@@ -16,13 +16,9 @@ DOWNLOAD_COMMAND_FILE=download_command_list.txt
 ENV_FILE=env_command_list.txt
 STATUS=0
 
-
+### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
 cd /home/ec2-user/
-
-### 1. create an output and log directory
-mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
 date > templog___ ; STATUS+=,$?  ## start time
-
  
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 wget $SCRIPTS_URL/aws_decode_run_json.py >> templog___ 2>> templog___ ; STATUS+=,$?
@@ -43,6 +39,9 @@ mkfs -t ext4 $EBS_DEVICE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # creating a fil
 mkdir $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  
 mount /dev/xvdb $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # mount
 sudo chmod 777 $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
+
+### create an output directory under the mounted ebs directory and move log file into that output directory
+mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
 mv templog___ $LOGFILE
 send_log
 
