@@ -18,7 +18,7 @@ The log files will be sent to S3 intermittently but not in real time.
 From anywhere you have aws configured with the right credentials and region, you can run the following command to launch an instance of the desired type. (For more details, see Test12. The content of ths page is an upgraded version of Test12.) 
 Basically, this command launches an instance based on a CWL-Docker-toil AMI (AMI with docker daemon and cwl-runner and toil installed based on Amazon Linux AMI), with shut-down-behavior 'terminate' and read/write access to S3 and has run_workflow.sh as user-data. Those are critical requirements. Most likely an additional EBS volume must be attached (in the below example to 100GB, io1 type with 5000 IOPS) because the default 8GB is not sufficient for most data. The exact volume size can be determined based on the data size and the workflow (e.g. which determines intermediate and output file sizes). The instance type is set to i2.xlarge in the case below, but it could also be flexible depending on the data size.
 
-``
+```
 JOBID=v989328isyrbag02
 INSTANCE_TYPE=i2.xlarge
 EBS_SIZE=100  ## in GB
@@ -26,7 +26,7 @@ EBS_TYPE=io1
 EBS_IOPS=5000
 AMI_ID=ami-7ff26968
 aws ec2 run-instances --image-id AMI_ID --instance-type INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/xvdb,Ebs={VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS} --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --user-data file://run_workflow.$JOBID.sh
-``
+```
  
 The same kind of command can be executed to launch an instance in other ways (e.g. using python, with different security handling, etc, but the requirements stated above must be kept.)
 Once you call the EC2 instance, the rest is completely independent of how you called it.
