@@ -1,5 +1,6 @@
 #!/bin/bash
 JOBID=$1
+SHUTDOWN_MIN=60   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
 EBS_DEVICE=/dev/xvdb
 JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
@@ -9,7 +10,6 @@ LOCAL_OUTDIR=$HOME/out
 LOGFILE=$LOCAL_OUTDIR/log
 LOCAL_CWLDIR=$EBS_DIR/cwl
 MD5FILE=md5sum.txt
-SHUTDOWN_MIN=now   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
 SCRIPTS_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
 INPUT_YML_FILE=inputs.yml
 DOWNLOAD_COMMAND_FILE=download_command_list.txt
