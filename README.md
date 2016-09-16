@@ -25,13 +25,16 @@ EBS_SIZE=100  ## in GB
 EBS_TYPE=io1
 EBS_IOPS=5000
 AMI_ID=ami-7ff26968
+./create_run_workflow.sh $JOBID ## This creates the userdata script run_workflow.$JOBID.sh.
+
+# make sure your json file is already on s3 before doing this:
 aws ec2 run-instances --image-id AMI_ID --instance-type INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/xvdb,Ebs={VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS} --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --user-data file://run_workflow.$JOBID.sh > launch.$JOBID.log
 ```
  
 The same kind of command can be executed to launch an instance in other ways (e.g. using python, with different security handling, etc, but the requirements stated above must be kept.)
 Once you call the EC2 instance, the rest is completely independent of how you called it.
 
-``run_workflow.v989328isyrbag02.sh`` looks as below:
+For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
 ```
 #!/bin/bash
 JOBID=v989328isyrbag02   ### This part can be changed by the lambda
@@ -41,7 +44,7 @@ wget SCRIPT_URL/$RUN_SCRIPT
 chmod +x $RUN_SCRIPT
 source $RUN_SCRIPT $JOBID
 ```
-The second line should depend on the JOBID and this script should be generated on the fly after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
+The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
  
 # Required scripts (on S3)
 Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
