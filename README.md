@@ -37,7 +37,7 @@ Once you call the EC2 instance, the rest is completely independent of how you ca
 For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
 ```
 #!/bin/bash
-JOBID=v989328isyrbag02   ### This part can be changed by the lambda
+JOBID=v989328isyrbag02  
 RUN_SCRIPT=aws_run_workflow.sh
 SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
 wget SCRIPT_URL/$RUN_SCRIPT
