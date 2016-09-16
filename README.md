@@ -46,7 +46,7 @@ source $RUN_SCRIPT $JOBID
 ```
 The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
  
-# Required scripts that will be downloaded to the worker instance
+# Scripts that will be downloaded to the worker instance
 Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
 The three codes are:
 
@@ -59,7 +59,7 @@ The three codes are:
  
 # Assumptions (requirements)
 The only assumptions required for this module to work are as below:
-1) Must have the above three scripts in the specified SCRIPT_URL. This url can change, if it is changed inside both run_workflow.$JOBID.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
+1) Must have the above three scripts in the specified SCRIPT_URL. This url can change, if it is changed inside both create_run_workflow.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
 2) The run json file must be in S3 bucket named 4dn-aws-pipeline-run-json. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
 3) The run json file name must be $JOBID.run.json (replace $JOBID with the actual job ID).
 4) The run json file must be in the following format:

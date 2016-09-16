@@ -56,6 +56,11 @@ source $DOWNLOAD_COMMAND_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 ls >> $LOGFILE  ; STATUS+=,$?
 send_log 
 
+df >> $LOGFILE ; STATUS+=,$?
+pwd >> $LOGFILE ; STATUS+=,$?
+ls -lh / >> $LOGFILE; STATUS+=,$?
+send_log
+
 ### 3. activate cwl-runner environment
 source venv/cwl/bin/activate  ; STATUS+=,$?
 ### 5. run command
