@@ -5,10 +5,12 @@ EBS_DEVICE=/dev/xvdb
 JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
 POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
-EBS_DIR=/data1
-LOCAL_OUTDIR=$EBS_DIR/out
+EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
+LOCAL_OUTDIR=$EBS_DIR/out  
 LOGFILE=$LOCAL_OUTDIR/log
 LOCAL_CWLDIR=$EBS_DIR/cwl
+LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
+LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 MD5FILE=md5sum.txt
 SCRIPTS_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
 INPUT_YML_FILE=inputs.yml
@@ -40,8 +42,11 @@ mkdir $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
 mount /dev/xvdb $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # mount
 sudo chmod 777 $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
 
-### create an output directory under the mounted ebs directory and move log file into that output directory
+### create subdirectories under the mounted ebs directory and move log file into that output directory
 mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
+mkdir -p $LOCAL_INPUT_DIR; STATUS+=,$?
+mkdir -p $LOCAL_REFERENCE_DIR; STATUS+=,$?
+mkdir -p $LOCAL_CWLDIR; STATUS+=,$?
 mv templog___ $LOGFILE
 send_log
 
@@ -59,6 +64,7 @@ send_log
 df >> $LOGFILE ; STATUS+=,$?
 pwd >> $LOGFILE ; STATUS+=,$?
 ls -lh / >> $LOGFILE; STATUS+=,$?
+ls -lhR $EBS_DIR >> $LOGFILE; STATUS+=,$?
 send_log
 
 ### 3. activate cwl-runner environment
