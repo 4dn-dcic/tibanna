@@ -37,10 +37,12 @@ send_log(){
 }
 
 ###  mount the EBS volume to the EBS_DIR
-mkfs -t ext4 $EBS_DEVICE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # creating a file system
-mkdir $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  
-mount /dev/xvdb $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # mount
-sudo chmod 777 $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
+lsblk >> templog___ 2>> templog___; STATUS+=,$?
+mkfs -t ext4 $EBS_DEVICE >> templog___ 2>> templog___; STATUS+=,$?  # creating a file system
+mkdir $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?  
+mount $EBS_DEVICE $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?  # mount
+sudo chmod 777 $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?
+
 
 ### create subdirectories under the mounted ebs directory and move log file into that output directory
 mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
