@@ -1,0 +1,54 @@
+{
+ "Job": {
+   "JOBID": "v989328isyrbag02", 
+   "App": {
+       "App_name": "Gitar",
+       "version": "0.2",
+       "cwl_directory": "4dn-cwl/gitar/v0.2-draft3", 
+       "main_cwl": "hictool-bam2hdf5.cwl" 
+   },
+   "Input": {
+       "Input_files_data": {
+           "input_bam1" : {
+               "class": "File",
+               "dir": "4dn-tool-evaluation-files",
+               "path": "GM12878_SRR1658581_pair1.bam"
+           },
+           "input_bam2" : {
+               "class": "File",
+               "dir": "4dn-tool-evaluation-files",
+               "path": "GM12878_SRR1658581_pair2.bam"
+           }
+       },
+       "Input_files_reference": {
+           "bowtie_index" : {
+               "class": "File",
+               "dir": "4dn-tool-evaluation-files",
+               "path": "hg19.bowtieIndex.tgz"
+           },
+           "chrlen_file" : {
+               "class": "File",
+               "dir": "4dn-tool-evaluation-files",
+               "path": "hg19.chrlen_file"
+           },
+           "RE_bed" : {
+               "class": "File",
+               "dir": "4dn-tool-evaluation-files",
+               "path": "HindIII_hg19_liftover.bed"
+           }
+       },
+       "Input_parameters": {
+           "contact_matrix_binsize": 50000,
+           "chromosome": ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]
+       }
+   },
+   "Output" : {
+       "output_directory": "4dn-tool-evaluation-files/output/20160711.v989328isyrbag02"
+   },
+   "Instance_type": "i2.xlarge",
+   "EBS": "800",
+   "AMI_ID": "ami-78c13615",
+   "start_time" : "20160711-155396"
+ }
+}
+
