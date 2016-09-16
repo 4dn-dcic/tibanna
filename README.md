@@ -9,46 +9,56 @@ The goal is to construct a version zero framework for executing a cwl pipeline d
 The module works as a diagram below:
 First, create a JOBID, a run.json file, a tiny shell script (run_workflow.sh) file and upload the run.json file to S3. (This part has yet to be implemented, currently I manually created the JOBID, run.json file and the shell script.)
 Then, launch a self-executing EC2 instance with a JOB ID and run_workflow.sh passed to it.
-The self-executing EC2 instance will download necessary scripts, run.json, data and workflow codes from S3 and run the workflow and upload the output and status to S3 and then terminate itself.
+The self-executing EC2 instance will download necessary scripts and workflow codes from github and run.json, data from S3 and run the workflow and upload the output and status to S3 and then terminate itself.
+The log files will be sent to S3 intermittently but not in real time.
 
 --diagram--
 
 # Launching a self-executing EC2 instance
 From anywhere you have aws configured with the right credentials and region, you can run the following command to launch an instance of the desired type. (For more details, see Test12. The content of ths page is an upgraded version of Test12.) 
-Basically, this command launches an instance based on a CWL-Docker AMI (AMI with docker daemon and cwl-runner installed based on Amazon Linux AMI), with shut-down-behavior 'terminate' and read/write access to S3 and has run_workflow.sh as user-data. Those are critical requirements. Most likely the EBS volume must be reset (in the below example to 100GB) because the default 8GB is not sufficient for most data. The exact volume size can be determined based on the data size and the workflow (e.g. which determines intermediate and output file sizes). The instance type is set to i2.xlarge in the case below, but it could also be flexible depending on the data size.
+Basically, this command launches an instance based on a CWL-Docker-toil AMI (AMI with docker daemon and cwl-runner and toil installed based on Amazon Linux AMI), with shut-down-behavior 'terminate' and read/write access to S3 and has run_workflow.sh as user-data. Those are critical requirements. Most likely an additional EBS volume must be attached (in the below example to 100GB, io1 type with 5000 IOPS) because the default 8GB is not sufficient for most data. The exact volume size can be determined based on the data size and the workflow (e.g. which determines intermediate and output file sizes). The instance type is set to i2.xlarge in the case below, but it could also be flexible depending on the data size.
 
 ``
-aws ec2 run-instances --image-id ami-78c13615 --instance-type i2.xlarge --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/xvda,Ebs={VolumeSize=100} --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --user-data file://run_workflow.sh
+JOBID=v989328isyrbag02
+INSTANCE_TYPE=i2.xlarge
+EBS_SIZE=100  ## in GB
+EBS_TYPE=io1
+EBS_IOPS=5000
+AMI_ID=ami-7ff26968
+aws ec2 run-instances --image-id AMI_ID --instance-type INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/xvdb,Ebs={VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS} --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --user-data file://run_workflow.$JOBID.sh
 ``
  
 The same kind of command can be executed to launch an instance in other ways (e.g. using python, with different security handling, etc, but the requirements stated above must be kept.)
 Once you call the EC2 instance, the rest is completely independent of how you called it.
 
-``run_workflow.sh`` looks as below:
+``run_workflow.v989328isyrbag02.sh`` looks as below:
 ```
 #!/bin/bash
 JOBID=v989328isyrbag02   ### This part can be changed by the lambda
 RUN_SCRIPT=aws_run_workflow.sh
-SCRIPT_BUCKET=4dn-aws-pipeline-mng-scripts
-aws s3 cp s3://$SCRIPT_BUCKET/$RUN_SCRIPT .
+SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
+wget SCRIPT_URL/$RUN_SCRIPT
 chmod +x $RUN_SCRIPT
 source $RUN_SCRIPT $JOBID
 ```
-The second line should depend on the JOBID and this script should be generated on the fly after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from S3 bucket named 4dn-aws-pipeline-mng-scripts and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
+The second line should depend on the JOBID and this script should be generated on the fly after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
  
 # Required scripts (on S3)
-Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from S3 and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
-The three codes that I uploaded to S3 (bucket name 4dn-aws-pipeline-mng-scripts) look at below:
+Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
+The three codes are:
 
  ``aws_run_workflow.sh``
+
  ``aws_decode_run_json.py``
+
  ``aws_update_run_json.py``
+
  
 # Assumptions (requirements)
 The only assumptions required for this module to work are as below:
-1) Must have the above three scripts in an S3 bucket named 4dn-aws-pipeline-mng-scripts. This bucket name can change, if it is changed inside both run_workflow.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
+1) Must have the above three scripts in the specified SCRIPT_URL. This url can change, if it is changed inside both run_workflow.$JOBID.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
 2) The run json file must be in S3 bucket named 4dn-aws-pipeline-run-json. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
-3) The run json file name must be JOBID.run.json (replace JOBID with the actual JOBID).
+3) The run json file name must be $JOBID.run.json (replace $JOBID with the actual job ID).
 4) The run json file must be in the following format:
 ```
 {
@@ -57,8 +67,9 @@ The only assumptions required for this module to work are as below:
    "App": {
        "App_name": "Gitar",
        "version": "0.2",
-       "cwl_directory": "4dn-cwl/gitar/v0.2-draft3", 
-       "main_cwl": "hictool-bam2hdf5.cwl" 
+       "cwl_url": "https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.draft3_v0.2/",
+       "main_cwl": "hictool-bam2hdf5.cwl",
+       "cwl_files": []
    },
    "Input": {
        "Input_files_data": {
@@ -96,10 +107,12 @@ The only assumptions required for this module to work are as below:
        }
    },
    "Output" : {
-       "output_directory": "4dn-tool-evaluation-files/output/20160711.v989328isyrbag02"
+       "output_bucket_directory": "4dn-tool-evaluation-files/output/20160711.v989328isyrbag02"
    },
    "Instance_type": "i2.xlarge",
-   "EBS": "800",
+   "EBS_SIZE": "800",
+   "EBS_TYPE": "io1",
+   "EBS_IOPS": 5000,
    "AMI_ID": "ami-78c13615",
    "start_time" : "20160711-155396"
  }
@@ -107,9 +120,10 @@ The only assumptions required for this module to work are as below:
 ```
 
 The fields required by the script include
-* "App" / "cwl_directory" : name of bucket and subdirectories that contains the cwl files.
+* "App" / "cwl_url" : name of github directory that contains the cwl files (directory for raw files).
 * "App" / "main_cwl" : name of the cwl file to run (wither workflow cwl or a command (single-step) cwl).
-* "Output" / "output_directory" : name of bucket and subdirectories where output files will be put.
+* "App" / "cwl_files" : name of the other cwl files needed to run (e.g. called by main_cwl).
+* "Output" / "output_bucket_directory" : name of bucket and subdirectories where output files will be put. The bucket must exist. Subdirectories can be created on the fly.
 * "Input" / "Input_files_data" / "class" : always 'File' unless array of files. It follows CWL convention used to define a file input in the meta data file used by cwl-runner.
 * "Input" / "Input_files_reference" / "class"  : same.
 * "Input" / "Input_files_data" / "dir" : name of bucket and subdirectories where a corresponding input data file is stored.

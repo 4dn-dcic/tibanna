@@ -4,8 +4,9 @@
    "App": {
        "App_name": "Gitar",
        "version": "0.2",
-       "cwl_directory": "4dn-cwl/gitar/v0.2-draft3", 
-       "main_cwl": "hictool-bam2hdf5.cwl" 
+       "cwl_url": "https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.draft3_v0.2/", 
+       "main_cwl": "hictool-bam2hdf5.cwl",
+       "cwl_files": []
    },
    "Input": {
        "Input_files_data": {
@@ -43,10 +44,12 @@
        }
    },
    "Output" : {
-       "output_directory": "4dn-tool-evaluation-files/output/20160711.v989328isyrbag02"
+       "output_bucket_directory": "4dn-tool-evaluation-files/output/20160711.v989328isyrbag02"
    },
    "Instance_type": "i2.xlarge",
-   "EBS": "800",
+   "EBS_SIZE": "800",
+   "EBS_TYPE": "io1",
+   "EBS_IOPS": 5000,
    "AMI_ID": "ami-78c13615",
    "start_time" : "20160711-155396"
  }

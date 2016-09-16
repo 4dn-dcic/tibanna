@@ -1,50 +1,75 @@
 #!/bin/bash
 JOBID=$1
+EBS_DEVICE=/dev/xvdb
 JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
 POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
-LOCAL_OUTDIR=out
-LOGFILE=out/log
-LOCAL_CWLDIR=cwl
+EBS_DIR=/data1
+LOCAL_OUTDIR=$HOME/out
+LOGFILE=$LOCAL_OUTDIR/log
+LOCAL_CWLDIR=$EBS_DIR/cwl
 MD5FILE=md5sum.txt
 SHUTDOWN_MIN=now   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
-SCRIPTS_BUCKET_NAME=4dn-aws-pipeline-mng-scripts
+SCRIPTS_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
 INPUT_YML_FILE=inputs.yml
 DOWNLOAD_COMMAND_FILE=download_command_list.txt
 ENV_FILE=env_command_list.txt
 STATUS=0
-cd /home/ec2-user/;  STATUS+=,$?
- 
+
+
+
 ### 1. create an output and log directory
 mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
 date > $LOGFILE; STATUS+=,$?  ## start time
-### 2. get the run.json file and parse it to get environmental variables CWL_DIRECTORY, CWL_FILE and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
-aws s3 cp s3://$SCRIPTS_BUCKET_NAME/aws_decode_run_json.py . ; STATUS+=,$?
-aws s3 cp s3://$SCRIPTS_BUCKET_NAME/aws_update_run_json.py . ; STATUS+=,$?
+
+ 
+### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
+wget $SCRIPTS_URL/aws_decode_run_json.py . ; STATUS+=,$?
+wget $SCRIPTS_URL/aws_update_run_json.py . ; STATUS+=,$?
+
 aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME . ; STATUS+=,$?
-# what's the best way to pass the run.json file to this instance?
 chmod +x ./*py  ; STATUS+=,$?
 ./aws_decode_run_json.py $RUN_JSON_FILE_NAME  ;  STATUS+=,$?
 source $ENV_FILE ;  STATUS+=,$?
- 
-### 3. download files from s3
-# download cwl
-aws s3 cp --recursive s3://$CWLBUCKET $LOCAL_CWLDIR  ; STATUS+=,$?
-# download data & reference files
+
+# function that sends log to s3 (it requires OUTBUCKET to be defined, which is done by sourcing $ENV_FILE.)
+send_log(){
+   aws s3 cp $LOGFILE s3://$OUTBUCKET/$LOGFILE
+}
+send_log 
+
+###  mount the EBS volume to the EBS_DIR
+mkfs -t ext4 $EBS_DEVICE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # creating a file system
+mkdir $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  
+mount /dev/xvdb $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # mount
+sudo chmod 777 $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
+cd $EBS_DIR;  STATUS+=,$?
+send_log
+
+# download cwl from github or any other url.
+for CWL_FILE in $MAIN_CWL $CWL_FILES
+do
+ wget -O$LOCAL_CWLDIR/$CWL_FILE $CWL_URL/$CWL_FILE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
+done
+# download data & reference files from s3
 source $DOWNLOAD_COMMAND_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 ls >> $LOGFILE  ; STATUS+=,$?
- 
+send_log 
+
 ### 3. activate cwl-runner environment
 source venv/cwl/bin/activate  ; STATUS+=,$?
 ### 5. run command
 cwl-runner --outdir $LOCAL_OUTDIR --leave-tmpdir $LOCAL_CWLDIR/$CWL_FILE $INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 deactivate  ; STATUS+=,$?
- 
+send_log 
+
 ### 6. copy output files to s3
 md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ; STATUS+=,$?  ## calculate md5sum for output files (except log file, to avoid confusion)
 mv $MD5FILE $LOCAL_OUTDIR  ; STATUS+=,$?
 date >> $LOGFILE  ;   STATUS+=,$? ## done time
-aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET  ; STATUS+=,$?
+send_log
+aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET >> $LOGFILE 2>> $LOGFILE ; STATUS+=,$?
+send_log
 #<calculate md5sum for uploaded output files> ## is there a direct way to get this for a file on s3?
  
 ### 7. updating status
@@ -65,3 +90,4 @@ sudo shutdown -h $SHUTDOWN_MIN
 #id=$(ec2-metadata -i|cut -d' ' -f2)
 #aws ec2 terminate-instances --instance-ids $id
  
+

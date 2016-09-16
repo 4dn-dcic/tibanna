@@ -1,7 +1,7 @@
 #!/bin/bash
 JOBID=v989328isyrbag02   ### This part can be changed by the lambda
 RUN_SCRIPT=aws_run_workflow.sh
-SCRIPT_BUCKET=4dn-aws-pipeline-mng-scripts
-aws s3 cp s3://$SCRIPT_BUCKET/$RUN_SCRIPT .
+SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
+wget SCRIPT_URL/$RUN_SCRIPT
 chmod +x $RUN_SCRIPT
 source $RUN_SCRIPT $JOBID

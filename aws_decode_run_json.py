@@ -40,7 +40,9 @@ with open(input_yml_filename,'w') as f_yml:
 # create a file that defines environmental variables
 # I have to use these variables after this script finishes running. I didn't use os.environ + os.system('bash') because that would remove the other env variables set before this script started running.
 with open(env_filename,'w') as f_env:
-  f_env.write("CWLBUCKET={}\n".format(dict["Job"]["App"]["cwl_directory"]))
-  f_env.write("CWL_FILE={}\n".format(dict["Job"]["App"]["main_cwl"]))
-  f_env.write("OUTBUCKET={}\n".format(dict["Job"]["Output"]["output_directory"]))
+  f_env.write("CWL_URL={}\n".format(dict["Job"]["App"]["cwl_url"]))
+  f_env.write("MAIN_CWL={}\n".format(dict["Job"]["App"]["main_cwl"])) ## main cwl to be run (the other cwl files will be called by this one)
+  f_env.write("CWL_FILES={}\n".format(' '.join(dict["Job"]["App"]["cwl_files"]))) ## list of cwl files in an array delimited by a space
+  f_env.write("OUTBUCKET={}\n".format(dict["Job"]["Output"]["output_bucket_directory"]))
  
+
