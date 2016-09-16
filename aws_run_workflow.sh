@@ -6,7 +6,7 @@ JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
 POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 EBS_DIR=/data1
-LOCAL_OUTDIR=$(pwd)/out
+LOCAL_OUTDIR=$EBS_DIR/out
 LOGFILE=$LOCAL_OUTDIR/log
 LOCAL_CWLDIR=$EBS_DIR/cwl
 MD5FILE=md5sum.txt
@@ -17,33 +17,33 @@ ENV_FILE=env_command_list.txt
 STATUS=0
 
 
+cd /home/ec2-user/
 
 ### 1. create an output and log directory
 mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
-date > $LOGFILE; STATUS+=,$?  ## start time
+date > templog___ ; STATUS+=,$?  ## start time
 
  
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
-wget $SCRIPTS_URL/aws_decode_run_json.py ; STATUS+=,$?
-wget $SCRIPTS_URL/aws_update_run_json.py ; STATUS+=,$?
+wget $SCRIPTS_URL/aws_decode_run_json.py >> templog___ 2>> templog___ ; STATUS+=,$?
+wget $SCRIPTS_URL/aws_update_run_json.py >> templog___ 2>> templog___ ; STATUS+=,$?
 
-aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME . ; STATUS+=,$?
-chmod +x ./*py  ; STATUS+=,$?
-./aws_decode_run_json.py $RUN_JSON_FILE_NAME  ;  STATUS+=,$?
-source $ENV_FILE ;  STATUS+=,$?
+aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME . >> templog___ 2>> templog___ ; STATUS+=,$?
+chmod +x ./*py >> templog___ 2>> templog___ ; STATUS+=,$?
+./aws_decode_run_json.py $RUN_JSON_FILE_NAME >> templog___ 2>> templog___ ;  STATUS+=,$?
+source $ENV_FILE >> templog___ 2>> templog___ ;  STATUS+=,$?
 
 # function that sends log to s3 (it requires OUTBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){
    aws s3 cp $LOGFILE s3://$OUTBUCKET/$LOGFILE
 }
-send_log 
 
 ###  mount the EBS volume to the EBS_DIR
 mkfs -t ext4 $EBS_DEVICE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # creating a file system
 mkdir $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  
 mount /dev/xvdb $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?  # mount
 sudo chmod 777 $EBS_DIR >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
-cd $EBS_DIR;  STATUS+=,$?
+mv templog___ $LOGFILE
 send_log
 
 # download cwl from github or any other url.
@@ -52,6 +52,7 @@ do
  wget -O$LOCAL_CWLDIR/$CWL_FILE $CWL_URL/$CWL_FILE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
 done
 # download data & reference files from s3
+cat $DOWNLOAD_COMMAND_FILE >> $LOGFILE 2>> $LOGFILE ; STATUS+=,$?
 source $DOWNLOAD_COMMAND_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 ls >> $LOGFILE  ; STATUS+=,$?
 send_log 
@@ -62,7 +63,7 @@ ls -lh / >> $LOGFILE; STATUS+=,$?
 send_log
 
 ### 3. activate cwl-runner environment
-source venv/cwl/bin/activate  ; STATUS+=,$?
+source /home/ec2-user/venv/cwl/bin/activate  ; STATUS+=,$?
 ### 5. run command
 cwl-runner --outdir $LOCAL_OUTDIR --leave-tmpdir $LOCAL_CWLDIR/$CWL_FILE $INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 deactivate  ; STATUS+=,$?

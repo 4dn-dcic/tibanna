@@ -25,10 +25,11 @@ EBS_SIZE=100  ## in GB
 EBS_TYPE=io1
 EBS_IOPS=5000
 AMI_ID=ami-7ff26968
+KAYPAIR=duplexa.4dn
 ./create_run_workflow.sh $JOBID ## This creates the userdata script run_workflow.$JOBID.sh.
 
 # make sure your json file is already on s3 before doing this:
-aws ec2 run-instances --image-id AMI_ID --instance-type INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/xvdb,Ebs={VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS} --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --user-data file://run_workflow.$JOBID.sh > launch.$JOBID.log
+aws ec2 run-instances --image-id $AMI_ID --instance-type $INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/sdb,Ebs="{VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS,DeleteOnTermination=true}" --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --ebs-optimized --user-data file://run_workflow.$JOBID.sh --key-name $KEYPAIR >> launch.$JOBID.log
 ```
  
 The same kind of command can be executed to launch an instance in other ways (e.g. using python, with different security handling, etc, but the requirements stated above must be kept.)
