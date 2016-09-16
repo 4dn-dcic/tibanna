@@ -46,7 +46,7 @@ source $RUN_SCRIPT $JOBID
 ```
 The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
  
-# Required scripts (on S3)
+# Required scripts that will be downloaded to the worker instance
 Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
 The three codes are:
 
