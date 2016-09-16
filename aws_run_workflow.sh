@@ -6,7 +6,7 @@ JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
 POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 EBS_DIR=/data1
-LOCAL_OUTDIR=$HOME/out
+LOCAL_OUTDIR=$(pwd)/out
 LOGFILE=$LOCAL_OUTDIR/log
 LOCAL_CWLDIR=$EBS_DIR/cwl
 MD5FILE=md5sum.txt
@@ -24,8 +24,8 @@ date > $LOGFILE; STATUS+=,$?  ## start time
 
  
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
-wget $SCRIPTS_URL/aws_decode_run_json.py . ; STATUS+=,$?
-wget $SCRIPTS_URL/aws_update_run_json.py . ; STATUS+=,$?
+wget $SCRIPTS_URL/aws_decode_run_json.py ; STATUS+=,$?
+wget $SCRIPTS_URL/aws_update_run_json.py ; STATUS+=,$?
 
 aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME . ; STATUS+=,$?
 chmod +x ./*py  ; STATUS+=,$?
