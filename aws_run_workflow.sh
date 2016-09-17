@@ -76,7 +76,7 @@ source /home/ec2-user/venv/cwl/bin/activate  ; STATUS+=,$?
 ### 5. run command
 cwd0=$(pwd)
 cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
-cwl-runner $LOCAL_CWLDIR/$CWL_FILE $cwd0/$INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
+cwl-runner $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 deactivate  ; STATUS+=,$?
 cd $cwd0
 send_log 
