@@ -72,10 +72,13 @@ ls -lhR $EBS_DIR >> $LOGFILE; STATUS+=,$?
 send_log
 
 ### 3. activate cwl-runner environment
-source /home/ec2-user/venv/cwl/bin/activate  ; STATUS+=,$?
+source /home/ec2-user/venv/toil/bin/activate  ; STATUS+=,$?
 ### 5. run command
-cwl-runner --outdir $LOCAL_OUTDIR --leave-tmpdir $LOCAL_CWLDIR/$CWL_FILE $INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
+cwd0=$(pwd)
+cd $LOCAL_CWLDIR  ## so that other downstream cwl files can be accessed
+cwl-runner --outdir $LOCAL_OUTDIR $LOCAL_CWLDIR/$CWL_FILE $INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 deactivate  ; STATUS+=,$?
+cd $cwd0
 send_log 
 
 ### 6. copy output files to s3
