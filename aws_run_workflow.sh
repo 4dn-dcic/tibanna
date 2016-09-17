@@ -41,8 +41,10 @@ lsblk >> templog___ 2>> templog___; STATUS+=,$?
 mkfs -t ext4 $EBS_DEVICE >> templog___ 2>> templog___; STATUS+=,$?  # creating a file system
 mkdir $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?  
 mount $EBS_DEVICE $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?  # mount
-sudo chmod 777 $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?
+chmod 777 $EBS_DIR >> templog___ 2>> templog___; STATUS+=,$?
 
+### restart docker so the mounting can take effect
+service docker restart
 
 ### create subdirectories under the mounted ebs directory and move log file into that output directory
 mkdir -p $LOCAL_OUTDIR; STATUS+=,$?
