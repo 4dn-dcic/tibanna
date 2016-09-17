@@ -8,7 +8,7 @@ POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_OUTDIR=$EBS_DIR/out  
 LOGFILE=$LOCAL_OUTDIR/log
-LOCAL_CWLDIR=$EBS_DIR/cwl
+LOCAL_CWLDIR=$LOCAL_OUTDIR ## cwl-runner directory handling is so great that we had to do this..
 LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 MD5FILE=md5sum.txt
@@ -72,14 +72,20 @@ ls -lhR $EBS_DIR >> $LOGFILE; STATUS+=,$?
 send_log
 
 ### 3. activate cwl-runner environment
-source /home/ec2-user/venv/toil/bin/activate  ; STATUS+=,$?
+source /home/ec2-user/venv/cwl/bin/activate  ; STATUS+=,$?
 ### 5. run command
 cwd0=$(pwd)
-cd $LOCAL_CWLDIR  ## so that other downstream cwl files can be accessed
-cwl-runner --outdir $LOCAL_OUTDIR $LOCAL_CWLDIR/$CWL_FILE $INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
+cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
+cwl-runner $LOCAL_CWLDIR/$CWL_FILE $cwd0/$INPUT_YML_FILE >> $LOGFILE 2>> $LOGFILE   ; STATUS+=,$?
 deactivate  ; STATUS+=,$?
 cd $cwd0
 send_log 
+
+### delete cwl files so that they won't get to s3
+for CWL_FILE in $MAIN_CWL $CWL_FILES
+do
+ rm -f $LOCAL_CWLDIR/$CWL_FILE >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?
+done
 
 ### 6. copy output files to s3
 md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ; STATUS+=,$?  ## calculate md5sum for output files (except log file, to avoid confusion)
