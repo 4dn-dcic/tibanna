@@ -27,14 +27,14 @@ AMI_ID=ami-7ff26968
 KAYPAIR=duplexa.4dn
 JSON_BUCKET=4dn-aws-pipeline-run-json
 
-JOBID=v989328isyrbag02
 # The following json-generating script assumes python 2.7 or higher.
 # JOBID can be manually assigned (-j) or randomly generated.
 # A simple example command is shown below.
 # JOBID=`python ./create_json.py -c some.cwl -cd http://some_cwl_url -co other1.cwl,other2.cwl -i '{"input_bam1":"lalala.1.bam","input_bam2":"lalala.1.bam"}' -ir '{"reference_genome":"hg19.fassta"}' -id some_iput_bucket -ird some_reference_bucket -ip '{"binsize":5000,"chr":[1,2,3,4,5]}' -o some_output_bucket -t m2.xlarge -s 200 -IO 6000 -J fhfhfhfh`
 
 # The following command generates a json file ./json/v989328isyrbag02.run.json (and stores the job ID to env variable JOBID)
-JOBID=`python ./create_json.py -c hictool-bam2hdf5.cwl -cd https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/ -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ird 4dn-tool-evaluation-files -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -s 800 -J v989328isyrbag02`
+# JOBID is in this case manually assigned to be v989328isyrbag02.
+JOBID=`python ./create_json.py -c hictool-bam2hdf5.cwl -cd https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/ -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ird 4dn-tool-evaluation-files -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -s $EBS_SIZE -IO $EBS_IOPS -t $INSTANCE_TYPE -J v989328isyrbag02`
 
 # Copy the json file to a designated bucket so it can be accssed by the worker instance
 aws s3 cp ./json/$JOBID.run.json s3://JSON_BUCKET/$JOBID.run.json
