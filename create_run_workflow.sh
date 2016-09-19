@@ -1,7 +1,7 @@
 #!/bin/bash
 JOBID=$1
 RUN_WORKFLOW_FILE=run_workflow.$JOBID.sh
-SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
+SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/dev/
 echo "#!/bin/bash" > $RUN_WORKFLOW_FILE
 echo "JOBID=$JOBID" >> $RUN_WORKFLOW_FILE
 echo "RUN_SCRIPT=aws_run_workflow.sh" >> $RUN_WORKFLOW_FILE

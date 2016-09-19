@@ -3,10 +3,10 @@
    "JOBID": "v989328isyrbag02", 
    "App": {
        "App_name": "Gitar",
-       "version": "0.2",
+       "App_version": "0.2",
        "cwl_url": "https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/", 
        "main_cwl": "hictool-bam2hdf5.cwl",
-       "cwl_files": []
+       "other_cwl_files": []
    },
    "Input": {
        "Input_files_data": {
