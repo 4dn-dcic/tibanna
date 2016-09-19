@@ -2,14 +2,14 @@
     "Job": {
         "AMI_ID": "ami-78c13615", 
         "App": {
-            "App_name": "", 
+            "App_name": "hictool-bam2hdf5", 
             "App_version": "", 
             "cwl_url": "https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/", 
             "main_cwl": "hictool-bam2hdf5.cwl", 
             "other_cwl_files": []
         }, 
         "EBS_IOPS": 5000, 
-        "EBS_SIZE": 800, 
+        "EBS_SIZE": 100, 
         "EBS_TYPE": "io1", 
         "Input": {
             "Input_files_data": {
@@ -75,6 +75,6 @@
         "Output": {
             "output_bucket_directory": "4dn-tool-evaluation-files/output/20160918.v989328isyrbag02"
         }, 
-        "start_time": "20160918-23:57:15"
+        "start_time": "20160919-02:45:48-EDT"
     }
 }

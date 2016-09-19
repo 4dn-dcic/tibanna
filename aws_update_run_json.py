@@ -11,7 +11,7 @@ with open(json_old,'r') as json_old_f:
    dict=json.load(json_old_f)
  
 ## add end time
-date=time.strftime("%Y%m%d-%H:%M:%S")
+date=time.strftime("%Y%m%d-%H:%M:%S-%Z")
 dict['Job']['end_time']=date
  
 ## add status
