@@ -23,7 +23,7 @@ STATUS=0
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?; }  ## usage: exl command
 
 # function that sends log to s3 (it requires OUTBUCKET to be defined, which is done by sourcing $ENV_FILE.)
-send_log(){  aws s3 cp $LOGFILE s3://$OUTBUCKET/$LOGFILE; }  ## usage: send_log (no argument)
+send_log(){  aws s3 cp $LOGFILE s3://$OUTBUCKET; }  ## usage: send_log (no argument)
 
 
 ### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
