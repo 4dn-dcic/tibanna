@@ -127,7 +127,7 @@ def launch_instance (par, jobid):
   ## launch an instance
   print "launching an instance..."
 
-  Userdata_file = "run_workflow.{jobid}.sh".format(jobid=jobid)
+  Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid,dir=par['userdata_dir'])
 
   launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type} --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination  --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE},VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}\" --iam-instance-profile Arn={arn} --ebs-optimized --user-data={userdata}".format(ami=par['worker_ami_id'], instance_type=par['instance_type'], arn=par['s3_access_arn'], EBS_SIZE=par['storage_size'], EBS_TYPE='io1', EBS_IOPS=par['storage_iops'], userdata='file://'+Userdata_file)
   if par['keyname'] != '':
