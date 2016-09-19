@@ -138,12 +138,16 @@ def launch_instance (par, jobid):
 
   # get public IP for the instance (This may not happen immediately)
   instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
-  instance_desc_logstr=[False,'']
-  while instance_desc_logstr[0]==False:  ## keep trying until you get the result.
+  try_again=True
+  while try_again:  ## keep trying until you get the result.
     time.sleep(1) # wait for one second before trying again.
-    instance_desc_logstr= run_command_out_check (instance_desc_command)
-  instance_desc_log=json.loads(instance_desc_logstr[1])
-  instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
+    try:
+      instance_desc_logstr= run_command_out_check (instance_desc_command) # sometimes you don't get a description immediately
+      instance_desc_log=json.loads(instance_desc_logstr[1])
+      instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress'] # sometimes you get a description but PublicIP is not available yet
+      try_again=False
+    except:
+      try_again=True
 
 
   ## 5. Add to the job list
