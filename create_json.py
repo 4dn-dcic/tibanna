@@ -140,6 +140,7 @@ def launch_instance (par, jobid):
   instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
   instance_desc_logstr=[False,'']
   while instance_desc_logstr[0]==False:  ## keep trying until you get the result.
+    time.sleep(1) # wait for one second before trying again.
     instance_desc_logstr= run_command_out_check (instance_desc_command)
   instance_desc_log=json.loads(instance_desc_logstr[1])
   instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
