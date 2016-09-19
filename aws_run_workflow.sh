@@ -25,7 +25,6 @@ exl(){ $@ >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?; }  ## usage: exl command
 # function that sends log to s3 (it requires OUTBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$OUTBUCKET; }  ## usage: send_log (no argument)
 
-
 ### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
 LOGFILE=$LOGFILE1
 cd /home/ec2-user/
@@ -40,6 +39,10 @@ exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod +x ./*py
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
+
+# first create an output bucket/directory
+touch job_started
+aws s3 cp job_started s3://$OUTBUCKET/job_started
 
 
 ###  mount the EBS volume to the EBS_DIR
