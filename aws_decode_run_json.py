@@ -35,16 +35,19 @@ with open(downloadlist_filename,'w') as f_download:
 with open(input_yml_filename,'w') as f_yml:
   inputs = dict_input.copy()
   yml={}
+  for category in ["Input_parameters"]:
+     for item,value in inputs[category].iteritems():
+       yml[item]=value
   for category in ["Input_files_data","Input_files_reference"]:
      if category=="Input_files_data":
         LOCAL_DIR=input_dir
      else:
         LOCAL_DIR=reference_dir
-     for item in inputs[category].keys():
-       if inputs[category][item].has_key('dir'):
-          del inputs[category][item]['dir']
-       inputs[category][item]['path']=LOCAL_DIR + '/' + inputs[category][item]['path']
-       yml[item]=inputs[category][item].copy()
+     for item,v in inputs[category].iteritems():
+       if v.has_key('dir'):
+          del v['dir']
+       v['path']=LOCAL_DIR + '/' + v['path']
+       yml[item]=v.copy()
   json.dump(yml, f_yml, indent=4, sort_keys=True)
  
  
