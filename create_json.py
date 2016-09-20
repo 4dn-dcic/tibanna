@@ -152,7 +152,7 @@ def launch_instance (par, jobid):
 
   ## 5. Add to the job list
   with open(par['job_list_file'],'a') as fo:
-    fo.write("{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id, par['instance_type'], instance_ip, par['job_tag']))
+    fo.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id, par['instance_type'], instance_ip, par['job_tag'], par['outbucket']))
 
 
 
@@ -219,8 +219,10 @@ par={
  'storage_size': cfg['default_ebs_size'], # redudant with final_args
  'storage_iops': cfg['ebs_iops'], # redundant with final_args
  'job_list_file': cfg['job_list_file'], 
- 'job_tag': '' # app_name in final_args
+ 'job_tag': '', # app_name in final_args
+ 'outbucket': cfg['output_S3_bucket'] # redundant with output_bucket_directory in final_args
 }
+
 
 
 
@@ -279,7 +281,7 @@ par['instance_type'] =final_args['instance_type']
 par['storage_size']= final_args['storage_size']
 par['storage_iops']= final_args['storage_iops']
 par['job_tag']=final_args['app_name']
-
+par['outbucket']=final_args['output_bucket_directory']
 
 # create json and copy to s3
 jobid=create_json(final_args, json_dir, args.job_id, args.copy_to_s3 )

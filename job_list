@@ -1,7 +1,4 @@
-job_id	instance_id	instance_type	public_ip	tag
-C24WkGoVKfg9	i-5dcba74b	c4.large	54.172.226.225	gatk-gvcf
-LQEfk3yazaa5	i-75145b44	c4.xlarge	54.162.54.77	gatk-gvcf
-JBxTdOKKDMnt	i-dbc3afcd	i2.xlarge	52.91.238.116	hictool-bam2hdf5
-pZw50kSdjP4O	i-19d2be0f	i2.xlarge	54.173.59.209	hictool-bam2hdf5
-HAnSr5RGEMOU	i-a32b44b5	c4.large	54.164.134.237	gatk-gvcf
-HBZyUJmCesv8	i-934807a2	c4.xlarge	54.85.156.234	gatk-gvcf
+job_id	instance_id	instance_type	public_ip	tag	outbucket
+pZw50kSdjP4O	i-19d2be0f	i2.xlarge	54.173.59.209	hictool-bam2hdf5	4dn-tool-evaluation-files/output
+HAnSr5RGEMOU	i-a32b44b5	c4.large	54.164.134.237	gatk-gvcf	tibanna-output/takeda-gatk-201609
+HBZyUJmCesv8	i-934807a2	c4.xlarge	54.85.156.234	gatk-gvcf	tibanna-output/takeda-gatk-201609
