@@ -1,24 +1,24 @@
 # Tibanna
 Tibanna is the gas mine in Cloud City that makes Hyperdrives zoom.  It's also the pipeline running in the cloud that ensure data is properly processed for 4dn.
 
-# Table of contents
+## Table of contents
 * [Goal](#goal)
 * [Summary and diagram](#summary-and-diagram)
 * [prerequisites](#prerequisites)
 * [awsub](#awsub)
-** [auto-launch](#auto-launch)
-** [usage for awsub](#usage-for-awsub)
+  * [auto-launch](#auto-launch)
+  * [usage for awsub](#usage-for-awsub)
 * [awstat](#awstat)
-* [.tibanna.config](#.tibanna.config)
-* [Semiautomated launch](#semiautomated-launch)
+* [config file](#config file)
+* [Semi-automated launch](#semi-automated-launch)
 * [Worker scripts](#worker-scripts)
 * [Output](#output)
 
 
-# Goal
+## Goal
 The goal is to construct a version zero framework for executing a cwl pipeline directly on aws without using SBG (nor DNA nexus), that can be used as an independent module.
  
-# Summary and diagram
+## Summary and diagram
 The module works as a diagram below:
 First, `awsub` creates a JOBID, a json file describing launch details, a tiny shell script (run_workflow.sh) file describing what needs to be done on launch, uploads the run.json file to S3 and launches an EC2 instance with the right configuration with the run_workflow.sh passed to it.
 The EC2 instance downloads the launch json file from S3 and necessary scripts and workflow codes from github and gets input files from S3 and runs the workflow and uploads the output and status to S3 and then terminates itself.
@@ -31,7 +31,7 @@ All the jobs that have been launched will be recorded in ./job_list and can be d
 From anywhere you have aws configured with the right credentials and region, you can run the following command to launch an instance of the desired type.
 Basically, this command launches an instance based on a CWL-Docker-toil AMI (AMI with docker daemon and cwl-runner and toil installed based on Amazon Linux AMI), with shut-down-behavior 'terminate' and read/write access to S3 and has run_workflow.sh as user-data. Those are critical requirements. Most likely an additional EBS volume must be attached (in the below example to 100GB, io1 type with 5000 IOPS) because the default 8GB is not sufficient for most data. The exact volume size can be determined based on the data size and the workflow (e.g. which determines intermediate and output file sizes). The instance type is set to i2.xlarge in the case below, but it could also be flexible depending on the data size.
 
-# prerequisites
+## Prerequisites
 The following condition is assumed.
 * python >=2.7
 * awscli is installed and its path is included in PATH. 
@@ -42,7 +42,7 @@ The following condition is assumed.
 
 
 ## awsub
-## auto-launch
+#### auto-launch
 Given a config file (./.tibanna.connfig), the following command would do everything from creating a json file, copying it to S3, launching an instance and executing a workflow.
 ```
 .awsub -c hictool-bam2hdf5.cwl -a hictool-bam2hdf5 -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -J v989328isyrbag02 -ue
@@ -50,7 +50,7 @@ Given a config file (./.tibanna.connfig), the following command would do everyth
 ```
 This command would also add an entry to a job_list file (./.job_list) describing the job ID, instance ID, instance IP and the app name.
 
-## Usage for awsub
+#### Usage for awsub
 The full usage and a simple example command for awsub is as below: 
 ```
 usage: awsub [-h] [-c CWL] [-cd CWL_DIRECTORY] [-co CWL_CHILDREN]
@@ -117,7 +117,7 @@ A simple example command is shown below. Without -ue, it will only create a json
 
 
 ## awstat
-### checking status
+#### checking status
 To check status, use awstat. It shows job status as well.
 ```
 ./awstat
@@ -134,8 +134,9 @@ MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       
 The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error. To check success/fail for a finished job, it looks for a file $JOBID.success under the output bucket. To check 'error' while running, it looks for $JOBID.error under the output bucket.
 
 
-## .tibanna.config
-An example .tibanna.config file looks like below. This can be modified by the user:
+## config file
+#### .tibanna.config
+An example `.tibanna.config` file looks like below. This can be modified by the user:
 ```
 {
  "reference_S3_bucket": "maestro-resources",
@@ -156,9 +157,9 @@ An example .tibanna.config file looks like below. This can be modified by the us
 The reference_S3_bucket must exist and all the resource files (e.g. genome reference fasta) must be in this bucket. The output_S3_bucket also must exist, but in case a subdirectory is included in the bucket name, the subdirectory doesn't have to pre-exist. The json_bucket must exist. This is where the launch json files will be sent to. The S3_access_arn must have been created already, using IAM. It is simply an arn of an IAM role. The worker_ami_id must be based on Amazon Linux AMI and have docker daemon and cwltools installed. The directory for cwltools is assumed to be /home/ec2-user/venv/cwl/bin/. The EBS type is always io1, so that one can change the iops value. All the cwl files must be under cwl_url. The keyname is a key pair that you already have, so that you can ssh into the worker instances using the key pair.
 
 
-# semiautomated launch
-## awsub without -ue option
-A less automated way would be as follows. This will not add an entry to a job_list file. The main difference is the option -ue. Without the -ue option, awsub will only create a launch json file, but it will not copy the json file to S3 nor will it launch an instance.
+## semi-automated launch
+### awsub without -ue option
+A less automated way would be as follows. This will not add an entry to a job_list file. The main difference is the option -ue. Without the -ue option, awsub will only create a launch json file, but it will not copy the json file to S3 nor will it launch an instance. These steps are actually implemented inside awsub.
 
 ```
 INSTANCE_TYPE=i2.xlarge
@@ -175,7 +176,7 @@ USERDATA_DIR=./userdata
 # JOBID can be manually assigned (-j) or randomly generated.
 # The following command generates a json file ./json/v989328isyrbag02.run.json (and stores the job ID to env variable JOBID) is actually runnable (given the files and buckets exist).
 # JOBID is in this case manually assigned to be v989328isyrbag02.
-JOBID=`python ./awsub -c hictool-bam2hdf5.cwl -cd https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/ -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ird 4dn-tool-evaluation-files -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -s $EBS_SIZE -IO $EBS_IOPS -t $INSTANCE_TYPE -J v989328isyrbag02`
+JOBID=`./awsub -c hictool-bam2hdf5.cwl -cd https://raw.githubusercontent.com/SooLee/gitar.workflow/master/cwl.20160712.draft3/ -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ird 4dn-tool-evaluation-files -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -s $EBS_SIZE -IO $EBS_IOPS -t $INSTANCE_TYPE -J v989328isyrbag02`
 
 # 2. Copy the json file to a designated bucket so it can be accssed by the worker instance
 aws s3 cp ./json/$JOBID.run.json s3://$JSON_BUCKET/$JOBID.run.json
@@ -185,8 +186,6 @@ aws s3 cp ./json/$JOBID.run.json s3://$JSON_BUCKET/$JOBID.run.json
 
 # 4. The following command launches a self-terminating instance that executes the workflow (assuming the json file is already on S3)
 aws ec2 run-instances --image-id $AMI_ID --instance-type $INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/sdb,Ebs="{VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS,DeleteOnTermination=true}" --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --ebs-optimized --user-data file://run_workflow.$JOBID.sh --key-name $KEYPAIR >> launch.$JOBID.log
-#The same kind of command can be executed to launch an instance in other ways (e.g. using python, with different security handling, etc, but the requirements stated above must be kept.)
-#Once you call the EC2 instance, the rest is completely independent of how you called it.
 ```
 
 For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
@@ -202,9 +201,8 @@ source $RUN_SCRIPT $JOBID
 The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
 
 
-
-# Worker scripts
-## Scripts that will be downloaded to the worker instance
+## Worker scripts
+#### Scripts that will be downloaded to the worker instance
 Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
 The three codes are:
 
@@ -214,13 +212,13 @@ The three codes are:
 
  ``aws_update_run_json.py``
 
+The above three scripts in the SCRIPT_URL variable specified inside some scripts. Currently, it is the url for this github repo for 'raw' files. This url can change, if it is changed inside both create_run_workflow.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
  
-# Launch json
-The only assumptions required for this module to work are as below:
-1) Must have the above three scripts in the specified SCRIPT_URL. This url can change, if it is changed inside both create_run_workflow.sh and aws_run_workflow.sh. (hard-coded once in each script as an environmental variable)
-2) The run json file must be in S3 bucket named 4dn-aws-pipeline-run-json. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
-3) The run json file name must be $JOBID.run.json (replace $JOBID with the actual job ID).
-4) The run json file must be in the following format:
+## Launch json
+The assumptions about the run json file are as below:
+1) The run json file must be in S3 bucket named 4dn-aws-pipeline-run-json. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
+2) The run json file name must be $JOBID.run.json (replace $JOBID with the actual job ID).
+3) The run json file must be in the following format:
 ```
 {
  "Job": {
@@ -293,7 +291,7 @@ The fields required by the script include
 * "Input_parameters" : In case the workflow has input parameters other than files, then they can be entered. For a parameter that is scattered according to the workflow, you can use an array representation in square brackets (e.g. chromosomes in the above example)
 Other fields are good to have, but not assumed by the above three scripts.
  
-# Output
+## Output
 It produces and uploads the following output files in the specified output directory in S3, in addition to the actual output files from the pipeline execution.
 * $JOBID.log : stdout and stderr capture from all commands run on the EC2, up to the point before output files are uploaded to S3.
 * md5sum.txt : md5sum of all output files except log and md5sum.txt itself.
