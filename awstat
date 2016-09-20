@@ -22,12 +22,12 @@ def run():
 
         # get job status for the instance
         instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
-        instance_desc_logstr=subprocess.check_output(instance_desc_command, shell=True) # capturing stdout from the launch command
-        instance_desc_log=json.loads(instance_desc_logstr)
-        if not instance_desc_log['Reservations']:
-          instance_status = 'depricated'
-        else: 
+        try:
+          instance_desc_logstr=subprocess.check_output(instance_desc_command, shell=True) # capturing stdout from the launch command
+          instance_desc_log=json.loads(instance_desc_logstr)
           instance_status = str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
+        except: 
+          instance_status = 'depricated'
         j.append(instance_status)
 
         # adding whether the job was a success (if it was a success, there will be a file jobid.success in the output bucket.)
