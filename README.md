@@ -9,7 +9,9 @@ Tibanna is the gas mine in Cloud City that makes Hyperdrives zoom.  It's also th
   * [auto-launch](#auto-launch)
   * [usage for awsub](#usage-for-awsub)
 * [awstat](#awstat)
-* [config file](#config file)
+   * [Checking status](#checking-status)
+  * [usage for awstat](#usage-for-awstat)
+* [Config file](#config-file)
 * [Semi-automated launch](#semi-automated-launch)
 * [Worker scripts](#worker-scripts)
 * [Output](#output)
@@ -141,6 +143,21 @@ MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       
 
 ```
 The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error. To check success/fail for a finished job, it looks for a file $JOBID.success under the output bucket. To check 'error' while running, it looks for $JOBID.error under the output bucket.
+
+#### Usage for awstat
+`awstat` can print log and postrun.json contents to stdout with options -l or -p (it takes a few seconds downloading the these files from S3 and displaying them). It is recommended to use with `less`. You can also specify a job ID by using the option -j.
+```
+usage: awstat [-h] [-l] [-p] [-j JOB_ID]
+
+Arguments
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l, --log             Print out log as well.
+  -p, --postrun_json    Print out postrun.json as well.
+  -j JOB_ID, --job_id JOB_ID
+                        Look at only the specified job_id.
+```
 
 
 ## config file
