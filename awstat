@@ -6,7 +6,7 @@ import json
 import csv
 
 JOB_LIST_FILE="./job_list"
-JOB_LIST_HEADER=['job_id','instance_id','instance_type','public_ip','tag','outbucket']
+JOB_LIST_HEADER=['job_id','instance_id','instance_type','public_ip','tag','start_time','outbucket']
 
 
 def run():
@@ -16,7 +16,8 @@ def run():
       sys.exit("job_list file doesn't contain proper header. Aborting.\n")
     else:
       nJobs=0
-      for j in jobs:
+      for j0 in jobs:
+        j=j0[0:6]
         instance_id = j[1] 
 
         # get job status for the instance
@@ -27,20 +28,23 @@ def run():
           instance_status = 'depricated'
         else: 
           instance_status = str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
-          instance_launchtime = str(instance_desc_log['Reservations'][0]['Instances'][0]['LaunchTime'])
-        j.append(instance_launchtime)
         j.append(instance_status)
 
         # adding whether the job was a success (if it was a success, there will be a file jobid.success in the output bucket.)
         if instance_status=='depricated' or instance_status=='terminated':
-          instance_success_command = "aws s3 ls s3://{outbucket}//{jobid}.success".format(outbucket=j[5],jobid=j[0])
+          instance_success_command = "aws s3 ls s3://{outbucket}//{jobid}.success".format(outbucket=j0[6],jobid=j[0])
           try:
             subprocess.check_output(instance_success_command.split(' '))
             instance_success='success'
           except:
             instance_success='fail'
         else:
-          instance_success='unknown'
+          instance_error_command = "aws s3 ls s3://{outbucket}//{jobid}.error".format(outbucket=j0[6],jobid=j[0])
+          try:
+            subprocess.check_output(instance_error_command.split(' '))
+            instance_success='error'
+          except:
+            instance_success='unknown'
         j.append(instance_success)
 
         print('\t'.join(j))

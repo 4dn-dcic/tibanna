@@ -152,7 +152,7 @@ def launch_instance (par, jobid):
 
   ## 5. Add to the job list
   with open(par['job_list_file'],'a') as fo:
-    fo.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id, par['instance_type'], instance_ip, par['job_tag'], par['outbucket']))
+    fo.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id, par['instance_type'], instance_ip, par['job_tag'], get_start_time(), par['outbucket']))
 
 
 

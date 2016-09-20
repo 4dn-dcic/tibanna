@@ -18,12 +18,17 @@ ENV_FILE=env_command_list.txt
 LOGFILE1=templog___  # log before mounting ebs
 LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 STATUS=0
+ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 
 # function that executes a command and collecting log
-exl(){ $@ >> $LOGFILE 2>> $LOGFILE; STATUS+=,$?; }  ## usage: exl command
+exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$OUTBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if OUTBUCKET has already been defined, send error to s3.
 
 # function that sends log to s3 (it requires OUTBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$OUTBUCKET; }  ## usage: send_log (no argument)
+
+# function that sends error file to s3 to notify something went wrong.
+send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$OUTBUCKET; }  ## usage: send_log (no argument)
+
 
 ### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
 LOGFILE=$LOGFILE1
@@ -63,6 +68,7 @@ exl mkdir -p $LOCAL_CWLDIR
 mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
+
 
 ### download cwl from github or any other url.
 for CWL_FILE in $MAIN_CWL $CWL_FILES
