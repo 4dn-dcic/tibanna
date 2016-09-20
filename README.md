@@ -26,16 +26,20 @@ python create_json.py -c hictool-bam2hdf5.cwl -a hictool-bam2hdf5 -i '{"input_ba
 This command would also add an entry to a job_list file (./.job_list) describing the job ID, instance ID, instance IP and the app name.
 
 
-To check status, use awstat:
+To check status, use awstat. It shows job status as well.
 ```
 ./awstat
-C24WkGoVKfg9    i-5dcba74b      c4.large        54.172.226.225  gatk-gvcf       2016-09-20T03:18:00.000Z        terminated
-LQEfk3yazaa5    i-75145b44      c4.xlarge       54.162.54.77    gatk-gvcf       2016-09-20T03:18:17.000Z        terminated
-JBxTdOKKDMnt    i-dbc3afcd      i2.xlarge       52.91.238.116   hictool-bam2hdf5        2016-09-20T03:34:05.000Z        running
+aKQ8dvDEqOCt    i-a63e51b0      i2.xlarge       52.90.239.227   hictool-bam2hdf5        20160920-00:28:03-EDT   depricated      fail
+VbAWsToXISHZ    i-7b6f006d      i2.xlarge       54.158.138.118  hictool-bam2hdf5        20160920-01:37:12-EDT   shutting-down   fail
+rv44vwT7YGbg    i-c06d02d6      i2.xlarge       54.89.44.40     hictool-bam2hdf5        20160920-01:38:57-EDT   terminated      success
+65qpesGOdDuB    i-586c034e      i2.xlarge       54.82.187.53    hictool-bam2hdf5        20160920-01:39:29-EDT   shutting-down   fail
+6IAd4HmVN6Do    i-bb7f10ad      i2.xlarge       52.90.142.199   hictool-bam2hdf5        20160920-01:56:25-EDT   running	error
+by7tsdXgfxY1    i-f3c18ec2      c4.xlarge       54.167.226.98   gatk-gvcf       20160920-02:44:36-EDT   running unknown
+UXN9jBFbYznk    i-c2de91f3      t2.medium       54.166.107.182  gatk-gvcf       20160920-02:49:36-EDT   running unknown
+MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       20160920-02:50:29-EDT   running unknown
 
 ```
-The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time and status.
-It has launch time directly taken from the instance report, but keep in mind that AWS has many issues with time zones. 
+The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error.
 
 
 A less automated way would be as follows. This will not add an entry to a job_list file.

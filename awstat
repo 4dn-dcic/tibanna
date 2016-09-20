@@ -31,15 +31,15 @@ def run():
         j.append(instance_status)
 
         # adding whether the job was a success (if it was a success, there will be a file jobid.success in the output bucket.)
-        if instance_status=='depricated' or instance_status=='terminated':
-          instance_success_command = "aws s3 ls s3://{outbucket}//{jobid}.success".format(outbucket=j0[6],jobid=j[0])
+        if instance_status=='depricated' or instance_status=='terminated' or instance_status=='shutting-down':
+          instance_success_command = "aws s3 ls s3://{outbucket}/{jobid}.success".format(outbucket=j0[6],jobid=j[0])
           try:
             subprocess.check_output(instance_success_command.split(' '))
             instance_success='success'
           except:
             instance_success='fail'
         else:
-          instance_error_command = "aws s3 ls s3://{outbucket}//{jobid}.error".format(outbucket=j0[6],jobid=j[0])
+          instance_error_command = "aws s3 ls s3://{outbucket}/{jobid}.error".format(outbucket=j0[6],jobid=j[0])
           try:
             subprocess.check_output(instance_error_command.split(' '))
             instance_success='error'

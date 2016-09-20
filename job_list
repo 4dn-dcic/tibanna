@@ -1,3 +1,9 @@
 job_id	instance_id	instance_type	public_ip	tag	start_time	outbucket
 aKQ8dvDEqOCt	i-a63e51b0	i2.xlarge	52.90.239.227	hictool-bam2hdf5	20160920-00:28:03-EDT	4dn-tool-evaluation-files/output
 VbAWsToXISHZ	i-7b6f006d	i2.xlarge	54.158.138.118	hictool-bam2hdf5	20160920-01:37:12-EDT	4dn-tool-evaluation-files/output
+rv44vwT7YGbg	i-c06d02d6	i2.xlarge	54.89.44.40	hictool-bam2hdf5	20160920-01:38:57-EDT	4dn-tool-evaluation-files/output
+65qpesGOdDuB	i-586c034e	i2.xlarge	54.82.187.53	hictool-bam2hdf5	20160920-01:39:29-EDT	4dn-tool-evaluation-files/output/2
+6IAd4HmVN6Do	i-bb7f10ad	i2.xlarge	52.90.142.199	hictool-bam2hdf5	20160920-01:56:25-EDT	4dn-tool-evaluation-files/output/2
+by7tsdXgfxY1	i-f3c18ec2	c4.xlarge	54.167.226.98	gatk-gvcf	20160920-02:44:36-EDT	tibanna-output/takeda-gatk-201609
+UXN9jBFbYznk	i-c2de91f3	t2.medium	54.166.107.182	gatk-gvcf	20160920-02:49:36-EDT	tibanna-output/takeda-gatk-201609
+MnAdcMoHVqzR	i-da5e31cc	c4.large	54.172.217.7	gatk-gvcf	20160920-02:50:29-EDT	tibanna-output/takeda-gatk-201609
