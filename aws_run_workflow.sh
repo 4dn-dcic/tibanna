@@ -124,7 +124,7 @@ if [ `echo $STATUS| sed 's/0//g' | sed 's/,//g'` ]; then export JOB_STATUS=$STAT
 ### 8. create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
 exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 exl aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$OUTBUCKET/$POSTRUN_JSON_FILE_NAME
-if [ $STATUS -a $STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$OUTBUCKET/; fi
+if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$OUTBUCKET/; fi
 send_log
 
 ### how do we send a signal that the job finished?
