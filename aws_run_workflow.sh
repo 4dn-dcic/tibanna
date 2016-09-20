@@ -72,7 +72,7 @@ done
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
-exl source $DOWNLOAD_COMMAND_FILE
+exl time source $DOWNLOAD_COMMAND_FILE  # report download time
 exl ls
 send_log 
 
