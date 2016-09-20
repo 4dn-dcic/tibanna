@@ -119,7 +119,7 @@ A more complicated real example with a for loop to parallelize over a parameter:
 ```
 sample=SM_XXFHEH8
 for region in `cat hg19.chrom_split.150K`; do
- /opt/python-2.7.6/bin/python awsub -c gatk-gvcf.cwl -a gatk-gvcf -i "{\"BAM\":\"$sample.bam\",\"BAM_BAI\":\"$sample.bam.bai\"}" -id takeda-data-201609 -ir "{\"FASTA\":\"human_g1k_v37_decoy.fasta\",\"FASTA_FAI\":\"human_g1k_v37_decoy.fasta.fai\",\"FASTA_DICT\":\"human_g1k_v37_decoy.dict\",\"dbSNP\":\"dbsnp_138.b37.vcf\",\"dbSNP_IDX\":\"dbsnp_138.b37.vcf.idx\"}" -ip "{\"region\":\"$region\",\"prefix\":\"$sample\",\"ncore\":16}" -t c3.4xlarge -s 300 -o tibanna-output/p26-gatk-201609 -ue  
+ /opt/python-2.7.6/bin/python awsub -c gatk-gvcf.cwl -a gatk-gvcf -i "{\"BAM\":\"$sample.bam\",\"BAM_BAI\":\"$sample.bam.bai\"}" -id p26-data-201609 -ir "{\"FASTA\":\"human_g1k_v37_decoy.fasta\",\"FASTA_FAI\":\"human_g1k_v37_decoy.fasta.fai\",\"FASTA_DICT\":\"human_g1k_v37_decoy.dict\",\"dbSNP\":\"dbsnp_138.b37.vcf\",\"dbSNP_IDX\":\"dbsnp_138.b37.vcf.idx\"}" -ip "{\"region\":\"$region\",\"prefix\":\"$sample\",\"ncore\":16}" -t c3.4xlarge -s 300 -o tibanna-output/p26-gatk-201609 -ue  
 done
 ```
 Note that the use of double-quote wrapping instead of single-quotes, for the -i, -ir and -ip options. That allows the embedded variables (e.g. $sample, $region) to take effect. The double-quotes within double-quotes must be preceded by '\'.
