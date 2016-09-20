@@ -25,6 +25,19 @@ python create_json.py -c hictool-bam2hdf5.cwl -a hictool-bam2hdf5 -i '{"input_ba
 ```
 This command would also add an entry to a job_list file (./.job_list) describing the job ID, instance ID, instance IP and the app name.
 
+
+To check status, use awstat:
+```
+./awstat
+C24WkGoVKfg9    i-5dcba74b      c4.large        54.172.226.225  gatk-gvcf       2016-09-20T03:18:00.000Z        terminated
+LQEfk3yazaa5    i-75145b44      c4.xlarge       54.162.54.77    gatk-gvcf       2016-09-20T03:18:17.000Z        terminated
+JBxTdOKKDMnt    i-dbc3afcd      i2.xlarge       52.91.238.116   hictool-bam2hdf5        2016-09-20T03:34:05.000Z        running
+
+```
+The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time and status.
+It has launch time directly taken from the instance report, but keep in mind that AWS has many issues with time zones. 
+
+
 A less automated way would be as follows. This will not add an entry to a job_list file.
 
 ```
@@ -56,7 +69,20 @@ aws ec2 run-instances --image-id $AMI_ID --instance-type $INSTANCE_TYPE --instan
 #Once you call the EC2 instance, the rest is completely independent of how you called it.
 ```
 
+For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
+```
+#!/bin/bash
+JOBID=v989328isyrbag02  
+RUN_SCRIPT=aws_run_workflow.sh
+SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
+wget SCRIPT_URL/$RUN_SCRIPT
+chmod +x $RUN_SCRIPT
+source $RUN_SCRIPT $JOBID
+```
+The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
 
+
+# Usage for create_json.py
 The full usage and a simple example command for create_json.py is as below: 
 ```
 usage: create_json.py [-h] [-c CWL] [-cd CWL_DIRECTORY] [-co CWL_CHILDREN]
@@ -119,19 +145,6 @@ optional arguments:
 ```
 
 
-
-
-For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
-```
-#!/bin/bash
-JOBID=v989328isyrbag02  
-RUN_SCRIPT=aws_run_workflow.sh
-SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
-wget SCRIPT_URL/$RUN_SCRIPT
-chmod +x $RUN_SCRIPT
-source $RUN_SCRIPT $JOBID
-```
-The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
  
 # Scripts that will be downloaded to the worker instance
 Basically, aws_run_workflow.sh downloads two python scripts that parses and updates json files from github and these three scripts together will do all the works and terminate the EC2 instance once everything is finished.
