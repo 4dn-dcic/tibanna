@@ -41,8 +41,29 @@ MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       
 ```
 The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error.
 
+An example .tibanna.config file looks like below. This can be modified by the user:
+```
+{
+ "reference_S3_bucket": "maestro-resources",
+ "output_S3_bucket": "tibanna-output",
+ "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+ "keyname": "duplexa.4dn",
+ "worker_ami_id": "ami-7ff26968",
+ "default_instance_type": "i2.xlarge",
+ "default_ebs_size": 100,
+ "ebs_iops": 5000,
+ "userdata_dir": "./userdata",
+ "json_dir": "./json",
+ "json_bucket": "4dn-aws-pipeline-run-json",
+ "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
+ "job_list_file": "./job_list"
+}
+```
+The reference_S3_bucket must exist and all the resource files (e.g. genome reference fasta) must be in this bucket. The output_S3_bucket also must exist, but in case a subdirectory is included in the bucket name, the subdirectory doesn't have to pre-exist. The json_bucket must exist. This is where the launch json files will be sent to. The S3_access_arn must have been created already, using IAM. It is simply an arn of an IAM role. The worker_ami_id must be based on Amazon Linux AMI and have docker daemon and cwltools installed. The directory for cwltools is assumed to be /home/ec2-user/venv/cwl/bin/. The EBS type is always io1, so that one can change the iops value. All the cwl files must be under cwl_url. The keyname is a key pair that you already have, so that you can ssh into the worker instances using the key pair.
 
-A less automated way would be as follows. This will not add an entry to a job_list file.
+
+
+A less automated way would be as follows. This will not add an entry to a job_list file. The main difference is the option -ue. Without the -ue option, create_json.py will only create a launch json file, but it will not copy the json file to S3 nor will it launch an instance.
 
 ```
 INSTANCE_TYPE=i2.xlarge
@@ -95,8 +116,8 @@ usage: create_json.py [-h] [-c CWL] [-cd CWL_DIRECTORY] [-co CWL_CHILDREN]
                       [-id INPUT_FILES_DIRECTORY]
                       [-ird INPUT_REFERENCE_FILES_DIRECTORY]
                       [-o OUTPUT_BUCKET_DIRECTORY] [-t INSTANCE_TYPE]
-                      [-s STORAGE_SIZE] [-IO STORAGE_IOPS] [-jd JSON_DIR]
-                      [-J JOB_ID] [-u] [-e]
+                      [-s STORAGE_SIZE] [-IO STORAGE_IOPS] [-NO]
+                      [-jd JSON_DIR] [-J JOB_ID] [-u] [-e]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -132,6 +153,9 @@ optional arguments:
                         EBS storage size in GB (default set in config)
   -IO STORAGE_IOPS, --storage_iops STORAGE_IOPS
                         EBS storage IOPS (default set in config)
+  -NO, --not_EBS_optimized
+                        Use this flag if the instance type is not EBS-
+                        optimized (default: EBS-optimized)
   -jd JSON_DIR, --json_dir JSON_DIR
                         Local directory in which the output json file will be
                         written (default set in config)
