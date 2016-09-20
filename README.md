@@ -45,7 +45,7 @@ The following condition is assumed.
 #### auto-launch
 Given a config file (./.tibanna.connfig), the following command would do everything from creating a json file, copying it to S3, launching an instance and executing a workflow.
 ```
-.awsub -c hictool-bam2hdf5.cwl -a hictool-bam2hdf5 -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -J v989328isyrbag02 -ue
+./awsub -c hictool-bam2hdf5.cwl -a hictool-bam2hdf5 -i '{"input_bam1":"GM12878_SRR1658581_pair1.bam","input_bam2":"GM12878_SRR1658581_pair2.bam"}' -id 4dn-tool-evaluation-files -ir '{"bowtie_index":"hg19.bowtieIndex.tgz","chrlen_file":"hg19.chrlen_file","RE_bed":"HindIII_hg19_liftover.bed"}' -ip '{"contact_matrix_binsize":50000,"chromosome":["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","X"]}' -o 4dn-tool-evaluation-files/output/20160918.v989328isyrbag02 -J v989328isyrbag02 -ue
 
 ```
 This command would also add an entry to a job_list file (./.job_list) describing the job ID, instance ID, instance IP and the app name.
@@ -216,7 +216,7 @@ The above three scripts in the SCRIPT_URL variable specified inside some scripts
  
 ## Launch json
 The assumptions about the run json file are as below:
-1) The run json file must be in S3 bucket named 4dn-aws-pipeline-run-json. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
+1) The run json file must be in S3 bucket specified in the config file. This bucket name can change, if it is changed inside aws_run_workflow.sh (appearing once in the script as an environmental variable).
 2) The run json file name must be $JOBID.run.json (replace $JOBID with the actual job ID).
 3) The run json file must be in the following format:
 ```
