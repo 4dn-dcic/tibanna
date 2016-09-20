@@ -110,10 +110,19 @@ optional arguments:
                         Launch instance based on the json file.
 ```
 
-A simple example command is shown below. Without -ue, it will only create a json file and will not connect to AWS.
+A simple mock example command is shown below. Without -ue, it will only create a json file and will not connect to AWS.
 ```
 ./awsub -c some.cwl -a some_app -cd http://some_cwl_url -co other1.cwl,other2.cwl -i '{"input_bam1":"lalala.1.bam","input_bam2":"lalala.1.bam"}' -ir '{"reference_genome":"hg19.fassta"}' -id some_iput_bucket -ird some_reference_bucket -ip '{"binsize":5000,"chr":[1,2,3,4,5]}' -o some_output_bucket -t m2.xlarge -s 200 -IO 6000
 ```
+
+A more complicated real example with a for loop to parallelize over a parameter:
+```
+sample=SM_XXFHEH8
+for region in `cat hg19.chrom_split.150K`; do
+ /opt/python-2.7.6/bin/python awsub -c gatk-gvcf.cwl -a gatk-gvcf -i "{\"BAM\":\"$sample.bam\",\"BAM_BAI\":\"$sample.bam.bai\"}" -id takeda-data-201609 -ir "{\"FASTA\":\"human_g1k_v37_decoy.fasta\",\"FASTA_FAI\":\"human_g1k_v37_decoy.fasta.fai\",\"FASTA_DICT\":\"human_g1k_v37_decoy.dict\",\"dbSNP\":\"dbsnp_138.b37.vcf\",\"dbSNP_IDX\":\"dbsnp_138.b37.vcf.idx\"}" -ip "{\"region\":\"$region\",\"prefix\":\"$sample\",\"ncore\":16}" -t c3.4xlarge -s 300 -o tibanna-output/p26-gatk-201609 -ue  
+done
+```
+Note that the use of double-quote wrapping instead of single-quotes, for the -i, -ir and -ip options. That allows the embedded variables (e.g. $sample, $region) to take effect. The double-quotes within double-quotes must be preceded by '\'.
 
 
 ## awstat
