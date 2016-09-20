@@ -39,7 +39,9 @@ UXN9jBFbYznk    i-c2de91f3      t2.medium       54.166.107.182  gatk-gvcf       
 MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       20160920-02:50:29-EDT   running unknown
 
 ```
-The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error.
+The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error. To check success/fail for a finished job, it looks for a file $JOBID.success under the output bucket. To check 'error' while running, it looks for $JOBID.error under the output bucket.
+
+
 
 An example .tibanna.config file looks like below. This can be modified by the user:
 ```
@@ -62,7 +64,7 @@ An example .tibanna.config file looks like below. This can be modified by the us
 The reference_S3_bucket must exist and all the resource files (e.g. genome reference fasta) must be in this bucket. The output_S3_bucket also must exist, but in case a subdirectory is included in the bucket name, the subdirectory doesn't have to pre-exist. The json_bucket must exist. This is where the launch json files will be sent to. The S3_access_arn must have been created already, using IAM. It is simply an arn of an IAM role. The worker_ami_id must be based on Amazon Linux AMI and have docker daemon and cwltools installed. The directory for cwltools is assumed to be /home/ec2-user/venv/cwl/bin/. The EBS type is always io1, so that one can change the iops value. All the cwl files must be under cwl_url. The keyname is a key pair that you already have, so that you can ssh into the worker instances using the key pair.
 
 
-
+# Semi-automated launching
 A less automated way would be as follows. This will not add an entry to a job_list file. The main difference is the option -ue. Without the -ue option, create_json.py will only create a launch json file, but it will not copy the json file to S3 nor will it launch an instance.
 
 ```
