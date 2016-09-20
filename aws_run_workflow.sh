@@ -107,7 +107,7 @@ md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum f
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
-
+exl ls -lhtr $LOCAL_OUTDIR/
 exl aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 send_log
  

@@ -27,6 +27,8 @@ def run():
           instance_status = 'depricated'
         else: 
           instance_status = str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
+          instance_launchtime = str(instance_desc_log['Reservations'][0]['Instances'][0]['LaunchTime'])
+        j.append(instance_launchtime)
         j.append(instance_status)
         print('\t'.join(j))
         nJobs += 1

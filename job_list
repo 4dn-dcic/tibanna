@@ -1,3 +1,4 @@
 job_id	instance_id	instance_type	public_ip	tag
 C24WkGoVKfg9	i-5dcba74b	c4.large	54.172.226.225	gatk-gvcf
 LQEfk3yazaa5	i-75145b44	c4.xlarge	54.162.54.77	gatk-gvcf
+JBxTdOKKDMnt	i-dbc3afcd	i2.xlarge	52.91.238.116	hictool-bam2hdf5
