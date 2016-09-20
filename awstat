@@ -1,0 +1,44 @@
+#!/usr/bin/python
+
+import sys
+import subprocess
+import json
+import csv
+
+JOB_LIST_FILE="./job_list"
+JOB_LIST_HEADER=['job_id','instance_id','instance_type','public_ip','tag']
+
+
+def run():
+  with open(JOB_LIST_FILE,'r') as f:
+    jobs=csv.reader(f,delimiter='\t')
+    if next(jobs)!=JOB_LIST_HEADER:
+      sys.exit("job_list file doesn't contain proper header. Aborting.\n")
+    else:
+      nJobs=0
+      for j in jobs:
+        instance_id = j[1] 
+
+        # get job status for the instance
+        instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
+        instance_desc_logstr=subprocess.check_output(instance_desc_command, shell=True) # capturing stdout from the launch command
+        instance_desc_log=json.loads(instance_desc_logstr)
+        if not instance_desc_log['Reservations']:
+          instance_status = 'depricated'
+        else: 
+          instance_status = str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
+        j.append(instance_status)
+        print('\t'.join(j))
+        nJobs += 1
+    if nJobs==0:
+      print("No jobs.\n");
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Arguments")
+    args = parser.parse_args()
+
+    run()
+
+

@@ -16,7 +16,7 @@ INPUT_YML_FILE=inputs.yml
 DOWNLOAD_COMMAND_FILE=download_command_list.txt
 ENV_FILE=env_command_list.txt
 LOGFILE1=templog___  # log before mounting ebs
-LOGFILE2=$LOCAL_OUTDIR/log
+LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 STATUS=0
 
 # function that executes a command and collecting log
@@ -72,7 +72,9 @@ done
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
-exl time source $DOWNLOAD_COMMAND_FILE  # report download time
+exl date 
+exl source $DOWNLOAD_COMMAND_FILE 
+exl date
 exl ls
 send_log 
 
