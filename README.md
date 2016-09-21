@@ -9,7 +9,9 @@ Tibanna is the gas mine in Cloud City that makes Hyperdrives zoom.  It's also th
   * [auto-launch](#auto-launch)
   * [usage for awsub](#usage-for-awsub)
 * [awstat](#awstat)
-* [config file](#config file)
+   * [Checking status](#checking-status)
+  * [usage for awstat](#usage-for-awstat)
+* [Config file](#config-file)
 * [Semi-automated launch](#semi-automated-launch)
 * [Worker scripts](#worker-scripts)
 * [Output](#output)
@@ -113,10 +115,19 @@ optional arguments:
                         Launch instance based on the json file.
 ```
 
-A simple example command is shown below. Without -ue, it will only create a json file and will not connect to AWS.
+A simple mock example command is shown below. Without -ue, it will only create a json file and will not connect to AWS.
 ```
 ./awsub -c some.cwl -a some_app -cd http://some_cwl_url -co other1.cwl,other2.cwl -i '{"input_bam1":"lalala.1.bam","input_bam2":"lalala.1.bam"}' -ir '{"reference_genome":"hg19.fassta"}' -id some_iput_bucket -ird some_reference_bucket -ip '{"binsize":5000,"chr":[1,2,3,4,5]}' -o some_output_bucket -t m2.xlarge -s 200 -IO 6000
 ```
+
+A more complicated real example with a for loop to parallelize over a parameter:
+```
+sample=SM_XXFHEH8
+for region in `cat hg19.chrom_split.150K`; do
+ /opt/python-2.7.6/bin/python awsub -c gatk-gvcf.cwl -a gatk-gvcf -i "{\"BAM\":\"$sample.bam\",\"BAM_BAI\":\"$sample.bam.bai\"}" -id p26-data-201609 -ir "{\"FASTA\":\"human_g1k_v37_decoy.fasta\",\"FASTA_FAI\":\"human_g1k_v37_decoy.fasta.fai\",\"FASTA_DICT\":\"human_g1k_v37_decoy.dict\",\"dbSNP\":\"dbsnp_138.b37.vcf\",\"dbSNP_IDX\":\"dbsnp_138.b37.vcf.idx\"}" -ip "{\"region\":\"$region\",\"prefix\":\"$sample\",\"ncore\":16}" -t c3.4xlarge -s 300 -o tibanna-output/p26-gatk-201609 -ue  
+done
+```
+Note that the use of double-quote wrapping instead of single-quotes, for the -i, -ir and -ip options. That allows the embedded variables (e.g. $sample, $region) to take effect. The double-quotes within double-quotes must be preceded by '\'.
 
 
 ## awstat
@@ -135,6 +146,21 @@ MnAdcMoHVqzR    i-da5e31cc      c4.large        54.172.217.7    gatk-gvcf       
 
 ```
 The columns are jobID, instanceID, instance_type, public_IP, tag (app_name), launch time, status and success/fail/error. To check success/fail for a finished job, it looks for a file $JOBID.success under the output bucket. To check 'error' while running, it looks for $JOBID.error under the output bucket.
+
+#### Usage for awstat
+`awstat` can print log and postrun.json contents to stdout with options -l or -p (it takes a few seconds downloading the these files from S3 and displaying them). It is recommended to use with `less`. You can also specify a job ID by using the option -j.
+```
+usage: awstat [-h] [-l] [-p] [-j JOB_ID]
+
+Arguments
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l, --log             Print out log as well.
+  -p, --postrun_json    Print out postrun.json as well.
+  -j JOB_ID, --job_id JOB_ID
+                        Look at only the specified job_id.
+```
 
 
 ## config file
