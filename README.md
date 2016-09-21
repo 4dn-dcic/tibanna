@@ -54,13 +54,13 @@ This command would also add an entry to a job_list file (./.job_list) describing
 The full usage and a simple example command for awsub is as below: 
 ```
 usage: awsub [-h] [-c CWL] [-cd CWL_DIRECTORY] [-co CWL_CHILDREN]
-                      [-a APP_NAME] [-av APP_VERSION] [-i INPUT_FILES]
-                      [-ir INPUT_REFERENCE_FILES] [-ip INPUT_PARAMETERS]
-                      [-id INPUT_FILES_DIRECTORY]
-                      [-ird INPUT_REFERENCE_FILES_DIRECTORY]
-                      [-o OUTPUT_BUCKET_DIRECTORY] [-t INSTANCE_TYPE]
-                      [-s STORAGE_SIZE] [-IO STORAGE_IOPS] [-NO]
-                      [-jd JSON_DIR] [-J JOB_ID] [-u] [-e]
+             [-a APP_NAME] [-av APP_VERSION] [-i INPUT_FILES]
+             [-ir INPUT_REFERENCE_FILES] [-ip INPUT_PARAMETERS]
+             [-id INPUT_FILES_DIRECTORY]
+             [-ird INPUT_REFERENCE_FILES_DIRECTORY]
+             [-o OUTPUT_BUCKET_DIRECTORY] [-t INSTANCE_TYPE] [-s STORAGE_SIZE]
+             [-sT STORAGE_TYPE] [-IO STORAGE_IOPS] [-NO] [-jd JSON_DIR]
+             [-J JOB_ID] [-u] [-e]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -94,6 +94,9 @@ optional arguments:
                         EC2 instance type (default set in config)
   -s STORAGE_SIZE, --storage_size STORAGE_SIZE
                         EBS storage size in GB (default set in config)
+  -sT STORAGE_TYPE, --storage_type STORAGE_TYPE
+                        EBS storage type (available values: gp2, io1, st1,
+                        sc1, standard (default: io1)
   -IO STORAGE_IOPS, --storage_iops STORAGE_IOPS
                         EBS storage IOPS (default set in config)
   -NO, --not_EBS_optimized
@@ -146,6 +149,7 @@ An example `.tibanna.config` file looks like below. This can be modified by the 
  "worker_ami_id": "ami-7ff26968",
  "default_instance_type": "i2.xlarge",
  "default_ebs_size": 100,
+ "default_ebs_type": "io1",
  "ebs_iops": 5000,
  "userdata_dir": "./userdata",
  "json_dir": "./json",
