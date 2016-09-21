@@ -24,12 +24,14 @@ with open(downloadlist_filename,'w') as f_download:
     else:
       LOCAL_DIR=reference_dir
     for i in range(0,len(dict_input[category])):
-      print i
-      print keys[i]
-      print str(dict_input[category][keys[i]])
-      DATA_FILE = dict_input[category][keys[i]]["path"]
       DATA_BUCKET = dict_input[category][keys[i]]["dir"]
-      f_download.write("aws s3 cp s3://{0}/{1} {2}/{1}\n".format(DATA_BUCKET,DATA_FILE,LOCAL_DIR))
+      if isinstance(dict_input[category][keys[i]]["path"], list):
+        for file in dict_input[category][keys[i]]["path"]:
+          DATA_FILE = file
+          f_download.write("aws s3 cp s3://{0}/{1} {2}/{1}\n".format(DATA_BUCKET,DATA_FILE,LOCAL_DIR))
+      else:  
+        DATA_FILE = dict_input[category][keys[i]]["path"]
+        f_download.write("aws s3 cp s3://{0}/{1} {2}/{1}\n".format(DATA_BUCKET,DATA_FILE,LOCAL_DIR))
  
 ## create an input yml file for cwl-runner
 with open(input_yml_filename,'w') as f_yml:
@@ -43,11 +45,19 @@ with open(input_yml_filename,'w') as f_yml:
         LOCAL_DIR=input_dir
      else:
         LOCAL_DIR=reference_dir
-     for item,v in inputs[category].iteritems():
+     for item in inputs[category].keys():
+       v=inputs[category][item]
        if v.has_key('dir'):
           del v['dir']
-       v['path']=LOCAL_DIR + '/' + v['path']
-       yml[item]=v.copy()
+       if isinstance(v['path'], list):
+          v2=[]
+          for i in range(0,len(v['path'])):
+            v2.append ( { "class": v['class'], "path": LOCAL_DIR + '/' + v['path'][i] } )
+          v=v2
+          yml[item]=v
+       else:
+          v['path']=LOCAL_DIR + '/' + v['path']
+          yml[item]=v.copy()
   json.dump(yml, f_yml, indent=4, sort_keys=True)
  
  
