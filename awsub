@@ -33,6 +33,14 @@ def run_command_out_check (command):
       return([False,''])
 
 
+def launch_and_get_instance_id (launch_command, jobid):
+  try:
+    instance_launch_logstr=subprocess.check_output(launch_command, shell=True) # capturing stdout from the launch command
+  except:
+    sys.exit("failed to launch instance for job {jobid}".format(jobid=jobid))
+  instance_launch_log=json.loads(instance_launch_logstr)
+  return instance_launch_log['Instances'][0]['InstanceId']
+
 
 
 def read_config( CONFIG_FILE, CONFIG_KEYS):
@@ -78,7 +86,7 @@ def create_json( a, json_dir, jobid, copy_to_s3 ):  # a is the final_args dictio
            },
            'Instance_type': a['instance_type'],
            'EBS_SIZE': a['storage_size'],
-           'EBS_TYPE': 'io1',
+           'EBS_TYPE': a['storage_type'],
            'EBS_IOPS': a['storage_iops'],
            "AMI_ID": "ami-78c13615",
            "start_time" : start_time
@@ -111,7 +119,7 @@ def create_json( a, json_dir, jobid, copy_to_s3 ):  # a is the final_args dictio
     run_command_out_check (command)
 
   ## print & retur JOBID
-  print(jobid)
+  print("jobid={}".format(jobid))
   return(jobid)
 
 
@@ -127,16 +135,21 @@ def launch_instance (par, jobid):
   ## launch an instance
   print "launching an instance..."
 
+  # creating a launch command
   Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid,dir=par['userdata_dir'])
-
-  launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type} --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination  --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE},VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}\" --iam-instance-profile Arn={arn} --user-data={userdata}".format(ami=par['worker_ami_id'], instance_type=par['instance_type'], arn=par['s3_access_arn'], EBS_SIZE=par['storage_size'], EBS_TYPE='io1', EBS_IOPS=par['storage_iops'], userdata='file://'+Userdata_file)
+  launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type} --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination  --iam-instance-profile Arn={arn} --user-data={userdata}".format(ami=par['worker_ami_id'], instance_type=par['instance_type'], arn=par['s3_access_arn'], userdata='file://'+Userdata_file)
   if par['keyname'] != '':
     launch_command += " --key-name {keyname}".format(keyname=par['keyname'])
   if par['EBS_optimized']:
     launch_command += " --ebs-optimized"
-  instance_launch_logstr=subprocess.check_output(launch_command, shell=True) # capturing stdout from the launch command
-  instance_launch_log=json.loads(instance_launch_logstr)
-  instance_id = instance_launch_log['Instances'][0]['InstanceId']
+  if par['storage_iops']:  ## io1 type, specify iops
+    launch_command += " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE},VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}\"".format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'], EBS_IOPS=par['storage_iops'])
+  else: ## gp type or other type? do not specify iops
+    launch_command += " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE},VolumeType={EBS_TYPE},DeleteOnTermination=true}}\"".format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
+
+
+  # launch instance and get id
+  instance_id=launch_and_get_instance_id (launch_command, jobid)
 
   # get public IP for the instance (This may not happen immediately)
   instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
@@ -151,7 +164,7 @@ def launch_instance (par, jobid):
     except:
       try_again=True
 
-
+  print("instance_id={}, instance_ip={}".format(instance_id,instance_ip))
   ## 5. Add to the job list
   with open(par['job_list_file'],'a') as fo:
     fo.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id, par['instance_type'], instance_ip, par['job_tag'], get_start_time(), par['outbucket']))
@@ -175,6 +188,7 @@ parser.add_argument("-ird", "--input_reference_files_directory", help="bucket na
 parser.add_argument("-o", "--output_bucket_directory", help="bucket name and subdirectory for output files and logs (override config)")
 parser.add_argument("-t", "--instance_type", help="EC2 instance type (default set in config)")
 parser.add_argument("-s", "--storage_size", help="EBS storage size in GB (default set in config)")
+parser.add_argument("-sT", "--storage_type", help="EBS storage type (available values: gp2, io1, st1, sc1, standard (default: io1)")
 parser.add_argument("-IO", "--storage_iops", help="EBS storage IOPS (default set in config)")
 parser.add_argument("-NO", "--not_EBS_optimized", help="Use this flag if the instance type is not EBS-optimized (default: EBS-optimized)", action="store_true")
 parser.add_argument("-jd", "--json_dir", help="Local directory in which the output json file will be written (default set in config)")
@@ -187,7 +201,7 @@ args = parser.parse_args()
 
 ## default variables
 CONFIG_FILE=".tibanna.config"
-CONFIG_KEYS=["reference_S3_bucket","output_S3_bucket","s3_access_arn","keyname","worker_ami_id","default_instance_type","default_ebs_size","ebs_iops","userdata_dir","json_dir","json_bucket","cwl_url","job_list_file"]
+CONFIG_KEYS=["reference_S3_bucket","output_S3_bucket","s3_access_arn","keyname","worker_ami_id","default_instance_type","default_ebs_size","default_ebs_type","ebs_iops","userdata_dir","json_dir","json_bucket","cwl_url","job_list_file"]
 cfg=read_config(CONFIG_FILE, CONFIG_KEYS)
 
 ## parameters that will go into the json file
@@ -205,6 +219,7 @@ final_args={
  'output_bucket_directory': cfg['output_S3_bucket'], 
  'instance_type': cfg['default_instance_type'],
  'storage_size': cfg['default_ebs_size'],
+ 'storage_type': cfg['default_ebs_type'],
  'storage_iops': cfg['ebs_iops']
 }
 # local directory in which the json file will be first created.
@@ -220,6 +235,7 @@ par={
  'userdata_dir': cfg['userdata_dir'],
  'instance_type': cfg['default_instance_type'], # redundant with final_args
  'storage_size': cfg['default_ebs_size'], # redudant with final_args
+ 'storage_type': cfg['default_ebs_type'], # redudant with final_args
  'storage_iops': cfg['ebs_iops'], # redundant with final_args
  'EBS_optimized': True,
  'job_list_file': cfg['job_list_file'], 
@@ -273,6 +289,9 @@ if args.instance_type:
 if args.storage_size:
   final_args['storage_size']=int(args.storage_size)
 
+if args.storage_type:
+  final_args['storage_type']=args.storage_type
+
 if args.storage_iops:
   final_args['storage_iops']=int(args.storage_iops)
 
@@ -286,9 +305,16 @@ if args.json_dir:
 # make sure these parameters are consistent between par and a.
 par['instance_type'] =final_args['instance_type']
 par['storage_size']= final_args['storage_size']
+par['storage_type']= final_args['storage_type']
 par['storage_iops']= final_args['storage_iops']
 par['job_tag']=final_args['app_name']
 par['outbucket']=final_args['output_bucket_directory']
+
+# EBS type
+if par['storage_type'] != 'io1':
+  par['storage_iops']=''
+  final_args['storage_iops']=''
+
 
 # create json and copy to s3
 jobid=create_json(final_args, json_dir, args.job_id, args.copy_to_s3 )
