@@ -125,10 +125,10 @@ def create_json( a, json_dir, jobid, copy_to_s3 ):  # a is the final_args dictio
 
 
 
-def launch_instance (par, jobid):
+def launch_instance (par, jobid, shutdown_min ):
 
   ## Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
-  command="./create_run_workflow.sh {jobid} {dir}".format(jobid=jobid,dir=par['userdata_dir'])
+  command="./create_run_workflow.sh {jobid} {dir} {shutdown_min}".format(jobid=jobid,dir=par['userdata_dir'],shutdown_min = shutdown_min)
   run_command_out_check (command)
 
 
@@ -194,6 +194,7 @@ if __name__ == "__main__":
   parser.add_argument("-NO", "--not_EBS_optimized", help="Use this flag if the instance type is not EBS-optimized (default: EBS-optimized)", action="store_true")
   parser.add_argument("-jd", "--json_dir", help="Local directory in which the output json file will be written (default set in config)")
   parser.add_argument("-J", "--job_id", help="Manually assign job ID as specififed (default: randomly generated)")
+  parser.add_argument("-m", "--shutdown_min", help="Number of minutes before shutdown after the jobs are finished. (default now)")
   parser.add_argument("-u", "--copy_to_s3", help="Upload or copy the json file to S3 bucket json_bucket", action="store_true")
   parser.add_argument("-e", "--launch_instance", help="Launch instance based on the json file.", action="store_true")
   
@@ -243,8 +244,8 @@ if __name__ == "__main__":
    'job_tag': '', # app_name in final_args
    'outbucket': cfg['output_S3_bucket'] # redundant with output_bucket_directory in final_args
   }
-  
-  
+ 
+  shutdown_min='now' 
   
   
   if args.cwl:
@@ -302,6 +303,9 @@ if __name__ == "__main__":
   
   if args.json_dir:
     json_dir=args.json_dir
+
+  if args.shutdown_min:
+    shutdown_min=args.shutdown_min
   
   
   # make sure these parameters are consistent between par and a.
@@ -323,7 +327,7 @@ if __name__ == "__main__":
   
   # launch instance and execute workflow
   if args.launch_instance:
-    launch_instance(par, jobid)
+    launch_instance(par, jobid, shutdown_min)
   
   
   

@@ -1,6 +1,6 @@
 #!/bin/bash
 JOBID=$1
-SHUTDOWN_MIN=now   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
+SHUTDOWN_MIN=$2   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
 EBS_DEVICE=/dev/xvdb
 JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json

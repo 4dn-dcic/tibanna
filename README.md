@@ -62,7 +62,7 @@ usage: awsub [-h] [-c CWL] [-cd CWL_DIRECTORY] [-co CWL_CHILDREN]
              [-ird INPUT_REFERENCE_FILES_DIRECTORY]
              [-o OUTPUT_BUCKET_DIRECTORY] [-t INSTANCE_TYPE] [-s STORAGE_SIZE]
              [-sT STORAGE_TYPE] [-IO STORAGE_IOPS] [-NO] [-jd JSON_DIR]
-             [-J JOB_ID] [-u] [-e]
+             [-J JOB_ID] [-m SHUTDOWN_MIN] [-u] [-e]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -110,6 +110,9 @@ optional arguments:
   -J JOB_ID, --job_id JOB_ID
                         Manually assign job ID as specififed (default:
                         randomly generated)
+  -m SHUTDOWN_MIN, --shutdown_min SHUTDOWN_MIN
+                        Number of minutes before shutdown after the jobs are
+                        finished. (default now)
   -u, --copy_to_s3      Upload or copy the json file to S3 bucket json_bucket
   -e, --launch_instance
                         Launch instance based on the json file.
@@ -212,7 +215,7 @@ JOBID=`./awsub -c hictool-bam2hdf5.cwl -cd https://raw.githubusercontent.com/Soo
 aws s3 cp ./json/$JOBID.run.json s3://$JSON_BUCKET/$JOBID.run.json
 
 # 3. Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
-./create_run_workflow.sh $JOBID $USERDATA_DIR
+./create_run_workflow.sh $JOBID $USERDATA_DIR now
 
 # 4. The following command launches a self-terminating instance that executes the workflow (assuming the json file is already on S3)
 aws ec2 run-instances --image-id $AMI_ID --instance-type $INSTANCE_TYPE --instance-initiated-shutdown-behavior terminate --count 1 --monitoring Enabled=true --enable-api-termination --block-device-mappings DeviceName=/dev/sdb,Ebs="{VolumeSize=$EBS_SIZE,VolumeType=$EBS_TYPE,Iops=$EBS_IOPS,DeleteOnTermination=true}" --iam-instance-profile Arn=arn:aws:iam::643366669028:instance-profile/S3_access --ebs-optimized --user-data file://run_workflow.$JOBID.sh --key-name $KEYPAIR >> launch.$JOBID.log
@@ -222,11 +225,12 @@ For example, ``run_workflow.v989328isyrbag02.sh`` looks as below:
 ```
 #!/bin/bash
 JOBID=v989328isyrbag02  
+SHUTDOWN_MIN=now
 RUN_SCRIPT=aws_run_workflow.sh
 SCRIPT_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/
 wget SCRIPT_URL/$RUN_SCRIPT
 chmod +x $RUN_SCRIPT
-source $RUN_SCRIPT $JOBID
+source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN
 ```
 The second line should depend on the JOBID and this script should be generated on the fly by create_run_workflow.sh, after a JOBID is assigned. This script will be passed to EC2 and executed at the beginning. It will first download aws_run_workflow.sh from github and run it with the specified JOBID. The rest will be taken care of by aws_run_workflow.sh.
 
