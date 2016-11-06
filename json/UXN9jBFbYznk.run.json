@@ -1,0 +1,61 @@
+{
+    "Job": {
+        "AMI_ID": "ami-78c13615", 
+        "App": {
+            "App_name": "gatk-gvcf", 
+            "App_version": "", 
+            "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/", 
+            "main_cwl": "gatk-gvcf.cwl", 
+            "other_cwl_files": []
+        }, 
+        "EBS_IOPS": 5000, 
+        "EBS_SIZE": 300, 
+        "EBS_TYPE": "io1", 
+        "Input": {
+            "Input_files_data": {
+                "BAM": {
+                    "class": "File", 
+                    "dir": "takeda-data-201609", 
+                    "path": "SM-CJKUO.bam"
+                }, 
+                "BAM_BAI": {
+                    "class": "File", 
+                    "dir": "takeda-data-201609", 
+                    "path": "SM-CJKUO.bam.bai"
+                }
+            }, 
+            "Input_files_reference": {
+                "FASTA": {
+                    "class": "File", 
+                    "dir": "maestro-resources", 
+                    "path": "human_g1k_v37_decoy.fasta"
+                }, 
+                "FASTA_DICT": {
+                    "class": "File", 
+                    "dir": "maestro-resources", 
+                    "path": "human_g1k_v37_decoy.dict"
+                }, 
+                "FASTA_FAI": {
+                    "class": "File", 
+                    "dir": "maestro-resources", 
+                    "path": "human_g1k_v37_decoy.fasta.fai"
+                }, 
+                "dbSNP": {
+                    "class": "File", 
+                    "dir": "maestro-resources", 
+                    "path": "dbsnp_138.b37.vcf"
+                }
+            }, 
+            "Input_parameters": {
+                "prefix": "SM-CJKUO", 
+                "region": "1:3000001-4000000"
+            }
+        }, 
+        "Instance_type": "t2.medium", 
+        "JOBID": "UXN9jBFbYznk", 
+        "Output": {
+            "output_bucket_directory": "tibanna-output/takeda-gatk-201609"
+        }, 
+        "start_time": "20160920-02:49:18-EDT"
+    }
+}

@@ -1,0 +1,59 @@
+{
+    "Job": {
+        "AMI_ID": "ami-78c13615", 
+        "App": {
+            "App_name": "hictool-bam2hdf5", 
+            "App_version": "", 
+            "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/", 
+            "main_cwl": "hictool-bam2hdf5.cwl", 
+            "other_cwl_files": []
+        }, 
+        "EBS_IOPS": 5000, 
+        "EBS_SIZE": 100, 
+        "EBS_TYPE": "io1", 
+        "Input": {
+            "Input_files_data": {
+                "input_bam1": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "GM12878_SRR1658581_pair1.bam"
+                }, 
+                "input_bam2": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "GM12878_SRR1658581_pair2.bam"
+                }
+            }, 
+            "Input_files_reference": {
+                "RE_bed": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "HindIII_hg19_liftover.bed"
+                }, 
+                "bowtie_index": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "hg19.bowtieIndex.tgz"
+                }, 
+                "chrlen_file": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "hg19.chrlen_file"
+                }
+            }, 
+            "Input_parameters": {
+                "chromosome": [
+                    "21", 
+                    "22"
+                ], 
+                "contact_matrix_binsize": 50000
+            }
+        }, 
+        "Instance_type": "i2.xlarge", 
+        "JOBID": "aKQ8dvDEqOCt", 
+        "Output": {
+            "output_bucket_directory": "4dn-tool-evaluation-files/output"
+        }, 
+        "start_time": "20160920-00:28:03-EDT"
+    }
+}
