@@ -1,4 +1,4 @@
-#!/home/sl325/git/tibanna/lambda/test_mount/bin/python2.7
+#!/home/ec2-user/tibanna/lambda/test_mount/bin/python2.7
 
 # -*- coding: utf-8 -*-
 import re

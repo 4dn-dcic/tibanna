@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from collections import namedtuple
 
 from ..exceptions import LocationParseError
@@ -16,8 +15,6 @@ class Url(namedtuple('Url', url_attrs)):
 
     def __new__(cls, scheme=None, auth=None, host=None, port=None, path=None,
                 query=None, fragment=None):
-        if path and not path.startswith('/'):
-            path = '/' + path
         return super(Url, cls).__new__(cls, scheme, auth, host, port, path,
                                        query, fragment)
 
@@ -86,7 +83,6 @@ class Url(namedtuple('Url', url_attrs)):
     def __str__(self):
         return self.url
 
-
 def split_first(s, delims):
     """
     Given a string and an iterable of delimiters, split on the first found
@@ -117,7 +113,7 @@ def split_first(s, delims):
     if min_idx is None or min_idx < 0:
         return s, '', None
 
-    return s[:min_idx], s[min_idx + 1:], min_delim
+    return s[:min_idx], s[min_idx+1:], min_delim
 
 
 def parse_url(url):
@@ -207,7 +203,6 @@ def parse_url(url):
         path, query = path.split('?', 1)
 
     return Url(scheme, auth, host, port, path, query, fragment)
-
 
 def get_host(url):
     """

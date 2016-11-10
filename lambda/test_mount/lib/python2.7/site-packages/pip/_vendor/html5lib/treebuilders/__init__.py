@@ -28,7 +28,7 @@ to the format used in the unittests
 
 from __future__ import absolute_import, division, unicode_literals
 
-from .._utils import default_etree
+from ..utils import default_etree
 
 treeBuilderCache = {}
 

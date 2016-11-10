@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from . import base
+from . import _base
 
 
-class Filter(base.Filter):
+class Filter(_base.Filter):
     def __init__(self, source, encoding):
-        base.Filter.__init__(self, source)
+        _base.Filter.__init__(self, source)
         self.encoding = encoding
 
     def __iter__(self):
@@ -13,7 +13,7 @@ class Filter(base.Filter):
         meta_found = (self.encoding is None)
         pending = []
 
-        for token in base.Filter.__iter__(self):
+        for token in _base.Filter.__iter__(self):
             type = token["type"]
             if type == "StartTag":
                 if token["name"].lower() == "head":

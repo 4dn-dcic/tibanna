@@ -1,9 +1,9 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from . import base
+from . import _base
 
 
-class Filter(base.Filter):
+class Filter(_base.Filter):
     def slider(self):
         previous1 = previous2 = None
         for token in self.source:
@@ -11,8 +11,7 @@ class Filter(base.Filter):
                 yield previous2, previous1, token
             previous2 = previous1
             previous1 = token
-        if previous1 is not None:
-            yield previous2, previous1, None
+        yield previous2, previous1, None
 
     def __iter__(self):
         for previous, token, next in self.slider():
@@ -59,7 +58,7 @@ class Filter(base.Filter):
         elif tagname == 'colgroup':
             # A colgroup element's start tag may be omitted if the first thing
             # inside the colgroup element is a col element, and if the element
-            # is not immediately preceded by another colgroup element whose
+            # is not immediately preceeded by another colgroup element whose
             # end tag has been omitted.
             if type in ("StartTag", "EmptyTag"):
                 # XXX: we do not look at the preceding event, so instead we never
@@ -71,7 +70,7 @@ class Filter(base.Filter):
         elif tagname == 'tbody':
             # A tbody element's start tag may be omitted if the first thing
             # inside the tbody element is a tr element, and if the element is
-            # not immediately preceded by a tbody, thead, or tfoot element
+            # not immediately preceeded by a tbody, thead, or tfoot element
             # whose end tag has been omitted.
             if type == "StartTag":
                 # omit the thead and tfoot elements' end tag when they are

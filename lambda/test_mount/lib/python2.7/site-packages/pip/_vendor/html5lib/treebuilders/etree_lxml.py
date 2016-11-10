@@ -10,17 +10,16 @@ When any of these things occur, we emit a DataLossWarning
 """
 
 from __future__ import absolute_import, division, unicode_literals
-# pylint:disable=protected-access
 
 import warnings
 import re
 import sys
 
-from . import base
+from . import _base
 from ..constants import DataLossWarning
 from .. import constants
 from . import etree as etree_builders
-from .. import _ihatexml
+from .. import ihatexml
 
 import lxml.etree as etree
 
@@ -54,7 +53,8 @@ class Document(object):
 
 def testSerializer(element):
     rv = []
-    infosetFilter = _ihatexml.InfosetFilter(preventDoubleDashComments=True)
+    finalText = None
+    infosetFilter = ihatexml.InfosetFilter()
 
     def serializeElement(element, indent=0):
         if not hasattr(element, "tag"):
@@ -79,7 +79,7 @@ def testSerializer(element):
                     next_element = next_element.getnext()
             elif isinstance(element, str) or isinstance(element, bytes):
                 # Text in a fragment
-                assert isinstance(element, str) or sys.version_info[0] == 2
+                assert isinstance(element, str) or sys.version_info.major == 2
                 rv.append("|%s\"%s\"" % (' ' * indent, element))
             else:
                 # Fragment case
@@ -128,12 +128,16 @@ def testSerializer(element):
                 rv.append("|%s\"%s\"" % (' ' * (indent - 2), element.tail))
     serializeElement(element, 0)
 
+    if finalText is not None:
+        rv.append("|%s\"%s\"" % (' ' * 2, finalText))
+
     return "\n".join(rv)
 
 
 def tostring(element):
     """Serialize an element and its child nodes to a string"""
     rv = []
+    finalText = None
 
     def serializeElement(element):
         if not hasattr(element, "tag"):
@@ -169,10 +173,13 @@ def tostring(element):
 
     serializeElement(element)
 
+    if finalText is not None:
+        rv.append("%s\"" % (' ' * 2, finalText))
+
     return "".join(rv)
 
 
-class TreeBuilder(base.TreeBuilder):
+class TreeBuilder(_base.TreeBuilder):
     documentClass = Document
     doctypeClass = DocumentType
     elementClass = None
@@ -182,15 +189,13 @@ class TreeBuilder(base.TreeBuilder):
 
     def __init__(self, namespaceHTMLElements, fullTree=False):
         builder = etree_builders.getETreeModule(etree, fullTree=fullTree)
-        infosetFilter = self.infosetFilter = _ihatexml.InfosetFilter(preventDoubleDashComments=True)
+        infosetFilter = self.infosetFilter = ihatexml.InfosetFilter()
         self.namespaceHTMLElements = namespaceHTMLElements
 
         class Attributes(dict):
-            def __init__(self, element, value=None):
-                if value is None:
-                    value = {}
+            def __init__(self, element, value={}):
                 self._element = element
-                dict.__init__(self, value)  # pylint:disable=non-parent-init-called
+                dict.__init__(self, value)
                 for key, value in self.items():
                     if isinstance(key, tuple):
                         name = "{%s}%s" % (key[2], infosetFilter.coerceAttribute(key[1]))
@@ -252,12 +257,12 @@ class TreeBuilder(base.TreeBuilder):
             data = property(_getData, _setData)
 
         self.elementClass = Element
-        self.commentClass = Comment
+        self.commentClass = builder.Comment
         # self.fragmentClass = builder.DocumentFragment
-        base.TreeBuilder.__init__(self, namespaceHTMLElements)
+        _base.TreeBuilder.__init__(self, namespaceHTMLElements)
 
     def reset(self):
-        base.TreeBuilder.reset(self)
+        _base.TreeBuilder.reset(self)
         self.insertComment = self.insertCommentInitial
         self.initial_comments = []
         self.doctype = None
@@ -298,21 +303,19 @@ class TreeBuilder(base.TreeBuilder):
             self.doctype = doctype
 
     def insertCommentInitial(self, data, parent=None):
-        assert parent is None or parent is self.document
-        assert self.document._elementTree is None
         self.initial_comments.append(data)
 
     def insertCommentMain(self, data, parent=None):
         if (parent == self.document and
                 self.document._elementTree.getroot()[-1].tag == comment_type):
-            warnings.warn("lxml cannot represent adjacent comments beyond the root elements", DataLossWarning)
+                warnings.warn("lxml cannot represent adjacent comments beyond the root elements", DataLossWarning)
         super(TreeBuilder, self).insertComment(data, parent)
 
     def insertRoot(self, token):
         """Create the document root"""
         # Because of the way libxml2 works, it doesn't seem to be possible to
         # alter information like the doctype after the tree has been parsed.
-        # Therefore we need to use the built-in parser to create our initial
+        # Therefore we need to use the built-in parser to create our iniial
         # tree, after which we can add elements like normal
         docStr = ""
         if self.doctype:
@@ -341,8 +344,7 @@ class TreeBuilder(base.TreeBuilder):
 
         # Append the initial comments:
         for comment_token in self.initial_comments:
-            comment = self.commentClass(comment_token["data"])
-            root.addprevious(comment._element)
+            root.addprevious(etree.Comment(comment_token["data"]))
 
         # Create the root document and add the ElementTree to it
         self.document = self.documentClass()
