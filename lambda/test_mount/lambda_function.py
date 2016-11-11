@@ -2,22 +2,23 @@ from __future__ import print_function
 
 import json
 import urllib
-import boto3
-import requests
+import boto3 ## 1.4.1 (not the default boto3 on lambda)
+import requests 
 import time
 
 sbg_base_url = "https://api.sbgenomics.com/v2"
 sbg_project_id = "4dn-dcic/dev"
-bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket (currently only I have the permission to list its content)
+bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
 object_for_token = "token-4dn-labor" # an object containing a sbg token
-volume_name = '4dn_s3'
-volume_id = '4dn-labor/' + volume_name
-object_for_access_key = 's3-access-key-4dn-labor'
+volume_name = '4dn_s3' # name of the volume to be mounted on sbg.
+volume_id = '4dn-labor/' + volume_name # ID of the volume to be mounted on sbg.
+object_for_access_key = 's3-access-key-4dn-labor'  # an object containing security credentials for a user 'sbg_s3', who has access to 4dn s3 buckets. It's in the same bucket_for_token. Public_key\nsecret_key. We need this not for the purpose of lambda connecting to our s3, but SBG requires it for mounting our s3 bucket to the sbg s3.
+
 
 ## function that grabs SBG token from a designated S3 bucket
 def get_sbg_token (s3):
   try:
-    s3.Bucket(bucket_for_token).download_file(object_for_token,'/tmp/'+ object_for_token)
+    s3.Bucket(bucket_for_token).download_file(object_for_token,'/tmp/'+ object_for_token)  ## lambda doesn't have write access to every place, so use /tmp/.
     with open('/tmp/' + object_for_token,'r') as f:  
       token = f.readline().rstrip()
     return token
@@ -56,16 +57,16 @@ def create_volumes (token, volume_name, bucket_name, public_key, secret_key, buc
     "service" : {
        "type": "s3",
        "bucket": bucket_name,
-       "prefix": bucket_object_prefix,
+       "prefix": bucket_object_prefix, ## prefix of objects, this causs some confusion later when referring to the mounted file, because you have to exclude the prefix part, so just keep it as ''. 
        "credentials": {
-         "access_key_id": public_key,
-         "secret_access_key": secret_key
+         "access_key_id": public_key, ## public access key for our s3 bucket
+         "secret_access_key": secret_key  ## secret access key for our s3 bucket
        },
        "properties": {
          "sse_algorithm": "AES256"
        }
     },
-    "access_mode" : access_mode
+    "access_mode" : access_mode  ## either 'rw' or 'ro'.
   }
   response = requests.post(volume_url, headers=header, data=json.dumps(data))
   print(format_response(response))
