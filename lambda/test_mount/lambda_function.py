@@ -130,7 +130,7 @@ def lambda_handler(event, context):
         sbg_import_id = import_volume_content (token, volume_id, key)
         time.sleep(2)
         sbg_check_import_response = get_details_of_import(token, sbg_import_id)
-        return(format_response(sbg_check_import_response))
+        return(sbg_check_import_response)
         
     except Exception as e:
         print(e)
