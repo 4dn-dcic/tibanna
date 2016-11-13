@@ -117,8 +117,10 @@ def lambda_handler(event, context):
     #print("Received event: " + json.dumps(event, indent=2))
 
     # Get the object from the event and show its content type
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    key = urllib.unquote_plus(event['Records'][0]['s3']['object']['key'].encode('utf8'))
+    #bucket = event['Records'][0]['s3']['bucket']['name']
+    #key = urllib.unquote_plus(event['Records'][0]['s3']['object']['key'].encode('utf8'))
+    bucket = event['bucket_name']
+    key = urllib.unquote_plus(event['object_key'].encode('utf8'))
     try:
         s3 = boto3.resource('s3')
         response = s3.Object(bucket, key)
@@ -128,7 +130,7 @@ def lambda_handler(event, context):
         sbg_import_id = import_volume_content (token, volume_id, key)
         time.sleep(2)
         sbg_check_import_response = get_details_of_import(token, sbg_import_id)
-        print(sbg_check_import_response)
+        return(format_response(sbg_check_import_response))
         
     except Exception as e:
         print(e)
@@ -136,4 +138,4 @@ def lambda_handler(event, context):
         raise e
 
 
-
+   
