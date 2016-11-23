@@ -33,7 +33,6 @@ def get_access_key (s3):
     s3.Bucket(bucket_for_token).download_file(object_for_access_key,'/tmp/'+ object_for_access_key)
     with open('/tmp/' + object_for_access_key,'r') as f:
       access_key = f.read().splitlines()
-      print(str(access_key))
     return access_key
 
   except Exception as e:
@@ -69,7 +68,7 @@ def create_volumes (token, volume_name, bucket_name, public_key, secret_key, buc
     "access_mode" : access_mode  ## either 'rw' or 'ro'.
   }
   response = requests.post(volume_url, headers=header, data=json.dumps(data))
-  print(format_response(response))
+  return(format_response(response))
 
 
 
@@ -99,7 +98,6 @@ def import_volume_content (token, volume_id, object_key, dest_filename=None):
     "overwrite": False
   }
   response = requests.post(import_url, headers=header, data=json.dumps(data))
-  print(format_response(response))
   return(response.json()['id'])
 
 
@@ -108,8 +106,15 @@ def get_details_of_import (token, import_id):
   import_url = sbg_base_url + "/storage/imports/" + import_id
   header= { "X-SBG-Auth-Token" : token, "Content-type" : "application/json" }
   data = { "import_id" : import_id }
-  response = requests.get(import_url, headers=header, data=json.dumps(data))
-  print(format_response(response))
+
+  while True:
+    response = requests.get(import_url, headers=header, data=json.dumps(data))
+    if response.json()['state'] != 'PENDING':
+      break;
+    time.sleep(2)
+
+  return(format_response(response))
+
 
 
 
@@ -119,23 +124,41 @@ def lambda_handler(event, context):
     # Get the object from the event and show its content type
     #bucket = event['Records'][0]['s3']['bucket']['name']
     #key = urllib.unquote_plus(event['Records'][0]['s3']['object']['key'].encode('utf8'))
-    bucket = event['bucket_name']
-    key = urllib.unquote_plus(event['object_key'].encode('utf8'))
+    bucket = event['bucket_name'].encode('utf8')
+    key = event['object_key'].encode('utf8')
+
+    ## check the bucket and key
     try:
         s3 = boto3.resource('s3')
         response = s3.Object(bucket, key)
-        token = get_sbg_token(s3)
-        access_key = get_access_key(s3)
-        sbg_create_volume_response = create_volumes (token, volume_name, bucket, public_key=access_key[0], secret_key=access_key[1])
-        sbg_import_id = import_volume_content (token, volume_id, key)
-        time.sleep(2)
-        sbg_check_import_response = get_details_of_import(token, sbg_import_id)
-        return(sbg_check_import_response)
-        
+
     except Exception as e:
         print(e)
         print('Error getting object {} from bucket {}. Make sure they exist and your bucket is in the same region as this function.'.format(key, bucket))
         raise e
+ 
+
+    ## get token and access key
+    try:
+        token = get_sbg_token(s3)
+        access_key = get_access_key(s3)
+
+    except Exception as e:
+        print(e)
+        print('Error getting token and access key from bucket {}.'.format(bucket))
+        raise e
 
 
-   
+    ## mount the bucket and import the file
+    try: 
+        sbg_create_volume_response = create_volumes (token, volume_name, bucket, public_key=access_key[0], secret_key=access_key[1])
+        sbg_import_id = import_volume_content (token, volume_id, key)
+        sbg_check_import_response = get_details_of_import(token, sbg_import_id)
+        return(sbg_check_import_response)
+
+    except Exception as e:
+        print(e)
+        print('Error mounting/importing the file to SBG') 
+        raise e
+
+
