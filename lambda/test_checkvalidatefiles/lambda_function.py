@@ -222,11 +222,15 @@ def check_export (token, export_id):
   data = { "export_id" : export_id }
 
   response = requests.get(export_url, headers=header, data=json.dumps(data))
-  print(response.json())
+  return(response.json())
 
 
 def get_export_status (token, export_id):
-  return check_export(token, export_id)['state']
+  result = check_export(token, export_id)
+  if result.has_key('state'):
+    return check_export(token, export_id)['state']
+  else:
+    return None
 
 
 def generate_uuid ():
@@ -322,7 +326,6 @@ def export_all_output_files(token, sbg_run_detail_resp):
              export_id = export_to_volume (token, sbg_file_id, volume_id, sbg_filename)
              export_report.append( {"filename":sbg_filename, "export_id":export_id } )
 
-  print(str(export_report)) ## DEBUGGING
   return ( export_report) ## array of dictionaries
 
 
@@ -405,7 +408,9 @@ def lambda_handler(event, context):
       try:
          export_report = export_all_output_files(token, check_task_response)  #array of {filename, export_id}
          processed_files_result = fill_processed_files(token, export_report, bucket)
+         print(str(processed_files_result))  ## DEBUGGING
          metadata_processed_files = processed_files_result['metadata']
+         print(str(metadata_processed_files))  ## DEBUGGING
          metadata_workflow_run = fill_workflow_run(check_task_response, processed_files_result['report'], bucket)
          return ( { "workflow": metadata_workflow_run, "processed_files": metadata_processed_files } )
   
