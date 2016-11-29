@@ -122,3 +122,112 @@ In this example, an output file '_12_report' has been created and assigned uuid 
 }
 ```
 
+Example output with output file export completed.
+```
+{
+  "workflow_run": {
+    "output_files": [
+      {
+        "workflow_argument_name": "report",
+        "value": "7204bc0e-49e5-4c33-afab-9ec90d65faf3"
+      }
+    ],
+    "uuid": "8de5a59e-49e5-4c33-afab-9ec90d65faf3",
+    "parameters": [
+      {
+        "workflow_argument_name": "type",
+        "value": "fastq"
+      }
+    ],
+    "input_files": []
+  },
+  "processed_files": [
+    {
+      "status": "export COMPLETED",
+      "submitted_by": "admin@admin.com",
+      "uuid": "7204bc0e-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNFUJD37IHA",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/_13_report"
+    }
+  ]
+}
+```
+
+Example output from a Hi-C_processing_partA run (producing four output files)
+```
+{
+  "workflow_run": {
+    "output_files": [
+      {
+        "workflow_argument_name": "out_pairs_index",
+        "value": "5caaa69e-49e5-4c33-afab-9ec90d65faf3"
+      },
+      {
+        "workflow_argument_name": "out_sorted_bam_index",
+        "value": "49b5dc2e-49e5-4c33-afab-9ec90d65faf3"
+      },
+      {
+        "workflow_argument_name": "out_sorted_bam",
+        "value": "1c76dd19-49e5-4c33-afab-9ec90d65faf3"
+      },
+      {
+        "workflow_argument_name": "out_pairs",
+        "value": "281cef36-49e5-4c33-afab-9ec90d65faf3"
+      }
+    ],
+    "uuid": "bcfbc3f0-49e5-4c33-afab-9ec90d65faf3",
+    "parameters": [],
+    "input_files": []
+  },
+  "processed_files": [
+    {
+      "status": "export COMPLETED",
+      "submitted_by": "admin@admin.com",
+      "uuid": "5caaa69e-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNF4ZG16SPQ",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/_1_out.bsorted.pairs.gz.px2"
+    },
+    {
+      "status": "export COMPLETED",
+      "submitted_by": "admin@admin.com",
+      "uuid": "49b5dc2e-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNFRZBPHGIF",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/out.sorted.bam.bai"
+    },
+    {
+      "status": "export COMPLETED",
+      "submitted_by": "admin@admin.com",
+      "uuid": "1c76dd19-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNFROXPB21J",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/_1_out.sorted.bam"
+    },
+    {
+      "status": "export COMPLETED",
+      "submitted_by": "admin@admin.com",
+      "uuid": "281cef36-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNF6TUAVFQI",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/_1_out.bsorted.pairs.gz"
+    }
+  ]
+}
+```
