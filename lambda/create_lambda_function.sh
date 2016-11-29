@@ -10,7 +10,7 @@ aws lambda create-function  \
     --runtime python2.7       \
     --role $role_arn  \
     --description "$desc" \
-    --timeout 60      \
+    --timeout 300      \
     --memory-size 128 \
     --handler lambda_function.lambda_handler \
     --zip-file fileb://$zipfilepath  \
