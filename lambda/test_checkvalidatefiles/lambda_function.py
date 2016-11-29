@@ -412,7 +412,7 @@ def lambda_handler(event, context):
          metadata_processed_files = processed_files_result['metadata']
          print(str(metadata_processed_files))  ## DEBUGGING
          metadata_workflow_run = fill_workflow_run(check_task_response, processed_files_result['report'], bucket)
-         return ( { "workflow": metadata_workflow_run, "processed_files": metadata_processed_files } )
+         return ( { "workflow_run": metadata_workflow_run, "processed_files": metadata_processed_files } )
   
       except Exception as e:
           print(e)
@@ -422,7 +422,7 @@ def lambda_handler(event, context):
     else:
       metadata_workflow_run = fill_workflow_run(check_task_response, [], bucket)
       metadata_workflow_run['status'] = run_status
-      return ( { "workflow": metadata_workflow_run, "processed_files": []} )
+      return ( { "workflow_run": metadata_workflow_run, "processed_files": []} )
 
 
 if __name__ == "__main__":

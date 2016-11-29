@@ -83,6 +83,7 @@ Example output while the workflow is still running
 ```
 
 Example output after task is done (file export may still be running)
+In this example, an output file '_12_report' has been created and assigned uuid d897a651-49e5-4c33-afab-9ec90d65faf3 and exported to bucket 4dn-dcic-sbg. This output file corresponds to the output 'report' in the workflow. The workflow run is assigned uuid 72a65bb0-49e5-4c33-afab-9ec90d65faf3.
 ```
 {
   "processed_files": [
@@ -98,7 +99,7 @@ Example output after task is done (file export may still be running)
       "filename": "s3://4dn-dcic-sbg/_12_report"
     }
   ],
-  "workflow": {
+  "workflow_run": {
     "output_files": [
       {
         "workflow_argument_name": "report",
