@@ -82,3 +82,38 @@ Example output while the workflow is still running
 
 ```
 
+Example output after task is done (file export may still be running)
+```
+{
+  "processed_files": [
+    {
+      "status": "export RUNNING",
+      "submitted_by": "admin@admin.com",
+      "uuid": "d897a651-49e5-4c33-afab-9ec90d65faf3",
+      "award": "1U01CA200059-01",
+      "file_format": "other",
+      "notes": "sample dcic notes",
+      "accession": "4DNFIB4P2S5F",
+      "lab": "4dn-dcic-lab",
+      "filename": "s3://4dn-dcic-sbg/_12_report"
+    }
+  ],
+  "workflow": {
+    "output_files": [
+      {
+        "workflow_argument_name": "report",
+        "value": "d897a651-49e5-4c33-afab-9ec90d65faf3"
+      }
+    ],
+    "uuid": "72a65bb0-49e5-4c33-afab-9ec90d65faf3",
+    "parameters": [
+      {
+        "workflow_argument_name": "type",
+        "value": "fastq"
+      }
+    ],
+    "input_files": []
+  }
+}
+```
+
