@@ -16,7 +16,7 @@ Example input
 ```
 
 ### output format
-Example output (succeeded). The 'id' field can be used as input for test_checkvalidatefiles.
+Example output (succeeded). The 'id' field can be used as the 'task_id' input for test_checkvalidatefiles.
 ```
 {
   "status": "QUEUED",
