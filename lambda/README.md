@@ -6,6 +6,7 @@ Currently the following lambda functions work. (Many details need to change thou
 
 ## test_validatefiles2
 Mounts a file on 4dn S3 to sbg s3, launch a validatefiles task on that file on SBG.
+It works specifically for validatefiles, but has room to be extended
 ### input format
 Example input
 ```
@@ -51,6 +52,8 @@ Example output (succeeded). The 'id' field can be used as the 'task_id' input fo
 
 ## test_checkvaliatefiles
 Checks status of a task on SBG and if completed, export output to 4dn s3 and return workflow_run and processed_files metadata objects.
+This lambda function is generic and not specifically applicable to validatefiles.
+
 ### input format
 Example input
 ```

@@ -404,9 +404,20 @@ def lambda_handler(event, context):
     run_status = check_task_response['status'] 
     if run_status == 'COMPLETED' or run_status == 'FAILED':
 
+      ## mount the output bucket (silent if already mounted)
+      try: 
+         sbg_create_volume_response = create_volumes (token, volume_name, bucket, public_key=access_key[0], secret_key=access_key[1])
+        
+      except Exception as e:
+         print(e)
+         print('Error mounting output bucket to SBG') 
+         raise e
+
+
       ## initiate output file export and fill in metadata
       try:
          export_report = export_all_output_files(token, check_task_response)  #array of {filename, export_id}
+         time.sleep(10)  # give some time so that small files can be finished exporting before checking export status.
          processed_files_result = fill_processed_files(token, export_report, bucket)
          print(str(processed_files_result))  ## DEBUGGING
          metadata_processed_files = processed_files_result['metadata']
