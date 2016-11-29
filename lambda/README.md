@@ -1,5 +1,7 @@
 # lambda functions
 Currently the following lambda functions work.
+* test_validatefiles2
+* test_checkvalidatefiles
 
 
 ## test_validatefiles2
