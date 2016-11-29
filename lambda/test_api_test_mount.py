@@ -5,9 +5,10 @@ url = "https://kglml0pmwa.execute-api.us-east-1.amazonaws.com/dev"
 
 def test_mount_lambda(token):
 
-    headers = {'X-SBG-Auth-Token': token,
-               'Content-Type': 'application/json'}
+    #headers = {'X-SBG-Auth-Token': token,
+    #           'Content-Type': 'application/json'}
 
+    headers = {}
     #payload
     data = {"bucket_name" : "4dn-dcic-sbg",
             "object_key" : "arrow7.jpg"
