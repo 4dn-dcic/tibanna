@@ -18,7 +18,7 @@ object_for_access_key = 's3-access-key-4dn-labor'  # an object containing securi
 
 
 
-class SBGTaskInput:
+class SBGTaskInput(object):
   def __init__(self, sbg_project_id, app_name, inputs={}): 
     self.app = sbg_project_id + "/" + app_name
     self.project = sbg_project_id
@@ -27,20 +27,26 @@ class SBGTaskInput:
   def toJSON(self):
     return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-  def toDict(self):
-    return(json.loads(self.toJSON))
-
   def add_input(self, new_input):
     self.inputs.update(new_input)
 
   def add_inputfile(self, filename, file_id, argument_name):
     new_input = { argument_name: { "class": "File", "name": filename, "path": file_id } }
-    self.add_input(new_input)
+    if self.check_validity_inputfile(new_input):
+      self.add_input(new_input)
+    else:
+      print("Error: input format for SBGTaskInput not valid")
+      sys.exit()
 
   def add_inputparam(self, param_name, argument_name):
     new_input = { argument_name: param_name }
     self.add_input(new_input)
 
+  def check_validity_inputfile(self, ip):
+    if isinstance(ip, dict) and len(ip)==1 and isinstance(ip.values()[0],dict) and ip.values()[0].has_key('class') and ip.values()[0].has_key('name') and ip.values()[0].has_key('path'):
+      return(True)
+    else:
+      return(False)
 
 
 ## function that grabs SBG token from a designated S3 bucket
@@ -162,7 +168,7 @@ def create_data_payload_validatefiles ( import_response ):
      sbgtaskinput = SBGTaskInput(sbg_project_id, app_name)
      sbgtaskinput.add_inputfile(file_name, file_id, "input_file")
      sbgtaskinput.add_inputparam("fastq","type")
-     data = sbgtaskinput.toDict()
+     data = sbgtaskinput.__dict__
 
      return(data)
 
@@ -189,7 +195,7 @@ def create_task(token, data):
 
 
 def run_task (token, create_task_response):
-    task_id = create_task_response['id']
+    task_id = create_task_response.get('id')
     url = sbg_base_url + "/tasks/" + task_id + "/actions/run"
     headers = {'X-SBG-Auth-Token': token,
                'Content-Type': 'application/json'}
@@ -212,177 +218,6 @@ def check_task (token, task_id):
     ## wait while task is pending
     response = requests.get(url, headers=headers, data=json.dumps(data))
     return ( response.json() )
-
-
-
-def export_to_volume (token, source_file_id, volume_id, dest_filename):
-  export_url = sbg_base_url + "/storage/exports/"
-  header= { "X-SBG-Auth-Token" : token, "Content-type" : "application/json" }
-  data = {
-    "source": {
-      "file": source_file_id
-    },
-    "destination": {
-      "volume": volume_id,
-      "location": dest_filename
-    }
-  }
-  response = requests.post(export_url, headers=header, data=json.dumps(data))
-  
-  if response.json().has_key('id'):
-    return(response.json().get('id'))
-  else:
-    print("Export error")
-    print(response)
-    sys.exit()
-
-def check_export (token, export_id):
-  export_url = sbg_base_url + "/storage/exports/" + export_id
-  header= { "X-SBG-Auth-Token" : token, "Content-type" : "application/json" }
-  data = { "export_id" : export_id }
-
-  ## wait while exporting (only TEMPORARY or for very small file like validatefile report)
-  while True:
-    response = requests.get(export_url, headers=header, data=json.dumps(data))
-    if response.json().get('state') == 'COMPLETED' or response.json().get('state') == 'FAILED':
-      break;
-    else:
-      print(response.json().get('state'))  ## remove later.
-    time.sleep(2)
-  print(response.json())
-
-
-def generate_uuid ():
-  rand_uuid_start=''
-  for i in xrange(8):
-    r=random.choice('abcdef1234567890')
-    rand_uuid_start += r
-    uuid=rand_uuid_start + "-49e5-4c33-afab-9ec90d65faf3"
-  return uuid
-
-def generate_rand_accession ():
-  rand_accession=''
-  for i in xrange(8):
-    r=random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
-    rand_accession += r
-    accession = "4DNF"+rand_accession
-  return accession
-
-
-# This function returns a new workflow_run dictionary; it should be updated so that existing workflow_run objects are modified.
-# Input files are omitted here. They should already be in the workflow_run.
-def fill_workflow_run(sbg_run_detail_resp, processed_files_report, bucket_name, output_only=True):
-
-  workflow_run={ 'uuid':generate_uuid(), 'input_files':[], 'output_files':[], 'parameters':[] }
-  processed_files = []  
-
-  report_dict = sbg_run_detail_resp
-
-  if output_only:
-     file_type_list = ['outputs']  ## transfer only output files
-  else:
-     file_type_list = ['inputs','outputs']  ## transfer both input and output files
-
-  # input/output files
-  # export files to s3, add to file metadata json, add to workflow_run dictionary
-  for file_type in file_type_list:
-    if file_type=='inputs':
-       workflow_run_file_type='input_files'
-    else:
-       workflow_run_file_type='output_files'
-       
-    for k,v in report_dict.get(file_type).iteritems():
-      if isinstance(v,dict) and v.get('class')=='File':   ## This is a file
-         sbg_filename = v.get('name')
-         uuid = processed_files_report.get(sbg_filename).get('uuid')
-         workflow_run.get(workflow_run_file_type).append({'workflow_argument_name':k, 'value':uuid})
-
-      elif isinstance(v,list):
-         for v_el in v:
-            if isinstance(v_el,dict) and v_el.get('class')=='File':  ## This is a file (v is an array of files)
-               sbg_filename = v.get('name')
-               uuid = processed_files_report.get(sbg_filename).get('uuid')
-               workflow_run.get(workflow_run_file_type).append({'workflow_argument_name':k, 'value':uuid})
-
-  # parameters
-  # add to workflow_run dictionary
-  # assuming that parameters in the sbg report are either a single value or an array of single values.
-  for k,v in report_dict.get('inputs').iteritems():
-     if not isinstance(v,dict) and not isinstance(v,list):
-        workflow_run.get('parameters').append({'workflow_argument_name':k, 'value':v})
-     if isinstance(v,list):
-        for v_el in v:
-           if not isinstance(v_el,dict):
-              workflow_run.get('parameters').append({'workflow_argument_name':k, 'value':v_el})
-
-  return (workflow_run)  ## later change to actually 'updating metadata'
-
-
-
-# Initiate exporting all output files to S3 and returns an array of {filename, export_id} dictionary
-# export_id should be used to track export status.
-def export_all_output_files(token, sbg_run_detail_resp):
-
-  export_report = []
-
-  workflow_run_file_type='output_files'
-  file_type = 'outputs'
-
-  # export all output files to s3
-  for k,v in sbg_run_detail_resp.get(file_type).iteritems():
-    if isinstance(v,dict) and v.get('class')=='File':   ## This is a file
-       sbg_file_id = v.get('path').encode('utf8')
-       sbg_filename = v.get('name').encode('utf8')
-       export_id = export_to_volume (token, sbg_file_id, volume_id, sbg_filename)
-       export_report.append( {"filename":sbg_filename, "export_id":export_id } )
-
-
-    elif isinstance(v,list):
-       for v_el in v:
-          if isinstance(v_el,dict) and v_el.get('class')=='File':  ## This is a file (v is an array of files)
-             sbg_file_id = v.get('path').encode('utf8')
-             sbg_filename = v.get('name').encode('utf8')
-             export_id = export_to_volume (token, sbg_file_id, volume_id, sbg_filename)
-             export_report.append( {"filename":sbg_filename, "export_id":export_id } )
-
-  print(str(export_report)) ## DEBUGGING
-  return ( export_report) ## array of dictionaries
-
-
-
-def fill_processed_files(token, export_report, bucket_name):
-
-  processed_files=[]
-  fill_report={}
-
-  for file in export_report.iteritems():
-    filename = file.get('filename')
-    export_id = file.get('export_id')
-    status = get_export_status(token, export_id)
-
-    accession=generate_rand_accession()
-    uuid=generate_uuid()
-
-    fill_report[filename]={"export_id":export_id,"status":status,"accession":accession,"uuid":uuid}
-
-    # create a meta data file object
-    metadata= {
-      "accession": accession,
-      "filename": 's3://' + bucket_name + '/' + filename,
-      "notes": "sample dcic notes",
-      "lab": "4dn-dcic-lab",
-      "submitted_by": "admin@admin.com",
-      "lab": "4dn-dcic-lab",
-      "award": "1U01CA200059-01",
-      "file_format": "other",
-      #"experiments":["4DNEX067APT1"],
-      "uuid": uuid,
-      "status": "export " + status
-    }
-
-    processed_files.append(metadata)
-
-  return ({"metadata":processed_files,"report": fill_report })
 
 
 
@@ -422,6 +257,7 @@ def lambda_handler(event, context):
 
         bucket = e.get('bucket_name').encode('utf8')
         key = e.get('object_key').encode('utf8')
+        workflow_argument = e.get('workflow_argument_name').encode('utf8')
     
         ## check the bucket and key
         try:
@@ -444,9 +280,9 @@ def lambda_handler(event, context):
 
         ## add to task input
         try:
-            sbg_file_name = sbg_check_import_response.get('name')
-            sbg_file_id = sbg_check_import_response.get('id')
-            task_input.append( sbg_file_name, sbg_file_id, workflow_argument )
+            sbg_file_name = sbg_check_import_response.get('result').get('name')
+            sbg_file_id = sbg_check_import_response.get('result').get('id')
+            task_input.add_inputfile( sbg_file_name, sbg_file_id, workflow_argument )
         
         except Exception as e:
             print(e)
@@ -456,11 +292,10 @@ def lambda_handler(event, context):
 
     # run a validatefiles task 
     try:
-        #task_data = create_data_payload_validatefiles ( sbg_check_import_response, app_name, task_input )
-        task_data = task_input.toDict()
+        #task_data = create_data_payload_validatefiles ( sbg_check_import_response)
+        task_data = task_input.__dict__
         create_task_response = create_task ( token, task_data )
         run_response = run_task (token, create_task_response)
-        print (run_response)
 
     except Exception as e:
         print(e)

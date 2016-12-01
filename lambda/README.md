@@ -1,19 +1,54 @@
 # lambda functions
 Currently the following lambda functions work. (Many details need to change though)
-* test_validatefiles2
+* test_validatefiles3
 * test_checkvalidatefiles
 
 
-## test_validatefiles2
-Mounts a file on 4dn S3 to sbg s3, launch a validatefiles task on that file on SBG.
-It works specifically for validatefiles, but has room to be extended
+## test_validatefiles3
+Mounts a set of files on 4dn S3 to sbg s3, launch a task on those files on SBG.
 ### input format
-Example input
+Example input for validatefiles
 ```
 {
-  "bucket_name": "4dn-dcic-sbg",
-  "object_key": "arrow7.jpg"
+    "input_files": [
+        {
+          "bucket_name":"4dn-dcic-sbg",
+          "object_key":"arrow7.jpg",
+          "workflow_argument_name":"input_file"
+        }
+    ],
+    "app_name": "validate",
+    "parameters": {}
 }
+
+```
+
+Example input for bwa-mem (alignment)
+```
+{
+  "input_files": [
+    {
+      "bucket_name": "4dn-tool-evaluation-files",
+      "object_key": "___GM12878_SRR1658581_1pc_1_R1.fastq",
+      "workflow_argument_name": "fastq1"
+    },
+    {
+      "bucket_name": "4dn-tool-evaluation-files",
+      "object_key": "___GM12878_SRR1658581_1pc_1_R2.fastq",
+      "workflow_argument_name": "fastq2"
+    },
+    {
+      "bucket_name": "4dn-tool-evaluation-files",
+      "object_key": "___hg19-0.7.13.bwaIndex.tgz",
+      "workflow_argument_name": "bwa_index"
+    }
+  ],
+  "app_name": "bwa-mem",
+  "parameters": {
+    "nThreads": 8
+  }
+}
+
 ```
 
 ### output format
