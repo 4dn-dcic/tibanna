@@ -1,10 +1,10 @@
 # lambda functions
 Currently the following lambda functions work. (Many details need to change though)
-* test_validatefiles3
-* test_checkvalidatefiles
+* launch_workflow_run_sbg
+* check_workflow_run_sbg
 
 
-## test_validatefiles3
+## launch_workflow_run_sbg
 Mounts a set of files on 4dn S3 to sbg s3, launch a task on those files on SBG.
 ### input format
 Example input for validatefiles
@@ -52,7 +52,7 @@ Example input for bwa-mem (alignment)
 ```
 
 ### output format
-Example output (succeeded). The 'id' field can be used as the 'task_id' input for test_checkvalidatefiles.
+Example output (succeeded). The 'id' field can be used as the 'task_id' input for check_workflow_run_sbg.
 ```
 {
   "status": "QUEUED",
@@ -85,7 +85,7 @@ Example output (succeeded). The 'id' field can be used as the 'task_id' input fo
 }
 ```
 
-## test_checkvaliatefiles
+## check_workflow_run_sbg
 Checks status of a task on SBG and if completed, export output to 4dn s3 and return workflow_run and processed_files metadata objects.
 This lambda function is generic and not specifically applicable to validatefiles.
 
