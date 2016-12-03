@@ -1,7 +1,0 @@
-json
-urllib
-boto3==1.4.1
-requests==2.11.1 
-time
-sys
-random

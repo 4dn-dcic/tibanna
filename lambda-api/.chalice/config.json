@@ -1,0 +1,6 @@
+{
+  "app_name": "lambda-api", 
+  "stage": "dev",
+  "manage_iam_role": false, 
+  "iam_role_arn": "arn:aws:iam::643366669028:role/lambda_full_s3"
+}
