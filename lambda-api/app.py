@@ -8,7 +8,7 @@ import time
 import sys
 import random
 
-app = Chalice(app_name="tibanna_lambda_dev")
+app = Chalice(app_name="tibanna_lambda_api")
 
 
 sbg_project_id = "4dn-dcic/dev"
@@ -274,6 +274,10 @@ def get_access_key (s3):
 def format_response (response):
   return json.dumps(json.loads(response.text), indent=4)
 
+
+@app.route("/")
+def index():
+  pass
 
 
 @app.route("/run",methods=['POST'])
