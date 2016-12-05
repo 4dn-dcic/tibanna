@@ -10,7 +10,7 @@ import random
 
 app = Chalice(app_name="tibanna_lambda_api")
 
-sbg_base_url = "https://api.sbgenomics.com/v4"
+sbg_base_url = "https://api.sbgenomics.com/v2"
 sbg_project_id = "4dn-dcic/dev"
 bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
 object_for_token = "token-4dn-labor" # an object containing a sbg token
@@ -390,7 +390,7 @@ def fill_workflow_run(sbg_run_detail_resp, processed_files_report, bucket_name, 
 
 # Initiate exporting all output files to S3 and returns an array of {filename, export_id} dictionary
 # export_id should be used to track export status.
-def export_all_output_files(token, sbg_run_detail_resp):
+def export_all_output_files(token, sbg_volume, sbg_run_detail_resp):
 
   export_report = []
 
@@ -402,7 +402,7 @@ def export_all_output_files(token, sbg_run_detail_resp):
     if isinstance(v,dict) and v.get('class')=='File':   ## This is a file
        sbg_file_id = v['path'].encode('utf8')
        sbg_filename = v['name'].encode('utf8')
-       export_id = export_to_volume (token, sbg_file_id, volume_id, sbg_filename)
+       export_id = export_to_volume (token, sbg_file_id, sbg_volume.id, sbg_filename)
        export_report.append( {"filename":sbg_filename, "export_id":export_id } )
 
 
@@ -411,7 +411,7 @@ def export_all_output_files(token, sbg_run_detail_resp):
           if isinstance(v_el,dict) and v_el.get('class')=='File':  ## This is a file (v is an array of files)
              sbg_file_id = v['path'].encode('utf8')
              sbg_filename = v['name'].encode('utf8')
-             export_id = export_to_volume (token, sbg_file_id, volume_id, sbg_filename)
+             export_id = export_to_volume (token, sbg_file_id, sbg_volume.id, sbg_filename)
              export_report.append( {"filename":sbg_filename, "export_id":export_id } )
 
   return ( export_report) ## array of dictionaries
@@ -595,6 +595,7 @@ def EXPORT():
     try:
         token = get_sbg_token(s3)
         access_key = get_access_key(s3)
+        print("got token and access_key")
 
     except Exception as e:
         print(e)
@@ -602,9 +603,14 @@ def EXPORT():
         raise e
     
 
+    # create an sbg object
+    sbg = SBGWorkflowRun(token, sbg_project_id)
+
     # check task 
     try:
         check_task_response = check_task (token, task_id)
+        print("got check_task response")
+        print(check_task_response)
 
     except Exception as e:
         print(e)
@@ -612,14 +618,18 @@ def EXPORT():
         raise e
     
 
-    run_status = check_task_response['status'] 
+    run_status = check_task_response.get('status') 
+    print(run_status)
+
     if run_status == 'COMPLETED' or run_status == 'FAILED':
 
       ## mount the output bucket (silent if already mounted)
       try:
          sbg_volume= SBGVolume() 
-         sbg_create_volume_response = create_volumes (token, sbg_volume.name, bucket, public_key=access_key[0], secret_key=access_key[1])
-        
+         print("created an output volume id")
+         sbg_create_volume_response = sbg.create_volumes (sbg_volume, bucket, public_key=access_key[0], secret_key=access_key[1])
+         print("created an output volume")
+
       except Exception as e:
          print(e)
          print('Error mounting output bucket to SBG') 
@@ -628,7 +638,7 @@ def EXPORT():
 
       ## initiate output file export and fill in metadata
       try:
-         export_report = export_all_output_files(token, check_task_response)  #array of {filename, export_id}
+         export_report = export_all_output_files(token, sbg_volume, check_task_response)  #array of {filename, export_id}
          time.sleep(10)  # give some time so that small files can be finished exporting before checking export status.
          processed_files_result = fill_processed_files(token, export_report, bucket)
          print(str(processed_files_result))  ## DEBUGGING
