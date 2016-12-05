@@ -616,8 +616,9 @@ def EXPORT():
     if run_status == 'COMPLETED' or run_status == 'FAILED':
 
       ## mount the output bucket (silent if already mounted)
-      try: 
-         sbg_create_volume_response = create_volumes (token, volume_name, bucket, public_key=access_key[0], secret_key=access_key[1])
+      try:
+         sbg_volume= SBGVolume() 
+         sbg_create_volume_response = create_volumes (token, sbg_volume.name, bucket, public_key=access_key[0], secret_key=access_key[1])
         
       except Exception as e:
          print(e)
