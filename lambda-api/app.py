@@ -298,7 +298,7 @@ def export_to_volume (token, source_file_id, volume_id, dest_filename):
   response = requests.post(export_url, headers=header, data=json.dumps(data))
   
   if response.json().has_key('id'):
-    return(response.json()['id'])
+    return(response.json().get('id'))
   else:
     print("Export error")
     print(response)
@@ -316,7 +316,7 @@ def check_export (token, export_id):
 def get_export_status (token, export_id):
   result = check_export(token, export_id)
   if result.has_key('state'):
-    return check_export(token, export_id)['state']
+    return check_export(token, export_id).get('state')
   else:
     return None
 
@@ -656,6 +656,64 @@ def EXPORT():
       metadata_workflow_run = fill_workflow_run(check_task_response, [], bucket)
       metadata_workflow_run['status'] = run_status
       return ( { "workflow_run": metadata_workflow_run, "processed_files": []} )
+
+
+@app.route("/finalize",methods=['POST'])
+def FINALIZE():
+    event = app.current_request.json_body
+
+    # Get the object from the event and show its content type
+    task_id = event['task_id'].encode('utf8')   
+    export_id_list = event['export_id_list']
+    output_handling_type = event['output_handler'].encode('utf8')
+
+    try:
+        s3 = boto3.resource('s3')
+    except Exception as e:
+        print(e)
+        print("Error creating an S3 resource")
+        raise e 
+
+    ## get token and access key
+    try:
+        token = get_sbg_token(s3)
+        access_key = get_access_key(s3)
+        print("got token and access_key")
+
+    except Exception as e:
+        print(e)
+        print('Error getting token and access key from bucket {}.'.format(bucket))
+        raise e
+    
+
+    # create an sbg object
+    sbg = SBGWorkflowRun(token, sbg_project_id)
+
+    # check task 
+    try:
+        overall_export_status = ''
+        for export_id in export_id_list:
+          export_status = check_export_status (token, export_id)
+          if export_status == "FAILED":
+            overall_export_status = "FAILED"
+            break
+          elseif export_status != "COMPLETED":
+            overall_export_status = 'PENDING'
+        if overall_export_status == '':
+          overall_export_status = 'COMPLETED'
+
+        if overall_export_status == 'PENDING" or overall_export_status == 'FAILED":
+          return({"status": overall_export_status})
+
+    except Exception as e:
+        print(e)
+        print('Error getting export status')
+        raise e
+
+    ## other things
+    #   1. update workflow metadata
+    #   2. either update file metadata or parse file and get qc metric
+
 
 
 if __name__ == "__main__":
