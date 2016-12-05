@@ -18,5 +18,5 @@ http POST $ENDPOINT_URI/run < ../test_json/test_input_requestbody_launch_workflo
 ```
 
 Note: the tests work only when the input file import from a previous run using the same input files is removed from SBG.
-
+(contact soo to get endpoint uri)
 
