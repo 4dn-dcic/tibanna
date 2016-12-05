@@ -1,0 +1,12 @@
+{
+    "input_files": [
+        {
+          "bucket_name":"4dn-dcic-sbg",
+          "object_key":"arrow7.jpg",
+          "workflow_argument_name":"input_file"
+        }
+    ],
+    "app_name": "md5",
+    "parameters": {}
+}
+
