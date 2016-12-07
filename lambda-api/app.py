@@ -697,12 +697,12 @@ def FINALIZE():
           if export_status == "FAILED":
             overall_export_status = "FAILED"
             break
-          elseif export_status != "COMPLETED":
+          elif export_status != "COMPLETED":
             overall_export_status = 'PENDING'
         if overall_export_status == '':
           overall_export_status = 'COMPLETED'
 
-        if overall_export_status == 'PENDING" or overall_export_status == 'FAILED":
+        if overall_export_status == 'PENDING' or overall_export_status == 'FAILED':
           return({"status": overall_export_status})
 
     except Exception as e:
