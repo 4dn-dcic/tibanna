@@ -7,7 +7,7 @@ chalice new-project lambda-api
 cd lambda-api
 # prepare for app.py, requirements.txt and .chalice/config.json
 #source bin/activate  ## don't use venv
-pip install -r requirements.txt -t . --upgrade
+pip install -r requirements.txt --upgrade
 chalice deploy  # deployment requires security credentials.
 ```
 
