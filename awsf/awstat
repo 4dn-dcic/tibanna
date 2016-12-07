@@ -6,111 +6,111 @@ import json
 import csv
 
 JOB_LIST_FILE="./job_list"
-JOB_LIST_HEADER=['job_id','instance_id','instance_type','public_ip','tag','start_time','outbucket']
+JOB_LIST_HEADER=['job_id', 'instance_id', 'instance_type', 'public_ip', 'tag', 'start_time', 'outbucket']
 LOGDIR="./logs"
 
 
 def check_status (instance_id):
-  instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
-  try:
-    instance_desc_logstr=subprocess.check_output(instance_desc_command.split(' ')) # capturing stdout from the launch command
-    instance_desc_log=json.loads(instance_desc_logstr)
-    return str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
-  except: # instance doesn't exist any more
-    return 'depricated'
+    instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
+    try:
+        instance_desc_logstr=subprocess.check_output(instance_desc_command.split(' ')) # capturing stdout from the launch command
+        instance_desc_log=json.loads(instance_desc_logstr)
+        return str(instance_desc_log['Reservations'][0]['Instances'][0]['State']['Name'])
+    except: # instance doesn't exist any more
+        return 'depricated'
 
 
 def check_success_error (jobid, outbucket, instance_status):
-  if instance_status=='depricated' or instance_status=='terminated' or instance_status=='shutting-down':
-    instance_success_command = "aws s3 ls s3://{outbucket}/{jobid}.success".format(outbucket=outbucket,jobid=jobid)
-    try:
-      subprocess.check_output(instance_success_command.split(' '))
-      return 'success'
-    except:
-      return 'fail'
-  else:
-    instance_error_command = "aws s3 ls s3://{outbucket}/{jobid}.error".format(outbucket=outbucket,jobid=jobid)
-    try:
-      subprocess.check_output(instance_error_command.split(' '))
-      return 'error'
-    except:
-      return 'unknown'
+    if instance_status=='depricated' or instance_status=='terminated' or instance_status=='shutting-down':
+        instance_success_command = "aws s3 ls s3://{outbucket}/{jobid}.success".format(outbucket=outbucket, jobid=jobid)
+        try:
+            subprocess.check_output(instance_success_command.split(' '))
+            return 'success'
+        except:
+            return 'fail'
+    else:
+        instance_error_command = "aws s3 ls s3://{outbucket}/{jobid}.error".format(outbucket=outbucket, jobid=jobid)
+        try:
+            subprocess.check_output(instance_error_command.split(' '))
+            return 'error'
+        except:
+            return 'unknown'
 
 
 def print_log (jobid, logdir, outbucket):
-  instance_log_command1 = "aws s3 cp s3://{outbucket}/{jobid}.log {logdir}".format(outbucket=outbucket,jobid=jobid,logdir=logdir)
-  instance_log_command2 = "cat {logdir}/{jobid}.log".format(jobid=jobid,logdir=logdir)
-  try:
-    subprocess.check_output(instance_log_command1.split(' '))
-    instance_log = subprocess.check_output(instance_log_command2.split(' '))
-    print(instance_log)
-  except:
-    print("instance log not available.")
+    instance_log_command1 = "aws s3 cp s3://{outbucket}/{jobid}.log {logdir}".format(outbucket=outbucket, jobid=jobid, logdir=logdir)
+    instance_log_command2 = "cat {logdir}/{jobid}.log".format(jobid=jobid, logdir=logdir)
+    try:
+        subprocess.check_output(instance_log_command1.split(' '))
+        instance_log = subprocess.check_output(instance_log_command2.split(' '))
+        print(instance_log)
+    except:
+        print("instance log not available.")
 
 
 def print_postrun_json (jobid, postrun_jsondir, outbucket):
-  instance_postrun_json_command1 = "aws s3 cp s3://{outbucket}/{jobid}.postrun.json {postrun_jsondir}".format(outbucket=outbucket,jobid=jobid,postrun_jsondir=postrun_jsondir)
-  instance_postrun_json_command2 = "cat {postrun_jsondir}/{jobid}.postrun.json".format(jobid=jobid,postrun_jsondir=postrun_jsondir)
-  try:
-    subprocess.check_output(instance_postrun_json_command1.split(' '))
-    instance_postrun_json = subprocess.check_output(instance_postrun_json_command2.split(' '))
-    print(instance_postrun_json)
-  except:
-    print("instance postrun.json not available.")
+    instance_postrun_json_command1 = "aws s3 cp s3://{outbucket}/{jobid}.postrun.json {postrun_jsondir}".format(outbucket=outbucket, jobid=jobid, postrun_jsondir=postrun_jsondir)
+    instance_postrun_json_command2 = "cat {postrun_jsondir}/{jobid}.postrun.json".format(jobid=jobid, postrun_jsondir=postrun_jsondir)
+    try:
+        subprocess.check_output(instance_postrun_json_command1.split(' '))
+        instance_postrun_json = subprocess.check_output(instance_postrun_json_command2.split(' '))
+        print(instance_postrun_json)
+    except:
+        print("instance postrun.json not available.")
 
 
 def run(specified_job_id, is_long, is_postrun_json):
-  
-  with open(JOB_LIST_FILE,'r') as f:
-    jobs=csv.reader(f,delimiter='\t')
-    if next(jobs)!=JOB_LIST_HEADER:
-      sys.exit("job_list file doesn't contain proper header. Aborting.\n")
-    else:
-      nJobs=0
-      for j0 in jobs:
-        j=j0[0:6]
-        instance_id = j[1]
-        job_id = j[0]
-        out_bucket = j0[6] 
+    
+    with open(JOB_LIST_FILE, 'r') as f:
+        jobs=csv.reader(f, delimiter='\t')
+        if next(jobs)!=JOB_LIST_HEADER:
+            sys.exit("job_list file doesn't contain proper header. Aborting.\n")
+        else:
+            nJobs=0
+            for j0 in jobs:
+                j=j0[0:6]
+                instance_id = j[1]
+                job_id = j[0]
+                out_bucket = j0[6] 
 
-        if specified_job_id and job_id != specified_job_id:
-          continue
+                if specified_job_id and job_id != specified_job_id:
+                    continue
 
-        # get job status for the instance
-        instance_status = check_status (instance_id)
-        j.append(instance_status)
+                # get job status for the instance
+                instance_status = check_status (instance_id)
+                j.append(instance_status)
 
-        # adding whether the job was a success (if it was a success, there will be a file jobid.success in the output bucket.)
-        instance_success = check_success_error (job_id, out_bucket, instance_status)
-        j.append(instance_success)
+                # adding whether the job was a success (if it was a success, there will be a file jobid.success in the output bucket.)
+                instance_success = check_success_error (job_id, out_bucket, instance_status)
+                j.append(instance_success)
 
-        print('\t'.join(j))
+                print('\t'.join(j))
 
-        ## print out log
-        if is_long == True:
-          print_log(job_id,LOGDIR,out_bucket)
+                ## print out log
+                if is_long == True:
+                    print_log(job_id, LOGDIR, out_bucket)
 
-        ## print out postrun json
-        if is_postrun_json == True:
-          print_postrun_json(job_id,LOGDIR,out_bucket)
+                ## print out postrun json
+                if is_postrun_json == True:
+                    print_postrun_json(job_id, LOGDIR, out_bucket)
 
-        nJobs += 1
+                nJobs += 1
 
-    if nJobs==0:
-      print("No jobs.\n");
+        if nJobs==0:
+            print("No jobs.\n");
 
 
 
 
 if __name__ == "__main__":
-    import argparse
+        import argparse
 
-    parser = argparse.ArgumentParser(description="Arguments")
-    parser.add_argument("-l", "--log", help="Print out log as well.", action="store_true")
-    parser.add_argument("-p", "--postrun_json", help="Print out postrun.json as well.", action="store_true")
-    parser.add_argument("-j", "--job_id", help="Look at only the specified job_id.")
-    args = parser.parse_args()
+        parser = argparse.ArgumentParser(description="Arguments")
+        parser.add_argument("-l", "--log", help="Print out log as well.", action="store_true")
+        parser.add_argument("-p", "--postrun_json", help="Print out postrun.json as well.", action="store_true")
+        parser.add_argument("-j", "--job_id", help="Look at only the specified job_id.")
+        args = parser.parse_args()
 
-    run(args.job_id, args.log, args.postrun_json)
+        run(args.job_id, args.log, args.postrun_json)
 
 
