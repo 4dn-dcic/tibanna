@@ -1,5 +1,5 @@
-# Tibanna
-Tibanna is the gas mine in Cloud City that makes Hyperdrives zoom.  It's also the pipeline running in the cloud that ensure data is properly processed for 4dn.
+# awsf
+Awsf is a set of tools that allows running and monitoring docker- and cwl-based pipelines on AWS.
 
 ## Table of contents
 * [Goal](#goal)
