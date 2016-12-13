@@ -1,6 +1,8 @@
 from __future__ import print_function
 from chalice import Chalice
 
+import wranglertools.fdnDCIC as fdnDCIC
+import os
 import json
 import boto3 ## 1.4.1 (not the default boto3 on lambda)
 import requests 
@@ -15,6 +17,8 @@ sbg_project_id = "4dn-dcic/dev"
 bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
 object_for_token = "token-4dn-labor" # an object containing a sbg token
 object_for_access_key = 's3-access-key-4dn-labor'    # an object containing security credentials for a user 'sbg_s3', who has access to 4dn s3 buckets. It's in the same bucket_for_token. Public_key\nsecret_key. We need this not for the purpose of lambda connecting to our s3, but SBG requires it for mounting our s3 bucket to the sbg s3.
+bucket_for_keypairs = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
+object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
 
 
 class SBGVolume:
@@ -66,6 +70,22 @@ class SBGTaskInput(object):
 
 
 
+class WorkflowRunMetadata(object, workflow_uuid):
+    def __init__(self):
+        """Class for WorkflowRun that matches the 4DN Metadata schema
+        Workflow_uuid (uuid of the workflow to run) has to be given.
+        Workflow_run uuid is auto-generated when the object is created.
+        """
+        self.uuid = generate_uuid()
+        self.workflow = workflow_uuid
+        self.run_platform = 'SBG'
+        self.sbg_task_id = None
+        self.sbg_mounted_volume_ids = []
+        self.sbg_import_ids = []
+        self.sbg_export_ids = []
+        
+
+
 class SBGWorkflowRun(object): ## one object per workflow run
 
     base_url = "https://api.sbgenomics.com/v2"
@@ -78,6 +98,15 @@ class SBGWorkflowRun(object): ## one object per workflow run
         self.import_id_list=[]    ## list of import ids for the files imported for the current run.
         self.task_id=None    ## task_id for the current workflow run. It will be assigned after draft task is successfully created. We keep the information here, so we can re-run the task if it fails and also for the sanity check - so that we only run tasks that we created.
         self.task_input=None    ## SBGTaskInput object
+
+    def sbg2workflowrun (workflow_uuid):
+        WorkflowRunMetadata wr (workflow_uuid)
+        wr.sbg_task_id=self.task_id
+        wr.sbg_mounted_volume_ids=[]
+        for x in self.volume_list:
+          wr.sbg_mounted_volume_ids.append(x.id)
+        wr.sbg_import_ids=self.import_id_list
+        return (wr.__dict__)
 
 
     ## function that creates volume
@@ -252,6 +281,18 @@ def get_sbg_token (s3):
         with open('/tmp/' + object_for_token, 'r') as f:    
             token = f.readline().rstrip()
         return token
+    except Exception as e:
+        print(e)
+        print('Error getting token from S3.')
+        raise e
+
+
+def get_keypairs_file (s3):
+    try:
+        file_location = '/tmp/'+ object_for_keypairs
+        s3.Bucket(bucket_for_keypairs).download_file(object_for_keypairs, file_location)    ## lambda doesn't have write access to every place, so use /tmp/.
+        return file_location
+
     except Exception as e:
         print(e)
         print('Error getting token from S3.')
@@ -459,6 +500,34 @@ def format_response (response):
     return json.dumps(json.loads(response.text), indent=4)
 
 
+def post_to_metadata(keypairs_file, post_item, schema_name):
+
+    assert os.path.isfile(keypairs_file)
+
+    try:
+        key = fdnDCIC.FDN_Key(keypairs_file, "default")
+    except Exception as e:
+        print(e)
+        print("key error")
+        raise e
+
+    try:
+        connection = fdnDCIC.FDN_Connection(key)
+    except Exception as e:
+        print(e)
+        print("connection error")
+        raise e
+
+    try:
+        response = fdnDCIC.new_FDN(connection, schema_name, post_item)
+    except Exception as e:
+        print(e)
+        print("post error")
+        raise e
+
+    print(json.dumps(response))
+
+
 @app.route("/")
 def index():
     pass
@@ -472,7 +541,11 @@ def RUN():
         input_file_list = event.get('input_files')
         app_name = event.get('app_name').encode('utf8')
         parameter_dict = event.get('parameters')
-
+        workflow_uuid = event.get('workflow_uuid').encode('utf8')  
+        '''
+        workflow_uuid : for now, pass this on. Later we can add a code to automatically retrieve this from app_name (or vice versa).
+        Note multiple workflow_uuids can be available for an app_name (different versions of the same app could have a different uuid)
+        '''
 
         ## get s3 resource 
         ## check the bucket and key
@@ -493,6 +566,15 @@ def RUN():
         except Exception as e:
                 print(e)
                 print('Error getting token and access key from bucket {}.'.format(bucket))
+                raise e
+
+        ## get key json file (Jeremy: modify this later)
+        try:
+               keypairs_file = get_keypairs_file(s3)
+
+        except Exception as e:
+                print(e)
+                print('Error getting keypairs file from bucket {}.'.format(bucket))
                 raise e
 
         ## create a sbg workflow run object to use
@@ -564,6 +646,18 @@ def RUN():
                 print('Error running a task')
                 raise e
         
+        # post to metadata
+        try:
+                wr = sbg.sbg2workflowrun(workflow_uuid)
+                resp = post_to_metadata(metadata_key_file, wr, "workflow_run_sbg")
+                print(resp)
+
+        except Exception as e:
+                print(e)
+                print('Error posting to metadata')
+                raise e
+
+
         # for debugging
         try:
                 print(json.dumps(sbg.__dict__))
