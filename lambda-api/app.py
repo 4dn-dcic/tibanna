@@ -9,6 +9,7 @@ import requests
 import time
 import sys
 import random
+import datetime
 
 app = Chalice(app_name="tibanna_lambda_api")
 
@@ -18,7 +19,8 @@ bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this 
 object_for_token = "token-4dn-labor" # an object containing a sbg token
 object_for_access_key = 's3-access-key-4dn-labor'    # an object containing security credentials for a user 'sbg_s3', who has access to 4dn s3 buckets. It's in the same bucket_for_token. Public_key\nsecret_key. We need this not for the purpose of lambda connecting to our s3, but SBG requires it for mounting our s3 bucket to the sbg s3.
 bucket_for_keypairs = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
-object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
+#object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
+object_for_keypairs = "test_keypairs.json" # an object containing a sbg token
 
 
 class SBGVolume:
@@ -42,7 +44,7 @@ class SBGTaskInput(object):
     def __init__(self, sbg_project_id, app_name, inputs={}): 
         self.app = sbg_project_id + "/" + app_name
         self.project = sbg_project_id
-        self.inputs = inputs
+        self.inputs = inputs.copy()
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -70,8 +72,8 @@ class SBGTaskInput(object):
 
 
 
-class WorkflowRunMetadata(object, workflow_uuid):
-    def __init__(self):
+class WorkflowRunMetadata(object):
+    def __init__(self, workflow_uuid, metadata_input=[], metadata_parameters=[]):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow_uuid (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -79,28 +81,43 @@ class WorkflowRunMetadata(object, workflow_uuid):
         self.uuid = generate_uuid()
         self.workflow = workflow_uuid
         self.run_platform = 'SBG'
-        self.sbg_task_id = None
+        self.sbg_task_id = ''
         self.sbg_mounted_volume_ids = []
         self.sbg_import_ids = []
         self.sbg_export_ids = []
-        
+        self.award = '1U01CA200059-01'
+        self.lab = '4dn-dcic-lab'
+        self.input_files = metadata_input
+        self.parameters = metadata_parameters
 
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+    '''
+    class __metaclass__(type):
+        def __iter__(self):
+            for attr in dir(WorkflowRunMetadata):
+                if not attr.startswith("__"):
+                    yield(attr)        
+    '''
 
 class SBGWorkflowRun(object): ## one object per workflow run
 
     base_url = "https://api.sbgenomics.com/v2"
 
-    def __init__(self, token, project_id):
+    def __init__(self, token, project_id, app_name):
         self.token=token
         self.header={ "X-SBG-Auth-Token" : token, "Content-type" : "application/json" }
         self.project_id=project_id
+        self.app_name = app_name
         self.volume_list=[]    ## list of volumes mounted for the current run. We keep the information here so that they can be deleted later
         self.import_id_list=[]    ## list of import ids for the files imported for the current run.
-        self.task_id=None    ## task_id for the current workflow run. It will be assigned after draft task is successfully created. We keep the information here, so we can re-run the task if it fails and also for the sanity check - so that we only run tasks that we created.
+        self.task_id=''    ## task_id for the current workflow run. It will be assigned after draft task is successfully created. We keep the information here, so we can re-run the task if it fails and also for the sanity check - so that we only run tasks that we created.
         self.task_input=None    ## SBGTaskInput object
 
-    def sbg2workflowrun (workflow_uuid):
-        WorkflowRunMetadata wr (workflow_uuid)
+
+    def sbg2workflowrun (self, workflow_uuid, metadata_input=[], metadata_parameters=[]):
+        wr = WorkflowRunMetadata(workflow_uuid, metadata_input, metadata_parameters)
+        wr.title = self.app_name + " run " + str(datetime.datetime.now())
         wr.sbg_task_id=self.task_id
         wr.sbg_mounted_volume_ids=[]
         for x in self.volume_list:
@@ -525,7 +542,7 @@ def post_to_metadata(keypairs_file, post_item, schema_name):
         print("post error")
         raise e
 
-    print(json.dumps(response))
+    return(response)
 
 
 @app.route("/")
@@ -570,24 +587,33 @@ def RUN():
 
         ## get key json file (Jeremy: modify this later)
         try:
-               keypairs_file = get_keypairs_file(s3)
+                metadata_keypairs_file = get_keypairs_file(s3)
 
         except Exception as e:
                 print(e)
                 print('Error getting keypairs file from bucket {}.'.format(bucket))
                 raise e
 
+
         ## create a sbg workflow run object to use
-        sbg = SBGWorkflowRun(token, sbg_project_id)
+        sbg = SBGWorkflowRun(token, sbg_project_id, app_name)
 
         ## mount multiple input files to SBG S3 and
         ## create a SBGTaskInput object that contains multiple files and given parameters
         task_input = SBGTaskInput(sbg_project_id, app_name, parameter_dict)
+
+        ## initalize metadata parameters and input file array
+        metadata_parameters=[]
+        for k,v in parameter_dict.iteritems():
+            metadata_parameters.append = { "workflow_argument_name": k, "value": v }
+        metadata_input= []
+
         for e in input_file_list:
 
                 bucket = e.get('bucket_name').encode('utf8')
                 key = e.get('object_key').encode('utf8')
                 workflow_argument = e.get('workflow_argument_name').encode('utf8')
+                key_uuid = e.get('uuid').encode('utf8')
         
                 ## check the bucket and key
                 try:
@@ -600,7 +626,7 @@ def RUN():
                 ## mount the bucket and import the file
                 try: 
                         sbg_volume = SBGVolume()
-                        sbg_create_volume_response = sbg.create_volumes (sbg_volume, bucket, public_key=access_key[0], secret_key=access_key[1])
+                        sbg_create_volume_response = sbg.create_volumes (sbg_volume, bucket, public_key=access_key[0], secret_key=access_key[1], bucket_object_prefix = key_uuid + '/' )
                         print(sbg_create_volume_response)    ## DEBUGGING
                         sbg_import_id = sbg.import_volume_content (sbg_volume, key)
                         print(sbg_import_id)
@@ -617,12 +643,12 @@ def RUN():
                         sbg_file_name = sbg_check_import_response.get('result').get('name')
                         sbg_file_id = sbg_check_import_response.get('result').get('id')
                         task_input.add_inputfile( sbg_file_name, sbg_file_id, workflow_argument )
+                        metadata_input.append( { "workflow_argument_name": workflow_argument, "value": key_uuid })
                 
                 except Exception as e:
                         print(e)
                         print('Error mounting/importing the file to SBG') 
                         raise e 
-
 
         # run a validatefiles task 
         try:
@@ -639,7 +665,6 @@ def RUN():
         # check task
         try:
                 check_task_response = sbg.check_task()
-                return( check_task_response )
 
         except Exception as e:
                 print(e)
@@ -648,9 +673,11 @@ def RUN():
         
         # post to metadata
         try:
-                wr = sbg.sbg2workflowrun(workflow_uuid)
-                resp = post_to_metadata(metadata_key_file, wr, "workflow_run_sbg")
-                print(resp)
+                wr = sbg.sbg2workflowrun(workflow_uuid, metadata_input, metadata_parameters)
+                print(json.dumps(wr))
+                workflow_post_resp = post_to_metadata(metadata_keypairs_file, wr, "workflow_run_sbg")
+
+                return( { "sbg_task": check_task_response, "metadata_object": workflow_post_resp} )
 
         except Exception as e:
                 print(e)
