@@ -653,6 +653,7 @@ def RUN():
         # run a validatefiles task 
         try:
                 #task_data = sbg.create_data_payload_validatefiles( sbg_check_import_response)
+                print(json.dumps(task_input.__dict__, indent=4))
                 create_task_response = sbg.create_task( task_input )
                 run_response = sbg.run_task()
 

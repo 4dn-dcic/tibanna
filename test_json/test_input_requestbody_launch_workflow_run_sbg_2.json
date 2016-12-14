@@ -1,22 +1,26 @@
 {
   "input_files": [
     {
-      "bucket_name": "4dn-tool-evaluation-files",
-      "object_key": "___GM12878_SRR1658581_1pc_1_R1.fastq",
+      "bucket_name": "encoded-4dn-files",
+      "object_key": "4DNFI067AFHV.fastq.gz",
+      "uuid": "46e82a90-49e5-4c33-afab-9ec90d65cca1",
       "workflow_argument_name": "fastq1"
     },
     {
-      "bucket_name": "4dn-tool-evaluation-files",
-      "object_key": "___GM12878_SRR1658581_1pc_1_R2.fastq",
+      "bucket_name": "encoded-4dn-files",
+      "object_key": "4DNFI067AFHX.fastq.gz",
+      "uuid": "46e82a90-49e5-4c33-afab-9ec90d65cca2",
       "workflow_argument_name": "fastq2"
     },
     {
-      "bucket_name": "4dn-tool-evaluation-files",
-      "object_key": "__hg19-0.7.13.bwaIndex.tgz",
+      "bucket_name": "encoded-4dn-files",
+      "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
+      "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
       "workflow_argument_name": "bwa_index"
     }
   ],
-  "app_name": "bwa-mem",
+  "workflow_uuid": "02d636b9-d82d-4da9-950c-2ca994a0943e",
+  "app_name": "hi-c-processing-parta",
   "parameters": {
     "nThreads": 8
   }
