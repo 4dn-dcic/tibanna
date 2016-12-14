@@ -41,10 +41,16 @@ class SBGVolume:
 
 
 class SBGTaskInput(object):
-    def __init__(self, sbg_project_id, app_name, inputs={}): 
+    def __init__(self, sbg_project_id, app_name, input_param={}): 
         self.app = sbg_project_id + "/" + app_name
         self.project = sbg_project_id
-        self.inputs = inputs.copy()
+        self.inputs = {}
+        for k,v in input_param.iteritems():
+            if isinstance(k, (str, unicode)):
+                k= k.encode('utf-8')
+            if isinstance(v, (str, unicode)):
+                v= v.encode('utf-8')
+            self.add_inputparam(v, k)
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -600,16 +606,26 @@ def RUN():
 
         ## mount multiple input files to SBG S3 and
         ## create a SBGTaskInput object that contains multiple files and given parameters
+        print(json.dumps(parameter_dict))
         task_input = SBGTaskInput(sbg_project_id, app_name, parameter_dict)
+        print(task_input.__dict__)
 
         ## initalize metadata parameters and input file array
         metadata_parameters=[]
         for k,v in parameter_dict.iteritems():
-            metadata_parameters.append = { "workflow_argument_name": k, "value": v }
+            if isinstance(k, (str, unicode)):
+                k = k.encode('utf-8')
+            if isinstance(v, (str, unicode)):
+                v = v.encode('utf-8')
+            else:
+                v = str(v)
+            metadata_parameters.append( { "workflow_argument_name": k, "value": v } )
+        print(metadata_parameters)
         metadata_input= []
 
         for e in input_file_list:
 
+                print(e)
                 bucket = e.get('bucket_name').encode('utf8')
                 key = e.get('object_key').encode('utf8')
                 workflow_argument = e.get('workflow_argument_name').encode('utf8')
