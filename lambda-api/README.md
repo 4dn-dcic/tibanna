@@ -30,6 +30,11 @@ http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/run < ../test_
 ## Export call
 ## checking status and exporting the output file (the task_id should be valid and once the file is exported you can't run it again.)
 http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/export < ../test_json/test_input_requestbody_export_sbg.json
+
+## Finalize call
+## checks that all exports are done and updates the file_processed metadata
+http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/finalize < ../test_json/test_input_requestbody_finalize_sbg.json
+
 ```
 
 Note: the tests work only when the input file import from a previous run using the same input files is removed from SBG.

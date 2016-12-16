@@ -330,7 +330,8 @@ class SBGWorkflowRun(object): ## one object per workflow run
     def export_all_output_files(self, sbg_volume, sbg_run_detail_resp):
     
         self.export_report = []
-    
+        self.export_id_list = []
+
         workflow_run_file_type='output_files'
     
         # export all output files to s3
@@ -341,6 +342,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
                  # export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
                  export_id = generate_uuid()  ## temporary
                  self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
+                 self.export_id_list.append(export_id)
     
             elif isinstance(v, list):
                  for v_el in v:
@@ -350,6 +352,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
                              # export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
                              export_id = generate_uuid()  ## temporary
                              self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
+                             self.export_id_list.append(export_id)
 
         print(self.export_report)  # debugging
 
@@ -426,7 +429,13 @@ class SBGWorkflowRun(object): ## one object per workflow run
         response = requests.get(export_url, headers=self.header, data=json.dumps(data))
         return(response.json())
 
-
+    def delete_volumes(self):
+        response_all=[]
+        for sbg_volume in self.sbg_volume_list:
+            url = self.base_url + "/storage/volumes/" + sbg_volume.id
+            response = requests.get(export_url, headers=self.header, data=json.dumps({}))
+            response_all.append(response)
+        return({"responses": response_all})
 
 ## function that grabs SBG token from a designated S3 bucket
 def get_sbg_token (s3):
@@ -991,6 +1000,7 @@ def FINALIZE_(event):
                 import_ids = get_resp.get('sbg_import_ids')
                 export_ids = get_resp.get('sbg_export_ids')
                 mounted_volume_ids = get_resp.get('sbg_mounted_volume_ids')
+                outputfile_uuid_list = [ ff.get('value') for ff in get_resp.get('output_files')]
 
                 print("get workflow_run")
                 print(get_resp)
@@ -1010,7 +1020,7 @@ def FINALIZE_(event):
                 raise e
 
 
-        # check task 
+        # check export status 
         try:
                 overall_export_status = ''
                 for export_id in export_ids:
@@ -1023,17 +1033,46 @@ def FINALIZE_(event):
                 if overall_export_status == '':
                     overall_export_status = 'COMPLETED'
 
-                if overall_export_status == 'PENDING' or overall_export_status == 'FAILED':
-                    return({"status": overall_export_status})
-
         except Exception as e:
                 print(e)
                 print('Error getting export status')
                 raise e
 
-        ## other things
-        #     1. update workflow_run metadata
-        #     2. either update file metadata or parse file and get qc metric
+
+        # patch to file_processed metadata
+        all_patch_resp = []
+        if overall_export_status == 'COMPLETED':
+
+            # delete mounted volumes
+            try:
+                delete_resp = sbg.delete_volumes()
+           
+            except Exception as e:
+                print(e)
+                print('Error deleting mounted volumes on SBG')
+                raise e    
+
+            # update file_processed metadata
+            try:
+                for uuid in outputfile_uuid_list:
+                    patch_resp = patch_to_metadata(metadata_keypairs_file,{"status": "uploaded"}, uuid)
+                    all_patch_resp.append(patch_resp)
+
+            except Exception as e:
+                print(e)
+                print('Error patching to file_processed metadata')
+                raise e    
+
+            # patch to workflow_run_sbg metadata
+            try:
+                workflow_patch_resp = patch_to_metadata(metadata_keypairs_file, {"run_status": "complete"}, workflow_run_uuid)
+       
+            except Exception as e:
+                print(e)
+                print('Error patching to workflow_run metadata')
+                raise e    
+
+        return({"delete_resp": delete_resp, "SBG_export_status": overall_export_status, "file_patch_response": all_patch_resp, "workflow_run_patch_response": workflow_patch_resp})
 
 
 
