@@ -449,8 +449,9 @@ class SBGWorkflowRun(object): ## one object per workflow run
         response_all=[]
         for sbg_volume in self.volume_list:
             url = self.base_url + "/storage/volumes/" + sbg_volume.id
-            response = requests.get(url, headers=self.header, data=json.dumps({}))
+            response = requests.delete(url, headers=self.header)
             response_all.append(response)
+        self.volume_list=[]
         return({"responses": response_all})
 
     def delete_imported_files(self):
@@ -459,8 +460,9 @@ class SBGWorkflowRun(object): ## one object per workflow run
             import_detail = self.get_details_of_import(import_id)
             imported_file_id = import_detail.get('result').get('id')
             url = self.base_url + "/storage/files/" + imported_file_id
-            response = requests.get(url, headers=self.header, data=json.dumps({}))
+            response = requests.delete(url, headers=self.header)
             response_all.append(response)
+        self.import_id_list=[]
         return({"responses": response_all})
 
 
@@ -470,7 +472,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
             export_detail = self.check_export(export_id)
             exported_file_id = export_detail.get('source').get('file')
             url = self.base_url + "/storage/files/" + exported_file_id
-            response = requests.get(url, headers=self.header, data=json.dumps({}))
+            response = requests.delete(url, headers=self.header)
             response_all.append(response)
         return({"responses": response_all})
 
