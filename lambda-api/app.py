@@ -429,6 +429,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
         response = requests.get(export_url, headers=self.header, data=json.dumps(data))
         return(response.json())
 
+
     def delete_volumes(self):
         response_all=[]
         for sbg_volume in self.volume_list:
@@ -436,6 +437,28 @@ class SBGWorkflowRun(object): ## one object per workflow run
             response = requests.get(url, headers=self.header, data=json.dumps({}))
             response_all.append(response)
         return({"responses": response_all})
+
+    def delete_imported_files(self):
+        response_all=[]
+        for import_id in self.import_id_list:
+            import_detail = self.get_details_of_import(import_id)
+            imported_file_id = import_detail.get('result').get('id')
+            url = self.base_url + "/storage/files/" + imported_file_id
+            response = requests.get(url, headers=self.header, data=json.dumps({}))
+            response_all.append(response)
+        return({"responses": response_all})
+
+
+    def delete_exported_files(self):
+        response_all=[]
+        for export_id in self.export_id_list:
+            export_detail = self.check_export(export_id)
+            exported_file_id = export_detail.get('result').get('id')
+            url = self.base_url + "/storage/files/" + exported_file_id
+            response = requests.get(url, headers=self.header, data=json.dumps({}))
+            response_all.append(response)
+        return({"responses": response_all})
+
 
 ## function that grabs SBG token from a designated S3 bucket
 def get_sbg_token (s3):
@@ -505,6 +528,7 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
 
     outputfiles=[]
     processed_files = []    
+    export_id_list = []
 
     report_dict = sbg_run_detail_resp
 
@@ -514,16 +538,20 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
         if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
              sbg_filename = v['name']
              uuid = processed_files_report[sbg_filename]['uuid']
+             export_id = processed_files_report[sbg_filename]['export_id']
              outputfiles.append({'workflow_argument_name':k, 'value':uuid})
+             export_id_list.append(export_id)
 
         elif isinstance(v, list):
              for v_el in v:
                     if isinstance(v_el, dict) and v_el.get('class')=='File':    ## This is a file (v is an array of files)
                          sbg_filename = v['name']
                          uuid = processed_files_report[sbg_filename]['uuid']
+                         export_id = processed_files_report[sbg_filename]['export_id']
                          outputfiles.append({'workflow_argument_name':k, 'value':uuid})
+                         export_id_list.append(export_id)
 
-    return ({"output_files": outputfiles, "run_status": "output_files_transferring"})
+    return ({"output_files": outputfiles, "run_status": "output_files_transferring", "sbg_export_ids": export_id_list})
 
 
 
@@ -1000,7 +1028,7 @@ def FINALIZE_(event):
                 import_ids = get_resp.get('sbg_import_ids')
                 export_ids = get_resp.get('sbg_export_ids')
                 mounted_volume_ids = get_resp.get('sbg_mounted_volume_ids')
-                outputfile_uuid_list = [ ff.get('value') for ff in get_resp.get('output_files')]
+                outputfile_accession_list = [ ff.get('value') for ff in get_resp.get('output_files')]
 
                 print("get workflow_run")
                 print(get_resp)
@@ -1024,7 +1052,7 @@ def FINALIZE_(event):
         try:
                 overall_export_status = ''
                 for export_id in export_ids:
-                    export_status = check_export_status (token, export_id)
+                    export_status = sbg.get_export_status(export_id)
                     if export_status == "FAILED":
                         overall_export_status = "FAILED"
                         break
@@ -1041,21 +1069,35 @@ def FINALIZE_(event):
 
         # patch to file_processed metadata
         all_patch_resp = []
+        delete_resp_volume = {}
+        delete_resp_import = {}
+        delete_resp_export = {}
+        workflow_patch_resp = {}
         if overall_export_status == 'COMPLETED':
 
             # delete mounted volumes
             try:
-                delete_resp = sbg.delete_volumes()
+                delete_resp_volume = sbg.delete_volumes()
            
             except Exception as e:
                 print(e)
                 print('Error deleting mounted volumes on SBG')
                 raise e    
 
+            # delete imported input files and exported output files on SBG
+            try:
+               delete_resp_import = sbg.delete_imported_files()
+               delete_resp_export = sbg.delete_exported_files()
+
+            except Exception as e:
+                print(e)
+                print('Error deleting imported/exported files on SBG')
+                raise e    
+
             # update file_processed metadata
             try:
-                for uuid in outputfile_uuid_list:
-                    patch_resp = patch_to_metadata(metadata_keypairs_file,{"status": "uploaded"}, uuid)
+                for accession in outputfile_accession_list:
+                    patch_resp = patch_to_metadata(metadata_keypairs_file,{"status": "uploaded"}, None, accession, None)
                     all_patch_resp.append(patch_resp)
 
             except Exception as e:
@@ -1065,14 +1107,14 @@ def FINALIZE_(event):
 
             # patch to workflow_run_sbg metadata
             try:
-                workflow_patch_resp = patch_to_metadata(metadata_keypairs_file, {"run_status": "complete"}, workflow_run_uuid)
+                workflow_patch_resp = patch_to_metadata(metadata_keypairs_file, {"run_status": "complete"}, None, None, workflow_run_uuid)
        
             except Exception as e:
                 print(e)
                 print('Error patching to workflow_run metadata')
                 raise e    
 
-        return({"delete_resp": delete_resp, "SBG_export_status": overall_export_status, "file_patch_response": all_patch_resp, "workflow_run_patch_response": workflow_patch_resp})
+        return({"SBG_export_status": overall_export_status, "delete_resp": [delete_resp_volume, delete_resp_import, delete_resp_export], "file_patch_response": all_patch_resp, "workflow_run_patch_response": workflow_patch_resp})
 
 
 
