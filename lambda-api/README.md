@@ -43,8 +43,16 @@ Note: the tests work only when the input file import from a previous run using t
 
 ## local test
 ```
-# If you run local server, first run the following
+# If you're using a local server, first run the following
 aws s3 cp ~/keypairs.json s3://4dn-dcic-sbg/local_kaypairs.json
+
+# If you're using a test server, toggle the following object_for_keypairs at line 23 of app.py
+
+# toggle the following depending on which server you're using. If you're using local server, do 'aws s3 cp ~/keypairs.json s3://4dn-dcic-sbg/local_keypairs.json' before using the lambda.
+object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
+#object_for_keypairs = "test_keypairs.json" # an object containing a sbg token
+
+# The fastq input files in test_json examples are currently in both local and test s3 buckets.
 
 # testing without deploying lambda
 python app.py -j ../test_json/test_input_requestbody_launch_workflow_run_sbg.json -c 'run'
