@@ -113,11 +113,6 @@ class WorkflowRunMetadata(object):
 
 class FileProcessedMetadata(object):
 
-    # default assign to 4dn-dcic - later change to input file submitter
-    notes = "sample dcic notes"
-    lab= "4dn-dcic-lab"
-    submitted_by= "admin@admin.com"
-    award= "1U01CA200059-01"
 
     def __init__(self, uuid, accession, filename, status, workflow_run_uuid):
         self.accession = accession
@@ -125,6 +120,11 @@ class FileProcessedMetadata(object):
         self.file_format = "other"  # we will deal with this later
         self.status = status 
         self.workflow_run = workflow_run_uuid
+        # default assign to 4dn-dcic - later change to input file submitter
+        self.notes = "sample dcic notes"
+        self.lab= "4dn-dcic-lab"
+        self.submitted_by= "admin@admin.com"
+        self.award= "1U01CA200059-01"
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
