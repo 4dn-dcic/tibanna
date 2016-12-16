@@ -88,7 +88,7 @@ class SBGTaskInput(object):
 class WorkflowRunMetadata(object):
 
 
-    def __init__(self, workflow_uuid, metadata_input=[], metadata_parameters=[]):
+    def __init__(self, workflow_uuid, metadata_input=[], metadata_parameters=[], task_id=None, import_ids=None, export_ids=None, mounted_volume_ids=None):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow_uuid (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -96,10 +96,23 @@ class WorkflowRunMetadata(object):
         self.uuid = generate_uuid()
         self.workflow = workflow_uuid
         self.run_platform = 'SBG'   # for now we use only SBG - we can change it later as we add tibanna
-        self.sbg_task_id = ''
-        self.sbg_mounted_volume_ids = []
-        self.sbg_import_ids = []
-        self.sbg_export_ids = []
+        if task_id is None:
+            self.sbg_task_id = ''
+        else:
+            self.sbg_task_id = task_id
+
+        if mounted_volume_ids is None:
+            self.sbg_mounted_volume_ids = []
+        else:
+            self.sbg_mounted_volume_ids = mounted_volume_ids
+        if import_ids is None:
+            self.sbg_import_ids = []
+        else:
+            self.sbg_import_ids = import_ids
+        if export_ids is None:
+            self.sbg_export_ids = []
+        else:
+            self.sbg_export_ids = export_ids
         self.input_files = metadata_input
         self.parameters = metadata_parameters
         self.output_files = []
@@ -108,6 +121,9 @@ class WorkflowRunMetadata(object):
 
     def append_outputfile(outjson):
         self.output_files.append(outjson)
+
+    def append_volumes(sbg_volume):
+        self.sbg_mounted_volume_ids.append(sbg_volume.id)
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -339,8 +355,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
             if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
                  sbg_file_id = v['path'].encode('utf8')
                  sbg_filename = v['name'].encode('utf8')
-                 # export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
-                 export_id = generate_uuid()  ## temporary
+                 export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
                  self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
                  self.export_id_list.append(export_id)
     
@@ -349,8 +364,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
                         if isinstance(v_el, dict) and v_el.get('class')=='File':    ## This is a file (v is an array of files)
                              sbg_file_id = v['path'].encode('utf8')
                              sbg_filename = v['name'].encode('utf8')
-                             # export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
-                             export_id = generate_uuid()  ## temporary
+                             export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
                              self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
                              self.export_id_list.append(export_id)
 
@@ -417,8 +431,9 @@ class SBGWorkflowRun(object): ## one object per workflow run
 
     def get_export_status (self, export_id):
         result = self.check_export(export_id)
+        print(result)
         if result.has_key('state'):
-            return self.check_export(token, export_id).get('state')
+            return self.check_export(export_id).get('state')
         else:
             return None
 
@@ -453,7 +468,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
         response_all=[]
         for export_id in self.export_id_list:
             export_detail = self.check_export(export_id)
-            exported_file_id = export_detail.get('result').get('id')
+            exported_file_id = export_detail.get('source').get('file')
             url = self.base_url + "/storage/files/" + exported_file_id
             response = requests.get(url, headers=self.header, data=json.dumps({}))
             response_all.append(response)
@@ -524,7 +539,7 @@ def generate_rand_accession ():
 
 # This function returns a new workflow_run dictionary; it should be updated so that existing workflow_run objects are modified.
 # Input files are omitted here. They should already be in the workflow_run.
-def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_report):
+def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_report, sbg_volume, wr):
 
     outputfiles=[]
     processed_files = []    
@@ -551,7 +566,8 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
                          outputfiles.append({'workflow_argument_name':k, 'value':uuid})
                          export_id_list.append(export_id)
 
-    return ({"output_files": outputfiles, "run_status": "output_files_transferring", "sbg_export_ids": export_id_list})
+    wr.sbg_mounted_volume_ids.append(sbg_volume.id)
+    return ({"output_files": outputfiles, "run_status": "output_files_transferring", "sbg_export_ids": export_id_list, "sbg_mounted_volume_ids": wr.sbg_mounted_volume_ids})
 
 
 
@@ -904,6 +920,16 @@ def EXPORT_(event):
                 raise e
 
 
+        # create a WorkflowRunMetadata object
+        try:
+                wr = WorkflowRunMetadata(workflow_run_uuid, task_id=task_id, import_ids=import_ids, mounted_volume_ids=mounted_volume_ids)
+
+        except Exception as e:
+                print(e)
+                print('Error creating an WorkflowRunMetadata class object')
+                raise e
+
+
         # check task 
         try:
                 check_task_response = sbg.check_task()
@@ -957,7 +983,7 @@ def EXPORT_(event):
                     raise e
 
             try:
-                 metadata_workflow_patch = get_output_patch_for_workflow_run(check_task_response, processed_files_result['report'])
+                 metadata_workflow_patch = get_output_patch_for_workflow_run(check_task_response, processed_files_result['report'], sbg_volume, wr)
                  print(metadata_workflow_patch)
                  wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, None, None, workflow_run_uuid)
                  print(wr_patch_resp)
@@ -1047,6 +1073,14 @@ def FINALIZE_(event):
                 print('Error creating an SBGWorkflowRun class object')
                 raise e
 
+        # create a WorkflowRunMetadata object
+        try:
+                wr = WorkflowRunMetadata(workflow_run_uuid, task_id=task_id, import_ids=import_ids, export_ids=export_ids, mounted_volume_ids=mounted_volume_ids)
+
+        except Exception as e:
+                print(e)
+                print('Error creating an WorkflowRunMetadata class object')
+                raise e
 
         # check export status 
         try:
