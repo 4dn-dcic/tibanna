@@ -1131,10 +1131,10 @@ if __name__ == "__main__":
         event = json.load(f)
 
     if args.command == 'run':
-        RUN_(event)
+        print( RUN_(event) )
     elif args.command == 'export':
-        EXPORT_(event)
+        print( EXPORT_(event) )
     else:
-        FINALIZE_(event)
+        print( FINALIZE_(event) )
 
 

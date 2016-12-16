@@ -38,7 +38,7 @@ http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/finalize < ../
 ```
 
 Note: the tests work only when the input file import from a previous run using the same input files is removed from SBG.
-(contact soo to get endpoint uri)
+(contact soo to get API_ID)
 
 
 ## local test
@@ -62,6 +62,16 @@ python app.py -j ../test_json/test_input_requestbody_finalize_sbg.json -c 'final
  
 ```
 
+## Test with deployed lambda
+```
+# first deploy it
+chalice deploy
+
+# same as above (modify the uuid's in test_json files ) but use http POST instead of python app.py
+http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/run < ../test_json/test_input_requestbody_launch_workflow_run_sbg.json
+http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/export < ../test_json/test_input_requestbody_export_sbg.json
+http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/finalize < ../test_json/test_input_requestbody_finalize_sbg.json
+```
 
 
 ## Run call
