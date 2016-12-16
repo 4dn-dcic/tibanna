@@ -949,12 +949,12 @@ def FINALIZE():
         event = app.current_request.json_body
         return(FINALIZE_(event))
 
+
 def FINALIZE_(event):
 
         # Get the object from the event and show its content type
-        task_id = event['task_id'].encode('utf8')     
-        export_id_list = event['export_id_list']
-        output_handling_type = event['output_handler'].encode('utf8')
+        workflow_run_uuid = event['workflow_run_uuid']
+        output_handling_type = event['output_handler'].encode('utf8')  # not used by the function currently
 
         try:
                 s3 = boto3.resource('s3')
@@ -973,15 +973,47 @@ def FINALIZE_(event):
                 print(e)
                 print('Error getting token and access key from bucket {}.'.format(bucket))
                 raise e
-        
 
-        # create an sbg object
-        sbg = SBGWorkflowRun(token, sbg_project_id)
+        ## get metadata access key json file (Jeremy: modify this later)
+        try:
+                metadata_keypairs_file = get_keypairs_file(s3)
+
+        except Exception as e:
+                print(e)
+                print('Error getting keypairs file from bucket {}.'.format(bucket))
+                raise e
+
+        ## get metadata for workflow_run_sbg object from given uuid
+        try:
+                get_resp = get_metadata(metadata_keypairs_file, None, None, workflow_run_uuid)
+                app_name = get_resp.get('name')
+                task_id = get_resp.get('sbg_task_id')
+                import_ids = get_resp.get('sbg_import_ids')
+                export_ids = get_resp.get('sbg_export_ids')
+                mounted_volume_ids = get_resp.get('sbg_mounted_volume_ids')
+
+                print("get workflow_run")
+                print(get_resp)
+
+        except Exception as e:
+                print(e)
+                print('Error getting metadata for workflow_run object for uuid {}'.format(workflow_run_uuid))
+                raise e
+
+
+        # create an SBGWorkflowRun object
+        try:
+                sbg = SBGWorkflowRun(token, sbg_project_id, app_name, task_id=task_id, import_ids=import_ids, mounted_volume_ids = mounted_volume_ids, export_ids = export_ids)
+        except Exception as e:
+                print(e)
+                print('Error creating an SBGWorkflowRun class object')
+                raise e
+
 
         # check task 
         try:
                 overall_export_status = ''
-                for export_id in export_id_list:
+                for export_id in export_ids:
                     export_status = check_export_status (token, export_id)
                     if export_status == "FAILED":
                         overall_export_status = "FAILED"
@@ -1000,7 +1032,7 @@ def FINALIZE_(event):
                 raise e
 
         ## other things
-        #     1. update workflow metadata
+        #     1. update workflow_run metadata
         #     2. either update file metadata or parse file and get qc metric
 
 
@@ -1012,14 +1044,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Arguments")
     parser.add_argument("-j", "--json", help="Chrom.size file, tab-delimited")
-    parser.add_argument("-c", "--command", help="Either 'run' or 'export'")
+    parser.add_argument("-c", "--command", help="Either 'run' or 'export' or 'finalize'")
     args = parser.parse_args()
     with open(args.json,'r') as f:
         event = json.load(f)
 
     if args.command == 'run':
         RUN_(event)
-    else:
+    elif args.command == 'export':
         EXPORT_(event)
- 
+    else:
+        FINALIZE_(event)
+
 
