@@ -431,9 +431,9 @@ class SBGWorkflowRun(object): ## one object per workflow run
 
     def delete_volumes(self):
         response_all=[]
-        for sbg_volume in self.sbg_volume_list:
+        for sbg_volume in self.volume_list:
             url = self.base_url + "/storage/volumes/" + sbg_volume.id
-            response = requests.get(export_url, headers=self.header, data=json.dumps({}))
+            response = requests.get(url, headers=self.header, data=json.dumps({}))
             response_all.append(response)
         return({"responses": response_all})
 
@@ -931,7 +931,7 @@ def EXPORT_(event):
             try:
                  metadata_workflow_patch = get_output_patch_for_workflow_run(check_task_response, processed_files_result['report'])
                  print(metadata_workflow_patch)
-                 wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, uuid=workflow_run_uuid)
+                 wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, None, None, workflow_run_uuid)
                  print(wr_patch_resp)
                  return ( { "workflow_run_patch": wr_patch_resp, "processed_files": metadata_processed_file } )
 
@@ -943,8 +943,8 @@ def EXPORT_(event):
 
         else:
             try:
-                metadata_workflow_patch = {"run_status": run_status}
-                wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, uuid=workflow_run_uuid)
+                metadata_workflow_patch = {"run_status": "running"}
+                wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, None, None, workflow_run_uuid)
                 return ( { "workflow_run_patch": wr_patch_resp, "processed_files": []} )
 
             except Exception as e:

@@ -41,6 +41,29 @@ Note: the tests work only when the input file import from a previous run using t
 (contact soo to get endpoint uri)
 
 
+## local test
+```
+# If you run local server, first run the following
+aws s3 cp ~/keypairs.json s3://4dn-dcic-sbg/local_kaypairs.json
+
+# testing without deploying lambda
+python app.py -j ../test_json/test_input_requestbody_launch_workflow_run_sbg.json -c 'run'
+
+# then add the new workflow_run_sbg object uuid into the following file (modify just the 'workflow_run_uuid'): ../test_json/test_input_requestbody_export_sbg.json 
+
+python app.py -j ../test_json/test_input_requestbody_export_sbg.json -c 'export'
+
+# do it again, if task still running (run_status = 'RUNNING' not 'COMPLETED').
+
+# then add the new workflow_run_sbg object uuid into the following file (modify just the 'workflow_run_uuid'): ../test_json/test_input_requestbody_finalize_sbg.json 
+
+python app.py -j ../test_json/test_input_requestbody_finalize_sbg.json -c 'finalize'
+# do it again, if export is still running.
+ 
+```
+
+
+
 ## Run call
 * mounts/imports input files from s3 and launch a task in SBG.
 * updates metadata schema for workflow_run_sbg, using fdnDCIC.
