@@ -81,6 +81,20 @@ http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/export < ../te
 http POST https://$API_ID.execute-api.us-east-1.amazonaws.com/dev/finalize < ../test_json/test_input_requestbody_finalize_sbg.json
 ```
 
+## Example (good) responses
+export (running)
+```
+{'workflow_run_patch': {u'status': u'success', u'@graph': [{u'sbg_mounted_volume_ids': [u'4dn-labor/4dn_s3x43ajz7e'], u'run_status': u'running', u'sbg_export_ids': [], u'aliases': [], u'submitted_by': u'/users/986b362f-4eb6-4a9c-8173-3ab267307e3a/', u'documents': [], u'uuid': u'5fd8ec8a-49e5-4c33-afab-cc82b180e0ff', u'parameters': [], u'title': u'md5 run 2016-12-16 22:32:04.400947', u'schema_version': u'1', u'sbg_task_id': u'ed008be9-5252-4baa-89e1-3c06ec97172d', u'output_files': [], u'status': u'in review by lab', u'run_platform': u'SBG', u'workflow': u'/workflows/d3f25cd3-e726-4b3c-a022-48f844474b41/', u'sbg_import_ids': [u'9F7t7O0gi0sHmwtLr8kP3Ya5ie0EZl6z'], u'award': u'/awards/1U01CA200059-01/', u'lab': u'/labs/4dn-dcic-lab/', u'@id': u'/workflow-runs-sbg/5fd8ec8a-49e5-4c33-afab-cc82b180e0ff/', u'input_files': [{u'workflow_argument_name': u'input_file', u'value': u'/files-fastq/4DNFI067AFHV/'}], u'date_created': u'2016-12-16T21:32:04.422542+00:00', u'@type': [u'WorkflowRunSbg', u'Item']}], u'@type': [u'result']}, 'processed_files': []}
+```
+export (done)
+```
+{'workflow_run_patch': {u'status': u'success', u'@graph': [{u'sbg_mounted_volume_ids': [u'4dn-labor/4dn_s3x43ajz7e'], u'run_status': u'output_files_transferring', u'sbg_export_ids': [u'42d036fc-49e5-4c33-afab-0e74f249a3e1'], u'aliases': [], u'submitted_by': u'/users/986b362f-4eb6-4a9c-8173-3ab267307e3a/', u'documents': [], u'uuid': u'5fd8ec8a-49e5-4c33-afab-cc82b180e0ff', u'parameters': [], u'title': u'md5 run 2016-12-16 22:32:04.400947', u'schema_version': u'1', u'sbg_task_id': u'ed008be9-5252-4baa-89e1-3c06ec97172d', u'output_files': [{u'workflow_argument_name': u'report', u'value': u'/files-processed/4DNFC7279JAQ/'}], u'status': u'in review by lab', u'run_platform': u'SBG', u'workflow': u'/workflows/d3f25cd3-e726-4b3c-a022-48f844474b41/', u'sbg_import_ids': [u'9F7t7O0gi0sHmwtLr8kP3Ya5ie0EZl6z'], u'award': u'/awards/1U01CA200059-01/', u'lab': u'/labs/4dn-dcic-lab/', u'@id': u'/workflow-runs-sbg/5fd8ec8a-49e5-4c33-afab-cc82b180e0ff/', u'input_files': [{u'workflow_argument_name': u'input_file', u'value': u'/files-fastq/4DNFI067AFHV/'}], u'date_created': u'2016-12-16T21:32:04.422542+00:00', u'@type': [u'WorkflowRunSbg', u'Item']}], u'@type': [u'result']}, 'processed_files': {'status': 'uploading', 'submitted_by': '4dndcic@gmail.com', 'uuid': '4d4e843b-49e5-4c33-afab-5b79f9d8cdd0', 'file_format': 'other', 'notes': 'sample dcic notes', 'accession': '4DNFC7279JAQ', 'lab': '4dn-dcic-lab', 'filename': '_34_report', 'award': '1U01CA200059-01'}}
+```
+finalize (pending)
+```
+{'SBG_export_status': 'PENDING', 'workflow_run_patch_response': {}, 'file_patch_response': [], 'delete_resp': [{}, {}, {}]}
+```
+
 
 ## Run call
 * mounts/imports input files from s3 and launch a task in SBG.
