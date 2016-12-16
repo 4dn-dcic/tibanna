@@ -19,8 +19,10 @@ bucket_for_token = "4dn-dcic-sbg" # an object containing a sbg token is in this 
 object_for_token = "token-4dn-labor" # an object containing a sbg token
 object_for_access_key = 's3-access-key-4dn-labor'    # an object containing security credentials for a user 'sbg_s3', who has access to 4dn s3 buckets. It's in the same bucket_for_token. Public_key\nsecret_key. We need this not for the purpose of lambda connecting to our s3, but SBG requires it for mounting our s3 bucket to the sbg s3.
 bucket_for_keypairs = "4dn-dcic-sbg" # an object containing a sbg token is in this bucket 
-#object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
-object_for_keypairs = "test_keypairs.json" # an object containing a sbg token
+
+# toggle the following depending on which server you're using. If you're using local server, do 'aws s3 cp ~/keypairs.json s3://4dn-dcic-sbg/local_keypairs.json' before using the lambda.
+object_for_keypairs = "local_keypairs.json" # an object containing a sbg token
+#object_for_keypairs = "test_keypairs.json" # an object containing a sbg token
 
 
 class SBGVolume:
@@ -85,8 +87,6 @@ class SBGTaskInput(object):
 
 class WorkflowRunMetadata(object):
 
-    award = '1U01CA200059-01'
-    lab = '4dn-dcic-lab'
 
     def __init__(self, workflow_uuid, metadata_input=[], metadata_parameters=[]):
         """Class for WorkflowRun that matches the 4DN Metadata schema
@@ -103,6 +103,8 @@ class WorkflowRunMetadata(object):
         self.input_files = metadata_input
         self.parameters = metadata_parameters
         self.output_files = []
+        self.award = '1U01CA200059-01'
+        self.lab = '4dn-dcic-lab'
 
     def append_outputfile(outjson):
         self.output_files.append(outjson)
@@ -114,16 +116,18 @@ class WorkflowRunMetadata(object):
 class FileProcessedMetadata(object):
 
 
-    def __init__(self, uuid, accession, filename, status, workflow_run_uuid):
+    def __init__(self, uuid, accession, filename, status, workflow_run_uuid=None):
+        self.uuid = uuid
         self.accession = accession
         self.filename = filename
         self.file_format = "other"  # we will deal with this later
         self.status = status 
-        self.workflow_run = workflow_run_uuid
+        if workflow_run_uuid is not None:
+            self.workflow_run = workflow_run_uuid
         # default assign to 4dn-dcic - later change to input file submitter
         self.notes = "sample dcic notes"
         self.lab= "4dn-dcic-lab"
-        self.submitted_by= "admin@admin.com"
+        self.submitted_by= "4dndcic@gmail.com"
         self.award= "1U01CA200059-01"
 
     def toJSON(self):
@@ -143,7 +147,7 @@ class SBGWorkflowRun(object): ## one object per workflow run
         self.import_id_list = import_ids    ## list of import ids for the files imported for the current run.
         self.task_id=task_id    ## task_id for the current workflow run. It will be assigned after draft task is successfully created. We keep the information here, so we can re-run the task if it fails and also for the sanity check - so that we only run tasks that we created.
         self.task_input = None    ## SBGTaskInput object
-        self.export_report = [{"filename": '', "export_id": id} in export_ids]
+        self.export_report = [{"filename": '', "export_id": id} for id in export_ids]
         self.export_id_list = export_ids
 
 
@@ -328,10 +332,9 @@ class SBGWorkflowRun(object): ## one object per workflow run
         self.export_report = []
     
         workflow_run_file_type='output_files'
-        file_type = 'outputs'
     
         # export all output files to s3
-        for k, v in sbg_run_detail_resp.get(file_type).iteritems():
+        for k, v in sbg_run_detail_resp.get('outputs').iteritems():
             if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
                  sbg_file_id = v['path'].encode('utf8')
                  sbg_filename = v['name'].encode('utf8')
@@ -367,11 +370,12 @@ class SBGWorkflowRun(object): ## one object per workflow run
             fill_report[filename] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
     
             # create a meta data file object
-            metadata = FileProcessedMetadata(uuid, accession, filename, "uploading", workflow_run_uuid)
+            # metadata = FileProcessedMetadata(uuid, accession, filename, "uploading", workflow_run_uuid)  # if I add workflow_run_uuis, I get an error message like : '577c2684-49e5-4c33-afab-9ec90d65faf3' is not of type 'WorkflowRun'
+            metadata = FileProcessedMetadata(uuid, accession, filename, "uploading")
             print(metadata.__dict__)
             processed_files.append(metadata.__dict__)
     
-        return ({"metadata":processed_files,"report": fill_report })
+        return ({"metadata": processed_files,"report": fill_report })
     
 
     # This function exports a file on SBG to a mounted output bucket and returns export_id
@@ -467,10 +471,14 @@ def get_access_key (s3):
 
 def generate_uuid ():
     rand_uuid_start=''
+    rand_uuid_end=''
     for i in xrange(8):
         r=random.choice('abcdef1234567890')
         rand_uuid_start += r
-        uuid=rand_uuid_start + "-49e5-4c33-afab-9ec90d65faf3"
+    for i in xrange(12):
+        r2=random.choice('abcdef1234567890')
+        rand_uuid_end += r2
+    uuid=rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
     return uuid
 
 def generate_rand_accession ():
@@ -478,7 +486,7 @@ def generate_rand_accession ():
     for i in xrange(8):
         r=random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
         rand_accession += r
-        accession = "4DNF"+rand_accession
+    accession = "4DNF"+rand_accession
     return accession
 
 
@@ -493,7 +501,7 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
 
     # input/output files
     # export files to s3, add to file metadata json, add to workflow_run dictionary
-    for k,v in report_dict.get(file_type).iteritems():
+    for k,v in report_dict.get('outputs').iteritems():
         if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
              sbg_filename = v['name']
              uuid = processed_files_report[sbg_filename]['uuid']
@@ -506,7 +514,7 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
                          uuid = processed_files_report[sbg_filename]['uuid']
                          outputfiles.append({'workflow_argument_name':k, 'value':uuid})
 
-    return ({"output_files": outputfiles, "status": "output_files_transferring"})
+    return ({"output_files": outputfiles, "run_status": "output_files_transferring"})
 
 
 
@@ -546,7 +554,7 @@ def post_to_metadata(keypairs_file, post_item, schema_name):
 
 
 
-def get_metadata(keypairs_file, schema_name="", schema_class_name="", uuid=""):
+def get_metadata(keypairs_file, schema_name=None, schema_class_name=None, uuid=None):
 
     assert os.path.isfile(str(keypairs_file))
 
@@ -581,6 +589,53 @@ def get_metadata(keypairs_file, schema_name="", schema_class_name="", uuid=""):
         raise e
 
 
+def patch_to_metadata(keypairs_file, patch_item, schema_class_name=None, accession=None, uuid=None):
+
+    assert os.path.isfile(keypairs_file)
+
+    try:
+        key = fdnDCIC.FDN_Key(keypairs_file, "default")
+    except Exception as e:
+        print(e)
+        print("key error")
+        raise e
+
+    try:
+        connection = fdnDCIC.FDN_Connection(key)
+    except Exception as e:
+        print(e)
+        print("connection error")
+        raise e
+
+    try:
+        if(schema_class_name is not None):
+            resp = fdnDCIC.get_FDN("/search/?type=" + schema_class_name, connection)
+            items_uuids = [i['uuid'] for i in resp['@graph']]
+        elif(accession is not None):
+            resp = fdnDCIC.get_FDN("/" + accession, connection)
+            item_uuid = resp.get('uuid')
+            items_uuids = [item_uuid]
+        elif(uuid is not None):
+            items_uuids = [uuid]
+        else:
+            items_uuids = []
+
+    except Exception as e:
+        print(e)
+        print("get error")
+        raise e
+
+    try:
+        for item_uuid in items_uuids:
+            response = fdnDCIC.patch_FDN(item_uuid, connection, patch_item)
+            return(response)
+
+    except Exception as e:
+        print(e)
+        print("get error")
+        raise e
+
+
 
 
 @app.route("/")
@@ -590,8 +645,10 @@ def index():
 
 @app.route("/run", methods=['POST'])
 def RUN():
-
         event = app.current_request.json_body
+        return(RUN_(event))
+
+def RUN_(event):
 
         input_file_list = event.get('input_files')
         app_name = event.get('app_name').encode('utf8')
@@ -864,9 +921,10 @@ def EXPORT_(event):
 
             try:
                  metadata_workflow_patch = get_output_patch_for_workflow_run(check_task_response, processed_files_result['report'])
-                 wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, "workflow_run_sbg")
+                 print(metadata_workflow_patch)
+                 wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, uuid=workflow_run_uuid)
                  print(wr_patch_resp)
-                 return ( { "workflow_run_patch": wr_patch_resp, "processed_files": metadata_processed_files } )
+                 return ( { "workflow_run_patch": wr_patch_resp, "processed_files": metadata_processed_file } )
 
             except Exception as e:
                     print(e)
@@ -875,14 +933,23 @@ def EXPORT_(event):
  
 
         else:
-            metadata_workflow_run = fill_workflow_run(check_task_response, [], bucket)
-            metadata_workflow_run['status'] = run_status
-            return ( { "workflow_run": metadata_workflow_run, "processed_files": []} )
+            try:
+                metadata_workflow_patch = {"run_status": run_status}
+                wr_patch_resp = patch_to_metadata(metadata_keypairs_file, metadata_workflow_patch, uuid=workflow_run_uuid)
+                return ( { "workflow_run_patch": wr_patch_resp, "processed_files": []} )
 
+            except Exception as e:
+                    print(e)
+                    print('Error patching workflow_run_sbg metadata')
+                    raise e
+            
 
 @app.route("/finalize", methods=['POST'])
 def FINALIZE():
         event = app.current_request.json_body
+        return(FINALIZE_(event))
+
+def FINALIZE_(event):
 
         # Get the object from the event and show its content type
         task_id = event['task_id'].encode('utf8')     
@@ -945,9 +1012,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Arguments")
     parser.add_argument("-j", "--json", help="Chrom.size file, tab-delimited")
+    parser.add_argument("-c", "--command", help="Either 'run' or 'export'")
     args = parser.parse_args()
     with open(args.json,'r') as f:
         event = json.load(f)
 
-    EXPORT_(event)
+    if args.command == 'run':
+        RUN_(event)
+    else:
+        EXPORT_(event)
  
+
