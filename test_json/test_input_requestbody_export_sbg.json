@@ -1,4 +1,5 @@
 {
-  "task_id": "1d9ac367-d95c-4506-9b43-6469f94d6a09",
-  "bucket_name":"4dn-dcic-sbg"
+  "bucket_name": "4dn-dcic-sbg",
+  "app_name": "md5",
+  "workflow_run_uuid": "a44d9c53-49e5-4c33-afab-394b50f2e337"
 }
