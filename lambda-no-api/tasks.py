@@ -186,3 +186,11 @@ def publish(ctx, test=False):
     else:
         run('python setup.py register sdist bdist_wheel', echo=True)
         run('twine upload dist/*', echo=True)
+
+@task
+def set_lambda_s3_perms(ctx):
+    '''
+    aws lambda add-permissions \
+    --function-name 
+    #9e7e144b18724b65641286dfa355edb64c424035706bd1674e9096ee77422a45
+

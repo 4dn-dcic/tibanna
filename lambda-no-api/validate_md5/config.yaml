@@ -1,6 +1,6 @@
 region: us-east-1
 
-function_name: calc_md5 
+function_name: validate_md5 
 handler: filechecker.verify_md5 
 role: lambda_full_s3 
 description: Calculates md5 file hash. 

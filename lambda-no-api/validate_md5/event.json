@@ -15,7 +15,7 @@
 								"size": 1024
 						},
 						"bucket": {
-								"arn": bucketarn,
+								"arn": "elasticbeanstalk-encoded-4dn-files",
 								"name": "sourcebucket",
 								"ownerIdentity": {
 										"principalId": "EXAMPLE"
