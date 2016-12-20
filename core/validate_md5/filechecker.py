@@ -1,12 +1,12 @@
 from __future__ import print_function
 
 import json
-import urllib
 import boto3
 import os
 
 print('Loading function')
 
+# pull out into helper lib
 s3 = boto3.client('s3')
 SYS_BUCKET = 'elasticbeanstalk-encoded-4dn-system'
 keyfile_name = 'illnevertell'
@@ -20,6 +20,17 @@ def get_access_keys():
                              SSECustomerAlgorithm='AES256')
     akey = response['Body'].read()
     return json.loads(akey)['default']
+
+
+def current_env():
+    return os.environ.get('ENV_NAME', 'test')
+
+
+def get_base_url(system):
+    urls = {'sbg': {'test': 'https://217gpx7m6i.execute-api.us-east-1.amazonaws.com/dev/'}}
+
+    env = current_env()
+    return urls[system][env]
 
 
 def build_req_parameters(event_data):
@@ -48,9 +59,10 @@ def build_req_parameters(event_data):
 def verify_md5(event, context):
     # akeys = get_access_keys()
     print("Received event: " + json.dumps(event, indent=2))
-    workflow_params = build_req_parameters(event)
-
+    # workflow_params = build_req_parameters(event)
+    # url = get_base_url('sbg')
     # call the workflow function on SBG
+    # async request
 
     # update results
 

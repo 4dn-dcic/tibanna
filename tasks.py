@@ -20,10 +20,11 @@ def upload(keyname, data, s3bucket, secret=None):
 
     s3 = boto3.client('s3')
     s3.put_object(Bucket=s3bucket,
-        Key=keyname,
-        Body=data,
-        SSECustomerKey=secret,
-        SSECustomerAlgorithm='AES256')
+                  Key=keyname,
+                  Body=data,
+                  SSECustomerKey=secret,
+                  SSECustomerAlgorithm='AES256')
+
 
 @task
 def loc(ctx):
@@ -35,6 +36,12 @@ def loc(ctx):
 
     run('find . -iname "*py" | grep -v {} | xargs wc -l | sort -n'.format(
         ' '.join('-e ' + e for e in excludes)))
+
+
+@task
+def get_url(ctx, prj_name='lambda_sbg'):
+    url = run('cd %s; chalice url' % prj_name).stdout.strip('\n')
+    return url
 
 
 @task
@@ -68,7 +75,14 @@ def clean(ctx):
 
 
 @task
-def deploy(ctx, name, version=None):
+def deploy_chalice(ctx, name='lambda_sbg', version=None):
+    print("deploying %s" % (name))
+    print("a chalice based lambda api")
+    run("cd %s; chalice deploy" % (name))
+
+
+@task
+def deploy_core(ctx, name, version=None):
     print("preparing for deploy...")
     print("first lets clean everythign up.")
     clean(ctx)
@@ -186,11 +200,3 @@ def publish(ctx, test=False):
     else:
         run('python setup.py register sdist bdist_wheel', echo=True)
         run('twine upload dist/*', echo=True)
-
-@task
-def set_lambda_s3_perms(ctx):
-    '''
-    aws lambda add-permissions \
-    --function-name 
-    #9e7e144b18724b65641286dfa355edb64c424035706bd1674e9096ee77422a45
-

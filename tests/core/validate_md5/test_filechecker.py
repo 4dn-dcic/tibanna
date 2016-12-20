@@ -1,12 +1,13 @@
 import pytest
-from validate_md5 import filechecker
+from core.validate_md5 import filechecker
 import json
+
 
 @pytest.fixture
 def put_file_event_data():
     return {
-            "Records": [
-            {
+             "Records": [
+               {
                 "eventVersion": "2.0",
                 "eventTime": "1970-01-01T00:00:00.000Z",
                 "requestParameters": {
@@ -22,10 +23,10 @@ def put_file_event_data():
                         },
                         "bucket": {
                             "arn": "arn:aws:s3:::elasticbeanstalk-encoded-4dn-files",
-                                "name": "elasticbeanstalk-encoded-4dn-files",
-                                "ownerIdentity": {
-                                        "principalId": "EXAMPLE"
-                                }
+                            "name": "elasticbeanstalk-encoded-4dn-files",
+                            "ownerIdentity": {
+                                 "principalId": "EXAMPLE"
+                             }
                         },
                         "s3SchemaVersion": "1.0"
                 },
@@ -39,9 +40,9 @@ def put_file_event_data():
                         "principalId": "EXAMPLE"
                 },
                 "eventSource": "aws:s3"
-        }
-        ]
-    }
+              }  # noqa
+            ]  # noqa
+         }
 
 
 def test_get_access_keys_live():
@@ -55,6 +56,7 @@ def test_get_access_keys_live():
         assert res['key']
         assert res['server']
 
+
 def test_build_req_parameters(put_file_event_data):
     params = json.loads(
         filechecker.build_req_parameters(put_file_event_data))
@@ -63,4 +65,3 @@ def test_build_req_parameters(put_file_event_data):
     assert input_file['bucket_name'] == 'elasticbeanstalk-encoded-4dn-files'
     assert input_file['object_key'] == '4DNFI7RAJFJ4.fasta.gz'
     assert input_file['uuid'] == 'test_upload'
-
