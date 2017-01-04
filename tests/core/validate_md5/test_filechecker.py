@@ -45,18 +45,6 @@ def put_file_event_data():
          }
 
 
-def test_get_access_keys_live():
-    # this test is live to s3, will potentially reveal secret info
-    import os
-    if os.environ.get("SECRET"):
-        # run the test only if key set
-        res = filechecker.get_access_keys()
-        assert len(res.keys()) == 3
-        assert res['secret']
-        assert res['key']
-        assert res['server']
-
-
 def test_build_req_parameters(put_file_event_data):
     params = json.loads(
         filechecker.build_req_parameters(put_file_event_data))

@@ -2,13 +2,24 @@
 import os
 import sys
 import webbrowser
-
+import json
 from invoke import task, run
 import boto3
-
+import contextlib
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
+
+
+@contextlib.contextmanager
+def chdir(dirname=None):
+    curdir = os.getcwd()
+    try:
+        if dirname is not None:
+            os.chdir(dirname)
+            yield
+    finally:
+        os.chdir(curdir)
 
 
 def upload(keyname, data, s3bucket, secret=None):
@@ -84,11 +95,12 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 @task
 def deploy_core(ctx, name, version=None):
     print("preparing for deploy...")
-    print("first lets clean everythign up.")
-    clean(ctx)
-    print("now lets make sure the tests pass")
+    print("make sure tests pass")
     test(ctx)
-    build_lambda_package(ctx, name)
+    with chdir("./core/%s" % (name)):
+        print("clean up previous builds.")
+        clean(ctx)
+        build_lambda_package(ctx, name)
     print("next get version information")
     # version = update_version(ctx, version)
     print("then tag the release in git")
@@ -99,20 +111,34 @@ def deploy_core(ctx, name, version=None):
 
 @task
 def build_lambda_package(ctx, name):
-    run('cd %s; lambda deploy' % name)
+    run('lambda deploy  --local-package ../..')
 
 
 @task
-def upload_keys(ctx):
-    sbgkey = os.environ.get('SBG_KEY')
-    if not sbgkey:
-        print("no sbg key to deploy")
-    else:
-        s3bucket = 'elasticbeanstalk-encoded-4dn-system'
-        if os.environ.get('ENV_NAME') == 'PROD':
-            s3bucket = 'elasticbeanstalk-production-encoded-4dn-system'
-        print("uploading sbkey to %s" % (s3bucket))
-        upload('sbgkey', sbgkey, s3bucket)
+def upload_sbg_keys(ctx, sbgkey=None):
+    if sbgkey is None:
+        sbgkey = os.environ.get('SBG_KEY')
+    return upload_keys(ctx, sbgkey, 'sbgkey')
+
+
+def upload_keys(ctx, keys, name):
+    s3bucket = 'elasticbeanstalk-encoded-4dn-system'
+    if os.environ.get('ENV_NAME') == 'PROD':
+        s3bucket = 'elasticbeanstalk-production-encoded-4dn-system'
+    print("uploading sbkey to %s as %s" % (s3bucket, name))
+    upload(name, keys, s3bucket)
+
+
+@task
+def upload_s3_keys(ctx, key=None, secret=None):
+    if key is None:
+        key = os.environ.get("SBG_S3_KEY")
+    if secret is None:
+        secret = os.environ.get("SBG_S3_SECRET")
+
+    pckt = {'key': key,
+            'secret': secret}
+    return upload_keys(ctx, json.dumps(pckt), 'sbgs3key')
 
 
 @task
