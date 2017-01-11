@@ -2,6 +2,21 @@ import wranglertools.fdnDCIC as fdnDCIC
 import json
 import zipfile
 import re
+import random
+
+# this function is redundant - already in lambda app.py
+def generate_uuid ():
+    rand_uuid_start=''
+    rand_uuid_end=''
+    for i in xrange(8):
+        r=random.choice('abcdef1234567890')
+        rand_uuid_start += r
+    for i in xrange(12):
+        r2=random.choice('abcdef1234567890')
+        rand_uuid_end += r2
+    uuid=rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
+    return uuid
+
 
 def parse_fastqc ( summary_filename, data_filename ):
     """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
@@ -19,7 +34,10 @@ def parse_fastqc ( summary_filename, data_filename ):
             a = line.strip().split('\t')
             if a[0] in qc_key_list_in_data:
                 qc_json.update({a[0]: a[1]})
-    
+   
+    # add uuid, lab & award
+    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": generate_uuid()})
+
     return(qc_json)
 
 
@@ -58,7 +76,7 @@ if __name__ == '__main__':
     else:
         zip_filename = "/Users/soo/data/hic/fastq/GM12878_SRR1658581_1pc_1_R1_fastqc.zip"
 
-    print( parse_fastqc( summary_filename, data_filename ) )
-    print( parse_fastqc_zip( zip_filename ) )
+    # print( parse_fastqc( summary_filename, data_filename ) )
+    print( json.dumps( parse_fastqc_zip( zip_filename ) ))
 
 
