@@ -1,6 +1,7 @@
 import wranglertools.fdnDCIC as fdnDCIC
 import json
-
+import zipfile
+import re
 
 def parse_fastqc ( summary_filename, data_filename ):
     """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
@@ -23,13 +24,23 @@ def parse_fastqc ( summary_filename, data_filename ):
 
 
 
+def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' ):
+    """ Return a quality_metric_fastqc metadata dictionary given a zipped fastqc output file. """
+    zip = zipfile.ZipFile( fastqc_zip_filename )
+    fastqc_zip_filetitle = re.sub(r'^.+/', '', fastqc_zip_filename)
+    target_dir = target_dir + '/' + fastqc_zip_filetitle[:-4]
+    zip.extractall( target_dir )
+    return ( parse_fastqc( target_dir + '/summary.txt', target_dir + '/fastqc_data.txt' ) )
+    
+
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description="file_reference_post")
     parser.add_argument('-s', '--summary_filename', help='summary.txt file')
-    parser.add_argument('-d', '--data_filename', help='fastq_data.txt file')
+    parser.add_argument('-d', '--data_filename', help='fastqc_data.txt file')
+    parser.add_argument('-z', '--zip_filename', help='fastqc.zip file')
     args = parser.parse_args()
 
     if args.summary_filename:
@@ -37,12 +48,17 @@ if __name__ == '__main__':
     else:
         summary_filename = "/Users/soo/data/hic/fastq/GM12878_SRR1658581_1pc_1_R1_fastqc/summary.txt"
 
-    if args.data_flename:
+    if args.data_filename:
         data_filename = args.data_filename
     else:
         data_filename = "/Users/soo/data/hic/fastq/GM12878_SRR1658581_1pc_1_R1_fastqc/fastqc_data.txt"
 
-    run(summary_filename, data_filename)
+    if args.zip_filename:
+        zip_filename = args.zip_filename
+    else:
+        zip_filename = "/Users/soo/data/hic/fastq/GM12878_SRR1658581_1pc_1_R1_fastqc.zip"
 
+    print( parse_fastqc( summary_filename, data_filename ) )
+    print( parse_fastqc_zip( zip_filename ) )
 
 
