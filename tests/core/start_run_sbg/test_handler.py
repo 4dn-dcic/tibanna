@@ -1,10 +1,11 @@
 import pytest
-from core.run_sbg import service
+from core.start_run_sbg import service
 from core import utils
+from ..conftest import valid_env
 
 
 @pytest.fixture
-def md5_event_data():
+def md5_event_data(s3_keys):
     return {
       "input_files": [
         {
@@ -16,7 +17,8 @@ def md5_event_data():
       ],
       "app_name": "md5",
       "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
-      "parameters": {}
+      "parameters": {},
+      "s3_keys": s3_keys
     }
 
 
@@ -44,29 +46,36 @@ def multi_infile_data():
     }
 
 
-@pytest.mark.webtest
 @pytest.fixture
-def md5_sbg_wfrun():
-    return service.create_sbg_workflow('md5')
+def sbg_project():
+    return "4dn-dcic/dev"
 
 
+@pytest.fixture
+def md5_sbg_wfrun(sbg_keys):
+    try:
+        return utils.create_sbg_workflow('md5', token=sbg_keys)
+    except:
+        print("generally this test fails if you haven't set aws keys in your terminal")
+
+
+@valid_env
 @pytest.mark.webtest
-def test_mount_on_sbg(md5_event_data, md5_sbg_wfrun):
-    s3_key = utils.get_s3_keys()
+def test_mount_on_sbg(md5_event_data, md5_sbg_wfrun, s3_keys):
     input_file = md5_event_data['input_files'][0]
-    assert service.mount_on_sbg(input_file, s3_key, md5_sbg_wfrun)
+    assert service.mount_on_sbg(input_file, s3_keys, md5_sbg_wfrun)
 
 
+@valid_env
 @pytest.mark.webtest
-def test_mount_multiple_on_sbg(md5_sbg_wfrun, multi_infile_data):
-    s3_key = utils.get_s3_keys()
+def test_mount_multiple_on_sbg(md5_sbg_wfrun, multi_infile_data, s3_keys):
     input_file_list = multi_infile_data['input_files']
-    mounts3_tasks = [service.mount_on_sbg(infile, s3_key, md5_sbg_wfrun)
+    mounts3_tasks = [service.mount_on_sbg(infile, s3_keys, md5_sbg_wfrun)
                      for infile in input_file_list]
     assert len(mounts3_tasks) == 2
 
 
+@valid_env
 @pytest.mark.webtest
 def test_handler(md5_event_data):
-    return
     service.handler(md5_event_data, '')

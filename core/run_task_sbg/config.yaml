@@ -1,0 +1,15 @@
+region: us-east-1
+
+function_name: run_task_sbg 
+handler: service.handler
+role: lambda_full_s3
+description: after input files are imported, run the actual task on SBG 
+
+# if access key and secret are left blank, boto will use the credentials
+# defined in the [default] section of ~/.aws/credentials.
+aws_access_key_id:
+aws_secret_access_key:
+
+# dist_directory: dist
+# timeout: 15
+# memory_size: 512

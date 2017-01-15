@@ -56,19 +56,32 @@ def get_url(ctx, prj_name='lambda_sbg'):
 
 
 @task
-def test(ctx, watch=False, last_failing=False, no_flake=False):
+def test(ctx, watch=False, last_failing=False, no_flake=False, extra=''):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
+    from os import path
+
     import pytest
     if not no_flake:
         flake(ctx)
-    args = []
+    args = ['-rxs', ]
+    args.append(extra)
     if watch:
         args.append('-f')
     if last_failing:
         args.append('--lf')
     retcode = pytest.main(args)
+    try:
+        home = path.expanduser("~")
+        if retcode == 0:
+            sndfile = os.path.join(home, "code", "snd", "zenyatta", "You_Have_Done_Well.ogg")
+        else:
+            sndfile = os.path.join(home, "code", "snd", "zenyatta", "Darkness\ Falls.ogg")
+        print(sndfile)
+        run("vlc -I rc %s --play-and-exit -q" % (sndfile))
+    except:
+        pass
     return(retcode)
 
 
@@ -92,25 +105,42 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
     run("cd %s; chalice deploy" % (name))
 
 
+def get_all_core_lambdas():
+    return ['start_run_sbg',
+            'check_import_sbg',
+            ]
+
+
 @task
 def deploy_core(ctx, name, version=None):
     print("preparing for deploy...")
     print("make sure tests pass")
-    test(ctx)
-    with chdir("./core/%s" % (name)):
-        print("clean up previous builds.")
-        clean(ctx)
-        build_lambda_package(ctx, name)
-    print("next get version information")
-    # version = update_version(ctx, version)
-    print("then tag the release in git")
-    # git_tag(ctx, version, "new production release %s" % (version))
-    # print("Build is now triggered for production deployment of %s "
-    #      "check travis for build status" % (version))
+    if test(ctx) != 0:
+        print("tests need to pass first before deploy")
+        return
+    if name == 'all':
+        names = get_all_core_lambdas()
+        print(names)
+    else:
+        names = [name, ]
+
+    for name in names:
+        print("=" * 20, "Deploying lambda", name, "=" * 20)
+        with chdir("./core/%s" % (name)):
+            print("clean up previous builds.")
+            clean(ctx)
+            print("building lambda package")
+            deploy_lambda_package(ctx, name)
+        print("next get version information")
+        # version = update_version(ctx, version)
+        print("then tag the release in git")
+        # git_tag(ctx, version, "new production release %s" % (version))
+        # print("Build is now triggered for production deployment of %s "
+        #      "check travis for build status" % (version))
 
 
 @task
-def build_lambda_package(ctx, name):
+def deploy_lambda_package(ctx, name):
     run('lambda deploy  --local-package ../..')
 
 
