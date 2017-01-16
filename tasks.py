@@ -6,9 +6,17 @@ import json
 from invoke import task, run
 import boto3
 import contextlib
+import shutil
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
+
+
+def get_all_core_lambdas():
+    return ['start_run_sbg',
+            'check_import_sbg',
+            'run_task_sbg',
+            ]
 
 
 @contextlib.contextmanager
@@ -49,6 +57,26 @@ def loc(ctx):
         ' '.join('-e ' + e for e in excludes)))
 
 
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
+
+
+@task
+def new_lambda(ctx, name, base='run_task_sbg'):
+    '''
+    create a new lambda by copy from a base one and replacing some core strings.
+    '''
+    copytree(src='./core/%s' % base,
+             dst='./core/%s' % base)
+    # TODO: awk some lines here...
+
+
 @task
 def get_url(ctx, prj_name='lambda_sbg'):
     url = run('cd %s; chalice url' % prj_name).stdout.strip('\n')
@@ -56,7 +84,7 @@ def get_url(ctx, prj_name='lambda_sbg'):
 
 
 @task
-def test(ctx, watch=False, last_failing=False, no_flake=False, extra=''):
+def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
@@ -66,6 +94,8 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, extra=''):
     if not no_flake:
         flake(ctx)
     args = ['-rxs', ]
+    if k:
+        args.append('-k %s' % k)
     args.append(extra)
     if watch:
         args.append('-f')
@@ -103,12 +133,6 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
     print("deploying %s" % (name))
     print("a chalice based lambda api")
     run("cd %s; chalice deploy" % (name))
-
-
-def get_all_core_lambdas():
-    return ['start_run_sbg',
-            'check_import_sbg',
-            ]
 
 
 @task

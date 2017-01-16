@@ -18,7 +18,25 @@
 		    "BackoffRate" : 2.0
 		   }
 		  ],
-		 "End": true
-	}
+		  "Next": "RunTaskSbg"
+	},
+	"RunTaskSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_sbg",
+		"Next": "CheckTaskSbg"
+	},
+	"CheckTaskSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_sbg",
+		"Retry": [
+		  {
+		    "ErrorEquals": ["UnhandledError"],
+		    "IntervalSeconds": 60,
+		    "MaxAttempts" : 100,
+		    "BackoffRate" : 2.0
+		   }
+		  ],
+          "End":"True"
+	},
   }
 }
