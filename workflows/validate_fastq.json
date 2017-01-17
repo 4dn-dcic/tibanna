@@ -1,0 +1,42 @@
+{
+  "Comment": "Check md5 hash and validate that file is a fastq",
+  "StartAt": "StartRunSbg",
+  "States": {
+	"StartRunSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:start_run_sbg",
+		"Next": "CheckImportSbg"
+	},
+	"CheckImportSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_import_sbg",
+		"Retry": [
+		  {
+		    "ErrorEquals": ["UnhandledError"],
+		    "IntervalSeconds": 5,
+		    "MaxAttempts" : 10,
+		    "BackoffRate" : 2.0
+		   }
+		  ],
+		  "Next": "RunTaskSbg"
+	},
+	"RunTaskSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_sbg",
+		"Next": "CheckTaskSbg"
+	},
+	"CheckTaskSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_sbg",
+		"Retry": [
+		  {
+		    "ErrorEquals": ["UnhandledError"],
+		    "IntervalSeconds": 60,
+		    "MaxAttempts" : 100,
+		    "BackoffRate" : 2.0
+		   }
+		  ],
+          "End":true
+	}
+  }
+}

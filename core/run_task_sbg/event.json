@@ -1,0 +1,20 @@
+{"metadata_input": [{"value": "test_upload",
+				     "workflow_argument_name": "input_file"}],
+ "metadata_parameters": [],
+ "workflow": {"app_name": "md5",
+		"export_id_list": [],
+		"export_report": [],
+		"import_id_list": ["xFS8KAE2OtFB7FbRuOhCYKaibURP3ABR"],
+		"project_id": "4dn-dcic/dev",
+		"task_id": "",
+		"task_input": {"app": "4dn-dcic/dev/md5",
+                       "project": "4dn-dcic/dev",
+					   "name": "md5",
+					   "inputs": {"input_file": {"class": "File",
+					   "name": "4DNFI7RAJFJ4.fasta.gz",
+					   "path": "5877fc32e4b0f31cb4bc37a1"}}},
+		"volume_list": [{"id": "4dn-labor/4dn_s3wwsqodmn",
+						"name": "4dn_s3wwsqodmn"}]
+		},
+		"workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41"
+}
