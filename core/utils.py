@@ -6,6 +6,7 @@ import boto3
 import os
 import requests
 import random
+import uuid
 
 from wranglertools import fdnDCIC
 
@@ -67,6 +68,7 @@ def to_sbg_workflow_args(parameter_dict):
     metadata_input = []
     for k, v in parameter_dict.iteritems():
         # we need this to be an integer if it really is, else a string
+        # Jeremy: v can also be float or double, in which case they should be float or double.
         try:
             v = int(v)
         except ValueError:
@@ -358,7 +360,7 @@ class SBGWorkflowRun(object):
             export_id = file['export_id']
             status = self.get_export_status(export_id)
             accession=generate_rand_accession()
-            uuid=generate_uuid()
+            uuid=uuid.uuid4()
             fill_report[filename] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
             # create a meta data file object
             # metadata = FileProcessedMetadata(uuid, accession, filename,
@@ -498,19 +500,6 @@ class SBGTaskInput(object):
             return False
 
 
-def generate_uuid():
-    # TODO: Ask Sue can't we just do uuid4() ?
-    rand_uuid_start = ''
-    rand_uuid_end = ''
-    for i in xrange(8):
-        r = random.choice('abcdef1234567890')
-        rand_uuid_start += r
-    for i in xrange(12):
-        r2 = random.choice('abcdef1234567890')
-        rand_uuid_end += r2
-    uuid = rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
-    return uuid
-
 
 def create_ffmeta(workflow, input_files=[],
                   parameters=[], sbg_task_id=None,
@@ -536,7 +525,7 @@ class WorkflowRunMetadata(object):
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
         """
-        self.uuid = uuid if uuid else generate_uuid()
+        self.uuid = uuid if uuid else uuid.uuid4() 
         self.workflow = workflow
         self.run_platform = run_platform
         if sbg_task_id is None:

@@ -214,20 +214,6 @@ def get_access_key (s3):
 
 
 
-
-
-def generate_uuid ():
-    rand_uuid_start=''
-    rand_uuid_end=''
-    for i in xrange(8):
-        r=random.choice('abcdef1234567890')
-        rand_uuid_start += r
-    for i in xrange(12):
-        r2=random.choice('abcdef1234567890')
-        rand_uuid_end += r2
-    uuid=rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
-    return uuid
-
 def generate_rand_accession ():
     rand_accession=''
     for i in xrange(8):
