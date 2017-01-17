@@ -4,8 +4,8 @@ from chalice import Chalice
 import wranglertools.fdnDCIC as fdnDCIC
 import os
 import json
-import boto3 ## 1.4.1 (not the default boto3 on lambda)
-import requests 
+import boto3  # 1.4.1 (not the default boto3 on lambda)
+import requests
 import time
 import sys
 import random

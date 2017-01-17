@@ -16,6 +16,7 @@ def get_all_core_lambdas():
     return ['start_run_sbg',
             'check_import_sbg',
             'run_task_sbg',
+            'check_task_sbg',
             ]
 
 

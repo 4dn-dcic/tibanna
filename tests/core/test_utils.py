@@ -3,12 +3,6 @@ import pytest
 from conftest import valid_env
 
 
-# TODO: move this into conftest.py and make it session scope
-@pytest.fixture(scope='module')
-def sbg_keys():
-    return utils.get_sbg_keys()
-
-
 @pytest.fixture
 def sbg_project():
     return "4dn-dcic/dev"
@@ -100,6 +94,12 @@ def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
     assert sbg.app_name == wf['app_name']
     assert sbg.header == wf['header']
     assert sbg.task_input.__dict__ == wf['task_input']
+
+
+def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
+    meta = ff_meta_event_data['ff_meta']
+    ff_wfr = utils.WorkflowRunMetadata(**meta)
+    assert ff_wfr
 
 
 def sbg_workflow_as_dict_clears_secrets(workflow_event_data):

@@ -36,7 +36,7 @@
 		    "BackoffRate" : 2.0
 		   }
 		  ],
-          "End":"True"
-	},
+          "End":true
+	}
   }
 }

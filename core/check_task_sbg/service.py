@@ -22,4 +22,7 @@ def handler(event, context):
         raise Exception('Task not finished => %s' % data)
 
     return {'workflow': sbg.as_dict(),
-            'run_response': status}
+            'run_response': status,
+            'workflow_uuid': event.get('workflow_uuid'),
+            'metadata_parameters': event.get('metadata_parameters'),
+            }

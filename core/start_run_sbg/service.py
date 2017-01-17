@@ -152,50 +152,6 @@ class SBGVolume(object):
 '''
 
 
-class WorkflowRunMetadata(object):
-
-
-    def __init__(self, workflow_uuid, metadata_input=[], metadata_parameters=[], task_id=None, import_ids=None, export_ids=None, mounted_volume_ids=None):
-        """Class for WorkflowRun that matches the 4DN Metadata schema
-        Workflow_uuid (uuid of the workflow to run) has to be given.
-        Workflow_run uuid is auto-generated when the object is created.
-        """
-        self.uuid = generate_uuid()
-        self.workflow = workflow_uuid
-        self.run_platform = 'SBG'   # for now we use only SBG - we can change it later as we add tibanna
-        if task_id is None:
-            self.sbg_task_id = ''
-        else:
-            self.sbg_task_id = task_id
-
-        if mounted_volume_ids is None:
-            self.sbg_mounted_volume_ids = []
-        else:
-            self.sbg_mounted_volume_ids = mounted_volume_ids
-        if import_ids is None:
-            self.sbg_import_ids = []
-        else:
-            self.sbg_import_ids = import_ids
-        if export_ids is None:
-            self.sbg_export_ids = []
-        else:
-            self.sbg_export_ids = export_ids
-        self.input_files = metadata_input
-        self.parameters = metadata_parameters
-        self.output_files = []
-        self.award = '1U01CA200059-01'
-        self.lab = '4dn-dcic-lab'
-
-    def append_outputfile(outjson):
-        self.output_files.append(outjson)
-
-    def append_volumes(sbg_volume):
-        self.sbg_mounted_volume_ids.append(sbg_volume.id)
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-
 class FileProcessedMetadata(object):
 
 
@@ -320,16 +276,15 @@ def format_response (response):
     return json.dumps(json.loads(response.text), indent=4)
 
 
-def post_to_metadata(keypairs_file, post_item, schema_name):
+def post_to_metadata(key, post_item, schema_name):
 
-    assert os.path.isfile(keypairs_file)
-
-    try:
-        key = fdnDCIC.FDN_Key(keypairs_file, "default")
+    '''try:
+        key = fdnDCIC.FDN_Key(keypairs, "default")
     except Exception as e:
         print(e)
         print("key error")
         raise e
+    '''
 
     try:
         connection = fdnDCIC.FDN_Connection(key)

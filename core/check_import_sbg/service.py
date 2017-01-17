@@ -28,17 +28,22 @@ def handler(event, context):
     # initalize metadata parameters and input file array
     metadata_parameters, metadata_input = utils.to_sbg_workflow_args(parameter_dict)
 
+    # TODO: perhaps all this should be in the SBGWorkflowRun
+    # sbg.metadata_input = metadata_input
+    # sbg.metadata_parameters = metadata_parameters
     for idx, import_id in enumerate(import_ids):
         if import_id not in sbg.import_id_list:
             raise Exception("Import is not in list of imported ids")
 
         data = json.dumps({"import_id": import_id})
-
-        res = _api._get("/storage/imports/" + import_id, data)
-        if res.json().get('state') != 'COMPLETED':
+        # TODO: Let this be a funciton of SBGWorkflowRun
+        res = _api._get("/storage/imports/" + import_id, data).json()
+        if res.get('state') != 'COMPLETED':
             raise Exception("file still uploading")
         else:
-            results = res.json().get('result')
+            # No idea why, but sometimes it comes back without
+            # results as a sub object
+            results = res.get('result', res)
             sbg_file_name = results.get('name')
             sbg_file_id = results.get('id')
             arg_name = input_file_args[idx].get('workflow_argument_name')

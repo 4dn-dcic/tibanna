@@ -1,10 +1,13 @@
 from __future__ import print_function
 
 import json
+import datetime
 import boto3
 import os
 import requests
 import random
+
+from wranglertools import fdnDCIC
 
 
 ###########################
@@ -31,7 +34,10 @@ class SBGAPI(object):
 
 
 def get_access_keys():
-    return get_key(keyfile_name)['default']
+    keys = get_key()
+    # TODO: store with appropriate server, for now default to testportal
+    keys['default']['server'] = 'http://testportal.4dnucleome.org'
+    return keys
 
 
 def get_sbg_keys():
@@ -170,18 +176,14 @@ class SBGWorkflowRun(object):
             cleaned_workflow['task_input'] = ti.as_dict()
         return cleaned_workflow
 
-    def sbg2workflowrun(self, workflow_uuid, metadata_input=[], metadata_parameters=[]):
-        '''
-        wr = WorkflowRunMetadata(workflow_uuid, metadata_input, metadata_parameters)
+    def sbg2workflowrun(self, wr):
         wr.title = self.app_name + " run " + str(datetime.datetime.now())
         wr.sbg_task_id = self.task_id
         wr.sbg_mounted_volume_ids = []
         for x in self.volume_list:
-          wr.sbg_mounted_volume_ids.append(x)
-        wr.sbg_import_ids=self.import_id_list
+            wr.sbg_mounted_volume_ids.append(x)
+        wr.sbg_import_ids = self.import_id_list
         return (wr.__dict__)
-        '''
-        pass
 
     def create_volumes(self, sbg_volume, bucket_name, public_key,
                        secret_key, bucket_object_prefix='', access_mode='rw'):
@@ -494,6 +496,103 @@ class SBGTaskInput(object):
             return True
         else:
             return False
+
+
+def generate_uuid():
+    # TODO: Ask Sue can't we just do uuid4() ?
+    rand_uuid_start = ''
+    rand_uuid_end = ''
+    for i in xrange(8):
+        r = random.choice('abcdef1234567890')
+        rand_uuid_start += r
+    for i in xrange(12):
+        r2 = random.choice('abcdef1234567890')
+        rand_uuid_end += r2
+    uuid = rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
+    return uuid
+
+
+def create_ffmeta(workflow, input_files=[],
+                  parameters=[], sbg_task_id=None,
+                  sbg_import_ids=None, sbg_export_ids=None,
+                  sbg_mounted_volume_ids=None, uuid=None,
+                  award='1U01CA200059-01', lab='4dn-dcic-lab',
+                  run_platform='SBG', **kwargs):
+    return WorkflowRunMetadata(workflow, input_files, parameters,
+                               sbg_task_id, sbg_import_ids, sbg_export_ids,
+                               sbg_mounted_volume_ids, uuid,
+                               award, lab, run_platform, **kwargs)
+
+
+class WorkflowRunMetadata(object):
+
+    def __init__(self, workflow, input_files=[],
+                 parameters=[], sbg_task_id=None,
+                 sbg_import_ids=None, sbg_export_ids=None,
+                 sbg_mounted_volume_ids=None, uuid=None,
+                 award='1U01CA200059-01', lab='4dn-dcic-lab',
+                 run_platform='SBG', **kwargs):
+        """Class for WorkflowRun that matches the 4DN Metadata schema
+        Workflow (uuid of the workflow to run) has to be given.
+        Workflow_run uuid is auto-generated when the object is created.
+        """
+        self.uuid = uuid if uuid else generate_uuid()
+        self.workflow = workflow
+        self.run_platform = run_platform
+        if sbg_task_id is None:
+            self.sbg_task_id = ''
+        else:
+            self.sbg_task_id = sbg_task_id
+
+        if sbg_mounted_volume_ids is None:
+            self.sbg_mounted_volume_ids = []
+        else:
+            self.sbg_mounted_volume_ids = sbg_mounted_volume_ids
+        if sbg_import_ids is None:
+            self.sbg_import_ids = []
+        else:
+            self.sbg_import_ids = sbg_import_ids
+        if sbg_export_ids is None:
+            self.sbg_export_ids = []
+        else:
+            self.sbg_export_ids = sbg_export_ids
+        self.input_files = input_files
+        self.parameters = parameters
+        self.output_files = []
+        self.award = award
+        self.lab = lab
+
+    def append_outputfile(self, outjson):
+        self.output_files.append(outjson)
+
+    def append_volumes(self, sbg_volume):
+        self.sbg_mounted_volume_ids.append(sbg_volume.id)
+
+    def as_dict(self):
+        return self.__dict__
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+
+def post_to_metadata(key, post_item, schema_name):
+
+    try:
+        fdn_key = fdnDCIC.FDN_Key(key, 'default')
+        connection = fdnDCIC.FDN_Connection(fdn_key)
+    except Exception as e:
+        raise Exception("Unable to connect to server with check keys : %s" % e)
+
+    try:
+        response = fdnDCIC.new_FDN(connection, schema_name, post_item)
+        if response.get('status') == 'error':
+            raise Exception("error %s \n unalbe to post data to schema %s, data: %s" %
+                            (response, schema_name, post_item))
+    except Exception as e:
+        raise Exception("unalbe to post data to schema %s, data: %s" %
+                        (schema_name, post_item))
+
+    return response
 
 
 def current_env():
