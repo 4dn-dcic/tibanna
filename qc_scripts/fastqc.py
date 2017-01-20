@@ -3,19 +3,7 @@ import json
 import zipfile
 import re
 import random
-
-# this function is redundant - already in lambda app.py
-def generate_uuid ():
-    rand_uuid_start=''
-    rand_uuid_end=''
-    for i in xrange(8):
-        r=random.choice('abcdef1234567890')
-        rand_uuid_start += r
-    for i in xrange(12):
-        r2=random.choice('abcdef1234567890')
-        rand_uuid_end += r2
-    uuid=rand_uuid_start + "-49e5-4c33-afab-" + rand_uuid_end
-    return uuid
+import uuid
 
 
 def parse_fastqc ( summary_filename, data_filename ):
@@ -36,7 +24,7 @@ def parse_fastqc ( summary_filename, data_filename ):
                 qc_json.update({a[0]: a[1]})
    
     # add uuid, lab & award
-    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": generate_uuid()})
+    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": uuid.uuid4()})
 
     return(qc_json)
 
