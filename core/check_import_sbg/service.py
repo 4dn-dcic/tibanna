@@ -12,28 +12,18 @@ _api = utils.SBGAPI(utils.get_sbg_keys())
 # check the status and other details of import
 def handler(event, context):
     # get data
-    import_ids = event.get('import_ids')
     input_file_args = event.get('input_file_args')
-    sbg = utils.create_sbg_workflow(**event.get('workflow'))
     parameter_dict = event.get('parameter_dict')
-    workflow_uuid = event.get('workflow_uuid')
+    sbg = utils.create_sbg_workflow(**event.get('workflow'))
+    ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    import_ids = sbg.import_id_list
 
     # create Task for workflow run later
     task_input = utils.SBGTaskInput(sbg.app_name,
                                     project=sbg.project_id,
                                     inputs=parameter_dict)
 
-    print(task_input)
-
-    # initalize metadata parameters and input file array
-    metadata_parameters, metadata_input = utils.to_sbg_workflow_args(parameter_dict)
-
-    # TODO: perhaps all this should be in the SBGWorkflowRun
-    # sbg.metadata_input = metadata_input
-    # sbg.metadata_parameters = metadata_parameters
     for idx, import_id in enumerate(import_ids):
-        if import_id not in sbg.import_id_list:
-            raise Exception("Import is not in list of imported ids")
 
         data = json.dumps({"import_id": import_id})
         # TODO: Let this be a funciton of SBGWorkflowRun
@@ -50,10 +40,8 @@ def handler(event, context):
             arg_uuid = input_file_args[idx].get('uuid')
             task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name)
             sbg.task_input = task_input
-            metadata_input.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
+            ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
 
         return {'workflow': sbg.as_dict(),
-                'workflow_uuid': workflow_uuid,
-                'metadata_parameters': metadata_parameters,
-                'metadata_input': metadata_input
+                'ff_meta': ff_meta.as_dict()
                 }

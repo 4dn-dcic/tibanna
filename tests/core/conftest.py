@@ -48,6 +48,16 @@ def ff_meta_event_data(sbg_keys, ff_keys):
     return get_event_file_for('update_metadata_ff', sbg_keys, ff_keys)
 
 
+@pytest.fixture(scope='session')
+def export_files_event_data(sbg_keys, ff_keys):
+    return get_event_file_for('export_files_sbg', sbg_keys, ff_keys)
+
+
+@pytest.fixture(scope='session')
+def check_export_event_data(sbg_keys, ff_keys):
+    return get_event_file_for('check_export_sbg', sbg_keys, ff_keys)
+
+
 def get_event_file_for(lambda_name, sbg_keys, ff_keys=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'core', lambda_name, 'event.json')

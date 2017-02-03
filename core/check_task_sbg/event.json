@@ -9,6 +9,7 @@
 						"name": "md5"},
 		"volume_list": [{"id": "4dn-labor/4dn_s3wwsqodmn",
 						"name": "4dn_s3wwsqodmn"}],
+        "output_volume_id": "4dn-labor/4dn_s3wwsqodmn",
 		"export_report": [],
 		"project_id": "4dn-dcic/dev",
 		"export_id_list": []},

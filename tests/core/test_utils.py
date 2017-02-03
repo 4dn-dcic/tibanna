@@ -54,7 +54,35 @@ def workflow_event_data():
                          "volume_list": [{"id": "4dn-labor/4dn_s32588y8f6", "name": "4dn_s32588y8f6"}],
                          "header": {"X-SBG-Auth-Token": "1234", "Content-type": "application/json"},
                          "token": "1234", "export_report": [], "project_id": "4dn-dcic/dev",
-                         "export_id_list": []}}
+                         "export_id_list": [], "output_volume_id": "4dn-labor/4dn_s32588y8f7"}}
+
+
+def test_create_ff_meta_base_sbg_data(json_request):
+    app_name = json_request['app_name']
+    sbg = utils.create_sbg_workflow(app_name)
+    parameters, input_files = utils.to_sbg_workflow_args(json_request['parameters'])
+    ff_meta = utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                  input_files, parameters)
+
+    assert ff_meta.title.startswith(app_name)
+    assert ff_meta.input_files == input_files
+    assert ff_meta.parameters == parameters
+
+
+def test_create_ff_meta_pulls_data_from_sbg_object(workflow_event_data, json_request):
+    sbg = utils.create_sbg_workflow(**workflow_event_data['workflow'])
+    parameters, input_files = utils.to_sbg_workflow_args(json_request['parameters'])
+    ff_meta = utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                  input_files, parameters)
+    assert ff_meta
+    assert ff_meta.title.startswith(sbg.app_name)
+    assert ff_meta.input_files == input_files
+    assert ff_meta.parameters == parameters
+    assert ff_meta.sbg_import_ids == sbg.import_id_list
+    vols_in_test_data = [item['name'] for item in sbg.volume_list]
+    for vol in ff_meta.sbg_mounted_volume_ids:
+        assert vol in vols_in_test_data
+    assert ff_meta.sbg_task_id == sbg.task_id
 
 
 def test_to_sbg_workflow_args(json_request):
@@ -77,6 +105,14 @@ def test_sbg_api_gets_keys_by_default():
 
 @valid_env
 @pytest.mark.webtest
+def test_read_s3():
+    filename = '__test_data/test_file.txt'
+    read = utils.read_s3(filename)
+    assert read.strip() == 'thisisatest'
+
+
+@valid_env
+@pytest.mark.webtest
 def test_create_sbg_workflow(sbg_project, sbg_keys):
     sbg = utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
     assert sbg.header
@@ -94,6 +130,7 @@ def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
     assert sbg.app_name == wf['app_name']
     assert sbg.header == wf['header']
     assert sbg.task_input.__dict__ == wf['task_input']
+    assert sbg.output_volume_id == wf['output_volume_id']
 
 
 def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
@@ -102,9 +139,10 @@ def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
     assert ff_wfr
 
 
-def sbg_workflow_as_dict_clears_secrets(workflow_event_data):
+def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):
     wf = workflow_event_data['workflow']
     sbg = utils.create_sbg_workflow(**wf)
     sbg_dict = sbg.as_dict()
     assert not sbg_dict.get('header')
     assert not sbg_dict.get('token')
+    assert sbg_dict.get('output_volume_id') == wf['output_volume_id']
