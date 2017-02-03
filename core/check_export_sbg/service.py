@@ -36,14 +36,13 @@ def md5_updater(status, sbg, ff_meta):
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
             print("no matcho")
-            md5_updater("upload failed", sbg, key=ff_meta)
+            md5_updater("upload failed", sbg, ff_meta)
         else:
-            import pdb
-            pdb.set_trace()
-            original_file['status'] = 'uploaded'
-            original_file['content_md5sum'] = md5
+            new_file = {}
+            new_file['status'] = 'uploaded'
+            new_file['content_md5sum'] = md5
 
-            utils.patch_metadata(original_file, uuid=original_file['uuid'], key=ff_meta)
+            utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
 
 
 # check the status and other details of import
