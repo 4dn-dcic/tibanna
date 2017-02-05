@@ -10,3 +10,5 @@ A set of tools for running docker- and cwl-based pipelines on AWS
 A lambda function integrated with APIGateway, for managing pipelines on AWS and SBG
 * [README](lambda-api/README.md) for more details
 
+* TODO: have registration function that creates the step-function workflow, ideally storing
+  configuration in internal tables so stats an be gathered and d presented to users. 

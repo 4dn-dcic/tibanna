@@ -137,7 +137,7 @@ class FileProcessedMetadata(object):
         self.accession = accession
         self.filename = filename
         self.file_format = "other"  # we will deal with this later
-        self.status = status 
+        self.status = status
         if workflow_run_uuid is not None:
             self.workflow_run = workflow_run_uuid
         # default assign to 4dn-dcic - later change to input file submitter
@@ -903,8 +903,7 @@ def EXPORT_(event):
                 task_id = get_resp.get('sbg_task_id')
                 import_ids = get_resp.get('sbg_import_ids')
                 mounted_volume_ids = get_resp.get('sbg_mounted_volume_ids')
-                
-                print("get workflow_run") 
+                print("get workflow_run")
                 print(get_resp)
 
         except Exception as e:

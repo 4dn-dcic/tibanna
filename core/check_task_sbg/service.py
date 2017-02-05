@@ -16,13 +16,12 @@ def handler(event, context):
 
     # check status of workflow, error if not done
     status = sbg.check_task()
-    if not status['status'] in ['DONE', 'COMPLETED']:
+    if not status['status'] in ['DONE', 'COMPLETED', 'FAILED']:
         data = {'workflow': sbg.as_dict(),
                 'status': status}
         raise Exception('Task not finished => %s' % data)
 
     return {'workflow': sbg.as_dict(),
             'run_response': status,
-            'workflow_uuid': event.get('workflow_uuid'),
-            'metadata_parameters': event.get('metadata_parameters'),
+            'ff_meta': event.get('ff_meta')
             }

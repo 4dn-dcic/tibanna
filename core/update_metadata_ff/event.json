@@ -39,7 +39,7 @@
 				 "type": "v2",
 				 "id": "c5113189-7a2b-4a23-9767-b55eae76d3e8"},
 "ff_meta": {"input_files": [{"workflow_argument_name": "input_file",
-						"value": "test_upload"}],
-				     "parameters": [],
-				     "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41"}
+						"value":"46e82a90-49e5-4c33-afab-9ec90d65faa1"}],
+             "parameters": [],
+             "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41"}
 }

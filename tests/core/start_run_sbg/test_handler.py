@@ -18,7 +18,8 @@ def md5_event_data(s3_keys):
       "app_name": "md5",
       "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
       "parameters": {},
-      "s3_keys": s3_keys
+      "s3_keys": s3_keys,
+      "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
     }
 
 
@@ -78,4 +79,13 @@ def test_mount_multiple_on_sbg(md5_sbg_wfrun, multi_infile_data, s3_keys):
 @valid_env
 @pytest.mark.webtest
 def test_handler(md5_event_data):
-    service.handler(md5_event_data, '')
+    data = service.handler(md5_event_data, '')
+    assert data['ff_meta']
+    assert data['workflow']
+    # input volume plus output volume
+    assert len(data['workflow']['volume_list']) == 2
+    assert data['workflow']['output_volume_id']
+    assert data['workflow']['output_volume_id'] == data['workflow']['volume_list'][1]['id']
+    assert data['input_file_args']
+
+

@@ -21,7 +21,5 @@ def handler(event, context):
 
     return {'workflow': sbg.as_dict(),
             'run_response': run_response,
-            'workflow_uuid': event.get('workflow_uuid'),
-            'metadata_parameters': event.get('metadata_parameters'),
-            'metadata_input': event.get('metadata_input')
+            'ff_meta': event.get('ff_meta')
             }
