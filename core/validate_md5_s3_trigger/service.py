@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
 import json
-from uuid import uuid4
 
 client = boto3.client('stepfunctions')
 STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
@@ -14,21 +13,22 @@ def handler(event, context):
     '''
     # get file name
     filename = event['Records'][0]['s3']['object']['key']
-
-    run_name = "validate%s" % (str(uuid4()))
-    bucket_name = event['Records'][0]['s3']['bucket']['name']
+    run_name = "validate_%s" % (filename.split('/')[0])
 
     # trigger the step function to run
     response = client.start_execution(
         stateMachineArn=STEP_FUNCTION_ARN,
         name=run_name,
-        input=make_input(filename, bucket_name),
+        input=make_input(event),
     )
 
     return response
 
 
-def make_input(filename, bucket):
+def make_input(event):
+    filename = event['Records'][0]['s3']['object']['key']
+    bucket = event['Records'][0]['s3']['bucket']['name']
+
     uuid, key = filename.split('/')
     json_data = {"parameters": {},
                  "app_name": "md5",

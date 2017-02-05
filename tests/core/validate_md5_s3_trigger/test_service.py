@@ -1,8 +1,10 @@
 from core.validate_md5_s3_trigger.service import handler as validate_md5_s3_trigger
 from core.validate_md5_s3_trigger.service import make_input
+# from core.validate_md5_s3_trigger.service import STEP_FUNCTION_ARN
 import pytest
 from ..conftest import valid_env
 import json
+import boto3
 
 
 def test_build_req_parameters(s3_trigger_event_data):
@@ -20,3 +22,18 @@ def test_build_req_parameters(s3_trigger_event_data):
 def test_s3_trigger_e2e(s3_trigger_event_data):
     ret = validate_md5_s3_trigger(s3_trigger_event_data, None)
     assert ret
+    assert ret['ResponseMetadata']['HTTPStatusCode'] == 200
+    executionArn = ret['executionArn']
+
+    # see if task is running and kill it
+    client = boto3.client('stepfunctions')
+    run_details = client.describe_execution(
+        executionArn=executionArn
+    )
+    assert run_details['status'] == 'RUNNING'
+
+    client.stop_execution(
+        executionArn=executionArn,
+        error='test-run',
+        cause='test run stuff',
+    )
