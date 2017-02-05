@@ -44,6 +44,11 @@ def check_task_event_data(sbg_keys):
 
 
 @pytest.fixture(scope='session')
+def s3_trigger_event_data(sbg_keys):
+    return get_event_file_for('validate_md5_s3_trigger', sbg_keys)
+
+
+@pytest.fixture(scope='session')
 def ff_meta_event_data(sbg_keys, ff_keys):
     return get_event_file_for('update_metadata_ff', sbg_keys, ff_keys)
 

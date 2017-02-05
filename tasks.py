@@ -20,6 +20,7 @@ def get_all_core_lambdas():
             'update_metadata_ff',
             'export_files_sbg',
             'check_export_sbg',
+            'validate_md5_s3_trigger',
             ]
 
 
