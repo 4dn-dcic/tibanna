@@ -28,10 +28,11 @@ def md5_updater(status, sbg, ff_meta):
             raise Exception("Export of file %s is still running" % filename)
         elif status in ['FAILED']:
     '''
+    # file to update -- thats the uuid
+    original_file = utils.get_metadata(ff_meta.input_files[0]['value'], key=ff_key)
+    
     if status == 'uploaded':
         md5 = utils.read_s3(ff_meta.output_files[0]['filename']).strip()
-        # file to update
-        original_file = utils.get_metadata(ff_meta.input_files[0]['value'], key=ff_key)  # thats the uuid
         original_md5 = original_file.get('content_md5sum', False)
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
@@ -42,6 +43,10 @@ def md5_updater(status, sbg, ff_meta):
             new_file['status'] = 'uploaded'
             new_file['content_md5sum'] = md5
 
+            utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
+    elif status == 'upload failed':
+            new_file = {}
+            new_file['status'] = 'upload failed'
             utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
 
 
