@@ -30,7 +30,7 @@ def md5_updater(status, sbg, ff_meta):
     '''
     # file to update -- thats the uuid
     original_file = utils.get_metadata(ff_meta.input_files[0]['value'], key=ff_key)
-    
+
     if status == 'uploaded':
         md5 = utils.read_s3(ff_meta.output_files[0]['filename']).strip()
         original_md5 = original_file.get('content_md5sum', False)
