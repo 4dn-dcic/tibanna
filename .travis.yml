@@ -7,7 +7,6 @@ python:
 install:
 - pip install six
 - pip install -U -r requirements.txt
-- pip install coveralls
 - pip install codacy-coverage
 script:
 - invoke test
@@ -17,7 +16,6 @@ script:
   invoke deploy_core all; fi
 after_success:
 - python-codacy-coverage -r coverage.xml
-- coveralls
 env:
   global:
   - secure: oD66frJIPm08Rg3oM1wpIGFScT2OvWtJwnQ8QwNxu9SYTYG0A5S2XTBDGi539FV5+u1DLUm3A2+EEiGchsef0LBJg71PdSjf06smSXLqdSxElmVqDLr52FLTio8EExNiMepKKVX9N+6x+AlGfE6GlkCB/RWj7m5CHguTBBL6RTGFejpRSHaJuZGVQJ3LuPiyheDax9fD5jL2SEehCUyS2ooHDlEMatbhfVdcSaUXYunqZr3wNow0DQ0wTs6z0dRdUPnVvuwVtrvOlnhgn5gXC24RpyxCvNkIzsA50Xm8m5N3Em+zJWcpkAIJbec1xJwUQburqUyUuxgjl6EL3Y+ca/Zc2Fsyx6JsunO0a+3nv6M//OwS8kcmJKrlYp/ldfYMGHlV1V1+8eoKCXPxcNF7OMlX4ipn+wtqPGLzk5yepTkuewNFVZyoBw2L9eqwMIsqYQswxK+SHebIfTWuUPEmgqp7Q/MOL/g7NvyeLeTqUGjkawItjSZiYjiKMWuimUj8QiFPghKwM4HAALRufhEpk3qTCjH+rrzaE+11vrOiFz0bv6eP7kxC4MgAoXLi6qLNJkkrOwSgbPLfc8ZtS3FQ4upA0KgAtDDfp3TC7RmpmBJmuhzuZxKg3xTkm5Lf7ZKQk/ddtbiTkfTrdM7LmKCTLxIFZN0ezY3YIA3IocfC5JM=
