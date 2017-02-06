@@ -15,6 +15,9 @@ def handler(event, context):
     filename = event['Records'][0]['s3']['object']['key']
     run_name = "validate_%s" % (filename.split('/')[0])
 
+    if event.get('run_name'):
+        run_name = event.get('run_name')  # used for testing
+
     # trigger the step function to run
     response = client.start_execution(
         stateMachineArn=STEP_FUNCTION_ARN,
