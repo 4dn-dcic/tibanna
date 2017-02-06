@@ -2,7 +2,8 @@
 import boto3
 import json
 
-client = boto3.client('stepfunctions')
+
+client = boto3.client('stepfunctions', region_name='us-east-1')
 STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
 
 
