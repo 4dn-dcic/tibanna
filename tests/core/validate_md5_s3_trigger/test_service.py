@@ -29,7 +29,7 @@ def test_s3_trigger_e2e(s3_trigger_event_data):
     executionArn = ret['executionArn']
 
     # see if task is running and kill it
-    client = boto3.client('stepfunctions')
+    client = boto3.client('stepfunctions', region_name='us-east-1')
     run_details = client.describe_execution(
         executionArn=executionArn
     )
