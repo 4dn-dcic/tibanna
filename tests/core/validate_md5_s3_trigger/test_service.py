@@ -33,8 +33,6 @@ def test_s3_trigger_e2e(s3_trigger_event_data):
     run_details = client.describe_execution(
         executionArn=executionArn
     )
-    import pdb
-    pdb.set_trace()
     assert run_details['status'] == 'RUNNING'
 
     client.stop_execution(
