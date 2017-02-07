@@ -13,6 +13,7 @@ def handler(event, context):
     event will be set to file data.
     '''
     # get file name
+    print(event)
     filename = event['Records'][0]['s3']['object']['key']
     run_name = "validate_%s" % (filename.split('/')[0])
 
@@ -34,17 +35,15 @@ def make_input(event):
     bucket = event['Records'][0]['s3']['bucket']['name']
 
     uuid, key = filename.split('/')
-    json_data = {"parameters": {},
+    return {"parameters": {},
                  "app_name": "md5",
                  "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
                  "input_files": [
                     {"workflow_argument_name": "input_file",
                      "bucket_name": bucket,
-                     "uuid": uuid,
-                     "object_key": key,
+                     "uuid": str(uuid),
+                     "object_key": str(key),
                      }
                  ],
                  "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
                  }
-
-    return json.dumps(json_data)
