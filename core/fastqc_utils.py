@@ -1,43 +1,43 @@
-import wranglertools.fdnDCIC as fdnDCIC
 import json
 import zipfile
 import re
-import random
 import uuid
 
 
-def parse_fastqc ( summary_filename, data_filename ):
-    """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
+def parse_fastqc(summary_filename, data_filename):
+    """ Return a quality_metric_fastqc metadata dictionary
+    given two fastqc output files, summary.txt (summary_filename)
+    and fastqc_data.txt (data_filename) """
 
-    qc_key_list_in_data = ['Total Sequences','Sequences flagged as poor quality','Sequence length','%GC']
-    
-    qc_json={}
+    qc_key_list_in_data = ['Total Sequences', 'Sequences flagged as poor quality',
+                           'Sequence length', '%GC']
+    qc_json = {}
     with open(summary_filename, 'r') as f:
         for line in f:
             a = line.split('\t')
             qc_json.update({a[1]: a[0]})
-    
+
     with open(data_filename, 'r') as f:
         for line in f:
             a = line.strip().split('\t')
             if a[0] in qc_key_list_in_data:
                 qc_json.update({a[0]: a[1]})
-   
+
     # add uuid, lab & award
     qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": uuid.uuid4()})
 
     return(qc_json)
 
 
+def parse_fastqc_zip(fastqc_zip_filename, target_dir='/tmp'):
+    """ Return a quality_metric_fastqc metadata dictionary
+    given a zipped fastqc output file. """
 
-def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' ):
-    """ Return a quality_metric_fastqc metadata dictionary given a zipped fastqc output file. """
-    zip = zipfile.ZipFile( fastqc_zip_filename )
+    zip = zipfile.ZipFile(fastqc_zip_filename)
     fastqc_zip_filetitle = re.sub(r'^.+/', '', fastqc_zip_filename)
     target_dir = target_dir + '/' + fastqc_zip_filetitle[:-4]
-    zip.extractall( target_dir )
-    return ( parse_fastqc( target_dir + '/summary.txt', target_dir + '/fastqc_data.txt' ) )
-    
+    zip.extractall(target_dir)
+    return(parse_fastqc(target_dir + '/summary.txt', target_dir + '/fastqc_data.txt'))
 
 
 if __name__ == '__main__':
@@ -65,6 +65,4 @@ if __name__ == '__main__':
         zip_filename = "/Users/soo/data/hic/fastq/GM12878_SRR1658581_1pc_1_R1_fastqc.zip"
 
     # print( parse_fastqc( summary_filename, data_filename ) )
-    print( json.dumps( parse_fastqc_zip( zip_filename ) ))
-
-
+    print(json.dumps(parse_fastqc_zip(zip_filename)))
