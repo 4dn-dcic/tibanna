@@ -7,6 +7,7 @@
 			 "uuid": "test_upload", 
 			 "object_key": "4DNFI7RAJFJ4.fasta.gz"
 			}
-	]
+	],
+    "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
 }
 

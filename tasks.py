@@ -17,6 +17,10 @@ def get_all_core_lambdas():
             'check_import_sbg',
             'run_task_sbg',
             'check_task_sbg',
+            'update_metadata_ff',
+            'export_files_sbg',
+            'check_export_sbg',
+            'validate_md5_s3_trigger',
             ]
 
 

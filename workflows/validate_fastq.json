@@ -36,7 +36,25 @@
 		    "BackoffRate" : 2.0
 		   }
 		  ],
-          "End":true
+          "Next": "ExportFilesSbg"
+	},
+	"ExportFilesSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:export_files_sbg",
+		"Next": "CheckExportSbg"
+	},
+	"CheckExportSbg": {
+		"Type": "Task",
+		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_export_sbg",
+		"Retry": [
+		  {
+		    "ErrorEquals": ["UnhandledError"],
+		    "IntervalSeconds": 10,
+		    "MaxAttempts" : 100,
+		    "BackoffRate" : 2.0
+		   }
+		  ],
+          "Next": "ExportFilesSbg"
 	}
   }
 }
