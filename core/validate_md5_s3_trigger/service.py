@@ -2,7 +2,6 @@
 import boto3
 import json
 
-
 client = boto3.client('stepfunctions', region_name='us-east-1')
 STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
 
@@ -13,8 +12,10 @@ def handler(event, context):
     event will be set to file data.
     '''
     # get file name
+    # print(event)
+
     filename = event['Records'][0]['s3']['object']['key']
-    run_name = "validate_%s" % (filename.split('/')[0])
+    run_name = "validate_%s" % (filename.split('/')[1].split('.')[0])
 
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
@@ -26,6 +27,8 @@ def handler(event, context):
         input=make_input(event),
     )
 
+    # pop no json serializable stuff...
+    response.pop('startDate')
     return response
 
 
@@ -34,17 +37,16 @@ def make_input(event):
     bucket = event['Records'][0]['s3']['bucket']['name']
 
     uuid, key = filename.split('/')
-    json_data = {"parameters": {},
-                 "app_name": "md5",
-                 "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
-                 "input_files": [
-                    {"workflow_argument_name": "input_file",
-                     "bucket_name": bucket,
-                     "uuid": uuid,
-                     "object_key": key,
-                     }
-                 ],
-                 "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+    data = {"parameters": {},
+            "app_name": "md5",
+            "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
+            "input_files": [
+                {"workflow_argument_name": "input_file",
+                 "bucket_name": bucket,
+                 "uuid": str(uuid),
+                 "object_key": str(key),
                  }
-
-    return json.dumps(json_data)
+             ],
+            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+            }
+    return json.dumps(data)

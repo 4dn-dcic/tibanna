@@ -20,9 +20,9 @@ This is core functionality (a set of lambda functions) that relies on AWS STEP F
 A set of tools for running docker- and cwl-based pipelines on AWS
 * [README](awsf/README.md) for more details
 
-## lambda-api
+## lambda_sbg
 A lambda function integrated with APIGateway, for managing pipelines on AWS and SBG
-* [README](lambda-api/README.md) for more details
+* [README](lambda_sbg/README.md) for more details
 
 * TODO: have registration function that creates the step-function workflow, ideally storing
   configuration in internal tables so stats an be gathered and d presented to users. 
