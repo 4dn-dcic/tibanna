@@ -20,7 +20,7 @@ def md5_updater(status, sbg, ff_meta):
     # based on status, update file object
 
     # file to update -- thats the uuid
-    accession = sbg.task_input.inputs['input_file']['name'].split('.')[0]
+    accession = sbg.task_input.inputs['input_file']['name'].split('.')[0].strip('/')
     original_file = utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
