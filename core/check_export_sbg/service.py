@@ -19,17 +19,9 @@ def md5_updater(status, sbg, ff_meta):
     # don't bother with update_processed_file_metadata stuff
     # based on status, update file object
 
-    '''
-        if status == 'COMPLETED':
-            OUTFILE_UPDATERS[sbg.app_name]('upladed', sbg, ff_meta)
-            # ff_meta.update_processed_file_metadata(status='uploaded')
-        elif status in ['PENDING', 'RUNNING']:
-            OUTFILE_UPDATERS[sbg.app_name]('uplading', sbg, ff_meta)
-            raise Exception("Export of file %s is still running" % filename)
-        elif status in ['FAILED']:
-    '''
     # file to update -- thats the uuid
-    original_file = utils.get_metadata(ff_meta.input_files[0]['value'], key=ff_key)
+    accession = sbg.task_input.inputs['input_file']['name'].split('.')[0]
+    original_file = utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
         md5 = utils.read_s3(ff_meta.output_files[0]['filename']).strip()
@@ -43,7 +35,7 @@ def md5_updater(status, sbg, ff_meta):
             new_file['status'] = 'uploaded'
             new_file['content_md5sum'] = md5
 
-            utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
+            utils.patch_metadata(new_file, accession, key=ff_key)
     elif status == 'upload failed':
             new_file = {}
             new_file['status'] = 'upload failed'

@@ -23,7 +23,7 @@
         "task_input": {"project": "4dn-dcic/dev",
             "inputs": {"input_file": {"path": "58820d9ce4b034438db1479c",
                 "class": "File",
-                "name": "4DNFI7RAJFJ4.fasta.gz"}},
+                "name": "4DNFIG8PD3JR.fasta.gz"}},
                 "app": "4dn-dcic/dev/md5",
                 "name": "md5"},
         "volume_list": [{"id": "4dn-labor/4dn_s32gkz1s7x", "name": "4dn_s32gkz1s7x"},
