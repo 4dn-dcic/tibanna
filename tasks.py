@@ -296,7 +296,7 @@ def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
     client = boto3.client('stepfunctions', region_name='us-east-1')
     STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
 
-    run_name = 'fastqc_%s_1' % accession
+    run_name = 'fastqc_%s' % accession
     accession = accession + ".fastq.gz"
     print("about to start run %s" % run_name)
     # trigger the step function to run
