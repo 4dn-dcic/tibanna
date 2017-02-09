@@ -6,6 +6,7 @@ import random
 import uuid
 import glob
 import boto3
+import os
 
 def parse_fastqc ( summary_filename, data_filename ):
     """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
@@ -31,14 +32,23 @@ def parse_fastqc ( summary_filename, data_filename ):
 
 
 
-def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' ):
+def upload_dir ( target_dir, bucket_name, s3_subdir ):
+    s3 = boto3.client('s3')
+    for root, dir, files in os.walk( target_dir ):
+        for filename in files:
+            local_path = os.path.join(root, filename)
+            relative_path = os.path.relpath(local_path, target_dir)
+            s3_path = os.path.join( s3_subdir, relative_path)
+            s3.upload_file ( local_path, bucket_name, s3_path)
+
+
+def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' , bucket_name = '4dn-tool-evaluation-files', s3_subdir = 'hahaha_fastqc'):
     """ Return a quality_metric_fastqc metadata dictionary given a zipped fastqc output file. """
     zip = zipfile.ZipFile( fastqc_zip_filename )
     zip.extractall( target_dir )
     target_dir = glob.glob( target_dir + '/*_fastqc' )[0]
 
-    s3 = boto3.client('s3')
-    s3.upload_file( target_dir + '/summary.txt', '4dn-tool-evaluation-files', 'haha_fastqc/summary.txt' ) 
+    upload_dir ( target_dir, bucket_name, s3_subdir )
 
     return ( parse_fastqc( target_dir + '/summary.txt', target_dir + '/fastqc_data.txt' ) )
     
