@@ -25,11 +25,21 @@ def parse_fastqc ( summary_filename, data_filename ):
             if a[0] in qc_key_list_in_data:
                 qc_json.update({a[0]: a[1]})
    
+    # overall quality status 
+    # (do this before uuid, lab & award, so we'll use only quality metric to determind this. (e.g. if all PASS then PASS))
+    qc_json = determine_overall_status ( qc_json )
+  
+
     # add uuid, lab & award
     qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": str(uuid.uuid4()) })
 
     return(qc_json)
 
+
+def determine_overall_status ( qc_json ):
+    """Currently PASS no matter what """
+    qc_json.append( 'overall_quality_status': 'PASS' )
+    return( qc_json )
 
 
 def upload_dir ( target_dir, bucket_name, s3_subdir ):
