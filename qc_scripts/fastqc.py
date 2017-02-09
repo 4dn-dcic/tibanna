@@ -5,6 +5,7 @@ import re
 import random
 import uuid
 import glob
+import boto3
 
 def parse_fastqc ( summary_filename, data_filename ):
     """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
@@ -35,6 +36,10 @@ def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' ):
     zip = zipfile.ZipFile( fastqc_zip_filename )
     zip.extractall( target_dir )
     target_dir = glob.glob( target_dir + '/*_fastqc' )[0]
+
+    s3 = boto3.client('s3')
+    s3.upload_file( target_dir + '/summary.txt', '4dn-tool-evaluation-files', 'haha_fastqc/summary.txt' ) 
+
     return ( parse_fastqc( target_dir + '/summary.txt', target_dir + '/fastqc_data.txt' ) )
     
 
