@@ -92,3 +92,4 @@ logs/
 
 # os x stuff
 .DS_Store
+.chalice/

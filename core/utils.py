@@ -77,10 +77,10 @@ def read_s3_zipfile(s3key, files_to_extract):
     bytestream = BytesIO(s3_stream)
     zipstream = ZipFile(bytestream, 'r')
     ret_files = {}
-    import pdb
-    pdb.set_trace()
+
     for name in files_to_extract:
-        # search subdirectories for name
+        # search subdirectories for file with name
+        # so I don't have to worry about figuring out the subdirs
         zipped_filename = find_file(name, zipstream)
         if zipped_filename:
             ret_files[name] = zipstream.open(zipped_filename).read()
