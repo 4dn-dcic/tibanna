@@ -4,7 +4,7 @@ import zipfile
 import re
 import random
 import uuid
-
+import glob
 
 def parse_fastqc ( summary_filename, data_filename ):
     """ Return a quality_metric_fastqc metadata dictionary given two fastqc output files, summary.txt (summary_filename) and fastqc_data.txt (data_filename) """
@@ -24,7 +24,7 @@ def parse_fastqc ( summary_filename, data_filename ):
                 qc_json.update({a[0]: a[1]})
    
     # add uuid, lab & award
-    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": uuid.uuid4()})
+    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": str(uuid.uuid4()) })
 
     return(qc_json)
 
@@ -33,9 +33,8 @@ def parse_fastqc ( summary_filename, data_filename ):
 def parse_fastqc_zip ( fastqc_zip_filename, target_dir = '/tmp' ):
     """ Return a quality_metric_fastqc metadata dictionary given a zipped fastqc output file. """
     zip = zipfile.ZipFile( fastqc_zip_filename )
-    fastqc_zip_filetitle = re.sub(r'^.+/', '', fastqc_zip_filename)
-    target_dir = target_dir + '/' + fastqc_zip_filetitle[:-4]
     zip.extractall( target_dir )
+    target_dir = glob.glob( target_dir + '/*_fastqc' )[0]
     return ( parse_fastqc( target_dir + '/summary.txt', target_dir + '/fastqc_data.txt' ) )
     
 
