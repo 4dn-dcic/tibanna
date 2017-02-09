@@ -90,3 +90,5 @@ json/
 userdata/
 logs/
 
+# os x stuff
+.DS_Store

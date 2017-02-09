@@ -113,6 +113,16 @@ def test_read_s3():
 
 @valid_env
 @pytest.mark.webtest
+def test_read_s3_zip():
+    filename = '__test_data/fastqc_report.zip'
+    files = utils.read_s3_zipfile(filename, ['summary.txt', 'fastqc_data.txt'])
+    assert files['summary.txt']
+    assert files['fastqc_data.txt']
+    assert files['summary.txt'].startswith('PASS')
+
+
+@valid_env
+@pytest.mark.webtest
 def test_create_sbg_workflow(sbg_project, sbg_keys):
     sbg = utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
     assert sbg.header

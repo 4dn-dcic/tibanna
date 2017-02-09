@@ -7,6 +7,8 @@ import os
 import requests
 import random
 from uuid import uuid4
+from zipfile import ZipFile
+from io import BytesIO
 
 from wranglertools import fdnDCIC
 
@@ -67,8 +69,28 @@ def get_key(keyfile_name='illnevertell'):
 def read_s3(filename):
     response = s3.get_object(Bucket=OUTFILE_BUCKET,
                              Key=filename)
-
     return response['Body'].read()
+
+
+def read_s3_zipfile(s3key, files_to_extract):
+    s3_stream = read_s3(s3key)
+    bytestream = BytesIO(s3_stream)
+    zipstream = ZipFile(bytestream, 'r')
+    ret_files = {}
+    import pdb
+    pdb.set_trace()
+    for name in files_to_extract:
+        # search subdirectories for name
+        zipped_filename = find_file(name, zipstream)
+        if zipped_filename:
+            ret_files[name] = zipstream.open(zipped_filename).read()
+    return ret_files
+
+
+def find_file(name, zipstream):
+    for zipped_filename in zipstream.namelist():
+        if zipped_filename.endswith(name):
+            return zipped_filename
 
 
 def to_sbg_workflow_args(parameter_dict):
