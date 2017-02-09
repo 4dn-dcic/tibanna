@@ -72,6 +72,34 @@ def read_s3(filename):
     return response['Body'].read()
 
 
+def s3_put(obj, filename):
+    s3.put_object(Bucket=OUTFILE_BUCKET,
+                  Key=filename,
+                  Body=obj
+                  )
+
+
+def s3_read_dir(prefix):
+    return s3.list_objects(Bucket=OUTFILE_BUCKET,
+                           Prefix=prefix)
+
+
+def s3_delete_dir(prefix):
+    # one query get list of all the files we want to delete
+    obj_list = s3.list_objects(Bucket=OUTFILE_BUCKET,
+                               Prefix=prefix)
+    files = obj_list.get('Contents', [])
+
+    # morph file list into format that boto3 wants
+    delete_keys = {'Objects': []}
+    delete_keys['Objects'] = [{'Key': k} for k in
+                              [obj['Key'] for obj in files]]
+
+    # second query deletes all the files, NOTE: Max 1000 files
+    s3.delete_objects(Bucket=OUTFILE_BUCKET,
+                      Delete=delete_keys)
+
+
 def read_s3_zipfile(s3key, files_to_extract):
     s3_stream = read_s3(s3key)
     bytestream = BytesIO(s3_stream)
@@ -85,6 +113,27 @@ def read_s3_zipfile(s3key, files_to_extract):
         if zipped_filename:
             ret_files[name] = zipstream.open(zipped_filename).read()
     return ret_files
+
+
+def unzip_s3_to_s3(zipped_s3key, dest_dir):
+    if not dest_dir.endswith('/'):
+        dest_dir += '/'
+
+    s3_stream = read_s3(zipped_s3key)
+    # read this badboy to memory, don't go to disk
+    bytestream = BytesIO(s3_stream)
+    zipstream = ZipFile(bytestream, 'r')
+
+    # directory should be first name in the list
+    file_list = zipstream.namelist()
+    basedir_name = file_list.pop(0)
+    assert basedir_name.endswith('/')
+
+    for file_name in file_list:
+        # don't copy dirs just files
+        if not file_name.endswith('/'):
+            s3_file_name = file_name.replace(basedir_name, dest_dir)
+            s3_put(zipstream.open(file_name, 'r').read(), s3_file_name)
 
 
 def find_file(name, zipstream):

@@ -123,6 +123,25 @@ def test_read_s3_zip():
 
 @valid_env
 @pytest.mark.webtest
+def test_unzip_s3_to_s3():
+    prefix = '__test_data/extracted'
+    filename = '__test_data/fastqc_report.zip'
+    utils.s3_delete_dir(prefix)
+
+    # ensure this thing was deleted
+    # if no files there will be no Contents in response
+    objs = utils.s3_read_dir(prefix)
+    assert [] == objs.get('Contents', [])
+
+    # now copy to that dir we just deleted
+    utils.unzip_s3_to_s3(filename, prefix)
+
+    objs = utils.s3_read_dir(prefix)
+    assert objs.get('Contents', None)
+
+
+@valid_env
+@pytest.mark.webtest
 def test_create_sbg_workflow(sbg_project, sbg_keys):
     sbg = utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
     assert sbg.header
