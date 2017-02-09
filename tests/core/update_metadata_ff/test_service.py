@@ -10,5 +10,5 @@ def test_run_update_metadata_ff_e2e(ff_meta_event_data):
     ret = ff(ff_meta_event_data, None)
     assert json.dumps(ret)
     assert ret['workflow']['task_input']
-    assert ret['metadata_object']
-    assert ret['workflowrun']
+    assert ret['res']
+    assert ret['ff_meta']

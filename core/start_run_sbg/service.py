@@ -22,22 +22,41 @@ def handler(event, context):
     app_name = event.get('app_name').encode('utf8')
     parameter_dict = event.get('parameters')
     workflow_uuid = event.get('workflow_uuid').encode('utf8')
+    output_bucket = event.get('output_bucket')
 
     # get necessary tokens
     s3_keys = event.get('s3_keys')
     if not s3_keys:
         s3_keys = utils.get_s3_keys()
 
+    # represents the SBG info we need
     sbg = utils.create_sbg_workflow(app_name)
 
-    # mount all files to sbg
-    mounts3_tasks = [mount_on_sbg(infile, s3_keys, sbg) for infile in input_file_list]
+    # represents the workflow metadata to be stored in fourfront
+    parameters, input_files = utils.to_sbg_workflow_args(parameter_dict)
+
+    # create the ff_meta output info
+    ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters)
+
+    # mount all input files to sbg this will also update sbg to store the import_ids
+    _ = [mount_on_sbg(infile, s3_keys, sbg) for infile in input_file_list]
+
+    # create a link to the output directory as well
+    if output_bucket:
+        sbg_volume = utils.create_sbg_volume_details()
+        res = sbg.create_volumes(sbg_volume, output_bucket,
+                           public_key=s3_keys['key'],
+                           secret_key=s3_keys['secret'])
+        vol_id = res.get('id')
+        if not vol_id:
+            # we got an error
+            raise Exception("Unable to mount output volume, error is %s " % res)
+        sbg.output_volume_id = vol_id
 
     # let's not pass keys in plain text parameters
-    return {"import_ids": mounts3_tasks,
-            "input_file_args": input_file_list,
+    return {"input_file_args": input_file_list,
             "workflow": sbg.as_dict(),
-            "workflow_uuid": workflow_uuid,
+            "ff_meta": ff_meta.as_dict(),
             "parameter_dict": parameter_dict}
 
     '''
@@ -113,9 +132,7 @@ def mount_on_sbg(input_file, s3_keys, sbg):
     try:
         s3.Object(bucket, '%s/%s' % (key_uuid, key)).load()
     except Exception as e:
-        print(e)
-        print('ERROR: Object {} in bucket {} not found.'.format(key, bucket))
-        raise e
+        raise Exception('ERROR: Object {} in bucket {} not found\n{}.'.format(key, bucket, e))
 
     # mount the bucket and import the file
     try:

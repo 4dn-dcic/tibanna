@@ -6,7 +6,9 @@ import boto3
 import os
 import requests
 import random
-import uuid
+from uuid import uuid4
+from zipfile import ZipFile
+from io import BytesIO
 
 from wranglertools import fdnDCIC
 
@@ -17,6 +19,7 @@ from wranglertools import fdnDCIC
 SBG_PROJECT_ID = "4dn-dcic/dev"
 s3 = boto3.client('s3')
 SYS_BUCKET = 'elasticbeanstalk-encoded-4dn-system'
+OUTFILE_BUCKET = 'elasticbeanstalk-encoded-4dn-wfoutput-files'
 keyfile_name = 'illnevertell'
 
 
@@ -37,7 +40,7 @@ class SBGAPI(object):
 def get_access_keys():
     keys = get_key()
     # TODO: store with appropriate server, for now default to testportal
-    keys['default']['server'] = 'http://testportal.4dnucleome.org'
+    keys['default']['server'] = 'https://testportal.4dnucleome.org'
     return keys
 
 
@@ -61,6 +64,82 @@ def get_key(keyfile_name='illnevertell'):
     except ValueError:
         # maybe its not json after all
         return akey
+
+
+def read_s3(filename):
+    response = s3.get_object(Bucket=OUTFILE_BUCKET,
+                             Key=filename)
+    return response['Body'].read()
+
+
+def s3_put(obj, filename):
+    s3.put_object(Bucket=OUTFILE_BUCKET,
+                  Key=filename,
+                  Body=obj
+                  )
+
+
+def s3_read_dir(prefix):
+    return s3.list_objects(Bucket=OUTFILE_BUCKET,
+                           Prefix=prefix)
+
+
+def s3_delete_dir(prefix):
+    # one query get list of all the files we want to delete
+    obj_list = s3.list_objects(Bucket=OUTFILE_BUCKET,
+                               Prefix=prefix)
+    files = obj_list.get('Contents', [])
+
+    # morph file list into format that boto3 wants
+    delete_keys = {'Objects': []}
+    delete_keys['Objects'] = [{'Key': k} for k in
+                              [obj['Key'] for obj in files]]
+
+    # second query deletes all the files, NOTE: Max 1000 files
+    s3.delete_objects(Bucket=OUTFILE_BUCKET,
+                      Delete=delete_keys)
+
+
+def read_s3_zipfile(s3key, files_to_extract):
+    s3_stream = read_s3(s3key)
+    bytestream = BytesIO(s3_stream)
+    zipstream = ZipFile(bytestream, 'r')
+    ret_files = {}
+
+    for name in files_to_extract:
+        # search subdirectories for file with name
+        # so I don't have to worry about figuring out the subdirs
+        zipped_filename = find_file(name, zipstream)
+        if zipped_filename:
+            ret_files[name] = zipstream.open(zipped_filename).read()
+    return ret_files
+
+
+def unzip_s3_to_s3(zipped_s3key, dest_dir):
+    if not dest_dir.endswith('/'):
+        dest_dir += '/'
+
+    s3_stream = read_s3(zipped_s3key)
+    # read this badboy to memory, don't go to disk
+    bytestream = BytesIO(s3_stream)
+    zipstream = ZipFile(bytestream, 'r')
+
+    # directory should be first name in the list
+    file_list = zipstream.namelist()
+    basedir_name = file_list.pop(0)
+    assert basedir_name.endswith('/')
+
+    for file_name in file_list:
+        # don't copy dirs just files
+        if not file_name.endswith('/'):
+            s3_file_name = file_name.replace(basedir_name, dest_dir)
+            s3_put(zipstream.open(file_name, 'r').read(), s3_file_name)
+
+
+def find_file(name, zipstream):
+    for zipped_filename in zipstream.namelist():
+        if zipped_filename.endswith(name):
+            return zipped_filename
 
 
 def to_sbg_workflow_args(parameter_dict):
@@ -126,7 +205,7 @@ def create_sbg_workflow(app_name, task_id='', task_input=None, token=None,
     # create data for sbg workflow run
     # create a sbg workflow run object to use
     wfrun = SBGWorkflowRun(token, project_id, app_name, task_id, task_input_class, import_id_list,
-                           mounted_volume_ids, export_id_list)
+                           mounted_volume_ids, export_id_list, **kwargs)
     return wfrun
 
 
@@ -141,12 +220,15 @@ class SBGWorkflowRun(object):
 
     def __init__(self, token, project_id, app_name, task_id='', task_input=None,
                  import_id_list=None, mounted_volume_ids=None, export_id_list=None,
-                 header=None):
+                 header=None, output_volume_id=None, export_report=None, **kwargs):
 
         # list of import ids for the files imported for the current run.
         self.import_id_list = [] if import_id_list is None else import_id_list
         mounted_volume_ids = [] if mounted_volume_ids is None else mounted_volume_ids
         self.export_id_list = [] if export_id_list is None else export_id_list
+        self.export_report = [] if export_report is None else export_report
+        self.output_volume_id = output_volume_id
+
         if not header:
             self.header = {"X-SBG-Auth-Token": token, "Content-type": "application/json"}
         else:
@@ -177,15 +259,6 @@ class SBGWorkflowRun(object):
         if ti:
             cleaned_workflow['task_input'] = ti.as_dict()
         return cleaned_workflow
-
-    def sbg2workflowrun(self, wr):
-        wr.title = self.app_name + " run " + str(datetime.datetime.now())
-        wr.sbg_task_id = self.task_id
-        wr.sbg_mounted_volume_ids = []
-        for x in self.volume_list:
-            wr.sbg_mounted_volume_ids.append(x)
-        wr.sbg_import_ids = self.import_id_list
-        return (wr.__dict__)
 
     def create_volumes(self, sbg_volume, bucket_name, public_key,
                        secret_key, bucket_object_prefix='', access_mode='rw'):
@@ -323,35 +396,75 @@ class SBGWorkflowRun(object):
             print('Error creating a task payload')
             raise e
 
-    '''
     # Initiate exporting all output files to S3 and returns an array of {filename, export_id} dictionary
     # export_id should be used to track export status.
-    def export_all_output_files(self, sbg_volume, sbg_run_detail_resp):
+    def export_all_output_files(self, sbg_run_detail_resp, base_dir="", sbg_volume=None):
         self.export_report = []
         self.export_id_list = []
 
-        workflow_run_file_type='output_files'
+        if base_dir and not base_dir.endswith("/"):
+            base_dir += "/"
+
+        # get the output volume
+        if sbg_volume is None:
+            sbg_volume = self.output_volume_id
+
         # export all output files to s3
         for k, v in sbg_run_detail_resp.get('outputs').iteritems():
-            if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
-                 sbg_file_id = v['path'].encode('utf8')
-                 sbg_filename = v['name'].encode('utf8')
-                 export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
-                 self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
-                 self.export_id_list.append(export_id)
+            if isinstance(v, dict) and v.get('class') == 'File':     # This is a file
+                sbg_file_id = v['path'].encode('utf8')
+                # put all files in directory with uuid of workflowrun
+                dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
+                # report will help with generating metadata later
+                self.export_report.append({"filename": dest_filename, "export_id": export_id,
+                                           "workflow_arg_name": k, 'value': str(uuid4())})
+                self.export_id_list.append(export_id)
             elif isinstance(v, list):
-                 for v_el in v:
-                        ## This is a file (v is an array of files)
-                        if isinstance(v_el, dict) and v_el.get('class')=='File':
-                             sbg_file_id = v['path'].encode('utf8')
-                             sbg_filename = v['name'].encode('utf8')
-                             export_id = self.export_to_volume (sbg_file_id, sbg_volume, sbg_filename)
-                             self.export_report.append( {"filename":sbg_filename, "export_id":export_id } )
-                             self.export_id_list.append(export_id)
+                for v_el in v:
+                    # This is a file (v is an array of files)
+                    if isinstance(v_el, dict) and v_el.get('class') == 'File':
+                        sbg_file_id = v['path'].encode('utf8')
+                        dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                        export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
+                        self.export_report.append({"filename": dest_filename, "export_id": export_id,
+                                                   "workflow_arg_name": k, 'value': str(uuid4())})
+                        self.export_id_list.append(export_id)
 
-        print(self.export_report)  # debugging
+        return self.export_report
 
+    def export_to_volume(self, source_file_id, sbg_volume_id, dest_filename):
+        '''
+        This function exports a file on SBG to a mounted output bucket and returns export_id
+        '''
 
+        export_url = self.base_url + "/storage/exports/?overwrite=true"
+        data = {
+            "source": {
+                "file": source_file_id
+            },
+            "destination": {
+                "volume": sbg_volume_id,
+                "location": dest_filename
+            }
+        }
+        response = requests.post(export_url, headers=self.header, data=json.dumps(data)).json()
+        if 'id' in response.keys():
+            # Export initiated corretly
+            export_id = response.get('id')
+            if export_id not in self.export_id_list:
+                self.export_id_list.append(export_id)
+            return export_id
+        else:
+            raise Exception("Export error %s \n request data is %s" % (response, data))
+
+    def check_export(self, export_id):
+        export_url = self.base_url + "/storage/exports/" + export_id
+        data = {"export_id": export_id}
+        response = requests.get(export_url, headers=self.header, data=json.dumps(data))
+        return response.json()
+
+    '''
     def fill_processed_file_metadata(self, bucket_name, workflow_run_uuid):
         processed_files=[]
         fill_report={}
@@ -360,7 +473,7 @@ class SBGWorkflowRun(object):
             export_id = file['export_id']
             status = self.get_export_status(export_id)
             accession=generate_rand_accession()
-            uuid=uuid.uuid4()
+            uuid=str(uuid4())
             fill_report[filename] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
             # create a meta data file object
             # metadata = FileProcessedMetadata(uuid, accession, filename,
@@ -373,50 +486,7 @@ class SBGWorkflowRun(object):
             processed_files.append(metadata.__dict__)
         return ({"metadata": processed_files,"report": fill_report })
 
-    # This function exports a file on SBG to a mounted output bucket and returns export_id
-    def export_to_volume (self, source_file_id, sbg_volume, dest_filename):
 
-        if sbg_volume not in self.volume_list:
-            print("Error: the specified volume doesn't exist in the current workflow run.")
-            sys.exit()
-        export_url = self.base_url + "/storage/exports/"
-        data = {
-            "source": {
-                "file": source_file_id
-            },
-            "destination": {
-                "volume": sbg_volume.id,
-                "location": dest_filename
-            }
-        }
-        print("export data = {}".format(json.dumps(data)))
-        response = requests.post(export_url, headers=self.header, data=json.dumps(data))
-        print(response.json())
-        if response.json().has_key('id'):
-            return(response.json().get('id'))
-            export_id = response.json().get('id')
-            if export_id not in self.export_id_list:
-                self.export_id_list.append(export_id)
-            return(export_id)
-
-        else:
-            print("Export error")
-            print(response)
-            sys.exit()
-
-    def get_export_status (self, export_id):
-        result = self.check_export(export_id)
-        print(result)
-        if result.has_key('state'):
-            return self.check_export(export_id).get('state')
-        else:
-            return None
-
-    def check_export (self, export_id):
-        export_url = self.base_url + "/storage/exports/" + export_id
-        data = { "export_id" : export_id }
-        response = requests.get(export_url, headers=self.header, data=json.dumps(data))
-        return(response.json())
 
 
     def delete_volumes(self):
@@ -499,33 +569,69 @@ class SBGTaskInput(object):
         else:
             return False
 
+    def sbg2workflowrun(self, wr):
+        wr.title = self.app_name + " run " + str(datetime.datetime.now())
+        wr.sbg_task_id = self.task_id
+        wr.sbg_mounted_volume_ids = []
+        for x in self.volume_list:
+            wr.sbg_mounted_volume_ids.append(x)
+        wr.sbg_import_ids = self.import_id_list
+        return (wr.__dict__)
 
 
-def create_ffmeta(workflow, input_files=[],
-                  parameters=[], sbg_task_id=None,
-                  sbg_import_ids=None, sbg_export_ids=None,
-                  sbg_mounted_volume_ids=None, uuid=None,
-                  award='1U01CA200059-01', lab='4dn-dcic-lab',
-                  run_platform='SBG', **kwargs):
+def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, sbg_task_id=None,
+                  sbg_mounted_volume_ids=None, sbg_import_ids=None, sbg_export_ids=None, uuid=None,
+                  award='1U01CA200059-01', lab='4dn-dcic-lab', run_platform='SBG',
+                  output_files=None, run_status='started', **kwargs):
+
+    input_files = [] if input_files is None else input_files
+    parameters = [] if parameters is None else parameters
+    # TODO: this probably is not right
+    sbg_export_ids = [] if sbg_export_ids is None else sbg_export_ids
+
+    if title is None:
+        title = sbg.app_name + " run " + str(datetime.datetime.now())
+
+    if sbg_task_id is None:
+        sbg_task_id = sbg.task_id
+
+    if not sbg_mounted_volume_ids:
+        try:
+            sbg.volume_list[0]['name']
+            sbg_mounted_volume_ids = [x['name'] for x in sbg.volume_list]
+        except:
+            sbg_mounted_volume_ids = [x for x in sbg.volume_list]
+
+    if not sbg_import_ids:
+        sbg_import_ids = sbg.import_id_list
+
+    if not output_files:
+        output_files = sbg.export_report
+
     return WorkflowRunMetadata(workflow, input_files, parameters,
                                sbg_task_id, sbg_import_ids, sbg_export_ids,
                                sbg_mounted_volume_ids, uuid,
-                               award, lab, run_platform, **kwargs)
+                               award, lab, run_platform, title, output_files, run_status, **kwargs)
 
 
 class WorkflowRunMetadata(object):
+    '''
+    fourfront metadata
+    '''
 
     def __init__(self, workflow, input_files=[],
                  parameters=[], sbg_task_id=None,
                  sbg_import_ids=None, sbg_export_ids=None,
                  sbg_mounted_volume_ids=None, uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
-                 run_platform='SBG', **kwargs):
+                 run_platform='SBG', title=None, output_files=None,
+                 run_status='started', **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
         """
-        self.uuid = uuid if uuid else uuid.uuid4() 
+        self.run_status = run_status
+        self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
         self.run_platform = run_platform
         if sbg_task_id is None:
@@ -545,11 +651,36 @@ class WorkflowRunMetadata(object):
             self.sbg_export_ids = []
         else:
             self.sbg_export_ids = sbg_export_ids
+
+        if output_files is None:
+            self.output_files = []
+        else:
+            self.output_files = output_files
+
+        self.title = title
         self.input_files = input_files
         self.parameters = parameters
-        self.output_files = []
         self.award = award
         self.lab = lab
+
+    def update_processed_file_metadata(self, status='upload failed'):
+        pass
+
+    def get_ouptfile_metadata(self):
+        meta = []
+        filestatus = 'uploaded'
+        if self.status in ['started', 'running', 'output_files_transferring', 'error']:
+            filestatus = 'uploading'
+
+        for of in self.output_files:
+            if of['workflow_arg_name'] not in ['report']:
+                meta.append({'uuid': of['value'],
+                             'filename': of['filename'],
+                             'status': filestatus,
+                             'file_format': "other",  # deal with this later
+                             'lab': self.lab,
+                             'award': self.award
+                             })
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
@@ -563,23 +694,61 @@ class WorkflowRunMetadata(object):
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
+    def post(self, key):
+        return post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key)
 
-def post_to_metadata(key, post_item, schema_name):
+
+def fdn_connection(key='', connection=None):
+    assert key or connection
+
+    if not connection:
+        try:
+            fdn_key = fdnDCIC.FDN_Key(key, 'default')
+            connection = fdnDCIC.FDN_Connection(fdn_key)
+        except Exception as e:
+            raise Exception("Unable to connect to server with check keys : %s" % e)
+    return connection
+
+
+def patch_metadata(patch_item, obj_id='', key='', connection=None):
+    '''
+    obj_id can be uuid or @id for most object
+    '''
+
+    connection = fdn_connection(key, connection)
+
+    obj_id = obj_id if obj_id else patch_item['uuid']
 
     try:
-        fdn_key = fdnDCIC.FDN_Key(key, 'default')
-        connection = fdnDCIC.FDN_Connection(fdn_key)
+        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item)
+
+        if response.get('status') == 'error':
+            raise Exception("error %s \n unalbe to patch obj: %s \n with  data: %s" %
+                            (response, obj_id, patch_item))
     except Exception as e:
-        raise Exception("Unable to connect to server with check keys : %s" % e)
+        raise Exception("error %s \nunalbe to patch object %s \ndata: %s" % (e, obj_id, patch_item))
+    return response
+
+
+def get_metadata(obj_id, key='', connection=None):
+    connection = fdn_connection(key, connection)
+    return fdnDCIC.get_FDN(obj_id, connection)
+
+
+def post_to_metadata(post_item, schema_name, key='', connection=None):
+    connection = fdn_connection(key, connection)
 
     try:
         response = fdnDCIC.new_FDN(connection, schema_name, post_item)
-        if response.get('status') == 'error':
+        if (response.get('status') == 'error' and response.get('detail') == 'UUID conflict'):
+            # item already posted lets patch instead
+            patch_metadata(post_item, connection=connection)
+        elif response.get('status') == 'error':
             raise Exception("error %s \n unalbe to post data to schema %s, data: %s" %
                             (response, schema_name, post_item))
     except Exception as e:
-        raise Exception("unalbe to post data to schema %s, data: %s" %
-                        (schema_name, post_item))
+        raise Exception("error %s \nunalbe to post data to schema %s, data: %s" %
+                        (e, schema_name, post_item))
 
     return response
 
