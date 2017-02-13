@@ -27,12 +27,22 @@ def parse_fastqc(summary, data, url=''):
             # maybe a blank line or something
             pass
 
+    # overall quality status
+    # (do this before uuid, lab & award, so we'll use only quality metric to determind this. (e.g. if all PASS then PASS))
+    qc_json = determine_overall_status ( qc_json )
+
     # add uuid, lab & award
     qc_json.update({"award": "1U01CA200059-01",
                     "lab": "4dn-dcic-lab",
                     "uuid": str(uuid.uuid4()),
                     "url": url})
 
+    return(qc_json)
+
+
+def determine_overall_status (qc_json):
+    """Currently PASS no matter what """
+    qc_json.update({'overall_quality_status': 'PASS'})
     return(qc_json)
 
 
