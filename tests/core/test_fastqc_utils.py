@@ -19,3 +19,4 @@ def data():
 def test_parse_fastqc(summary, data):
     meta = fastqc_utils.parse_fastqc(summary, data, url='test_url')
     assert meta['url'] == 'test_url'
+    assert meta['overall_quality_status'] == 'PASS'
