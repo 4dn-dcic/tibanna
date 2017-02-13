@@ -2,7 +2,7 @@ import uuid
 from core import utils
 
 
-def parse_fastqc(summary, data):
+def parse_fastqc(summary, data, url=''):
     """ Return a quality_metric_fastqc metadata dictionary
     given two fastqc output files, summary.txt (summary_filename)
     and fastqc_data.txt (data_filename) """
@@ -12,20 +12,31 @@ def parse_fastqc(summary, data):
     qc_json = {}
     for line in summary.split('\n'):
         a = line.split('\t')
-        qc_json.update({a[1]: a[0]})
+        try:
+            qc_json.update({a[1]: a[0]})
+        except IndexError:  # pragma: no cover
+            # maybe a blank line or something
+            pass
 
     for line in data.split('\n'):
         a = line.strip().split('\t')
-        if a[0] in qc_key_list_in_data:
-            qc_json.update({a[0]: a[1]})
+        try:
+            if a[0] in qc_key_list_in_data:
+                qc_json.update({a[0]: a[1]})
+        except IndexError:  # pragma: no cover
+            # maybe a blank line or something
+            pass
 
     # add uuid, lab & award
-    qc_json.update({"award": "1U01CA200059-01", "lab": "4dn-dcic-lab", "uuid": uuid.uuid4()})
+    qc_json.update({"award": "1U01CA200059-01",
+                    "lab": "4dn-dcic-lab",
+                    "uuid": str(uuid.uuid4()),
+                    "url": url})
 
     return(qc_json)
 
 
-def parse_fastqc_from_s3(key_for_zipped_file):
+def parse_fastqc_from_s3(key_for_zipped_file):  # pragma: no cover
     file_names = ['summary.txt', 'fastqc_data.txt']
     files = utils.read_s3_zipfile(key_for_zipped_file, file_names)
     parse_fastqc(files['summary.txt'],

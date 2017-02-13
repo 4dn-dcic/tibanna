@@ -96,8 +96,9 @@ def s3_delete_dir(prefix):
                               [obj['Key'] for obj in files]]
 
     # second query deletes all the files, NOTE: Max 1000 files
-    s3.delete_objects(Bucket=OUTFILE_BUCKET,
-                      Delete=delete_keys)
+    if delete_keys['Objects']:
+        s3.delete_objects(Bucket=OUTFILE_BUCKET,
+                          Delete=delete_keys)
 
 
 def read_s3_zipfile(s3key, files_to_extract):
@@ -115,7 +116,10 @@ def read_s3_zipfile(s3key, files_to_extract):
     return ret_files
 
 
-def unzip_s3_to_s3(zipped_s3key, dest_dir):
+def unzip_s3_to_s3(zipped_s3key, dest_dir, retfile_names=None):
+    if retfile_names is None:
+        retfile_names = []
+
     if not dest_dir.endswith('/'):
         dest_dir += '/'
 
@@ -129,11 +133,21 @@ def unzip_s3_to_s3(zipped_s3key, dest_dir):
     basedir_name = file_list.pop(0)
     assert basedir_name.endswith('/')
 
+    ret_files = {}
     for file_name in file_list:
         # don't copy dirs just files
         if not file_name.endswith('/'):
             s3_file_name = file_name.replace(basedir_name, dest_dir)
-            s3_put(zipstream.open(file_name, 'r').read(), s3_file_name)
+            # just perf optimization so we don't have to copy
+            # files twice that we want to further interogate
+            the_file = zipstream.open(file_name, 'r').read()
+            file_to_find = file_name.split('/')[-1]
+            if file_to_find in retfile_names:
+                ret_files[file_to_find] = {'s3key': s3_file_name,
+                                           'data': the_file}
+            s3_put(the_file, s3_file_name)
+
+    return ret_files
 
 
 def find_file(name, zipstream):

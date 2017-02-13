@@ -17,11 +17,13 @@ def fastqc_updater(status, sbg, ff_meta):
     # move files to proper s3 location
     accession = get_inputfile_accession(sbg)
     zipped_report = ff_meta.output_files[0]['filename'].strip()
-    utils.unzip_s3_to_s3(zipped_report, accession)
+    files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
+    files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
     # parse fastqc metadata
-    summary = utils.read_s3(accession + '/summary.txt')
-    data = utils.read_s3(accession + '/fastqc_data.txt')
-    meta = parse_fastqc(summary, data)
+    meta = parse_fastqc(files['summary.txt']['data'],
+                        files['fastqc_data.txt']['data'],
+                        url=files['fastqc_report.html']['s3key'])
+
     # post fastq metadata
     utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
 
