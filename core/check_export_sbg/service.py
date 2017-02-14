@@ -73,17 +73,21 @@ def handler(event, context):
         status = export_res.get('state')
         sbg.export_report[idx]['status'] = status
         if status == 'COMPLETED':
-            OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
             # ff_meta.update_processed_file_metadata(status='uploaded')
         elif status in ['PENDING', 'RUNNING']:
-            OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
             raise Exception("Export of file %s is still running" % filename)
         elif status in ['FAILED']:
-            OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
             raise Exception("Failed to export file %s \n sbg result: %s" % (filename, export_res))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
     ff_meta.run_status = "output_file_transfer_finished"
+
+    # allow for a simple way for updater to add appropriate meta_data
+    if patch_meta:
+        ff_meta.__dict__.update(patch_meta)
     # make all the file export meta-data stuff here
 
     return {'workflow': sbg.as_dict(),
