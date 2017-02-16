@@ -6,6 +6,7 @@ import boto3
 import os
 import requests
 import random
+import mimetypes
 from uuid import uuid4
 from zipfile import ZipFile
 from io import BytesIO
@@ -73,9 +74,16 @@ def read_s3(filename):
 
 
 def s3_put(obj, filename):
+    '''
+    try to guess content type
+    '''
+    content_type = mimetypes.guess_type(filename)[0]
+    if content_type is None:
+        content_type = 'binary/octet-stream'
     s3.put_object(Bucket=OUTFILE_BUCKET,
                   Key=filename,
-                  Body=obj
+                  Body=obj,
+                  ContentType=content_type
                   )
 
 
@@ -757,7 +765,7 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
         response = fdnDCIC.new_FDN(connection, schema_name, post_item)
         if (response.get('status') == 'error' and response.get('detail') == 'UUID conflict'):
             # item already posted lets patch instead
-            patch_metadata(post_item, connection=connection)
+            response = patch_metadata(post_item, connection=connection)
         elif response.get('status') == 'error':
             raise Exception("error %s \n unalbe to post data to schema %s, data: %s" %
                             (response, schema_name, post_item))

@@ -127,12 +127,13 @@ def mount_on_sbg(input_file, s3_keys, sbg):
     bucket = input_file.get('bucket_name').encode('utf8')
     key = input_file.get('object_key').encode('utf8')
     key_uuid = input_file.get('uuid').encode('utf8')
+    s3_key = "%s/%s" % (key_uuid, key)
 
     # check the bucket and key exists
     try:
-        s3.Object(bucket, '%s/%s' % (key_uuid, key)).load()
+        s3.Object(bucket, s3_key).load()
     except Exception as e:
-        raise Exception('ERROR: Object {} in bucket {} not found\n{}.'.format(key, bucket, e))
+        raise Exception('ERROR: Object {} in bucket {} not found\n{}.'.format(s3_key, bucket, e))
 
     # mount the bucket and import the file
     try:

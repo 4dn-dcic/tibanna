@@ -15,7 +15,7 @@ def update_processed_file_metadata(status, sbg, ff_meta):
 
 def fastqc_updater(status, sbg, ff_meta):
     # move files to proper s3 location
-    accession = get_inputfile_accession(sbg)
+    accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['filename'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
@@ -26,13 +26,13 @@ def fastqc_updater(status, sbg, ff_meta):
 
     # post fastq metadata
     qc_meta = utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
-    import pdb
-    pdb.set_trace()
+    if qc_meta.get('@graph'):
+        qc_meta = qc_meta['@graph'][0]
 
-    # update original file as well
+# update original file as well
     original_file = utils.get_metadata(accession, key=ff_key)
-    original_file['quality_metric'] = qc_meta['@id']
-    utils.patch_metadata(original_file, key=ff_key)
+    patch_file = {'quality_metric': qc_meta['@id']}
+    utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
 
 
 def md5_updater(status, sbg, ff_meta):
@@ -59,8 +59,8 @@ def md5_updater(status, sbg, ff_meta):
             utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
 
 
-def get_inputfile_accession(sbg):
-        return sbg.task_input.inputs['input_file']['name'].split('.')[0].strip('/')
+def get_inputfile_accession(sbg, input_file_name='input_file'):
+        return sbg.task_input.inputs[input_file_name]['name'].split('.')[0].strip('/')
 
 
 # check the status and other details of import

@@ -2,6 +2,16 @@ import uuid
 from core import utils
 
 
+def number(astring):
+    try:
+        num = float(astring)
+        if num % 1 == 0:
+            num = int(num)
+        return num
+    except:
+        return astring
+
+
 def parse_fastqc(summary, data, url=''):
     """ Return a quality_metric_fastqc metadata dictionary
     given two fastqc output files, summary.txt (summary_filename)
@@ -22,7 +32,7 @@ def parse_fastqc(summary, data, url=''):
         a = line.strip().split('\t')
         try:
             if a[0] in qc_key_list_in_data:
-                qc_json.update({a[0]: a[1]})
+                qc_json.update({a[0]: number(a[1])})
         except IndexError:  # pragma: no cover
             # maybe a blank line or something
             pass
