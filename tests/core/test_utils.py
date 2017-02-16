@@ -134,9 +134,10 @@ def test_unzip_s3_to_s3():
     assert [] == objs.get('Contents', [])
 
     # now copy to that dir we just deleted
-    retfile_list = ['summary.txt', 'fastqc_data.txt']
+    retfile_list = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     ret_files = utils.unzip_s3_to_s3(filename, prefix, retfile_list)
-    assert 2 == len(ret_files.keys())
+    assert 3 == len(ret_files.keys())
+    assert ret_files['fastqc_report.html']['s3key'].startswith("https://s3.amazonaws.com")
 
     objs = utils.s3_read_dir(prefix)
     assert objs.get('Contents', None)

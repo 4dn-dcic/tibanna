@@ -25,7 +25,14 @@ def fastqc_updater(status, sbg, ff_meta):
                         url=files['fastqc_report.html']['s3key'])
 
     # post fastq metadata
-    utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    qc_meta = utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    import pdb
+    pdb.set_trace()
+
+    # update original file as well
+    original_file = utils.get_metadata(accession, key=ff_key)
+    original_file['quality_metric'] = qc_meta['@id']
+    utils.patch_metadata(original_file, key=ff_key)
 
 
 def md5_updater(status, sbg, ff_meta):

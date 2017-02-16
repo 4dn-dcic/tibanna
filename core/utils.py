@@ -138,12 +138,13 @@ def unzip_s3_to_s3(zipped_s3key, dest_dir, retfile_names=None):
         # don't copy dirs just files
         if not file_name.endswith('/'):
             s3_file_name = file_name.replace(basedir_name, dest_dir)
+            s3_key = "https://s3.amazonaws.com/%s/%s" % (OUTFILE_BUCKET, s3_file_name)
             # just perf optimization so we don't have to copy
             # files twice that we want to further interogate
             the_file = zipstream.open(file_name, 'r').read()
             file_to_find = file_name.split('/')[-1]
             if file_to_find in retfile_names:
-                ret_files[file_to_find] = {'s3key': s3_file_name,
+                ret_files[file_to_find] = {'s3key': s3_key,
                                            'data': the_file}
             s3_put(the_file, s3_file_name)
 
