@@ -63,8 +63,6 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
             # duplicate UUID, just ignore that
             return
         raise e
-    import pdb
-    pdb.set_trace()
     assert json.dumps(ret)
     assert ret['workflow']
 
