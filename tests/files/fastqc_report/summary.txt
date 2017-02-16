@@ -1,0 +1,12 @@
+PASS	Basic Statistics	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Per base sequence quality	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Per tile sequence quality	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Per sequence quality scores	GM12878_SRR1658581_1pc_1_R1.fastq
+WARN	Per base sequence content	GM12878_SRR1658581_1pc_1_R1.fastq
+WARN	Per sequence GC content	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Per base N content	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Sequence Length Distribution	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Sequence Duplication Levels	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Overrepresented sequences	GM12878_SRR1658581_1pc_1_R1.fastq
+PASS	Adapter Content	GM12878_SRR1658581_1pc_1_R1.fastq
+WARN	Kmer Content	GM12878_SRR1658581_1pc_1_R1.fastq

@@ -285,3 +285,40 @@ def publish(ctx, test=False):
     else:
         run('python setup.py register sdist bdist_wheel', echo=True)
         run('twine upload dist/*', echo=True)
+
+
+@task
+def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
+                        accession='4DNFIW7Q5UDL',
+                        uuid='02e3f7cf-6699-4281-96fa-528bf87b7741'
+                        ):
+
+    client = boto3.client('stepfunctions', region_name='us-east-1')
+    STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
+
+    run_name = 'fastqc_%s' % accession
+    accession = accession + ".fastq.gz"
+    print("about to start run %s" % run_name)
+    # trigger the step function to run
+    response = client.start_execution(
+        stateMachineArn=STEP_FUNCTION_ARN,
+        name=run_name,
+        input=make_input(bucket_name, accession, uuid),
+    )
+    print(response)
+
+
+def make_input(bucket_name, key, uuid):
+    data = {"parameters": {},
+            "app_name": "fastqc-0-11-4-1",
+            "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
+            "input_files": [
+                {"workflow_argument_name": "input_fastq",
+                 "bucket_name": bucket_name,
+                 "uuid": str(uuid),
+                 "object_key": str(key),
+                 }
+             ],
+            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+            }
+    return json.dumps(data)

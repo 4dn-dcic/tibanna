@@ -27,7 +27,7 @@ setup(
     packages=['core'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
-    author_email='jeremy_johnson@hms.harvard.edu',
+    author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu',
     url='http://data.4dnucleome.org',
     license='MIT',
     classifiers=[
@@ -35,8 +35,6 @@ setup(
             'Operating System :: POSIX :: Linux',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.5',
             ],
     install_requires=requires,
     include_package_data=True,

@@ -2,6 +2,8 @@
 from core import utils
 import boto3
 from collections import defaultdict
+from core.fastqc_utils import parse_fastqc
+
 
 s3 = boto3.resource('s3')
 ff_key = utils.get_access_keys()
@@ -11,16 +13,31 @@ def update_processed_file_metadata(status, sbg, ff_meta):
     return ff_meta.update_processed_file_metadata(status=status)
 
 
+def fastqc_updater(status, sbg, ff_meta):
+    # move files to proper s3 location
+    accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
+    zipped_report = ff_meta.output_files[0]['filename'].strip()
+    files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
+    files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
+    # parse fastqc metadata
+    meta = parse_fastqc(files['summary.txt']['data'],
+                        files['fastqc_data.txt']['data'],
+                        url=files['fastqc_report.html']['s3key'])
+
+    # post fastq metadata
+    qc_meta = utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    if qc_meta.get('@graph'):
+        qc_meta = qc_meta['@graph'][0]
+
+# update original file as well
+    original_file = utils.get_metadata(accession, key=ff_key)
+    patch_file = {'quality_metric': qc_meta['@id']}
+    utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+
+
 def md5_updater(status, sbg, ff_meta):
-
-    # create / update Workflow run object
-    # del ff_meta.output_files
-    # ff_meta.post(key=utils.get_access_keys())
-    # don't bother with update_processed_file_metadata stuff
-    # based on status, update file object
-
-    # file to update -- thats the uuid
-    accession = sbg.task_input.inputs['input_file']['name'].split('.')[0].strip('/')
+    # get metadata about original input file
+    accession = get_inputfile_accession(sbg)
     original_file = utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
@@ -42,6 +59,10 @@ def md5_updater(status, sbg, ff_meta):
             utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
 
 
+def get_inputfile_accession(sbg, input_file_name='input_file'):
+        return sbg.task_input.inputs[input_file_name]['name'].split('.')[0].strip('/')
+
+
 # check the status and other details of import
 def handler(event, context):
     '''
@@ -59,17 +80,21 @@ def handler(event, context):
         status = export_res.get('state')
         sbg.export_report[idx]['status'] = status
         if status == 'COMPLETED':
-            OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
             # ff_meta.update_processed_file_metadata(status='uploaded')
         elif status in ['PENDING', 'RUNNING']:
-            OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
             raise Exception("Export of file %s is still running" % filename)
         elif status in ['FAILED']:
-            OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
             raise Exception("Failed to export file %s \n sbg result: %s" % (filename, export_res))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
     ff_meta.run_status = "output_file_transfer_finished"
+
+    # allow for a simple way for updater to add appropriate meta_data
+    if patch_meta:
+        ff_meta.__dict__.update(patch_meta)
     # make all the file export meta-data stuff here
 
     return {'workflow': sbg.as_dict(),
@@ -80,3 +105,4 @@ def handler(event, context):
 OUTFILE_UPDATERS = defaultdict(lambda: update_processed_file_metadata)
 OUTFILE_UPDATERS['md5'] = md5_updater
 OUTFILE_UPDATERS['validatefiles'] = md5_updater
+OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater
