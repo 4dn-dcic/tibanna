@@ -55,7 +55,7 @@ def fastqc_payload():  # pylint: disable=fixme
 
 @valid_env
 @pytest.mark.webtest
-def test_check_export_fastqc_e2e(fastqc_payload):
+def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
     try:
         ret = check_export_handler(fastqc_payload, None)
     except Exception as e:
@@ -71,8 +71,8 @@ def test_check_export_fastqc_e2e(fastqc_payload):
     sbg = utils.create_sbg_workflow(**ret['workflow'])
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     print(accession)
-    # original_file = utils.get_metadata(accession)
-    # assert original_file['@graph'][0]['quality_metric']
+    original_file = utils.get_metadata(accession, ff_keys)
+    assert original_file['quality_metric']
 
 
 @valid_env
