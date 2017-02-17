@@ -7,6 +7,8 @@ from invoke import task, run
 import boto3
 import contextlib
 import shutil
+# from botocore.errorfactory import ExecutionAlreadyExists
+from uuid import uuid4
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -180,9 +182,19 @@ def upload_sbg_keys(ctx, sbgkey=None):
     return upload_keys(ctx, sbgkey, 'sbgkey')
 
 
+def _PROD():
+    return _tbenv() == 'PROD'
+
+
+def _tbenv(env_data=None):
+    if env_data and env_data.get('env'):
+        return env_data('env')
+    return os.environ.get('ENV_NAME')
+
+
 def upload_keys(ctx, keys, name):
     s3bucket = 'elasticbeanstalk-encoded-4dn-system'
-    if os.environ.get('ENV_NAME') == 'PROD':
+    if _PROD():
         s3bucket = 'elasticbeanstalk-production-encoded-4dn-system'
     print("uploading sbkey to %s as %s" % (s3bucket, name))
     upload(name, keys, s3bucket)
@@ -292,7 +304,11 @@ def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
                         accession='4DNFIW7Q5UDL',
                         uuid='02e3f7cf-6699-4281-96fa-528bf87b7741'
                         ):
+    input_json = make_input(bucket_name, accession, uuid)
+    return _run_workflow(input_json, accession)
 
+
+def _run_workflow(input_json, accession):
     client = boto3.client('stepfunctions', region_name='us-east-1')
     STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
 
@@ -300,12 +316,39 @@ def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
     accession = accession + ".fastq.gz"
     print("about to start run %s" % run_name)
     # trigger the step function to run
-    response = client.start_execution(
-        stateMachineArn=STEP_FUNCTION_ARN,
-        name=run_name,
-        input=make_input(bucket_name, accession, uuid),
-    )
+    try:
+        response = client.start_execution(
+            stateMachineArn=STEP_FUNCTION_ARN,
+            name=run_name,
+            input=input_json,
+        )
+    except Exception as e:
+        if e.response.get('Error'):
+            if e.response['Error'].get('Code') == 'ExecutionAlreadyExists':
+                print("execution already exists...mangling name and retrying...")
+                # TODO: prompt for overwrite
+                response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN,
+                    name=run_name + str(uuid4()),
+                    input=input_json,
+                )
+            else:
+                raise(e)
+        else:
+            raise(e)
+
     print(response)
+
+
+def _tibanna_settings(settings_patch=None):
+    tibanna = {"run_id": '',
+               "env": _tbenv(),
+               "url": '',
+               }
+    if settings_patch:
+        tibanna.update(settings_patch)
+
+    return {'_tibanna': tibanna}
 
 
 def make_input(bucket_name, key, uuid):
@@ -319,6 +362,7 @@ def make_input(bucket_name, key, uuid):
                  "object_key": str(key),
                  }
              ],
-            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files",
             }
+    data.update(_tibanna_settings({'run_id': str(key)}))
     return json.dumps(data)
