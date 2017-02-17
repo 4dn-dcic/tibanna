@@ -308,29 +308,54 @@ def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
     return _run_workflow(input_json, accession)
 
 
-def _run_workflow(input_json, accession):
-    client = boto3.client('stepfunctions', region_name='us-east-1')
-    STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
+@task
+def run_workflow(ctx, input_json=''):
+    with open(input_json) as input_file:
+        data = json.load(input_file)
+        return _run_workflow(data)
 
-    run_name = 'fastqc_%s' % accession
-    accession = accession + ".fastq.gz"
+
+def _run_workflow(input_json, accession=''):
+    client = boto3.client('stepfunctions', region_name='us-east-1')
+    base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2'
+    STEP_FUNCTION_ARN = base_arn % 'stateMachine'
+    base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
+
+    # build from appropriate input json
+    # assume run_type and and run_id
+    input_json = _tibanna_settings(input_json)
+    run_name = input_json[_tibanna]['run_name']
+
+    # calculate what the url will be
+    url = "%s%s%s%s" % (base_url, (base_arn % 'execution'), ":", run_name)
+    input_json[_tibanna]['url'] = url
+
+    aws_input = json.dumps(input_json)
     print("about to start run %s" % run_name)
     # trigger the step function to run
     try:
         response = client.start_execution(
             stateMachineArn=STEP_FUNCTION_ARN,
             name=run_name,
-            input=input_json,
+            input=aws_input,
         )
     except Exception as e:
         if e.response.get('Error'):
             if e.response['Error'].get('Code') == 'ExecutionAlreadyExists':
                 print("execution already exists...mangling name and retrying...")
+                run_name += str(uuid4())
+                input_json[_tibanna]['run_name'] = run_name
+
+                # calculate what the url will be
+                url = "%s%s%s%s" % (base_url, (base_arn % 'execution'), ":", run_name)
+                input_json[_tibanna]['url'] = url
+                aws_input = json.dumps(input_json)
+
                 # TODO: prompt for overwrite
                 response = client.start_execution(
                     stateMachineArn=STEP_FUNCTION_ARN,
-                    name=run_name + str(uuid4()),
-                    input=input_json,
+                    name=run_name,
+                    input=aws_input,
                 )
             else:
                 raise(e)
@@ -340,15 +365,34 @@ def _run_workflow(input_json, accession):
     print(response)
 
 
+# just store this in one place
+_tibanna = '_tibanna'
+
+
 def _tibanna_settings(settings_patch=None):
-    tibanna = {"run_id": '',
+    tibanna = {"run_id": uuid4(),
                "env": _tbenv(),
                "url": '',
+               'run_type': 'generic',
+               'run_name': '',
                }
+    in_place = False
     if settings_patch:
-        tibanna.update(settings_patch)
+        in_place = settings_patch.get(_tibanna, None)
+        if in_place:
+            tibanna.update(in_place)
+        else:
+            tibanna.update(settings_patch)
 
-    return {'_tibanna': tibanna}
+    # generate run name
+    if not tibanna.get('run_name'):
+        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'], tibanna['run_id'])
+
+    if in_place:
+        settings_patch[_tibanna] = tibanna
+        return settings_patch
+    else:
+        return {_tibanna: tibanna}
 
 
 def make_input(bucket_name, key, uuid):
@@ -364,5 +408,6 @@ def make_input(bucket_name, key, uuid):
              ],
             "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files",
             }
-    data.update(_tibanna_settings({'run_id': str(key)}))
-    return json.dumps(data)
+    data.update(_tibanna_settings({'run_id': str(key),
+                                   'run_type': 'fastqc'}))
+    return data
