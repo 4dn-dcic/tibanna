@@ -23,11 +23,16 @@ def handler(event, context):
     parameter_dict = event.get('parameters')
     workflow_uuid = event.get('workflow_uuid').encode('utf8')
     output_bucket = event.get('output_bucket')
+    tibanna = event.get('_tibanna')
 
     # get necessary tokens
     s3_keys = event.get('s3_keys')
     if not s3_keys:
         s3_keys = utils.get_s3_keys()
+
+    ff_keys = event.get('ff_keys')
+    if not ff_keys:
+        ff_keys = utils.get_access_keys()
 
     # represents the SBG info we need
     sbg = utils.create_sbg_workflow(app_name)
@@ -36,7 +41,11 @@ def handler(event, context):
     parameters, input_files = utils.to_sbg_workflow_args(parameter_dict)
 
     # create the ff_meta output info
-    ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters)
+    ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                 run_url=tibanna['url'])
+
+    # store metadata so we know the run has started
+    ff_meta.post(key=ff_keys)
 
     # mount all input files to sbg this will also update sbg to store the import_ids
     _ = [mount_on_sbg(infile, s3_keys, sbg) for infile in input_file_list]

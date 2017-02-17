@@ -648,7 +648,8 @@ class WorkflowRunMetadata(object):
                  sbg_mounted_volume_ids=None, uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='SBG', title=None, output_files=None,
-                 run_status='started', **kwargs):
+                 run_status='started',
+                 run_url='', **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -657,6 +658,7 @@ class WorkflowRunMetadata(object):
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
         self.run_platform = run_platform
+        self.run_url = run_url
         if sbg_task_id is None:
             self.sbg_task_id = ''
         else:
