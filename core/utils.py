@@ -165,15 +165,19 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def to_sbg_workflow_args(parameter_dict):
+def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
     metadata_parameters = []
     metadata_input = []
     for k, v in parameter_dict.iteritems():
-        # we need this to be an integer if it really is, else a string
-        # Jeremy: v can also be float or double, in which case they should be float or double.
-        try:
-            v = int(v)
-        except ValueError:
+        # we need this to be a float or integer if it really is, else a string
+        if not vals_as_string:
+            try:
+                v = float(v)
+                if v % 1 == 0:
+                    v = int(v)
+            except ValueError:
+                v = str(v)
+        else:
             v = str(v)
 
         metadata_parameters.append({"workflow_argument_name": k, "value": v})
@@ -648,7 +652,8 @@ class WorkflowRunMetadata(object):
                  sbg_mounted_volume_ids=None, uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='SBG', title=None, output_files=None,
-                 run_status='started', **kwargs):
+                 run_status='started',
+                 run_url='', **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -657,6 +662,8 @@ class WorkflowRunMetadata(object):
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
         self.run_platform = run_platform
+        if run_url:
+            self.run_url = run_url
         if sbg_task_id is None:
             self.sbg_task_id = ''
         else:

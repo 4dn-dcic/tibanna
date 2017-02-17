@@ -95,7 +95,10 @@ def handler(event, context):
     # allow for a simple way for updater to add appropriate meta_data
     if patch_meta:
         ff_meta.__dict__.update(patch_meta)
+
     # make all the file export meta-data stuff here
+    # TODO: fix bugs with ff_meta mapping for output and input file
+    # ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict()
