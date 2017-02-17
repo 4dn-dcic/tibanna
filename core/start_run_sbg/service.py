@@ -38,9 +38,12 @@ def handler(event, context):
     sbg = utils.create_sbg_workflow(app_name)
 
     # represents the workflow metadata to be stored in fourfront
-    parameters, input_files = utils.to_sbg_workflow_args(parameter_dict)
+    parameters, _ = utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # create the ff_meta output info
+    input_files =  [{'workflow_argument_name': fil['workflow_argument_name'],
+                     'value': fil['uuid']} for fil in input_file_list]
+
     ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
                                  run_url=tibanna.get('url', ''))
 

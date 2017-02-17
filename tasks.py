@@ -323,7 +323,7 @@ def _run_workflow(input_json, accession=''):
 
     # build from appropriate input json
     # assume run_type and and run_id
-    input_json = _tibanna_settings(input_json)
+    input_json = _tibanna_settings(input_json, force_inplace=True)
     run_name = input_json[_tibanna]['run_name']
 
     # calculate what the url will be
@@ -371,17 +371,20 @@ def _run_workflow(input_json, accession=''):
 _tibanna = '_tibanna'
 
 
-def _tibanna_settings(settings_patch=None):
-    tibanna = {"run_id": uuid4(),
+def _tibanna_settings(settings_patch=None, force_inplace=False):
+    tibanna = {"run_id": str(uuid4()),
                "env": _tbenv(),
                "url": '',
                'run_type': 'generic',
                'run_name': '',
                }
-    in_place = False
+    in_place = None
+    if force_inplace:
+        if not settings_patch.get(_tibanna):
+            settings_patch[_tibanna] = {}
     if settings_patch:
         in_place = settings_patch.get(_tibanna, None)
-        if in_place:
+        if in_place is not None:
             tibanna.update(in_place)
         else:
             tibanna.update(settings_patch)
@@ -390,7 +393,7 @@ def _tibanna_settings(settings_patch=None):
     if not tibanna.get('run_name'):
         tibanna['run_name'] = "%s_%s" % (tibanna['run_type'], tibanna['run_id'])
 
-    if in_place:
+    if in_place is not None:
         settings_patch[_tibanna] = tibanna
         return settings_patch
     else:

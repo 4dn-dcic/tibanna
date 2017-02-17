@@ -19,7 +19,14 @@ def handler(event, context):
         raise Exception("Failed to create draft task with input %s" % sbg.task_input)
     run_response = sbg.run_task()
 
+    ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta.run_status = 'running'
+
+    # make all the file export meta-data stuff here
+    # TODO: fix ff_meta mapping issue
+    # ff_meta.post(key=utils.get_access_keys())
+
     return {'workflow': sbg.as_dict(),
             'run_response': run_response,
-            'ff_meta': event.get('ff_meta')
+            'ff_meta': ff_meta.as_dict()
             }

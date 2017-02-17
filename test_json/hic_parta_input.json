@@ -22,6 +22,6 @@
   "workflow_uuid": "02d636b9-d82d-4da9-950c-2ca994a0943e",
   "app_name": "hi-c-processing-parta",
   "parameters": {
-    "nThreads": 8
+    "nThreads": "8"
   }
 }

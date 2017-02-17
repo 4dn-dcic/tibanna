@@ -165,15 +165,19 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def to_sbg_workflow_args(parameter_dict):
+def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
     metadata_parameters = []
     metadata_input = []
     for k, v in parameter_dict.iteritems():
-        # we need this to be an integer if it really is, else a string
-        # Jeremy: v can also be float or double, in which case they should be float or double.
-        try:
-            v = int(v)
-        except ValueError:
+        # we need this to be a float or integer if it really is, else a string
+        if not vals_as_string:
+            try:
+                v = float(v)
+                if v % 1 == 0:
+                    v = int(v)
+            except ValueError:
+                v = str(v)
+        else:
             v = str(v)
 
         metadata_parameters.append({"workflow_argument_name": k, "value": v})
