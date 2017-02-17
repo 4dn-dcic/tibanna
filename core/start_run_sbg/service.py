@@ -23,7 +23,7 @@ def handler(event, context):
     parameter_dict = event.get('parameters')
     workflow_uuid = event.get('workflow_uuid').encode('utf8')
     output_bucket = event.get('output_bucket')
-    tibanna = event.get('_tibanna')
+    tibanna = event.get('_tibanna', {})
 
     # get necessary tokens
     s3_keys = event.get('s3_keys')
@@ -42,7 +42,7 @@ def handler(event, context):
 
     # create the ff_meta output info
     ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                 run_url=tibanna['url'])
+                                 run_url=tibanna.get('url', ''))
 
     # store metadata so we know the run has started
     ff_meta.post(key=ff_keys)

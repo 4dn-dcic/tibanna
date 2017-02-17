@@ -658,7 +658,8 @@ class WorkflowRunMetadata(object):
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
         self.run_platform = run_platform
-        self.run_url = run_url
+        if run_url:
+            self.run_url = run_url
         if sbg_task_id is None:
             self.sbg_task_id = ''
         else:

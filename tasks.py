@@ -301,7 +301,7 @@ def publish(ctx, test=False):
 
 @task
 def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
-                        accession='4DNFIW7Q5UDL',
+                        accession='4DNFIW7Q5UDL.fastq.gz',
                         uuid='02e3f7cf-6699-4281-96fa-528bf87b7741'
                         ):
     input_json = make_input(bucket_name, accession, uuid)
@@ -362,7 +362,9 @@ def _run_workflow(input_json, accession=''):
         else:
             raise(e)
 
-    print(response)
+    print("response from aws was: \n %s" % response)
+    print("url to view status:")
+    print(input_json[_tibanna]['url'])
 
 
 # just store this in one place
