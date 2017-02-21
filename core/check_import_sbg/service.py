@@ -23,17 +23,13 @@ def handler(event, context):
                                     project=sbg.project_id,
                                     inputs=parameter_dict)
 
-    temp=[]  # Soo
-    temp.append(import_ids)  # Soo
     for idx, import_id in enumerate(import_ids):
 
-        temp.append([idx, import_id])  # Soo
         data = json.dumps({"import_id": import_id})
         # TODO: Let this be a funciton of SBGWorkflowRun 
         # Soo: We already had this function in  SBGWorkflowRun. What happened to it?
         res = _api._get("/storage/imports/" + import_id, data).json()
         if res.get('state') != 'COMPLETED':
-            temp.append([idx, res.get('state')])  # Soo
             raise Exception("file still uploading")
         else:
             # No idea why, but sometimes it comes back without
@@ -44,7 +40,6 @@ def handler(event, context):
             arg_name = input_file_args[idx].get('workflow_argument_name')
             arg_uuid = input_file_args[idx].get('uuid')
             task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name)
-            temp.append(task_input.as_dict())  # Soo
             sbg.task_input = task_input
             ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
 
