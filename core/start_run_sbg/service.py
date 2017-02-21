@@ -17,6 +17,9 @@ def handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
+
+    print("hello?") # Soo
+
     # get incomming data
     input_file_list = event.get('input_files')
     app_name = event.get('app_name').encode('utf8')
@@ -92,7 +95,10 @@ def handler(event, context):
         # task_data = sbg.create_data_payload_validatefiles(sbg_check_import_response)
         print(json.dumps(task_input.__dict__, indent=4))
         create_task_response = sbg.create_task( task_input )
+        print("hello") # Soo
+        print(create_task_response)  # Soo
         run_response = sbg.run_task()
+        print(run_response) # Soo
 
     except Exception as e:
         print(e)

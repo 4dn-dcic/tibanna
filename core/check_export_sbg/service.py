@@ -104,6 +104,7 @@ def handler(event, context):
             'ff_meta': ff_meta.as_dict()
             }
 
+
 # Cardinal knowledge of all workflow updaters
 OUTFILE_UPDATERS = defaultdict(lambda: update_processed_file_metadata)
 OUTFILE_UPDATERS['md5'] = md5_updater
