@@ -27,6 +27,7 @@ def handler(event, context):
 
         data = json.dumps({"import_id": import_id})
         # TODO: Let this be a funciton of SBGWorkflowRun
+        # Soo: We already had this function in  SBGWorkflowRun. What happened to it?
         res = _api._get("/storage/imports/" + import_id, data).json()
         if res.get('state') != 'COMPLETED':
             raise Exception("file still uploading")
@@ -46,6 +47,6 @@ def handler(event, context):
         # TODO: fix ff_meta bugs with input / output files
         # ff_meta.post(key=utils.get_access_keys())
 
-        return {'workflow': sbg.as_dict(),
-                'ff_meta': ff_meta.as_dict()
-                }
+    return {'workflow': sbg.as_dict(),
+            'ff_meta': ff_meta.as_dict()
+            }
