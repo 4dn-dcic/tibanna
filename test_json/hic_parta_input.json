@@ -23,5 +23,6 @@
   "app_name": "hi-c-processing-parta",
   "parameters": {
     "nThreads": 8
-  }
+  },
+  "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
 }
