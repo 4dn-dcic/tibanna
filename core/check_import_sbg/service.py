@@ -26,7 +26,7 @@ def handler(event, context):
     for idx, import_id in enumerate(import_ids):
 
         data = json.dumps({"import_id": import_id})
-        # TODO: Let this be a funciton of SBGWorkflowRun 
+        # TODO: Let this be a funciton of SBGWorkflowRun
         # Soo: We already had this function in  SBGWorkflowRun. What happened to it?
         res = _api._get("/storage/imports/" + import_id, data).json()
         if res.get('state') != 'COMPLETED':
