@@ -38,14 +38,15 @@ def handler(event, context):
             sbg_file_name = results.get('name')
             sbg_file_id = results.get('id')
             arg_name = input_file_args[idx].get('workflow_argument_name')
-            arg_uuid = input_file_args[idx].get('uuid')
+            # arg_uuid = input_file_args[idx].get('uuid')
             task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name)
             sbg.task_input = task_input
-            ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
+            # ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
+            # Soo: This information was alreadyin ff_meta that was passed into this function.
 
         # make all the file export meta-data stuff here
         # TODO: fix ff_meta bugs with input / output files
-        # ff_meta.post(key=utils.get_access_keys())
+        ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict()

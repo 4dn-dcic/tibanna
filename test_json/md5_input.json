@@ -4,7 +4,7 @@
 	"input_files": [
 			{"workflow_argument_name": "input_file", 
 			 "bucket_name": "elasticbeanstalk-encoded-4dn-files",
-			 "uuid": "46e82a90-49e5-4c33-afab-9ec90d65cca1", 
+			 "uuid": "46e82a90-49e5-4c33-afab-9ec90d65cca1",
 			 "object_key": "4DNFI067AFHV.fastq.gz"
 			}
 	],

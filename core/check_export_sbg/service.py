@@ -98,7 +98,7 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    # ff_meta.post(key=utils.get_access_keys())
+    ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict()
