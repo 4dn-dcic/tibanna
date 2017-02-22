@@ -696,10 +696,12 @@ class WorkflowRunMetadata(object):
     def update_processed_file_metadata(self, status='upload failed'):
         pass
 
-    def get_ouptfile_metadata(self):
+    def get_outputfile_metadata(self):
         meta = []
         filestatus = 'uploaded'
-        if self.status in ['started', 'running', 'output_files_transferring', 'error']:
+
+        # Soo: ?? Shouldn't it be 'uploading' only when run_status is output_files_transferring?
+        if self.run_status in ['started', 'running', 'output_files_transferring', 'error']:
             filestatus = 'uploading'
 
         for of in self.output_files:
@@ -711,6 +713,7 @@ class WorkflowRunMetadata(object):
                              'lab': self.lab,
                              'award': self.award
                              })
+        return(meta)
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
@@ -725,7 +728,12 @@ class WorkflowRunMetadata(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def post(self, key):
-        return post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key)
+        response = []
+        if self.output_files:
+            for ofm in self.get_outputfile_metadata():
+                response.append(post_to_metadata(ofm, "file_processed", key=key))
+            response.append(post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key))
+        return(response)
 
 
 def fdn_connection(key='', connection=None):
