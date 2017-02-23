@@ -682,10 +682,18 @@ class WorkflowRunMetadata(object):
         else:
             self.sbg_export_ids = sbg_export_ids
 
-        if output_files is None:
+        if not output_files:
             self.output_files = []
         else:
-            self.output_files = output_files
+            if not hasattr(self,'output_files') or not self.output_files:
+                self.output_files = output_files
+            else:
+                # self.output_files may contain e.g. file_format and file_type information.
+                for of in self.output_files: 
+                    for of2 in output_files:
+                       if of['workflow_argument_name'] == of2['workflow_argument_name']:
+                           for k, v in of2.iteritems():
+                               of[k]=v
 
         self.title = title
         self.input_files = input_files
@@ -694,7 +702,11 @@ class WorkflowRunMetadata(object):
         self.lab = lab
 
     def update_processed_file_metadata(self, status='upload failed'):
-        pass
+        for of in self.output_files:
+            of['value'] = uuid4()
+            for ofreport in self.export_report:
+                if ofreport['workflow_arg_name'] == of['workflow_argument_name']:
+                    of.update(ofreport)
 
     def get_outputfile_metadata(self):
         meta = []
@@ -705,14 +717,13 @@ class WorkflowRunMetadata(object):
             filestatus = 'uploading'
 
         for of in self.output_files:
-            if of['workflow_arg_name'] not in ['report']:
-                meta.append({'uuid': of['value'],
-                             'filename': of['filename'],
-                             'status': filestatus,
-                             'file_format': "other",  # deal with this later
-                             'lab': self.lab,
-                             'award': self.award
-                             })
+            meta.append({'uuid': of['value'],
+                         'filename': of['filename'],
+                         'status': filestatus,
+                         'file_format': "other",  # deal with this later
+                         'lab': self.lab,
+                         'award': self.award
+                         })
         return(meta)
 
     def append_outputfile(self, outjson):
