@@ -43,14 +43,15 @@ def handler(event, context):
     # represents the workflow metadata to be stored in fourfront
     parameters, _ = utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
-
     # get argument format & type info from workflow
     workflow_info = utils.get_metadata(workflow_uuid, key=ff_keys)
     arginfo=dict()
     for arg in workflow_info.get('arguments'):
        if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
-           arginfo.update({ arg['workflow_argument_name']: {'format': arg['argument_format'], 'type': arg['argument_type']} })
-
+           argname = arg['workflow_argument_name']
+           argformat = arg['argument_format'] if arg.has_key('argument_format') else None
+           arginfo.update({ argname: {'format': argformat, 
+                                      'type': arg['argument_type']} })
 
     # create the ff_meta output info
     input_files =  [{'workflow_argument_name': fil['workflow_argument_name'],
@@ -59,8 +60,8 @@ def handler(event, context):
     # create empty output file info
     output_files = [{'workflow_argument_name': argname,
                      'type': arginfo[argname]['type'],
+                     'extension': '',  # processed file extention: later get it from file_processed schema
                      'format': arginfo[argname]['format']} for argname in arginfo.keys()]
-
 
     ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
                                  run_url=tibanna.get('url', ''), output_files = output_files)
