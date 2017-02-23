@@ -10,7 +10,7 @@ ff_key = utils.get_access_keys()
 
 
 def update_processed_file_metadata(status, sbg, ff_meta):
-    return ff_meta.update_processed_file_metadata(status=status)
+    return ff_meta.update_processed_file_metadata(status=status, sbg=sbg)
 
 
 def fastqc_updater(status, sbg, ff_meta):

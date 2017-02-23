@@ -701,10 +701,10 @@ class WorkflowRunMetadata(object):
         self.award = award
         self.lab = lab
 
-    def update_processed_file_metadata(self, status='upload failed'):
+    def update_processed_file_metadata(self, status='upload failed', sbg):
         for of in self.output_files:
             of['value'] = uuid4()
-            for ofreport in self.export_report:
+            for ofreport in sbg.export_report:
                 if ofreport['workflow_arg_name'] == of['workflow_argument_name']:
                     of.update(ofreport)
 
