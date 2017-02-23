@@ -463,7 +463,7 @@ class SBGWorkflowRun(object):
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                 # report will help with generating metadata later
                 self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                           "workflow_arg_name": k, 'value': file_uuid, "accession": accession})
+                                           "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
                 self.export_id_list.append(export_id)
             elif isinstance(v, list):
                 for v_el in v:
@@ -484,7 +484,7 @@ class SBGWorkflowRun(object):
                             accession = None
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                         self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                                   "workflow_arg_name": k, 'value': file_uuid, "accession": accession})
+                                                   "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
                         self.export_id_list.append(export_id)
         return self.export_report
 
@@ -666,7 +666,7 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
         # self.output_files may contain e.g. file_format and file_type information.
         for of in output_files: 
             for of2 in sbg.export_report:
-               if of['workflow_argument_name'] == of2['workflow_arg_name']:
+               if of['workflow_argument_name'] == of2['workflow_argument_name']:
                    for k, v in of2.iteritems():
                        of[k]=v
 
@@ -729,9 +729,9 @@ class WorkflowRunMetadata(object):
         if sbg and sbg.export_report:
             for of in self.output_files:
                 for ofreport in sbg.export_report:
-                    if ofreport['workflow_arg_name'] == of['workflow_argument_name']:
+                    if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
                         pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'], 
-                                                             ofreport['filename'], of['format'], status = status).as_dict())
+                                                             ofreport['filename'], of['format'], status = status))
         return(pf_meta)
 
     def append_outputfile(self, outjson):

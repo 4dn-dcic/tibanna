@@ -43,5 +43,5 @@ def handler(event, context):
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta
+            'pf_meta': [pf.as_dict() for pf in pf_meta]
             }
