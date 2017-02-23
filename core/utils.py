@@ -662,6 +662,13 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
 
     if not output_files:
         output_files = sbg.export_report
+    else:
+        # self.output_files may contain e.g. file_format and file_type information.
+        for of in output_files: 
+            for of2 in sbg.export_report:
+               if of['workflow_argument_name'] == of2['workflow_arg_name']:
+                   for k, v in of2.iteritems():
+                       of[k]=v
 
     return WorkflowRunMetadata(workflow, input_files, parameters,
                                sbg_task_id, sbg_import_ids, sbg_export_ids,
@@ -710,21 +717,9 @@ class WorkflowRunMetadata(object):
         else:
             self.sbg_export_ids = sbg_export_ids
 
-        if not output_files:
-            self.output_files = []
-        else:
-            if not hasattr(self,'output_files') or not self.output_files:
-                self.output_files = output_files
-            else:
-                # self.output_files may contain e.g. file_format and file_type information.
-                for of in self.output_files: 
-                    for of2 in output_files:
-                       if of['workflow_argument_name'] == of2['workflow_argument_name']:
-                           for k, v in of2.iteritems():
-                               of[k]=v
-
         self.title = title
         self.input_files = input_files
+        self.output_files = output_files
         self.parameters = parameters
         self.award = award
         self.lab = lab
@@ -736,7 +731,7 @@ class WorkflowRunMetadata(object):
                 for ofreport in sbg.export_report:
                     if ofreport['workflow_arg_name'] == of['workflow_argument_name']:
                         pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'], 
-                                                             ofreport['filename'], of['format'], status = status))
+                                                             ofreport['filename'], of['format'], status = status).as_dict())
         return(pf_meta)
 
     def append_outputfile(self, outjson):

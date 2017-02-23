@@ -11,6 +11,7 @@ def create_processed_file_metadata(status, sbg, ff_meta):
     except Exception as e:
         raise Exception("Unable to create processed file metadata json : %s" % e)
     try:
+        ff_key = utils.get_access_keys()
         for pf in pf_meta:
             pf.post(key=ff_key)
     except Exception as e:
@@ -42,5 +43,5 @@ def handler(event, context):
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta.as_dict()
+            'pf_meta': pf_meta
             }
