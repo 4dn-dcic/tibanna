@@ -232,7 +232,8 @@ def create_sbg_workflow(app_name, task_id='', task_input=None, token=None,
     # create data for sbg workflow run
     # create a sbg workflow run object to use
     wfrun = SBGWorkflowRun(token, project_id, app_name, task_id, task_input_class, import_id_list,
-                           mounted_volume_ids, export_id_list, **kwargs)
+                           mounted_volume_ids, export_id_list,
+                           kwargs.get('output_volume_id'), kwargs.get('export_report'))
     return wfrun
 
 
@@ -247,7 +248,7 @@ class SBGWorkflowRun(object):
 
     def __init__(self, token, project_id, app_name, task_id='', task_input=None,
                  import_id_list=None, mounted_volume_ids=None, export_id_list=None,
-                 header=None, output_volume_id=None, export_report=None, **kwargs):
+                 output_volume_id=None, export_report=None, header=None):
 
         # list of import ids for the files imported for the current run.
         self.import_id_list = [] if import_id_list is None else import_id_list
@@ -276,8 +277,6 @@ class SBGWorkflowRun(object):
             # ensure task_input matches this workflow
             assert task_input.name == self.app_name
             assert task_input.project == self.project_id
-
-        self.export_report = [{"filename": '', "export_id": id} for id in self.export_id_list]
 
     def as_dict(self):
         cleaned_workflow = self.__dict__.copy()
@@ -425,9 +424,19 @@ class SBGWorkflowRun(object):
 
     # Initiate exporting all output files to S3 and returns an array of {filename, export_id} dictionary
     # export_id should be used to track export status.
-    def export_all_output_files(self, sbg_run_detail_resp, base_dir="", sbg_volume=None):
+    def export_all_output_files(self, sbg_run_detail_resp, ff_meta, base_dir="", sbg_volume=None):
         self.export_report = []
         self.export_id_list = []
+
+        if 'output_files' not in ff_meta or len(ff_meta.get('output_files')) == 0:
+            return self.export_report
+
+        # workflow argument
+        wodict = dict()
+        for of in ff_meta.get('output_files'):
+            wodict.update({of['workflow_argument_name']: {'format': of['format'],
+                                                          'type': of['type'],
+                                                          'extension': of['extension']}})
 
         if base_dir and not base_dir.endswith("/"):
             base_dir += "/"
@@ -440,24 +449,47 @@ class SBGWorkflowRun(object):
         for k, v in sbg_run_detail_resp.get('outputs').iteritems():
             if isinstance(v, dict) and v.get('class') == 'File':     # This is a file
                 sbg_file_id = v['path'].encode('utf8')
-                # put all files in directory with uuid of workflowrun
-                dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                if wodict[k]['type'] == 'Output processed file':
+                    # processed files
+                    # these files go into directory with file_uuid.
+                    # Also change file name here (these files tend to be large)
+                    file_uuid = str(uuid4())
+                    accession = generate_rand_accession()
+                    dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                else:
+                    # QC and report
+                    # put all files in directory with uuid of workflowrun
+                    dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                    file_uuid = None
+                    accession = None
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                 # report will help with generating metadata later
                 self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                           "workflow_arg_name": k, 'value': str(uuid4())})
+                                           "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
                 self.export_id_list.append(export_id)
             elif isinstance(v, list):
                 for v_el in v:
                     # This is a file (v is an array of files)
                     if isinstance(v_el, dict) and v_el.get('class') == 'File':
                         sbg_file_id = v['path'].encode('utf8')
-                        dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                        if wodict[k]['type'] == 'Output processed file':
+                            # processed files
+                            # these files go into directory with file_uuid.
+                            # Also change file name here (these files tend to be large)
+                            file_uuid = str(uuid4())
+                            accession = generate_rand_accession()
+                            dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                        else:
+                            # QC and report
+                            # put all files in directory with uuid of workflowrun
+                            dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                            file_uuid = None
+                            accession = None
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                         self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                                   "workflow_arg_name": k, 'value': str(uuid4())})
+                                                   "workflow_argument_name": k, 'value': file_uuid,
+                                                   "accession": accession})
                         self.export_id_list.append(export_id)
-
         return self.export_report
 
     def export_to_volume(self, source_file_id, sbg_volume_id, dest_filename):
@@ -634,6 +666,13 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
 
     if not output_files:
         output_files = sbg.export_report
+    else:
+        # self.output_files may contain e.g. file_format and file_type information.
+        for of in output_files:
+            for of2 in sbg.export_report:
+                if of['workflow_argument_name'] == of2['workflow_argument_name']:
+                    for k, v in of2.iteritems():
+                        of[k] = v
 
     return WorkflowRunMetadata(workflow, input_files, parameters,
                                sbg_task_id, sbg_import_ids, sbg_export_ids,
@@ -682,38 +721,22 @@ class WorkflowRunMetadata(object):
         else:
             self.sbg_export_ids = sbg_export_ids
 
-        if output_files is None:
-            self.output_files = []
-        else:
-            self.output_files = output_files
-
         self.title = title
         self.input_files = input_files
+        self.output_files = output_files
         self.parameters = parameters
         self.award = award
         self.lab = lab
 
-    def update_processed_file_metadata(self, status='upload failed'):
-        pass
-
-    def get_outputfile_metadata(self):
-        meta = []
-        filestatus = 'uploaded'
-
-        # Soo: ?? Shouldn't it be 'uploading' only when run_status is output_files_transferring?
-        if self.run_status in ['started', 'running', 'output_files_transferring', 'error']:
-            filestatus = 'uploading'
-
-        for of in self.output_files:
-            if of['workflow_arg_name'] not in ['report']:
-                meta.append({'uuid': of['value'],
-                             'filename': of['filename'],
-                             'status': filestatus,
-                             'file_format': "other",  # deal with this later
-                             'lab': self.lab,
-                             'award': self.award
-                             })
-        return(meta)
+    def create_processed_file_metadata(self, status, sbg):
+        pf_meta = []
+        if sbg and sbg.export_report:
+            for of in self.output_files:
+                for ofreport in sbg.export_report:
+                    if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
+                        pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
+                                                             ofreport['filename'], of['format'], status=status))
+        return(pf_meta)
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
@@ -728,12 +751,28 @@ class WorkflowRunMetadata(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def post(self, key):
-        response = []
-        if self.output_files:
-            for ofm in self.get_outputfile_metadata():
-                response.append(post_to_metadata(ofm, "file_processed", key=key))
-            response.append(post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key))
-        return(response)
+        return post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key)
+
+
+class ProcessedFileMetadata(object):
+    def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
+                 award='1U01CA200059-01', status='uploading'):
+        self.uuid = uuid if uuid else uuid4()
+        self.accession = accession if accession else generate_rand_accession()
+        self.status = status
+        self.lab = lab
+        self.award = award
+        self.filename = filename
+        self.file_format = file_format
+
+    def as_dict(self):
+        return self.__dict__
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    def post(self, key):
+        return post_to_metadata(self.as_dict(), "file_processed", key=key)
 
 
 def fdn_connection(key='', connection=None):
@@ -789,6 +828,15 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
                         (e, schema_name, post_item))
 
     return response
+
+
+def generate_rand_accession():
+    rand_accession = ''
+    for i in xrange(8):
+        r = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
+        rand_accession += r
+    accession = "4DNF"+rand_accession
+    return accession
 
 
 def current_env():

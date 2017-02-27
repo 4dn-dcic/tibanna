@@ -9,7 +9,7 @@
         "lab": "4dn-dcic-lab",
         "sbg_mounted_volume_ids": ["4dn_s32gkz1s7x","4dn_s33xkquabu"],
         "title": "md5 run 2017-01-20 13:16:11.026176",
-        "output_files": [{"workflow_arg_name": "report", 
+        "output_files": [{"workflow_argument_name": "report", 
 				"export_id": "ZVveNfSydBLUTFWljqGSKW3td1ZFWQ4F", 
 				"value": "df0b19c3-635e-4aa0-a539-6a252284003b", 
 				"filename": "37a6c288-4218-460b-8533-b50a3e63ca87/_67_report"}],

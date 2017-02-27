@@ -9,8 +9,23 @@ s3 = boto3.resource('s3')
 ff_key = utils.get_access_keys()
 
 
-def update_processed_file_metadata(status, sbg, ff_meta):
-    return ff_meta.update_processed_file_metadata(status=status)
+def donothing(status, sbg, ff_meta):
+    return None
+
+
+def update_processed_file_metadata(status, pf_meta):
+    try:
+        for pf in pf_meta:
+            pf['status'] = status
+    except Exception as e:
+        raise Exception("Unable to update processed file metadata json : %s" % e)
+    try:
+        for pf in pf_meta:
+            pfo = utils.ProcessedFileMetadata(**pf)
+            pfo.post(key=ff_key)
+    except Exception as e:
+        raise Exception("Unable to post processed file metadata : %s" % e)
+    return pf_meta
 
 
 def fastqc_updater(status, sbg, ff_meta):
@@ -72,6 +87,7 @@ def handler(event, context):
     # get data
     sbg = utils.create_sbg_workflow(**event.get('workflow'))
     ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    pf_meta = event.get('pf_meta')
 
     for idx, export in enumerate(sbg.export_report):
         filename = export['filename']
@@ -81,7 +97,8 @@ def handler(event, context):
         sbg.export_report[idx]['status'] = status
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
-            # ff_meta.update_processed_file_metadata(status='uploaded')
+            if pf_meta:
+                pf_meta = update_processed_file_metadata('uploaded', pf_meta)
         elif status in ['PENDING', 'RUNNING']:
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
             raise Exception("Export of file %s is still running" % filename)
@@ -101,12 +118,12 @@ def handler(event, context):
     ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
-            'ff_meta': ff_meta.as_dict()
+            'ff_meta': ff_meta.as_dict(),
+            'pf_meta': pf_meta
             }
 
-
 # Cardinal knowledge of all workflow updaters
-OUTFILE_UPDATERS = defaultdict(lambda: update_processed_file_metadata)
+OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['md5'] = md5_updater
 OUTFILE_UPDATERS['validatefiles'] = md5_updater
 OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater
