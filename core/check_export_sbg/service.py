@@ -9,6 +9,9 @@ s3 = boto3.resource('s3')
 ff_key = utils.get_access_keys()
 
 
+def donothing(status, sbg, ff_meta):
+    return None
+
 def update_processed_file_metadata(status, pf_meta):
     try:
         for pf in pf_meta:
@@ -17,7 +20,8 @@ def update_processed_file_metadata(status, pf_meta):
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
         for pf in pf_meta:
-            pf.post(key=ff_key)
+            pfo = utils.ProcessedFileMetadata(**pf)
+            pfo.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
     return pf_meta
@@ -117,9 +121,8 @@ def handler(event, context):
             'pf_meta': pf_meta
            }
 
-
 # Cardinal knowledge of all workflow updaters
-OUTFILE_UPDATERS = defaultdict(lambda: update_processed_file_metadata)
+OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['md5'] = md5_updater
 OUTFILE_UPDATERS['validatefiles'] = md5_updater
 OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater

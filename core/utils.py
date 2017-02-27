@@ -232,7 +232,7 @@ def create_sbg_workflow(app_name, task_id='', task_input=None, token=None,
     # create data for sbg workflow run
     # create a sbg workflow run object to use
     wfrun = SBGWorkflowRun(token, project_id, app_name, task_id, task_input_class, import_id_list,
-                           mounted_volume_ids, export_id_list, **kwargs)
+                           mounted_volume_ids, export_id_list, kwargs.get('output_volume_id'), kwargs.get('export_report'))
     return wfrun
 
 
@@ -247,7 +247,7 @@ class SBGWorkflowRun(object):
 
     def __init__(self, token, project_id, app_name, task_id='', task_input=None,
                  import_id_list=None, mounted_volume_ids=None, export_id_list=None,
-                 header=None, output_volume_id=None, export_report=None, **kwargs):
+                 output_volume_id=None, export_report=None, header=None):
 
         # list of import ids for the files imported for the current run.
         self.import_id_list = [] if import_id_list is None else import_id_list
@@ -276,8 +276,6 @@ class SBGWorkflowRun(object):
             # ensure task_input matches this workflow
             assert task_input.name == self.app_name
             assert task_input.project == self.project_id
-
-        self.export_report = [{"filename": '', "export_id": id} for id in self.export_id_list]
 
     def as_dict(self):
         cleaned_workflow = self.__dict__.copy()
@@ -453,7 +451,7 @@ class SBGWorkflowRun(object):
                     # these files go into directory with file_uuid. Also change file name here (these files tend to be large)
                     file_uuid = str(uuid4())
                     accession = generate_rand_accession()
-                    dest_filename = "%s%s" % (file_uuid, accession + wodict[k]['extension']) 
+                    dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
                 else:
                     # QC and report
                     # put all files in directory with uuid of workflowrun
@@ -475,7 +473,7 @@ class SBGWorkflowRun(object):
                             # these files go into directory with file_uuid. Also change file name here (these files tend to be large)
                             file_uuid = str(uuid4())
                             accession = generate_rand_accession()
-                            dest_filename = "%s%s" % (file_uuid, accession + wodict[k]['extension']) 
+                            dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
