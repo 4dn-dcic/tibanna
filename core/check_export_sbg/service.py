@@ -16,7 +16,7 @@ def donothing(status, sbg, ff_meta):
 def update_processed_file_metadata(status, pf_meta):
     try:
         for pf in pf_meta:
-            pf['status']=status
+            pf['status'] = status
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
@@ -120,7 +120,7 @@ def handler(event, context):
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
             'pf_meta': pf_meta
-           }
+            }
 
 # Cardinal knowledge of all workflow updaters
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)

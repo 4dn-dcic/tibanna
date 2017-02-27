@@ -451,11 +451,11 @@ class SBGWorkflowRun(object):
                 sbg_file_id = v['path'].encode('utf8')
                 if wodict[k]['type'] == 'Output processed file':
                     # processed files
-                    # these files go into directory with file_uuid. 
+                    # these files go into directory with file_uuid.
                     # Also change file name here (these files tend to be large)
                     file_uuid = str(uuid4())
                     accession = generate_rand_accession()
-                    dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
+                    dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
                 else:
                     # QC and report
                     # put all files in directory with uuid of workflowrun
@@ -478,7 +478,7 @@ class SBGWorkflowRun(object):
                             # Also change file name here (these files tend to be large)
                             file_uuid = str(uuid4())
                             accession = generate_rand_accession()
-                            dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
+                            dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
@@ -668,7 +668,7 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
         output_files = sbg.export_report
     else:
         # self.output_files may contain e.g. file_format and file_type information.
-        for of in output_files: 
+        for of in output_files:
             for of2 in sbg.export_report:
                 if of['workflow_argument_name'] == of2['workflow_argument_name']:
                     for k, v in of2.iteritems():
@@ -729,13 +729,13 @@ class WorkflowRunMetadata(object):
         self.lab = lab
 
     def create_processed_file_metadata(self, status, sbg):
-        pf_meta=[]
+        pf_meta = []
         if sbg and sbg.export_report:
             for of in self.output_files:
                 for ofreport in sbg.export_report:
                     if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
                         pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
-                                                             ofreport['filename'], of['format'], status = status))
+                                                             ofreport['filename'], of['format'], status=status))
         return(pf_meta)
 
     def append_outputfile(self, outjson):
@@ -758,7 +758,7 @@ class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
                  award='1U01CA200059-01', status='uploading'):
         self.uuid = uuid if uuid else uuid4()
-        self.accession = accession if accession else generate_random_accession()
+        self.accession = accession if accession else generate_rand_accession()
         self.status = status
         self.lab = lab
         self.award = award
@@ -830,10 +830,10 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
     return response
 
 
-def generate_rand_accession ():
-    rand_accession=''
+def generate_rand_accession():
+    rand_accession = ''
     for i in xrange(8):
-        r=random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
+        r = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
         rand_accession += r
     accession = "4DNF"+rand_accession
     return accession
