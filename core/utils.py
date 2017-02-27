@@ -428,7 +428,7 @@ class SBGWorkflowRun(object):
         self.export_report = []
         self.export_id_list = []
 
-        if not ff_meta.has_key('output_files') or len(ff_meta.get('output_files')) == 0:
+        if 'output_files' not in ff_meta or len(ff_meta.get('output_files')) == 0:
             return self.export_report
 
         # workflow argument

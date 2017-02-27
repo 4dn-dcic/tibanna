@@ -35,9 +35,9 @@ def handler(event, context):
     ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
 
-    # create processed file metadata here, because 
-    # 1) we want to keep track of the uploading status and 
-    # 2) we want to specify directory and file name before we export 
+    # create processed file metadata here, because
+    # 1) we want to keep track of the uploading status and
+    # 2) we want to specify directory and file name before we export
     # (these files can be large so don't change file name after the export which is equivalent to rewriting)
     pf_meta = create_processed_file_metadata("uploading", sbg, ff_meta)
 
