@@ -12,6 +12,7 @@ ff_key = utils.get_access_keys()
 def donothing(status, sbg, ff_meta):
     return None
 
+
 def update_processed_file_metadata(status, pf_meta):
     try:
         for pf in pf_meta:

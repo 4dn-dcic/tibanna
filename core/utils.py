@@ -232,7 +232,8 @@ def create_sbg_workflow(app_name, task_id='', task_input=None, token=None,
     # create data for sbg workflow run
     # create a sbg workflow run object to use
     wfrun = SBGWorkflowRun(token, project_id, app_name, task_id, task_input_class, import_id_list,
-                           mounted_volume_ids, export_id_list, kwargs.get('output_volume_id'), kwargs.get('export_report'))
+                           mounted_volume_ids, export_id_list,
+                           kwargs.get('output_volume_id'), kwargs.get('export_report'))
     return wfrun
 
 
@@ -431,9 +432,11 @@ class SBGWorkflowRun(object):
             return self.export_report
 
         # workflow argument
-        wodict=dict()
+        wodict = dict()
         for of in ff_meta.get('output_files'):
-            wodict.update({of['workflow_argument_name']: {'format': of['format'], 'type': of['type'], 'extension': of['extension']}})
+            wodict.update({of['workflow_argument_name']: {'format': of['format'],
+                                                          'type': of['type'],
+                                                          'extension': of['extension']}})
 
         if base_dir and not base_dir.endswith("/"):
             base_dir += "/"
@@ -448,7 +451,8 @@ class SBGWorkflowRun(object):
                 sbg_file_id = v['path'].encode('utf8')
                 if wodict[k]['type'] == 'Output processed file':
                     # processed files
-                    # these files go into directory with file_uuid. Also change file name here (these files tend to be large)
+                    # these files go into directory with file_uuid. 
+                    # Also change file name here (these files tend to be large)
                     file_uuid = str(uuid4())
                     accession = generate_rand_accession()
                     dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
@@ -470,7 +474,8 @@ class SBGWorkflowRun(object):
                         sbg_file_id = v['path'].encode('utf8')
                         if wodict[k]['type'] == 'Output processed file':
                             # processed files
-                            # these files go into directory with file_uuid. Also change file name here (these files tend to be large)
+                            # these files go into directory with file_uuid.
+                            # Also change file name here (these files tend to be large)
                             file_uuid = str(uuid4())
                             accession = generate_rand_accession()
                             dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension']) 
@@ -482,7 +487,8 @@ class SBGWorkflowRun(object):
                             accession = None
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                         self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                                   "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
+                                                   "workflow_argument_name": k, 'value': file_uuid,
+                                                   "accession": accession})
                         self.export_id_list.append(export_id)
         return self.export_report
 
@@ -664,9 +670,9 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
         # self.output_files may contain e.g. file_format and file_type information.
         for of in output_files: 
             for of2 in sbg.export_report:
-               if of['workflow_argument_name'] == of2['workflow_argument_name']:
-                   for k, v in of2.iteritems():
-                       of[k]=v
+                if of['workflow_argument_name'] == of2['workflow_argument_name']:
+                    for k, v in of2.iteritems():
+                        of[k] = v
 
     return WorkflowRunMetadata(workflow, input_files, parameters,
                                sbg_task_id, sbg_import_ids, sbg_export_ids,
@@ -728,7 +734,7 @@ class WorkflowRunMetadata(object):
             for of in self.output_files:
                 for ofreport in sbg.export_report:
                     if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
-                        pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'], 
+                        pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
                                                              ofreport['filename'], of['format'], status = status))
         return(pf_meta)
 
@@ -749,7 +755,8 @@ class WorkflowRunMetadata(object):
 
 
 class ProcessedFileMetadata(object):
-    def __init__(self, uuid = None, accession = None, filename = None, file_format = None, lab = '4dn-dcic-lab', award = '1U01CA200059-01', status = 'uploading'):
+    def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
+                 award='1U01CA200059-01', status='uploading'):
         self.uuid = uuid if uuid else uuid4()
         self.accession = accession if accession else generate_random_accession()
         self.status = status
