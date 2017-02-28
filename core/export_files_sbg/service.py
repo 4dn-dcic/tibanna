@@ -11,9 +11,10 @@ def create_processed_file_metadata(status, sbg, ff_meta):
     except Exception as e:
         raise Exception("Unable to create processed file metadata json : %s" % e)
     try:
-        ff_key = utils.get_access_keys()
-        for pf in pf_meta:
-            pf.post(key=ff_key)
+        if pf_meta:
+            ff_key = utils.get_access_keys()
+            for pf in pf_meta:
+                pf.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
     return pf_meta

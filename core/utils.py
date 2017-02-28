@@ -428,15 +428,17 @@ class SBGWorkflowRun(object):
         self.export_report = []
         self.export_id_list = []
 
-        if 'output_files' not in ff_meta or len(ff_meta.get('output_files')) == 0:
-            return self.export_report
-
-        # workflow argument
-        wodict = dict()
-        for of in ff_meta.get('output_files'):
-            wodict.update({of['workflow_argument_name']: {'format': of['format'],
-                                                          'type': of['type'],
-                                                          'extension': of['extension']}})
+        # all workflow runs must have an output file, either processed file, QC file or a report file.
+        try:
+            # workflow argument
+            wodict = dict()
+            for of in ff_meta.get('output_files'):
+                wodict.update({of['workflow_argument_name']: {'format': of['format'],
+                                                              'type': of['type'],
+                                                              'extension': of['extension']}})
+        except Exception as e:
+            print("Can't create wodict out of output_files field of workflow_run metadata %s" % e)
+            raise e
 
         if base_dir and not base_dir.endswith("/"):
             base_dir += "/"
@@ -732,10 +734,11 @@ class WorkflowRunMetadata(object):
         pf_meta = []
         if sbg and sbg.export_report:
             for of in self.output_files:
-                for ofreport in sbg.export_report:
-                    if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
-                        pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
-                                                             ofreport['filename'], of['format'], status=status))
+                if of['type'] == ['Output processed file']:
+                    for ofreport in sbg.export_report:
+                        if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
+                            pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
+                                                                 ofreport['filename'], of['format'], status=status))
         return(pf_meta)
 
     def append_outputfile(self, outjson):
@@ -757,7 +760,7 @@ class WorkflowRunMetadata(object):
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
                  award='1U01CA200059-01', status='uploading'):
-        self.uuid = uuid if uuid else uuid4()
+        self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
         self.status = status
         self.lab = lab
