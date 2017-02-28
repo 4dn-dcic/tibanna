@@ -47,8 +47,11 @@ def fastqc_updater(status, sbg, ff_meta):
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
-# update original file as well
-    original_file = utils.get_metadata(accession, key=ff_key)
+    # update original file as well
+    try:
+        original_file = utils.get_metadata(accession, key=ff_key)
+    except Exception as e:
+        raise Exception("Couldn't get metadata for accession {} : original_file ={}\n".format(accession, str(original_file)) % e)
     patch_file = {'quality_metric': qc_meta['@id']}
     try:
         utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
