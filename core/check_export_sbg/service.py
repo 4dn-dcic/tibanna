@@ -50,8 +50,10 @@ def fastqc_updater(status, sbg, ff_meta):
 # update original file as well
     original_file = utils.get_metadata(accession, key=ff_key)
     patch_file = {'quality_metric': qc_meta['@id']}
-    utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
-
+    try:
+        utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+    except Exception as e:
+        raise Exception("patch_metadata failed in fastqc_updater. %s. original_file ={}\n".format(str(original_file)) % e)
 
 def md5_updater(status, sbg, ff_meta):
     # get metadata about original input file
