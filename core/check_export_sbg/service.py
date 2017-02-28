@@ -51,13 +51,13 @@ def fastqc_updater(status, sbg, ff_meta):
     try:
         original_file = utils.get_metadata(accession, key=ff_key)
     except Exception as e:
-        raise Exception("Couldn't get metadata for accession {} : " \
+        raise Exception("Couldn't get metadata for accession {} : "
                         + "original_file ={}\n".format(accession, str(original_file)) % e)
     patch_file = {'quality_metric': qc_meta['@id']}
     try:
         utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
     except Exception as e:
-        raise Exception("patch_metadata failed in fastqc_updater. %s. " \
+        raise Exception("patch_metadata failed in fastqc_updater. %s. "
                         + "original_file ={}\n".format(str(original_file)) % e)
 
 
