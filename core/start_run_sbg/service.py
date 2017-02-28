@@ -46,12 +46,16 @@ def handler(event, context):
     # get argument format & type info from workflow
     workflow_info = utils.get_metadata(workflow_uuid, key=ff_keys)
     arginfo=dict()
-    for arg in workflow_info.get('arguments'):
-       if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
-           argname = arg['workflow_argument_name']
-           argformat = arg['argument_format'] if arg.has_key('argument_format') else None
-           arginfo.update({ argname: {'format': argformat, 
-                                      'type': arg['argument_type']} })
+    try:
+        for arg in workflow_info.get('arguments'):
+           if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
+               argname = arg['workflow_argument_name']
+               argformat = arg['argument_format'] if arg.has_key('argument_format') else None
+               arginfo.update({ argname: {'format': argformat, 
+                                          'type': arg['argument_type']} })
+    except Exception as e:
+        print("Make sure your workflow metadata has 'argument' field. %s\n" % e)
+        raise e
 
     # create the ff_meta output info
     input_files =  [{'workflow_argument_name': fil['workflow_argument_name'],

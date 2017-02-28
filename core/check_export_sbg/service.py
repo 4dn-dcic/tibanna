@@ -33,7 +33,10 @@ def fastqc_updater(status, sbg, ff_meta):
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['filename'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
-    files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
+    try:
+        files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
+    except Exception as e:
+        raise Exception("%s (key={})\n".format(zipped_report) % e)
     # parse fastqc metadata
     meta = parse_fastqc(files['summary.txt']['data'],
                         files['fastqc_data.txt']['data'],
@@ -44,10 +47,18 @@ def fastqc_updater(status, sbg, ff_meta):
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
-# update original file as well
-    original_file = utils.get_metadata(accession, key=ff_key)
+    # update original file as well
+    try:
+        original_file = utils.get_metadata(accession, key=ff_key)
+    except Exception as e:
+        raise Exception("Couldn't get metadata for accession {} : ".format(accession)
+                        + "original_file ={}\n".format(str(original_file)) % e)
     patch_file = {'quality_metric': qc_meta['@id']}
-    utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+    try:
+        utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+    except Exception as e:
+        raise Exception("patch_metadata failed in fastqc_updater. %s. "
+                        + "original_file ={}\n".format(str(original_file)) % e)
 
 
 def md5_updater(status, sbg, ff_meta):
