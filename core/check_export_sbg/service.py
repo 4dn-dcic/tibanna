@@ -21,7 +21,6 @@ def update_processed_file_metadata(status, pf_meta):
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
         for pf in pf_meta:
-            raise Exception("pf_meta = {}".format(str(pf_meta))) # Soo
             pfo = utils.ProcessedFileMetadata(**pf)
             pfo.post(key=ff_key)
     except Exception as e:
