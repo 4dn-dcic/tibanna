@@ -466,8 +466,10 @@ class SBGWorkflowRun(object):
                     accession = ''
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                 # report will help with generating metadata later
-                self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                           "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
+                export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                if file_uuid:
+                    export_item.update({'value': file_uuid, "accession": accession})
+                self.export_report.append(export_item)
                 self.export_id_list.append(export_id)
             elif isinstance(v, list):
                 for v_el in v:
@@ -488,9 +490,10 @@ class SBGWorkflowRun(object):
                             file_uuid = ''
                             accession = ''
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
-                        self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                                   "workflow_argument_name": k, 'value': file_uuid,
-                                                   "accession": accession})
+                        export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                        if file_uuid:
+                            export_item.update({'value': file_uuid, "accession": accession})
+                        self.export_report.append(export_item)
                         self.export_id_list.append(export_id)
         return self.export_report
 
@@ -725,7 +728,8 @@ class WorkflowRunMetadata(object):
 
         self.title = title
         self.input_files = input_files
-        self.output_files = output_files
+        if output_files:
+            self.output_files = output_files
         self.parameters = parameters
         self.award = award
         self.lab = lab
@@ -744,7 +748,7 @@ class WorkflowRunMetadata(object):
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
 
-    def append_volumes(self, sbg_volume):
+    def app    end_volumes(self, sbg_volume):
         self.sbg_mounted_volume_ids.append(sbg_volume.id)
 
     def as_dict(self):
