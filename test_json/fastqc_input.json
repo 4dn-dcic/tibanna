@@ -2,7 +2,7 @@
 		"input_files": [
 				{
 						"bucket_name": "elasticbeanstalk-encoded-4dn-files",
-						"object_key": "DNFIN232JJ3.fastq.gz",
+						"object_key": "4DNFIN232JJ3.fastq.gz",
 						"uuid": "0048955c-7cb6-4e56-a4d8-56fad52f688b",
 						"workflow_argument_name": "input_fastq"
 				}
