@@ -1,19 +1,19 @@
 {
   "input_files": [
     {
-      "bucket_name": "encoded-4dn-files",
+      "bucket_name": "elasticbeanstalk-encoded-4dn-files",
       "object_key": "4DNFIN232JJ4.fastq.gz",
       "uuid" : "0048955c-7cb6-4e56-a4d8-56fad52f688c",
       "workflow_argument_name": "fastq1"
     },
     {
-      "bucket_name": "encoded-4dn-files",
+      "bucket_name": "elasticbeanstalk-encoded-4dn-files",
       "object_key": "4DNFIN232JJ5.fastq.gz",
       "uuid": "0048955c-7cb6-4e56-a4d8-56fad52f688d",
       "workflow_argument_name": "fastq2"
     },
     {
-      "bucket_name": "encoded-4dn-files",
+      "bucket_name": "elasticbeanstalk-encoded-4dn-files",
       "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
       "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
       "workflow_argument_name": "bwa_index"

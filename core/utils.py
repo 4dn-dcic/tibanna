@@ -734,6 +734,7 @@ class WorkflowRunMetadata(object):
         pf_meta = []
         if sbg and sbg.export_report:
             for of in self.output_files:
+                Exception("{}".format(of['type')) # Soo
                 if of['type'] == ['Output processed file']:
                     for ofreport in sbg.export_report:
                         if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
