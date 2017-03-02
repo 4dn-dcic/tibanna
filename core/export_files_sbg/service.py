@@ -8,9 +8,8 @@ s3 = boto3.resource('s3')
 def create_processed_file_metadata(status, sbg, ff_meta):
     try:
         pf_meta = ff_meta.create_processed_file_metadata(status=status, sbg=sbg)
-        raise Exception("pf_meta = {}".format(str(pf_meta)))
     except Exception as e:
-        raise Exception("Unable to create processed file metadata json : %s" % e)
+        raise Exception("Unable to create processed file metadata json : %s." % e)
     try:
         if pf_meta:
             ff_key = utils.get_access_keys()
@@ -41,13 +40,9 @@ def handler(event, context):
     # 1) we want to keep track of the uploading status and
     # 2) we want to specify directory and file name before we export
     # (these files can be large so don't change file name after the export which is equivalent to rewriting)
-    tmp = ff_meta.output_files
-    tmp2 = sbg.export_report
     pf_meta = create_processed_file_metadata("uploading", sbg, ff_meta)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'tmp': tmp,
-            'tmp2': tmp2
-            # 'pf_meta': [pf.as_dict() for pf in pf_meta]
+            'pf_meta': [pf.as_dict() for pf in pf_meta]
             }

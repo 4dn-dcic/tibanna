@@ -734,7 +734,7 @@ class WorkflowRunMetadata(object):
         pf_meta = []
         if sbg and sbg.export_report:
             for of in self.output_files:
-                if of['type'] == ['Output processed file']:
+                if of['type'] == 'Output processed file':
                     for ofreport in sbg.export_report:
                         if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
                             pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
@@ -758,7 +758,7 @@ class WorkflowRunMetadata(object):
 
 
 class ProcessedFileMetadata(object):
-    def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
+    def __init__(self, uuid=None, accession=None, filename='', file_format='', lab='4dn-dcic-lab',
                  award='1U01CA200059-01', status='uploading'):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
