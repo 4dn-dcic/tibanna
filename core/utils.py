@@ -748,7 +748,7 @@ class WorkflowRunMetadata(object):
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
 
-    def app    end_volumes(self, sbg_volume):
+    def append_volumes(self, sbg_volume):
         self.sbg_mounted_volume_ids.append(sbg_volume.id)
 
     def as_dict(self):
