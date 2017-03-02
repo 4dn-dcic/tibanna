@@ -41,9 +41,13 @@ def handler(event, context):
     # 1) we want to keep track of the uploading status and
     # 2) we want to specify directory and file name before we export
     # (these files can be large so don't change file name after the export which is equivalent to rewriting)
+    tmp = ff_meta.output_files
+    tmp2 = sbg.export_report
     pf_meta = create_processed_file_metadata("uploading", sbg, ff_meta)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': [pf.as_dict() for pf in pf_meta]
+            'tmp': tmp,
+            'tmp2': tmp2
+            # 'pf_meta': [pf.as_dict() for pf in pf_meta]
             }
