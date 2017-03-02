@@ -462,8 +462,8 @@ class SBGWorkflowRun(object):
                     # QC and report
                     # put all files in directory with uuid of workflowrun
                     dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                    file_uuid = None
-                    accession = None
+                    file_uuid = ''
+                    accession = ''
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                 # report will help with generating metadata later
                 self.export_report.append({"filename": dest_filename, "export_id": export_id,
@@ -485,8 +485,8 @@ class SBGWorkflowRun(object):
                             # QC and report
                             # put all files in directory with uuid of workflowrun
                             dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                            file_uuid = None
-                            accession = None
+                            file_uuid = ''
+                            accession = ''
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                         self.export_report.append({"filename": dest_filename, "export_id": export_id,
                                                    "workflow_argument_name": k, 'value': file_uuid,
