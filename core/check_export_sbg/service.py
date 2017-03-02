@@ -60,6 +60,9 @@ def fastqc_updater(status, sbg, ff_meta):
         raise Exception("patch_metadata failed in fastqc_updater. %s. " +
                         "original_file ={}\n".format(str(original_file)) % e)
 
+    # nothing to patch to ff_meta
+    return None
+
 
 def md5_updater(status, sbg, ff_meta):
     # get metadata about original input file
@@ -83,6 +86,9 @@ def md5_updater(status, sbg, ff_meta):
             new_file = {}
             new_file['status'] = 'upload failed'
             utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
+
+    # nothing to patch to ff_meta
+    return None
 
 
 def get_inputfile_accession(sbg, input_file_name='input_file'):
