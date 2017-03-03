@@ -462,12 +462,14 @@ class SBGWorkflowRun(object):
                     # QC and report
                     # put all files in directory with uuid of workflowrun
                     dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                    file_uuid = None
-                    accession = None
+                    file_uuid = ''
+                    accession = ''
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
                 # report will help with generating metadata later
-                self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                           "workflow_argument_name": k, 'value': file_uuid, "accession": accession})
+                export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                if file_uuid:
+                    export_item.update({'value': file_uuid, "accession": accession})
+                self.export_report.append(export_item)
                 self.export_id_list.append(export_id)
             elif isinstance(v, list):
                 for v_el in v:
@@ -485,12 +487,13 @@ class SBGWorkflowRun(object):
                             # QC and report
                             # put all files in directory with uuid of workflowrun
                             dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                            file_uuid = None
-                            accession = None
+                            file_uuid = ''
+                            accession = ''
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
-                        self.export_report.append({"filename": dest_filename, "export_id": export_id,
-                                                   "workflow_argument_name": k, 'value': file_uuid,
-                                                   "accession": accession})
+                        export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                        if file_uuid:
+                            export_item.update({'value': file_uuid, "accession": accession})
+                        self.export_report.append(export_item)
                         self.export_id_list.append(export_id)
         return self.export_report
 
@@ -725,7 +728,8 @@ class WorkflowRunMetadata(object):
 
         self.title = title
         self.input_files = input_files
-        self.output_files = output_files
+        if output_files:
+            self.output_files = output_files
         self.parameters = parameters
         self.award = award
         self.lab = lab
@@ -734,7 +738,7 @@ class WorkflowRunMetadata(object):
         pf_meta = []
         if sbg and sbg.export_report:
             for of in self.output_files:
-                if of['type'] == ['Output processed file']:
+                if of['type'] == 'Output processed file':
                     for ofreport in sbg.export_report:
                         if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
                             pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
@@ -758,7 +762,7 @@ class WorkflowRunMetadata(object):
 
 
 class ProcessedFileMetadata(object):
-    def __init__(self, uuid=None, accession=None, filename=None, file_format=None, lab='4dn-dcic-lab',
+    def __init__(self, uuid=None, accession=None, filename='', file_format='', lab='4dn-dcic-lab',
                  award='1U01CA200059-01', status='uploading'):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()

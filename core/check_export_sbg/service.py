@@ -51,14 +51,17 @@ def fastqc_updater(status, sbg, ff_meta):
     try:
         original_file = utils.get_metadata(accession, key=ff_key)
     except Exception as e:
-        raise Exception("Couldn't get metadata for accession {} : ".format(accession)
-                        + "original_file ={}\n".format(str(original_file)) % e)
+        raise Exception("Couldn't get metadata for accession {} : ".format(accession) +
+                        "original_file ={}\n".format(str(original_file)) % e)
     patch_file = {'quality_metric': qc_meta['@id']}
     try:
         utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
     except Exception as e:
-        raise Exception("patch_metadata failed in fastqc_updater. %s. "
-                        + "original_file ={}\n".format(str(original_file)) % e)
+        raise Exception("patch_metadata failed in fastqc_updater. %s. " +
+                        "original_file ={}\n".format(str(original_file)) % e)
+
+    # nothing to patch to ff_meta
+    return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}]}
 
 
 def md5_updater(status, sbg, ff_meta):
@@ -83,6 +86,9 @@ def md5_updater(status, sbg, ff_meta):
             new_file = {}
             new_file['status'] = 'upload failed'
             utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
+
+    # nothing to patch to ff_meta
+    return None
 
 
 def get_inputfile_accession(sbg, input_file_name='input_file'):

@@ -319,7 +319,8 @@ def run_workflow(ctx, input_json=''):
 
 def _run_workflow(input_json, accession=''):
     client = boto3.client('stepfunctions', region_name='us-east-1')
-    base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2'
+    # base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2'
+    base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2-3'
     STEP_FUNCTION_ARN = base_arn % 'stateMachine'
     base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
 
