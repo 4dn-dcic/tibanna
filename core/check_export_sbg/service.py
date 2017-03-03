@@ -61,7 +61,7 @@ def fastqc_updater(status, sbg, ff_meta):
                         "original_file ={}\n".format(str(original_file)) % e)
 
     # nothing to patch to ff_meta
-    return None
+    return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}]}
 
 
 def md5_updater(status, sbg, ff_meta):
