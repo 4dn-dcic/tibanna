@@ -137,7 +137,7 @@ def launch_instance(par, jobid, shutdown_min):
     run_command_out_check(command)
 
     # launch an instance
-    print "launching an instance..."
+    print("launching an instance...")
 
     # creating a launch command
     Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
