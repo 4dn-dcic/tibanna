@@ -6,7 +6,6 @@ import random
 import string
 import os
 import subprocess
-import argparse
 
 
 # random string generator
@@ -61,7 +60,7 @@ def read_config(CONFIG_FILE, CONFIG_KEYS):
     return cfg
 
 
-def create_json(a, json_dir, jobid, copy_to_s3):
+def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     # a is the final_args dictionary. json_dir is the output directory for the json file
 
     # create jobid here
@@ -119,10 +118,11 @@ def create_json(a, json_dir, jobid, copy_to_s3):
         json.dump(pre, json_new_f, indent=4, sort_keys=True)
 
     # copy the json file to the s3 bucket
-    args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
-    if copy_to_s3 is True:
-        command = "aws s3 cp ./{json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
-        run_command_out_check(command)
+    if json_bucket:
+        args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
+        if copy_to_s3 is True:
+            command = "aws s3 cp ./{json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
+            run_command_out_check(command)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
@@ -188,4 +188,3 @@ def launch_instance(par, jobid, shutdown_min):
                                                        par['instance_type'],
                                                        instance_ip, par['job_tag'],
                                                        get_start_time(), par['outbucket']))
-
