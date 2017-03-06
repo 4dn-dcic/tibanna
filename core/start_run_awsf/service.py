@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import boto3
+# import boto3
 from core import ec2_utils as utils
-import json
-import random
-import sys
-import time
-import string
-import os
-import subprocess
+# import json
+# import random
+# import sys
+# import time
+# import string
+# import os
+# import subprocess
 
-## s3 = boto3.resource('s3')
+# s3 = boto3.resource('s3')
 
 
 def handler(event, context):
@@ -27,7 +27,8 @@ def handler(event, context):
     json_bucket: S3 bucket and directory in which the output json file will be written
     s3_access_arn: IAM instance profile for S3 access
     keyname: name of keypapir used for launching instances
-    worker_ami_id: ID of AMI used for the instance - it should have docker daemon and cwl-runner (either toil or cwltools) installed 
+    worker_ami_id: ID of AMI used for the instance - it should have docker daemon and
+                   cwl-runner (either toil or cwltools) installed
     userdata_dir: local directory to store userdata (used internally within lambda)
 
     args:
@@ -45,21 +46,25 @@ def handler(event, context):
     launch_instance: Launch instance based on the json file
     '''
 
-    ## read default variables in config
+    # read default variables in config
     CONFIG_FIELD = "config"
-    CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn", "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size", "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "json_bucket", "cwl_url"]
-    ARGS_KEYS = ["cwl","cwl_children", "app_name", "app_version", "input_files", "input_reference_files", "input_parameters", "input_files_directory", "not_EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
+    CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
+                   "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "json_bucket",
+                   "cwl_url"]
+    # ARGS_KEYS = ["cwl","cwl_children", "app_name", "app_version", "input_files",
+    #               "input_reference_files", "input_parameters", "input_files_directory",
+    #               "not_EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
 
-    cfg = event.get("CONFIG_FIELD")
+    cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
         assert(k in cfg)
 
     args = event.get("args")
-    
-    ## parameters that will go into the pre-run json file
-    final_args={
+    # parameters that will go into the pre-run json file
+    final_args = {
      'cwl_directory': cfg.get('cwl_url'),
-     'cwl': args.get('cwl'), 
+     'cwl': args.get('cwl'),
      'cwl_children': args.get('cwl_children'),
      'app_name': args.get('app_name'),
      'app_version': args.get('app_version'),
@@ -67,43 +72,41 @@ def handler(event, context):
      'input_reference_files': args.get('input_reference_files'),
      'input_parameters': args.get('input_parameters'),
      'input_files_directory': args.get('input_files_directory'),
-     'input_reference_files_directory': cfg.get('reference_S3_bucket'), 
-     'output_bucket_directory': cfg.get('output_S3_bucket'), 
+     'input_reference_files_directory': cfg.get('reference_S3_bucket'),
+     'output_bucket_directory': cfg.get('output_S3_bucket'),
      'instance_type': cfg.get('default_instance_type'),
      'storage_size': cfg.get('default_ebs_size'),
      'storage_type': cfg.get('default_ebs_type'),
      'storage_iops': cfg.get('ebs_iops')
     }
-    
+
     # parameters needed to launch an instance
-    par={
+    par = {
      's3_access_arn': cfg.get('s3_access_arn'),
      'worker_ami_id': cfg.get('worker_ami_id'),
      'keyname': cfg.get('keyname'),
      'userdata_dir': cfg.get('userdata_dir'),
-     'instance_type': cfg.get('default_instance_type'), # redundant with final_args
-     'storage_size': cfg.get('default_ebs_size'), # redundant with final_args
-     'storage_type': cfg.get('default_ebs_type'), # redundant with final_args
-     'storage_iops': cfg.get('ebs_iops'), # redundant with final_args
+     'instance_type': cfg.get('default_instance_type'),  # redundant with final_args
+     'storage_size': cfg.get('default_ebs_size'),  # redundant with final_args
+     'storage_type': cfg.get('default_ebs_type'),  # redundant with final_args
+     'storage_iops': cfg.get('ebs_iops'),  # redundant with final_args
      'EBS_optimized': True,
-     'job_tag': final_args.get('app_name'), 
-     'outbucket': cfg.get('output_S3_bucket') # redundant with output_bucket_directory in final_args
+     'job_tag': final_args.get('app_name'),
+     'outbucket': cfg.get('output_S3_bucket')  # redundant with output_bucket_directory in final_args
     }
- 
+
     shutdown_min = args.get('shutdown_min')
     copy_to_s3 = args.get('copy_to_s3')
 
     # local directory in which the json file will be first created.
-    json_dir=cfg.get('json_dir')
+    json_dir = cfg.get('json_dir')
 
     # bucket name to which the json file will be sent.
-    json_bucket=cfg.get('json_bucket')
-    
+    # json_bucket=cfg.get('json_bucket')
+
     # create json and copy to s3
-    jobid=utils.create_json(final_args, json_dir, '', copy_to_s3 )
-    
+    jobid = utils.create_json(final_args, json_dir, '', copy_to_s3)
+
     # launch instance and execute workflow
     if args.launch_instance:
         utils.launch_instance(par, jobid, shutdown_min)
-    
-    
