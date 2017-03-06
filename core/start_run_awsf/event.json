@@ -26,7 +26,7 @@
    "not_EBS_optimized" : false,
    "shutdown_min" : "now",
    "copy_to_s3" : false,
-   "launch_instance", true
+   "launch_instance" : true
  }
 }
 
