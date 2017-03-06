@@ -23,6 +23,7 @@ def get_all_core_lambdas():
             'export_files_sbg',
             'check_export_sbg',
             'validate_md5_s3_trigger',
+            'start_run_awsf'
             ]
 
 
