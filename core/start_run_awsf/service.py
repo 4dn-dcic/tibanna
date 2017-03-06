@@ -24,7 +24,6 @@ def handler(event, context):
     default_ebs_type: EBS storage type (available values: gp2, io1, st1, sc1, standard (default: io1)
     ebs_iops: EBS storage IOPS
     json_dir: Local directory in which the output json file will be written
-    json_bucket: S3 bucket and directory in which the output json file will be written
     s3_access_arn: IAM instance profile for S3 access
     keyname: name of keypapir used for launching instances
     worker_ami_id: ID of AMI used for the instance - it should have docker daemon and
@@ -50,17 +49,20 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
                    "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
-                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "json_bucket",
-                   "cwl_url"]
-    # ARGS_KEYS = ["cwl","cwl_children", "app_name", "app_version", "input_files",
-    #               "input_reference_files", "input_parameters", "input_files_directory",
-    #               "not_EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url"]
+    ARGS_FIELD = "args"
+    ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
+                 "input_reference_files", "input_parameters", "input_files_directory",
+                 "not_EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
         assert(k in cfg)
 
-    args = event.get("args")
+    args = event.get(ARGS_FIELD)
+    for k in ARGS_KEYS:
+        assert(k in args)
+
     # parameters that will go into the pre-run json file
     final_args = {
      'cwl_directory': cfg.get('cwl_url'),
@@ -100,9 +102,6 @@ def handler(event, context):
 
     # local directory in which the json file will be first created.
     json_dir = cfg.get('json_dir')
-
-    # bucket name to which the json file will be sent.
-    # json_bucket=cfg.get('json_bucket')
 
     # create json and copy to s3
     jobid = utils.create_json(final_args, json_dir, '', copy_to_s3)
