@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from core import utils
+from core import sbg_utils
 import json
 import random
 
@@ -31,21 +31,21 @@ def handler(event, context):
     # get necessary tokens
     s3_keys = event.get('s3_keys')
     if not s3_keys:
-        s3_keys = utils.get_s3_keys()
+        s3_keys = sbg_utils.get_s3_keys()
 
     ff_keys = event.get('ff_keys')
     if not ff_keys:
-        ff_keys = utils.get_access_keys()
+        ff_keys = sbg_utils.get_access_keys()
 
     # represents the SBG info we need
-    sbg = utils.create_sbg_workflow(app_name)
+    sbg = sbg_utils.create_sbg_workflow(app_name)
 
     # represents the workflow metadata to be stored in fourfront
-    parameters, _ = utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
+    parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
-    workflow_info = utils.get_metadata(workflow_uuid, key=ff_keys)
-    arginfo=dict()
+    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=ff_keys)
+    arginfo = dict()
     try:
         for arg in workflow_info.get('arguments'):
            if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
@@ -58,8 +58,8 @@ def handler(event, context):
         raise e
 
     # create the ff_meta output info
-    input_files =  [{'workflow_argument_name': fil['workflow_argument_name'],
-                     'value': fil['uuid']} for fil in input_file_list]
+    input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
+                    'value': fil['uuid']} for fil in input_file_list]
 
     # create empty output file info
     output_files = [{'workflow_argument_name': argname,
@@ -67,8 +67,8 @@ def handler(event, context):
                      'extension': '',  # processed file extention: later get it from file_processed schema
                      'format': arginfo[argname]['format']} for argname in arginfo.keys()]
 
-    ff_meta = utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                 run_url=tibanna.get('url', ''), output_files = output_files)
+    ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                      run_url=tibanna.get('url', ''), output_files=output_files)
 
     # store metadata so we know the run has started
     ff_meta.post(key=ff_keys)
@@ -78,10 +78,10 @@ def handler(event, context):
 
     # create a link to the output directory as well
     if output_bucket:
-        sbg_volume = utils.create_sbg_volume_details()
+        sbg_volume = sbg_utils.create_sbg_volume_details()
         res = sbg.create_volumes(sbg_volume, output_bucket,
-                           public_key=s3_keys['key'],
-                           secret_key=s3_keys['secret'])
+                                 public_key=s3_keys['key'],
+                                 secret_key=s3_keys['secret'])
         vol_id = res.get('id')
         if not vol_id:
             # we got an error
@@ -175,7 +175,7 @@ def mount_on_sbg(input_file, s3_keys, sbg):
 
     # mount the bucket and import the file
     try:
-        sbg_volume = utils.create_sbg_volume_details()
+        sbg_volume = sbg_utils.create_sbg_volume_details()
         sbg.create_volumes(sbg_volume, bucket,
                            public_key=s3_keys['key'],
                            secret_key=s3_keys['secret'],
@@ -210,7 +210,6 @@ class SBGVolume(object):
 
 class FileProcessedMetadata(object):
 
-
     def __init__(self, uuid, accession, filename, status, workflow_run_uuid=None):
         self.uuid = uuid
         self.accession = accession
@@ -229,10 +228,8 @@ class FileProcessedMetadata(object):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
-
-
-## function that grabs SBG token from a designated S3 bucket
-def get_sbg_token (s3):
+# function that grabs SBG token from a designated S3 bucket
+def get_sbg_token(s3):
     try:
         s3.Bucket(bucket_for_token).download_file(object_for_token, '/tmp/'+ object_for_token)    # lambda doesn't have write access to every place, so use /tmp/.
         with open('/tmp/' + object_for_token, 'r') as f:    

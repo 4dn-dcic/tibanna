@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import utils
+from core import sbg_utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -12,7 +12,7 @@ def handler(event, context):
     http://docs.sevenbridges.com/reference#get-task-execution-details
     '''
     # get data
-    sbg = utils.create_sbg_workflow(**event.get('workflow'))
+    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
 
     # check status of workflow, error if not done
     status = sbg.check_task()

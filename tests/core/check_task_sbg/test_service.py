@@ -11,6 +11,8 @@ def test_check_task_sbg_e2e(check_task_event_data):
         ret = check_task_handler(check_task_event_data, None)
     except Exception as e:
         datastring = e.message.strip("Task not finished => ")
+        import pdb
+        pdb.set_trace()
         import ast
         resp = ast.literal_eval(datastring)
         assert 'status' in resp.keys()
