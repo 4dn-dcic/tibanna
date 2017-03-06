@@ -146,11 +146,9 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 def deploy_core(ctx, name, version=None):
     print("preparing for deploy...")
     print("make sure tests pass")
-    '''
     if test(ctx) != 0:
         print("tests need to pass first before deploy")
         return
-    '''
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)

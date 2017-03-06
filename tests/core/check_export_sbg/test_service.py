@@ -55,6 +55,7 @@ def fastqc_payload():  # pylint: disable=fixme
 
 @valid_env
 @pytest.mark.webtest
+@pytest.mark.skip
 def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
     try:
         ret = check_export_handler(fastqc_payload, None)
@@ -75,6 +76,7 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
 
 @valid_env
 @pytest.mark.webtest
+@pytest.mark.skip
 def test_check_export_sbg_e2e(check_export_event_data):
     try:
         ret = check_export_handler(check_export_event_data, None)
