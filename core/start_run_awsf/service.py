@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from core import ec2_utils
+from core import ec2_utils as utils
 import json
 import random
 import sys
@@ -97,10 +97,10 @@ def handler(event, context):
     shutdown_min = args.get('shutdown_min')
     
     # create json and copy to s3
-    jobid=create_json(final_args, json_dir, args.job_id, args.copy_to_s3 )
+    jobid=utils.create_json(final_args, json_dir, args.job_id, args.copy_to_s3 )
     
     # launch instance and execute workflow
     if args.launch_instance:
-        launch_instance(par, jobid, shutdown_min)
+        utils.launch_instance(par, jobid, shutdown_min)
     
     
