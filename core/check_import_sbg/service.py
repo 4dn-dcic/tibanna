@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from core import utils
+from core import sbg_utils
 import boto3
 import json
 
 s3 = boto3.resource('s3')
 # TODO: I don't want to call the following in test,
 # filter out with env var / DEV_ENV
-_api = utils.SBGAPI(utils.get_sbg_keys())
+_api = sbg_utils.SBGAPI(sbg_utils.get_sbg_keys())
 
 
 # check the status and other details of import
@@ -14,14 +14,14 @@ def handler(event, context):
     # get data
     input_file_args = event.get('input_file_args')
     parameter_dict = event.get('parameter_dict')
-    sbg = utils.create_sbg_workflow(**event.get('workflow'))
-    ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     import_ids = sbg.import_id_list
 
     # create Task for workflow run later
-    task_input = utils.SBGTaskInput(sbg.app_name,
-                                    project=sbg.project_id,
-                                    inputs=parameter_dict)
+    task_input = sbg_utils.SBGTaskInput(sbg.app_name,
+                                        project=sbg.project_id,
+                                        inputs=parameter_dict)
 
     for idx, import_id in enumerate(import_ids):
 
@@ -46,7 +46,7 @@ def handler(event, context):
 
         # make all the file export meta-data stuff here
         # TODO: fix ff_meta bugs with input / output files
-        ff_meta.post(key=utils.get_access_keys())
+        ff_meta.post(key=sbg_utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict()

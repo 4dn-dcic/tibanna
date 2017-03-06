@@ -6,6 +6,7 @@ import json
 
 @valid_env
 @pytest.mark.webtest
+@pytest.mark.skip
 def test_run_task_sbg_e2e(run_task_event_data):
     ret = handler(run_task_event_data, None)
     assert json.dumps(ret)

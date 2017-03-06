@@ -1,6 +1,6 @@
 import pytest
 from core.start_run_sbg import service
-from core import utils
+from core import sbg_utils
 from ..conftest import valid_env
 
 
@@ -55,7 +55,7 @@ def sbg_project():
 @pytest.fixture
 def md5_sbg_wfrun(sbg_keys):
     try:
-        return utils.create_sbg_workflow('md5', token=sbg_keys)
+        return sbg_utils.create_sbg_workflow('md5', token=sbg_keys)
     except:
         print("generally this test fails if you haven't set aws keys in your terminal")
 
@@ -79,7 +79,11 @@ def test_mount_multiple_on_sbg(md5_sbg_wfrun, multi_infile_data, s3_keys):
 @valid_env
 @pytest.mark.webtest
 def test_handler(md5_event_data):
-    data = service.handler(md5_event_data, '')
+    try:
+        data = service.handler(md5_event_data, '')
+    except ValueError:
+        # since we are using live data, sometimes it goes missing
+        pytest.skip("data seems not to be there")
     assert data['ff_meta']
     assert data['workflow']
     # input volume plus output volume

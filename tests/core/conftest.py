@@ -1,5 +1,5 @@
 import pytest
-from core import utils
+from core import sbg_utils
 import os
 import json
 
@@ -15,17 +15,17 @@ valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
 
 @pytest.fixture(scope='session')
 def s3_keys():
-    return utils.get_s3_keys()
+    return sbg_utils.get_s3_keys()
 
 
 @pytest.fixture(scope='session')
 def sbg_keys():
-    return utils.get_sbg_keys()
+    return sbg_utils.get_sbg_keys()
 
 
 @pytest.fixture(scope='session')
 def ff_keys():
-    return utils.get_access_keys()
+    return sbg_utils.get_access_keys()
 
 
 @pytest.fixture(scope='session')
