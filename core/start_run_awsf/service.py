@@ -74,10 +74,6 @@ def handler(event, context):
      'storage_type': cfg.get('default_ebs_type'),
      'storage_iops': cfg.get('ebs_iops')
     }
-    # local directory in which the json file will be first created.
-    json_dir=cfg.get('json_dir')
-    # bucket name to which the json file will be sent.
-    json_bucket=cfg.get('json_bucket')
     
     # parameters needed to launch an instance
     par={
@@ -95,9 +91,16 @@ def handler(event, context):
     }
  
     shutdown_min = args.get('shutdown_min')
+    copy_to_s3 = args.get('copy_to_s3')
+
+    # local directory in which the json file will be first created.
+    json_dir=cfg.get('json_dir')
+
+    # bucket name to which the json file will be sent.
+    json_bucket=cfg.get('json_bucket')
     
     # create json and copy to s3
-    jobid=utils.create_json(final_args, json_dir, args.job_id, args.copy_to_s3 )
+    jobid=utils.create_json(final_args, json_dir, '', copy_to_s3 )
     
     # launch instance and execute workflow
     if args.launch_instance:
