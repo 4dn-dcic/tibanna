@@ -6,6 +6,7 @@ import os
 import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
+from uuid import uuid4
 
 
 ###########################
@@ -127,6 +128,101 @@ def find_file(name, zipstream):
     for zipped_filename in zipstream.namelist():
         if zipped_filename.endswith(name):
             return zipped_filename
+
+
+def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
+    '''
+    accession is unique name that we be part of run id
+    '''
+    client = boto3.client('stepfunctions', region_name='us-east-1')
+    # base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2'
+    base_arn = 'arn:aws:states:us-east-1:643366669028:%s:%s'
+    STEP_FUNCTION_ARN = base_arn % ('stateMachine', str(workflow))
+    base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
+
+    # build from appropriate input json
+    # assume run_type and and run_id
+    input_json = _tibanna_settings(input_json, force_inplace=True)
+    run_name = input_json[_tibanna]['run_name']
+
+    # calculate what the url will be
+    url = "%s%s%s%s" % (base_url,
+                        base_arn % ('execution', str(workflow)),
+                        ":",
+                        run_name)
+
+    input_json[_tibanna]['url'] = url
+
+    aws_input = json.dumps(input_json)
+    print("about to start run %s" % run_name)
+    # trigger the step function to run
+    try:
+        response = client.start_execution(
+            stateMachineArn=STEP_FUNCTION_ARN,
+            name=run_name,
+            input=aws_input,
+        )
+    except Exception as e:
+        if e.response.get('Error'):
+            if e.response['Error'].get('Code') == 'ExecutionAlreadyExists':
+                print("execution already exists...mangling name and retrying...")
+                run_name += str(uuid4())
+                input_json[_tibanna]['run_name'] = run_name
+
+                # calculate what the url will be
+                url = "%s%s%s%s" % (base_url, (base_arn % 'execution'), ":", run_name)
+                input_json[_tibanna]['url'] = url
+                aws_input = json.dumps(input_json)
+
+                # TODO: prompt for overwrite
+                response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN,
+                    name=run_name,
+                    input=aws_input,
+                )
+            else:
+                raise(e)
+        else:
+            raise(e)
+
+    print("response from aws was: \n %s" % response)
+    print("url to view status:")
+    print(input_json[_tibanna]['url'])
+    input_json[_tibanna]['response'] = response
+    return input_json
+
+
+# just store this in one place
+_tibanna = '_tibanna'
+
+
+def _tibanna_settings(settings_patch=None, force_inplace=False):
+    tibanna = {"run_id": str(uuid4()),
+               "env": current_env(),
+               "url": '',
+               'run_type': 'generic',
+               'run_name': '',
+               }
+    in_place = None
+    if force_inplace:
+        if not settings_patch.get(_tibanna):
+            settings_patch[_tibanna] = {}
+    if settings_patch:
+        in_place = settings_patch.get(_tibanna, None)
+        if in_place is not None:
+            tibanna.update(in_place)
+        else:
+            tibanna.update(settings_patch)
+
+    # generate run name
+    if not tibanna.get('run_name'):
+        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'], tibanna['run_id'])
+
+    if in_place is not None:
+        settings_patch[_tibanna] = tibanna
+        return settings_patch
+    else:
+        return {_tibanna: tibanna}
 
 
 def current_env():
