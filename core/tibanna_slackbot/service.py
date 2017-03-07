@@ -59,9 +59,20 @@ logger.setLevel(logging.INFO)
 
 
 def respond(err, res=None):
+    res_d = {"attachments":  [
+                {
+                    "fallback": "We're running your workflow now!",
+                    "title": "Workflow started",
+                    "title_link": "http://github.com/hms-dbmi",
+                    "text": "Your Workflow is running.  Thanks for using tibanna.",
+                    "image_url": res,
+                    "color": "#764FA5"
+                }
+            ]
+            }
     return {
         'statusCode': '400' if err else '200',
-        'body': err.message if err else json.dumps(res),
+        'body': err.message if err else json.dumps(res_d),
         'headers': {
             'Content-Type': 'application/json',
         },
@@ -69,18 +80,16 @@ def respond(err, res=None):
 
 
 def giphy(query, apikey="dc6zaTOxFJmzC"):
-    # from random import randint
+    from random import randint
     args = {'query': query,
             'apikey': apikey,
-            'offset': 0  # randint(0, 25)
+            'offset': randint(0, 25)
             }
     query = "q={query}&api_key={apikey}&limit=1&offset={offset}".format(**args)
 
     api_url = "http://api.giphy.com/v1/gifs/search?%s" % (query)
     res = requests.get(api_url).json()
     img_url = res['data'][0]['images']['downsized']['url']
-    import pdb
-    pdb.set_trace()
     return img_url
 
 
@@ -93,15 +102,18 @@ def lambda_handler(event, context):
         logger.error("Request token (%s) does not match expected", token)
         return respond(Exception('Invalid request token'))
 
-    user = params['user_name'][0]
+    # user = params['user_name'][0]
     # command = params['command'][0]
     # channel = params['channel_name'][0]
-    command_text = params['text'][0]
+    # command_text = params['text'][0]
     terms = ['take off', 'blast off', 'running']
     random_giphy = giphy(random.choice(terms))
 
+    '''
     return respond(None,
-                   "%s worflow %s is now running.\n%s\n  Thank you for using tibanna" % (user,
-                                                                                         command_text,
-                                                                                         random_giphy)
+                   "%s worflow %s is now running. Thank you for using tibanna %s" % (user,
+                                                                                     command_text,
+                                                                                     random_giphy)
                    )
+    '''
+    return respond(None, random_giphy)
