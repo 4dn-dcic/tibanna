@@ -6,6 +6,11 @@ import random
 import string
 import os
 import subprocess
+import logging
+from invoke import run
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 # random string generator
@@ -38,14 +43,17 @@ def run_command_out_check(command):
 
 
 def launch_and_get_instance_id(launch_command, jobid):
-    instance_launch_logstr = ''
+    logstr = ''
     try:  # capturing stdout from the launch command
-        instance_launch_logstr = subprocess.check_output(launch_command, shell=True)
+        logs = run(launch_command)
+        logstr += logs.stdout
+        logstr += logs.stderr
+
     except Exception as e:
         raise Exception("failed to launch instance for job {jobid}: {log}. %s"
-                        .format(jobid=jobid, log=instance_launch_logstr) % e)
-    instance_launch_log = json.loads(instance_launch_logstr)
-    return instance_launch_log['Instances'][0]['InstanceId']
+                        .format(jobid=jobid, log=logstr) % e)
+    log = json.loads(logstr)
+    return log['Instances'][0]['InstanceId']
 
 
 def read_config(CONFIG_FILE, CONFIG_KEYS):
@@ -124,7 +132,7 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
         args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
         if copy_to_s3 is True:
             command = "aws s3 cp ./{json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
-            run_command_out_check(command)
+            subprocess.check_output(command, shell=True)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
@@ -137,13 +145,18 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min):
     run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
     script_url = 'https://raw.githubusercontent.com/hms-dbmi/tibanna/master/'
     with open(run_workflow_file, 'w') as fout:
-        fout.write("#!/bin/bash\n")
-        fout.write("JOBID={}\n".format(jobid))
-        fout.write("RUN_SCRIPT=aws_run_workflow.sh\n")
-        fout.write("SCRIPT_URL={}\n".format(script_url))
-        fout.write("wget $SCRIPT_URL/$RUN_SCRIPT\n")
-        fout.write("chmod +x $RUN_SCRIPT\n")
-        fout.write("source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN\n")
+        str = ''
+        str += "#!/bin/bash\n"
+        str += "JOBID={}\n".format(jobid)
+        str += "RUN_SCRIPT=aws_run_workflow.sh\n"
+        str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
+        str += "SCRIPT_URL={}\n".format(script_url)
+        str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+        str += "chmod +x $RUN_SCRIPT\n"
+        str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN\n"
+        fout.write(str)
+    logger.info(str)
+    # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
 
 
 def launch_instance(par, jobid, shutdown_min):
@@ -156,6 +169,8 @@ def launch_instance(par, jobid, shutdown_min):
 
     # creating a launch command
     Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
+    logger.info(Userdata_file)
+
     launch_args = {'ami': par['worker_ami_id'],
                    'instance_type': par['instance_type'],
                    'arn': par['s3_access_arn'],
@@ -172,17 +187,21 @@ def launch_instance(par, jobid, shutdown_min):
 
     # storage iops option
     if par['storage_iops']:    # io1 type, specify iops
-        options_storage = " --block-device-mappings DeviceName=/dev/sdb, Ebs=\"{{VolumeSize={EBS_SIZE}," + \
-                          " VolumeType={EBS_TYPE}, Iops={EBS_IOPS}, DeleteOnTermination=true}}"
+        options_storage = " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE}," + \
+                          "VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}\""
         options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'],
                                                  EBS_IOPS=par['storage_iops'])
     else:  # gp type or other type? do not specify iops
-        options_storage += " --block-device-mappings DeviceName=/dev/sdb, Ebs=\"{{VolumeSize={EBS_SIZE}," + \
-                           "VolumeType={EBS_TYPE}, DeleteOnTermination=true}}\""
+        options_storage += " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE}," + \
+                           "VolumeType={EBS_TYPE},DeleteOnTermination=true}}\""
         options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
     launch_command += options_storage
 
     # launch instance and get id
+    logger.info(launch_command)
+    # logger.info(subprocess.check_output("aws s3 ls", shell=True))
+    logger.info(run('ls /usr/local/bin/').stdout)
+
     instance_id = launch_and_get_instance_id(launch_command, jobid)
 
     # get public IP for the instance (This may not happen immediately)
