@@ -12,7 +12,7 @@
    "userdata_dir": "/tmp/userdata",
    "json_dir": "/tmp/json",
    "json_bucket": "4dn-aws-pipeline-run-json",
-   "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
+   "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/"
  },
  "args" : {
    "cwl" : "gatk-gvcf.cwl",

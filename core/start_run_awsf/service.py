@@ -107,5 +107,5 @@ def handler(event, context):
     jobid = utils.create_json(final_args, json_dir, '', copy_to_s3)
 
     # launch instance and execute workflow
-    if args.launch_instance:
+    if args.get('launch_instance'):
         utils.launch_instance(par, jobid, shutdown_min)

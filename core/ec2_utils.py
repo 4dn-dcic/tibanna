@@ -38,10 +38,12 @@ def run_command_out_check(command):
 
 
 def launch_and_get_instance_id(launch_command, jobid):
+    instance_launch_logstr = ''
     try:  # capturing stdout from the launch command
         instance_launch_logstr = subprocess.check_output(launch_command, shell=True)
-    except:
-        sys.exit("failed to launch instance for job {jobid}".format(jobid=jobid))
+    except Exception as e:
+        raise Exception("failed to launch instance for job {jobid}: {log}. %s"
+                        .format(jobid=jobid, log=instance_launch_logstr) % e)
     instance_launch_log = json.loads(instance_launch_logstr)
     return instance_launch_log['Instances'][0]['InstanceId']
 
@@ -129,15 +131,28 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     return(jobid)
 
 
+def create_run_workflow(jobid, userdata_dir, shutdown_min):
+    if not os.path.exists(userdata_dir):
+        os.mkdir(userdata_dir)
+    run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
+    script_url = 'https://raw.githubusercontent.com/hms-dbmi/tibanna/master/'
+    with open(run_workflow_file, 'w') as fout:
+        fout.write("#!/bin/bash\n")
+        fout.write("JOBID={}\n".format(jobid))
+        fout.write("RUN_SCRIPT=aws_run_workflow.sh\n")
+        fout.write("SCRIPT_URL={}\n".format(script_url))
+        fout.write("wget $SCRIPT_URL/$RUN_SCRIPT\n")
+        fout.write("chmod +x $RUN_SCRIPT\n")
+        fout.write("source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN\n")
+
+
 def launch_instance(par, jobid, shutdown_min):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
-    args = {'jobid': jobid, 'dir': par['userdata_dir'], 'shotdown_min': shutdown_min}
-    command = "./create_run_workflow.sh {jobid} {dir} {shutdown_min}".format(**args)
-    run_command_out_check(command)
-
-    # launch an instance
-    print "launching an instance..."
+    try:
+        create_run_workflow(jobid, par['userdata_dir'], shutdown_min)
+    except Exception as e:
+        raise Exception("Cannot create run_workflow script. %s" % e)
 
     # creating a launch command
     Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
@@ -146,22 +161,26 @@ def launch_instance(par, jobid, shutdown_min):
                    'arn': par['s3_access_arn'],
                    'userdata': 'file://' + Userdata_file,
                    }
-    launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type}"
-    " --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination"
-    " --iam-instance-profile Arn={arn} --user-data={userdata}".format(**launch_args)
+    launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type}" + \
+                     " --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination" + \
+                     " --iam-instance-profile Arn={arn} --user-data={userdata}"
+    launch_command = launch_command.format(**launch_args)
     if par['keyname'] != '':
         launch_command += " --key-name {keyname}".format(keyname=par['keyname'])
     if par['EBS_optimized']:
         launch_command += " --ebs-optimized"
+
+    # storage iops option
     if par['storage_iops']:    # io1 type, specify iops
-        launch_command += " --block-device-mappings DeviceName=/dev/sdb, Ebs=\"{{VolumeSize={EBS_SIZE},"
-        " VolumeType={EBS_TYPE}, Iops={EBS_IOPS}, DeleteOnTermination=true}"
-        "}\"".format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'], EBS_IOPS=par['storage_iops'])
+        options_storage = " --block-device-mappings DeviceName=/dev/sdb, Ebs=\"{{VolumeSize={EBS_SIZE}," + \
+                          " VolumeType={EBS_TYPE}, Iops={EBS_IOPS}, DeleteOnTermination=true}}"
+        options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'],
+                                                 EBS_IOPS=par['storage_iops'])
     else:  # gp type or other type? do not specify iops
-        launch_command += " --block-device-mappings DeviceName=/dev/sdb,"
-        "Ebs=\"{{VolumeSize={EBS_SIZE},"
-        "VolumeType={EBS_TYPE}, DeleteOnTermination=true}}\"".format(EBS_SIZE=par['storage_size'],
-                                                                     EBS_TYPE=par['storage_type'])
+        options_storage += " --block-device-mappings DeviceName=/dev/sdb, Ebs=\"{{VolumeSize={EBS_SIZE}," + \
+                           "VolumeType={EBS_TYPE}, DeleteOnTermination=true}}\""
+        options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
+    launch_command += options_storage
 
     # launch instance and get id
     instance_id = launch_and_get_instance_id(launch_command, jobid)
