@@ -150,7 +150,7 @@ def giphy(query, apikey="dc6zaTOxFJmzC"):
             'apikey': apikey,
             'offset': randint(0, 10)
             }
-    query = "q={query}&api_key={apikey}&limit=1&offset={offset}".format(**args)
+    query = "q={query}&api_key={apikey}&limit=1&offset={offset}&raiting=pg".format(**args)
 
     api_url = "http://api.giphy.com/v1/gifs/search?%s" % (query)
     res = requests.get(api_url).json()
