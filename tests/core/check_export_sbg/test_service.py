@@ -3,7 +3,7 @@ from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
-from core import utils
+from core import sbg_utils
 
 
 @pytest.fixture
@@ -55,7 +55,6 @@ def fastqc_payload():  # pylint: disable=fixme
 
 @valid_env
 @pytest.mark.webtest
-@pytest.mark.skip
 def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
     try:
         ret = check_export_handler(fastqc_payload, None)
@@ -67,16 +66,15 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
     assert json.dumps(ret)
     assert ret['workflow']
 
-    sbg = utils.create_sbg_workflow(**ret['workflow'])
+    sbg = sbg_utils.create_sbg_workflow(**ret['workflow'])
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     print(accession)
-    original_file = utils.get_metadata(accession, ff_keys)
+    original_file = sbg_utils.get_metadata(accession, ff_keys)
     assert original_file['quality_metric']
 
 
 @valid_env
 @pytest.mark.webtest
-@pytest.mark.skip
 def test_check_export_sbg_e2e(check_export_event_data):
     try:
         ret = check_export_handler(check_export_event_data, None)

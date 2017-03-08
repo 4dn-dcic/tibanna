@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import utils
+from core import sbg_utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -12,7 +12,7 @@ def create_processed_file_metadata(status, sbg, ff_meta):
         raise Exception("Unable to create processed file metadata json : %s." % e)
     try:
         if pf_meta:
-            ff_key = utils.get_access_keys()
+            ff_key = sbg_utils.get_access_keys()
             for pf in pf_meta:
                 pf.post(key=ff_key)
     except Exception as e:
@@ -26,14 +26,14 @@ def handler(event, context):
     '''
 
     # get data
-    sbg = utils.create_sbg_workflow(**event.get('workflow'))
+    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
     run_response = event.get('run_response')
     ff_meta = event.get('ff_meta')
     uuid = ff_meta['uuid']
 
     sbg.export_all_output_files(run_response, ff_meta, base_dir=uuid)
     # creating after we export will add output file info to ff_meta
-    ff_meta = utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
 
     # create processed file metadata here, because

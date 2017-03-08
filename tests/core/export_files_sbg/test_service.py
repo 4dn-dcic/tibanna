@@ -6,7 +6,6 @@ import json
 
 @valid_env
 @pytest.mark.webtest
-@pytest.mark.skip
 def test_export_files_sbg_e2e(export_files_event_data):
     try:
         ret = export_files_handler(export_files_event_data, None)
