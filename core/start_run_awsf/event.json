@@ -5,7 +5,7 @@
    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
    "keyname": "duplexa.4dn",
    "worker_ami_id": "ami-7ff26968",
-   "default_instance_type": "i2.xlarge",
+   "default_instance_type": "t2.nano",
    "default_ebs_size": 100,
    "default_ebs_type": "io1",
    "ebs_iops": 5000,
