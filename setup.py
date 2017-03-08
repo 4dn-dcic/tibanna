@@ -12,6 +12,7 @@ requires = [
     'boto3==1.4.2',
     'botocore==1.4.52',
     'awscli==1.10.62',
+    'invoke'
 ]
 
 tests_require = [

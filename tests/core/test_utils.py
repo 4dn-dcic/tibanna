@@ -1,4 +1,4 @@
-from core import utils
+from core import utils, sbg_utils
 import pytest
 from conftest import valid_env
 
@@ -59,10 +59,10 @@ def workflow_event_data():
 
 def test_create_ff_meta_base_sbg_data(json_request):
     app_name = json_request['app_name']
-    sbg = utils.create_sbg_workflow(app_name)
-    parameters, input_files = utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                  input_files, parameters)
+    sbg = sbg_utils.create_sbg_workflow(app_name)
+    parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
+    ff_meta = sbg_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                      input_files, parameters)
 
     assert ff_meta.title.startswith(app_name)
     assert ff_meta.input_files == input_files
@@ -70,10 +70,10 @@ def test_create_ff_meta_base_sbg_data(json_request):
 
 
 def test_create_ff_meta_pulls_data_from_sbg_object(workflow_event_data, json_request):
-    sbg = utils.create_sbg_workflow(**workflow_event_data['workflow'])
-    parameters, input_files = utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                  input_files, parameters)
+    sbg = sbg_utils.create_sbg_workflow(**workflow_event_data['workflow'])
+    parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
+    ff_meta = sbg_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                      input_files, parameters)
     assert ff_meta
     assert ff_meta.title.startswith(sbg.app_name)
     assert ff_meta.input_files == input_files
@@ -86,7 +86,7 @@ def test_create_ff_meta_pulls_data_from_sbg_object(workflow_event_data, json_req
 
 
 def test_to_sbg_workflow_args(json_request):
-    sbg_args, sbg_input = utils.to_sbg_workflow_args(json_request['parameters'])
+    sbg_args, sbg_input = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
     assert sbg_args[0]['workflow_argument_name'] == 'nThreads'
     assert sbg_args[0]['value'] == 8
     assert sbg_args[1]['workflow_argument_name'] == 'teststring'
@@ -97,7 +97,7 @@ def test_to_sbg_workflow_args(json_request):
 
 @valid_env
 def test_sbg_api_gets_keys_by_default():
-    api = utils.SBGAPI()
+    api = sbg_utils.SBGAPI()
     assert api
     assert api.token
     assert api.header
@@ -146,7 +146,7 @@ def test_unzip_s3_to_s3():
 @valid_env
 @pytest.mark.webtest
 def test_create_sbg_workflow(sbg_project, sbg_keys):
-    sbg = utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
+    sbg = sbg_utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
     assert sbg.header
     assert sbg.header['X-SBG-Auth-Token'] == sbg_keys
     assert sbg.app_name == 'md5'
@@ -154,7 +154,7 @@ def test_create_sbg_workflow(sbg_project, sbg_keys):
 
 def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
     wf = workflow_event_data['workflow']
-    sbg = utils.create_sbg_workflow(**wf)
+    sbg = sbg_utils.create_sbg_workflow(**wf)
     assert sbg.export_id_list == wf['export_id_list']
     assert sbg.volume_list == wf['volume_list']
     assert sbg.import_id_list == wf['import_id_list']
@@ -167,13 +167,13 @@ def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
 
 def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
     meta = ff_meta_event_data['ff_meta']
-    ff_wfr = utils.WorkflowRunMetadata(**meta)
+    ff_wfr = sbg_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
 
 
 def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):
     wf = workflow_event_data['workflow']
-    sbg = utils.create_sbg_workflow(**wf)
+    sbg = sbg_utils.create_sbg_workflow(**wf)
     sbg_dict = sbg.as_dict()
     assert not sbg_dict.get('header')
     assert not sbg_dict.get('token')
