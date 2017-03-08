@@ -225,7 +225,7 @@ def launch_instance(par, jobid, shutdown_min):
         time.sleep(1)  # wait for one second before trying again.
         try:
             # sometimes you don't get a description immediately
-            instance_desc_logstr = run_command_out_check(instance_desc_command)
+            instance_desc_logstr = x.main(instance_desc_command_arr)
             instance_desc_log = json.loads(instance_desc_logstr[1])
             # sometimes you get a description but PublicIP is not available yet
             instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
