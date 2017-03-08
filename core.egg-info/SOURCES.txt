@@ -2,7 +2,9 @@ setup.cfg
 setup.py
 core/__init__.py
 core/_version.py
+core/ec2_utils.py
 core/fastqc_utils.py
+core/sbg_utils.py
 core/utils.py
 core.egg-info/PKG-INFO
 core.egg-info/SOURCES.txt
