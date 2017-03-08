@@ -22,7 +22,7 @@ def fastqc_payload():  # pylint: disable=fixme
                                         "4dn_s3ijocpds2"],
              "run_status": "output_files_transferring",
              "input_files": [{"workflow_argument_name": "input_fastq",
-                              "value": "02e3f7cf-6699-4281-96fa-528bf87b7741"}],
+                              "value": "0048955c-7cb6-4e56-a4d8-56fad52f688c"}],
              "sbg_export_ids": [],
              "output_files": [{"workflow_arg_name": "report_zip",
                                "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",

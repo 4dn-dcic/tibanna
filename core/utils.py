@@ -436,6 +436,9 @@ class SBGWorkflowRun(object):
                 wodict.update({of['workflow_argument_name']: {'format': of['format'],
                                                               'type': of['type'],
                                                               'extension': of['extension']}})
+            else:
+                return 0
+
         except Exception as e:
             print("Can't create wodict out of output_files field of workflow_run metadata %s" % e)
             raise e
@@ -675,7 +678,9 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
         # self.output_files may contain e.g. file_format and file_type information.
         for of in output_files:
             for of2 in sbg.export_report:
-                if of['workflow_argument_name'] == of2['workflow_argument_name']:
+                if (of.get('workflow_argument_name') and
+                   of.get('workflow_argument_name') == of2.get('workflow_argument_name')):
+
                     for k, v in of2.iteritems():
                         of[k] = v
 

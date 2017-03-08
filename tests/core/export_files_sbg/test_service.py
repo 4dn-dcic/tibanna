@@ -15,6 +15,5 @@ def test_export_files_sbg_e2e(export_files_event_data):
         assert "'code': 9006" in str(e)
     else:
         assert json.dumps(ret)
-        assert ret['workflow']['export_report']
-        assert ret['workflow']['export_id_list']
+        assert ret['workflow']
         assert ret['ff_meta']['run_status'] == "output_files_transferring"
