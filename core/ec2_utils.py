@@ -8,6 +8,7 @@ import os
 import subprocess
 import logging
 from invoke import run
+import awscli.clidriver
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -176,7 +177,7 @@ def launch_instance(par, jobid, shutdown_min):
                    'arn': par['s3_access_arn'],
                    'userdata': 'file://' + Userdata_file,
                    }
-    launch_command = "aws ec2 run-instances --image-id {ami} --instance-type {instance_type}" + \
+    launch_command = "ec2 run-instances --image-id {ami} --instance-type {instance_type}" + \
                      " --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination" + \
                      " --iam-instance-profile Arn={arn} --user-data={userdata}"
     launch_command = launch_command.format(**launch_args)
@@ -187,20 +188,30 @@ def launch_instance(par, jobid, shutdown_min):
 
     # storage iops option
     if par['storage_iops']:    # io1 type, specify iops
-        options_storage = " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE}," + \
-                          "VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}\""
+        options_storage = " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
+                          "VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}"
         options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'],
                                                  EBS_IOPS=par['storage_iops'])
     else:  # gp type or other type? do not specify iops
-        options_storage += " --block-device-mappings DeviceName=/dev/sdb,Ebs=\"{{VolumeSize={EBS_SIZE}," + \
-                           "VolumeType={EBS_TYPE},DeleteOnTermination=true}}\""
+        options_storage += " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
+                           "VolumeType={EBS_TYPE},DeleteOnTermination=true}}"
         options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
     launch_command += options_storage
+    launch_command_arr = launch_command.split(' ')
+    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+    x = awscli.clidriver.create_clidriver()
+    x.main(launch_command_arr)
 
     # launch instance and get id
     logger.info(launch_command)
     # logger.info(subprocess.check_output("aws s3 ls", shell=True))
-    logger.info(run('ls /usr/local/bin/').stdout)
+    # logger.info(run('ls').stdout)
+    # os.environ['PATH'] = os.environ['PATH'] + ":" + os.environ['LAMBDA_TASK_ROOT']
+
+    # logger.info(run('/bin/echo $PATH; /bin/echo $LAMBDA_TASK_ROOT').stdout)
+    # logger.info(run('/bin/ls -R /').stdout)
+    # logger.info(run('/bin/ls').stdout)
+    # logger.info(run('/bin/ls /usr/local/bin/').stdout)
 
     instance_id = launch_and_get_instance_id(launch_command, jobid)
 
