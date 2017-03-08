@@ -24,7 +24,7 @@ def fastqc_payload():  # pylint: disable=fixme
              "input_files": [{"workflow_argument_name": "input_fastq",
                               "value": "0048955c-7cb6-4e56-a4d8-56fad52f688c"}],
              "sbg_export_ids": [],
-             "output_files": [{"workflow_arg_name": "report_zip",
+             "output_files": [{"workflow_argument_name": "report_zip",
                                "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
                                "value": "f3716210-0593-498a-bc66-c9d883bd3171",
                                "filename": "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}]},
@@ -42,7 +42,7 @@ def fastqc_payload():  # pylint: disable=fixme
                                          {"id": "4dn-labor/4dn_s3ijocpds2",
                                          "name": "4dn_s3ijocpds2"}],
                          "output_volume_id": "4dn-labor/4dn_s3ijocpds2",
-                         "export_report": [{"workflow_arg_name": "report_zip",
+                         "export_report": [{"workflow_argument_name": "report_zip",
                                             "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
                                             "value": "f3716210-0593-498a-bc66-c9d883bd3171",
                                             "filename":
