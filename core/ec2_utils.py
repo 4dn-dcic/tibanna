@@ -216,7 +216,10 @@ def launch_instance(par, jobid, shutdown_min):
     instance_id = launch_and_get_instance_id(launch_command, jobid)
 
     # get public IP for the instance (This may not happen immediately)
-    instance_desc_command = "aws ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
+    instance_desc_command = "ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
+    instance_desc_command_arr = instance_desc_command.split(' ')
+    x = awscli.clidriver.create_clidriver()
+
     try_again = True
     while try_again:    # keep trying until you get the result.
         time.sleep(1)  # wait for one second before trying again.
