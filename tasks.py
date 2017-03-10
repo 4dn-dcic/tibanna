@@ -319,6 +319,21 @@ def run_workflow(ctx, input_json=''):
         return _run_workflow(data)
 
 
+@task
+def travis(ctx, branch='master', owner='4dn-dcic', repo_name='fourfront'):
+    # lambdas use logging
+    import logging
+    logging.basicConfig()
+
+    from core.deploy_prod.service import handler as travis
+    data = {'branch': branch,
+            'repo_owner': owner,
+            'repo_name': repo_name
+            }
+    res = travis(data, None)
+    # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
+
+
 def make_input(bucket_name, key, uuid):
     data = {"parameters": {},
             "app_name": "fastqc-0-11-4-1",
