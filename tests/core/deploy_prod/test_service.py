@@ -11,7 +11,7 @@ valid_travis_env = pytest.mark.skipif(not os.environ.get("travis_key", False),
 def repo():  # pylint: disable=fixme
     return {'branch': 'master',
             'repo_owner': '4dn-dcic',
-            'repo_name': 'fourfront'
+            'repo_name': 'tibanna'
             }
 
 

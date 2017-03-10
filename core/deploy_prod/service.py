@@ -37,8 +37,7 @@ def handler(event, context):
                'User-Agent': 'tibanna/0.1.0',
                'Authorization': 'token %s' % travis_key
                }
-    import pdb
-    pdb.set_trace()
+
     url = 'https://api.travis-ci.org/repo/%s%s%s/requests' % (repo_owner, '%2F', repo_name)
 
     resp = requests.post(url, headers=headers, data=json.dumps(body))

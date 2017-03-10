@@ -5,6 +5,7 @@ cache:
 python:
 - '2.7'
 install:
+- env
 - pip install six
 - pip install -U -r requirements.txt
 - pip install codacy-coverage
