@@ -24,8 +24,9 @@ def get_all_core_lambdas():
             'export_files_sbg',
             'check_export_sbg',
             'validate_md5_s3_trigger',
-            'tibanna_slackbot'
-            'start_run_awsf'
+            'tibanna_slackbot',
+            'start_run_awsf',
+            'deploy_prod',
             ]
 
 
