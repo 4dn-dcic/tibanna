@@ -330,7 +330,7 @@ def travis(ctx, branch='master', owner='4dn-dcic', repo_name='fourfront'):
             'repo_owner': owner,
             'repo_name': repo_name
             }
-    res = travis(data, None)
+    travis(data, None)
     # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
 
 
