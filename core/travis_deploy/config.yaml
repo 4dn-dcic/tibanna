@@ -1,6 +1,6 @@
 region: us-east-1
 
-function_name: deploy_prod
+function_name: travis-deploy 
 handler: service.handler
 role: service-role/lambda-role 
 description: trigger a build on travis based on incoming request  

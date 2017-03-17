@@ -147,12 +147,13 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None):
+def deploy_core(ctx, name, version=None, run_tests=True):
     print("preparing for deploy...")
     print("make sure tests pass")
-    if test(ctx) != 0:
-        print("tests need to pass first before deploy")
-        return
+    #if run_tests:
+    #    if test(ctx) != 0:
+    #        print("tests need to pass first before deploy")
+    #        return
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
@@ -320,7 +321,7 @@ def run_workflow(ctx, input_json=''):
 
 
 @task
-def travis(ctx, branch='master', owner='4dn-dcic', repo_name='fourfront'):
+def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
     # lambdas use logging
     import logging
     logging.basicConfig()

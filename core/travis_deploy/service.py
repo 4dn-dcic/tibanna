@@ -29,7 +29,7 @@ def handler(event, context):
                 "message": "Your Tibanna triggered build has started.  Have a nice day! :)",
                 "branch": branch,
                 "config": {
-                    "env": {
+                    "global": {
                        "tibanna_deploy": "True"
                     }
                 }
