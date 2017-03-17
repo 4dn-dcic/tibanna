@@ -326,7 +326,7 @@ def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
     import logging
     logging.basicConfig()
 
-    from core.deploy_prod.service import handler as travis
+    from core.travis_deploy.service import handler as travis
     data = {'branch': branch,
             'repo_owner': owner,
             'repo_name': repo_name
