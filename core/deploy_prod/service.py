@@ -30,7 +30,7 @@ def handler(event, context):
                 "branch": branch,
                 "config": {
                     "env": {
-                       "tibanna-deploy": "True"
+                       "tibanna_deploy": "True"
                     }
                 }
               }
