@@ -1,4 +1,4 @@
-from core.deploy_prod.service import handler as deploy_prod_handler
+from core.travis_deploy.service import handler as deploy_prod_handler
 import pytest
 import os
 
