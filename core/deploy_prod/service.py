@@ -28,7 +28,12 @@ def handler(event, context):
             "request": {
                 "message": "Your Tibanna triggered build has started.  Have a nice day! :)",
                 "branch": branch,
+                "config": {
+                    "env": {
+                       "tibanna-deploy": "True"
+                    }
                 }
+              }
             }
 
     headers = {'Content-Type': 'application/json',
