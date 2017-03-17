@@ -24,16 +24,24 @@ def handler(event, context):
 
     # auth with travis through gh token
     # requests.post('https://https://api.travis-ci.org
+    # overwrite teh before_install section (travis doesn't allow append)
+    # by adding the tibanna-deploy env variable, which will trigger the deploy
     body = {
             "request": {
                 "message": "Your Tibanna triggered build has started.  Have a nice day! :)",
                 "branch": branch,
                 "config": {
-                    "global": {
-                       "tibanna_deploy": "True"
+                    "before_install": ["export tibanna_deploy=True",
+                                       "echo $tibanna_deploy",
+                                       "postgres --version",
+                                       "initdb --version",
+                                       "elasticsearch -v",
+                                       "nvm install 4",
+                                       "node --version",
+                                       "npm config set python /usr/bin/python2.7"
+                                    ]
                     }
                 }
-              }
             }
 
     headers = {'Content-Type': 'application/json',
