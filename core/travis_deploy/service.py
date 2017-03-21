@@ -39,7 +39,7 @@ def handler(event, context):
                                        "nvm install 4",
                                        "node --version",
                                        "npm config set python /usr/bin/python2.7"
-                                    ]
+                                       ]
                     }
                 }
             }
@@ -62,4 +62,4 @@ def handler(event, context):
     except:
         pass
 
-    return resp
+    return '' 
