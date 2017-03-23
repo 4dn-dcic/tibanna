@@ -12,9 +12,9 @@ Tibanna is the gas mine in Cloud City that makes Hyperdrives zoom.  It's also th
 
 Tibanna is an AWS step-function-based pipeline scheduler. It connects to either SevenBridgesGenomics or to our own system.
 <br><br>
-![Tibanna-sbg](tibanna_sbg_animated.gif)
-<br><br>
 ![Tibanna-awsf](tibanna_awsf.png)
+<br><br>
+![Tibanna-sbg](tibanna_sbg_animated.gif)
 <br><br>
 
 
