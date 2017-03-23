@@ -14,8 +14,9 @@ Tibanna is an AWS step-function-based pipeline scheduler. It connects to either 
 <br><br>
 ![Tibanna-sbg](tibanna_sbg_animated.gif)
 <br>
-<hr>
-<br>
+
+***
+
 ![Tibanna-awsf](tibanna_awsf.png)
 <br><br>
 
