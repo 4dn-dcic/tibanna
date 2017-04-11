@@ -30,7 +30,10 @@ invoke run_workflow --input-json='./test_json/fastqc_input.json' # fastqc, tiny 
 cd Submit4dn
 
 ## patch workflows to have 'argument' field.
-# hicparta
+# hicparta (older version)
+python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b.json -s software # bwa
+python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b2.json -s software # samtools
+python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b3.json -s software # pairix
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/steps5b.json -s analysis_step
 python tests/patch.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/workflow5b.json -u 02d636b9-d82d-4da9-950c-2ca994a0943e
 
