@@ -1,6 +1,7 @@
 ## test samples
 ```
 invoke run_workflow --input-json='./test_json/hic_parta_input2.json' # tiny files
+invoke run_workflow --input-json='./test_json/hic_parta_input3.json' # Koray's MySeq files (20170411)
 invoke run_workflow --input-json='./test_json/md5_input.json' # md5, tiny file
 invoke run_workflow --input-json='./test_json/fastqc_input.json' # fastqc, tiny file
 # (the three workflows can be run simultaneously, all using different input files))
