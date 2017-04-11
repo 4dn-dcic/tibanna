@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from core import sbg_utils
+from core import sbg_utils, utils
 import json
 import random
 
@@ -35,7 +35,7 @@ def handler(event, context):
 
     ff_keys = event.get('ff_keys')
     if not ff_keys:
-        ff_keys = sbg_utils.get_access_keys()
+        ff_keys = utils.get_access_keys()
 
     # represents the SBG info we need
     sbg = sbg_utils.create_sbg_workflow(app_name)

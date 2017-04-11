@@ -6,7 +6,7 @@ from core.fastqc_utils import parse_fastqc
 
 
 s3 = boto3.resource('s3')
-ff_key = sbg_utils.get_access_keys()
+ff_key = utils.get_access_keys()
 
 
 def donothing(status, sbg, ff_meta):
@@ -132,7 +132,7 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    ff_meta.post(key=sbg_utils.get_access_keys())
+    ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),

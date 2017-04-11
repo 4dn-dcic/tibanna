@@ -32,6 +32,11 @@ def handler(event, context):
     return response
 
 
+def get_outbucket_name(bucket):
+    '''chop up bucket name and have a play'''
+    return bucket.replace("files", "wfoutput")
+
+
 def make_input(event):
     filename = event['Records'][0]['s3']['object']['key']
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -47,6 +52,7 @@ def make_input(event):
                  "object_key": str(key),
                  }
              ],
-            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+            "output_bucket": get_outbucket_name(bucket)
             }
+
     return json.dumps(data)

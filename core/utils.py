@@ -13,9 +13,16 @@ from uuid import uuid4
 # Config
 ###########################
 s3 = boto3.client('s3')
-SYS_BUCKET = 'elasticbeanstalk-encoded-4dn-system'
-OUTFILE_BUCKET = 'elasticbeanstalk-encoded-4dn-wfoutput-files'
-keyfile_name = 'illnevertell'
+SYS_BUCKET = 'elasticbeanstalk-fourfront-webprod-system'
+OUTFILE_BUCKET = 'elasticbeanstalk-fourfront-webprod-wfoutput'
+
+
+def get_access_keys():
+    name = 'illnevertell'
+    if is_prod():
+        name = 'illnevertell_prod'
+    keys = get_key(keyfile_name=name)
+    return keys
 
 
 def get_key(keyfile_name='illnevertell'):
@@ -225,3 +232,7 @@ def _tibanna_settings(settings_patch=None, force_inplace=False):
 
 def current_env():
     return os.environ.get('ENV_NAME', 'test')
+
+
+def is_prod():
+    return current_env().lower() == 'prod'

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils
+from core import sbg_utils, utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -25,7 +25,7 @@ def handler(event, context):
     # run_response = event.get('run_response')
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     key = event.get('ff_keys')
-    ff_keys = sbg_utils.get_access_keys() if not key else key
+    ff_keys = utils.get_access_keys() if not key else key
 
     workflow_post_resp = ff_meta.post(key=ff_keys)
 

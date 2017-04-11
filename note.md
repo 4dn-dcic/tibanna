@@ -1,6 +1,5 @@
 ## test samples
 ```
-invoke run_workflow --input-json='./test_json/hic_parta_input.json' # small files
 invoke run_workflow --input-json='./test_json/hic_parta_input2.json' # tiny files
 invoke run_workflow --input-json='./test_json/md5_input.json' # md5, tiny file
 invoke run_workflow --input-json='./test_json/fastqc_input.json' # fastqc, tiny file

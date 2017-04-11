@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils
+from core import sbg_utils, utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -12,7 +12,7 @@ def create_processed_file_metadata(status, sbg, ff_meta):
         raise Exception("Unable to create processed file metadata json : %s." % e)
     try:
         if pf_meta:
-            ff_key = sbg_utils.get_access_keys()
+            ff_key = utils.get_access_keys()
             for pf in pf_meta:
                 pf.post(key=ff_key)
     except Exception as e:

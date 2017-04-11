@@ -153,7 +153,7 @@ def deploy_core(ctx, name, version=None, run_tests=True):
     if run_tests:
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
-            return
+            # return
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
@@ -197,10 +197,9 @@ def _tbenv(env_data=None):
     return os.environ.get('ENV_NAME')
 
 
-def upload_keys(ctx, keys, name):
-    s3bucket = 'elasticbeanstalk-encoded-4dn-system'
-    if _PROD():
-        s3bucket = 'elasticbeanstalk-production-encoded-4dn-system'
+def upload_keys(ctx, keys, name, s3bucket=None):
+    if not s3bucket:
+        s3bucket = 'elasticbeanstalk-fourfront-webprod-system'
     print("uploading sbkey to %s as %s" % (s3bucket, name))
     upload(name, keys, s3bucket)
 

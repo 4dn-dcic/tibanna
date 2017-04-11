@@ -33,13 +33,6 @@ def get_sbg_keys():
     return get_key('sbgkey')
 
 
-def get_access_keys():
-    keys = get_key()
-    # TODO: store with appropriate server, for now default to testportal
-    keys['default']['server'] = 'https://testportal.4dnucleome.org'
-    return keys
-
-
 def get_s3_keys():
     return get_key('sbgs3key')
 

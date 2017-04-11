@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils
+from core import sbg_utils, utils
 import boto3
 import json
 
@@ -46,7 +46,7 @@ def handler(event, context):
 
         # make all the file export meta-data stuff here
         # TODO: fix ff_meta bugs with input / output files
-        ff_meta.post(key=sbg_utils.get_access_keys())
+        ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict()

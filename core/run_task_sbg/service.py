@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils
+from core import sbg_utils, utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -24,7 +24,7 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix ff_meta mapping issue
-    ff_meta.post(key=sbg_utils.get_access_keys())
+    ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
             'run_response': run_response,

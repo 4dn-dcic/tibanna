@@ -1,5 +1,5 @@
 import pytest
-from core import sbg_utils
+from core import sbg_utils, utils
 import os
 import json
 
@@ -25,7 +25,7 @@ def sbg_keys():
 
 @pytest.fixture(scope='session')
 def ff_keys():
-    return sbg_utils.get_access_keys()
+    return utils.get_access_keys()
 
 
 @pytest.fixture(scope='session')

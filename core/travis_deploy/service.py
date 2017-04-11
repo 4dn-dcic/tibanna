@@ -7,9 +7,7 @@ import json
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
 travis_key = os.environ.get('travis_key')
-gh_token = os.environ.get('gh_token')
 
 
 def get_default(data, key):
@@ -21,10 +19,9 @@ def handler(event, context):
     branch = get_default(event, 'branch')
     repo_owner = get_default(event, 'repo_owner')
     repo_name = get_default(event, 'repo_name')
+    print("trigger build for %s/%s on branch %s" % (repo_owner, repo_name, branch))
 
-    # auth with travis through gh token
-    # requests.post('https://https://api.travis-ci.org
-    # overwrite teh before_install section (travis doesn't allow append)
+    # overwrite the before_install section (travis doesn't allow append)
     # by adding the tibanna-deploy env variable, which will trigger the deploy
     body = {
             "request": {
@@ -61,5 +58,3 @@ def handler(event, context):
         logger.info(resp.json())
     except:
         pass
-
-    return '' 
