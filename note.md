@@ -31,6 +31,7 @@ cd Submit4dn
 
 ## patch workflows to have 'argument' field.
 # hicparta
+python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/steps5b.json -s analysis_step
 python tests/patch.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/workflow5b.json -u 02d636b9-d82d-4da9-950c-2ca994a0943e
 
 # md5
