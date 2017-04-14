@@ -48,7 +48,7 @@ def handler(event, context):
     arginfo = dict()
     try:
         for arg in workflow_info.get('arguments'):
-           if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
+           if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
                argname = arg['workflow_argument_name']
                argformat = arg['argument_format'] if arg.has_key('argument_format') else ''
                arginfo.update({ argname: {'format': argformat, 
