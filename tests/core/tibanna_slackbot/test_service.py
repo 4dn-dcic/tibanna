@@ -24,4 +24,3 @@ def test_build_status():
 @pytest.mark.webtest
 def test_build_status_run():
     print(BuildStatus().run())
-    assert 0

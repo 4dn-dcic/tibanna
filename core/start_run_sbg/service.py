@@ -76,6 +76,7 @@ def handler(event, context):
                 pf_meta.append(pf)
                 resp = pf.post(key=ff_keys)
                 arginfo[argname]['upload_key'] = resp.get('upload_key')
+                arginfo[argname]['uuid'] = resp.get('uuid')
 
     except Exception as e:
         print("Failed to post Processed file metadata. %s\n" % e)
@@ -85,6 +86,7 @@ def handler(event, context):
     try:
         output_files = [{'workflow_argument_name': argname,
                          'type': arginfo[argname]['type'],
+                         'value': arginfo[argname]['uuid'] if arginfo[argname].has_key('uuid') else '',
                          'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
                          'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
                          'format': arginfo[argname]['format']} for argname in arginfo.keys()]
