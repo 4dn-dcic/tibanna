@@ -71,18 +71,16 @@ def handler(event, context):
     pf_meta= []
     for argname in arginfo.keys():
         if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
-            pf_meta.append(sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']))
-
-    for pf in pf_meta:
-        resp = pf.post(key=ff_keys)
-        # pf.upload_key = resp.get("upload_key")  # update pf_meta by adding upload_key
-        arginfo[argname]['upload_key'] = pf.upload_key
+            pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']))
+            pf_meta.append(pf)
+            resp = pf.post(key=ff_keys)
+            arginfo[argname]['upload_key'] = pf.upload_key
 
     # create empty output file info
     try:
         output_files = [{'workflow_argument_name': argname,
                          'type': arginfo[argname]['type'],
-                         'upload_key': arginfo[argname]['upload_key'],  # get it from pf_meta
+                         'upload_key': arginfo[argname]['upload_key'],
                          'extension': fe_map.get(arginfo[argname]['format']), 
                          'format': arginfo[argname]['format']} for argname in arginfo.keys()]
     except Exception as e:
