@@ -70,7 +70,7 @@ def handler(event, context):
     # processed file metadata
     pf_meta = [sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']) for argname in arginfo.keys()] 
     for pf in pf_meta:
-        resp = pf.post(key=ff_key)
+        resp = pf.post(key=ff_keys)
         pf.upload_key = resp.get("upload_key")  # update pf_meta by adding upload_key
         arginfo[argname]['upload_key'] = pf.upload_key
 
