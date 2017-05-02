@@ -69,13 +69,16 @@ def handler(event, context):
 
     # processed file metadata
     try:
-        pf_meta = []  # pf_meta
-        output_files = []  # goes to ff_meta
+        pf_meta = [0] * len(arginfo)  # pf_meta
+        output_files = [dict()] * len(arginfo)  # goes to ff_meta
+        k=0
+        k2=0
         for argname in arginfo.keys():
-            of = dict()
+            of = output_files[k]
             of['workflow_argument_name'] = argname
             of['type'] = arginfo[argname]['type']
             if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
+                pf = pf_meta[k2]
                 pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
                 pf_meta.append(pf)
                 resp = pf.post(key=ff_keys)  # actually post processed file metadata here
@@ -83,12 +86,14 @@ def handler(event, context):
                 of['format'] = arginfo[argname]['format']
                 of['extension'] = fe_map.get(arginfo[argname]['format'])
                 of['value'] = resp.get('uuid')
-            output_files.append(of)
+                print("output file value = " + of['value'] + "\n")
+                k2 = k2 + 1
+            k = k + 1
 
     except Exception as e:
         print("Failed to post Processed file metadata. %s\n" % e)
-        print("resp" + resp + "\n")
-        print("output_files = " + output_files + "\n")
+        print("resp" + str(resp) + "\n")
+        print("output_files = " + str(output_files) + "\n")
         print("Can't prepare output_files information. %s\n" % e)
         if not fe_map.has_key(arginfo[argname]['format']):
             print("format-extension map doesn't have the key" + arginfo[argname]['format'])
