@@ -87,7 +87,8 @@ def handler(event, context):
 
     except Exception as e:
         print("Failed to post Processed file metadata. %s\n" % e)
-        print(resp)
+        print("resp" + resp + "\n")
+        print("output_files = " + output_files + "\n")
         print("Can't prepare output_files information. %s\n" % e)
         if not fe_map.has_key(arginfo[argname]['format']):
             print("format-extension map doesn't have the key" + arginfo[argname]['format'])
