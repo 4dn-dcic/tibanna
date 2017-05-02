@@ -68,7 +68,7 @@ def handler(event, context):
                     'value': fil['uuid']} for fil in input_file_list]
 
     # processed file metadata
-    pf_meta = [ProcessedFileMetadata(file_format=arginfo[argname]['format']) for argname in arginfo.keys()] 
+    pf_meta = [sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']) for argname in arginfo.keys()] 
     for pf in pf_meta:
         resp = pf.post(key=ff_key)
         pf.upload_key = resp.get("upload_key")  # update pf_meta by adding upload_key

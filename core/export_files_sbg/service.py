@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils, utils
+from core import sbg_utils
 import boto3
 
 s3 = boto3.resource('s3')
