@@ -68,6 +68,7 @@ def handler(event, context):
                     'value': fil['uuid']} for fil in input_file_list]
 
     # processed file metadata
+    pf_meta= []
     for argname in arginfo.keys():
         if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
             pf_meta.append(sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']))
