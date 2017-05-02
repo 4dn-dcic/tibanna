@@ -45,15 +45,15 @@ def read_s3(filename):
     return response['Body'].read()
 
 
-def s3_put(obj, filename):
+def s3_put(obj, upload_key):
     '''
     try to guess content type
     '''
-    content_type = mimetypes.guess_type(filename)[0]
+    content_type = mimetypes.guess_type(upload_key)[0]
     if content_type is None:
         content_type = 'binary/octet-stream'
     s3.put_object(Bucket=OUTFILE_BUCKET,
-                  Key=filename,
+                  Key=upload_key,
                   Body=obj,
                   ContentType=content_type
                   )

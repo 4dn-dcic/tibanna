@@ -222,10 +222,10 @@ class SBGVolume(object):
 
 class FileProcessedMetadata(object):
 
-    def __init__(self, uuid, accession, filename, status, workflow_run_uuid=None):
+    def __init__(self, uuid, accession, upload_key, status, workflow_run_uuid=None):
         self.uuid = uuid
         self.accession = accession
-        self.filename = filename
+        self.upload_key = upload_key
         self.file_format = "other"  # we will deal with this later
         self.status = status 
         if workflow_run_uuid is not None:
@@ -302,18 +302,18 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
     # export files to s3, add to file metadata json, add to workflow_run dictionary
     for k,v in report_dict.get('outputs').iteritems():
         if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
-             sbg_filename = v['name']
-             uuid = processed_files_report[sbg_filename]['uuid']
-             export_id = processed_files_report[sbg_filename]['export_id']
+             sbg_upload_key = v['name']
+             uuid = processed_files_report[sbg_upload_key]['uuid']
+             export_id = processed_files_report[sbg_upload_key]['export_id']
              outputfiles.append({'workflow_argument_name':k, 'value':uuid})
              export_id_list.append(export_id)
 
         elif isinstance(v, list):
              for v_el in v:
                     if isinstance(v_el, dict) and v_el.get('class')=='File':    ## This is a file (v is an array of files)
-                         sbg_filename = v['name']
-                         uuid = processed_files_report[sbg_filename]['uuid']
-                         export_id = processed_files_report[sbg_filename]['export_id']
+                         sbg_upload_key = v['name']
+                         uuid = processed_files_report[sbg_upload_key]['uuid']
+                         export_id = processed_files_report[sbg_upload_key]['export_id']
                          outputfiles.append({'workflow_argument_name':k, 'value':uuid})
                          export_id_list.append(export_id)
 

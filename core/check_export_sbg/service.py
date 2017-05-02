@@ -31,7 +31,7 @@ def update_processed_file_metadata(status, pf_meta):
 def fastqc_updater(status, sbg, ff_meta):
     # move files to proper s3 location
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
-    zipped_report = ff_meta.output_files[0]['filename'].strip()
+    zipped_report = ff_meta.output_files[0]['upload_key'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     try:
         files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
@@ -70,7 +70,7 @@ def md5_updater(status, sbg, ff_meta):
     original_file = sbg_utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
-        md5 = utils.read_s3(ff_meta.output_files[0]['filename']).strip()
+        md5 = utils.read_s3(ff_meta.output_files[0]['upload_key']).strip()
         original_md5 = original_file.get('content_md5sum', False)
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
@@ -107,7 +107,7 @@ def handler(event, context):
     pf_meta = event.get('pf_meta')
 
     for idx, export in enumerate(sbg.export_report):
-        filename = export['filename']
+        upload_key = export['upload_key']
         export_id = export['export_id']
         export_res = sbg.check_export(export_id)
         status = export_res.get('state')
@@ -118,10 +118,10 @@ def handler(event, context):
                 pf_meta = update_processed_file_metadata('uploaded', pf_meta)
         elif status in ['PENDING', 'RUNNING']:
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
-            raise Exception("Export of file %s is still running" % filename)
+            raise Exception("Export of file %s is still running" % upload_key)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
-            raise Exception("Failed to export file %s \n sbg result: %s" % (filename, export_res))
+            raise Exception("Failed to export file %s \n sbg result: %s" % (upload_key, export_res))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
     ff_meta.run_status = "output_file_transfer_finished"
@@ -138,6 +138,7 @@ def handler(event, context):
             'ff_meta': ff_meta.as_dict(),
             'pf_meta': pf_meta
             }
+
 
 # Cardinal knowledge of all workflow updaters
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
