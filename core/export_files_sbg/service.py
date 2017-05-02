@@ -1,23 +1,8 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils, utils
+from core import sbg_utils
 import boto3
 
 s3 = boto3.resource('s3')
-
-
-def create_processed_file_metadata(status, sbg, ff_meta):
-    try:
-        pf_meta = ff_meta.create_processed_file_metadata(status=status, sbg=sbg)
-    except Exception as e:
-        raise Exception("Unable to create processed file metadata json : %s." % e)
-    try:
-        if pf_meta:
-            ff_key = utils.get_access_keys()
-            for pf in pf_meta:
-                pf.post(key=ff_key)
-    except Exception as e:
-        raise Exception("Unable to post processed file metadata : %s" % e)
-    return pf_meta
 
 
 def handler(event, context):
@@ -30,6 +15,7 @@ def handler(event, context):
     run_response = event.get('run_response')
     ff_meta = event.get('ff_meta')
     uuid = ff_meta['uuid']
+    pf_meta = event.get('pf_meta')
 
     sbg.export_all_output_files(run_response, ff_meta, base_dir=uuid)
     # creating after we export will add output file info to ff_meta
@@ -40,9 +26,10 @@ def handler(event, context):
     # 1) we want to keep track of the uploading status and
     # 2) we want to specify directory and file name before we export
     # (these files can be large so don't change file name after the export which is equivalent to rewriting)
-    pf_meta = create_processed_file_metadata("uploading", sbg, ff_meta)
+    # pf_meta = sbg_utils.create_processed_file_metadata("uploading", sbg, ff_meta)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': [pf.as_dict() for pf in pf_meta]
+            # 'pf_meta': [pf.as_dict() for pf in pf_meta]
+            'pf_meta': pf_meta
             }

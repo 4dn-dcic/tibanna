@@ -14,8 +14,8 @@ def number(astring):
 
 def parse_fastqc(summary, data, url=''):
     """ Return a quality_metric_fastqc metadata dictionary
-    given two fastqc output files, summary.txt (summary_filename)
-    and fastqc_data.txt (data_filename) """
+    given two fastqc output files, summary.txt (summary_upload_key)
+    and fastqc_data.txt (data_upload_key) """
 
     qc_key_list_in_data = ['Total Sequences', 'Sequences flagged as poor quality',
                            'Sequence length', '%GC']

@@ -67,11 +67,26 @@ def handler(event, context):
     input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
                     'value': fil['uuid']} for fil in input_file_list]
 
+    # processed file metadata
+    try:
+        pf_meta= []
+        for argname in arginfo.keys():
+            if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
+                pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
+                pf_meta.append(pf)
+                resp = pf.post(key=ff_keys)
+                arginfo[argname]['upload_key'] = resp.get('upload_key')
+
+    except Exception as e:
+        print("Failed to post Processed file metadata. %s\n" % e)
+        print(resp)
+
     # create empty output file info
     try:
         output_files = [{'workflow_argument_name': argname,
                          'type': arginfo[argname]['type'],
-                         'extension': fe_map.get(arginfo[argname]['format']), 
+                         'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
+                         'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
                          'format': arginfo[argname]['format']} for argname in arginfo.keys()]
     except Exception as e:
         print("Can't prepare output_files information. %s\n" % e)
@@ -100,10 +115,13 @@ def handler(event, context):
             raise Exception("Unable to mount output volume, error is %s " % res)
         sbg.output_volume_id = vol_id
 
+
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "workflow": sbg.as_dict(),
             "ff_meta": ff_meta.as_dict(),
+            'pf_meta': [pf.as_dict() for pf in pf_meta],
             "parameter_dict": parameter_dict}
 
     '''
@@ -222,10 +240,10 @@ class SBGVolume(object):
 
 class FileProcessedMetadata(object):
 
-    def __init__(self, uuid, accession, filename, status, workflow_run_uuid=None):
+    def __init__(self, uuid, accession, upload_key, status, workflow_run_uuid=None):
         self.uuid = uuid
         self.accession = accession
-        self.filename = filename
+        self.upload_key = upload_key
         self.file_format = "other"  # we will deal with this later
         self.status = status 
         if workflow_run_uuid is not None:
@@ -302,18 +320,18 @@ def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_repor
     # export files to s3, add to file metadata json, add to workflow_run dictionary
     for k,v in report_dict.get('outputs').iteritems():
         if isinstance(v, dict) and v.get('class')=='File':     ## This is a file
-             sbg_filename = v['name']
-             uuid = processed_files_report[sbg_filename]['uuid']
-             export_id = processed_files_report[sbg_filename]['export_id']
+             sbg_upload_key = v['name']
+             uuid = processed_files_report[sbg_upload_key]['uuid']
+             export_id = processed_files_report[sbg_upload_key]['export_id']
              outputfiles.append({'workflow_argument_name':k, 'value':uuid})
              export_id_list.append(export_id)
 
         elif isinstance(v, list):
              for v_el in v:
                     if isinstance(v_el, dict) and v_el.get('class')=='File':    ## This is a file (v is an array of files)
-                         sbg_filename = v['name']
-                         uuid = processed_files_report[sbg_filename]['uuid']
-                         export_id = processed_files_report[sbg_filename]['export_id']
+                         sbg_upload_key = v['name']
+                         uuid = processed_files_report[sbg_upload_key]['uuid']
+                         export_id = processed_files_report[sbg_upload_key]['export_id']
                          outputfiles.append({'workflow_argument_name':k, 'value':uuid})
                          export_id_list.append(export_id)
 

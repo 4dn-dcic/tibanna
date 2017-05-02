@@ -199,28 +199,28 @@ class SBGWorkflowRun(object):
             print("volume creation error")
             raise e
 
-    def import_volume_content(self, sbg_volume, object_key, dest_filename=None):
+    def import_volume_content(self, sbg_volume, object_key, dest_upload_key=None):
         '''
         function that initiations importing (mounting) an object on 4dn s3 to SBG s3
-        source_filename : object key on 4dn s3
-        dest_filename : filename-to-be on SBG s3 (default, to be the same as source_filename)
+        source_upload_key : object key on 4dn s3
+        dest_upload_key : upload_key-to-be on SBG s3 (default, to be the same as source_upload_key)
         return value : the newly imported (mounted) file's ID on SBG S3
         '''
         if sbg_volume not in self.volume_list:
             raise Exception("Error: the specified volume doesn't exist in the current workflow run.")
 
-        source_filename = object_key
-        if dest_filename is None:
-            dest_filename = object_key
+        source_upload_key = object_key
+        if dest_upload_key is None:
+            dest_upload_key = object_key
         import_url = self.base_url + "/storage/imports"
         data = {
             "source": {
                 "volume": sbg_volume['id'],
-                "location": source_filename
+                "location": source_upload_key
             },
             "destination": {
                 "project": self.project_id,
-                "name": dest_filename
+                "name": dest_upload_key
             },
             "overwrite": True
         }
@@ -294,7 +294,7 @@ class SBGWorkflowRun(object):
             print('Error creating a task payload')
             raise e
 
-    # Initiate exporting all output files to S3 and returns an array of {filename, export_id} dictionary
+    # Initiate exporting all output files to S3 and returns an array of {upload_key, export_id} dictionary
     # export_id should be used to track export status.
     def export_all_output_files(self, sbg_run_detail_resp, ff_meta, base_dir="", sbg_volume=None):
         self.export_report = []
@@ -329,16 +329,16 @@ class SBGWorkflowRun(object):
                     # Also change file name here (these files tend to be large)
                     file_uuid = str(uuid4())
                     accession = generate_rand_accession()
-                    dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                    dest_upload_key = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
                 else:
                     # QC and report
                     # put all files in directory with uuid of workflowrun
-                    dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                    dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
                     file_uuid = ''
                     accession = ''
-                export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
+                export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                 # report will help with generating metadata later
-                export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                export_item = {"upload_key": dest_upload_key, "export_id": export_id, "workflow_argument_name": k}
                 if file_uuid:
                     export_item.update({'value': file_uuid, "accession": accession})
                 self.export_report.append(export_item)
@@ -354,22 +354,24 @@ class SBGWorkflowRun(object):
                             # Also change file name here (these files tend to be large)
                             file_uuid = str(uuid4())
                             accession = generate_rand_accession()
-                            dest_filename = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                            dest_upload_key = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
-                            dest_filename = "%s%s" % (base_dir, v['name'].encode('utf8'))
+                            dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
                             file_uuid = ''
                             accession = ''
-                        export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_filename)
-                        export_item = {"filename": dest_filename, "export_id": export_id, "workflow_argument_name": k}
+                        export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
+                        export_item = {"upload_key": dest_upload_key,
+                                       "export_id": export_id,
+                                       "workflow_argument_name": k}
                         if file_uuid:
                             export_item.update({'value': file_uuid, "accession": accession})
                         self.export_report.append(export_item)
                         self.export_id_list.append(export_id)
         return self.export_report
 
-    def export_to_volume(self, source_file_id, sbg_volume_id, dest_filename):
+    def export_to_volume(self, source_file_id, sbg_volume_id, dest_upload_key):
         '''
         This function exports a file on SBG to a mounted output bucket and returns export_id
         '''
@@ -381,7 +383,7 @@ class SBGWorkflowRun(object):
             },
             "destination": {
                 "volume": sbg_volume_id,
-                "location": dest_filename
+                "location": dest_upload_key
             }
         }
         response = requests.post(export_url, headers=self.header, data=json.dumps(data)).json()
@@ -405,19 +407,19 @@ class SBGWorkflowRun(object):
         processed_files=[]
         fill_report={}
         for file in self.export_report:
-            filename = file['filename']
+            upload_key = file['upload_key']
             export_id = file['export_id']
             status = self.get_export_status(export_id)
             accession=generate_rand_accession()
             uuid=str(uuid4())
-            fill_report[filename] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
+            fill_report[upload_key] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
             # create a meta data file object
-            # metadata = FileProcessedMetadata(uuid, accession, filename,
+            # metadata = FileProcessedMetadata(uuid, accession, upload_key,
             # "uploading", workflow_run_uuid)
             # if I add workflow_run_uuis, I get an error message like :
             # '577c2684-49e5-4c33-afab-9ec90d65faf3' is not of type 'WorkflowRun'
 
-            metadata = FileProcessedMetadata(uuid, accession, filename, "uploading")
+            metadata = FileProcessedMetadata(uuid, accession, upload_key, "uploading")
             print(metadata.__dict__)
             processed_files.append(metadata.__dict__)
         return ({"metadata": processed_files,"report": fill_report })
@@ -483,8 +485,8 @@ class SBGTaskInput(object):
     def add_input(self, new_input):
         self.inputs.update(new_input)
 
-    def add_inputfile(self, filename, file_id, argument_name):
-        new_input = {argument_name: {"class": "File", "name": filename, "path": file_id}}
+    def add_inputfile(self, upload_key, file_id, argument_name):
+        new_input = {argument_name: {"class": "File", "name": upload_key, "path": file_id}}
         if self.check_validity_inputfile(new_input):
             self.add_input(new_input)
         else:
@@ -614,7 +616,7 @@ class WorkflowRunMetadata(object):
                     for ofreport in sbg.export_report:
                         if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
                             pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
-                                                                 ofreport['filename'], of['format'], status=status))
+                                                                 ofreport['upload_key'], of['format'], status=status))
         return(pf_meta)
 
     def append_outputfile(self, outjson):
@@ -634,14 +636,13 @@ class WorkflowRunMetadata(object):
 
 
 class ProcessedFileMetadata(object):
-    def __init__(self, uuid=None, accession=None, filename='', file_format='', lab='4dn-dcic-lab',
+    def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  award='1U01CA200059-01', status='uploading'):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
         self.status = status
         self.lab = lab
         self.award = award
-        self.filename = filename
         self.file_format = file_format
 
     def as_dict(self):

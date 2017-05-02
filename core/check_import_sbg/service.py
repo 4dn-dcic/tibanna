@@ -17,6 +17,7 @@ def handler(event, context):
     sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     import_ids = sbg.import_id_list
+    pf_meta = event.get('pf_meta')
 
     # create Task for workflow run later
     task_input = sbg_utils.SBGTaskInput(sbg.app_name,
@@ -49,5 +50,6 @@ def handler(event, context):
         ff_meta.post(key=utils.get_access_keys())
 
     return {'workflow': sbg.as_dict(),
-            'ff_meta': ff_meta.as_dict()
+            'ff_meta': ff_meta.as_dict(),
+            'pf_meta': pf_meta
             }

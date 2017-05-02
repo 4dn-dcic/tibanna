@@ -26,8 +26,8 @@ def fastqc_payload():  # pylint: disable=fixme
              "sbg_export_ids": [],
              "output_files": [{"workflow_argument_name": "report_zip",
                                "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
-                               "value": "fa1fc604-4788-4804-b9f0-bbabe3045e91",
-                               "filename": "__test_data/SRR2671430_1.fastq.gz"}]},
+                               "value": "f3716210-0593-498a-bc66-c9d883bd3171",
+                               "upload_key": "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}]},
             "workflow": {"import_id_list": ["pAqEn5E2N5zL0X32gaRwogs8nrZ9LGJg"],
                          "app_name": "fastqc-0-11-4-1",
                          "task_id": "06121cfb-39a8-47a1-a0bf-852a9053cec0",
@@ -44,9 +44,9 @@ def fastqc_payload():  # pylint: disable=fixme
                          "output_volume_id": "4dn-labor/4dn_s3ijocpds2",
                          "export_report": [{"workflow_argument_name": "report_zip",
                                             "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
-                                            "value": "fa1fc604-4788-4804-b9f0-bbabe3045e91",
-                                            "filename":
-                                            "__test_data/fastqc_report.zip"}],
+                                            "value": "f3716210-0593-498a-bc66-c9d883bd3171",
+                                            "upload_key":
+                                            "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}],
                          # pylint: disable=fixme, line-too-long
                          "project_id": "4dn-dcic/dev",
                          "export_id_list": ["Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",

@@ -14,8 +14,8 @@ def handler(event, context):
     # get file name
     # print(event)
 
-    filename = event['Records'][0]['s3']['object']['key']
-    run_name = "validate_%s" % (filename.split('/')[1].split('.')[0])
+    upload_key = event['Records'][0]['s3']['object']['key']
+    run_name = "validate_%s" % (upload_key.split('/')[1].split('.')[0])
 
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
@@ -38,10 +38,10 @@ def get_outbucket_name(bucket):
 
 
 def make_input(event):
-    filename = event['Records'][0]['s3']['object']['key']
+    upload_key = event['Records'][0]['s3']['object']['key']
     bucket = event['Records'][0]['s3']['bucket']['name']
 
-    uuid, key = filename.split('/')
+    uuid, key = upload_key.split('/')
     data = {"parameters": {},
             "app_name": "md5",
             "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
