@@ -74,7 +74,7 @@ def handler(event, context):
             pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
             pf_meta.append(pf)
             resp = pf.post(key=ff_keys)
-            arginfo[argname]['upload_key'] = pf.upload_key
+            arginfo[argname]['upload_key'] = resp.get('upload_key')
 
     # create empty output file info
     try:
