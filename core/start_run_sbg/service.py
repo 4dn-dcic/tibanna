@@ -71,7 +71,7 @@ def handler(event, context):
     pf_meta= []
     for argname in arginfo.keys():
         if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
-            pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format']))
+            pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
             pf_meta.append(pf)
             resp = pf.post(key=ff_keys)
             arginfo[argname]['upload_key'] = pf.upload_key
