@@ -68,20 +68,25 @@ def handler(event, context):
                     'value': fil['uuid']} for fil in input_file_list]
 
     # processed file metadata
-    pf_meta= []
-    for argname in arginfo.keys():
-        if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
-            pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
-            pf_meta.append(pf)
-            resp = pf.post(key=ff_keys)
-            arginfo[argname]['upload_key'] = resp.get('upload_key')
+    try:
+        pf_meta= []
+        for argname in arginfo.keys():
+            if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
+                pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
+                pf_meta.append(pf)
+                resp = pf.post(key=ff_keys)
+                arginfo[argname]['upload_key'] = resp.get('upload_key')
+
+    except Exception as e:
+        print("Failed to post Processed file metadata. %s\n" % e)
+        print(resp)
 
     # create empty output file info
     try:
         output_files = [{'workflow_argument_name': argname,
                          'type': arginfo[argname]['type'],
-                         'upload_key': arginfo[argname]['upload_key'],
-                         'extension': fe_map.get(arginfo[argname]['format']), 
+                         'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
+                         'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
                          'format': arginfo[argname]['format']} for argname in arginfo.keys()]
     except Exception as e:
         print("Can't prepare output_files information. %s\n" % e)
