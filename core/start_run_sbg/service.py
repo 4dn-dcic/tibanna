@@ -69,28 +69,25 @@ def handler(event, context):
 
     # processed file metadata
     try:
-        pf_meta= []
+        pf_meta = []  # pf_meta
+        output_files = []  # goes to ff_meta
         for argname in arginfo.keys():
+            of = dict()
+            of['workflow_argument_name'] = argname
+            of['type'] = arginfo[argname]['type']
             if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
                 pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
                 pf_meta.append(pf)
-                resp = pf.post(key=ff_keys)
-                arginfo[argname]['upload_key'] = resp.get('upload_key')
-                arginfo[argname]['uuid'] = resp.get('uuid')
+                resp = pf.post(key=ff_keys)  # actually post processed file metadata here
+                of['upload_key'] = resp.get('upload_key')
+                of['format'] = arginfo[argname]['format']
+                of['extension'] = fe_map.get(arginfo[argname]['format'])
+                of['value'] = resp.get('uuid')
+            output_files.append(of)
 
     except Exception as e:
         print("Failed to post Processed file metadata. %s\n" % e)
         print(resp)
-
-    # create empty output file info
-    try:
-        output_files = [{'workflow_argument_name': argname,
-                         'type': arginfo[argname]['type'],
-                         'value': arginfo[argname]['uuid'] if arginfo[argname].has_key('uuid') else '',
-                         'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
-                         'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
-                         'format': arginfo[argname]['format']} for argname in arginfo.keys()]
-    except Exception as e:
         print("Can't prepare output_files information. %s\n" % e)
         if not fe_map.has_key(arginfo[argname]['format']):
             print("format-extension map doesn't have the key" + arginfo[argname]['format'])
