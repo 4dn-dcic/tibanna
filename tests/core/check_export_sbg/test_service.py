@@ -1,5 +1,5 @@
 from core.check_export_sbg.service import handler as check_export_handler
-from core.check_export_sbg.service import get_inputfile_accession
+# from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
@@ -56,6 +56,16 @@ def fastqc_payload():  # pylint: disable=fixme
 @valid_env
 @pytest.mark.webtest
 def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
+    # lets make sure we have a valid fastqc file
+    # TODO: figure out why this doesn't just return one object
+    fastqs = sbg_utils.get_metadata("/search/?type=FileFastq&limit=1", ff_keys)['@graph'][0]
+    fastqc_payload['ff_meta']
+
+    filename = fastqs['upload_key'].split('/')[1]
+    fastqc_payload['workflow']['task_input']['inputs']['input_fastq']['name'] = filename
+    fastqc_payload['workflow']['export_report'][0]['value'] = fastqs['uuid']
+    fastqc_payload['ff_meta']['output_files'][0]['value'] = fastqs['uuid']
+
     try:
         ret = check_export_handler(fastqc_payload, None)
     except Exception as e:
@@ -63,14 +73,13 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
             # duplicate UUID, just ignore that
             return
         raise e
+    ret = check_export_handler(fastqc_payload, None)
     assert json.dumps(ret)
     assert ret['workflow']
 
-    sbg = sbg_utils.create_sbg_workflow(**ret['workflow'])
-    accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
-    print(accession)
-    original_file = sbg_utils.get_metadata(accession, ff_keys)
-    assert original_file['quality_metric']
+    # sbg = sbg_utils.create_sbg_workflow(**ret['workflow'])
+    # accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
+    # original_file = sbg_utils.get_metadata(accession, ff_keys)
 
 
 @valid_env
