@@ -48,7 +48,7 @@ def handler(event, context):
     arginfo = dict()
     try:
         for arg in workflow_info.get('arguments'):
-           if arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
+           if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
                argname = arg['workflow_argument_name']
                argformat = arg['argument_format'] if arg.has_key('argument_format') else ''
                arginfo.update({ argname: {'format': argformat, 
@@ -57,16 +57,28 @@ def handler(event, context):
         print("Make sure your workflow metadata has 'argument' field. %s\n" % e)
         raise e
 
+    # get format-extension map
+    try:
+        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=ff_keys).get('file_format_file_extension')
+    except Exception as e:
+        print("Can't get format-extension map from file_processed schema. %s\n" % e)
+
     # create the ff_meta output info
     input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
                     'value': fil['uuid']} for fil in input_file_list]
 
     # create empty output file info
-    output_files = [{'workflow_argument_name': argname,
-                     'type': arginfo[argname]['type'],
-                     'extension': '',  # processed file extention: later get it from file_processed schema
-                     'format': arginfo[argname]['format']} for argname in arginfo.keys()]
+    try:
+        output_files = [{'workflow_argument_name': argname,
+                         'type': arginfo[argname]['type'],
+                         'extension': fe_map.get(arginfo[argname]['format']), 
+                         'format': arginfo[argname]['format']} for argname in arginfo.keys()]
+    except Exception as e:
+        print("Can't prepare output_files information. %s\n" % e)
+        if not fe_map.has_key(arginfo[argname]['format']):
+            print("format-extension map doesn't have the key" + arginfo[argname]['format'])
 
+    # create workflow run metadata
     ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
                                       run_url=tibanna.get('url', ''), output_files=output_files)
 

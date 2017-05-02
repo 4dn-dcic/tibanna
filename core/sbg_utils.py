@@ -711,8 +711,8 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
 
 def generate_rand_accession():
     rand_accession = ''
-    for i in xrange(8):
+    for i in xrange(7):
         r = random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
         rand_accession += r
-    accession = "4DNF"+rand_accession
+    accession = "4DNFI"+rand_accession
     return accession
