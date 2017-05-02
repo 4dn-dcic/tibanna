@@ -718,3 +718,22 @@ def generate_rand_accession():
         rand_accession += r
     accession = "4DNFI"+rand_accession
     return accession
+
+
+
+def create_processed_file_metadata(status, sbg, ff_meta):
+    try:
+        pf_meta = ff_meta.create_processed_file_metadata(status=status, sbg=sbg)
+    except Exception as e:
+        raise Exception("Unable to create processed file metadata json : %s." % e)
+    try:
+        if pf_meta:
+            ff_key = utils.get_access_keys()
+            for pf in pf_meta:
+               resp = pf.post(key=ff_key)
+               pf.upload_key = resp.get("upload_key")
+    except Exception as e:
+        raise Exception("Unable to post processed file metadata : %s" % e)
+    return pf_meta
+
+

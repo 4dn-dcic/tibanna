@@ -67,10 +67,18 @@ def handler(event, context):
     input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
                     'value': fil['uuid']} for fil in input_file_list]
 
+    # processed file metadata
+    pf_meta = [ProcessedFileMetadata(file_format=arginfo[argname]['format']) for argname in arginfo.keys()] 
+    for pf in pf_meta:
+        resp = pf.post(key=ff_key)
+        pf.upload_key = resp.get("upload_key")  # update pf_meta by adding upload_key
+        arginfo[argname]['upload_key'] = pf.upload_key
+
     # create empty output file info
     try:
         output_files = [{'workflow_argument_name': argname,
                          'type': arginfo[argname]['type'],
+                         'upload_key': arginfo[argname]['upload_key'],  # get it from pf_meta
                          'extension': fe_map.get(arginfo[argname]['format']), 
                          'format': arginfo[argname]['format']} for argname in arginfo.keys()]
     except Exception as e:
@@ -100,10 +108,13 @@ def handler(event, context):
             raise Exception("Unable to mount output volume, error is %s " % res)
         sbg.output_volume_id = vol_id
 
+
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "workflow": sbg.as_dict(),
             "ff_meta": ff_meta.as_dict(),
+            'pf_meta': [pf.as_dict() for pf in pf_meta],
             "parameter_dict": parameter_dict}
 
     '''
