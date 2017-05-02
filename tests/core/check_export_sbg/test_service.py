@@ -27,12 +27,17 @@ def fastqc_payload():  # pylint: disable=fixme
              "output_files": [{"workflow_argument_name": "report_zip",
                                "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
 <<<<<<< HEAD
+<<<<<<< HEAD
                                "value": "f3716210-0593-498a-bc66-c9d883bd3171",
                                "upload_key": "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}]},
 =======
                                "value": "fa1fc604-4788-4804-b9f0-bbabe3045e91",
                                "filename": "__test_data/SRR2671430_1.fastq.gz"}]},
 >>>>>>> 10948fea3f574160258c019ca809a6ca4aeb14d2
+=======
+                               "value": "f3716210-0593-498a-bc66-c9d883bd3171",
+                               "upload_key": "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}]},
+>>>>>>> ff31103da6716cfabe43d59cec430892d6b9144d
             "workflow": {"import_id_list": ["pAqEn5E2N5zL0X32gaRwogs8nrZ9LGJg"],
                          "app_name": "fastqc-0-11-4-1",
                          "task_id": "06121cfb-39a8-47a1-a0bf-852a9053cec0",
@@ -50,6 +55,7 @@ def fastqc_payload():  # pylint: disable=fixme
                          "export_report": [{"workflow_argument_name": "report_zip",
                                             "export_id": "Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
 <<<<<<< HEAD
+<<<<<<< HEAD
                                             "value": "f3716210-0593-498a-bc66-c9d883bd3171",
                                             "upload_key":
                                             "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}],
@@ -58,6 +64,11 @@ def fastqc_payload():  # pylint: disable=fixme
                                             "filename":
                                             "__test_data/fastqc_report.zip"}],
 >>>>>>> 10948fea3f574160258c019ca809a6ca4aeb14d2
+=======
+                                            "value": "f3716210-0593-498a-bc66-c9d883bd3171",
+                                            "upload_key":
+                                            "d8e1b6a8-71d4-46e8-93cb-e07416252ca5/_1_4DNFIW7Q5UDL_fastqc.zip"}],
+>>>>>>> ff31103da6716cfabe43d59cec430892d6b9144d
                          # pylint: disable=fixme, line-too-long
                          "project_id": "4dn-dcic/dev",
                          "export_id_list": ["Z3X8ylki1QIKleYiccGu8V7ethxPBSfm",
