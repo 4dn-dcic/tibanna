@@ -12,6 +12,7 @@ def handler(event, context):
     '''
     # get data
     sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    pf_meta = event.get('pf_meta')
 
     # create task on SBG
     create_resp = sbg.create_task(sbg.task_input)
@@ -28,5 +29,6 @@ def handler(event, context):
 
     return {'workflow': sbg.as_dict(),
             'run_response': run_response,
-            'ff_meta': ff_meta.as_dict()
+            'ff_meta': ff_meta.as_dict(),
+            'pf_meta': pf_meta
             }
