@@ -73,21 +73,25 @@ def handler(event, context):
         output_files = [dict()] * len(arginfo)  # goes to ff_meta
         k=0
         k2=0
+        resps = []
         for argname in arginfo.keys():
             of = output_files[k]
             of['workflow_argument_name'] = argname
-            of['type'] = arginfo[argname]['type']
-            if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
+            of['type'] = arginfo[argname].get('type')
+            if arginfo[argname].get('format') != '':  # These are not processed files but report or QC files.
                 pf = pf_meta[k2]
-                pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
+                pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname].get('format'))
                 try:
                     resp = pf.post(key=ff_keys)  # actually post processed file metadata here
+                    resp = resp.get('@graph')[0]
+                    resps.append(resp)
+                    #return( {'resps': resps})
                 except Exception as e:
                     print("Failed to post Processed file metadata. %s\n" % e)
                     print("resp" + str(resp) + "\n")
                 of['upload_key'] = resp.get('upload_key')
-                of['format'] = arginfo[argname]['format']
-                of['extension'] = fe_map.get(arginfo[argname]['format'])
+                of['format'] = arginfo[argname].get('format')
+                of['extension'] = fe_map.get(arginfo[argname].get('format'))
                 of['value'] = resp.get('uuid')
                 print("output file value = " + of['value'] + "\n")
                 k2 = k2 + 1
@@ -96,8 +100,6 @@ def handler(event, context):
     except Exception as e:
         print("output_files = " + str(output_files) + "\n")
         print("Can't prepare output_files information. %s\n" % e)
-        if not fe_map.has_key(arginfo[argname]['format']):
-            print("format-extension map doesn't have the key" + arginfo[argname]['format'])
 
     # create workflow run metadata
     try:
