@@ -60,15 +60,10 @@ def handler(event, context):
     # processed file metadata
     try:
         if workflow_info.has_key('arguments'):
-            # pf_meta = [sbg_utils.ProcessedFileMetadata() for _ in range(len(workflow_info.get('arguments')))]  # pf_meta
-            # output_files = [dict()] * len(workflow_info.get('arguments'))  # goes to ff_meta
-            # k=0
-            # k2=0
             output_files = []
             pf_meta = []
             for arg in workflow_info.get('arguments'):
                 if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
-                    # of = output_files[k]
                     of = dict()
                     of['workflow_argument_name'] = arg.get('workflow_argument_name')
                     of['type'] = arg.get('argument_type')
@@ -85,7 +80,6 @@ def handler(event, context):
                         of['format'] = arg.get('argument_format')
                         of['extension'] = fe_map.get(arg.get('argument_format'))
                         pf_meta.append(pf)
-                    # k = k + 1
                     output_files.append(of)
 
     except Exception as e:
