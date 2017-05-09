@@ -69,7 +69,7 @@ def handler(event, context):
 
     # processed file metadata
     try:
-        pf_meta = [0] * len(arginfo)  # pf_meta
+        pf_meta = [sbg_utils.ProcessedFileMetadata() for _ in range(len(arginfo))]  # pf_meta
         output_files = [dict()] * len(arginfo)  # goes to ff_meta
         k=0
         k2=0
@@ -80,8 +80,11 @@ def handler(event, context):
             if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
                 pf = pf_meta[k2]
                 pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
-                pf_meta.append(pf)
-                resp = pf.post(key=ff_keys)  # actually post processed file metadata here
+                try:
+                    resp = pf.post(key=ff_keys)  # actually post processed file metadata here
+                except Exception as e:
+                    print("Failed to post Processed file metadata. %s\n" % e)
+                    print("resp" + str(resp) + "\n")
                 of['upload_key'] = resp.get('upload_key')
                 of['format'] = arginfo[argname]['format']
                 of['extension'] = fe_map.get(arginfo[argname]['format'])
