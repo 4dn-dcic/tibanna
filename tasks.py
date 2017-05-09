@@ -348,5 +348,7 @@ def make_input(bucket_name, key, uuid):
             "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files",
             }
     data.update(_tibanna_settings({'run_id': str(key),
-                                   'run_type': 'fastqc'}))
+                                   'run_type': 'fastqc',
+                                   'env': 'encoded-4dn',
+                                  }))
     return data

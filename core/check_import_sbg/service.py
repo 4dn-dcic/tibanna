@@ -6,7 +6,8 @@ import json
 s3 = boto3.resource('s3')
 # TODO: I don't want to call the following in test,
 # filter out with env var / DEV_ENV
-_api = sbg_utils.SBGAPI(sbg_utils.get_sbg_keys())
+# _api = sbg_utils.SBGAPI(sbg_utils.get_sbg_keys())
+_api = None
 
 
 # check the status and other details of import

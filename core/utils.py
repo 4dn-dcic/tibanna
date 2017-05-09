@@ -13,122 +13,133 @@ from uuid import uuid4
 # Config
 ###########################
 s3 = boto3.client('s3')
-SYS_BUCKET = 'elasticbeanstalk-fourfront-webprod-system'
-OUTFILE_BUCKET = 'elasticbeanstalk-fourfront-webprod-wfoutput'
 
 
-def get_access_keys():
-    name = 'illnevertell'
-    if is_prod():
-        name = 'illnevertell_prod'
-    keys = get_key(keyfile_name=name)
-    return keys
+class s3Utils(object):
 
+    def __init__(self, outfile_bucket=None, sys_bucket=None, env=None):
+        '''
+        if we pass in env set the outfile and sys bucket from the environment
+        '''
+        if sys_bucket is None:
+            # we use standardized naming schema, so s3 buckets always have same prefix
+            sys_bucket = "elasticbeanstalk-%s-system" % env
+            outfile_bucket = "elasticbeanstalk-%s-wfoutput" % env
 
-def get_key(keyfile_name='illnevertell'):
-    # Share secret encrypted S3 File
-    response = s3.get_object(Bucket=SYS_BUCKET,
-                             Key=keyfile_name,
-                             SSECustomerKey=os.environ.get("SECRET"),
-                             SSECustomerAlgorithm='AES256')
-    akey = response['Body'].read()
-    try:
-        return json.loads(akey)
-    except ValueError:
-        # maybe its not json after all
-        return akey
+        self.sys_bucket = sys_bucket
+        self.outfile_bucket = outfile_bucket
 
+    def get_access_keys(self):
+        name = 'illnevertell'
+        if is_prod():
+            name = 'illnevertell_prod'
+        keys = self.get_key(keyfile_name=name)
+        return keys
 
-def read_s3(filename):
-    response = s3.get_object(Bucket=OUTFILE_BUCKET,
-                             Key=filename)
-    return response['Body'].read()
+    def get_key(self, keyfile_name='illnevertell'):
+        # Share secret encrypted S3 File
+        response = s3.get_object(Bucket=self.sys_bucket,
+                                 Key=keyfile_name,
+                                 SSECustomerKey=os.environ.get("SECRET"),
+                                 SSECustomerAlgorithm='AES256')
+        akey = response['Body'].read()
+        try:
+            return json.loads(akey)
+        except ValueError:
+            # maybe its not json after all
+            return akey
 
+    def get_sbg_keys(self):
+        return self.get_key('sbgkey')
 
-def s3_put(obj, upload_key):
-    '''
-    try to guess content type
-    '''
-    content_type = mimetypes.guess_type(upload_key)[0]
-    if content_type is None:
-        content_type = 'binary/octet-stream'
-    s3.put_object(Bucket=OUTFILE_BUCKET,
-                  Key=upload_key,
-                  Body=obj,
-                  ContentType=content_type
-                  )
+    def get_s3_keys(self):
+        return self.get_key('sbgs3key')
 
+    def read_s3(self, filename):
+        response = s3.get_object(Bucket=self.outfile_bucket,
+                                 Key=filename)
+        return response['Body'].read()
 
-def s3_read_dir(prefix):
-    return s3.list_objects(Bucket=OUTFILE_BUCKET,
-                           Prefix=prefix)
+    def s3_put(self, obj, upload_key):
+        '''
+        try to guess content type
+        '''
+        content_type = mimetypes.guess_type(upload_key)[0]
+        if content_type is None:
+            content_type = 'binary/octet-stream'
+        s3.put_object(Bucket=self.outfile_bucket,
+                      Key=upload_key,
+                      Body=obj,
+                      ContentType=content_type
+                      )
 
-
-def s3_delete_dir(prefix):
-    # one query get list of all the files we want to delete
-    obj_list = s3.list_objects(Bucket=OUTFILE_BUCKET,
+    def s3_read_dir(self, prefix):
+        return s3.list_objects(Bucket=self.outfile_bucket,
                                Prefix=prefix)
-    files = obj_list.get('Contents', [])
 
-    # morph file list into format that boto3 wants
-    delete_keys = {'Objects': []}
-    delete_keys['Objects'] = [{'Key': k} for k in
-                              [obj['Key'] for obj in files]]
+    def s3_delete_dir(self, prefix):
+        # one query get list of all the files we want to delete
+        obj_list = s3.list_objects(Bucket=self.outfile_bucket,
+                                   Prefix=prefix)
+        files = obj_list.get('Contents', [])
 
-    # second query deletes all the files, NOTE: Max 1000 files
-    if delete_keys['Objects']:
-        s3.delete_objects(Bucket=OUTFILE_BUCKET,
-                          Delete=delete_keys)
+        # morph file list into format that boto3 wants
+        delete_keys = {'Objects': []}
+        delete_keys['Objects'] = [{'Key': k} for k in
+                                  [obj['Key'] for obj in files]]
 
+        # second query deletes all the files, NOTE: Max 1000 files
+        if delete_keys['Objects']:
+            s3.delete_objects(Bucket=self.outfile_bucket,
+                              Delete=delete_keys)
 
-def read_s3_zipfile(s3key, files_to_extract):
-    s3_stream = read_s3(s3key)
-    bytestream = BytesIO(s3_stream)
-    zipstream = ZipFile(bytestream, 'r')
-    ret_files = {}
+    def read_s3_zipfile(self, s3key, files_to_extract):
+        s3_stream = self.read_s3(s3key)
+        bytestream = BytesIO(s3_stream)
+        zipstream = ZipFile(bytestream, 'r')
+        ret_files = {}
 
-    for name in files_to_extract:
-        # search subdirectories for file with name
-        # so I don't have to worry about figuring out the subdirs
-        zipped_filename = find_file(name, zipstream)
-        if zipped_filename:
-            ret_files[name] = zipstream.open(zipped_filename).read()
-    return ret_files
+        for name in files_to_extract:
+            # search subdirectories for file with name
+            # so I don't have to worry about figuring out the subdirs
+            zipped_filename = find_file(name, zipstream)
+            if zipped_filename:
+                ret_files[name] = zipstream.open(zipped_filename).read()
+        return ret_files
 
+    def unzip_s3_to_s3(self, zipped_s3key, dest_dir, retfile_names=None):
+        if retfile_names is None:
+            retfile_names = []
 
-def unzip_s3_to_s3(zipped_s3key, dest_dir, retfile_names=None):
-    if retfile_names is None:
-        retfile_names = []
+        if not dest_dir.endswith('/'):
+            dest_dir += '/'
 
-    if not dest_dir.endswith('/'):
-        dest_dir += '/'
+        s3_stream = self.read_s3(zipped_s3key)
+        # read this badboy to memory, don't go to disk
+        bytestream = BytesIO(s3_stream)
+        zipstream = ZipFile(bytestream, 'r')
 
-    s3_stream = read_s3(zipped_s3key)
-    # read this badboy to memory, don't go to disk
-    bytestream = BytesIO(s3_stream)
-    zipstream = ZipFile(bytestream, 'r')
+        # directory should be first name in the list
+        file_list = zipstream.namelist()
+        basedir_name = file_list.pop(0)
+        assert basedir_name.endswith('/')
 
-    # directory should be first name in the list
-    file_list = zipstream.namelist()
-    basedir_name = file_list.pop(0)
-    assert basedir_name.endswith('/')
+        ret_files = {}
+        for file_name in file_list:
+            # don't copy dirs just files
+            if not file_name.endswith('/'):
+                s3_file_name = file_name.replace(basedir_name, dest_dir)
+                s3_key = "https://s3.amazonaws.com/%s/%s" % (self.outfile_bucket, s3_file_name)
+                # just perf optimization so we don't have to copy
+                # files twice that we want to further interogate
+                the_file = zipstream.open(file_name, 'r').read()
+                file_to_find = file_name.split('/')[-1]
+                if file_to_find in retfile_names:
+                    ret_files[file_to_find] = {'s3key': s3_key,
+                                               'data': the_file}
+                self.s3_put(the_file, s3_file_name)
 
-    ret_files = {}
-    for file_name in file_list:
-        # don't copy dirs just files
-        if not file_name.endswith('/'):
-            s3_file_name = file_name.replace(basedir_name, dest_dir)
-            s3_key = "https://s3.amazonaws.com/%s/%s" % (OUTFILE_BUCKET, s3_file_name)
-            # just perf optimization so we don't have to copy
-            # files twice that we want to further interogate
-            the_file = zipstream.open(file_name, 'r').read()
-            file_to_find = file_name.split('/')[-1]
-            if file_to_find in retfile_names:
-                ret_files[file_to_find] = {'s3key': s3_key,
-                                           'data': the_file}
-            s3_put(the_file, s3_file_name)
-
-    return ret_files
+        return ret_files
 
 
 def find_file(name, zipstream):
@@ -200,10 +211,32 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
 # just store this in one place
 _tibanna = '_tibanna'
 
+class Tibanna(object):
 
-def _tibanna_settings(settings_patch=None, force_inplace=False):
+    def __init__(env, s3_keys=None, ff_keys=None, sbg_keys=None):
+        self.env = env
+        self.s3Utils = s3Utils(env=env)
+
+        if not s3_keys:
+            s3_keys = s3Utils.get_s3_keys()
+        self.s3_keys = s3_keys
+
+        if not ff_keys:
+            ff_keys = s3Utils.get_access_keys()
+        self.ff_keys =  ff_keys
+
+        if not sbg_keys:
+            sbg_keys = s3Utils.get_sbg_keys()
+        self.sbg_keys = sbg_keys
+
+
+
+
+
+
+def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
     tibanna = {"run_id": str(uuid4()),
-               "env": current_env(),
+               "env": env,
                "url": '',
                'run_type': 'generic',
                'run_name': '',

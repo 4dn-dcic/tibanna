@@ -6,7 +6,8 @@ from core.fastqc_utils import parse_fastqc
 
 
 s3 = boto3.resource('s3')
-ff_key = utils.get_access_keys()
+# ff_key = utils.get_access_keys()
+ff_key = None
 
 
 def donothing(status, sbg, ff_meta):

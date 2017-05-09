@@ -64,7 +64,8 @@ def md5_sbg_wfrun(sbg_keys):
 @pytest.mark.webtest
 def test_mount_on_sbg(md5_event_data, md5_sbg_wfrun, s3_keys):
     input_file = md5_event_data['input_files'][0]
-    assert service.mount_on_sbg(input_file, s3_keys, md5_sbg_wfrun)
+    res = service.mount_on_sbg(input_file, s3_keys, md5_sbg_wfrun)
+    import pdb; pdb.set_trace()
 
 
 @valid_env
