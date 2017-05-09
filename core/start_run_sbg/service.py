@@ -94,16 +94,18 @@ def handler(event, context):
             k = k + 1
 
     except Exception as e:
-        print("Failed to post Processed file metadata. %s\n" % e)
-        print("resp" + str(resp) + "\n")
         print("output_files = " + str(output_files) + "\n")
         print("Can't prepare output_files information. %s\n" % e)
         if not fe_map.has_key(arginfo[argname]['format']):
             print("format-extension map doesn't have the key" + arginfo[argname]['format'])
 
     # create workflow run metadata
-    ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                      run_url=tibanna.get('url', ''), output_files=output_files)
+    try:
+        ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                          run_url=tibanna.get('url', ''), output_files=output_files)
+    except Exception as e:
+        print("Can't create ffmeta. %s\n" % e)
+
 
     # store metadata so we know the run has started
     ff_meta.post(key=ff_keys)
