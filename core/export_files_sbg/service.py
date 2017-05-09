@@ -21,6 +21,7 @@ def handler(event, context):
     # creating after we export will add output file info to ff_meta
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
+    pf_meta['status'] = "uploading"
 
     # create processed file metadata here, because
     # 1) we want to keep track of the uploading status and

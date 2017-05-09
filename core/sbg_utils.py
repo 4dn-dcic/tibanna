@@ -308,6 +308,9 @@ class SBGWorkflowRun(object):
                 wodict.update({of['workflow_argument_name']: {'format': of['format'],
                                                               'type': of['type'],
                                                               'extension': of['extension']}})
+                if(of.has_key('value')) { wodict[of['workflow_argument_name']].update( { 'value': of['value'] } )
+                if(of.has_key('upload_key')) { wodict[of['workflow_argument_name']].update( { 'upload_key': of['upload_key'] } )
+
         except Exception as e:
             print("Can't create wodict out of output_files field of workflow_run metadata %s" % e)
             raise e
@@ -325,22 +328,16 @@ class SBGWorkflowRun(object):
                 sbg_file_id = v['path'].encode('utf8')
                 if wodict[k]['type'] == 'Output processed file':
                     # processed files
-                    # these files go into directory with file_uuid.
-                    # Also change file name here (these files tend to be large)
-                    file_uuid = str(uuid4())
-                    accession = generate_rand_accession()
-                    dest_upload_key = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                    dest_upload_key = wodict[k]['upload_key']
                 else:
                     # QC and report
                     # put all files in directory with uuid of workflowrun
-                    dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                    file_uuid = ''
-                    accession = ''
+                    dest_upload_key = wodict[k]['upload_key']
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                 # report will help with generating metadata later
                 export_item = {"upload_key": dest_upload_key, "export_id": export_id, "workflow_argument_name": k}
-                if file_uuid:
-                    export_item.update({'value': file_uuid, "accession": accession})
+                if wodict[k].has_key('value'):
+                    export_item.update({'value': wodict[k]['value']})
                 self.export_report.append(export_item)
                 self.export_id_list.append(export_id)
             elif isinstance(v, list):
@@ -352,21 +349,17 @@ class SBGWorkflowRun(object):
                             # processed files
                             # these files go into directory with file_uuid.
                             # Also change file name here (these files tend to be large)
-                            file_uuid = str(uuid4())
-                            accession = generate_rand_accession()
-                            dest_upload_key = "%s%s" % (file_uuid + '/', accession + wodict[k]['extension'])
+                            dest_upload_key =  wodict[k]['upload_key']
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
-                            dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                            file_uuid = ''
-                            accession = ''
+                            dest_upload_key = wodict[k]['upload_key']
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                         export_item = {"upload_key": dest_upload_key,
                                        "export_id": export_id,
                                        "workflow_argument_name": k}
-                        if file_uuid:
-                            export_item.update({'value': file_uuid, "accession": accession})
+                        if wodict[k].has_key('value'):
+                            export_item.update({'value': wodict[k]['value']})
                         self.export_report.append(export_item)
                         self.export_id_list.append(export_id)
         return self.export_report
@@ -607,17 +600,6 @@ class WorkflowRunMetadata(object):
         self.parameters = parameters
         self.award = award
         self.lab = lab
-
-    def create_processed_file_metadata(self, status, sbg):
-        pf_meta = []
-        if sbg and sbg.export_report:
-            for of in self.output_files:
-                if of['type'] == 'Output processed file':
-                    for ofreport in sbg.export_report:
-                        if ofreport['workflow_argument_name'] == of['workflow_argument_name']:
-                            pf_meta.append(ProcessedFileMetadata(ofreport['value'], ofreport['accession'],
-                                                                 ofreport['upload_key'], of['format'], status=status))
-        return(pf_meta)
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
