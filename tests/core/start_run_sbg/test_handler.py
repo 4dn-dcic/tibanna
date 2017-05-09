@@ -19,7 +19,7 @@ def md5_event_data(s3_keys):
       "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
       "parameters": {},
       "s3_keys": s3_keys,
-      "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+      "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput"
     }
 
 
@@ -65,7 +65,6 @@ def md5_sbg_wfrun(sbg_keys):
 def test_mount_on_sbg(md5_event_data, md5_sbg_wfrun, s3_keys):
     input_file = md5_event_data['input_files'][0]
     res = service.mount_on_sbg(input_file, s3_keys, md5_sbg_wfrun)
-    import pdb; pdb.set_trace()
 
 
 @valid_env

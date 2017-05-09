@@ -350,5 +350,5 @@ def make_input(bucket_name, key, uuid):
     data.update(_tibanna_settings({'run_id': str(key),
                                    'run_type': 'fastqc',
                                    'env': 'encoded-4dn',
-                                  }))
+                                   }))
     return data

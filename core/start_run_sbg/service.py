@@ -18,7 +18,6 @@ def handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
-
     # get incomming data
     input_file_list = event.get('input_files')
     app_name = event.get('app_name').encode('utf8')
@@ -29,29 +28,20 @@ def handler(event, context):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env)
-
-    # get necessary tokens
-    s3_utils = s3Utils(output_bucket)
-    s3_keys = event.get('s3_keys')
-    if not s3_keys:
-        s3_keys = s3_utils.get_s3_keys()
-
-    ff_keys = event.get('ff_keys')
-    if not ff_keys:
-        ff_keys = s3_utils.get_access_keys()
+    tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
+                      settings=tibanna_settings)
 
     # represents the SBG info we need
-    sbg = sbg_utils.create_sbg_workflow(app_name)
+    sbg = sbg_utils.create_sbg_workflow(app_name, tibanna.sbg_keys)
 
     # represents the workflow metadata to be stored in fourfront
     parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
-    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=ff_keys)
-    arginfo = dict()
+    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    arginfo = {}
     try:
-        for arg in workflow_info.get('arguments'):
+        for arg in workflow_info.get('arguments', {}):
            if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
                argname = arg['workflow_argument_name']
                argformat = arg['argument_format'] if arg.has_key('argument_format') else ''
@@ -63,7 +53,7 @@ def handler(event, context):
 
     # get format-extension map
     try:
-        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=ff_keys).get('file_format_file_extension')
+        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
     except Exception as e:
         print("Can't get format-extension map from file_processed schema. %s\n" % e)
 
@@ -73,51 +63,46 @@ def handler(event, context):
 
     # processed file metadata
     try:
-        pf_meta = [0] * len(arginfo)  # pf_meta
-        output_files = [dict()] * len(arginfo)  # goes to ff_meta
-        k=0
-        k2=0
+        pf_meta= []
         for argname in arginfo.keys():
-            of = output_files[k]
-            of['workflow_argument_name'] = argname
-            of['type'] = arginfo[argname]['type']
             if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
-                pf = pf_meta[k2]
                 pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
                 pf_meta.append(pf)
-                resp = pf.post(key=ff_keys)  # actually post processed file metadata here
-                of['upload_key'] = resp.get('upload_key')
-                of['format'] = arginfo[argname]['format']
-                of['extension'] = fe_map.get(arginfo[argname]['format'])
-                of['value'] = resp.get('uuid')
-                print("output file value = " + of['value'] + "\n")
-                k2 = k2 + 1
-            k = k + 1
+                resp = pf.post(key=tibanna.ff_keys)
+                arginfo[argname]['upload_key'] = resp.get('upload_key')
 
     except Exception as e:
         print("Failed to post Processed file metadata. %s\n" % e)
-        print("resp" + str(resp) + "\n")
-        print("output_files = " + str(output_files) + "\n")
+        print(resp)
+
+    # create empty output file info
+    try:
+        output_files = [{'workflow_argument_name': argname,
+                         'type': arginfo[argname]['type'],
+                         'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
+                         'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
+                         'format': arginfo[argname]['format']} for argname in arginfo.keys()]
+    except Exception as e:
         print("Can't prepare output_files information. %s\n" % e)
         if not fe_map.has_key(arginfo[argname]['format']):
             print("format-extension map doesn't have the key" + arginfo[argname]['format'])
 
     # create workflow run metadata
     ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                      run_url=tibanna.get('url', ''), output_files=output_files)
+                                      run_url=tibanna.settings.get('url', ''), output_files=output_files)
 
     # store metadata so we know the run has started
-    ff_meta.post(key=ff_keys)
+    ff_meta.post(key=tibanna.ff_keys)
 
     # mount all input files to sbg this will also update sbg to store the import_ids
-    _ = [mount_on_sbg(infile, s3_keys, sbg) for infile in input_file_list]
+    _ = [mount_on_sbg(infile, tibanna.s3_keys, sbg) for infile in input_file_list]
 
     # create a link to the output directory as well
     if output_bucket:
         sbg_volume = sbg_utils.create_sbg_volume_details()
         res = sbg.create_volumes(sbg_volume, output_bucket,
-                                 public_key=s3_keys['key'],
-                                 secret_key=s3_keys['secret'])
+                                 public_key=tibanna.s3_keys['key'],
+                                 secret_key=tibanna.s3_keys['secret'])
         vol_id = res.get('id')
         if not vol_id:
             # we got an error

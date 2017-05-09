@@ -211,27 +211,28 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
 # just store this in one place
 _tibanna = '_tibanna'
 
+
 class Tibanna(object):
 
-    def __init__(env, s3_keys=None, ff_keys=None, sbg_keys=None):
+    def __init__(self, env, s3_keys=None, ff_keys=None, sbg_keys=None, settings=None):
         self.env = env
-        self.s3Utils = s3Utils(env=env)
+        self.s3 = s3Utils(env=env)
 
         if not s3_keys:
-            s3_keys = s3Utils.get_s3_keys()
+            s3_keys = self.s3.get_s3_keys()
         self.s3_keys = s3_keys
 
         if not ff_keys:
-            ff_keys = s3Utils.get_access_keys()
-        self.ff_keys =  ff_keys
+            ff_keys = self.s3.get_access_keys()
+        self.ff_keys = ff_keys
 
         if not sbg_keys:
-            sbg_keys = s3Utils.get_sbg_keys()
+            sbg_keys = self.s3.get_sbg_keys()
         self.sbg_keys = sbg_keys
 
-
-
-
+        if not settings:
+            settings = {}
+        self.settings = settings
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
