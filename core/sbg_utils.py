@@ -308,8 +308,10 @@ class SBGWorkflowRun(object):
                 wodict.update({of['workflow_argument_name']: {'format': of['format'],
                                                               'type': of['type'],
                                                               'extension': of['extension']}})
-                if(of.has_key('value')) { wodict[of['workflow_argument_name']].update( { 'value': of['value'] } )
-                if(of.has_key('upload_key')) { wodict[of['workflow_argument_name']].update( { 'upload_key': of['upload_key'] } )
+                if('value' in of):
+                    wodict[of['workflow_argument_name']].update({'value': of['value']})
+                if('upload_key' in of):
+                    wodict[of['workflow_argument_name']].update({'upload_key': of['upload_key']})
 
         except Exception as e:
             print("Can't create wodict out of output_files field of workflow_run metadata %s" % e)
@@ -336,7 +338,7 @@ class SBGWorkflowRun(object):
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                 # report will help with generating metadata later
                 export_item = {"upload_key": dest_upload_key, "export_id": export_id, "workflow_argument_name": k}
-                if wodict[k].has_key('value'):
+                if 'value' in wodict[k]:
                     export_item.update({'value': wodict[k]['value']})
                 self.export_report.append(export_item)
                 self.export_id_list.append(export_id)
@@ -349,7 +351,7 @@ class SBGWorkflowRun(object):
                             # processed files
                             # these files go into directory with file_uuid.
                             # Also change file name here (these files tend to be large)
-                            dest_upload_key =  wodict[k]['upload_key']
+                            dest_upload_key = wodict[k]['upload_key']
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
@@ -358,7 +360,7 @@ class SBGWorkflowRun(object):
                         export_item = {"upload_key": dest_upload_key,
                                        "export_id": export_id,
                                        "workflow_argument_name": k}
-                        if wodict[k].has_key('value'):
+                        if 'value' in wodict[k]:
                             export_item.update({'value': wodict[k]['value']})
                         self.export_report.append(export_item)
                         self.export_id_list.append(export_id)
