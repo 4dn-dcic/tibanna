@@ -637,7 +637,7 @@ class WorkflowRunMetadata(object):
 
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
-                 award='1U01CA200059-01', status='uploading'):
+                 award='1U01CA200059-01', status='to be uploaded by workflow'):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
         self.status = status
