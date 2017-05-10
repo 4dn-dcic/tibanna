@@ -21,13 +21,9 @@ def handler(event, context):
     # creating after we export will add output file info to ff_meta
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
-    pf_meta['status'] = "uploading"
-
-    # create processed file metadata here, because
-    # 1) we want to keep track of the uploading status and
-    # 2) we want to specify directory and file name before we export
-    # (these files can be large so don't change file name after the export which is equivalent to rewriting)
-    # pf_meta = sbg_utils.create_processed_file_metadata("uploading", sbg, ff_meta)
+    for pf in pf_meta:
+        pf['status'] = "uploading"
+    # we still need a code for patching.
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
