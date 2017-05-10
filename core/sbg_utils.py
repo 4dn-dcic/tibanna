@@ -305,13 +305,15 @@ class SBGWorkflowRun(object):
             # workflow argument
             wodict = dict()
             for of in ff_meta.get('output_files'):
-                wodict.update({of['workflow_argument_name']: {'format': of['format'],
-                                                              'type': of['type'],
-                                                              'extension': of['extension']}})
+                wodict.update({of['workflow_argument_name']: {'type': of['type']})
                 if('value' in of):
                     wodict[of['workflow_argument_name']].update({'value': of['value']})
                 if('upload_key' in of):
                     wodict[of['workflow_argument_name']].update({'upload_key': of['upload_key']})
+                if('format' in of):
+                    wodict[of['workflow_argument_name']].update({'format': of['format']})
+                if('extension' in of):
+                    wodict[of['workflow_argument_name']].update({'extension': of['extension']})
 
         except Exception as e:
             print("Can't create wodict out of output_files field of workflow_run metadata %s" % e)
