@@ -305,7 +305,7 @@ class SBGWorkflowRun(object):
             # workflow argument
             wodict = dict()
             for of in ff_meta.get('output_files'):
-                wodict.update({of['workflow_argument_name']: {'type': of['type']})
+                wodict.update({of['workflow_argument_name']: {'type': of['type']}})
                 if('value' in of):
                     wodict[of['workflow_argument_name']].update({'value': of['value']})
                 if('upload_key' in of):
@@ -336,7 +336,7 @@ class SBGWorkflowRun(object):
                 else:
                     # QC and report
                     # put all files in directory with uuid of workflowrun
-                    dest_upload_key = wodict[k]['upload_key']
+                    dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
                 export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                 # report will help with generating metadata later
                 export_item = {"upload_key": dest_upload_key, "export_id": export_id, "workflow_argument_name": k}
@@ -357,7 +357,7 @@ class SBGWorkflowRun(object):
                         else:
                             # QC and report
                             # put all files in directory with uuid of workflowrun
-                            dest_upload_key = wodict[k]['upload_key']
+                            dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
                         export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
                         export_item = {"upload_key": dest_upload_key,
                                        "export_id": export_id,
