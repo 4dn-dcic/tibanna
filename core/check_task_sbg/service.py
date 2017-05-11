@@ -23,5 +23,6 @@ def handler(event, context):
 
     return {'workflow': sbg.as_dict(),
             'run_response': status,
-            'ff_meta': event.get('ff_meta')
+            'ff_meta': event.get('ff_meta'),
+            'pf_meta': event.get('pf_meta')
             }
