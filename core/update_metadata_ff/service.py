@@ -20,8 +20,10 @@ def handler(event, context):
        then put / patch data_name with data
     #
     '''
-    # get data
-    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    # used to automatically determine the environment
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     # run_response = event.get('run_response')
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     key = event.get('ff_keys')
@@ -31,4 +33,5 @@ def handler(event, context):
 
     return{"workflow": sbg.as_dict(),
            "res": workflow_post_resp,
-           "ff_meta": ff_meta.as_dict()}
+           "ff_meta": ff_meta.as_dict(),
+           "_tibanna": tibanna.as_dict()}

@@ -55,7 +55,7 @@ def fastqc_payload():  # pylint: disable=fixme
 
 @valid_env
 @pytest.mark.webtest
-def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
+def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
     # lets make sure we have a valid fastqc file
     # TODO: figure out why this doesn't just return one object
     fastqs = sbg_utils.get_metadata("/search/?type=FileFastq&limit=1", ff_keys)['@graph'][0]
@@ -67,6 +67,7 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
     fastqc_payload['ff_meta']['output_files'][0]['value'] = fastqs['uuid']
 
     try:
+        fastqc_payload.update(tibanna_env)
         ret = check_export_handler(fastqc_payload, None)
     except Exception as e:
         if "409" in e:
@@ -84,8 +85,9 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys):
 
 @valid_env
 @pytest.mark.webtest
-def test_check_export_sbg_e2e(check_export_event_data):
+def test_check_export_sbg_e2e(check_export_event_data, tibanna_env):
     try:
+        check_export_event_data.update(tibanna_env)
         ret = check_export_handler(check_export_event_data, None)
     except KeyError as key_e:
         pytest.skip('Data issue, skipping test: %s' % key_e)

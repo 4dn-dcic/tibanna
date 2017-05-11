@@ -6,15 +6,15 @@ from core.fastqc_utils import parse_fastqc
 
 
 s3 = boto3.resource('s3')
-# ff_key = utils.get_access_keys()
-ff_key = None
 
 
-def donothing(status, sbg, ff_meta):
+def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def update_processed_file_metadata(status, pf_meta):
+def update_processed_file_metadata(status, pf_meta, tibanna):
+
+    ff_key = tibanna.ff_keys
     try:
         for pf in pf_meta:
             pf['status'] = status
@@ -29,13 +29,15 @@ def update_processed_file_metadata(status, pf_meta):
     return pf_meta
 
 
-def fastqc_updater(status, sbg, ff_meta):
+def fastqc_updater(status, sbg, ff_meta, tibanna):
+    # keys
+    ff_key = tibanna.ff_keys
     # move files to proper s3 location
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['upload_key'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     try:
-        files = utils.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
+        files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
     except Exception as e:
         raise Exception("%s (key={})\n".format(zipped_report) % e)
     # parse fastqc metadata
@@ -65,7 +67,10 @@ def fastqc_updater(status, sbg, ff_meta):
     return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}]}
 
 
-def md5_updater(status, sbg, ff_meta):
+def md5_updater(status, sbg, ff_meta, tibanna):
+
+    # get key
+    ff_key = tibanna.ff_keys
     # get metadata about original input file
     accession = get_inputfile_accession(sbg)
     original_file = sbg_utils.get_metadata(accession, key=ff_key)
@@ -76,7 +81,7 @@ def md5_updater(status, sbg, ff_meta):
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
             print("no matcho")
-            md5_updater("upload failed", sbg, ff_meta)
+            md5_updater("upload failed", sbg, ff_meta, tibanna)
         else:
             new_file = {}
             new_file['status'] = 'uploaded'
@@ -103,7 +108,10 @@ def handler(event, context):
     http://docs.sevenbridges.com/reference#get-task-execution-details
     '''
     # get data
-    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    # used to automatically determine the environment
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     pf_meta = event.get('pf_meta')
     # ensure this bad boy is always initialized
@@ -117,14 +125,14 @@ def handler(event, context):
         status = export_res.get('state')
         sbg.export_report[idx]['status'] = status
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta, tibanna)
             if pf_meta:
-                pf_meta = update_processed_file_metadata('uploaded', pf_meta)
+                pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
         elif status in ['PENDING', 'RUNNING']:
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta, tibanna)
             raise Exception("Export of file %s is still running" % upload_key)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta)
+            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta, tibanna)
             raise Exception("Failed to export file %s \n sbg result: %s" % (upload_key, export_res))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
@@ -136,11 +144,12 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    ff_meta.post(key=utils.get_access_keys())
+    ff_meta.post(key=tibanna.ff_keys)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta
+            'pf_meta': pf_meta,
+            '_tibanna': tibanna.as_dict()
             }
 
 

@@ -6,8 +6,9 @@ import json
 
 @valid_env
 @pytest.mark.webtest
-def test_export_files_sbg_e2e(export_files_event_data):
+def test_export_files_sbg_e2e(export_files_event_data, tibanna_env):
     try:
+        export_files_event_data.update(tibanna_env)
         ret = export_files_handler(export_files_event_data, None)
     except KeyError as e:
         pytest.skip("getting key error, probably test data issue")

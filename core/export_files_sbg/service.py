@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from core import sbg_utils
+from core.utils import Tibanna
 import boto3
 
 s3 = boto3.resource('s3')
@@ -11,7 +12,10 @@ def handler(event, context):
     '''
 
     # get data
-    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    # used to automatically determine the environment
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = Tibanna(**tibanna_settings)
+    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     run_response = event.get('run_response')
     ff_meta = event.get('ff_meta')
     uuid = ff_meta['uuid']
@@ -28,5 +32,6 @@ def handler(event, context):
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
             # 'pf_meta': [pf.as_dict() for pf in pf_meta]
-            'pf_meta': pf_meta
+            'pf_meta': pf_meta,
+            '_tibanna': tibanna.as_dict()
             }

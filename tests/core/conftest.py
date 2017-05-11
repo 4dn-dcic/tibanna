@@ -20,7 +20,7 @@ def tibanna_env():
 
 @pytest.fixture(scope='session')
 def s3_utils():
-    return s3Utils(env='fourfront-webprod')
+    return s3Utils(env=tibanna_env()['_tibanna']['env'])
 
 
 @pytest.fixture(scope='session')
