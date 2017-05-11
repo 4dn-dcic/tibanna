@@ -4,10 +4,6 @@ import boto3
 import json
 
 s3 = boto3.resource('s3')
-# TODO: I don't want to call the following in test,
-# filter out with env var / DEV_ENV
-# _api = sbg_utils.SBGAPI(sbg_utils.get_sbg_keys())
-_api = None
 
 
 # check the status and other details of import
@@ -15,7 +11,13 @@ def handler(event, context):
     # get data
     input_file_args = event.get('input_file_args')
     parameter_dict = event.get('parameter_dict')
-    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+
+    # used to automatically determine the environment
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
+    _api = sbg_utils.SBGAPI(tibanna.sbg_keys)
+
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     import_ids = sbg.import_id_list
     pf_meta = event.get('pf_meta')
@@ -47,10 +49,11 @@ def handler(event, context):
             # Soo: This information was alreadyin ff_meta that was passed into this function.
 
         # make all the file export meta-data stuff here
-        # TODO: fix ff_meta bugs with input / output files
-        ff_meta.post(key=utils.get_access_keys())
+        # TODO: fix=`=jedi=0,  ff_meta bu=`= (*_*key*_*) =`=jedi=`=gs with input / output files
+        ff_meta.post(key=tibanna.ff_keys)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta
+            'pf_meta': pf_meta,
+            "_tibanna": tibanna.as_dict(),
             }

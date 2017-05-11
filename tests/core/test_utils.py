@@ -1,4 +1,5 @@
 from core import sbg_utils
+from core.utils import Tibanna
 import pytest
 from conftest import valid_env
 
@@ -161,6 +162,14 @@ def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
     meta = ff_meta_event_data['ff_meta']
     ff_wfr = sbg_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
+
+
+def test_tibanna():
+    data = {'env': 'fourfront-webdev',
+            'settings': {'1': '1'}}
+    tibanna = Tibanna(**data)
+    assert tibanna
+    assert tibanna.as_dict() == data
 
 
 def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):

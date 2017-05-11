@@ -181,10 +181,16 @@ def deploy_lambda_package(ctx, name):
 
 
 @task
-def upload_sbg_keys(ctx, sbgkey=None):
+def upload_sbg_keys(ctx, sbgkey=None, env='fourfront-webprod'):
     if sbgkey is None:
         sbgkey = os.environ.get('SBG_KEY')
-    return upload_keys(ctx, sbgkey, 'sbgkey')
+
+    if sbgkey is None:
+        print("error no sbgkey found in environment")
+        return 1
+
+    s3bucket = "elasticbeanstalk-%s-system" % env
+    return upload_keys(ctx, sbgkey, 'sbgkey', s3bucket)
 
 
 def _PROD():
@@ -205,7 +211,7 @@ def upload_keys(ctx, keys, name, s3bucket=None):
 
 
 @task
-def upload_s3_keys(ctx, key=None, secret=None):
+def upload_s3_keys(ctx, key=None, secret=None, env="fourfront-webprod"):
     if key is None:
         key = os.environ.get("SBG_S3_KEY")
     if secret is None:
@@ -213,7 +219,8 @@ def upload_s3_keys(ctx, key=None, secret=None):
 
     pckt = {'key': key,
             'secret': secret}
-    return upload_keys(ctx, json.dumps(pckt), 'sbgs3key')
+    s3bucket = "elasticbeanstalk-%s-system" % env
+    return upload_keys(ctx, json.dumps(pckt), 'sbgs3key', s3bucket)
 
 
 @task

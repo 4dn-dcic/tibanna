@@ -116,6 +116,7 @@ def handler(event, context):
             "workflow": sbg.as_dict(),
             "ff_meta": ff_meta.as_dict(),
             'pf_meta': [pf.as_dict() for pf in pf_meta],
+            "_tibanna": tibanna.as_dict(),
             "parameter_dict": parameter_dict}
 
 

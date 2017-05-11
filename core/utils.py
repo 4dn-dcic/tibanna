@@ -234,6 +234,10 @@ class Tibanna(object):
             settings = {}
         self.settings = settings
 
+    def as_dict(self):
+        return {'env': self.env,
+                'settings': self.settings}
+
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
     tibanna = {"run_id": str(uuid4()),

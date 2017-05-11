@@ -13,6 +13,11 @@ valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
                                reason='Required environment not setup to run test')
 
 
+@pytest.fixture()
+def tibanna_env():
+    return {'_tibanna': {'env': 'fourfront-webprod'}}
+
+
 @pytest.fixture(scope='session')
 def s3_utils():
     return s3Utils(env='fourfront-webprod')
