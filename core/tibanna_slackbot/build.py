@@ -14,6 +14,6 @@ class BuildStatus(object):
         # check aws if environment is ok
         # run gui tests to verify this thing appears to be up
         beanstalk = boto3.client('elasticbeanstalk')
-        health = beanstalk.describe_environment_health(EnvironmentName='4dnweb-prod',
+        health = beanstalk.describe_environment_health(EnvironmentName='fourfront-webprod',
                                                        AttributeNames=['All', ])
         print(health)

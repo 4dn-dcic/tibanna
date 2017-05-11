@@ -73,6 +73,9 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
         if "409" in e:
             # duplicate UUID, just ignore that
             return
+        if "NoSuchKey" in e.message:
+            pytest.skip("file not on s3 ignorring test")
+            return
         raise e
     ret = check_export_handler(fastqc_payload, None)
     assert json.dumps(ret)
