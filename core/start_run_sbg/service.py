@@ -39,17 +39,7 @@ def handler(event, context):
 
     # get argument format & type info from workflow
     workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
-    arginfo = {}
-    try:
-        for arg in workflow_info.get('arguments', {}):
-           if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
-               argname = arg['workflow_argument_name']
-               argformat = arg['argument_format'] if arg.has_key('argument_format') else ''
-               arginfo.update({ argname: {'format': argformat,
-                                          'type': arg['argument_type']} })
-    except Exception as e:
-        print("Make sure your workflow metadata has 'argument' field. %s\n" % e)
-        raise e
+    # This dictionary has a key 'arguments' with a value { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
 
     # get format-extension map
     try:
@@ -63,33 +53,39 @@ def handler(event, context):
 
     # processed file metadata
     try:
-        pf_meta= []
-        for argname in arginfo.keys():
-            if arginfo[argname]['format'] != '':  # These are not processed files but report or QC files.
-                pf = sbg_utils.ProcessedFileMetadata(file_format=arginfo[argname]['format'])
-                pf_meta.append(pf)
-                resp = pf.post(key=tibanna.ff_keys)
-                arginfo[argname]['upload_key'] = resp.get('upload_key')
+        if workflow_info.has_key('arguments'):
+            output_files = []
+            pf_meta = []
+            for arg in workflow_info.get('arguments'):
+                if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
+                    of = dict()
+                    of['workflow_argument_name'] = arg.get('workflow_argument_name')
+                    of['type'] = arg.get('argument_type')
+                    if arg.has_key('argument_format'): # These are not processed files but report or QC files.
+                        pf = sbg_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
+                        try:
+                            resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
+                            resp = resp.get('@graph')[0]
+                            of['upload_key'] = resp.get('upload_key')
+                            of['value'] = resp.get('uuid')
+                        except Exception as e:
+                            print("Failed to post Processed file metadata. %s\n" % e)
+                            print("resp" + str(resp) + "\n")
+                        of['format'] = arg.get('argument_format')
+                        of['extension'] = fe_map.get(arg.get('argument_format'))
+                        pf_meta.append(pf)
+                    output_files.append(of)
 
     except Exception as e:
-        print("Failed to post Processed file metadata. %s\n" % e)
-        print(resp)
-
-    # create empty output file info
-    try:
-        output_files = [{'workflow_argument_name': argname,
-                         'type': arginfo[argname]['type'],
-                         'upload_key': arginfo[argname]['upload_key'] if arginfo[argname].has_key('upload_key') else '',
-                         'extension': fe_map.get(arginfo[argname]['format']) if fe_map.has_key(arginfo[argname]['format']) else '', 
-                         'format': arginfo[argname]['format']} for argname in arginfo.keys()]
-    except Exception as e:
+        print("output_files = " + str(output_files) + "\n")
         print("Can't prepare output_files information. %s\n" % e)
-        if not fe_map.has_key(arginfo[argname]['format']):
-            print("format-extension map doesn't have the key" + arginfo[argname]['format'])
 
     # create workflow run metadata
-    ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                      run_url=tibanna.settings.get('url', ''), output_files=output_files)
+    try:
+        ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                          run_url=tibanna.settings.get('url', ''), output_files=output_files)
+    except Exception as e:
+        print("Can't create ffmeta. %s\n" % e)
 
     # store metadata so we know the run has started
     ff_meta.post(key=tibanna.ff_keys)
@@ -108,8 +104,6 @@ def handler(event, context):
             # we got an error
             raise Exception("Unable to mount output volume, error is %s " % res)
         sbg.output_volume_id = vol_id
-
-
 
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
