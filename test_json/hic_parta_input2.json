@@ -24,5 +24,6 @@
   "parameters": {
     "nThreads": 8
   },
-  "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput"
+  "_tibanna": {"env": "fourfront-webprod"}
 }

@@ -10,5 +10,7 @@
 		"app_name": "fastqc-0-11-4-1",
 		"workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9", 
 		"parameters": {},
-		"output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+		"output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput-files",
+		"_tibanna": {"env": "fourfront-webprod"}
+
 }
