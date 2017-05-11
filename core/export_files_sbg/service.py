@@ -17,6 +17,9 @@ def handler(event, context):
     uuid = ff_meta['uuid']
     pf_meta = event.get('pf_meta')
 
+    if run_response in ['FAILED', 'ABORTED']:
+        raise Exception("workflow run failed or aborted")
+
     sbg.export_all_output_files(run_response, ff_meta, base_dir=uuid)
     # creating after we export will add output file info to ff_meta
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
