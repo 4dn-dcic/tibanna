@@ -10,8 +10,11 @@ def handler(event, context):
     '''
     this is to run the actual task
     '''
-    # get data
-    sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
+    # used to automatically determine the environment
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
+
     pf_meta = event.get('pf_meta')
 
     # create task on SBG
@@ -25,10 +28,11 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix ff_meta mapping issue
-    ff_meta.post(key=utils.get_access_keys())
+    ff_meta.post(key=tibanna.ff_keys)
 
     return {'workflow': sbg.as_dict(),
             'run_response': run_response,
             'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta
+            'pf_meta': pf_meta,
+            "_tibanna": tibanna.as_dict(),
             }

@@ -49,7 +49,7 @@ def handler(event, context):
             # Soo: This information was alreadyin ff_meta that was passed into this function.
 
         # make all the file export meta-data stuff here
-        # TODO: fix=`=jedi=0,  ff_meta bu=`= (*_*key*_*) =`=jedi=`=gs with input / output files
+        # TODO: fix ff_meta bugs with input / output files
         ff_meta.post(key=tibanna.ff_keys)
 
     return {'workflow': sbg.as_dict(),

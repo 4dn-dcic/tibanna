@@ -114,9 +114,10 @@ def handler(event, context):
             "parameter_dict": parameter_dict}
 
 
-##########################
+#################
 # Extra Functions
 #################
+
 def mount_on_sbg(input_file, s3_keys, sbg):
     # get important info from input_file json
     bucket = input_file.get('bucket_name').encode('utf8')
