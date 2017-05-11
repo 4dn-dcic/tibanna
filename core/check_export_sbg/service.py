@@ -105,11 +105,14 @@ def handler(event, context):
     sbg = sbg_utils.create_sbg_workflow(**event.get('workflow'))
     ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     pf_meta = event.get('pf_meta')
+    # ensure this bad boy is always initialized
+    patch_meta = False
 
     for idx, export in enumerate(sbg.export_report):
         upload_key = export['upload_key']
         export_id = export['export_id']
         export_res = sbg.check_export(export_id)
+        print("export res is %s", export_res)
         status = export_res.get('state')
         sbg.export_report[idx]['status'] = status
         if status == 'COMPLETED':
