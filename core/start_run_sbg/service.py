@@ -2,6 +2,7 @@
 
 import boto3
 from core import sbg_utils, utils
+from core.utils import s3Utils, Tibanna
 import json
 import random
 
@@ -17,39 +18,32 @@ def handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
-
-    print("hello?") # Soo
-
     # get incomming data
     input_file_list = event.get('input_files')
     app_name = event.get('app_name').encode('utf8')
     parameter_dict = event.get('parameters')
     workflow_uuid = event.get('workflow_uuid').encode('utf8')
     output_bucket = event.get('output_bucket')
-    tibanna = event.get('_tibanna', {})
-
-    # get necessary tokens
-    s3_keys = event.get('s3_keys')
-    if not s3_keys:
-        s3_keys = sbg_utils.get_s3_keys()
-
-    ff_keys = event.get('ff_keys')
-    if not ff_keys:
-        ff_keys = utils.get_access_keys()
+    tibanna_settings = event.get('_tibanna', {})
+    # if they don't pass in env guess it from output_bucket
+    env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
+    # tibanna provides access to keys based on env and stuff like that
+    tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
+                      settings=tibanna_settings)
 
     # represents the SBG info we need
-    sbg = sbg_utils.create_sbg_workflow(app_name)
+    sbg = sbg_utils.create_sbg_workflow(app_name, tibanna.sbg_keys)
 
     # represents the workflow metadata to be stored in fourfront
     parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
-    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=ff_keys)
+    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
     # This dictionary has a key 'arguments' with a value { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
 
     # get format-extension map
     try:
-        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=ff_keys).get('file_format_file_extension')
+        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
     except Exception as e:
         print("Can't get format-extension map from file_processed schema. %s\n" % e)
 
@@ -70,7 +64,7 @@ def handler(event, context):
                     if arg.has_key('argument_format'): # These are not processed files but report or QC files.
                         pf = sbg_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
                         try:
-                            resp = pf.post(key=ff_keys)  # actually post processed file metadata here
+                            resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                             resp = resp.get('@graph')[0]
                             of['upload_key'] = resp.get('upload_key')
                             of['value'] = resp.get('uuid')
@@ -89,104 +83,41 @@ def handler(event, context):
     # create workflow run metadata
     try:
         ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                          run_url=tibanna.get('url', ''), output_files=output_files)
+                                          run_url=tibanna.settings.get('url', ''), output_files=output_files)
     except Exception as e:
         print("Can't create ffmeta. %s\n" % e)
 
-
     # store metadata so we know the run has started
-    ff_meta.post(key=ff_keys)
+    ff_meta.post(key=tibanna.ff_keys)
 
     # mount all input files to sbg this will also update sbg to store the import_ids
-    _ = [mount_on_sbg(infile, s3_keys, sbg) for infile in input_file_list]
+    _ = [mount_on_sbg(infile, tibanna.s3_keys, sbg) for infile in input_file_list]
 
     # create a link to the output directory as well
     if output_bucket:
         sbg_volume = sbg_utils.create_sbg_volume_details()
         res = sbg.create_volumes(sbg_volume, output_bucket,
-                                 public_key=s3_keys['key'],
-                                 secret_key=s3_keys['secret'])
+                                 public_key=tibanna.s3_keys['key'],
+                                 secret_key=tibanna.s3_keys['secret'])
         vol_id = res.get('id')
         if not vol_id:
             # we got an error
             raise Exception("Unable to mount output volume, error is %s " % res)
         sbg.output_volume_id = vol_id
 
-
-
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "workflow": sbg.as_dict(),
             "ff_meta": ff_meta.as_dict(),
             'pf_meta': [pf.as_dict() for pf in pf_meta],
+            "_tibanna": tibanna.as_dict(),
             "parameter_dict": parameter_dict}
 
-    '''
-    for sbg_import_id in mounts3_tasks:
-        sbg_check_import_response = sbg.get_details_of_import(sbg_import_id)
 
-        ## add to task input
-        try:
-            sbg_file_name = sbg_check_import_response.get('result').get('name')
-            sbg_file_id = sbg_check_import_response.get('result').get('id')
-            task_input.add_inputfile(sbg_file_name, sbg_file_id, workflow_argument )
-            metadata_input.append( { "workflow_argument_name": workflow_argument, "value": key_uuid })
-
-        except Exception as e:
-            print(e)
-            print('Error mounting/importing the file to SBG')
-            raise e
-
-    # run a validatefiles task
-    try:
-        # task_data = sbg.create_data_payload_validatefiles(sbg_check_import_response)
-        print(json.dumps(task_input.__dict__, indent=4))
-        create_task_response = sbg.create_task( task_input )
-        print("hello") # Soo
-        print(create_task_response)  # Soo
-        run_response = sbg.run_task()
-        print(run_response) # Soo
-
-    except Exception as e:
-        print(e)
-        print('Error running a task')
-        raise e
-
-    # check task
-    try:
-        check_task_response = sbg.check_task()
-
-    except Exception as e:
-        print(e)
-        print('Error running a task')
-        raise e
-
-    # post to metadata
-    try:
-        wr = sbg.sbg2workflowrun(workflow_uuid, metadata_input, metadata_parameters)
-        print(json.dumps(wr))
-        workflow_post_resp = post_to_metadata(metadata_keypairs_file, wr, "workflow_run_sbg")
-
-        return( { "sbg_task": check_task_response, "metadata_object": workflow_post_resp} )
-
-    except Exception as e:
-        print(e)
-        print('Error posting to metadata')
-        raise e
-
-    # for debugging
-    try:
-        print(json.dumps(sbg.__dict__))
-    except Exception as e:
-        print(e)
-        print("Error printing the SBGWorkflowRun object.")
-        raise e
-    '''
-
-
-##########################
+#################
 # Extra Functions
 #################
+
 def mount_on_sbg(input_file, s3_keys, sbg):
     # get important info from input_file json
     bucket = input_file.get('bucket_name').encode('utf8')
@@ -211,28 +142,6 @@ def mount_on_sbg(input_file, s3_keys, sbg):
     except Exception as e:
         print("error importing to SBG")
         raise(e)
-
-'''
-class SBGVolume(object):
-    prefix = '4dn_s3'
-    account = '4dn-labor'
-
-    def __init__(self, volume_suffix=None, volume_id=None):
-
-        if volume_id is not None:
-            self.id = volume_id
-            self.name = self.id.split('/')[1]
-
-        else:
-            if volume_suffix is None:
-                volume_suffix=''
-                for i in xrange(8):
-                    r=random.choice('abcdefghijklmnopqrstuvwxyz1234567890')
-                    volume_suffix += r
-    
-            self.name = self.prefix + volume_suffix # name of the volume to be mounted on sbg.
-            self.id = self.account + '/' + self.name    # ID of the volume to be mounted on sbg.
-'''
 
 
 class FileProcessedMetadata(object):
@@ -343,15 +252,6 @@ def format_response (response):
 
 
 def post_to_metadata(key, post_item, schema_name):
-
-    '''try:
-        key = fdnDCIC.FDN_Key(keypairs, "default")
-    except Exception as e:
-        print(e)
-        print("key error")
-        raise e
-    '''
-
     try:
         connection = fdnDCIC.FDN_Connection(key)
     except Exception as e:
@@ -369,11 +269,7 @@ def post_to_metadata(key, post_item, schema_name):
     return(response)
 
 
-
-
-
 def get_metadata(keypairs_file, schema_name=None, schema_class_name=None, uuid=None):
-
     assert os.path.isfile(str(keypairs_file))
 
     try:
@@ -408,7 +304,6 @@ def get_metadata(keypairs_file, schema_name=None, schema_class_name=None, uuid=N
 
 
 def patch_to_metadata(keypairs_file, patch_item, schema_class_name=None, accession=None, uuid=None):
-
     assert os.path.isfile(keypairs_file)
 
     try:

@@ -1,4 +1,5 @@
-from core import utils, sbg_utils
+from core import sbg_utils
+from core.utils import Tibanna
 import pytest
 from conftest import valid_env
 
@@ -57,9 +58,9 @@ def workflow_event_data():
                          "export_id_list": [], "output_volume_id": "4dn-labor/4dn_s32588y8f7"}}
 
 
-def test_create_ff_meta_base_sbg_data(json_request):
+def test_create_ff_meta_base_sbg_data(json_request, sbg_keys):
     app_name = json_request['app_name']
-    sbg = sbg_utils.create_sbg_workflow(app_name)
+    sbg = sbg_utils.create_sbg_workflow(app_name, sbg_keys)
     parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
     ff_meta = sbg_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
                                       input_files, parameters)
@@ -96,26 +97,18 @@ def test_to_sbg_workflow_args(json_request):
 
 
 @valid_env
-def test_sbg_api_gets_keys_by_default():
-    api = sbg_utils.SBGAPI()
-    assert api
-    assert api.token
-    assert api.header
-
-
-@valid_env
 @pytest.mark.webtest
-def test_read_s3():
+def test_read_s3(s3_utils):
     filename = '__test_data/test_file.txt'
-    read = utils.read_s3(filename)
+    read = s3_utils.read_s3(filename)
     assert read.strip() == 'thisisatest'
 
 
 @valid_env
 @pytest.mark.webtest
-def test_read_s3_zip():
+def test_read_s3_zip(s3_utils):
     filename = '__test_data/fastqc_report.zip'
-    files = utils.read_s3_zipfile(filename, ['summary.txt', 'fastqc_data.txt'])
+    files = s3_utils.read_s3_zipfile(filename, ['summary.txt', 'fastqc_data.txt'])
     assert files['summary.txt']
     assert files['fastqc_data.txt']
     assert files['summary.txt'].startswith('PASS')
@@ -123,23 +116,23 @@ def test_read_s3_zip():
 
 @valid_env
 @pytest.mark.webtest
-def test_unzip_s3_to_s3():
+def test_unzip_s3_to_s3(s3_utils):
     prefix = '__test_data/extracted'
     filename = '__test_data/fastqc_report.zip'
-    utils.s3_delete_dir(prefix)
+    s3_utils.s3_delete_dir(prefix)
 
     # ensure this thing was deleted
     # if no files there will be no Contents in response
-    objs = utils.s3_read_dir(prefix)
+    objs = s3_utils.s3_read_dir(prefix)
     assert [] == objs.get('Contents', [])
 
     # now copy to that dir we just deleted
     retfile_list = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
-    ret_files = utils.unzip_s3_to_s3(filename, prefix, retfile_list)
+    ret_files = s3_utils.unzip_s3_to_s3(filename, prefix, retfile_list)
     assert 3 == len(ret_files.keys())
     assert ret_files['fastqc_report.html']['s3key'].startswith("https://s3.amazonaws.com")
 
-    objs = utils.s3_read_dir(prefix)
+    objs = s3_utils.s3_read_dir(prefix)
     assert objs.get('Contents', None)
 
 
@@ -169,6 +162,14 @@ def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
     meta = ff_meta_event_data['ff_meta']
     ff_wfr = sbg_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
+
+
+def test_tibanna():
+    data = {'env': 'fourfront-webdev',
+            'settings': {'1': '1'}}
+    tibanna = Tibanna(**data)
+    assert tibanna
+    assert tibanna.as_dict() == data
 
 
 def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):

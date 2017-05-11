@@ -1,5 +1,5 @@
 import pytest
-from core import sbg_utils, utils
+from core.utils import s3Utils
 import os
 import json
 
@@ -13,19 +13,29 @@ valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
                                reason='Required environment not setup to run test')
 
 
-@pytest.fixture(scope='session')
-def s3_keys():
-    return sbg_utils.get_s3_keys()
+@pytest.fixture()
+def tibanna_env():
+    return {'_tibanna': {'env': 'fourfront-webprod'}}
 
 
 @pytest.fixture(scope='session')
-def sbg_keys():
-    return sbg_utils.get_sbg_keys()
+def s3_utils():
+    return s3Utils(env=tibanna_env()['_tibanna']['env'])
 
 
 @pytest.fixture(scope='session')
-def ff_keys():
-    return utils.get_access_keys()
+def s3_keys(s3_utils):
+    return s3_utils.get_s3_keys()
+
+
+@pytest.fixture(scope='session')
+def sbg_keys(s3_utils):
+    return s3_utils.get_sbg_keys()
+
+
+@pytest.fixture(scope='session')
+def ff_keys(s3_utils):
+    return s3_utils.get_access_keys()
 
 
 @pytest.fixture(scope='session')

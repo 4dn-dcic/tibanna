@@ -5,8 +5,6 @@ import datetime
 import requests
 import random
 from uuid import uuid4
-from utils import get_key
-
 from wranglertools import fdnDCIC
 
 ###########################
@@ -18,23 +16,13 @@ SBG_PROJECT_ID = "4dn-dcic/dev"
 class SBGAPI(object):
     base_url = "https://api.sbgenomics.com/v2"
 
-    def __init__(self, token=None):
-        if not token:
-            token = get_sbg_keys()
+    def __init__(self, token):
         self.token = token
         self.header = {"X-SBG-Auth-Token": token, "Content-type": "application/json"}
 
     def _get(self, partial_url, data):
         url = self.base_url + partial_url
         return requests.get(url, headers=self.header, data=json.dumps(data))
-
-
-def get_sbg_keys():
-    return get_key('sbgkey')
-
-
-def get_s3_keys():
-    return get_key('sbgs3key')
 
 
 def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
@@ -79,17 +67,12 @@ def create_sbg_volume_details(volume_suffix=None, volume_id=None):
     return {'id': id, 'name': name}
 
 
-def create_sbg_workflow(app_name, task_id='', task_input=None, token=None,
+def create_sbg_workflow(app_name, token, task_id='', task_input=None,
                         project_id=None, import_id_list=None, mounted_volume_ids=None,
                         export_id_list=None, **kwargs):
     '''
     helper function to be used to create object from serialized json dictionary
     '''
-
-    # get necessary tokens
-    if not token:
-        token = get_sbg_keys()
-
     if not project_id:
         project_id = SBG_PROJECT_ID
 

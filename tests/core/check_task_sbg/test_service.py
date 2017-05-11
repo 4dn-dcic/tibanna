@@ -6,13 +6,12 @@ import json
 
 @valid_env
 @pytest.mark.webtest
-def test_check_task_sbg_e2e(check_task_event_data):
+def test_check_task_sbg_e2e(check_task_event_data, tibanna_env):
     try:
+        check_task_event_data.update(tibanna_env)
         ret = check_task_handler(check_task_event_data, None)
     except Exception as e:
         datastring = e.message.strip("Task not finished => ")
-        import pdb
-        pdb.set_trace()
         import ast
         resp = ast.literal_eval(datastring)
         assert 'status' in resp.keys()
@@ -23,3 +22,4 @@ def test_check_task_sbg_e2e(check_task_event_data):
         assert ret['workflow']['output_volume_id']
         assert ret['run_response']
         assert ret['run_response']['status'] in ['COMPLETED', 'DONE', 'FAILED']
+        assert ret['_tibanna']

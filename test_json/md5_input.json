@@ -8,6 +8,7 @@
 			 "object_key": "4DNFIN232JJ2.fastq.gz"
 			}
 	],
-    "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files"
+    "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput-files",
+    "_tibanna": {"env": "fourfront-webprod"}
 }
 
