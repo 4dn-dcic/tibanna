@@ -1,6 +1,6 @@
 ## test samples
 ```
-invoke run_workflow --input-json='./test_json/hic_parta_input2.json' # tiny files
+invoke run_workflow --input-json='./test_json/hic_parta_input4.json' # tiny files
 invoke run_workflow --input-json='./test_json/hic_parta_input3.json' # Koray's MySeq files (20170411)
 invoke run_workflow --input-json='./test_json/md5_input.json' # md5, tiny file
 invoke run_workflow --input-json='./test_json/fastqc_input.json' # fastqc, tiny file
@@ -30,14 +30,14 @@ invoke run_workflow --input-json='./test_json/fastqc_input.json' # fastqc, tiny 
 cd Submit4dn
 
 ## patch workflows to have 'argument' field.
-# hicparta (older version)
+# hicparta revision 9 (older version)
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b.json -s software # bwa
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b2.json -s software # samtools
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/software5b3.json -s software # pairix
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/steps5b.json -s analysis_step # bwa-mem
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/steps5b2.json -s analysis_step # sort_bam
 python tests/post.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/steps5b3.json -s analysis_step # bam2pairs
-python tests/patch.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/workflow5b.json -u 02d636b9-d82d-4da9-950c-2ca994a0943e
+python tests/patch.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/workflow8.json -u 02d636b9-d82d-4da9-950c-2ca994a09411
 
 # md5
 python tests/patch.py -k ~/.4dn_fourfront_key.json -p Data_Files/workflows/workflow6.json -u d3f25cd3-e726-4b3c-a022-48f844474b41
