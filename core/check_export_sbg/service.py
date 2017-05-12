@@ -76,7 +76,7 @@ def md5_updater(status, sbg, ff_meta, tibanna):
     original_file = sbg_utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
-        md5 = utils.read_s3(ff_meta.output_files[0]['upload_key']).strip()
+        md5 = tibanna.s3.read_s3(ff_meta.output_files[0]['upload_key']).strip()
         original_md5 = original_file.get('content_md5sum', False)
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
