@@ -309,6 +309,7 @@ def publish(ctx, test=False):
         run('python setup.py register sdist bdist_wheel', echo=True)
         run('twine upload dist/*', echo=True)
 
+
 @task
 def run_md5(ctx, env, accession, uuid):
     if not accession.endswith(".fastq.gz"):
@@ -327,7 +328,7 @@ def batch_fastqc(ctx, env, batch_size=20):
                                         "search/?type=File&status=uploaded&limit=%s" % batch_size,
                                         frame="embedded")
 
-    #TODO: need to change submit 4dn to not overwrite my limit
+    # TODO: need to change submit 4dn to not overwrite my limit
     if len(uploaded_files['@graph']) > batch_size:
         limited_files = uploaded_files['@graph'][:batch_size]
     else:
@@ -335,8 +336,8 @@ def batch_fastqc(ctx, env, batch_size=20):
 
     for ufile in limited_files:
         fastqc_run = False
-        for run in ufile.get('workflow_run_inputs', []):
-            if 'fastqc' in run:
+        for wfrun in ufile.get('workflow_run_inputs', []):
+            if 'fastqc' in wfrun:
                 fastqc_run = True
         if not fastqc_run:
             print("running fastqc for %s" % ufile.get('accession'))
@@ -344,9 +345,9 @@ def batch_fastqc(ctx, env, batch_size=20):
         else:
             print("******** fastqc already run for %s skipping" % ufile.get('accession'))
 
+
 @task
 def run_fastqc(ctx, env, accession, uuid):
-    import pdb; pdb.set_trace()
     if not accession.endswith(".fastq.gz"):
         accession += ".fastq.gz"
     input_json = make_input(env=env, workflow='fastqc-0-11-4-1/1', accession=accession, uuid=uuid)
@@ -354,8 +355,9 @@ def run_fastqc(ctx, env, accession, uuid):
 
 
 _workflows = {'md5': 'd3f25cd3-e726-4b3c-a022-48f844474b4',
-              'fastqc-0-11-4-1/1':'2324ad76-ff37-4157-8bcc-3ce72b7dace9',
-             }
+              'fastqc-0-11-4-1/1': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+              }
+
 
 def make_input(env, workflow, accession, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
@@ -401,5 +403,3 @@ def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
             }
     travis(data, None)
     # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
-
-

@@ -64,7 +64,10 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
                         "original_file ={}\n".format(str(original_file)) % e)
 
     # nothing to patch to ff_meta
-    return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}]}
+    output_files = ff_meta.output_files
+    output_files[0]['value'] = qc_meta['@id']
+    return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
+            'output_files': output_files}
 
 
 def md5_updater(status, sbg, ff_meta, tibanna):
@@ -157,4 +160,5 @@ def handler(event, context):
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['md5'] = md5_updater
 OUTFILE_UPDATERS['validatefiles'] = md5_updater
+OUTFILE_UPDATERS['fastqc-0-11-4-1/1'] = fastqc_updater
 OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater

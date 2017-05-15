@@ -238,12 +238,11 @@ class Tibanna(object):
     def get_reporter(self):
         '''
         a reporter is a generic name for somethign that reports on the results of each step
-        of the workflow.  For our immediate purposes this will return ffmetadata object 
+        of the workflow.  For our immediate purposes this will return ffmetadata object
         (which is a connection to our metadata repository, eventually it should, through
         polymorphism support any type of reporter a user might develop.
         '''
         return None
-
 
     def get_runner(self):
         '''
@@ -251,9 +250,6 @@ class Tibanna(object):
         Currently this is sbg for us.
         '''
         return None
-
-
-
 
     def as_dict(self):
         return {'env': self.env,
@@ -281,7 +277,7 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
     # generate run name
     if not tibanna.get('run_name'):
         # aws doesn't like / in names
-        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/','-'), tibanna['run_id'])
+        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/', '-'), tibanna['run_id'])
 
     if in_place is not None:
         settings_patch[_tibanna] = tibanna
@@ -291,7 +287,7 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
 
 
 def get_files_to_match(tibanna, query, frame='object'):
-    return  get_metadata(query, key=tibanna.ff_keys)
+    return get_metadata(query, key=tibanna.ff_keys)
 
 
 def current_env():
