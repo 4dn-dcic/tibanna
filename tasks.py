@@ -9,7 +9,7 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
-from core.utils import _tibanna_settings
+from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -309,14 +309,76 @@ def publish(ctx, test=False):
         run('python setup.py register sdist bdist_wheel', echo=True)
         run('twine upload dist/*', echo=True)
 
+@task
+def run_md5(ctx, env, accession, uuid):
+    if not accession.endswith(".fastq.gz"):
+        accession += ".fastq.gz"
+    input_json = make_input(env=env, workflow='md5', accession=accession, uuid=uuid)
+    return _run_workflow(input_json, accession)
+
 
 @task
-def run_fastqc_workflow(ctx, bucket_name='elasticbeanstalk-encoded-4dn-files',
-                        accession='4DNFIW7Q5UDL.fastq.gz',
-                        uuid='02e3f7cf-6699-4281-96fa-528bf87b7741'
-                        ):
-    input_json = make_input(bucket_name, accession, uuid)
+def batch_fastqc(ctx, env, batch_size=20):
+    '''
+    try to run fastqc on everythign that needs it ran
+    '''
+    tibanna = Tibanna(env=env)
+    uploaded_files = get_files_to_match(tibanna,
+                                        "search/?type=File&status=uploaded&limit=%s" % batch_size,
+                                        frame="embedded")
+
+    #TODO: need to change submit 4dn to not overwrite my limit
+    if len(uploaded_files['@graph']) > batch_size:
+        limited_files = uploaded_files['@graph'][:batch_size]
+    else:
+        limited_files = uploaded_files['@graph']
+
+    for ufile in limited_files:
+        fastqc_run = False
+        for run in ufile.get('workflow_run_inputs', []):
+            if 'fastqc' in run:
+                fastqc_run = True
+        if not fastqc_run:
+            print("running fastqc for %s" % ufile.get('accession'))
+            run_fastqc(ctx, env, ufile.get('accession'), ufile.get('uuid'))
+        else:
+            print("******** fastqc already run for %s skipping" % ufile.get('accession'))
+
+@task
+def run_fastqc(ctx, env, accession, uuid):
+    import pdb; pdb.set_trace()
+    if not accession.endswith(".fastq.gz"):
+        accession += ".fastq.gz"
+    input_json = make_input(env=env, workflow='fastqc-0-11-4-1/1', accession=accession, uuid=uuid)
     return _run_workflow(input_json, accession)
+
+
+_workflows = {'md5': 'd3f25cd3-e726-4b3c-a022-48f844474b4',
+              'fastqc-0-11-4-1/1':'2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+             }
+
+def make_input(env, workflow, accession, uuid):
+    bucket = "elasticbeanstalk-%s-files" % env
+    output_bucket = "elasticbeanstalk-%s-wfoutput" % env
+    workflow_uuid = _workflows[workflow]
+
+    data = {"parameters": {},
+            "app_name": workflow,
+            "workflow_uuid": workflow_uuid,
+            "input_files": [
+                {"workflow_argument_name": "input_fastq",
+                 "bucket_name": bucket,
+                 "uuid": uuid,
+                 "object_key": accession,
+                 }
+             ],
+            "output_bucket": output_bucket,
+            }
+    data.update(_tibanna_settings({'run_id': str(accession),
+                                   'run_type': workflow,
+                                   'env': env,
+                                   }))
+    return data
 
 
 @task
@@ -341,21 +403,3 @@ def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
     # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
 
 
-def make_input(bucket_name, key, uuid):
-    data = {"parameters": {},
-            "app_name": "fastqc-0-11-4-1",
-            "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
-            "input_files": [
-                {"workflow_argument_name": "input_fastq",
-                 "bucket_name": bucket_name,
-                 "uuid": str(uuid),
-                 "object_key": str(key),
-                 }
-             ],
-            "output_bucket": "elasticbeanstalk-encoded-4dn-wfoutput-files",
-            }
-    data.update(_tibanna_settings({'run_id': str(key),
-                                   'run_type': 'fastqc',
-                                   'env': 'encoded-4dn',
-                                   }))
-    return data

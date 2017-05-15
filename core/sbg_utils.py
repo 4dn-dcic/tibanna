@@ -656,9 +656,9 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
     return response
 
 
-def get_metadata(obj_id, key='', connection=None):
+def get_metadata(obj_id, key='', connection=None, frame="object"):
     connection = fdn_connection(key, connection)
-    return fdnDCIC.get_FDN(obj_id, connection)
+    return fdnDCIC.get_FDN(obj_id, connection, frame=frame)
 
 
 def post_to_metadata(post_item, schema_name, key='', connection=None):

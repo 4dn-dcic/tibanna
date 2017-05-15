@@ -7,6 +7,7 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
+from sbg_utils import get_metadata
 
 
 ###########################
@@ -234,6 +235,26 @@ class Tibanna(object):
             settings = {}
         self.settings = settings
 
+    def get_reporter(self):
+        '''
+        a reporter is a generic name for somethign that reports on the results of each step
+        of the workflow.  For our immediate purposes this will return ffmetadata object 
+        (which is a connection to our metadata repository, eventually it should, through
+        polymorphism support any type of reporter a user might develop.
+        '''
+        return None
+
+
+    def get_runner(self):
+        '''
+        a runner is an object that implements a set api to run the workflow one step at a time.
+        Currently this is sbg for us.
+        '''
+        return None
+
+
+
+
     def as_dict(self):
         return {'env': self.env,
                 'settings': self.settings}
@@ -259,13 +280,18 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
 
     # generate run name
     if not tibanna.get('run_name'):
-        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'], tibanna['run_id'])
+        # aws doesn't like / in names
+        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/','-'), tibanna['run_id'])
 
     if in_place is not None:
         settings_patch[_tibanna] = tibanna
         return settings_patch
     else:
         return {_tibanna: tibanna}
+
+
+def get_files_to_match(tibanna, query, frame='object'):
+    return  get_metadata(query, key=tibanna.ff_keys)
 
 
 def current_env():
