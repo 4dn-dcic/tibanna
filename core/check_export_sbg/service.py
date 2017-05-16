@@ -63,7 +63,7 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
         raise Exception("patch_metadata failed in fastqc_updater. %s. " +
                         "original_file ={}\n".format(str(original_file)) % e)
 
-    # nothing to patch to ff_meta
+    # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
     return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],

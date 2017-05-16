@@ -64,6 +64,13 @@ def ff_meta_event_data(sbg_keys, ff_keys):
 
 
 @pytest.fixture(scope='session')
+def md5_event_data():
+    # I want this to go through the tibanna env lookup, to ensure it gets
+    # appropriate keys
+    return get_test_json('md5_input.json')
+
+
+@pytest.fixture(scope='session')
 def export_files_event_data(sbg_keys, ff_keys):
     return get_event_file_for('export_files_sbg', sbg_keys, ff_keys)
 
@@ -73,12 +80,23 @@ def check_export_event_data(sbg_keys, ff_keys):
     return get_event_file_for('check_export_sbg', sbg_keys, ff_keys)
 
 
+def get_test_json(file_name):
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)
+    return read_event_file(event_file_name, sbg_keys, ff_keys)
+
+
 def get_event_file_for(lambda_name, sbg_keys, ff_keys=None):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'core', lambda_name, 'event.json')
+    return read_event_file(event_file_name, sbg_keys, ff_keys)
+
+
+def read_event_file(event_file_name, sbg_keys=None, ff_keys=None):
     with open(event_file_name) as json_data:
         data = json.load(json_data)
-        data['token'] = sbg_keys
-        if ff_keys:
+        if not sbg_keys is None:
+            data['token'] = sbg_keys
+        if not ff_keys is None:
             data['ff_keys'] = ff_keys
         return data
