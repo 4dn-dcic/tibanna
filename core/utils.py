@@ -7,7 +7,7 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
-from sbg_utils import get_metadata
+from .sbg_utils import get_metadata
 
 
 ###########################

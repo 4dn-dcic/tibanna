@@ -95,8 +95,8 @@ def get_event_file_for(lambda_name, sbg_keys, ff_keys=None):
 def read_event_file(event_file_name, sbg_keys=None, ff_keys=None):
     with open(event_file_name) as json_data:
         data = json.load(json_data)
-        if not sbg_keys is None:
+        if sbg_keys is not None:
             data['token'] = sbg_keys
-        if not ff_keys is None:
+        if ff_keys is not None:
             data['ff_keys'] = ff_keys
         return data
