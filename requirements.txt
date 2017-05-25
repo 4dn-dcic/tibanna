@@ -17,4 +17,8 @@ flake8==2.4.1
 # For notebooks
 pip==9.0.1
 jupyter
+pandas
+numpy
+matplotlib
+
 

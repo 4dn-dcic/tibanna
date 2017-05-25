@@ -496,7 +496,8 @@ def notebook(ctx):
     """
     Start IPython notebook server.
     """
-    with setenv(JUPYTER_CONFIG_DIR='{root}/notebooks'.format(root=ROOT_DIR)):
+    with setenv(PYTHONPATH='{root}/core:{root}:{root}/tests'.format(root=ROOT_DIR),
+                JUPYTER_CONFIG_DIR='{root}/notebooks'.format(root=ROOT_DIR)):
 
         os.chdir('notebooks')
 
