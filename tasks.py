@@ -10,6 +10,7 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
+from time import sleep
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -319,6 +320,43 @@ def run_md5(ctx, env, accession, uuid):
 
 
 @task
+def batch_md5(ctx, env, batch_size=20):
+    '''
+    try to run fastqc on everythign that needs it ran
+    '''
+    tibanna = Tibanna(env=env)
+    file_bucket = tibanna.s3.outfile_bucket.replace('wfoutput', 'files')
+    tibanna.s3.outfile_bucket = file_bucket
+    uploaded_files = get_files_to_match(tibanna,
+                                        "search/?type=File&status=uploading",
+                                        frame="embedded")
+
+    limited_files = uploaded_files['@graph']
+
+    files_processed = 0
+    total_files = len(limited_files)
+    skipped_files = 0
+    for ufile in limited_files:
+        if files_processed > batch_size:
+            print("we have done enough here")
+            sys.exit(0)
+
+        if not tibanna.s3.does_key_exist(ufile.get('upload_key')):
+            print("******** no file for %s on s3, can't run md5, skipping" %
+                  ufile.get('accession'))
+            skipped_files += 1
+            continue
+        else:
+            print("running md5 for %s" % ufile.get('accession'))
+            run_md5(ctx, env, ufile.get('accession'), ufile.get('uuid'))
+            files_processed += 1
+            sleep(5)
+
+    print("Total Files: %s, Processed Files: %s, Skipped Files: %s" %
+          (total_files, files_processed, skipped_files))
+
+
+@task
 def batch_fastqc(ctx, env, batch_size=20):
     '''
     try to run fastqc on everythign that needs it ran
@@ -344,6 +382,7 @@ def batch_fastqc(ctx, env, batch_size=20):
             run_fastqc(ctx, env, ufile.get('accession'), ufile.get('uuid'))
         else:
             print("******** fastqc already run for %s skipping" % ufile.get('accession'))
+        sleep(5)
 
 
 @task
@@ -354,21 +393,28 @@ def run_fastqc(ctx, env, accession, uuid):
     return _run_workflow(input_json, accession)
 
 
-_workflows = {'md5': 'd3f25cd3-e726-4b3c-a022-48f844474b4',
-              'fastqc-0-11-4-1/1': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+_workflows = {'md5':
+              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
+               'arg_name': 'input_file'
+               },
+              'fastqc-0-11-4-1/1':
+              {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+               'arg_name': 'input_fastq'
+               },
               }
 
 
 def make_input(env, workflow, accession, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
-    workflow_uuid = _workflows[workflow]
+    workflow_uuid = _workflows[workflow]['uuid']
+    workflow_arg_name = _workflows[workflow]['arg_name']
 
     data = {"parameters": {},
             "app_name": workflow,
             "workflow_uuid": workflow_uuid,
             "input_files": [
-                {"workflow_argument_name": "input_fastq",
+                {"workflow_argument_name": workflow_arg_name,
                  "bucket_name": bucket,
                  "uuid": uuid,
                  "object_key": accession,

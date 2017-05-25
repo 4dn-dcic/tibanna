@@ -32,8 +32,6 @@ class s3Utils(object):
 
     def get_access_keys(self):
         name = 'illnevertell'
-        if is_prod():
-            name = 'illnevertell_prod'
         keys = self.get_key(keyfile_name=name)
         return keys
 
@@ -60,6 +58,14 @@ class s3Utils(object):
         response = s3.get_object(Bucket=self.outfile_bucket,
                                  Key=filename)
         return response['Body'].read()
+
+    def does_key_exist(self, key):
+        try:
+            s3.head_object(Bucket=self.outfile_bucket,
+                           Key=key)
+        except Exception:
+            return False
+        return True
 
     def s3_put(self, obj, upload_key):
         '''

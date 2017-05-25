@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
-
+import logging
+import json
+import random
 import boto3
 from core import sbg_utils, utils
 from core.utils import s3Utils, Tibanna
-import json
-import random
 
+LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
@@ -33,28 +34,32 @@ def handler(event, context):
 
     # represents the SBG info we need
     sbg = sbg_utils.create_sbg_workflow(app_name, tibanna.sbg_keys)
+    LOG.warn("sbg is %s" % sbg.__dict__)
 
     # represents the workflow metadata to be stored in fourfront
     parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
     workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    LOG.warn("workflow info  %s" % workflow_info.__dict__)
+    LOG.warn("sbg is %s" % sbg.__dict__)
     # This dictionary has a key 'arguments' with a value { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
 
     # get format-extension map
     try:
         fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
     except Exception as e:
-        print("Can't get format-extension map from file_processed schema. %s\n" % e)
+        LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
 
     # create the ff_meta output info
     input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
                     'value': fil['uuid']} for fil in input_file_list]
+    LOG.warn("input_files is %s" % input_files)
 
     # processed file metadata
+    output_files = []
     try:
         if workflow_info.has_key('arguments'):
-            output_files = []
             pf_meta = []
             for arg in workflow_info.get('arguments'):
                 if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
@@ -69,23 +74,24 @@ def handler(event, context):
                             of['upload_key'] = resp.get('upload_key')
                             of['value'] = resp.get('uuid')
                         except Exception as e:
-                            print("Failed to post Processed file metadata. %s\n" % e)
-                            print("resp" + str(resp) + "\n")
+                            LOG.error("Failed to post Processed file metadata. %s\n" % e)
+                            LOG.error("resp" + str(resp) + "\n")
+                            raise e
                         of['format'] = arg.get('argument_format')
                         of['extension'] = fe_map.get(arg.get('argument_format'))
                         pf_meta.append(pf)
                     output_files.append(of)
 
     except Exception as e:
-        print("output_files = " + str(output_files) + "\n")
-        print("Can't prepare output_files information. %s\n" % e)
+        LOG.error("output_files = " + str(output_files) + "\n")
+        LOG.error("Can't prepare output_files information. %s\n" % e)
+        raise e.with_traceback(e)
 
     # create workflow run metadata
-    try:
-        ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                          run_url=tibanna.settings.get('url', ''), output_files=output_files)
-    except Exception as e:
-        print("Can't create ffmeta. %s\n" % e)
+    ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                      run_url=tibanna.settings.get('url', ''), output_files=output_files)
+    LOG.info("ff_meta is %s" % ff_meta.__dict__)
+
 
     # store metadata so we know the run has started
     ff_meta.post(key=tibanna.ff_keys)
