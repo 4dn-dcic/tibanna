@@ -92,5 +92,3 @@ def test_handler(md5_event_data):
     assert data['workflow']['output_volume_id'] == data['workflow']['volume_list'][1]['id']
     assert (data['input_file_args'][0]['workflow_argument_name'] ==
             md5_event_data['input_files'][0]['workflow_argument_name'])
-    import pdb
-    pdb.set_trace()

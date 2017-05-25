@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
+import time
 import random
 import boto3
 from core import sbg_utils, utils
@@ -21,9 +22,9 @@ def handler(event, context):
     '''
     # get incomming data
     input_file_list = event.get('input_files')
-    app_name = event.get('app_name').encode('utf8')
+    app_name = event.get('app_name')
     parameter_dict = event.get('parameters')
-    workflow_uuid = event.get('workflow_uuid').encode('utf8')
+    workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
     tibanna_settings = event.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
@@ -32,6 +33,7 @@ def handler(event, context):
     tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
                       settings=tibanna_settings)
 
+    LOG.info("input data is %s" % event)
     # represents the SBG info we need
     sbg = sbg_utils.create_sbg_workflow(app_name, tibanna.sbg_keys)
     LOG.warn("sbg is %s" % sbg.__dict__)
@@ -41,8 +43,10 @@ def handler(event, context):
 
     # get argument format & type info from workflow
     workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
-    LOG.warn("workflow info  %s" % workflow_info.__dict__)
-    LOG.warn("sbg is %s" % sbg.__dict__)
+    LOG.warn("workflow info  %s" % workflow_info)
+    if 'error' in workflow_info.get('@type', []):
+        raise Exception("FATAL, can't lookupt workflow info for % fourfront" % workflow_uuid)
+
     # This dictionary has a key 'arguments' with a value { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
 
     # get format-extension map
