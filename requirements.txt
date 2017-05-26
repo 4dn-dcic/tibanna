@@ -20,7 +20,3 @@ jupyter
 pandas
 numpy
 matplotlib
-
-# for slackbot
-giphy
-urlparse
