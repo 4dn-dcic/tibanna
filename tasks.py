@@ -425,6 +425,7 @@ def batch_fastqc(ctx, env, batch_size=20):
 
     print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
 
+
 @task
 def run_fastqc(ctx, env, accession, uuid):
     if not accession.endswith(".fastq.gz"):
@@ -506,4 +507,3 @@ def notebook(ctx):
             run('jupyter notebook --ip=*', pty=True)
         except KeyboardInterrupt:
             pass
-
