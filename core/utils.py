@@ -63,7 +63,8 @@ class s3Utils(object):
         try:
             s3.head_object(Bucket=self.outfile_bucket,
                            Key=key)
-        except Exception:
+        except Exception as e:
+            print(str(e))
             return False
         return True
 
