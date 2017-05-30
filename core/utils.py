@@ -32,8 +32,6 @@ class s3Utils(object):
 
     def get_access_keys(self):
         name = 'illnevertell'
-        if is_prod():
-            name = 'illnevertell_prod'
         keys = self.get_key(keyfile_name=name)
         return keys
 
@@ -60,6 +58,15 @@ class s3Utils(object):
         response = s3.get_object(Bucket=self.outfile_bucket,
                                  Key=filename)
         return response['Body'].read()
+
+    def does_key_exist(self, key):
+        try:
+            s3.head_object(Bucket=self.outfile_bucket,
+                           Key=key)
+        except Exception as e:
+            print(str(e))
+            return False
+        return True
 
     def s3_put(self, obj, upload_key):
         '''
@@ -164,6 +171,21 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
     input_json = _tibanna_settings(input_json, force_inplace=True)
     run_name = input_json[_tibanna]['run_name']
 
+    # check to see if run already exists
+    # and if so change our name a bit
+    arn = "%s%s%s" % (base_arn % ('execution', str(workflow)),
+                      ":",
+                      run_name)
+    try:
+        response = client.describe_execution(
+                executionArn=arn
+        )
+        if response:
+            run_name += str(uuid4())
+            input_json[_tibanna]['run_name'] = run_name
+    except Exception as e:
+        pass
+
     # calculate what the url will be
     url = "%s%s%s%s" % (base_url,
                         base_arn % ('execution', str(workflow)),
@@ -193,7 +215,6 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
                 input_json[_tibanna]['url'] = url
                 aws_input = json.dumps(input_json)
 
-                # TODO: prompt for overwrite
                 response = client.start_execution(
                     stateMachineArn=STEP_FUNCTION_ARN,
                     name=run_name,

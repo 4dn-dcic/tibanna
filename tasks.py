@@ -10,9 +10,31 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
+from time import sleep
+from contextlib import contextmanager
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
+
+
+@contextmanager
+def setenv(**kwargs):
+    # Backup
+    prev = {}
+    for k, v in kwargs.items():
+        if k in os.environ:
+            prev[k] = os.environ[k]
+        os.environ[k] = v
+
+    yield
+
+    # Restore
+    for k in kwargs.keys():
+        if k in prev:
+            os.environ[k] = prev[k]
+        else:
+            del os.environ[k]
 
 
 def get_all_core_lambdas():
@@ -319,10 +341,61 @@ def run_md5(ctx, env, accession, uuid):
 
 
 @task
+def batch_md5(ctx, env, batch_size=20):
+    '''
+    try to run fastqc on everythign that needs it ran
+    '''
+    tibanna = Tibanna(env=env)
+    file_bucket = tibanna.s3.outfile_bucket.replace('wfoutput', 'files')
+    tibanna.s3.outfile_bucket = file_bucket
+    uploaded_files = get_files_to_match(tibanna,
+                                        "search/?type=File&status=uploading",
+                                        frame="embedded")
+
+    limited_files = uploaded_files['@graph']
+
+    files_processed = 0
+    total_files = len(limited_files)
+    skipped_files = 0
+    for ufile in limited_files:
+        if files_processed >= batch_size:
+            print("we have done enough here")
+            sys.exit(0)
+
+        if not tibanna.s3.does_key_exist(ufile.get('upload_key')):
+            print("******** no file for %s on s3, can't run md5, skipping" %
+                  ufile.get('accession'))
+            skipped_files += 1
+            continue
+        else:
+            print("running md5 for %s" % ufile.get('accession'))
+            run_md5(ctx, env, ufile.get('accession'), ufile.get('uuid'))
+            files_processed += 1
+            sleep(10)
+            if files_processed % 10 == 0:
+                sleep(60)
+
+    print("Total Files: %s, Processed Files: %s, Skipped Files: %s" %
+          (total_files, files_processed, skipped_files))
+
+
+@task
 def batch_fastqc(ctx, env, batch_size=20):
     '''
     try to run fastqc on everythign that needs it ran
     '''
+    files_processed = 0
+    files_skipped = 0
+
+    # handle ctrl-c
+    import signal
+
+    def report(signum, frame):
+        print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
+        sys.exit(-1)
+
+    signal.signal(signal.SIGINT, report)
+
     tibanna = Tibanna(env=env)
     uploaded_files = get_files_to_match(tibanna,
                                         "search/?type=File&status=uploaded&limit=%s" % batch_size,
@@ -342,8 +415,15 @@ def batch_fastqc(ctx, env, batch_size=20):
         if not fastqc_run:
             print("running fastqc for %s" % ufile.get('accession'))
             run_fastqc(ctx, env, ufile.get('accession'), ufile.get('uuid'))
+            files_processed += 1
         else:
             print("******** fastqc already run for %s skipping" % ufile.get('accession'))
+            files_skipped += 1
+        sleep(5)
+        if files_processed % 10 == 0:
+            sleep(60)
+
+    print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
 
 
 @task
@@ -354,21 +434,28 @@ def run_fastqc(ctx, env, accession, uuid):
     return _run_workflow(input_json, accession)
 
 
-_workflows = {'md5': 'd3f25cd3-e726-4b3c-a022-48f844474b4',
-              'fastqc-0-11-4-1/1': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+_workflows = {'md5':
+              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
+               'arg_name': 'input_file'
+               },
+              'fastqc-0-11-4-1/1':
+              {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+               'arg_name': 'input_fastq'
+               },
               }
 
 
 def make_input(env, workflow, accession, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
-    workflow_uuid = _workflows[workflow]
+    workflow_uuid = _workflows[workflow]['uuid']
+    workflow_arg_name = _workflows[workflow]['arg_name']
 
     data = {"parameters": {},
             "app_name": workflow,
             "workflow_uuid": workflow_uuid,
             "input_files": [
-                {"workflow_argument_name": "input_fastq",
+                {"workflow_argument_name": workflow_arg_name,
                  "bucket_name": bucket,
                  "uuid": uuid,
                  "object_key": accession,
@@ -403,3 +490,20 @@ def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
             }
     travis(data, None)
     # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
+
+
+@task(aliases=['notebooks'])
+def notebook(ctx):
+    """
+    Start IPython notebook server.
+    """
+    with setenv(PYTHONPATH='{root}/core:{root}:{root}/tests'.format(root=ROOT_DIR),
+                JUPYTER_CONFIG_DIR='{root}/notebooks'.format(root=ROOT_DIR)):
+
+        os.chdir('notebooks')
+
+        # Need pty=True to let Ctrl-C kill the notebook server. Shrugs.
+        try:
+            run('jupyter notebook --ip=*', pty=True)
+        except KeyboardInterrupt:
+            pass
