@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
-import time
 import random
 import boto3
 from core import sbg_utils, utils
