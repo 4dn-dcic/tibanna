@@ -1,4 +1,4 @@
-from core import sbg_utils
+from core import sbg_utils, ff_utils
 from core.utils import Tibanna
 import pytest
 from conftest import valid_env
@@ -62,8 +62,8 @@ def test_create_ff_meta_base_sbg_data(json_request, sbg_keys):
     app_name = json_request['app_name']
     sbg = sbg_utils.create_sbg_workflow(app_name, sbg_keys)
     parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = sbg_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                      input_files, parameters)
+    ff_meta = ff_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                     input_files, parameters)
 
     assert ff_meta.title.startswith(app_name)
     assert ff_meta.input_files == input_files
@@ -73,8 +73,8 @@ def test_create_ff_meta_base_sbg_data(json_request, sbg_keys):
 def test_create_ff_meta_pulls_data_from_sbg_object(workflow_event_data, json_request):
     sbg = sbg_utils.create_sbg_workflow(**workflow_event_data['workflow'])
     parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = sbg_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                      input_files, parameters)
+    ff_meta = ff_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
+                                     input_files, parameters)
     assert ff_meta
     assert ff_meta.title.startswith(sbg.app_name)
     assert ff_meta.input_files == input_files
@@ -160,7 +160,7 @@ def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
 
 def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
     meta = ff_meta_event_data['ff_meta']
-    ff_wfr = sbg_utils.WorkflowRunMetadata(**meta)
+    ff_wfr = ff_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
 
 

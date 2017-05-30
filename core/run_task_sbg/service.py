@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils, utils
+from core import sbg_utils, utils, ff_utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -23,7 +23,7 @@ def handler(event, context):
         raise Exception("Failed to create draft task with input %s" % sbg.task_input)
     run_response = sbg.run_task()
 
-    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = 'running'
 
     # make all the file export meta-data stuff here

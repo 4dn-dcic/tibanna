@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import utils, sbg_utils, ff_utils
+from core import utils, sbg_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_fastqc
@@ -46,7 +46,7 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
                         url=files['fastqc_report.html']['s3key'])
 
     # post fastq metadata
-    qc_meta = ff_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    qc_meta = sbg_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
@@ -115,7 +115,7 @@ def handler(event, context):
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
     sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
-    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     pf_meta = event.get('pf_meta')
     # ensure this bad boy is always initialized
     patch_meta = False

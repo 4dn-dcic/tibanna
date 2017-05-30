@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils, utils
+from core import sbg_utils, utils, ff_utils
 import boto3
 import json
 
@@ -18,7 +18,7 @@ def handler(event, context):
     sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     _api = sbg_utils.SBGAPI(tibanna.sbg_keys)
 
-    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     import_ids = sbg.import_id_list
     pf_meta = event.get('pf_meta')
 

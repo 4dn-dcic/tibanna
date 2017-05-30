@@ -3,8 +3,8 @@ import logging
 import json
 import random
 import boto3
-from core import sbg_utils, utils
-from core.utils import s3Utils, Tibanna
+from core import sbg_utils, ff_utils
+from core.utils import Tibanna
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -41,7 +41,7 @@ def handler(event, context):
     parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
-    workflow_info = sbg_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
     LOG.warn("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookupt workflow info for % fourfront" % workflow_uuid)
@@ -50,7 +50,7 @@ def handler(event, context):
 
     # get format-extension map
     try:
-        fe_map = sbg_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
+        fe_map = ff_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
     except Exception as e:
         LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
 
@@ -91,7 +91,7 @@ def handler(event, context):
         raise e.with_traceback(e)
 
     # create workflow run metadata
-    ff_meta = sbg_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+    ff_meta = ff_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
                                       run_url=tibanna.settings.get('url', ''), output_files=output_files)
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
