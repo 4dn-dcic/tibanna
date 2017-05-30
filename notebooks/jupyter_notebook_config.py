@@ -6,7 +6,7 @@
 c = get_config()
 c.NotebookApp.port = 7777
 c.NotebookApp.allow_origin = '*'
-c.NotebookApp.ip = '*'
+c.NotebookApp.ip = '127.0.0.1'
 #------------------------------------------------------------------------------
 # SingletonConfigurable configuration
 #------------------------------------------------------------------------------
