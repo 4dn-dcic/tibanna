@@ -3,7 +3,7 @@ from core.check_export_sbg.service import handler as check_export_handler
 import pytest
 from ..conftest import valid_env
 import json
-from core import ff_utils
+from core import sbg_utils
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def fastqc_payload():  # pylint: disable=fixme
 def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
     # lets make sure we have a valid fastqc file
     # TODO: figure out why this doesn't just return one object
-    fastqs = ff_utils.get_metadata("/search/?type=FileFastq&limit=1", ff_keys)['@graph'][0]
+    fastqs = sbg_utils.get_metadata("/search/?type=FileFastq&limit=1", ff_keys)['@graph'][0]
     fastqc_payload['ff_meta']
 
     filename = fastqs['upload_key'].split('/')[1]
@@ -83,7 +83,7 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
 
     # sbg = sbg_utils.create_sbg_workflow(**ret['workflow'])
     # accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
-    # original_file = ff_utils.get_metadata(accession, ff_keys)
+    # original_file = sbg_utils.get_metadata(accession, ff_keys)
 
 
 @valid_env

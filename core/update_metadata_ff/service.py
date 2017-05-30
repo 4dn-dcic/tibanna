@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils, utils
+from core import sbg_utils, utils, ff_utils
 import boto3
 
 s3 = boto3.resource('s3')
@@ -25,7 +25,7 @@ def handler(event, context):
     tibanna = utils.Tibanna(**tibanna_settings)
     sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     # run_response = event.get('run_response')
-    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     key = event.get('ff_keys')
     ff_keys = utils.get_access_keys() if not key else key
 
