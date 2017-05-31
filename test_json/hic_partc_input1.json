@@ -1,0 +1,17 @@
+{
+  "input_files": [
+    {
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "object_key": "4DNFIN232XXX.cool",
+      "uuid" : "0048955c-7cb6-4e56-a4d8-56fad52f1111",
+      "workflow_argument_name": "input_cool"
+    }
+  ],
+  "workflow_uuid": "1348354f-49e5-4c33-afab-9ec90d65faf3",
+  "app_name": "hi-c-processing-partc/2",
+  "parameters": {
+    "ncores": 8
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+  "_tibanna": {"env": "fourfront-webprod"}
+}
