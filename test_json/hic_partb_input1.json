@@ -2,15 +2,9 @@
   "input_files": [
     {
       "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
-      "object_key": "4DNFIN232ZZZ.pairs.txt.gz",
-      "uuid" : "0048955c-7cb6-4e56-a4d8-56fad52f9999",
+      "object_key": ["4DNFIN232ZZZ.pairs.txt.gz", "4DNFIN232ZZZ.pairs.txt.gz"],
+      "uuid" : ["0048955c-7cb6-4e56-a4d8-56fad52f9999", "0048955c-7cb6-4e56-a4d8-56fad52f9999"],
       "workflow_argument_name": "input_pairs"
-    },
-    {
-      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
-      "object_key": "4DNFIN232YYY.pairs.txt.gz.px2",
-      "uuid": "0048955c-7cb6-4e56-a4d8-56fad52f7777",
-      "workflow_argument_name": "input_pairs_index"
     },
     {
       "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
