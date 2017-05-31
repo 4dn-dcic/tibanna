@@ -20,7 +20,7 @@
     }
   ],
   "workflow_uuid": "b9829418-49e5-4c33-afab-9ec90d65faf3",
-  "app_name": "hi-c-processing-partb/18",
+  "app_name": "hi-c-processing-partb/19",
   "parameters": {
     "ncores": 8,
     "binsize": 5000,
