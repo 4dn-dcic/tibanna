@@ -1,7 +1,7 @@
 {
   "input_files": [
     {
-      "bucket_name": "elasticbeanstalk-encoded-4dn-files",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
       "object_key": "4DNFIN232XXX.cool",
       "uuid" : "0048955c-7cb6-4e56-a4d8-56fad52f1111",
       "workflow_argument_name": "input_cool"
