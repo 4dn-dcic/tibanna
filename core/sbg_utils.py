@@ -138,9 +138,28 @@ class SBGWorkflowRun(object):
             cleaned_workflow['task_input'] = ti.as_dict()
         return cleaned_workflow
 
-    def find_volumes(self, bucket_name, bucket_object_prefix=''):
-        volume_url = self.base_url + '/storage/volumes/'
-        print(volume_url)
+    def check_import(self, import_id):
+        data = json.dumps({"import_id": import_id})
+        import_url = self.base_url + "/storage/imports/" + import_id
+
+        res = requests.get(import_url, headers=self.header)
+        if res.status_code == 404:
+            # maybe we have a file and not an import let's check
+            file_url = '/files?project=%s&name=%s' % (self.project_id, import_id)
+            fresp = requests.get(self.base_url + file_url, headers=self.header)
+
+            if len(fresp.json().get('items', [])) >= 1:
+                the_file = fresp.json()['items'][0]
+                # we got a file, make it look like result from import completed
+                data = {'result': {'name': the_file['name'], 'id': the_file['id']}}
+            else:
+                raise Exception("file not found")
+        else:
+            data = res.json()
+            if data.get('state') != 'COMPLETED':
+                raise Exception("file still uploading")
+
+        return data
 
     def create_volumes(self, sbg_volume, bucket_name, public_key,
                        secret_key, bucket_object_prefix='', access_mode='rw'):
@@ -214,21 +233,23 @@ class SBGWorkflowRun(object):
                 "project": self.project_id,
                 "name": dest_upload_key
             },
-            "overwrite": True
+            "overwrite": False
         }
 
         # TODO: problem here is there maybe no import id... so how to handle that
         # in check import?
         # first check and see if the file exists
-        # file_url = '/files?project=%s&name=%s' % (self.project_id, dest_upload_key)
-        # fresp = requests.get(self.base_url + file_url, headers=self.header)
+        file_url = '/files?project=%s&name=%s' % (self.project_id, dest_upload_key)
+        fresp = requests.get(self.base_url + file_url, headers=self.header)
 
-        # if len(fresp.json().get('items', [])) >= 1:
-        #    import_id = fresp.json().get('items')[0]['id']
-        # else:
-        # import a new one
-        response = requests.post(import_url, headers=self.header, data=json.dumps(data))
-        import_id = response.json().get('id')
+        # this means our query returned  a file... so it's already imported
+        if len(fresp.json().get('items', [])) >= 1:
+            # just return a handle to the file
+            import_id = fresp.json().get('items')[0]['name']
+        else:
+            # import a new one
+            response = requests.post(import_url, headers=self.header, data=json.dumps(data))
+            import_id = response.json().get('id')
         if import_id:
             if import_id not in self.import_id_list:
                 self.import_id_list.append(import_id)
