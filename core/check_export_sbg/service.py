@@ -37,7 +37,7 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['upload_key'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
-    LOG.debug("accession is %s" % accession)
+    LOG.info("accession is %s" % accession)
 
     try:
         files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
@@ -47,26 +47,26 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     meta = parse_fastqc(files['summary.txt']['data'],
                         files['fastqc_data.txt']['data'],
                         url=files['fastqc_report.html']['s3key'])
-    LOG.debug("fastqc meta is %s" % meta)
+    LOG.info("fastqc meta is %s" % meta)
 
     # post fastq metadata
     qc_meta = ff_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
-    LOG.debug("qc_meta is %s" % qc_meta)
+    LOG.info("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
         original_file = ff_utils.get_metadata(accession, key=ff_key)
-        LOG.debug("original_file is %s" % original_file)
+        LOG.info("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
     patch_file = {'quality_metric': qc_meta['@id']}
     try:
-        sbg_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
     except Exception as e:
-        raise Exception("patch_metadata failed in fastqc_updater. %s. " +
-                        "original_file ={}\n".format(str(original_file)) % e)
+        raise Exception("patch_metadata failed in fastqc_updater." + str(e) +
+                        "original_file ={}\n".format(str(original_file)))
 
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
@@ -74,7 +74,7 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     retval = {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
               'output_files': output_files}
 
-    LOG.debug("retval is %s" % retval)
+    LOG.info("retval is %s" % retval)
     return retval
 
 
@@ -97,11 +97,11 @@ def md5_updater(status, sbg, ff_meta, tibanna):
             new_file['status'] = 'uploaded'
             new_file['content_md5sum'] = md5
 
-            sbg_utils.patch_metadata(new_file, accession, key=ff_key)
+            ff_utils.patch_metadata(new_file, accession, key=ff_key)
     elif status == 'upload failed':
             new_file = {}
             new_file['status'] = 'upload failed'
-            sbg_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
+            ff_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
 
     # nothing to patch to ff_meta
     return None

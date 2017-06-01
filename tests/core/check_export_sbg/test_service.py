@@ -89,8 +89,99 @@ def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
 @valid_env
 @pytest.mark.webtest
 def test_check_export_sbg_e2e(check_export_event_data, tibanna_env):
+    check_export_event_data = {
+  "pf_meta": [],
+  "ff_meta": {
+    "run_platform": "SBG",
+    "uuid": "7715c6be-a8e6-4f0b-9cb9-492f27a8f5bb",
+    "parameters": [],
+    "workflow": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
+    "title": "fastqc-0-11-4-1/1 run 2017-06-01 14:06:06.660061",
+    "sbg_import_ids": [
+      "WnyWnmVx4m4BR5vtSgXxceIiZHTGtsW3"
+    ],
+    "award": "1U01CA200059-01",
+    "sbg_task_id": "",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_sbg_workflow_2:fastqc-0-11-4-1-1_4DNFIZW9JOY1.fastq.gzd6576407-073e-4c68-9818-56923bec5236",
+    "lab": "4dn-dcic-lab",
+    "sbg_mounted_volume_ids": [
+      "4dnfizw9joy1",
+      "4dn_s3dtu0v08s"
+    ],
+    "run_status": "output_files_transferring",
+    "output_files": [
+      {
+        "upload_key": "7715c6be-a8e6-4f0b-9cb9-492f27a8f5bb/_3_4DNFIZW9JOY1_fastqc.zip",
+        "export_id": "Ju3oDbdlQu2RZX6P9zYkoQ9V5WIAPo5t",
+        "type": "Output QC file",
+        "workflow_argument_name": "report_zip"
+      }
+    ],
+    "sbg_export_ids": [],
+    "input_files": [
+      {
+        "workflow_argument_name": "input_fastq",
+        "value": "44e538aa-0e1f-4721-be34-b1d080b3ef66"
+      }
+    ]
+  },
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_sbg_workflow_2:fastqc-0-11-4-1-1_4DNFIZW9JOY1.fastq.gzd6576407-073e-4c68-9818-56923bec5236",
+      "run_type": "fastqc-0-11-4-1/1",
+      "run_name": "fastqc-0-11-4-1-1_4DNFIZW9JOY1.fastq.gzd6576407-073e-4c68-9818-56923bec5236",
+      "env": "fourfront-webdev",
+      "run_id": "4DNFIZW9JOY1.fastq.gz"
+    }
+  },
+  "workflow": {
+    "import_id_list": [
+      "WnyWnmVx4m4BR5vtSgXxceIiZHTGtsW3"
+    ],
+    "app_name": "fastqc-0-11-4-1/1",
+    "task_id": "cfdaaeef-1356-4d8f-9acf-e9086ccadc16",
+    "task_input": {
+      "project": "4dn-dcic/dev",
+      "inputs": {
+        "input_fastq": {
+          "path": "59301f50e4b04374442deb55",
+          "class": "File",
+          "name": "4DNFIZW9JOY1.fastq.gz"
+        }
+      },
+      "app": "4dn-dcic/dev/fastqc-0-11-4-1/1",
+      "name": "fastqc-0-11-4-1/1"
+    },
+    "volume_list": [
+      {
+        "id": "4dn-labor/4dnfizw9joy1",
+        "name": "4dnfizw9joy1"
+      },
+      {
+        "id": "4dn-labor/4dn_s3dtu0v08s",
+        "name": "4dn_s3dtu0v08s"
+      }
+    ],
+    "output_volume_id": "4dn-labor/4dn_s3dtu0v08s",
+    "export_report": [
+      {
+        "upload_key": "7715c6be-a8e6-4f0b-9cb9-492f27a8f5bb/_3_4DNFIZW9JOY1_fastqc.zip",
+        "export_id": "Ju3oDbdlQu2RZX6P9zYkoQ9V5WIAPo5t",
+        "workflow_argument_name": "report_zip"
+      }
+    ],
+    "project_id": "4dn-dcic/dev",
+    "export_id_list": [
+      "Ju3oDbdlQu2RZX6P9zYkoQ9V5WIAPo5t",
+      "Ju3oDbdlQu2RZX6P9zYkoQ9V5WIAPo5t"
+    ]
+  }
+}
     try:
-        check_export_event_data.update(tibanna_env)
+        #check_export_event_data.update(tibanna_env)
+        import pdb
+        pdb.set_trace()
         ret = check_export_handler(check_export_event_data, None)
     except KeyError as key_e:
         pytest.skip('Data issue, skipping test: %s' % key_e)
