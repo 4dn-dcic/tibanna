@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 from core import utils, sbg_utils, ff_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_fastqc
 
-
+LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
@@ -22,7 +23,7 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
         for pf in pf_meta:
-            pfo = sbg_utils.ProcessedFileMetadata(**pf)
+            pfo = ff_utils.ProcessedFileMetadata(**pf)
             pfo.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
@@ -36,6 +37,8 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['upload_key'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
+    LOG.debug("accession is %s" % accession)
+
     try:
         files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
     except Exception as e:
@@ -44,18 +47,20 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     meta = parse_fastqc(files['summary.txt']['data'],
                         files['fastqc_data.txt']['data'],
                         url=files['fastqc_report.html']['s3key'])
+    LOG.debug("fastqc meta is %s" % meta)
 
     # post fastq metadata
     qc_meta = ff_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
+    LOG.debug("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
         original_file = ff_utils.get_metadata(accession, key=ff_key)
+        LOG.debug("original_file is %s" % original_file)
     except Exception as e:
-        raise Exception("Couldn't get metadata for accession {} : ".format(accession) +
-                        "original_file ={}\n".format(str(original_file)) % e)
+        raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
     patch_file = {'quality_metric': qc_meta['@id']}
     try:
         sbg_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
@@ -66,12 +71,14 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
-    return {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
-            'output_files': output_files}
+    retval = {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
+              'output_files': output_files}
+
+    LOG.debug("retval is %s" % retval)
+    return retval
 
 
 def md5_updater(status, sbg, ff_meta, tibanna):
-
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file

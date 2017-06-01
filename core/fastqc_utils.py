@@ -17,8 +17,8 @@ def parse_fastqc(summary, data, url=''):
     given two fastqc output files, summary.txt (summary_upload_key)
     and fastqc_data.txt (data_upload_key) """
 
-    qc_key_list_in_data = ['Total Sequences', 'Sequences flagged as poor quality',
-                           'Sequence length', '%GC']
+    qc_key_list_in_data = ['Total Sequences', 'Sequences flagged as poor quality', '%GC']
+    must_be_string = 'Sequence length'
     qc_json = {}
     for line in summary.split('\n'):
         a = line.split('\t')
@@ -33,6 +33,8 @@ def parse_fastqc(summary, data, url=''):
         try:
             if a[0] in qc_key_list_in_data:
                 qc_json.update({a[0]: number(a[1])})
+            elif a[0] == must_be_string:
+                qc_json.update({a[0]: str(a[1])})
         except IndexError:  # pragma: no cover
             # maybe a blank line or something
             pass

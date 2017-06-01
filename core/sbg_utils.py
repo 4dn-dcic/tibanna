@@ -42,8 +42,8 @@ def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
     return (metadata_parameters, metadata_input)
 
 
-def create_sbg_volume_details(volume_suffix=None, volume_id=None):
-    prefix = '4dn_s3'
+def create_sbg_volume_details(volume_suffix=None, volume_id=None, volume_prefix='4dn_s3'):
+    prefix = volume_prefix
     account = '4dn-labor'
     id = ''
     name = ''
@@ -61,7 +61,7 @@ def create_sbg_volume_details(volume_suffix=None, volume_id=None):
         name = prefix + volume_suffix  # name of the volume to be mounted on sbg.
         id = account + '/' + name    # ID of the volume to be mounted on sbg.
 
-    return {'id': id, 'name': name}
+    return {'id': id.lower(), 'name': name.lower()}
 
 
 def create_sbg_workflow(app_name, token, task_id='', task_input=None,
@@ -138,6 +138,10 @@ class SBGWorkflowRun(object):
             cleaned_workflow['task_input'] = ti.as_dict()
         return cleaned_workflow
 
+    def find_volumes(self, bucket_name, bucket_object_prefix=''):
+        volume_url = self.base_url + '/storage/volumes/'
+        print(volume_url)
+
     def create_volumes(self, sbg_volume, bucket_name, public_key,
                        secret_key, bucket_object_prefix='', access_mode='rw'):
         '''
@@ -169,7 +173,15 @@ class SBGWorkflowRun(object):
         }
 
         try:
-            response = requests.post(volume_url, headers=self.header, data=json.dumps(data))
+            # first check and see if we have this volume already created
+            response = requests.get(volume_url+sbg_volume['id'], headers=self.header)
+            if response.status_code != 200:
+                # if not create it
+                response = requests.post(volume_url, headers=self.header, data=json.dumps(data))
+
+            # sometimes sevenbridges services go down..x?
+            if response.status_code == 503:
+                raise Exception(response.json())
             # update volume_list
             if sbg_volume not in self.volume_list:
                 self.volume_list.append(sbg_volume)
@@ -204,8 +216,18 @@ class SBGWorkflowRun(object):
             },
             "overwrite": True
         }
-        response = requests.post(import_url, headers=self.header, data=json.dumps(data))
 
+        # TODO: problem here is there maybe no import id... so how to handle that
+        # in check import?
+        # first check and see if the file exists
+        # file_url = '/files?project=%s&name=%s' % (self.project_id, dest_upload_key)
+        # fresp = requests.get(self.base_url + file_url, headers=self.header)
+
+        # if len(fresp.json().get('items', [])) >= 1:
+        #    import_id = fresp.json().get('items')[0]['id']
+        # else:
+        # import a new one
+        response = requests.post(import_url, headers=self.header, data=json.dumps(data))
         import_id = response.json().get('id')
         if import_id:
             if import_id not in self.import_id_list:
