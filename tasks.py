@@ -189,10 +189,10 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, run_tests=True):
+def deploy_core(ctx, name, version=None, no_tests=False):
     print("preparing for deploy...")
     print("make sure tests pass")
-    if run_tests:
+    if no_tests is False:
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
             return

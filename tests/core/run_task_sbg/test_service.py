@@ -8,9 +8,13 @@ import json
 @pytest.mark.webtest
 def test_run_task_sbg_e2e(run_task_event_data, tibanna_env):
     run_task_event_data.update(tibanna_env)
-    ret = handler(run_task_event_data, None)
-    assert json.dumps(ret)
-    assert ret['workflow']['task_input']
-    assert ret['workflow']['task_id']
-    assert ret['workflow']['output_volume_id']
-    assert ret['run_response']
+    try:
+        ret = handler(run_task_event_data, None)
+    except Exception as exc:
+        assert str(exc).startswith('Failed to create task')
+    else:
+        assert json.dumps(ret)
+        assert ret['workflow']['task_input']
+        assert ret['workflow']['task_id']
+        assert ret['workflow']['output_volume_id']
+        assert ret['run_response']
