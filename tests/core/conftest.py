@@ -49,6 +49,11 @@ def run_task_event_data(sbg_keys):
 
 
 @pytest.fixture(scope='session')
+def finalize_event_data(sbg_keys):
+    return get_event_file_for('finalize', sbg_keys)
+
+
+@pytest.fixture(scope='session')
 def check_task_event_data(sbg_keys):
     return get_event_file_for('check_task_sbg', sbg_keys)
 

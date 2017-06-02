@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import errno
 import sys
 import webbrowser
 import json
@@ -45,10 +46,11 @@ def get_all_core_lambdas():
             'update_metadata_ff',
             'export_files_sbg',
             'check_export_sbg',
+            'finalize',
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
             'start_run_awsf',
-            'deploy_prod',
+            'travis_deploy',
             ]
 
 
@@ -91,13 +93,28 @@ def loc(ctx):
 
 
 def copytree(src, dst, symlinks=False, ignore=None):
+    skipfiles = ['.coverage', 'dist', 'htmlcov', '__init__.pyc', 'coverage.xml', 'service.pyc']
     for item in os.listdir(src):
-        s = os.path.join(src, item)
-        d = os.path.join(dst, item)
-        if os.path.isdir(s):
-            shutil.copytree(s, d, symlinks, ignore)
+        src_file = os.path.join(src, item)
+        dst_file = os.path.join(dst, item)
+        if src_file.split('/')[-1] in skipfiles:
+            print("skipping file %s" % src_file)
+            continue
+        if os.path.isdir(src_file):
+            mkdir(dst_file)
+            shutil.copytree(src_file, dst_file, symlinks, ignore)
         else:
-            shutil.copy2(s, d)
+            shutil.copy2(src_file, dst_file)
+
+
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
 
 
 @task
@@ -105,8 +122,11 @@ def new_lambda(ctx, name, base='run_task_sbg'):
     '''
     create a new lambda by copy from a base one and replacing some core strings.
     '''
-    copytree(src='./core/%s' % base,
-             dst='./core/%s' % base)
+    src_dir = './core/%s' % base
+    dest_dir = './core/%s' % name
+    mkdir(dest_dir)
+    copytree(src=src_dir, dst=dest_dir)
+    chdir(dest_dir)
     # TODO: awk some lines here...
 
 

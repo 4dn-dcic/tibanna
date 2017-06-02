@@ -1,5 +1,5 @@
 {
-  "Comment": "Check md5 hash and validate that file is a fastq",
+  "Comment": "Start a workflow run on sbg, track it and update our metadata to reflect whats going on",
   "StartAt": "StartRunSbg",
   "States": {
 	"StartRunSbg": {
@@ -12,7 +12,7 @@
 		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_import_sbg",
 		"Retry": [
 		  {
-		    "ErrorEquals": ["UnhandledError"],
+		    "ErrorEquals": ["SBGStillRunningException"],
 		    "IntervalSeconds": 5,
 		    "MaxAttempts" : 10,
 		    "BackoffRate" : 2.0
@@ -30,7 +30,7 @@
 		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_sbg",
 		"Retry": [
 		  {
-		    "ErrorEquals": ["UnhandledError"],
+		    "ErrorEquals": ["SBGStillRunningException"],
 		    "IntervalSeconds": 60,
 		    "MaxAttempts" : 100,
 		    "BackoffRate" : 2.0
@@ -48,13 +48,19 @@
 		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_export_sbg",
 		"Retry": [
 		  {
-		    "ErrorEquals": ["UnhandledError"],
+		    "ErrorEquals": ["SBGStillRunningException"],
 		    "IntervalSeconds": 10,
 		    "MaxAttempts" : 100,
 		    "BackoffRate" : 2.0
 		   }
 		  ],
-          "Next": "ExportFilesSbg"
+          "Next": "Finalize"
+	},
+	"Finalize": {
+			"Type": "Task",
+			"Resource": "arn:aws:lambda:us-east-1:643366669028:function:finalize",
+			"End": true
 	}
+
   }
 }

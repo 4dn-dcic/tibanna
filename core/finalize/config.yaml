@@ -1,9 +1,9 @@
 region: us-east-1
 
-function_name: run_task_sbg 
+function_name: finalize 
 handler: service.handler
 role: lambda_full_s3
-description: after input files are imported, run the actual task on SBG 
+description: finalize the workflow run by updating the status to pass, donig some checks, maybe clean up sbg, that sort of stuff 
 
 # if access key and secret are left blank, boto will use the credentials
 # defined in the [default] section of ~/.aws/credentials.
@@ -12,4 +12,4 @@ aws_secret_access_key:
 
 # dist_directory: dist
 timeout: 60 
-memory_size: 256 
+memory_size: 256
