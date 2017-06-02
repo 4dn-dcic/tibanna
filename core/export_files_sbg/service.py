@@ -21,6 +21,9 @@ def handler(event, context):
     uuid = ff_meta['uuid']
     pf_meta = event.get('pf_meta')
 
+    import pdb
+    pdb.set_trace()
+
     if run_response in ['FAILED', 'ABORTED']:
         raise Exception("workflow run failed or aborted")
 
@@ -28,6 +31,8 @@ def handler(event, context):
     # creating after we export will add output file info to ff_meta
     ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
+    ff_meta.post(key=tibanna.ff_keys)
+
     for pf in pf_meta:
         pf['status'] = "uploading"
     # we still need a code for patching.

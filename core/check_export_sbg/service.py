@@ -127,6 +127,13 @@ def handler(event, context):
     # ensure this bad boy is always initialized
     patch_meta = False
 
+    if len(sbg.export_report) != len(ff_meta.output_files):
+        ff_meta.run_status = 'error'
+        ff_meta.description = "no files output"
+        ff_meta.post(key=tibanna.ff_keys)
+        raise Exception("Failing the workflow because sbg outputed files = %d and ffmeta = %d" %
+                        (len(sbg.export_report), len(ff_meta.output_files)))
+
     for idx, export in enumerate(sbg.export_report):
         upload_key = export['upload_key']
         export_id = export['export_id']
