@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from core import sbg_utils
+from core import sbg_utils, ff_utils
 from core.utils import Tibanna
 import boto3
 
@@ -26,7 +26,7 @@ def handler(event, context):
 
     sbg.export_all_output_files(run_response, ff_meta, base_dir=uuid)
     # creating after we export will add output file info to ff_meta
-    ff_meta = sbg_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = "output_files_transferring"
     for pf in pf_meta:
         pf['status'] = "uploading"

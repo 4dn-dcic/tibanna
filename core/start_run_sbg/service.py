@@ -70,7 +70,7 @@ def handler(event, context):
                     of['workflow_argument_name'] = arg.get('workflow_argument_name')
                     of['type'] = arg.get('argument_type')
                     if arg.has_key('argument_format'): # These are not processed files but report or QC files.
-                        pf = sbg_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
+                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
                         try:
                             resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                             resp = resp.get('@graph')[0]
@@ -88,7 +88,7 @@ def handler(event, context):
     except Exception as e:
         LOG.error("output_files = " + str(output_files) + "\n")
         LOG.error("Can't prepare output_files information. %s\n" % e)
-        raise e.with_traceback(e)
+        raise e
 
     # create workflow run metadata
     ff_meta = ff_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,

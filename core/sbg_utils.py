@@ -42,8 +42,8 @@ def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
     return (metadata_parameters, metadata_input)
 
 
-def create_sbg_volume_details(volume_suffix=None, volume_id=None):
-    prefix = '4dn_s3'
+def create_sbg_volume_details(volume_suffix=None, volume_id=None, volume_prefix='4dn_s3'):
+    prefix = volume_prefix
     account = '4dn-labor'
     id = ''
     name = ''
@@ -61,7 +61,7 @@ def create_sbg_volume_details(volume_suffix=None, volume_id=None):
         name = prefix + volume_suffix  # name of the volume to be mounted on sbg.
         id = account + '/' + name    # ID of the volume to be mounted on sbg.
 
-    return {'id': id, 'name': name}
+    return {'id': id.lower(), 'name': name.lower()}
 
 
 def create_sbg_workflow(app_name, token, task_id='', task_input=None,
@@ -138,6 +138,29 @@ class SBGWorkflowRun(object):
             cleaned_workflow['task_input'] = ti.as_dict()
         return cleaned_workflow
 
+    def check_import(self, import_id):
+        data = json.dumps({"import_id": import_id})
+        import_url = self.base_url + "/storage/imports/" + import_id
+
+        res = requests.get(import_url, headers=self.header)
+        if res.status_code == 404:
+            # maybe we have a file and not an import let's check
+            file_url = '/files?project=%s&name=%s' % (self.project_id, import_id)
+            fresp = requests.get(self.base_url + file_url, headers=self.header)
+
+            if len(fresp.json().get('items', [])) >= 1:
+                the_file = fresp.json()['items'][0]
+                # we got a file, make it look like result from import completed
+                data = {'result': {'name': the_file['name'], 'id': the_file['id']}}
+            else:
+                raise Exception("file not found")
+        else:
+            data = res.json()
+            if data.get('state') != 'COMPLETED':
+                raise Exception("file still uploading")
+
+        return data
+
     def create_volumes(self, sbg_volume, bucket_name, public_key,
                        secret_key, bucket_object_prefix='', access_mode='rw'):
         '''
@@ -169,7 +192,15 @@ class SBGWorkflowRun(object):
         }
 
         try:
-            response = requests.post(volume_url, headers=self.header, data=json.dumps(data))
+            # first check and see if we have this volume already created
+            response = requests.get(volume_url+sbg_volume['id'], headers=self.header)
+            if response.status_code != 200:
+                # if not create it
+                response = requests.post(volume_url, headers=self.header, data=json.dumps(data))
+
+            # sometimes sevenbridges services go down..x?
+            if response.status_code == 503:
+                raise Exception(response.json())
             # update volume_list
             if sbg_volume not in self.volume_list:
                 self.volume_list.append(sbg_volume)
@@ -202,11 +233,23 @@ class SBGWorkflowRun(object):
                 "project": self.project_id,
                 "name": dest_upload_key
             },
-            "overwrite": True
+            "overwrite": False
         }
-        response = requests.post(import_url, headers=self.header, data=json.dumps(data))
 
-        import_id = response.json().get('id')
+        # TODO: problem here is there maybe no import id... so how to handle that
+        # in check import?
+        # first check and see if the file exists
+        file_url = '/files?project=%s&name=%s' % (self.project_id, dest_upload_key)
+        fresp = requests.get(self.base_url + file_url, headers=self.header)
+
+        # this means our query returned  a file... so it's already imported
+        if len(fresp.json().get('items', [])) >= 1:
+            # just return a handle to the file
+            import_id = fresp.json().get('items')[0]['name']
+        else:
+            # import a new one
+            response = requests.post(import_url, headers=self.header, data=json.dumps(data))
+            import_id = response.json().get('id')
         if import_id:
             if import_id not in self.import_id_list:
                 self.import_id_list.append(import_id)
