@@ -22,6 +22,9 @@ def handler(event, context):
     if create_resp['status'] != 'DRAFT':
         raise Exception("Failed to create draft task with input %s" % sbg.task_input)
     run_response = sbg.run_task()
+    if run_response.status == 400:
+        raise Exception("Filed to create task with input %s\n detailed info is %s" %
+                        (sbg.task_input, run_response))
 
     ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = 'running'
