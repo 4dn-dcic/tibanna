@@ -188,7 +188,7 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_3'):
 
     # calculate what the url will be
     url = "%s%s%s%s" % (base_url,
-                        base_arn % ('execution', str(workflow)),
+                        BASE_ARN % ('execution', str(workflow)),
                         ":",
                         run_name)
 
@@ -211,7 +211,7 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_3'):
                 input_json[_tibanna]['run_name'] = run_name
 
                 # calculate what the url will be
-                url = "%s%s%s%s" % (base_url, (base_arn % 'execution'), ":", run_name)
+                url = "%s%s%s%s" % (base_url, (BASE_ARN % 'execution'), ":", run_name)
                 input_json[_tibanna]['url'] = url
                 aws_input = json.dumps(input_json)
 
