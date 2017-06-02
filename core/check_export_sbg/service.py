@@ -140,9 +140,11 @@ def handler(event, context):
                 pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
         elif status in ['PENDING', 'RUNNING']:
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta, tibanna)
-            raise Exception("Export of file %s is still running" % upload_key)
+            raise sbg_utils.SBGStillRunningException("Export of file %s is still running" % upload_key)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta, tibanna)
+            ff_meta.run_status = 'error'
+            ff_meta.post(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s \n sbg result: %s" % (upload_key, export_res))
 
     # if we got all the exports let's go ahead and update our ff_metadata object

@@ -1,4 +1,20 @@
-{"workflow": {"import_id_list": ["xFS8KAE2OtFB7FbRuOhCYKaibURP3ABR"],
+{
+     "ff_meta": {
+         "run_platform": "SBG",
+         "uuid": "82ac98b3-759e-4073-bf36-a3705db81b97",
+         "parameters": [],
+         "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41",
+         "title": "md5 run 2017-01-19 11:21:23.218047",
+         "sbg_import_ids": ["xFS8KAE2OtFB7FbRuOhCYKaibURP3ABR"],
+         "award": "1U01CA200059-01",
+         "sbg_task_id": "",
+         "lab": "4dn-dcic-lab",
+         "sbg_mounted_volume_ids": [],
+         "output_files": [],
+         "sbg_export_ids": [],
+         "input_files": []
+     },
+    "workflow": {"import_id_list": ["xFS8KAE2OtFB7FbRuOhCYKaibURP3ABR"],
 		"app_name": "md5",
 		"task_id": "c069885e-bbd4-4d16-9ed7-7fba5b56b177",
 		"task_input": {"project": "4dn-dcic/dev",

@@ -1,0 +1,128 @@
+{"pf_meta":
+    [{"status":
+        "uploaded", "uuid":
+        "0ffcc47d-723c-4a28-91fa-c4c81c89d031", "file_format":
+        "pairs", "accession":
+        "4DNFIROGA6DX", "lab":
+        "4dn-dcic-lab", "award":
+        "1U01CA200059-01"}, {"status":
+        "uploaded", "uuid":
+        "24aaf96d-0a0b-418f-9f32-a155ac09f2f2", "file_format":
+        "pairs_px2", "accession":
+        "4DNFIC6ZEMHR", "lab":
+        "4dn-dcic-lab", "award":
+        "1U01CA200059-01"}], "ff_meta":
+        {"run_platform":
+            "SBG", "uuid":
+            "38f7402a-383d-4f55-a46e-0ae749f122ad", "parameters":
+            [{"workflow_argument_name":
+                "nsplit", "value":
+                "100"}], "workflow":
+                "a9caf6f3-49e5-4c33-afab-9ec90d65faf3", "title":"hi-c-processing-parta-juicer/5 run 2017-06-01 20:1:7.975270", "sbg_import_ids":
+                ["4DNFI9DO1YH1.fastq.gz", "4DNFIB8AUUCG.fastq.gz", "4DNFIZQZ39L9.bwaIndex.tgz", "4DNFI823LSII.chrom.sizes", "4DNFI823L888.fasta.gz", "4DNFI823L811.txt"], "award":
+                "1U01CA200059-01", "sbg_task_id":
+                "", "run_url":
+                "https:/console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:ws:tates:s-east-1:43366669028:xecution:un_sbg_workflow_2:ic-parta_4DNFI9DO1YH1-4DNFIB8AUUCG", "lab":
+                "4dn-dcic-lab", "sbg_mounted_volume_ids":
+                ["4dn_s3ue4xn91w", "4dn_s3ugl9cb5w", "4dn_s31n9cshou", "4dn_s342r6gc8i", "4dn_s3wnmdbt3y", "4dn_s3ljje53zm", "4dn_s3fgqv18qr"], "run_status":
+                "output_file_transfer_finished", "output_files":
+                [{"extension":
+                    ".pairs.txt.gz", "format":
+                    "pairs", "workflow_argument_name":
+                    "out_pairs", "value":
+                    "0ffcc47d-723c-4a28-91fa-c4c81c89d031", "upload_key":
+                    "0ffcc47d-723c-4a28-91fa-c4c81c89d031/4DNFIROGA6DX.pairs.txt.gz", "export_id":
+                    "duFxNQ6CDxxVhCx2RwsejKei1Qzf3DdM", "type":
+                    "Output processed file"}, {"extension":
+                    ".pairs.txt.gz.px2", "format":
+                    "pairs_px2", "workflow_argument_name":
+                    "out_pairs_index", "value":
+                    "24aaf96d-0a0b-418f-9f32-a155ac09f2f2", "upload_key":
+                    "24aaf96d-0a0b-418f-9f32-a155ac09f2f2/4DNFIC6ZEMHR.pairs.txt.gz.px2", "export_id":
+                    "38KuWZK5OjBsiq11JkSz8YKgUyaZfB7Y", "type":
+                    "Output processed file"}], "sbg_export_ids":
+                    [], "input_files":
+                    [{"workflow_argument_name":
+                        "fastq1", "value":
+                        "3316bd3b-9329-44c3-b708-3ceef0022904"}, {"workflow_argument_name":
+                        "fastq2", "value":
+                        "c3c79f5b-023c-466f-a37e-968e30bd15b7"}, {"workflow_argument_name":
+                        "bwa_index", "value":
+                        "1f53df95-4cf3-41cc-971d-81bb16c486dd"}, {"workflow_argument_name":
+                        "chrsizes", "value":
+                        "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9"}, {"workflow_argument_name":
+                        "reference_fasta", "value":
+                        "4a6d10ee-2edb-4402-a98f-0edb1d58ddd2"}, {"workflow_argument_name":
+                        "restriction_file", "value":
+                        "4a6d10ee-2edb-4402-a98f-0edb1d582083"}]}, "_tibanna":
+                        {"env":
+                            "fourfront-webdev", "settings":
+                            {"url":
+                                "https:/console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:ws:tates:s-east-1:43366669028:xecution:un_sbg_workflow_2:ic-parta_4DNFI9DO1YH1-4DNFIB8AUUCG",
+                                "run_type":"hic-parta", "run_id":
+                                "4DNFI9DO1YH1-4DNFIB8AUUCG", "env":
+                                "fourfront-webdev", "run_name":
+                                "hic-parta_4DNFI9DO1YH1-4DNFIB8AUUCG"}}, "workflow":
+                                {"import_id_list":
+                                    ["4DNFI9DO1YH1.fastq.gz", "4DNFIB8AUUCG.fastq.gz", "4DNFIZQZ39L9.bwaIndex.tgz", "4DNFI823LSII.chrom.sizes", "4DNFI823L888.fasta.gz", "4DNFI823L811.txt"], "app_name":
+                                    "hi-c-processing-parta-juicer/5", "task_id":
+                                    "5a063edf-bd1c-4701-b73e-726775713d35", "task_input":
+                                    {"project":
+                                        "4dn-dcic/dev", "inputs":
+                                        {"nsplit":
+                                            100, "chrsizes":
+                                            {"path":
+                                                "59305cb6e4b01337c803e724", "class":
+                                                "File", "name":
+                                                "4DNFI823LSII.chrom.sizes"}, "bwa_index":
+                                                {"path":
+                                                    "59305cb3e4b01337c803e6b9", "class":
+                                                    "File", "name":
+                                                    "4DNFIZQZ39L9.bwaIndex.tgz"}, "restriction_file":
+                                                    {"path":
+                                                        "59305cbde4b01337c803e7e9", "class":
+                                                        "File", "name":
+                                                        "4DNFI823L811.txt"}, "reference_fasta":
+                                                        {"path":
+                                                            "59305cbae4b01337c803e79b", "class":
+                                                            "File", "name":
+                                                            "4DNFI823L888.fasta.gz"}, "fastq2":
+                                                            {"path":
+                                                                "592f19b9e4b09a1f07975113", "class":
+                                                                "File", "name":
+                                                                "4DNFIB8AUUCG.fastq.gz"}, "fastq1":
+                                                                {"path":
+                                                                    "5930673ee4b043744434ed48", "class":
+                                                                    "File", "name":
+                                                                    "4DNFI9DO1YH1.fastq.gz"}}, "app":
+                                                                    "4dn-dcic/dev/hi-c-processing-parta-juicer/5", "name":
+                                                                    "hi-c-processing-parta-juicer/5"}, "volume_list":
+                                                                    [{"id":
+                                                                        "4dn-labor/4dn_s3ue4xn91w", "name":
+                                                                        "4dn_s3ue4xn91w"}, {"id":
+                                                                        "4dn-labor/4dn_s3ugl9cb5w", "name":
+                                                                        "4dn_s3ugl9cb5w"}, {"id":
+                                                                        "4dn-labor/4dn_s31n9cshou", "name":
+                                                                        "4dn_s31n9cshou"}, {"id":
+                                                                        "4dn-labor/4dn_s342r6gc8i", "name":
+                                                                        "4dn_s342r6gc8i"}, {"id":
+                                                                        "4dn-labor/4dn_s3wnmdbt3y", "name":
+                                                                        "4dn_s3wnmdbt3y"}, {"id":
+                                                                        "4dn-labor/4dn_s3ljje53zm", "name":
+                                                                        "4dn_s3ljje53zm"}, {"id":
+                                                                        "4dn-labor/4dn_s3fgqv18qr", "name":
+                                                                        "4dn_s3fgqv18qr"}], "output_volume_id":
+                                                                        "4dn-labor/4dn_s3fgqv18qr", "export_report":
+                                                                        [{"status":
+                                                                            "COMPLETED", "upload_key":
+                                                                            "24aaf96d-0a0b-418f-9f32-a155ac09f2f2/4DNFIC6ZEMHR.pairs.txt.gz.px2", "export_id":
+                                                                            "38KuWZK5OjBsiq11JkSz8YKgUyaZfB7Y", "workflow_argument_name":
+                                                                            "out_pairs_index", "value":
+                                                                            "24aaf96d-0a0b-418f-9f32-a155ac09f2f2"}, {"status":
+                                                                            "COMPLETED", "upload_key":
+                                                                            "0ffcc47d-723c-4a28-91fa-c4c81c89d031/4DNFIROGA6DX.pairs.txt.gz", "export_id":
+                                                                            "duFxNQ6CDxxVhCx2RwsejKei1Qzf3DdM", "workflow_argument_name":
+                                                                            "out_pairs", "value":
+                                                                            "0ffcc47d-723c-4a28-91fa-c4c81c89d031"}], "project_id":
+                                                                            "4dn-dcic/dev", "export_id_list":
+                                                                            ["38KuWZK5OjBsiq11JkSz8YKgUyaZfB7Y", "38KuWZK5OjBsiq11JkSz8YKgUyaZfB7Y", "duFxNQ6CDxxVhCx2RwsejKei1Qzf3DdM", "duFxNQ6CDxxVhCx2RwsejKei1Qzf3DdM"]}}

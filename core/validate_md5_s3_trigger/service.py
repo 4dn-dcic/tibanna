@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import boto3
 import json
+from core.utils import STEP_FUNCTION_ARN
 
 client = boto3.client('stepfunctions', region_name='us-east-1')
-STEP_FUNCTION_ARN = 'arn:aws:states:us-east-1:643366669028:stateMachine:run_sbg_workflow_2'
 
 
 def handler(event, context):

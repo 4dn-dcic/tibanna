@@ -10,16 +10,8 @@ import random
 SBG_PROJECT_ID = "4dn-dcic/dev"
 
 
-class SBGAPI(object):
-    base_url = "https://api.sbgenomics.com/v2"
-
-    def __init__(self, token):
-        self.token = token
-        self.header = {"X-SBG-Auth-Token": token, "Content-type": "application/json"}
-
-    def _get(self, partial_url, data):
-        url = self.base_url + partial_url
-        return requests.get(url, headers=self.header, data=json.dumps(data))
+class SBGStillRunningException(Exception):
+    pass
 
 
 def to_sbg_workflow_args(parameter_dict, vals_as_string=False):
@@ -157,7 +149,7 @@ class SBGWorkflowRun(object):
         else:
             data = res.json()
             if data.get('state') != 'COMPLETED':
-                raise Exception("file still uploading")
+                raise SBGStillRunningException("file still uploading")
 
         return data
 

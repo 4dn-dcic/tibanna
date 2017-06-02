@@ -13,6 +13,9 @@ from .ff_utils import get_metadata
 # Config
 ###########################
 s3 = boto3.client('s3')
+BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
+WORKFLOW_NAME = 'run_sbg_workflow_3'
+STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 
 
 class s3Utils(object):
@@ -155,14 +158,12 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
+def run_workflow(input_json, accession='', workflow='run_sbg_workflow_3'):
     '''
     accession is unique name that we be part of run id
     '''
     client = boto3.client('stepfunctions', region_name='us-east-1')
-    # base_arn = 'arn:aws:states:us-east-1:643366669028:%s:run_sbg_workflow_2'
-    base_arn = 'arn:aws:states:us-east-1:643366669028:%s:%s'
-    STEP_FUNCTION_ARN = base_arn % ('stateMachine', str(workflow))
+    STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', str(workflow))
     base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
 
     # build from appropriate input json
@@ -172,7 +173,7 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_2'):
 
     # check to see if run already exists
     # and if so change our name a bit
-    arn = "%s%s%s" % (base_arn % ('execution', str(workflow)),
+    arn = "%s%s%s" % (BASE_ARN % ('execution', str(workflow)),
                       ":",
                       run_name)
     try:
