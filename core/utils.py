@@ -7,6 +7,7 @@ from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
 from .ff_utils import get_metadata
+import logging
 
 
 ###########################
@@ -16,6 +17,7 @@ s3 = boto3.client('s3')
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
 WORKFLOW_NAME = 'run_sbg_workflow_3'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
+LOG = logging.getLogger(__name__)
 
 
 class s3Utils(object):
@@ -59,6 +61,7 @@ class s3Utils(object):
     def read_s3(self, filename):
         response = s3.get_object(Bucket=self.outfile_bucket,
                                  Key=filename)
+        LOG.info(str(response))
         return response['Body'].read()
 
     def does_key_exist(self, key):

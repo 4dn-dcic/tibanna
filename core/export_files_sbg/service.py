@@ -21,9 +21,6 @@ def handler(event, context):
     uuid = ff_meta['uuid']
     pf_meta = event.get('pf_meta')
 
-    import pdb
-    pdb.set_trace()
-
     if run_response in ['FAILED', 'ABORTED']:
         raise Exception("workflow run failed or aborted")
 

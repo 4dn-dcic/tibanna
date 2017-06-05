@@ -97,7 +97,15 @@ def md5_updater(status, sbg, ff_meta, tibanna):
             new_file['status'] = 'uploaded'
             new_file['content_md5sum'] = md5
 
-            ff_utils.patch_metadata(new_file, accession, key=ff_key)
+            try:
+                ff_utils.patch_metadata(new_file, accession, key=ff_key)
+            except Exception as e:
+                # TODO specific excpetion
+                # if patch fails try to patch worfklow status as failed
+                new_file = {}
+                new_file['status'] = 'upload failed'
+                new_file['description'] = str(e)
+                ff_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
     elif status == 'upload failed':
             new_file = {}
             new_file['status'] = 'upload failed'
