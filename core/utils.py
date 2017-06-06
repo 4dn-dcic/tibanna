@@ -73,18 +73,27 @@ class s3Utils(object):
             return False
         return True
 
-    def s3_put(self, obj, upload_key):
+    def s3_put(self, obj, upload_key, acl=None):
         '''
         try to guess content type
         '''
         content_type = mimetypes.guess_type(upload_key)[0]
         if content_type is None:
             content_type = 'binary/octet-stream'
-        s3.put_object(Bucket=self.outfile_bucket,
-                      Key=upload_key,
-                      Body=obj,
-                      ContentType=content_type
-                      )
+        if acl:
+            # we use this to set some of the object as public
+            s3.put_object(Bucket=self.outfile_bucket,
+                          Key=upload_key,
+                          Body=obj,
+                          ContentType=content_type,
+                          ACL=acl
+                          )
+        else:
+            s3.put_object(Bucket=self.outfile_bucket,
+                          Key=upload_key,
+                          Body=obj,
+                          ContentType=content_type
+                          )
 
     def s3_read_dir(self, prefix):
         return s3.list_objects(Bucket=self.outfile_bucket,
@@ -120,7 +129,7 @@ class s3Utils(object):
                 ret_files[name] = zipstream.open(zipped_filename).read()
         return ret_files
 
-    def unzip_s3_to_s3(self, zipped_s3key, dest_dir, retfile_names=None):
+    def unzip_s3_to_s3(self, zipped_s3key, dest_dir, retfile_names=None, acl=None):
         if retfile_names is None:
             retfile_names = []
 
@@ -150,7 +159,7 @@ class s3Utils(object):
                 if file_to_find in retfile_names:
                     ret_files[file_to_find] = {'s3key': s3_key,
                                                'data': the_file}
-                self.s3_put(the_file, s3_file_name)
+                self.s3_put(the_file, s3_file_name, acl=acl)
 
         return ret_files
 

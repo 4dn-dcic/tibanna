@@ -31,6 +31,9 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
 
 
 def fastqc_updater(status, sbg, ff_meta, tibanna):
+    if status == 'uploading':
+        # wait until this bad boy is finished
+        return
     # keys
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
@@ -40,8 +43,10 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     LOG.info("accession is %s" % accession)
 
     try:
-        files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse)
+        files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
+                                          acl='public-read')
     except Exception as e:
+        LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
     # parse fastqc metadata
     meta = parse_fastqc(files['summary.txt']['data'],
