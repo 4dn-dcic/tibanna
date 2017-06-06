@@ -28,6 +28,7 @@ def handler(event, context):
 
     ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = 'running'
+    ff_meta.sbg_task_id = run_response.get('id')
 
     # make all the file export meta-data stuff here
     # TODO: fix ff_meta mapping issue
