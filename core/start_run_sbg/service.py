@@ -54,11 +54,6 @@ def handler(event, context):
     except Exception as e:
         LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
 
-    # create the ff_meta output info
-    input_files = [{'workflow_argument_name': fil['workflow_argument_name'],
-                    'value': fil['uuid']} for fil in input_file_list]
-    LOG.warn("input_files is %s" % input_files)
-
     # processed file metadata
     output_files = []
     try:
@@ -90,17 +85,23 @@ def handler(event, context):
         LOG.error("Can't prepare output_files information. %s\n" % e)
         raise e
 
-    # create workflow run metadata
-    ff_meta = ff_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
-                                      run_url=tibanna.settings.get('url', ''), output_files=output_files)
-    LOG.info("ff_meta is %s" % ff_meta.__dict__)
+    # create the ff_meta output info
+    input_files = []
+    for input_file in input_file_list:
+        for uuid in ensure_list(input_file['uuid']):
+            input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
+                                'value': uuid})
+    LOG.warn("input_files is %s" % input_files)
 
+    ff_meta = ff_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
+                                     run_url=tibanna.settings.get('url', ''), output_files=output_files)
+    LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
     ff_meta.post(key=tibanna.ff_keys)
 
     # mount all input files to sbg this will also update sbg to store the import_ids
-    _ = [mount_on_sbg(infile, tibanna.s3_keys, sbg) for infile in input_file_list]
+    [mount_on_sbg(infile, tibanna.s3_keys, sbg) for infile in input_file_list]
 
     # create a link to the output directory as well
     if output_bucket:
@@ -118,7 +119,7 @@ def handler(event, context):
     return {"input_file_args": input_file_list,
             "workflow": sbg.as_dict(),
             "ff_meta": ff_meta.as_dict(),
-            'pf_meta': [pf.as_dict() for pf in pf_meta],
+            'pf_meta': [meta.as_dict() for meta in pf_meta],
             "_tibanna": tibanna.as_dict(),
             "parameter_dict": parameter_dict}
 
@@ -126,6 +127,10 @@ def handler(event, context):
 #################
 # Extra Functions
 #################
+def ensure_list(val):
+    if isinstance(val, (list, tuple)):
+        return val
+    return [val]
 
 def mount_on_sbg(input_file, s3_keys, sbg):
     # get important info from input_file json
@@ -226,7 +231,7 @@ def generate_rand_accession ():
 def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_report, sbg_volume, wr):
 
     outputfiles=[]
-    processed_files = []    
+    processed_files = []
     export_id_list = []
 
     report_dict = sbg_run_detail_resp
