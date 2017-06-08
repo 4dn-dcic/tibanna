@@ -20,6 +20,12 @@ STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 LOG = logging.getLogger(__name__)
 
 
+def ensure_list(val):
+    if isinstance(val, (list, tuple)):
+        return val
+    return [val]
+
+
 class s3Utils(object):
 
     def __init__(self, outfile_bucket=None, sys_bucket=None, env=None):

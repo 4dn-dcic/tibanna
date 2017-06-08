@@ -1,5 +1,5 @@
 from core import sbg_utils, ff_utils
-from core.utils import Tibanna
+from core.utils import Tibanna, ensure_list
 import pytest
 from conftest import valid_env
 
@@ -179,3 +179,10 @@ def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):
     assert not sbg_dict.get('header')
     assert not sbg_dict.get('token')
     assert sbg_dict.get('output_volume_id') == wf['output_volume_id']
+
+
+def test_ensure_list():
+    assert ensure_list(5) == [5]
+    assert ensure_list('hello') == ['hello']
+    assert ensure_list(['hello']) == ['hello']
+    assert ensure_list({'a': 'b'}) == [{'a': 'b'}]

@@ -39,7 +39,6 @@ def multi_infile_data():
           "uuid": "0626affd-5208-48a0-9081-9e03475fbeaa",
           "workflow_argument_name": "input_file"
         }
-
       ],
       "app_name": "md5",
       "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",

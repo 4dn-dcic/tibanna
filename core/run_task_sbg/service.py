@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from core import sbg_utils, utils, ff_utils
 import boto3
+import logging
+LOG = logging.getLogger(__name__)
 
 s3 = boto3.resource('s3')
 
@@ -17,14 +19,21 @@ def handler(event, context):
 
     pf_meta = event.get('pf_meta')
 
+    # add name to this task if it doesn't exist
+    if ((not sbg.task_input.name) and tibanna.settings):
+        sbg.task_input.name = tibanna.settings.get('run_name')
+
     # create task on SBG
+    LOG.info("sbg task input is %s" % sbg.task_input.__dict__)
     create_resp = sbg.create_task(sbg.task_input)
+    LOG.info("create task response is %s" % create_resp)
     if create_resp['status'] != 'DRAFT':
-        raise Exception("Failed to create draft task with input %s" % sbg.task_input)
+        raise Exception("Failed to create draft task with input %s" % sbg.task_input.__dict__)
     run_response = sbg.run_task()
+    LOG.info("run task respons is %s" % run_response)
     if run_response.get('status', 0) == 400:
         raise Exception("Failed to create task with input %s\n detailed info is %s" %
-                        (sbg.task_input, run_response))
+                        (sbg.task_input.__dict__, run_response))
 
     ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
     ff_meta.run_status = 'running'

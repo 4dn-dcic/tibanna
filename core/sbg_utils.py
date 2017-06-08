@@ -3,6 +3,7 @@ import json
 import datetime
 import requests
 import random
+from core.utils import ensure_list
 
 ###########################
 # Config
@@ -415,30 +416,6 @@ class SBGWorkflowRun(object):
         return response.json()
 
     '''
-    def fill_processed_file_metadata(self, bucket_name, workflow_run_uuid):
-        processed_files=[]
-        fill_report={}
-        for file in self.export_report:
-            upload_key = file['upload_key']
-            export_id = file['export_id']
-            status = self.get_export_status(export_id)
-            accession=generate_rand_accession()
-            uuid=str(uuid4())
-            fill_report[upload_key] = {"export_id": export_id, "status": status, "accession": accession, "uuid": uuid}
-            # create a meta data file object
-            # metadata = FileProcessedMetadata(uuid, accession, upload_key,
-            # "uploading", workflow_run_uuid)
-            # if I add workflow_run_uuis, I get an error message like :
-            # '577c2684-49e5-4c33-afab-9ec90d65faf3' is not of type 'WorkflowRun'
-
-            metadata = FileProcessedMetadata(uuid, accession, upload_key, "uploading")
-            print(metadata.__dict__)
-            processed_files.append(metadata.__dict__)
-        return ({"metadata": processed_files,"report": fill_report })
-
-
-
-
     def delete_volumes(self):
         response_all=[]
         for sbg_volume in self.volume_list:
@@ -497,27 +474,25 @@ class SBGTaskInput(object):
     def add_input(self, new_input):
         self.inputs.update(new_input)
 
-    def add_inputfile(self, upload_key, file_id, argument_name):
-        new_input = {argument_name: {"class": "File", "name": upload_key, "path": file_id}}
-        if self.check_validity_inputfile(new_input):
-            self.add_input(new_input)
+    def add_inputfile(self, upload_key, file_id, argument_name, is_list=False):
+        '''
+        create appropriate input for sbg task for the specified file.  Some inputs should
+        be file arrays, i.e. a list of files attached to a single input argument_name.  so if
+        is_list is true create those as a list, otherwise create the "standard" file input
+        '''
+
+        if is_list:
+            input_list = ensure_list(self.inputs.get(argument_name, []))
+            input_list.append({"class": "File", "name": upload_key, "path": file_id})
+            new_input = {argument_name: input_list}
         else:
-            raise Exception("Error: input format for SBGTaskInput not valid")
+            new_input = {argument_name: {"class": "File", "name": upload_key, "path": file_id}}
+
+        self.add_input(new_input)
 
     def add_inputparam(self, param_name, argument_name):
         new_input = {argument_name: param_name}
         self.add_input(new_input)
-
-    def check_validity_inputfile(self, ip):
-        if (isinstance(ip, dict) and
-                len(ip) == 1 and
-                isinstance(ip.values()[0], dict) and
-                'class' in ip.values()[0].keys() and
-                'name' in ip.values()[0].keys() and
-                'path' in ip.values()[0].keys()):
-            return True
-        else:
-            return False
 
     def sbg2workflowrun(self, wr):
         wr.title = self.app_name + " run " + str(datetime.datetime.now())

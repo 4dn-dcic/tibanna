@@ -37,9 +37,12 @@ def handler(event, context):
         sbg_file_name = results.get('name')
         sbg_file_id = results.get('id')
         arg_name = input_file_args[idx].get('workflow_argument_name')
-        # arg_uuid = input_file_args[idx].get('uuid')
-        task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name)
+        arg_uuids = input_file_args[idx].get('uuid')
+        # we need to know if this is a list so we can build proper task inputs for sbg
+        is_list = isinstance(arg_uuids, (list, tuple))
+        task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name, is_list)
         sbg.task_input = task_input
+
         # ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
         # Soo: This information was alreadyin ff_meta that was passed into this function.
 

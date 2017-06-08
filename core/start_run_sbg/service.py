@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 import json
-import random
 import boto3
 from core import sbg_utils, ff_utils
-from core.utils import Tibanna
+from core.utils import Tibanna, ensure_list
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -35,36 +34,41 @@ def handler(event, context):
     LOG.info("input data is %s" % event)
     # represents the SBG info we need
     sbg = sbg_utils.create_sbg_workflow(app_name, tibanna.sbg_keys)
-    LOG.warn("sbg is %s" % sbg.__dict__)
+    LOG.info("sbg is %s" % sbg.__dict__)
 
     # represents the workflow metadata to be stored in fourfront
     parameters, _ = sbg_utils.to_sbg_workflow_args(parameter_dict, vals_as_string=True)
 
     # get argument format & type info from workflow
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
-    LOG.warn("workflow info  %s" % workflow_info)
+    LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookupt workflow info for % fourfront" % workflow_uuid)
 
-    # This dictionary has a key 'arguments' with a value { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
+    # This dictionary has a key 'arguments' with a value
+    # { 'workflow_argument_name': ..., 'argument_type': ..., 'argument_format': ... }
 
     # get format-extension map
     try:
-        fe_map = ff_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys).get('file_format_file_extension')
+        fp_schema = ff_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys)
+        fe_map = fp_schema.get('file_format_file_extension')
     except Exception as e:
         LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
 
     # processed file metadata
     output_files = []
     try:
-        if workflow_info.has_key('arguments'):
+        if 'arguments' in workflow_info:
             pf_meta = []
             for arg in workflow_info.get('arguments'):
-                if arg.has_key('argument_type') and arg['argument_type'] in ['Output processed file','Output report file','Output QC file']:
+                if (arg.get('argument_type') in
+                   ['Output processed file', 'Output report file', 'Output QC file']):
+
                     of = dict()
                     of['workflow_argument_name'] = arg.get('workflow_argument_name')
                     of['type'] = arg.get('argument_type')
-                    if arg.has_key('argument_format'): # These are not processed files but report or QC files.
+                    if 'argument_format' in arg:
+                        # These are not processed files but report or QC files.
                         pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
                         try:
                             resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
@@ -88,10 +92,10 @@ def handler(event, context):
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
-        for uuid in ensure_list(input_file['uuid']):
+        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
             input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
-                                'value': uuid})
-    LOG.warn("input_files is %s" % input_files)
+                                'value': uuid, 'ordinal': idx + 1})
+    LOG.info("input_files is %s" % input_files)
 
     ff_meta = ff_utils.create_ffmeta(sbg, workflow_uuid, input_files, parameters,
                                      run_url=tibanna.settings.get('url', ''), output_files=output_files)
@@ -127,16 +131,19 @@ def handler(event, context):
 #################
 # Extra Functions
 #################
-def ensure_list(val):
-    if isinstance(val, (list, tuple)):
-        return val
-    return [val]
+
 
 def mount_on_sbg(input_file, s3_keys, sbg):
     # get important info from input_file json
-    bucket = input_file.get('bucket_name').encode('utf8')
-    key = input_file.get('object_key').encode('utf8')
-    key_uuid = input_file.get('uuid').encode('utf8')
+    bucket = input_file.get('bucket_name')
+    keys = ensure_list(input_file.get('object_key'))
+    key_uuids = ensure_list(input_file.get('uuid'))
+
+    for key, key_uuid in zip(keys, key_uuids):
+        mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg)
+
+
+def mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg):
     s3_key = "%s/%s" % (key_uuid, key)
 
     # check the bucket and key exists
@@ -165,72 +172,25 @@ class FileProcessedMetadata(object):
         self.accession = accession
         self.upload_key = upload_key
         self.file_format = "other"  # we will deal with this later
-        self.status = status 
+        self.status = status
         if workflow_run_uuid is not None:
             self.workflow_run = workflow_run_uuid
         # default assign to 4dn-dcic - later change to input file submitter
         self.notes = "sample dcic notes"
-        self.lab= "4dn-dcic-lab"
-        self.submitted_by= "4dndcic@gmail.com"
-        self.award= "1U01CA200059-01"
+        self.lab = "4dn-dcic-lab"
+        self.submitted_by = "4dndcic@gmail.com"
+        self.award = "1U01CA200059-01"
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 
-# function that grabs SBG token from a designated S3 bucket
-def get_sbg_token(s3):
-    try:
-        s3.Bucket(bucket_for_token).download_file(object_for_token, '/tmp/'+ object_for_token)    # lambda doesn't have write access to every place, so use /tmp/.
-        with open('/tmp/' + object_for_token, 'r') as f:    
-            token = f.readline().rstrip()
-        return token
-    except Exception as e:
-        print(e)
-        print('Error getting token from S3.')
-        raise e
-
-
-def get_keypairs_file (s3):
-    try:
-        file_location = '/tmp/'+ object_for_keypairs
-        s3.Bucket(bucket_for_keypairs).download_file(object_for_keypairs, file_location)    # lambda doesn't have write access to every place, so use /tmp/.
-        return file_location
-
-    except Exception as e:
-        print(e)
-        print('Error getting token from S3.')
-        raise e
-
-
-def get_access_key (s3):
-    try:
-        s3.Bucket(bucket_for_token).download_file(object_for_access_key, '/tmp/'+ object_for_access_key)
-        with open('/tmp/' + object_for_access_key, 'r') as f:
-            access_key = f.read().splitlines()
-        return access_key
-
-    except Exception as e:
-        print(e)
-        print('Error getting access key from S3.')
-        raise e
-
-
-
-def generate_rand_accession ():
-    rand_accession=''
-    for i in xrange(8):
-        r=random.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
-        rand_accession += r
-    accession = "4DNF"+rand_accession
-    return accession
-
-
-# This function returns a new workflow_run dictionary; it should be updated so that existing workflow_run objects are modified.
+# This function returns a new workflow_run dictionary; it should be updated
+# so that existing workflow_run objects are modified.
 # Input files are omitted here. They should already be in the workflow_run.
 def get_output_patch_for_workflow_run(sbg_run_detail_resp, processed_files_report, sbg_volume, wr):
 
-    outputfiles=[]
+    outputfiles = []
     processed_files = []
     export_id_list = []
 
