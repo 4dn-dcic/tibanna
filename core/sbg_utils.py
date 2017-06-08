@@ -119,8 +119,7 @@ class SBGWorkflowRun(object):
         self.task_id = task_id
         self.task_input = task_input  # SBGTaskInput object
         if task_input:
-            # ensure task_input matches this workflow
-            assert task_input.name == self.app_name
+            # ensure task_input at least is for our project
             assert task_input.project == self.project_id
 
     def as_dict(self):

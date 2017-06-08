@@ -21,8 +21,13 @@ def handler(event, context):
     pf_meta = event.get('pf_meta')
 
     # create Task for workflow run later
-    task_input = sbg_utils.SBGTaskInput(sbg.app_name,
+    task_name = sbg.app_name
+    if tibanna.settings and tibanna.settings.get('run_name'):
+        task_name = tibanna.settings.get('run_name')
+
+    task_input = sbg_utils.SBGTaskInput(task_name,
                                         project=sbg.project_id,
+                                        app=sbg.project_id + '/' + sbg.app_name,
                                         inputs=parameter_dict)
 
     for idx, import_id in enumerate(import_ids):

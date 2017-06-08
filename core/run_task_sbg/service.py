@@ -19,10 +19,6 @@ def handler(event, context):
 
     pf_meta = event.get('pf_meta')
 
-    # add name to this task if it doesn't exist
-    if ((not sbg.task_input.name) and tibanna.settings):
-        sbg.task_input.name = tibanna.settings.get('run_name')
-
     # create task on SBG
     LOG.info("sbg task input is %s" % sbg.task_input.__dict__)
     create_resp = sbg.create_task(sbg.task_input)
