@@ -529,3 +529,6 @@ def notebook(ctx):
             run('jupyter notebook --ip=*', pty=True)
         except KeyboardInterrupt:
             pass
+        print("If notebook does not open on your chorme automagically, try adding this to your bash_profie")
+        print("export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome")
+        print("*for MacOS and Chrome only")
