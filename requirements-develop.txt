@@ -1,0 +1,17 @@
+# for testing
+pytest==3.0.5
+pytest-cov==2.3.1
+mock
+
+# Build tasks
+invoke
+
+# Syntax checking
+flake8==2.4.1
+
+# For notebooks
+pip==9.0.1
+jupyter
+pandas
+numpy
+matplotlib

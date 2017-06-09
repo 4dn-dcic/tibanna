@@ -14,6 +14,7 @@ from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna
 from time import sleep
 from contextlib import contextmanager
+import aws_lambda
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -179,6 +180,7 @@ def flake(ctx):
 @task
 def clean(ctx):
     run("rm -rf build")
+    run("rm -rf dist")
     print("Cleaned up.")
 
 
@@ -203,6 +205,12 @@ def deploy_core(ctx, name, version=None, no_tests=False):
     else:
         names = [name, ]
 
+    # dist directores are the enemy, clean the all
+    for name in get_all_core_lambdas():
+        print("cleaning house before deploying")
+        with chdir("./core/%s" % (name)):
+            clean(ctx)
+
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
         with chdir("./core/%s" % (name)):
@@ -210,6 +218,8 @@ def deploy_core(ctx, name, version=None, no_tests=False):
             clean(ctx)
             print("building lambda package")
             deploy_lambda_package(ctx, name)
+            # need to clean up all dist, otherwise, installing local package takes forever
+            clean(ctx)
         print("next get version information")
         # version = update_version(ctx, version)
         print("then tag the release in git")
@@ -220,7 +230,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 
 @task
 def deploy_lambda_package(ctx, name):
-    run('lambda deploy  --local-package ../..')
+    aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
 
 
 @task
