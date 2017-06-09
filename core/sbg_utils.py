@@ -1,5 +1,6 @@
 from __future__ import print_function
 import json
+import logging
 import datetime
 import requests
 import random
@@ -9,6 +10,7 @@ from core.utils import ensure_list
 # Config
 ###########################
 SBG_PROJECT_ID = "4dn-dcic/dev"
+LOG = logging.getLogger(__name__)
 
 
 class SBGStillRunningException(Exception):
@@ -72,8 +74,10 @@ def create_sbg_workflow(app_name, token, task_id='', task_input=None,
     task_input_class = None
     if task_input:
         task_input_class = SBGTaskInput(task_input['name'],
+                                        app=task_input['project'] + '/' + app_name,
                                         project=task_input['project'],
                                         inputs=task_input['inputs'])
+
     # create data for sbg workflow run
     # create a sbg workflow run object to use
     wfrun = SBGWorkflowRun(token, project_id, app_name, task_id, task_input_class, import_id_list,
@@ -120,6 +124,7 @@ class SBGWorkflowRun(object):
         self.task_input = task_input  # SBGTaskInput object
         if task_input:
             # ensure task_input at least is for our project
+            assert task_input.app == self.project_id + "/" + self.app_name
             assert task_input.project == self.project_id
 
     def as_dict(self):
@@ -255,6 +260,7 @@ class SBGWorkflowRun(object):
         '''
         url = self.base_url + "/tasks"
         data = sbg_task_input.__dict__
+        LOG.info('create task data sent to sbg is %s' % data)
         resp = requests.post(url, headers=self.header, data=json.dumps(data))
 
         if 'id' in resp.json().keys():

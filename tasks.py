@@ -11,6 +11,7 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
+from core.utils import _tibanna
 from time import sleep
 from contextlib import contextmanager
 
@@ -494,7 +495,8 @@ def make_input(env, workflow, accession, uuid):
 def run_workflow(ctx, input_json=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
-        return _run_workflow(data)
+        resp = _run_workflow(data)
+        run('open %s' % resp[_tibanna]['url'])
 
 
 @task
