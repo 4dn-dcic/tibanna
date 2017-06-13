@@ -72,21 +72,14 @@ class s3Utils(object):
         LOG.info(str(response))
         return response['Body'].read()
 
-    def does_key_exist(self, key, file_type='output'):
-        if file_type == 'output':
-            try:
-                s3.head_object(Bucket=self.outfile_bucket, Key=key)
-            except Exception as e:
-                print(str(e))
-                return False
-
-        elif file_type == 'raw':
-            try:
-                s3.head_object(Bucket=self.raw_file_bucket, Key=key)
-            except Exception as e:
-                print(str(e))
-                return False
-        else:
+    def does_key_exist(self, key, bucket=None):
+        if not bucket:
+            bucket = self.outfile_bucket
+        try:
+            s3.head_object(Bucket=bucket,
+                           Key=key)
+        except Exception as e:
+            print(str(e))
             return False
         return True
 
