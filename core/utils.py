@@ -28,7 +28,7 @@ def ensure_list(val):
 
 class s3Utils(object):
 
-    def __init__(self, outfile_bucket=None, sys_bucket=None, env=None):
+    def __init__(self, outfile_bucket=None, sys_bucket=None, raw_file_bucket=None, env=None):
         '''
         if we pass in env set the outfile and sys bucket from the environment
         '''
@@ -36,9 +36,11 @@ class s3Utils(object):
             # we use standardized naming schema, so s3 buckets always have same prefix
             sys_bucket = "elasticbeanstalk-%s-system" % env
             outfile_bucket = "elasticbeanstalk-%s-wfoutput" % env
+            raw_file_bucket = "elasticbeanstalk-%s-files" % env
 
         self.sys_bucket = sys_bucket
         self.outfile_bucket = outfile_bucket
+        self.raw_file_bucket = raw_file_bucket
 
     def get_access_keys(self):
         name = 'illnevertell'
@@ -70,12 +72,21 @@ class s3Utils(object):
         LOG.info(str(response))
         return response['Body'].read()
 
-    def does_key_exist(self, key):
-        try:
-            s3.head_object(Bucket=self.outfile_bucket,
-                           Key=key)
-        except Exception as e:
-            print(str(e))
+    def does_key_exist(self, key, file_type='output'):
+        if file_type == 'output':
+            try:
+                s3.head_object(Bucket=self.outfile_bucket, Key=key)
+            except Exception as e:
+                print(str(e))
+                return False
+
+        elif file_type == 'raw':
+            try:
+                s3.head_object(Bucket=self.raw_file_bucket, Key=key)
+            except Exception as e:
+                print(str(e))
+                return False
+        else:
             return False
         return True
 
