@@ -3,3 +3,6 @@ botocore
 awscli
 -e git://github.com/j1z0/python-lambda.git#egg=python_lambda
 submit4dn
+
+# Build tasks
+invoke
