@@ -6,3 +6,6 @@ submit4dn
 
 # Build tasks
 invoke
+
+# Syntax checking
+flake8==2.4.1
