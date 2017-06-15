@@ -193,7 +193,33 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
     except Exception as e:
         raise Exception("error %s \nunalbe to post data to schema %s, data: %s" %
                         (e, schema_name, post_item))
+    return response
 
+
+def delete_field(post_json, del_field, connection=None):
+    """Does a put to delete the given field."""
+    my_uuid = post_json.get("uuid")
+    my_accession = post_json.get("accesion")
+    raw_json = fdnDCIC.get_FDN(my_uuid, connection, frame="raw")
+    # check if the uuid is in the raw_json
+    if not raw_json.get("uuid"):
+        raw_json["uuid"] = my_uuid
+    # if there is an accession, add it to raw so it does not created again
+    if my_accession:
+        if not raw_json.get("accession"):
+            raw_json["accession"] = my_accession
+    # remove field from the raw_json
+    if raw_json.get(del_field):
+        del raw_json[del_field]
+    # Do the put with raw_json
+    try:
+        response = fdnDCIC.put_FDN(my_uuid, connection, raw_json)
+        if response.get('status') == 'error':
+            raise Exception("error %s \n unable to delete field: %s \n of  item: %s" %
+                            (response, del_field, my_uuid))
+    except Exception as e:
+        raise Exception("error %s \n unable to delete field: %s \n of  item: %s" %
+                        (e, del_field, my_uuid))
     return response
 
 
