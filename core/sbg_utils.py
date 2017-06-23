@@ -379,7 +379,8 @@ class SBGWorkflowRun(object):
                             # QC and report
                             # put all files in directory with uuid of workflowrun
                             dest_upload_key = "%s%s" % (base_dir, v['name'].encode('utf8'))
-                        export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key)
+                        export_id = self.export_to_volume(sbg_file_id, sbg_volume, dest_upload_key,
+                                                          extra={"aws_canned_acl": "public-read"})
                         export_item = {"upload_key": dest_upload_key,
                                        "export_id": export_id,
                                        "workflow_argument_name": k}
@@ -389,9 +390,10 @@ class SBGWorkflowRun(object):
                         self.export_id_list.append(export_id)
         return self.export_report
 
-    def export_to_volume(self, source_file_id, sbg_volume_id, dest_upload_key):
+    def export_to_volume(self, source_file_id, sbg_volume_id, dest_upload_key, extra=None):
         '''
         This function exports a file on SBG to a mounted output bucket and returns export_id
+        extra would be additional parameters to send to sbg
         '''
 
         export_url = self.base_url + "/storage/exports/?overwrite=true"
@@ -404,6 +406,8 @@ class SBGWorkflowRun(object):
                 "location": dest_upload_key
             }
         }
+        if extra:
+            data.merge(extra)
         response = requests.post(export_url, headers=self.header, data=json.dumps(data)).json()
         if 'id' in response.keys():
             # Export initiated corretly
