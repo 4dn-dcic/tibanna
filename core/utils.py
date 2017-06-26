@@ -56,7 +56,7 @@ class s3Utils(object):
         akey = response['Body'].read()
         try:
             return json.loads(akey)
-        except ValueError:
+        except (ValueError, TypeError):
             # maybe its not json after all
             return akey
 

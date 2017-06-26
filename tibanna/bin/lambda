@@ -1,0 +1,6 @@
+#!/Users/soo/git/tibanna/tibanna/bin/python
+# EASY-INSTALL-DEV-SCRIPT: 'python-lambda==0.7.1','lambda'
+__requires__ = 'python-lambda==0.7.1'
+__import__('pkg_resources').require('python-lambda==0.7.1')
+__file__ = '/Users/soo/git/tibanna/tibanna/src/python-lambda/scripts/lambda'
+exec(compile(open(__file__).read(), __file__, 'exec'))
