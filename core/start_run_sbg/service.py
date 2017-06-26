@@ -105,7 +105,9 @@ def handler(event, context):
     ff_meta.post(key=tibanna.ff_keys)
 
     # mount all input files to sbg this will also update sbg to store the import_ids
-    [mount_on_sbg(infile, tibanna.s3_keys, sbg) for infile in input_file_list]
+    for infile in input_file_list:
+        imps = mount_on_sbg(infile, tibanna.s3_keys, sbg)
+        infile['import_ids'] = imps
 
     # create a link to the output directory as well
     if output_bucket:
@@ -139,8 +141,11 @@ def mount_on_sbg(input_file, s3_keys, sbg):
     keys = ensure_list(input_file.get('object_key'))
     key_uuids = ensure_list(input_file.get('uuid'))
 
+    import_ids = []
     for key, key_uuid in zip(keys, key_uuids):
-        mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg)
+        imp_id = mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg)
+        import_ids.append(imp_id)
+    return imp_id
 
 
 def mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg):
