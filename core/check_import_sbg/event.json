@@ -3,7 +3,8 @@
         {"object_key": "4DNFI7RAJFJ4.fasta.gz",
          "bucket_name": "elasticbeanstalk-encoded-4dn-files",
          "workflow_argument_name": "input_file",
-         "uuid": "test_upload"
+         "uuid": "test_upload",
+         "import_ids": ["xFS8KAE2OtFB7FbRuOhCYKaibURP3ABR"]
         }
     ],
     "workflow": {

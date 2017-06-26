@@ -145,7 +145,7 @@ def mount_on_sbg(input_file, s3_keys, sbg):
     for key, key_uuid in zip(keys, key_uuids):
         imp_id = mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg)
         import_ids.append(imp_id)
-    return imp_id
+    return import_ids
 
 
 def mount_one_on_sbg(key, key_uuid, bucket, s3_keys, sbg):

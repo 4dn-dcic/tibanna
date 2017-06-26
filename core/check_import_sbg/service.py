@@ -17,7 +17,7 @@ def handler(event, context):
     sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
 
     ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
-    import_ids = sbg.import_id_list
+    # import_ids = sbg.import_id_list
     pf_meta = event.get('pf_meta')
 
     # create Task for workflow run later
@@ -30,30 +30,31 @@ def handler(event, context):
                                         app=sbg.project_id + '/' + sbg.app_name,
                                         inputs=parameter_dict)
 
-    for idx, import_id in enumerate(import_ids):
+    for input_file in input_file_args:
+        for import_id in input_file.get('import_ids', []):
 
-        # this will handle checking if the import / file is on sbg, otherwise
-        # it will throw an error
-        res = sbg.check_import(import_id)
+            # this will handle checking if the import / file is on sbg, otherwise
+            # it will throw an error
+            res = sbg.check_import(import_id)
 
-        # No idea why, but sometimes it comes back without
-        # results as a sub object
-        results = res.get('result', res)
-        sbg_file_name = results.get('name')
-        sbg_file_id = results.get('id')
-        arg_name = input_file_args[idx].get('workflow_argument_name')
-        arg_uuids = input_file_args[idx].get('uuid')
-        # we need to know if this is a list so we can build proper task inputs for sbg
-        is_list = isinstance(arg_uuids, (list, tuple))
-        task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name, is_list)
-        sbg.task_input = task_input
+            # No idea why, but sometimes it comes back without
+            # results as a sub object
+            results = res.get('result', res)
+            sbg_file_name = results.get('name')
+            sbg_file_id = results.get('id')
+            arg_name = input_file.get('workflow_argument_name')
+            arg_uuids = input_file.get('uuid')
+            # we need to know if this is a list so we can build proper task inputs for sbg
+            is_list = isinstance(arg_uuids, (list, tuple))
+            task_input.add_inputfile(sbg_file_name, sbg_file_id, arg_name, is_list)
+            sbg.task_input = task_input
 
-        # ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
-        # Soo: This information was alreadyin ff_meta that was passed into this function.
+            # ff_meta.input_files.append({'workflow_argument_name': arg_name, 'value': arg_uuid})
+            # Soo: This information was alreadyin ff_meta that was passed into this function.
 
-        # make all the file export meta-data stuff here
-        # TODO: fix ff_meta bugs with input / output files
-        ff_meta.post(key=tibanna.ff_keys)
+    # make all the file export meta-data stuff here
+    # TODO: fix ff_meta bugs with input / output files
+    ff_meta.post(key=tibanna.ff_keys)
 
     return {'workflow': sbg.as_dict(),
             'ff_meta': ff_meta.as_dict(),
