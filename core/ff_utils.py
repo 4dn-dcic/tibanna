@@ -140,7 +140,6 @@ def fdn_connection(key='', connection=None):
     if not connection:
         try:
             fdn_key = fdnDCIC.FDN_Key(key, 'default')
-            print(fdn_key.__dict__)
             connection = fdnDCIC.FDN_Connection(fdn_key)
         except Exception as e:
             raise Exception("Unable to connect to server with check keys : %s" % e)
