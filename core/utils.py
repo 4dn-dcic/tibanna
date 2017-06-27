@@ -76,12 +76,12 @@ class s3Utils(object):
         if not bucket:
             bucket = self.outfile_bucket
         try:
-            s3.head_object(Bucket=bucket,
-                           Key=key)
+            file_metadata = s3.head_object(Bucket=bucket,
+                                           Key=key)
         except Exception as e:
             print(str(e))
             return False
-        return True
+        return file_metadata
 
     def s3_put(self, obj, upload_key, acl=None):
         '''
