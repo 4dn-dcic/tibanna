@@ -1,6 +1,6 @@
 {
   "parameters": {
-    "ncores": 8,
+    "ncores": 32,
     "min_res": 5000,
     "binsize": 5000
   },
@@ -45,5 +45,5 @@
     }
   ],
   "workflow_uuid": "b9829418-49e5-4c33-afab-9ec90d659999",
-  "app_name": "hi-c-processing-partb/24"
+  "app_name": "hi-c-processing-partb/26"
 }
