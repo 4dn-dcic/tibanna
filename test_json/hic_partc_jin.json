@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "ncores": 8
+  },
+  "_tibanna": {
+    "run_type": "hic-partc",
+    "run_id": "partC_4DNFIN4CG33A",
+    "env": "fourfront-webdev",
+    "run_name": "hic-partc_partC_4DNFIN4CG33A"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "input_files": [
+    {
+      "workflow_argument_name": "input_cool",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+      "uuid": "8af7699b-ff89-4f16-b6bb-64b4025b0ec4",
+      "object_key": "4DNFIN4CG33A.cool"
+    }
+  ],
+  "workflow_uuid": "1348354f-49e5-4c33-afab-9ec90d65faf3",
+  "app_name": "hi-c-processing-partc/2"
+}
