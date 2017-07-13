@@ -12,4 +12,5 @@ aws_secret_access_key:
 
 # dist_directory: dist
 timeout: 60 
-memory_size: 256 
+memory_size: 256
+
