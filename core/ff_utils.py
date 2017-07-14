@@ -43,7 +43,7 @@ def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, 
                     for k, v in of2.iteritems():
                         of[k] = v
 
-    return WorkflowRunMetadata(workflow, input_files, parameters,
+    return WorkflowRunMetadata(workflow, sbg.app_name, input_files, parameters,
                                sbg_task_id, sbg_import_ids, sbg_export_ids,
                                sbg_mounted_volume_ids, uuid,
                                award, lab, run_platform, title, output_files, run_status, **kwargs)
@@ -54,7 +54,7 @@ class WorkflowRunMetadata(object):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, input_files=[],
+    def __init__(self, workflow, app_name, input_files=[],
                  parameters=[], sbg_task_id=None,
                  sbg_import_ids=None, sbg_export_ids=None,
                  sbg_mounted_volume_ids=None, uuid=None,
@@ -66,6 +66,7 @@ class WorkflowRunMetadata(object):
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
         """
+        self.sbg_app_name = app_name
         self.run_status = run_status
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
