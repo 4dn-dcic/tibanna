@@ -160,10 +160,10 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
         response = fdnDCIC.patch_FDN(obj_id, connection, patch_item)
 
         if response.get('status') == 'error':
-            raise Exception("error %s \n unalbe to patch obj: %s \n with  data: %s" %
+            raise Exception("error %s \n unable to patch obj: %s \n with  data: %s" %
                             (response, obj_id, patch_item))
     except Exception as e:
-        raise Exception("error %s \nunalbe to patch object %s \ndata: %s" % (e, obj_id, patch_item))
+        raise Exception("error %s \nunable to patch object %s \ndata: %s" % (e, obj_id, patch_item))
     return response
 
 
@@ -189,10 +189,10 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
             # item already posted lets patch instead
             response = patch_metadata(post_item, connection=connection)
         elif response.get('status') == 'error':
-            raise Exception("error %s \n unalbe to post data to schema %s, data: %s" %
+            raise Exception("error %s \n unable to post data to schema %s, data: %s" %
                             (response, schema_name, post_item))
     except Exception as e:
-        raise Exception("error %s \nunalbe to post data to schema %s, data: %s" %
+        raise Exception("error %s \nunable to post data to schema %s, data: %s" %
                         (e, schema_name, post_item))
     return response
 
