@@ -32,7 +32,6 @@ def handler(event, context):
                                        "echo $tibanna_deploy",
                                        "postgres --version",
                                        "initdb --version",
-                                       "elasticsearch -v",
                                        "nvm install 4",
                                        "node --version",
                                        "npm config set python /usr/bin/python2.7"

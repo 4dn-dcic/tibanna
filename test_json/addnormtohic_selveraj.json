@@ -1,0 +1,23 @@
+{
+  "parameters": {
+    "maxmem": "30g",
+    "min_res": 5000
+  },
+  "_tibanna": {
+    "run_type": "addnormtohic",
+    "run_id": "hicnorm_dciclab_selveraj",
+    "env": "fourfront-webdev",
+    "run_name": "hicnorm_selveraj"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "input_files": [
+    {
+      "workflow_argument_name": "input_hic",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+      "uuid": "d7d69af4-6b0d-4361-9b7d-896a0bf57b6d",
+      "object_key": "4DNFIXG2RJR4.hic"
+    }
+  ],
+  "workflow_uuid": "e554d10d-d1e7-4055-aef6-4226ff1bcdb2",
+  "app_name": "addnormtohic-1/2"
+}
