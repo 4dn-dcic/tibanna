@@ -31,9 +31,9 @@
 		"Retry": [
 		  {
 		    "ErrorEquals": ["SBGStillRunningException"],
-		    "IntervalSeconds": 60,
+		    "IntervalSeconds": 600,
 		    "MaxAttempts" : 100,
-		    "BackoffRate" : 2.0
+		    "BackoffRate" : 1.0
 		   }
 		  ],
           "Next": "ExportFilesSbg"
@@ -49,9 +49,9 @@
 		"Retry": [
 		  {
 		    "ErrorEquals": ["SBGStillRunningException"],
-		    "IntervalSeconds": 10,
+		    "IntervalSeconds": 600,
 		    "MaxAttempts" : 100,
-		    "BackoffRate" : 2.0
+		    "BackoffRate" : 1.0
 		   }
 		  ],
           "Next": "Finalize"

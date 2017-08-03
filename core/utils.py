@@ -180,7 +180,7 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_sbg_workflow_3'):
+def run_workflow(input_json, accession='', workflow='run_sbg_workflow_4'):
     '''
     accession is unique name that we be part of run id
     '''
