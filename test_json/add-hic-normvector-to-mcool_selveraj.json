@@ -12,14 +12,14 @@
     {
       "workflow_argument_name": "input_hic",
       "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-      "uuid": "90240306-ebe6-4752-be71-c0e608a116ed",
-      "object_key": "4DNFIWFZ0N17.hic"
+      "uuid": "b4dcdcaa-7a16-4dcf-8e5e-0abc84316460",
+      "object_key": "4DNFIZLLZLPE.hic"
     },
     {
       "workflow_argument_name": "input_mcool",
       "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-      "uuid": "53434724-9753-439e-9176-63d16eb8f2d0",
-      "object_key": "4DNFI7UVGI6E.mcool"
+      "uuid": "3f794729-7c27-43dd-8e56-ce6b2cc0e2c7",
+      "object_key": "4DNFITZCROZ9.mcool"
     }
   ],
   "workflow_uuid": "e8b6d4be-20c4-4e39-b1a3-f04592894521",
