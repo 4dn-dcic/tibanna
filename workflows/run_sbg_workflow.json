@@ -32,7 +32,7 @@
 		  {
 		    "ErrorEquals": ["SBGStillRunningException"],
 		    "IntervalSeconds": 600,
-		    "MaxAttempts" : 100,
+		    "MaxAttempts" : 1000,
 		    "BackoffRate" : 1.0
 		   }
 		  ],
@@ -50,7 +50,7 @@
 		  {
 		    "ErrorEquals": ["SBGStillRunningException"],
 		    "IntervalSeconds": 600,
-		    "MaxAttempts" : 100,
+		    "MaxAttempts" : 1000,
 		    "BackoffRate" : 1.0
 		   }
 		  ],
