@@ -9,3 +9,4 @@ jupyter
 pandas
 numpy
 matplotlib
+tqdm
