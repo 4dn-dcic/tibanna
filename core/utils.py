@@ -83,6 +83,14 @@ class s3Utils(object):
             return False
         return file_metadata
 
+    def delete_key(self, key, bucket):
+        s3.delete_object(Bucket=bucket, Key=key)
+
+    def size(self, bucket):
+        sbuck = boto3.resource('s3').Bucket(bucket)
+        # get only head of objects so we can count them
+        return sum(1 for _ in sbuck.objects.all())
+
     def s3_put(self, obj, upload_key, acl=None):
         '''
         try to guess content type
