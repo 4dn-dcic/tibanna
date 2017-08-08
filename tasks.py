@@ -198,7 +198,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
     if no_tests is False:
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
-            # return
+            return
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
@@ -537,6 +537,7 @@ def notebook(ctx):
 
         # Need pty=True to let Ctrl-C kill the notebook server. Shrugs.
         try:
+            run('jupyter nbextension enable --py widgetsnbextension')
             run('jupyter notebook --ip=*', pty=True)
         except KeyboardInterrupt:
             pass
