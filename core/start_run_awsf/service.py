@@ -25,10 +25,10 @@ def handler(event, context):
     ebs_iops: EBS storage IOPS
     json_dir: Local directory in which the output json file will be written
     s3_access_arn: IAM instance profile for S3 access
-    keyname: name of keypapir used for launching instances
     worker_ami_id: ID of AMI used for the instance - it should have docker daemon and
                    cwl-runner (either toil or cwltools) installed
     userdata_dir: local directory to store userdata (used internally within lambda)
+    keyname: keyname
 
     args:
     cwl: main cwl file name
@@ -86,7 +86,6 @@ def handler(event, context):
     par = {
      's3_access_arn': cfg.get('s3_access_arn'),
      'worker_ami_id': cfg.get('worker_ami_id'),
-     'keyname': cfg.get('keyname'),
      'userdata_dir': cfg.get('userdata_dir'),
      'instance_type': cfg.get('default_instance_type'),  # redundant with final_args
      'storage_size': cfg.get('default_ebs_size'),  # redundant with final_args

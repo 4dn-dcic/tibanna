@@ -203,7 +203,7 @@ def launch_instance(par, jobid, shutdown_min):
     x.main(launch_command_arr)
 
     # launch instance and get id
-    logger.info(launch_command)
+    # logger.info(launch_command)
     # logger.info(subprocess.check_output("aws s3 ls", shell=True))
     # logger.info(run('ls').stdout)
     # os.environ['PATH'] = os.environ['PATH'] + ":" + os.environ['LAMBDA_TASK_ROOT']
@@ -219,6 +219,7 @@ def launch_instance(par, jobid, shutdown_min):
     instance_desc_command = "ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
     instance_desc_command_arr = instance_desc_command.split(' ')
     x = awscli.clidriver.create_clidriver()
+    x.main(instance_desc_command_arr)
 
     try_again = True
     while try_again:    # keep trying until you get the result.
