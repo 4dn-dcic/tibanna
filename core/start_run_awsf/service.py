@@ -49,7 +49,7 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
                    "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
-                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url"]
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url", "json_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
                  "input_reference_files", "input_parameters", "input_files_directory",
@@ -104,7 +104,7 @@ def handler(event, context):
     json_dir = cfg.get('json_dir')
 
     # create json and copy to s3
-    jobid = utils.create_json(final_args, json_dir, '', copy_to_s3)
+    jobid = utils.create_json(final_args, json_dir, '', copy_to_s3, cfg.get('json_bucket'))
 
     # launch instance and execute workflow
     if args.get('launch_instance'):

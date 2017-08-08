@@ -11,7 +11,8 @@
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
       "worker_ami_id" : "ami-7ff26968",
       "userdata_dir" : "/tmp/userdata",
-      "keyname": ""
+      "keyname": "",
+      "json_bucket": "4dn-aws-pipeline-run-json"
     },
     "args" : {
       "cwl" : "gatk-gvcf.cwl",

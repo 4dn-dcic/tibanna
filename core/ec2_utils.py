@@ -136,12 +136,22 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     with open(json_filename, 'w') as json_new_f:
         json.dump(pre, json_new_f, indent=4, sort_keys=True)
 
+    # Keep log of the final json
+    logger.info(str(pre))
+
     # copy the json file to the s3 bucket
+    logger.info(json_bucket)
+    logger.info(copy_to_s3)
+
     if json_bucket:
         args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
         if copy_to_s3 is True:
-            command = "aws s3 cp ./{json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
-            subprocess.check_output(command, shell=True)
+            command = "s3 cp {json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
+            command_arr = command.encode('utf-8').split(' ')
+            logger.info(command_arr)
+            x = awscli.clidriver.create_clidriver()
+            logger.info(x.main(command_arr))
+            # subprocess.check_output(command, shell=True)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
