@@ -152,7 +152,7 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min):
     if not os.path.exists(userdata_dir):
         os.mkdir(userdata_dir)
     run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
-    script_url = 'https://raw.githubusercontent.com/hms-dbmi/tibanna/master/awsf/'
+    script_url = 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/'
     with open(run_workflow_file, 'w') as fout:
         str = ''
         str += "#!/bin/bash\n"
