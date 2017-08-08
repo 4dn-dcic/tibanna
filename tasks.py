@@ -536,6 +536,7 @@ def notebook(ctx):
 
         # Need pty=True to let Ctrl-C kill the notebook server. Shrugs.
         try:
+            run('jupyter nbextension enable --py widgetsnbextension')
             run('jupyter notebook --ip=*', pty=True)
         except KeyboardInterrupt:
             pass
