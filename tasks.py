@@ -230,7 +230,8 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 
 @task
 def deploy_lambda_package(ctx, name):
-    aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+    # aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='requirements.txt')
+    aws_lambda.deploy(os.getcwd(), local_package='../..')
 
 
 @task
