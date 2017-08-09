@@ -7,7 +7,7 @@ import string
 import os
 import subprocess
 import logging
-from invoke import run
+# from invoke import run
 import awscli.clidriver
 
 logger = logging.getLogger()
@@ -46,15 +46,23 @@ def run_command_out_check(command):
 def launch_and_get_instance_id(launch_command, jobid):
     logstr = ''
     try:  # capturing stdout from the launch command
-        logs = run(launch_command)
-        logstr += logs.stdout
-        logstr += logs.stderr
+        launch_command_arr = launch_command.split(' ')
+        logger.info(launch_command)
+        logger.info(str(launch_command_arr))
+        os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+        x = awscli.clidriver.create_clidriver()
+        logger.info(x.main(['s3', 'ls']))
+        logger.info(x.main(launch_command_arr))
+        # logs = run(launch_command)
+        # logstr += logs.stdout
+        # logstr += logs.stderr
 
     except Exception as e:
         raise Exception("failed to launch instance for job {jobid}: {log}. %s"
                         .format(jobid=jobid, log=logstr) % e)
-    log = json.loads(logstr)
-    return log['Instances'][0]['InstanceId']
+    # log = json.loads(logstr)
+    # return log['Instances'][0]['InstanceId']
+    return 0
 
 
 def read_config(CONFIG_FILE, CONFIG_KEYS):
@@ -128,12 +136,22 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     with open(json_filename, 'w') as json_new_f:
         json.dump(pre, json_new_f, indent=4, sort_keys=True)
 
+    # Keep log of the final json
+    logger.info(str(pre))
+
     # copy the json file to the s3 bucket
+    logger.info(json_bucket)
+    logger.info(copy_to_s3)
+
     if json_bucket:
         args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
         if copy_to_s3 is True:
-            command = "aws s3 cp ./{json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
-            subprocess.check_output(command, shell=True)
+            command = "s3 cp {json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
+            command_arr = command.encode('utf-8').split(' ')
+            logger.info(command_arr)
+            x = awscli.clidriver.create_clidriver()
+            logger.info(x.main(command_arr))
+            # subprocess.check_output(command, shell=True)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
@@ -144,7 +162,7 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min):
     if not os.path.exists(userdata_dir):
         os.mkdir(userdata_dir)
     run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
-    script_url = 'https://raw.githubusercontent.com/hms-dbmi/tibanna/master/'
+    script_url = 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/'
     with open(run_workflow_file, 'w') as fout:
         str = ''
         str += "#!/bin/bash\n"
@@ -183,7 +201,7 @@ def launch_instance(par, jobid, shutdown_min):
     launch_command = launch_command.format(**launch_args)
     if par['keyname'] != '':
         launch_command += " --key-name {keyname}".format(keyname=par['keyname'])
-    if par['EBS_optimized']:
+    if par['EBS_optimized'] is True:
         launch_command += " --ebs-optimized"
 
     # storage iops option
@@ -197,10 +215,12 @@ def launch_instance(par, jobid, shutdown_min):
                            "VolumeType={EBS_TYPE},DeleteOnTermination=true}}"
         options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
     launch_command += options_storage
-    launch_command_arr = launch_command.split(' ')
-    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-    x = awscli.clidriver.create_clidriver()
-    x.main(launch_command_arr)
+    launch_command = launch_command.encode('utf-8')
+    logger.info(launch_command)
+    # launch_command_arr = launch_command.split(' ')
+    # os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+    # x = awscli.clidriver.create_clidriver()
+    # x.main(launch_command_arr)
 
     # launch instance and get id
     # logger.info(launch_command)
@@ -214,6 +234,7 @@ def launch_instance(par, jobid, shutdown_min):
     # logger.info(run('/bin/ls /usr/local/bin/').stdout)
 
     instance_id = launch_and_get_instance_id(launch_command, jobid)
+    return(0)
 
     # get public IP for the instance (This may not happen immediately)
     instance_desc_command = "ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)

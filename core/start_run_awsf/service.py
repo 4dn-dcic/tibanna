@@ -39,7 +39,7 @@ def handler(event, context):
     input_reference_files: input reference files in json format (parametername:filename)
     input_parameters: input parameters in json format (parametername:value)
     input_files_directory: bucket name and subdirectory for input files
-    not_EBS_optimized: Use this flag if the instance type is not EBS-optimized (default: EBS-optimized)
+    EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
     copy_to_s3: Upload or copy the json file to S3 bucket json_bucket
     launch_instance: Launch instance based on the json file
@@ -49,11 +49,11 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
                    "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
-                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url"]
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url", "json_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
                  "input_reference_files", "input_parameters", "input_files_directory",
-                 "not_EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
+                 "EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
@@ -84,6 +84,7 @@ def handler(event, context):
 
     # parameters needed to launch an instance
     par = {
+     'keyname': cfg.get('keyname'),
      's3_access_arn': cfg.get('s3_access_arn'),
      'worker_ami_id': cfg.get('worker_ami_id'),
      'userdata_dir': cfg.get('userdata_dir'),
@@ -91,7 +92,7 @@ def handler(event, context):
      'storage_size': cfg.get('default_ebs_size'),  # redundant with final_args
      'storage_type': cfg.get('default_ebs_type'),  # redundant with final_args
      'storage_iops': cfg.get('ebs_iops'),  # redundant with final_args
-     'EBS_optimized': True,
+     'EBS_optimized': cfg.get('EBS_optimized'),
      'job_tag': final_args.get('app_name'),
      'outbucket': cfg.get('output_S3_bucket')  # redundant with output_bucket_directory in final_args
     }
@@ -103,7 +104,7 @@ def handler(event, context):
     json_dir = cfg.get('json_dir')
 
     # create json and copy to s3
-    jobid = utils.create_json(final_args, json_dir, '', copy_to_s3)
+    jobid = utils.create_json(final_args, json_dir, '', copy_to_s3, cfg.get('json_bucket'))
 
     # launch instance and execute workflow
     if args.get('launch_instance'):

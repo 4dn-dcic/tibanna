@@ -11,7 +11,11 @@ LOCAL_CWLDIR=$LOCAL_OUTDIR ## cwl-runner directory handling is so great that we 
 LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 MD5FILE=$JOBID.md5sum.txt
-SCRIPTS_URL=https://raw.githubusercontent.com/hms-dbmi/tibanna/master/awsf/
+<<<<<<< HEAD
+SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/
+=======
+SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf
+>>>>>>> fe979082a1a4554f6af68c9a913cb914738396d4
 INPUT_YML_FILE=inputs.yml
 DOWNLOAD_COMMAND_FILE=download_command_list.txt
 ENV_FILE=env_command_list.txt
