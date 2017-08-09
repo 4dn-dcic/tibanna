@@ -1,9 +1,9 @@
 {
     "args" : {
-      "cwl" : "fastqc-0-11-4-1.3.cwl",
-      "cwl_children" : "fastqc-0-11-4.0.cwl",
+      "cwl" : "fastqc-0-11-4-1.8.cwl",
+      "cwl_children" : "fastqc-0-11-4.6.cwl",
       "app_name" : "fastqc-0-11-4-1",
-      "app_version" : "3",
+      "app_version" : "8",
       "input_files" : {"input_fastq": "test.h2500.fastq"},
       "input_reference_files" :  {},
       "input_parameters" :  {},
