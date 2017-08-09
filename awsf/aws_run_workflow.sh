@@ -1,6 +1,7 @@
 #!/bin/bash
 JOBID=$1
-SHUTDOWN_MIN=$2   #Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
+SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
+PASSWORD=$3  # Password for ssh connection for user ec2-user
 EBS_DEVICE=/dev/xvdb
 JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 RUN_JSON_FILE_NAME=$JOBID.run.json
@@ -11,11 +12,7 @@ LOCAL_CWLDIR=$LOCAL_OUTDIR ## cwl-runner directory handling is so great that we 
 LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 MD5FILE=$JOBID.md5sum.txt
-<<<<<<< HEAD
 SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/
-=======
-SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf
->>>>>>> fe979082a1a4554f6af68c9a913cb914738396d4
 INPUT_YML_FILE=inputs.yml
 DOWNLOAD_COMMAND_FILE=download_command_list.txt
 ENV_FILE=env_command_list.txt
@@ -40,7 +37,15 @@ LOGFILE=$LOGFILE1
 cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
+
+
+### sshd configure for password recognition
+echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ec2-user
+sudo cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
+sudo mv tmpp /etc/ssh/sshd_config
+exl sudo service sshd restart
  
+
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
