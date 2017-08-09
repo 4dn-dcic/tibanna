@@ -50,7 +50,7 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
                    "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
-                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url", 
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url",
                    "json_bucket", "password"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
@@ -97,7 +97,7 @@ def handler(event, context):
      'EBS_optimized': cfg.get('EBS_optimized'),
      'job_tag': final_args.get('app_name'),
      'outbucket': cfg.get('output_S3_bucket'),  # redundant with output_bucket_directory in final_args
-     'password': cfg.get('password') # password for ssh connection for user ec2-user
+     'password': cfg.get('password')  # password for ssh connection for user ec2-user
     }
 
     shutdown_min = args.get('shutdown_min')
@@ -113,5 +113,4 @@ def handler(event, context):
     if args.get('launch_instance'):
         utils.launch_instance(par, jobid, shutdown_min)
 
-    return ( {'final_args': final_args, 'par': par, 'jobid'=jobid} )
-
+    return ({'final_args': final_args, 'par': par, 'jobid': jobid})
