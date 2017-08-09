@@ -28,7 +28,8 @@ def handler(event, context):
     worker_ami_id: ID of AMI used for the instance - it should have docker daemon and
                    cwl-runner (either toil or cwltools) installed
     userdata_dir: local directory to store userdata (used internally within lambda)
-    keyname: keyname
+    keyname: keyname (do not use for lambda)
+    password: password for ssh connection for user ec2-user
 
     args:
     cwl: main cwl file name
@@ -49,7 +50,8 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["reference_S3_bucket", "output_S3_bucket", "s3_access_arn",
                    "keyname", "worker_ami_id", "default_instance_type", "default_ebs_size",
-                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url", "json_bucket"]
+                   "default_ebs_type", "ebs_iops", "userdata_dir", "json_dir", "cwl_url", 
+                   "json_bucket", "password"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
                  "input_reference_files", "input_parameters", "input_files_directory",
@@ -94,7 +96,8 @@ def handler(event, context):
      'storage_iops': cfg.get('ebs_iops'),  # redundant with final_args
      'EBS_optimized': cfg.get('EBS_optimized'),
      'job_tag': final_args.get('app_name'),
-     'outbucket': cfg.get('output_S3_bucket')  # redundant with output_bucket_directory in final_args
+     'outbucket': cfg.get('output_S3_bucket'),  # redundant with output_bucket_directory in final_args
+     'password': cfg.get('password') # password for ssh connection for user ec2-user
     }
 
     shutdown_min = args.get('shutdown_min')
@@ -109,3 +112,6 @@ def handler(event, context):
     # launch instance and execute workflow
     if args.get('launch_instance'):
         utils.launch_instance(par, jobid, shutdown_min)
+
+    return ( {'final_args': final_args, 'par': par, 'jobid'=jobid} )
+

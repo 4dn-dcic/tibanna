@@ -12,6 +12,7 @@
       "worker_ami_id" : "ami-7ff26968",
       "userdata_dir" : "/tmp/userdata",
       "keyname": "",
+      "password": "hahaha",
       "json_bucket": "4dn-aws-pipeline-run-json"
     },
     "args" : {

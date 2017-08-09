@@ -158,7 +158,7 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     return(jobid)
 
 
-def create_run_workflow(jobid, userdata_dir, shutdown_min):
+def create_run_workflow(jobid, userdata_dir, shutdown_min, password='lalala'):
     if not os.path.exists(userdata_dir):
         os.mkdir(userdata_dir)
     run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
@@ -169,10 +169,11 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min):
         str += "JOBID={}\n".format(jobid)
         str += "RUN_SCRIPT=aws_run_workflow.sh\n"
         str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
+        str += "PASSWORD={}\n".format(password)
         str += "SCRIPT_URL={}\n".format(script_url)
         str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
         str += "chmod +x $RUN_SCRIPT\n"
-        str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN\n"
+        str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD\n"
         fout.write(str)
     logger.info(str)
     # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
@@ -182,7 +183,7 @@ def launch_instance(par, jobid, shutdown_min):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        create_run_workflow(jobid, par['userdata_dir'], shutdown_min)
+        create_run_workflow(jobid, par['userdata_dir'], shutdown_min, par['password'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
