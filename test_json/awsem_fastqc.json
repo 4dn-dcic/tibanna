@@ -1,0 +1,33 @@
+{
+    "args" : {
+      "cwl" : "fastqc-0-11-4-1.3.cwl",
+      "cwl_children" : "",
+      "app_name" : "fastqc-0-11-4-1",
+      "app_version" : "3",
+      "input_files" : {"input_fastq": "test.h2500.fastq"},
+      "input_reference_files" :  {},
+      "input_parameters" :  {},
+      "input_files_directory" : "4dn-tool-evaluation-files",
+      "EBS_optimized" : false,
+      "shutdown_min" : "now",
+      "copy_to_s3" : true,
+      "launch_instance" : true
+    },
+    "config" : {
+      "cwl_url" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
+      "reference_S3_bucket" : "maestro-resources",
+      "output_S3_bucket" : "tibanna-output",
+      "default_instance_type" : "t2.nano",
+      "default_ebs_size" : 20,
+      "default_ebs_type" : "io1",
+      "ebs_iops" : 500,
+      "json_dir" : "/tmp/json",
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "worker_ami_id" : "ami-7ff26968",
+      "userdata_dir" : "/tmp/userdata",
+      "keyname": "",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "hahaha"
+    }
+}
+  
