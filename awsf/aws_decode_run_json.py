@@ -66,7 +66,7 @@ with open(input_yml_filename, 'w') as f_yml:
 with open(env_filename, 'w') as f_env:
     f_env.write("CWL_URL={}\n".format(dict["Job"]["App"]["cwl_url"]))
     f_env.write("MAIN_CWL={}\n".format(dict["Job"]["App"]["main_cwl"])) ## main cwl to be run (the other cwl files will be called by this one)
-    f_env.write("CWL_FILES={}\n".format(' '.join(dict["Job"]["App"]["other_cwl_files"]))) ## list of cwl files in an array delimited by a space
+    f_env.write("CWL_FILES={}\n".format(','.join(dict["Job"]["App"]["other_cwl_files"]))) ## list of cwl files in an array delimited by a space
     f_env.write("OUTBUCKET={}\n".format(dict["Job"]["Output"]["output_bucket_directory"]))
  
 
