@@ -11,6 +11,7 @@ LOCAL_OUTDIR=$EBS_DIR/out
 LOCAL_CWLDIR=$LOCAL_OUTDIR ## cwl-runner directory handling is so great that we had to do this..
 LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
+LOCAL_CWL_TMPDIR=$EBS_DIR/tmp
 MD5FILE=$JOBID.md5sum.txt
 SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/
 INPUT_YML_FILE=inputs.yml
@@ -107,7 +108,8 @@ exl source /home/ec2-user/venv/cwl/bin/activate
 ### run command
 cwd0=$(pwd)
 cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
-exl cwl-runner --tmpdir-prefix $EBS_DIR/tmp $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
+mkdir -p $LOCAL_CWL_TMPDIR
+exl cwl-runner --tmpdir-prefix $LOCAL_CWL_TMPDIR $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 deactivate
 cd $cwd0
 send_log 
