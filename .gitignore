@@ -94,3 +94,5 @@ logs/
 # os x stuff
 .DS_Store
 .chalice/
+
+notebooks/Single use scripts/Jsons/*
