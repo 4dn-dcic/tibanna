@@ -503,10 +503,13 @@ def make_input(env, workflow, accession, uuid):
 
 
 @task
-def run_workflow(ctx, input_json=''):
+def run_workflow(ctx, input_json='', workflow=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
-        resp = _run_workflow(data)
+        if workflow=='':
+            resp = _run_workflow(data)
+        else:
+            resp = _run_workflow(data, workflow=workflow)
         run('open %s' % resp[_tibanna]['url'])
 
 
