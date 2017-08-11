@@ -107,8 +107,7 @@ exl source /home/ec2-user/venv/cwl/bin/activate
 ### run command
 cwd0=$(pwd)
 cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
-sudo chmod 777 $LOCAL_OUTDIR
-exl cwl-runner --tmpdir-prefix $LOCAL_OUTDIR/tmp $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
+exl cwl-runner --tmpdir-prefix $EBS_DIR/tmp $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 deactivate
 cd $cwd0
 send_log 
