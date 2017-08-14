@@ -1,0 +1,28 @@
+{
+  "parameters": {
+    "ncores": 8
+  },
+  "_tibanna": {
+    "run_type": "hic-partc",
+    "run_id": "partC_rao2",
+    "env": "fourfront-webprod",
+    "run_name": "hic-partc_partC_rao2"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+  "input_files": [
+    {
+      "workflow_argument_name": "input_hic",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-wfoutput",
+      "uuid": "d3e1036b-b78b-461d-b3d4-e7e482932dd3",
+      "object_key": "4DNFIU59TRDY.hic"
+    },
+    {
+      "workflow_argument_name": "input_cool",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-wfoutput",
+      "uuid": "acdab973-8876-4a58-a701-97e7f30e3f0a",
+      "object_key": "4DNFIHKCL9SF.cool"
+    }
+  ],
+  "workflow_uuid": "c6480905-49e5-4c33-afab-9ec90d65faf3",
+  "app_name": "hi-c-processing-partc/8"
+}
