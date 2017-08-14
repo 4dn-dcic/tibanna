@@ -506,7 +506,7 @@ def make_input(env, workflow, accession, uuid):
 def run_workflow(ctx, input_json='', workflow=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
-        if workflow=='':
+        if workflow == '':
             resp = _run_workflow(data)
         else:
             resp = _run_workflow(data, workflow=workflow)
