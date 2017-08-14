@@ -110,6 +110,7 @@ cwd0=$(pwd)
 cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
 mkdir -p $LOCAL_CWL_TMPDIR
 pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
+yum install -y git
 git clone https://github.com/SooLee/cwltool
 cd cwltool
 pip install .
