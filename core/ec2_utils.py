@@ -100,6 +100,7 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
            },
            'Input': {
                     'Input_files_data': {},    # fill in later (below)
+                    'Secondary_files_data': {},   # fill in later (below)
                     'Input_files_reference': {},     # fill in later (below)
                     'Input_parameters': a['input_parameters']
            },
