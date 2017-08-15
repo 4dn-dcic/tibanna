@@ -1,7 +1,7 @@
 {
     "args" : {
-      "cwl" : "hi-c-processing-partb.39.cwl",
-      "cwl_children" : "merge-pairs.25.cwl,pairs2hic.15.cwl,cooler.19.cwl",
+      "cwl" : "hi-c-processing-partb.40.cwl",
+      "cwl_children" : "merge-pairs.28.cwl,pairs2hic.15.cwl,cooler.21.cwl",
       "app_name" : "hi-c-processing-partb",
       "app_version" : "39",
       "input_files" : {"input_pairs": ["e0b32fa9-a54e-4f62-86dc-039f60b34812/4DNFIIQN4FKO.pairs.gz"]},
