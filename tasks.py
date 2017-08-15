@@ -52,6 +52,7 @@ def get_all_core_lambdas():
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
             'start_run_awsf',
+            'run_task_awsf',
             'travis_deploy',
             ]
 
@@ -198,7 +199,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
     if no_tests is False:
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
-            return
+            # return
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
@@ -506,7 +507,7 @@ def make_input(env, workflow, accession, uuid):
 def run_workflow(ctx, input_json='', workflow=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
-        if workflow=='':
+        if workflow == '':
             resp = _run_workflow(data)
         else:
             resp = _run_workflow(data, workflow=workflow)

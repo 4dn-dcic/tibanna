@@ -2,11 +2,16 @@
   "Comment": "Start a workflow run on awsem, (later) track it and update our metadata to reflect whats going on",
   "StartAt": "StartRunAwsem",
   "States": {
-	"StartRunAwsem": {
-		"Type": "Task",
-		"Resource": "arn:aws:lambda:us-east-1:643366669028:function:start_run_awsf",
+        "StartRunAwsem": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:start_run_awsf",
+                "Next": "RunTaskAwsem"
+        },
+        "RunTaskAwsem": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_awsf",
                 "End": true
-	}
+        }
   }
 }
 
