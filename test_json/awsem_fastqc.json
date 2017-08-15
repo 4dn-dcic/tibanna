@@ -5,6 +5,7 @@
       "app_name" : "fastqc-0-11-4-1",
       "app_version" : "8",
       "input_files" : {"input_fastq": "test.h2500.fastq"},
+      "secondary_files": {},
       "input_reference_files" :  {},
       "input_parameters" :  {},
       "input_files_directory" : "4dn-tool-evaluation-files",

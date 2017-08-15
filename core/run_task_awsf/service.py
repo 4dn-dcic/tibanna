@@ -37,6 +37,7 @@ def handler(event, context):
     app_name: name of the app
     app_version: version of the app
     input_files: input files in json format (parametername:filename)
+    secondary_files: secondary files in json format (parametername:filename)
     input_reference_files: input reference files in json format (parametername:filename)
     input_parameters: input parameters in json format (parametername:value)
     input_files_directory: bucket name and subdirectory for input files
@@ -55,7 +56,8 @@ def handler(event, context):
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
                  "input_reference_files", "input_parameters", "input_files_directory",
-                 "EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance"]
+                 "EBS_optimized", "shutdown_min", "copy_to_s3", "launch_instance",
+                 "secondary_files"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:

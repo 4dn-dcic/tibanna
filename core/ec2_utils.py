@@ -117,6 +117,8 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     # fill in input_files and input_reference_files (restructured)
     for item, value in a['input_files'].iteritems():
         pre['Input']['Input_files_data'][item] = {'class': 'File', 'dir': a['input_files_directory'], 'path': value}
+    for item, value in a['secondary_files'].iteritems():
+        pre['Input']['Secondary_files_data'][item] = {'class': 'File', 'dir': a['input_files_directory'], 'path': value}
     for item, value in a['input_reference_files'].iteritems():
         pre['Input']['Input_files_reference'][item] = {'class': 'File',
                                                        'dir': a['input_reference_files_directory'],

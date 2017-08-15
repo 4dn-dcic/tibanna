@@ -17,9 +17,9 @@ with open(sys.argv[1], 'r') as json_file:
 ## create a download command list file from the information in json
 dict_input = dict["Job"]["Input"]
 with open(downloadlist_filename, 'w') as f_download:
-    for category in ["Input_files_data", "Input_files_reference"]:
+    for category in ["Input_files_data", "Input_files_reference", "Secondary_files_data"]:
         keys=dict_input[category].keys()
-        if category=="Input_files_data":
+        if category in ["Input_files_data", "Secondary_files_data"]:
             LOCAL_DIR=input_dir
         else:
             LOCAL_DIR=reference_dir
