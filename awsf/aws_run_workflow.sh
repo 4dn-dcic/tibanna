@@ -8,7 +8,7 @@ RUN_JSON_FILE_NAME=$JOBID.run.json
 POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_OUTDIR=$EBS_DIR/out  
-LOCAL_CWLDIR=$LOCAL_OUTDIR ## cwl-runner directory handling is so great that we had to do this..
+LOCAL_CWLDIR=$EBS_DIR/cwl 
 LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 LOCAL_CWL_TMPDIR=$EBS_DIR/tmp
@@ -108,7 +108,7 @@ exl source /home/ec2-user/venv/cwl/bin/activate
 
 ### run command
 cwd0=$(pwd)
-cd $LOCAL_OUTDIR  ## so that other downstream cwl files can be accessed and so that the output files can be captured.
+cd $LOCAL_CWLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
 #pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
 yum install -y git gcc
