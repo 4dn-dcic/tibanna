@@ -1,32 +1,33 @@
 {
-  "config" : {
-   "reference_S3_bucket": "maestro-resources",
-   "output_S3_bucket": "tibanna-output",
-   "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-   "keyname": "duplexa.4dn",
-   "worker_ami_id": "ami-7ff26968",
-   "default_instance_type": "t2.nano",
-   "default_ebs_size": 100,
-   "default_ebs_type": "io1",
-   "ebs_iops": 5000,
-   "userdata_dir": "/tmp/userdata",
-   "json_dir": "/tmp/json",
-   "json_bucket": "4dn-aws-pipeline-run-json",
-   "cwl_url": "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/"
- },
- "args" : {
-   "cwl" : "gatk-gvcf.cwl",
-   "cwl_children" : [],
-   "app_name" : "gatk-gvcf",
-   "app_version" : "",
-   "input_files" : {"BAM": "test.2_1.bam", "BAM_BAI": "test.2_1.bai"},
-   "input_reference_files" : {"FASTA": "human_g1k_v37_decoy.fasta", "FASTA_FAI": "human_g1k_v37_decoy.fasta.fai", "FASTA_DICT": "human_g1k_v37_decoy.dict", "dbSNP": "dbsnp_138.b37.vcf", "dbSNP_IDX": "dbsnp_138.b37.vcf.idx"},
-   "input_parameters" : {"region": "22", "prefix": "test", "ncore": 16, "mem": "24G"},
-   "input_files_directory" : "tibanna-testinput",
-   "not_EBS_optimized" : false,
-   "shutdown_min" : "now",
-   "copy_to_s3" : false,
-   "launch_instance" : true
- }
+    "config" : {
+      "cwl_url" : "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
+      "reference_S3_bucket" : "maestro-resources",
+      "output_S3_bucket" : "tibanna-output",
+      "default_instance_type" : "t2.medium",
+      "default_ebs_size" : 100,
+      "default_ebs_type" : "gp2",
+      "ebs_iops" : 5000,
+      "json_dir" : "/tmp/json",
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "worker_ami_id" : "ami-7ff26968",
+      "userdata_dir" : "/tmp/userdata",
+      "keyname": "",
+      "password": "hahaha",
+      "json_bucket": "4dn-aws-pipeline-run-json"
+    },
+    "args" : {
+      "cwl" : "gatk-gvcf.cwl",
+      "cwl_children" : "",
+      "app_name" : "gatk-gvcf",
+      "app_version" : "",
+      "input_files" : {"BAM": "test.2_1.bam", "BAM_BAI": "test.2_1.bai"},
+      "input_reference_files" :  {"FASTA": "human_g1k_v37_decoy.fasta", "FASTA_FAI": "human_g1k_v37_decoy.fasta.fai", "FASTA_DICT": "human_g1k_v37_decoy.dict", "dbSNP": "dbsnp_138.b37.vcf", "dbSNP_IDX": "dbsnp_138.b37.vcf.idx"}, 
+      "input_parameters" :  {"region": "21", "prefix": "test.2_1", "ncore": 2, "mem": "4G"}, 
+      "input_files_directory" : "tibanna-testinput",
+      "EBS_optimized" : false,
+      "shutdown_min" : "now",
+      "copy_to_s3" : true,
+      "launch_instance" : true
+    }
 }
-
+  
