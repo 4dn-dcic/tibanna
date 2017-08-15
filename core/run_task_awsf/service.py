@@ -75,6 +75,7 @@ def handler(event, context):
      'app_name': args.get('app_name'),
      'app_version': args.get('app_version'),
      'input_files': args.get('input_files'),
+     'secondary_files': args.get('secondary_files'),
      'input_reference_files': args.get('input_reference_files'),
      'input_parameters': args.get('input_parameters'),
      'input_files_directory': args.get('input_files_directory'),
