@@ -9,7 +9,7 @@
       "input_parameters" :  {"ncores": 1, "min_res": 5000, "binsize": 5000, "maxmem": "8g" },
       "input_files_directory" : "elasticbeanstalk-fourfront-webdev-wfoutput",
       "EBS_optimized" : false,
-      "shutdown_min" : "30",
+      "shutdown_min" : "120",
       "copy_to_s3" : true,
       "launch_instance" : true
     },
