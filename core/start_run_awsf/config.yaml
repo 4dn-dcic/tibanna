@@ -1,6 +1,6 @@
 region: us-east-1
 
-function_name: start_run_sbg 
+function_name: start_run_awsf
 handler: service.handler
 role: lambda_full_s3
 description: import files to SBG and create workflow object to store state of workflow run 
