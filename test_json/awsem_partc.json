@@ -1,9 +1,9 @@
 {
     "args" : {
-      "cwl" : "hi-c-processing-partc.10.cwl",
-      "cwl_children" : "cool2mcool.2.cwl,add-hic-normvector-to-mcool.5.cwl,extract-mcool-normvector-for-juicebox.5.cwl",
+      "cwl" : "hi-c-processing-partc.11.cwl",
+      "cwl_children" : "cool2mcool.2.cwl,add-hic-normvector-to-mcool.5.cwl,extract-mcool-normvector-for-juicebox.6.cwl",
       "app_name" : "hi-c-processing-partc",
-      "app_version" : "8",
+      "app_version" : "11",
       "input_files" : { "input_cool": "db256c9b-a712-4dd5-b9ee-4b0a4735341c/4DNFIP5NE7E4.cool", "input_hic": "3e352ebb-2e91-44e8-90c1-9c4e6568bf45/4DNFIDHBC4TC.hic" },
       "secondary_files": {},
       "input_reference_files" :  {},
