@@ -29,6 +29,9 @@
       "keyname": "",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha"
+    },
+    "_tibanna": {
+      "run_type": "partb"
     }
 }
   
