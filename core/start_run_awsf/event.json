@@ -3,9 +3,9 @@
 	"workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
 	"input_files": [
 			{"workflow_argument_name": "input_file", 
-			 "bucket_name": "elasticbeanstalk-encoded-4dn-files",
-			 "uuid": "test_upload", 
-			 "object_key": "4DNFI7RAJFJ4.fasta.gz"
+			 "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+			 "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+			 "object_key": "4DNFIRSRJH45.fastq.gz"
 			}
 	],
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
