@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-import json
+# import json
 import boto3
-from core import sbg_utils, ff_utils
+from core import ff_utils
 from core.utils import Tibanna, ensure_list
 
 LOG = logging.getLogger(__name__)
@@ -102,4 +102,4 @@ def handler(event, context):
             "_tibanna": tibanna.as_dict(),
             "config": event.get("config"),
             "args": event.get("args")
-           }
+            }
