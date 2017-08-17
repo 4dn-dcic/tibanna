@@ -7,6 +7,22 @@ import random
 from wranglertools import fdnDCIC
 
 
+def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
+                        output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
+                        run_status='started', run_platform='Tibanna', run_url=''):
+
+    input_files = [] if input_files is None else input_files
+    parameters = [] if parameters is None else parameters
+
+    if title is None:
+        title = app_name + " run " + str(datetime.datetime.now())
+
+    return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
+                               parameters=parameters, uuid=uuid, award=award,
+                               lab=lab, run_platform=run_platform, run_url=run_url,
+                               title=title, output_files=output_files, run_status=run_status)
+
+
 def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, sbg_task_id=None,
                   sbg_mounted_volume_ids=None, sbg_import_ids=None, sbg_export_ids=None, uuid=None,
                   award='1U01CA200059-01', lab='4dn-dcic-lab', run_platform='SBG',
@@ -111,8 +127,20 @@ class WorkflowRunMetadata(object):
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    def post(self, key):
-        return post_to_metadata(self.as_dict(), "workflow_run_sbg", key=key)
+    def post(self, key, type_name='workflow_run_sbg'):
+        return post_to_metadata(self.as_dict(), type_name, key=key)
+
+    def post_plain_wrf(self, key, type_name='workflow_run'):
+        from copy import deepcopy
+        data = deepcopy(self.as_dict())
+        print(data)
+        for akey in data.keys():
+            if akey.startswith("sbg"):
+                del data[akey]
+        print("snipped")
+        print(data)
+
+        return post_to_metadata(data, type_name, key=key)
 
 
 class ProcessedFileMetadata(object):
