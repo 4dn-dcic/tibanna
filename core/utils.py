@@ -188,7 +188,8 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_sbg_workflow_5'):
+def run_workflow(input_json, accession='', workflow='run_sbg_workflow_5',
+                 env='fourfront-webdev'):
     '''
     accession is unique name that we be part of run id
     '''
@@ -198,7 +199,7 @@ def run_workflow(input_json, accession='', workflow='run_sbg_workflow_5'):
 
     # build from appropriate input json
     # assume run_type and and run_id
-    input_json = _tibanna_settings(input_json, force_inplace=True)
+    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
     run_name = input_json[_tibanna]['run_name']
 
     # check to see if run already exists

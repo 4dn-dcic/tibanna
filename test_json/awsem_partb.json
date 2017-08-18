@@ -1,9 +1,9 @@
 {
     "args" : {
-      "cwl" : "hi-c-processing-partb.42.cwl",
-      "cwl_children" : "merge-pairs.28.cwl,pairs2hic.16.cwl,cooler.22.cwl",
+      "cwl" : "hi-c-processing-partb.43.cwl",
+      "cwl_children" : "merge-pairs.29.cwl,pairs2hic.17.cwl,cooler.23.cwl",
       "app_name" : "hi-c-processing-partb",
-      "app_version" : "42",
+      "app_version" : "43",
       "input_files" : {"input_pairs": ["e0b32fa9-a54e-4f62-86dc-039f60b34812/4DNFIIQN4FKO.pairs.gz"]},
       "secondary_files": {},
       "input_reference_files" :  {"chrsizes": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"},
@@ -29,6 +29,9 @@
       "keyname": "",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha"
+    },
+    "_tibanna": {
+      "run_type": "partb"
     }
 }
   
