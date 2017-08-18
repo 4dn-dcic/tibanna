@@ -8,6 +8,7 @@ install:
 - pip install pip --upgrade
 - pip install six
 - pip install -U -r requirements.txt
+- pip install -U -r requirements-develop.txt
 - pip install codacy-coverage
 script:
 - invoke test
