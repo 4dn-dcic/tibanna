@@ -13,7 +13,7 @@ with open(json_old, 'r') as json_old_f:
 
 ## read cwl output json file
 with open(json_out, 'r') as json_out_f:
-     dict['Job']['Output'].update(json.load(json_out_f))
+     dict['Job']['Output'].update({'Output files': json.load(json_out_f)})
 
 ## add end time
 date=time.strftime("%Y%m%d-%H:%M:%S-%Z")
