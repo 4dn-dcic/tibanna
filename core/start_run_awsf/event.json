@@ -26,10 +26,10 @@
       "password": "hahaha"
     },
     "args" : {
-      "cwl" : "md5.4.cwl",
+      "cwl" : "md5.5.cwl",
       "cwl_children" : "",
       "app_name" : "md5",
-      "app_version" : "4",
+      "app_version" : "5",
       "input_files" : {"input_file": "arrow2.jpg"},
       "secondary_files": {},
       "input_reference_files" :  {},
