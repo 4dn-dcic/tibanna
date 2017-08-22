@@ -8,6 +8,7 @@
       "secondary_files": {},
       "input_reference_files" :  {},
       "input_parameters" :  {},
+      "output_target": {},
       "input_files_directory" : "4dn-tool-evaluation-files",
       "EBS_optimized" : false,
       "shutdown_min" : "30",

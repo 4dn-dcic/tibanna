@@ -25,6 +25,7 @@
       "input_reference_files" :  {},
       "input_parameters" :  {},
       "input_files_directory" : "4dn-tool-evaluation-files",
+      "output_target": {"md5_report": "lalala/md5_report", "validatefiles_report": "lalala/validate_report"},
       "EBS_optimized" : false,
       "shutdown_min" : 30,
       "copy_to_s3" : true,

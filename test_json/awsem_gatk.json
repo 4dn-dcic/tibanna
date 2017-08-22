@@ -22,6 +22,7 @@
       "app_version" : "",
       "input_files" : {"BAM": "test.2_1.bam", "BAM_BAI": "test.2_1.bai"},
       "secondary_files": {},
+      "output_target": {},
       "input_reference_files" :  {"FASTA": "human_g1k_v37_decoy.fasta", "FASTA_FAI": "human_g1k_v37_decoy.fasta.fai", "FASTA_DICT": "human_g1k_v37_decoy.dict", "dbSNP": "dbsnp_138.b37.vcf", "dbSNP_IDX": "dbsnp_138.b37.vcf.idx"}, 
       "input_parameters" :  {"region": "21", "prefix": "test.2_1", "ncore": 2, "mem": "4G"}, 
       "input_files_directory" : "tibanna-testinput",
