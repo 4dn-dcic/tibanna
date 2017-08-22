@@ -1,35 +1,32 @@
 {
     "config" : {
-      "cwl_url" : "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
-      "reference_S3_bucket" : "maestro-resources",
-      "output_S3_bucket" : "tibanna-output",
-      "default_instance_type" : "t2.medium",
-      "default_ebs_size" : 100,
-      "default_ebs_type" : "gp2",
+      "instance_type" : "t2.medium",
+      "ebs_size" : 100,
+      "ebs_type" : "gp2",
       "ebs_iops" : 5000,
-      "json_dir" : "/tmp/json",
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
-      "worker_ami_id" : "ami-7ff26968",
-      "userdata_dir" : "/tmp/userdata",
-      "keyname": "",
+      "ami_id" : "ami-7ff26968",
       "password": "hahaha",
-      "json_bucket": "4dn-aws-pipeline-run-json"
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "EBS_optimized" : false,
+      "shutdown_min" : "now",
+      "copy_to_s3" : true,
+      "launch_instance" : true
     },
     "args" : {
       "cwl" : "gatk-gvcf.cwl",
       "cwl_children" : "",
       "app_name" : "gatk-gvcf",
       "app_version" : "",
+      "cwl_directory" : "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
+      "reference_S3_bucket" : "maestro-resources",
+      "output_S3_bucket" : "tibanna-output",
       "input_files" : {"BAM": "test.2_1.bam", "BAM_BAI": "test.2_1.bai"},
       "secondary_files": {},
       "output_target": {},
       "input_reference_files" :  {"FASTA": "human_g1k_v37_decoy.fasta", "FASTA_FAI": "human_g1k_v37_decoy.fasta.fai", "FASTA_DICT": "human_g1k_v37_decoy.dict", "dbSNP": "dbsnp_138.b37.vcf", "dbSNP_IDX": "dbsnp_138.b37.vcf.idx"}, 
       "input_parameters" :  {"region": "21", "prefix": "test.2_1", "ncore": 2, "mem": "4G"}, 
-      "input_files_directory" : "tibanna-testinput",
-      "EBS_optimized" : false,
-      "shutdown_min" : "now",
-      "copy_to_s3" : true,
-      "launch_instance" : true
+      "input_files_directory" : "tibanna-testinput"
     }
 }
   
