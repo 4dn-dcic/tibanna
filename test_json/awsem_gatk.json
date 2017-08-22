@@ -19,7 +19,7 @@
       "app_name" : "gatk-gvcf",
       "app_version" : "",
       "cwl_directory" : "https://raw.githubusercontent.com/hms-dbmi/4dn-dcic-workflow-codes/master/cwl/",
-      "reference_S3_bucket" : "maestro-resources",
+      "input_reference_files_directory" : "maestro-resources",
       "output_S3_bucket" : "tibanna-output",
       "input_files" : {"BAM": "test.2_1.bam", "BAM_BAI": "test.2_1.bai"},
       "secondary_files": {},

@@ -19,7 +19,7 @@
       "app_name" : "md5-validate",
       "app_version" : "4",
       "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "reference_S3_bucket" : "maestro-resources",
+      "input_reference_files_directory" : "maestro-resources",
       "output_S3_bucket" : "tibanna-output",
       "input_files" : {"input_file": "arrow2.jpg"},
       "secondary_files": {},

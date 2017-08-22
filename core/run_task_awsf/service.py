@@ -35,7 +35,7 @@ def handler(event, context):
     app_name: name of the app
     app_version: version of the app
     cwl_directory: the url and subdirectories for the main cwl file
-    reference_S3_bucket: bucket name and subdirectory for input reference files
+    input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
     input_files: input files in json format (parametername:filename)
     secondary_files: secondary files in json format (parametername:filename)
@@ -51,7 +51,7 @@ def handler(event, context):
                    "ebs_type", "ebs_iops", "json_bucket", "password"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
-                 "reference_S3_bucket", "output_S3_bucket", "cwl_directory",
+                 "input_reference_files_directory", "output_S3_bucket", "cwl_directory",
                  "input_reference_files", "input_parameters", "input_files_directory",
                  "secondary_files", "output_target"]
 

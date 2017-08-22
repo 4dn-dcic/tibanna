@@ -5,7 +5,7 @@
       "app_name" : "hi-c-processing-partc",
       "app_version" : "12",
       "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "reference_S3_bucket" : "elasticbeanstalk-fourfront-webdev-files",
+      "input_reference_files_directory" : "elasticbeanstalk-fourfront-webdev-files",
       "output_S3_bucket" : "tibanna-output",
       "input_files" : { "input_cool": "db256c9b-a712-4dd5-b9ee-4b0a4735341c/4DNFIP5NE7E4.cool", "input_hic": "3e352ebb-2e91-44e8-90c1-9c4e6568bf45/4DNFIDHBC4TC.hic" },
       "secondary_files": {},
