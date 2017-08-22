@@ -1,35 +1,32 @@
 {
     "config" : {
-      "cwl_url" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "reference_S3_bucket" : "maestro-resources",
-      "output_S3_bucket" : "tibanna-output",
-      "default_instance_type" : "t2.nano",
-      "default_ebs_size" : 20,
-      "default_ebs_type" : "io1",
+      "instance_type" : "t2.nano",
+      "ebs_size" : 20,
+      "ebs_type" : "io1",
       "ebs_iops" : 500,
-      "json_dir" : "/tmp/json",
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
-      "worker_ami_id" : "ami-7ff26968",
-      "userdata_dir" : "/tmp/userdata",
-      "keyname": "",
+      "ami_id" : "ami-7ff26968",
       "json_bucket": "4dn-aws-pipeline-run-json",
-      "password": "hahaha"
+      "password": "hahaha",
+      "EBS_optimized" : false,
+      "shutdown_min" : 30,
+      "copy_to_s3" : true,
+      "launch_instance" : true
     },
     "args" : {
       "cwl" : "md5-validate.4.cwl",
       "cwl_children" : "md5.5.cwl,validate.12.cwl",
       "app_name" : "md5-validate",
       "app_version" : "4",
+      "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
+      "reference_S3_bucket" : "maestro-resources",
+      "output_S3_bucket" : "tibanna-output",
       "input_files" : {"input_file": "arrow2.jpg"},
       "secondary_files": {},
       "input_reference_files" :  {},
       "input_parameters" :  {},
       "input_files_directory" : "4dn-tool-evaluation-files",
-      "output_target": {"md5_report": "lalala/md5_report", "validatefiles_report": "lalala/validate_report"},
-      "EBS_optimized" : false,
-      "shutdown_min" : 30,
-      "copy_to_s3" : true,
-      "launch_instance" : true
+      "output_target": {"md5_report": "lalala/md5_report", "validatefiles_report": "lalala/validate_report"}
     }
 }
   
