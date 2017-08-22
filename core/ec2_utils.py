@@ -79,7 +79,7 @@ def read_config(CONFIG_FILE, CONFIG_KEYS):
     return cfg
 
 
-def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
+def create_json(input_dict, jobid):
     # a is the final_args dictionary. json_dir is the output directory for the json file
 
     # create jobid here
@@ -89,44 +89,47 @@ def create_json(a, json_dir, jobid, copy_to_s3, json_bucket=''):
     # start time
     start_time = get_start_time()
 
-    #    pre is a dictionary to be printed as a pre-run json file.
-    pre = {'JOBID': jobid,
-           'App': {
-                    'App_name': a['app_name'],
-                    'App_version': a['app_version'],
-                    'cwl_url': a['cwl_directory'],
-                    'main_cwl': a['cwl'],
-                    'other_cwl_files': a['cwl_children']
-           },
-           'Input': {
-                    'Input_files_data': {},    # fill in later (below)
-                    'Secondary_files_data': {},   # fill in later (below)
-                    'Input_files_reference': {},     # fill in later (below)
-                    'Input_parameters': a['input_parameters']
-           },
-           'Output': {
-                    'output_bucket_directory': a['output_bucket_directory']
-           },
-           'Instance_type': a['instance_type'],
-           'EBS_SIZE': a['storage_size'],
-           'EBS_TYPE': a['storage_type'],
-           'EBS_IOPS': a['storage_iops'],
-           "AMI_ID": "ami-78c13615",
-           "start_time": start_time
-           }
+    a = input_dict.get('args')
+    copy_to_s3 = input_dict.get('config').get('copy_to_s3')
+    json_dir = input_dict.get('config').get('json_dir')
+    json_bucket = input_dict.get('config').get('json_bucket')
+
+    # pre is a dictionary to be printed as a pre-run json file.
+    pre = {'config': input_dict.get('config')}  # copy only config since arg is redundant with 'Job'
+    pre.update({'Job': {'JOBID': jobid,
+                        'App': {
+                                 'App_name': a['app_name'],
+                                 'App_version': a['app_version'],
+                                 'cwl_url': a['cwl_directory'],
+                                 'main_cwl': a['cwl'],
+                                 'other_cwl_files': a['cwl_children']
+                        },
+                        'Input': {
+                                 'Input_files_data': {},    # fill in later (below)
+                                 'Secondary_files_data': {},   # fill in later (below)
+                                 'Input_files_reference': {},     # fill in later (below)
+                                 'Input_parameters': a['input_parameters']
+                        },
+                        'Output': {
+                                 'output_bucket_directory': a['output_S3_bucket'],
+                                 'output_target': a['output_target']
+                        },
+                        "start_time": start_time
+                        }})
 
     # fill in input_files and input_reference_files (restructured)
     for item, value in a['input_files'].iteritems():
-        pre['Input']['Input_files_data'][item] = {'class': 'File', 'dir': a['input_files_directory'], 'path': value}
+        pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
+                                                         'dir': a['input_files_directory'],
+                                                         'path': value}
     for item, value in a['secondary_files'].iteritems():
-        pre['Input']['Secondary_files_data'][item] = {'class': 'File', 'dir': a['input_files_directory'], 'path': value}
+        pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
+                                                             'dir': a['input_files_directory'],
+                                                             'path': value}
     for item, value in a['input_reference_files'].iteritems():
-        pre['Input']['Input_files_reference'][item] = {'class': 'File',
-                                                       'dir': a['input_reference_files_directory'],
-                                                       'path': value}
-
-    # wrap
-    pre = {'Job': pre}
+        pre['Job']['Input']['Input_files_reference'][item] = {'class': 'File',
+                                                              'dir': a['input_reference_files_directory'],
+                                                              'path': value}
 
     # writing to a json file
     json_filename = create_json_filename(jobid, json_dir)
@@ -182,11 +185,11 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min, password='lalala'):
     # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
 
 
-def launch_instance(par, jobid, shutdown_min):
+def launch_instance(par, jobid):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        create_run_workflow(jobid, par['userdata_dir'], shutdown_min, par['password'])
+        create_run_workflow(jobid, par['userdata_dir'], par['shutdown_min'], par['password'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
@@ -194,7 +197,7 @@ def launch_instance(par, jobid, shutdown_min):
     Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
     logger.info(Userdata_file)
 
-    launch_args = {'ami': par['worker_ami_id'],
+    launch_args = {'ami': par['ami_id'],
                    'instance_type': par['instance_type'],
                    'arn': par['s3_access_arn'],
                    'userdata': 'file://' + Userdata_file,
@@ -203,22 +206,20 @@ def launch_instance(par, jobid, shutdown_min):
                      " --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination" + \
                      " --iam-instance-profile Arn={arn} --user-data={userdata}"
     launch_command = launch_command.format(**launch_args)
-    if par['keyname'] != '':
-        launch_command += " --key-name {keyname}".format(keyname=par['keyname'])
     if par['EBS_optimized'] is True:
         launch_command += " --ebs-optimized"
 
     # storage iops option
-    if par['storage_iops']:    # io1 type, specify iops
-        options_storage = " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
+    if par['ebs_iops']:    # io1 type, specify iops
+        options_ebs = " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
                           "VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}"
-        options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'],
-                                                 EBS_IOPS=par['storage_iops'])
+        options_ebs = options_ebs.format(EBS_SIZE=par['ebs_size'], EBS_TYPE=par['ebs_type'],
+                                         EBS_IOPS=par['ebs_iops'])
     else:  # gp type or other type? do not specify iops
-        options_storage += " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
-                           "VolumeType={EBS_TYPE},DeleteOnTermination=true}}"
-        options_storage = options_storage.format(EBS_SIZE=par['storage_size'], EBS_TYPE=par['storage_type'])
-    launch_command += options_storage
+        options_ebs += " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
+                       "VolumeType={EBS_TYPE},DeleteOnTermination=true}}"
+        options_ebs = options_ebs.format(EBS_SIZE=par['ebs_size'], EBS_TYPE=par['ebs_type'])
+    launch_command += options_ebs
     launch_command = launch_command.encode('utf-8')
     logger.info(launch_command)
     # launch_command_arr = launch_command.split(' ')
