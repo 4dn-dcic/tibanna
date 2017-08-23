@@ -52,6 +52,8 @@ exl sudo service sshd restart
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and OUTBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
+exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
+
 
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod +x ./*py
@@ -131,7 +133,9 @@ mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
-exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
+#exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
+exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $POSTRUN_JSON_FILE_NAME
+mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  
 ### updating status
@@ -139,7 +143,7 @@ send_log
 if [ `echo $STATUS| sed 's/0//g' | sed 's/,//g'` ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
 # This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
 ### 8. create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
-exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $POSTRUN_JSON_FILE_NAME
+exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$OUTBUCKET/$POSTRUN_JSON_FILE_NAME
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$OUTBUCKET/; fi
 send_log

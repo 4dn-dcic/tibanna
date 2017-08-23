@@ -4,16 +4,11 @@ import sys
 import os
 import time
 json_old=sys.argv[1]
-json_out=sys.argv[2]
-json_new=sys.argv[3]
+json_new=sys.argv[2]
  
 ## read old json file
 with open(json_old, 'r') as json_old_f:
      dict=json.load(json_old_f)
-
-## read cwl output json file
-with open(json_out, 'r') as json_out_f:
-     dict['Job']['Output'].update({'Output files': json.load(json_out_f)})
 
 ## add end time
 date=time.strftime("%Y%m%d-%H:%M:%S-%Z")
