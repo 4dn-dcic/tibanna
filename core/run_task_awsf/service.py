@@ -1,17 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# import boto3
 from core import ec2_utils as utils
-# import json
-# import random
-# import sys
-# import time
-# import string
-# import os
-# import subprocess
-
-# s3 = boto3.resource('s3')
-
 
 def handler(event, context):
     '''
@@ -79,4 +68,7 @@ def handler(event, context):
     if cfg.get('launch_instance'):
         utils.launch_instance(cfg, jobid)
 
-    return ({'args': args, 'config': cfg, 'jobid': jobid})
+    return ({'args': args, 'config': cfg, 'jobid': jobid,
+             'ff_meta': event.get('ff_meta'),
+             '_tibanna': event.get('_tibanna'),
+             'pf_meta': event.get('pf_meta')})
