@@ -46,11 +46,11 @@ def handler(event, context):
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
-        assert(k in cfg)
+        assert k in cfg, "%s not in config_field" % k
 
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
-        assert(k in args)
+        assert k in args, "%s not in args field" % k
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
