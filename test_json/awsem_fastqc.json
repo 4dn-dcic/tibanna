@@ -1,6 +1,6 @@
 {
     "args" : {
-      "cwl" : "fastqc-0-11-4-1.8.cwl",
+      "cwl" : "fastqc-0-11-4-1.9.cwl",
       "cwl_children" : "fastqc-0-11-4.6.cwl",
       "app_name" : "fastqc-0-11-4-1",
       "app_version" : "8",
