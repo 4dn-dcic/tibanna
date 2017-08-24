@@ -2,6 +2,7 @@
 
 from core import ec2_utils as utils
 
+
 def handler(event, context):
     '''
     config:

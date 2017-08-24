@@ -57,7 +57,6 @@ def fastqc_payload():  # pylint: disable=fixme
 @pytest.mark.webtest
 def test_check_export_fastqc_e2e(fastqc_payload, ff_keys, tibanna_env):
     # lets make sure we have a valid fastqc file
-    # TODO: figure out why this doesn't just return one object
     fastqs = ff_utils.get_metadata("/search/?type=FileFastq&limit=1", ff_keys)['@graph'][0]
     fastqc_payload['ff_meta']
 
