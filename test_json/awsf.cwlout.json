@@ -1,0 +1,12 @@
+{
+    "report": {
+        "checksum": "sha1$b369272104cba826f72a94272f650054d01a7f15", 
+        "basename": "report", 
+        "nameext": "", 
+        "nameroot": "report", 
+        "location": "file:///data1/out/report", 
+        "path": "/data1/out/report", 
+        "class": "File", 
+        "size": 33
+    }
+}
