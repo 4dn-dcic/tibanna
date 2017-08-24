@@ -6,14 +6,14 @@ from core import utils
 
 @pytest.fixture(scope='session')
 def check_task_input():
-    return {"args": {"output_s3_bucket": "tibanna-output"},
+    return {"args": {"output_S3_bucket": "tibanna-output"},
             "jobid": "test_job"
             }
 
 
 @pytest.fixture(scope='session')
 def s3(check_task_input):
-    bucket_name = check_task_input['args']['output_s3_bucket']
+    bucket_name = check_task_input['args']['output_S3_bucket']
     return utils.s3Utils(bucket_name, bucket_name, bucket_name)
 
 
