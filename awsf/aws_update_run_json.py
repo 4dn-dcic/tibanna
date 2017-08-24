@@ -11,7 +11,7 @@ with open(json_old, 'r') as json_old_f:
      dict=json.load(json_old_f)
 
 ## add end time, status, instance_id
-dict['Job']['end_time'] = strftime("%Y%m%d-%H:%M:%S-%Z")
+dict['Job']['end_time'] = time.strftime("%Y%m%d-%H:%M:%S-%Z")
 dict['Job']['status'] = os.getenv('JOB_STATUS')
 dict['Job']['instance_id'] = os.getenv('INSTANCE_ID')
  
