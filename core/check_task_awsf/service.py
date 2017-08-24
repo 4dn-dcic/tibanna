@@ -34,6 +34,6 @@ def handler(event, context):
     # check to see if job has completed if not throw retry error
     if s3.does_key_exist(job_success):
         print("completed successfully")
-        return
+        return event
     else:
         raise StillRunningException("job %s still running" % jobid)
