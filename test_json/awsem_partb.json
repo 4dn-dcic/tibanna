@@ -1,9 +1,9 @@
 {
     "args" : {
-      "cwl" : "hi-c-processing-partb.43.cwl",
-      "cwl_children" : "merge-pairs.29.cwl,pairs2hic.17.cwl,cooler.23.cwl",
+      "cwl" : "hi-c-processing-partb.44.cwl",
+      "cwl_children" : "merge-pairs.30.cwl,pairs2hic.18.cwl,cooler.24.cwl",
       "app_name" : "hi-c-processing-partb",
-      "app_version" : "43",
+      "app_version" : "44",
       "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
       "input_reference_files_directory" : "elasticbeanstalk-fourfront-webdev-files",
       "output_S3_bucket" : "tibanna-output",
