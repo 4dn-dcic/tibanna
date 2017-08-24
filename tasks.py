@@ -199,7 +199,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
     if no_tests is False:
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
-            # return
+            return
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
@@ -231,8 +231,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 
 @task
 def deploy_lambda_package(ctx, name):
-    # aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='requirements.txt')
-    aws_lambda.deploy(os.getcwd(), local_package='../..')
+    aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='requirements.txt')
 
 
 @task

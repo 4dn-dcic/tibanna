@@ -1,6 +1,6 @@
 region: us-east-1
 
-function_name: run_task_awsf
+function_name: check_task_awsf
 handler: service.handler
 role: lambda_full_s3
 description: check status of AWSEM run by interegating appropriate files on S3 

@@ -83,7 +83,9 @@ class s3Utils(object):
             return False
         return file_metadata
 
-    def delete_key(self, key, bucket):
+    def delete_key(self, key, bucket=None):
+        if not bucket:
+            bucket = self.outfile_bucket
         s3.delete_object(Bucket=bucket, Key=key)
 
     def size(self, bucket):
