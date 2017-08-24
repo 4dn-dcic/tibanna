@@ -134,6 +134,7 @@ exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
+pip install boto3
 exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $POSTRUN_JSON_FILE_NAME
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
