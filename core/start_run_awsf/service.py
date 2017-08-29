@@ -25,6 +25,7 @@ def handler(event, context):
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
     tibanna_settings = event.get('_tibanna', {})
+    args = event.get('args')
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
     # tibanna provides access to keys based on env and stuff like that
@@ -36,6 +37,10 @@ def handler(event, context):
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for % fourfront" % workflow_uuid)
+
+    # get cwl info from workflow_info
+    for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+        args[k] = workflow_info.get(k)
 
     # get format-extension map
     try:
@@ -101,5 +106,5 @@ def handler(event, context):
             'pf_meta': [meta.as_dict() for meta in pf_meta],
             "_tibanna": tibanna.as_dict(),
             "config": event.get("config"),
-            "args": event.get("args")
+            "args": args
             }
