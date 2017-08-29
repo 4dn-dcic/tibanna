@@ -93,6 +93,7 @@ def create_json(input_dict, jobid):
     copy_to_s3 = input_dict.get('config').get('copy_to_s3')
     json_dir = input_dict.get('config').get('json_dir')
     json_bucket = input_dict.get('config').get('json_bucket')
+    log_bucket = input_dict.get('config').get('log_bucket')
 
     # pre is a dictionary to be printed as a pre-run json file.
     pre = {'config': input_dict.get('config')}  # copy only config since arg is redundant with 'Job'
@@ -113,6 +114,9 @@ def create_json(input_dict, jobid):
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
                                  'output_target': a['output_target']
+                        },
+                        'Log': {
+                                 'log_bucket_directory': log_bucket
                         },
                         "start_time": start_time
                         }})
