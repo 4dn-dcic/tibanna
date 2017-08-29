@@ -233,6 +233,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 def deploy_lambda_package(ctx, name):
     aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='requirements.txt')
 
+
 @task
 def upload_sbg_keys(ctx, sbgkey=None, env='fourfront-webprod'):
     if sbgkey is None:
