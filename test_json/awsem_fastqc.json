@@ -1,7 +1,4 @@
 {
-    "args" : {
-      "output_S3_bucket" : "tibanna-output"
-    },
     "config" : {
       "instance_type" : "t2.nano",
       "ebs_size" : 20,
@@ -14,7 +11,8 @@
       "EBS_optimized" : false,
       "shutdown_min" : "30",
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output"
     },
     "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
     "input_files": [

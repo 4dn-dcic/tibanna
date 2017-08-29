@@ -1,9 +1,5 @@
 {
-    "args" : {
-      "output_S3_bucket" : "tibanna-output",
-      "secondary_files": {},
-      "input_parameters" :  {"ncores": 1, "min_res": 5000, "binsize": 5000, "maxmem": "8g" }
-    },
+    "parameters" :  {"ncores": 1, "min_res": 5000, "binsize": 5000, "maxmem": "8g" },
     "config" : {
       "instance_type" : "t2.2xlarge",
       "ebs_size" : 100,
@@ -16,7 +12,8 @@
       "EBS_optimized" : false,
       "shutdown_min" : "120",
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output"
     },
     "_tibanna": {
       "run_type": "partb",
@@ -37,7 +34,7 @@
         "object_key": ["4DNFIIQN4FKO.pairs.gz"]
       }
     ],
-    "app_name": "hi-c-processing-partb/41",
+    "app_name": "hi-c-processing-partb/44",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
   

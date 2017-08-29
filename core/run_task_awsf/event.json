@@ -34,6 +34,7 @@
     "ami_id": "ami-7ff26968",
     "copy_to_s3": true,
     "launch_instance": true,
-    "password": "hahaha"
+    "password": "hahaha",
+    "log_bucket": "tibanna-output"
   }
 }
