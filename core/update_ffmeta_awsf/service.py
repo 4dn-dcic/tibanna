@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from core import utils, sbg_utils, ff_utils
+from core import utils, ff_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_fastqc
@@ -30,13 +30,15 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
     return pf_meta
 
 
-def fastqc_updater(status, sbg, ff_meta, tibanna):
+def fastqc_updater(status, ff_meta, tibanna):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
     # keys
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
+    # need to remove sbg from this line
+    sbg = None
     accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
     zipped_report = ff_meta.output_files[0]['upload_key'].strip()
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
@@ -83,11 +85,12 @@ def fastqc_updater(status, sbg, ff_meta, tibanna):
     return retval
 
 
-def md5_updater(status, sbg, ff_meta, tibanna):
+def md5_updater(status, ff_meta, tibanna):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
-    accession = get_inputfile_accession(sbg)
+    # accession = get_inputfile_accession(sbg)
+    accession = None
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status == 'uploaded':
@@ -120,8 +123,9 @@ def md5_updater(status, sbg, ff_meta, tibanna):
     return None
 
 
-def get_inputfile_accession(sbg, input_file_name='input_file'):
-        return sbg.task_input.inputs[input_file_name]['name'].split('.')[0].strip('/')
+def get_inputfile_accession(awsem, input_file_name='input_file'):
+        return awsem['args']['input_files']['input_file']
+        # return sbg.task_input.inputs[input_file_name]['name'].split('.')[0].strip('/')
 
 
 # check the status and other details of import
@@ -134,18 +138,33 @@ def handler(event, context):
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
-    sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
-    ff_meta = ff_utils.create_ffmeta(sbg, **event.get('ff_meta'))
+    # sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
+    ff_meta = ff_utils.create_ffmeta_awsem(**event.get('ff_meta'))
     pf_meta = event.get('pf_meta')
     # ensure this bad boy is always initialized
     patch_meta = False
+    awsem = event['args']
 
-    if len(sbg.export_report) != len(ff_meta.output_files):
+    # go through this and replace export_report with awsf format
+    # actually interface should be look through ff_meta files and call
+    # give me the status of this thing from the runner, and runner.output_files.length
+    # so we just build a runner with interface to sbg and awsem
+    # runner.output_files.length()
+    # runner.output_files.file.status
+    # runner.output_files.file.loc
+    # runner.output_files.file.get
+
+    import pdb
+    pdb.set_trace()
+
+    awsem_output = len(awsem.get('output_target'))
+    ff_output = len(ff_meta.output_files)
+    if awsem_output !=  ff_output:
         ff_meta.run_status = 'error'
-        ff_meta.description = "no files output"
+        ff_meta.description = "%d files output expected %s" % (ff_output, awsem_output)
         ff_meta.post(key=tibanna.ff_keys)
-        raise Exception("Failing the workflow because sbg outputed files = %d and ffmeta = %d" %
-                        (len(sbg.export_report), len(ff_meta.output_files)))
+        raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
+                        (awsem_output, ff_output)
 
     for idx, export in enumerate(sbg.export_report):
         upload_key = export['upload_key']
