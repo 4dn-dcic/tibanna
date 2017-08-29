@@ -109,6 +109,15 @@ def handler(event, context):
     LOG.info("input_file_args is %s" % args['input_files'])
     args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
 
+    # output target
+    args['output_target'] = dict()
+    for of in ff_meta.output_files:
+        arg_name = of.get('workflow_argument_name')
+        if of.get('type') == 'Output processed file':
+            args['output_target'][arg_name] = of.get('upload_key')
+        else:
+            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "ff_meta": ff_meta.as_dict(),

@@ -15,8 +15,7 @@
     },
     "args" : {
       "output_S3_bucket" : "tibanna-output",
-      "input_parameters" :  {},
-      "output_target": {"report": "lalala/md5_report"}
+      "input_parameters" :  {}
     },
     "_tibanna": {
       "env": "fourfront-webdev",
