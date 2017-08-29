@@ -10,8 +10,13 @@
         "RunTaskAwsem": {
                 "Type": "Task",
                 "Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_awsf",
-                "End": true
-        }
+                "Next": "UpdateAwsemRun"
+        },
+		"UpdateAwsemRun": {
+				"Type": "Task",
+				"Resource": "arn:aws:states:us-east-1:643366669028:activity:update_awsem_run_activity",
+				"End": true
+		}
   }
 }
 
