@@ -118,6 +118,9 @@ def handler(event, context):
         else:
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
 
+    # output bucket
+    args['output_S3_bucket'] = event.get('output_bucket')
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "ff_meta": ff_meta.as_dict(),

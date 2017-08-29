@@ -14,7 +14,6 @@
       "launch_instance" : true
     },
     "args" : {
-      "output_S3_bucket" : "tibanna-output",
       "input_parameters" :  {}
     },
     "_tibanna": {

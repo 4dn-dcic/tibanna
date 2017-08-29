@@ -1,18 +1,7 @@
 {
     "args" : {
-      "cwl" : "fastqc-0-11-4-1.9.cwl",
-      "cwl_children" : "fastqc-0-11-4.6.cwl",
-      "app_name" : "fastqc-0-11-4-1",
-      "app_version" : "8",
-      "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "input_reference_files_directory" : "maestro-resources",
       "output_S3_bucket" : "tibanna-output",
-      "input_files" : {"input_fastq": "test.h2500.fastq"},
-      "secondary_files": {},
-      "input_reference_files" :  {},
-      "input_parameters" :  {},
-      "output_target": {},
-      "input_files_directory" : "4dn-tool-evaluation-files"
+      "input_parameters" :  {}
     },
     "config" : {
       "instance_type" : "t2.nano",
@@ -27,6 +16,16 @@
       "shutdown_min" : "30",
       "copy_to_s3" : true,
       "launch_instance" : true
-    }
+    },
+    "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
+    "input_files": [
+                    {"workflow_argument_name": "input_fastq", 
+                     "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+                     "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+                     "object_key": "4DNFIRSRJH45.fastq.gz"
+                    }
+    ],
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "app_name": "fastqc-0-11-4-1"
 }
   
