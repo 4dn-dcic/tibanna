@@ -30,11 +30,11 @@ def handler(event, context):
     launch_instance: Launch instance based on the json file
 
     args:
-    cwl: main cwl file name
-    cwl_children: names of the other cwl files used by main cwl file, delimiated by comma
+    cwl_main_filename: main cwl file name
+    cwl_child_filenames: names of the other cwl files used by main cwl file, delimiated by comma
     app_name: name of the app
     app_version: version of the app
-    cwl_directory: the url and subdirectories for the main cwl file
+    cwl_directory_url: the url and subdirectories for the main cwl file
     input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
     input_files: input files in json format (parametername:filename)
@@ -50,8 +50,8 @@ def handler(event, context):
                    "ami_id", "instance_type", "ebs_size", "launch_instance",
                    "ebs_type", "ebs_iops", "json_bucket", "password"]
     ARGS_FIELD = "args"
-    ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
-                 "input_reference_files_directory", "output_S3_bucket", "cwl_directory",
+    ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version", "input_files",
+                 "input_reference_files_directory", "output_S3_bucket", "cwl_directory_url",
                  "input_reference_files", "input_parameters", "input_files_directory",
                  "secondary_files", "output_target"]
 

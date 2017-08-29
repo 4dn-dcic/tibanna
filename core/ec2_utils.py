@@ -100,9 +100,9 @@ def create_json(input_dict, jobid):
                         'App': {
                                  'App_name': a['app_name'],
                                  'App_version': a['app_version'],
-                                 'cwl_url': a['cwl_directory'],
-                                 'main_cwl': a['cwl'],
-                                 'other_cwl_files': a['cwl_children']
+                                 'cwl_url': a['cwl_directory_url'],
+                                 'main_cwl': a['cwl_main_filename'],
+                                 'other_cwl_files': ','.join(a['cwl_child_filenames'])
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
