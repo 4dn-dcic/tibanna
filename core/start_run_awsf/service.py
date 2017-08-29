@@ -41,6 +41,7 @@ def handler(event, context):
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+        logger.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
 
     # get format-extension map
