@@ -25,12 +25,16 @@ def handler(event, context):
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
     tibanna_settings = event.get('_tibanna', {})
-    args = event.get('args')
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
     # tibanna provides access to keys based on env and stuff like that
     tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
                       settings=tibanna_settings)
+
+    if 'args' in event:
+        args = event.get('args')
+    else:
+        args = dict()
 
     # get argument format & type info from workflow
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)

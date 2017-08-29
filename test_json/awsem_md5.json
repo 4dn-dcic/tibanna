@@ -13,9 +13,7 @@
       "copy_to_s3" : true,
       "launch_instance" : true
     },
-    "args" : {
-      "input_parameters" :  {}
-    },
+    "args" : {},
     "_tibanna": {
       "env": "fourfront-webdev",
       "run_type": "md5"
