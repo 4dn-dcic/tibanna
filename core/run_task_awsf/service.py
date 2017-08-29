@@ -37,11 +37,9 @@ def handler(event, context):
     cwl_directory_url: the url and subdirectories for the main cwl file
     input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
-    input_files: input files in json format (parametername:filename)
-    secondary_files: secondary files in json format (parametername:filename)
-    input_reference_files: input reference files in json format (parametername:filename)
+    input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
+    secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})
     input_parameters: input parameters in json format (parametername:value)
-    input_files_directory: bucket name and subdirectory for input files
     '''
 
     # read default variables in config
@@ -50,10 +48,9 @@ def handler(event, context):
                    "ami_id", "instance_type", "ebs_size", "launch_instance",
                    "ebs_type", "ebs_iops", "json_bucket", "password"]
     ARGS_FIELD = "args"
-    ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version", "input_files",
-                 "input_reference_files_directory", "output_S3_bucket", "cwl_directory_url",
-                 "input_reference_files", "input_parameters", "input_files_directory",
-                 "secondary_files", "output_target"]
+    ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
+                 "input_files", "output_S3_bucket", "cwl_directory_url",
+                 "input_parameters", "secondary_files", "output_target"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:

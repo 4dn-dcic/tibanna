@@ -120,16 +120,12 @@ def create_json(input_dict, jobid):
     # fill in input_files and input_reference_files (restructured)
     for item, value in a['input_files'].iteritems():
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
-                                                         'dir': a['input_files_directory'],
-                                                         'path': value}
+                                                         'dir': value.get('bucket_name'),
+                                                         'path': value.get('object_key')}
     for item, value in a['secondary_files'].iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
-                                                             'dir': a['input_files_directory'],
-                                                             'path': value}
-    for item, value in a['input_reference_files'].iteritems():
-        pre['Job']['Input']['Input_files_reference'][item] = {'class': 'File',
-                                                              'dir': a['input_reference_files_directory'],
-                                                              'path': value}
+                                                             'dir': value.get('bucket_name'),
+                                                             'path': value.get('object_key')}
 
     # writing to a json file
     json_filename = create_json_filename(jobid, json_dir)

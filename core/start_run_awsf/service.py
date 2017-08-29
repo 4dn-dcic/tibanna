@@ -100,6 +100,15 @@ def handler(event, context):
     # store metadata so we know the run has started
     ff_meta.post_plain_wrf(key=tibanna.ff_keys)
 
+    # input file args for awsem
+    args['input_files'] = dict()
+    for input_file in input_file_list:
+        args['input_files'].update({input_file['workflow_argument_name']: {
+                                    'bucket_name': input_file['bucket_name'],
+                                    'object_key': input_file['uuid'] + '/' + input_file['object_key']}})
+    LOG.info("input_file_args is %s" % args['input_files'])
+    args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "ff_meta": ff_meta.as_dict(),
