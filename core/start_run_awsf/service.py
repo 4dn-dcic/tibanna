@@ -31,10 +31,7 @@ def handler(event, context):
     tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
                       settings=tibanna_settings)
 
-    if 'args' in event:
-        args = event.get('args')
-    else:
-        args = dict()
+    args = dict()
 
     # get argument format & type info from workflow
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)

@@ -1,5 +1,6 @@
 {
     "config" : {
+      "log_bucket" : "tibanna-output",
       "instance_type" : "t2.nano",
       "ebs_size" : 20,
       "ebs_type" : "io1",
