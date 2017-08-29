@@ -109,6 +109,9 @@ def handler(event, context):
     LOG.info("input_file_args is %s" % args['input_files'])
     args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
 
+    # parameters
+    args['input_parameters'] = event.get('parameters')
+
     # output target
     args['output_target'] = dict()
     for of in ff_meta.output_files:
