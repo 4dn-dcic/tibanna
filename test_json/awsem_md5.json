@@ -14,19 +14,7 @@
       "launch_instance" : true
     },
     "args" : {
-      "cwl" : "md5.5.cwl",
-      "cwl_children" : "",
-      "app_name" : "md5",
-      "app_version" : "5",
-      "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "input_reference_files_directory" : "maestro-resources",
-      "output_S3_bucket" : "tibanna-output",
-      "input_files" : {"input_file": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"},
-      "secondary_files": {},
-      "input_reference_files" :  {},
-      "input_parameters" :  {},
-      "input_files_directory" : "elasticbeanstalk-fourfront-webdev-files",
-      "output_target": {"report": "lalala/md5_report"}
+      "input_parameters" :  {}
     },
     "_tibanna": {
       "env": "fourfront-webdev",
