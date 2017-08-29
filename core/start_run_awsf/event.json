@@ -11,11 +11,10 @@
       "EBS_optimized" : false,
       "shutdown_min" : 30,
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output"
     },
-    "args" : {
-      "input_parameters" :  {}
-    },
+    "parameters" :  {}
     "_tibanna": {
       "env": "fourfront-webdev",
       "run_type": "md5"
