@@ -1,7 +1,6 @@
 {
     "args" : {
-      "output_S3_bucket" : "tibanna-output",
-      "input_parameters" :  {}
+      "output_S3_bucket" : "tibanna-output"
     },
     "config" : {
       "instance_type" : "t2.nano",
@@ -26,6 +25,7 @@
                     }
     ],
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "app_name": "fastqc-0-11-4-1"
+    "app_name": "fastqc-0-11-4-1",
+    "parameters": {}
 }
   

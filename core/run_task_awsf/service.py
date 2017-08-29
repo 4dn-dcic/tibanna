@@ -28,6 +28,7 @@ def handler(event, context):
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
     copy_to_s3: Upload or copy the json file to S3 bucket json_bucket
     launch_instance: Launch instance based on the json file
+    log_bucket: bucket for collecting logs (started, postrun, success, error, log)
 
     args:
     cwl_main_filename: main cwl file name
@@ -46,7 +47,7 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["s3_access_arn", "EBS_optimized", "shutdown_min", "copy_to_s3",
                    "ami_id", "instance_type", "ebs_size", "launch_instance",
-                   "ebs_type", "ebs_iops", "json_bucket", "password"]
+                   "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
                  "input_files", "output_S3_bucket", "cwl_directory_url",
