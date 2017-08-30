@@ -105,9 +105,16 @@ def handler(event, context):
     # input file args for awsem
     args['input_files'] = dict()
     for input_file in input_file_list:
+        if isinstance(input_file['uuid'], str) and isinstance(input_file['object_key'], str):
+            object_key = input_file['uuid'] + '/' + input_file['object_key']
+        elif isinstance(input_file['uuid'], list) and isinstance(input_file['object_key'], list) and len(input_file['uuid']) == len(input_file['object_key']):
+            object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
+        else:
+            raise Exception("input_file uuid and object_key should match in their type and length (if lists)")
         args['input_files'].update({input_file['workflow_argument_name']: {
                                     'bucket_name': input_file['bucket_name'],
-                                    'object_key': input_file['uuid'] + '/' + input_file['object_key']}})
+                                    'object_key': object_key}})
+
     LOG.info("input_file_args is %s" % args['input_files'])
     args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
 
