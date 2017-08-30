@@ -41,7 +41,7 @@ def handler(event, context):
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
-        logger.info(workflow_info.get(k))
+        LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
 
     # get format-extension map
@@ -107,7 +107,10 @@ def handler(event, context):
     for input_file in input_file_list:
         if isinstance(input_file['uuid'], str) and isinstance(input_file['object_key'], str):
             object_key = input_file['uuid'] + '/' + input_file['object_key']
-        elif isinstance(input_file['uuid'], list) and isinstance(input_file['object_key'], list) and len(input_file['uuid']) == len(input_file['object_key']):
+        elif (isinstance(input_file['uuid'], list) and
+              isinstance(input_file['object_key'], list) and
+              len(input_file['uuid']) == len(input_file['object_key'])):
+
             object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
         else:
             raise Exception("input_file uuid and object_key should match in their type and length (if lists) : type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']), len(input_file['uuid']), len(input_file['object_key'])))
