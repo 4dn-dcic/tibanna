@@ -90,6 +90,11 @@ def run_awsf_event_data(sbg_keys, ff_keys):
     return get_event_file_for('start_run_awsf', ff_keys=ff_keys)
 
 
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data(sbg_keys, ff_keys):
+    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys)
+
+
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)
