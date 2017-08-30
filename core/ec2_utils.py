@@ -9,6 +9,7 @@ import subprocess
 import logging
 # from invoke import run
 import awscli.clidriver
+from core import utils
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -267,3 +268,47 @@ def launch_instance(par, jobid):
                                                        par['instance_type'],
                                                        instance_ip, par['job_tag'],
                                                        get_start_time(), par['outbucket']))
+
+
+class WorkflowFile(object):
+
+    def __init__(self, bucket, key, runner):
+        self.bucket = bucket
+        self.key = key
+        self.s3 = utils.s3Utils(self.bucket, self.bucket, self.bucket)
+        self.runner = runner
+
+    @property
+    def status(self):
+        exists = self.s3.does_key_exist(self.key, self.bucket)
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+    def read(self):
+        return self.s3.read_s3(self.key).strip()
+
+
+# TODO: refactor this to inherit from an abstrat class called Runner
+# then implement for SBG as well
+class Awsem(object):
+
+    def __init__(self, json):
+        self.args = json['args']
+        self.config = json['config']
+        self.output_s3 = self.args['output_S3_bucket']
+        self.app_name = self.args['app_name']
+
+    def output_files(self):
+        files = []
+        for item in utils.ensure_list(self.args.get('output_target')):
+            wff = WorkflowFile(self.output_s3, item.get('report'),
+                               self)
+            files.append(wff)
+        return files
+
+    @property
+    def inputfile_accession(self):
+        filename = self.args['input_files']['input_file'].split('/')[-1]
+        return filename.split('.')[0].strip('/')

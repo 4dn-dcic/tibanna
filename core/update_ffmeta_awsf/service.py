@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from core import utils, ff_utils
+from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_fastqc
@@ -30,7 +30,7 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
     return pf_meta
 
 
-def fastqc_updater(status, ff_meta, tibanna):
+def fastqc_updater(status, wf_file, ff_meta, tibanna):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
@@ -38,14 +38,13 @@ def fastqc_updater(status, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
-    sbg = None
-    accession = get_inputfile_accession(sbg, input_file_name='input_fastq')
-    zipped_report = ff_meta.output_files[0]['upload_key'].strip()
+    accession = wf_file.runner.inputfile_accession
+    zipped_report = wf_file.key
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     LOG.info("accession is %s" % accession)
 
     try:
-        files = tibanna.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
+        files = wf_file.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
                                           acl='public-read')
     except Exception as e:
         LOG.info(tibanna.s3.__dict__)
@@ -85,21 +84,20 @@ def fastqc_updater(status, ff_meta, tibanna):
     return retval
 
 
-def md5_updater(status, ff_meta, tibanna):
+def md5_updater(status, wf_file, ff_meta, tibanna):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
-    # accession = get_inputfile_accession(sbg)
-    accession = None
+    accession = wf_file.runner.inputfile_accession
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
-    if status == 'uploaded':
-        md5 = tibanna.s3.read_s3(ff_meta.output_files[0]['upload_key']).strip()
+    if status.lower() == 'uploaded':
+        md5 = wf_file.read()
         original_md5 = original_file.get('content_md5sum', False)
         if original_md5 and original_md5 != md5:
             # file status to be upload failed / md5 mismatch
             print("no matcho")
-            md5_updater("upload failed", sbg, ff_meta, tibanna)
+            md5_updater("upload failed", wf_file, ff_meta, tibanna)
         else:
             new_file = {}
             new_file['status'] = 'uploaded'
@@ -123,11 +121,6 @@ def md5_updater(status, ff_meta, tibanna):
     return None
 
 
-def get_inputfile_accession(awsem, input_file_name='input_file'):
-        return awsem['args']['input_files']['input_file']
-        # return sbg.task_input.inputs[input_file_name]['name'].split('.')[0].strip('/')
-
-
 # check the status and other details of import
 def handler(event, context):
     '''
@@ -143,7 +136,7 @@ def handler(event, context):
     pf_meta = event.get('pf_meta')
     # ensure this bad boy is always initialized
     patch_meta = False
-    awsem = event['args']
+    awsem = ec2_utils.Awsem(event)
 
     # go through this and replace export_report with awsf format
     # actually interface should be look through ff_meta files and call
@@ -154,37 +147,28 @@ def handler(event, context):
     # runner.output_files.file.loc
     # runner.output_files.file.get
 
-    import pdb
-    pdb.set_trace()
-
-    awsem_output = len(awsem.get('output_target'))
+    awsem_output = awsem.output_files()
     ff_output = len(ff_meta.output_files)
-    if awsem_output != ff_output:
+    if len(awsem_output) != ff_output:
         ff_meta.run_status = 'error'
-        ff_meta.description = "%d files output expected %s" % (ff_output, awsem_output)
-        ff_meta.post(key=tibanna.ff_keys)
+        ff_meta.description = "%d files output expected %s" % (ff_output, len(awsem_output))
+        ff_meta.post_plain_wrf(key=tibanna.ff_keys)
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
-    for idx, export in enumerate(sbg.export_report):
-        upload_key = export['upload_key']
-        export_id = export['export_id']
-        export_res = sbg.check_export(export_id)
-        print("export res is %s", export_res)
-        status = export_res.get('state')
-        sbg.export_report[idx]['status'] = status
+    for export in awsem_output:
+        upload_key = export.key
+        status = export.status
+        print("export res is %s", status)
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploaded', sbg, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('uploaded', export, ff_meta, tibanna)
             if pf_meta:
                 pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
-        elif status in ['PENDING', 'RUNNING']:
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('uploading', sbg, ff_meta, tibanna)
-            raise sbg_utils.SBGStillRunningException("Export of file %s is still running" % upload_key)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[sbg.app_name]('upload failed', sbg, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
-            ff_meta.post(key=tibanna.ff_keys)
-            raise Exception("Failed to export file %s \n sbg result: %s" % (upload_key, export_res))
+            ff_meta.post_plain_wrf(key=tibanna.ff_keys)
+            raise Exception("Failed to export file %s" % (upload_key))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
     ff_meta.run_status = "output_file_transfer_finished"
@@ -195,9 +179,10 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    ff_meta.post(key=tibanna.ff_keys)
+    ff_meta.post_plain_wrf(key=tibanna.ff_keys)
 
-    return {'workflow': sbg.as_dict(),
+    return {'args': event['args'],
+            'config': event['config'],
             'ff_meta': ff_meta.as_dict(),
             'pf_meta': pf_meta,
             '_tibanna': tibanna.as_dict()
