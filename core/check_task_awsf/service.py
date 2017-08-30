@@ -12,7 +12,7 @@ def handler(event, context):
     somewhere in the event data should be a jobid
     '''
     # s3 bucket that stores the output
-    bucket_name = event['args']['output_s3_bucket']
+    bucket_name = event['config']['log_bucket']
     s3 = utils.s3Utils(bucket_name, bucket_name, bucket_name)
 
     # info about the jobby job

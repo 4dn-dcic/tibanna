@@ -9,7 +9,7 @@ from wranglertools import fdnDCIC
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
-                        run_status='started', run_platform='Tibanna', run_url=''):
+                        run_status='started', run_platform='Tibanna', run_url='', **kwargs):
 
     input_files = [] if input_files is None else input_files
     parameters = [] if parameters is None else parameters

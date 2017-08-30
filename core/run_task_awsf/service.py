@@ -1,16 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# import boto3
 from core import ec2_utils as utils
-# import json
-# import random
-# import sys
-# import time
-# import string
-# import os
-# import subprocess
-
-# s3 = boto3.resource('s3')
 
 
 def handler(event, context):
@@ -55,11 +45,11 @@ def handler(event, context):
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
-        assert(k in cfg)
+        assert k in cfg, "%s not in config_field" % k
 
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
-        assert(k in args)
+        assert k in args, "%s not in args field" % k
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
@@ -77,4 +67,7 @@ def handler(event, context):
     if cfg.get('launch_instance'):
         utils.launch_instance(cfg, jobid)
 
-    return ({'args': args, 'config': cfg, 'jobid': jobid})
+    return ({'args': args, 'config': cfg, 'jobid': jobid,
+             'ff_meta': event.get('ff_meta'),
+             '_tibanna': event.get('_tibanna'),
+             'pf_meta': event.get('pf_meta')})

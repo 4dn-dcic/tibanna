@@ -3,18 +3,18 @@
     "app_version": "8",
     "app_name": "fastqc-0-11-4-1",
     "input_parameters": {},
-    "input_reference_files_directory": "maestro-resources",
     "input_files": {
-      "input_fastq": "test.h2500.fastq"
+      "input_fastq": {
+          "object_key": "test.h2500.fastq",
+          "bucket_name": "tibanna-output"
+      }
     },
     "output_target": {},
     "secondary_files": {},
-    "cwl_directory": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
     "output_S3_bucket": "tibanna-output",
-    "input_files_directory": "4dn-tool-evaluation-files",
-    "input_reference_files": {},
-    "cwl_children": "fastqc-0-11-4.6.cwl",
-    "cwl": "fastqc-0-11-4-1.8.cwl"
+    "cwl_child_filenames": ["fastqc-0-11-4.6.cwl"],
+    "cwl_main_filename": "fastqc-0-11-4-1.8.cwl"
   },
   "config": {
     "ebs_size": 20,
@@ -23,7 +23,7 @@
     "json_dir": "/tmp/json",
     "EBS_optimized": false,
     "ebs_iops": 500,
-    "outbucket": null,
+    "log_bucket": "tibanna-output",
     "shutdown_min": "30",
     "instance_type": "t2.nano",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
