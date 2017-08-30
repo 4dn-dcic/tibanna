@@ -1,0 +1,71 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "md5", 
+            "App_version": "5", 
+            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/", 
+            "main_cwl": "md5.5.cwl", 
+            "other_cwl_files": ""
+        }, 
+        "Input": {
+            "Input_files_data": {
+                "input_file": {
+                    "class": "File", 
+                    "dir": "4dn-tool-evaluation-files", 
+                    "path": "arrow2.jpg"
+                }
+            }, 
+            "Input_files_reference": {}, 
+            "Input_parameters": {}, 
+            "Secondary_files_data": {}
+        }, 
+        "JOBID": "ZjEONidn5Qlc", 
+        "Output": {
+            "Output files": {
+                "report": {
+                    "basename": "report", 
+                    "checksum": "sha1$b369272104cba826f72a94272f650054d01a7f15", 
+                    "class": "File", 
+                    "location": "file:///data1/out/report", 
+                    "nameext": "", 
+                    "nameroot": "report", 
+                    "path": "/data1/out/report", 
+                    "size": 33, 
+                    "target": "lalala/report"
+                }
+            }, 
+            "output_bucket_directory": "tibanna-output", 
+            "output_target": {
+                "report": "lalala/report"
+            }
+        }, 
+        "end_time": "20170823-21:49:29-UTC", 
+        "start_time": "20170822-18:33:10-UTC", 
+        "status": null
+    }, 
+    "_tibanna": {
+        "env": "fourfront-webdev", 
+        "run_id": "b1e46d56-9f70-4a5e-87e2-11f1d1cdaeb7", 
+        "run_name": "generic_b1e46d56-9f70-4a5e-87e2-11f1d1cdaeb7", 
+        "run_type": "generic", 
+        "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow-3:generic_b1e46d56-9f70-4a5e-87e2-11f1d1cdaeb7"
+    }, 
+    "config": {
+        "EBS_optimized": false, 
+        "ami_id": "ami-7ff26968", 
+        "copy_to_s3": true, 
+        "ebs_iops": 500, 
+        "ebs_size": 20, 
+        "ebs_type": "io1", 
+        "instance_type": "t2.nano", 
+        "job_tag": "md5", 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "json_dir": "/tmp/json", 
+        "launch_instance": true, 
+        "outbucket": null, 
+        "password": "hahaha", 
+        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access", 
+        "shutdown_min": 30, 
+        "userdata_dir": "/tmp/userdata"
+    }
+}

@@ -1,14 +1,4 @@
-{"parameters": {}, 
-	"app_name": "md5", 
-	"workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
-	"input_files": [
-			{"workflow_argument_name": "input_file", 
-			 "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-			 "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
-			 "object_key": "4DNFIRSRJH45.fastq.gz"
-			}
-	],
-    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+{
     "config" : {
       "instance_type" : "t2.nano",
       "ebs_size" : 20,
@@ -21,22 +11,24 @@
       "EBS_optimized" : false,
       "shutdown_min" : 30,
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output"
     },
-    "args" : {
-      "cwl_directory" : "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-      "input_reference_files_directory" : "maestro-resources",
-      "output_S3_bucket" : "tibanna-output",
-      "cwl" : "md5.5.cwl",
-      "cwl_children" : "",
-      "app_name" : "md5",
-      "app_version" : "5",
-      "input_files" : {"input_file": "arrow2.jpg"},
-      "secondary_files": {},
-      "input_reference_files" :  {},
-      "input_parameters" :  {},
-      "output_target": {},
-      "input_files_directory" : "4dn-tool-evaluation-files"
-    }
+    "parameters" :  {}
+    "_tibanna": {
+      "env": "fourfront-webdev",
+      "run_type": "md5"
+    },
+    "parameters": {}, 
+    "app_name": "md5", 
+    "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
+    "input_files": [
+                    {"workflow_argument_name": "input_file", 
+                     "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+                     "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+                     "object_key": "4DNFIRSRJH45.fastq.gz"
+                    }
+    ],
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
 

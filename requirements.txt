@@ -5,7 +5,7 @@ awscli
 submit4dn
 
 # Build tasks
-invoke
+invoke==0.18.1
 
 # Syntax checking
 flake8==2.4.1
