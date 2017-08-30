@@ -93,6 +93,7 @@ def create_json(input_dict, jobid):
     copy_to_s3 = input_dict.get('config').get('copy_to_s3')
     json_dir = input_dict.get('config').get('json_dir')
     json_bucket = input_dict.get('config').get('json_bucket')
+    log_bucket = input_dict.get('config').get('log_bucket')
 
     # pre is a dictionary to be printed as a pre-run json file.
     pre = {'config': input_dict.get('config')}  # copy only config since arg is redundant with 'Job'
@@ -100,9 +101,9 @@ def create_json(input_dict, jobid):
                         'App': {
                                  'App_name': a['app_name'],
                                  'App_version': a['app_version'],
-                                 'cwl_url': a['cwl_directory'],
-                                 'main_cwl': a['cwl'],
-                                 'other_cwl_files': a['cwl_children']
+                                 'cwl_url': a['cwl_directory_url'],
+                                 'main_cwl': a['cwl_main_filename'],
+                                 'other_cwl_files': ','.join(a['cwl_child_filenames'])
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
@@ -114,22 +115,21 @@ def create_json(input_dict, jobid):
                                  'output_bucket_directory': a['output_S3_bucket'],
                                  'output_target': a['output_target']
                         },
+                        'Log': {
+                                 'log_bucket_directory': log_bucket
+                        },
                         "start_time": start_time
                         }})
 
     # fill in input_files and input_reference_files (restructured)
     for item, value in a['input_files'].iteritems():
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
-                                                         'dir': a['input_files_directory'],
-                                                         'path': value}
+                                                         'dir': value.get('bucket_name'),
+                                                         'path': value.get('object_key')}
     for item, value in a['secondary_files'].iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
-                                                             'dir': a['input_files_directory'],
-                                                             'path': value}
-    for item, value in a['input_reference_files'].iteritems():
-        pre['Job']['Input']['Input_files_reference'][item] = {'class': 'File',
-                                                              'dir': a['input_reference_files_directory'],
-                                                              'path': value}
+                                                             'dir': value.get('bucket_name'),
+                                                             'path': value.get('object_key')}
 
     # writing to a json file
     json_filename = create_json_filename(jobid, json_dir)

@@ -18,32 +18,30 @@ def handler(event, context):
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
     copy_to_s3: Upload or copy the json file to S3 bucket json_bucket
     launch_instance: Launch instance based on the json file
+    log_bucket: bucket for collecting logs (started, postrun, success, error, log)
 
     args:
-    cwl: main cwl file name
-    cwl_children: names of the other cwl files used by main cwl file, delimiated by comma
+    cwl_main_filename: main cwl file name
+    cwl_child_filenames: names of the other cwl files used by main cwl file, delimiated by comma
     app_name: name of the app
     app_version: version of the app
-    cwl_directory: the url and subdirectories for the main cwl file
+    cwl_directory_url: the url and subdirectories for the main cwl file
     input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
-    input_files: input files in json format (parametername:filename)
-    secondary_files: secondary files in json format (parametername:filename)
-    input_reference_files: input reference files in json format (parametername:filename)
+    input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
+    secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})
     input_parameters: input parameters in json format (parametername:value)
-    input_files_directory: bucket name and subdirectory for input files
     '''
 
     # read default variables in config
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["s3_access_arn", "EBS_optimized", "shutdown_min", "copy_to_s3",
                    "ami_id", "instance_type", "ebs_size", "launch_instance",
-                   "ebs_type", "ebs_iops", "json_bucket", "password"]
+                   "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"
-    ARGS_KEYS = ["cwl", "cwl_children", "app_name", "app_version", "input_files",
-                 "input_reference_files_directory", "output_S3_bucket", "cwl_directory",
-                 "input_reference_files", "input_parameters", "input_files_directory",
-                 "secondary_files", "output_target"]
+    ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
+                 "input_files", "output_S3_bucket", "cwl_directory_url",
+                 "input_parameters", "secondary_files", "output_target"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:

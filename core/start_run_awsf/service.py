@@ -31,11 +31,18 @@ def handler(event, context):
     tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
                       settings=tibanna_settings)
 
+    args = dict()
+
     # get argument format & type info from workflow
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for % fourfront" % workflow_uuid)
+
+    # get cwl info from workflow_info
+    for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+        logger.info(workflow_info.get(k))
+        args[k] = workflow_info.get(k)
 
     # get format-extension map
     try:
@@ -95,11 +102,35 @@ def handler(event, context):
     # store metadata so we know the run has started
     ff_meta.post_plain_wrf(key=tibanna.ff_keys)
 
+    # input file args for awsem
+    args['input_files'] = dict()
+    for input_file in input_file_list:
+        args['input_files'].update({input_file['workflow_argument_name']: {
+                                    'bucket_name': input_file['bucket_name'],
+                                    'object_key': input_file['uuid'] + '/' + input_file['object_key']}})
+    LOG.info("input_file_args is %s" % args['input_files'])
+    args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
+
+    # parameters
+    args['input_parameters'] = event.get('parameters')
+
+    # output target
+    args['output_target'] = dict()
+    for of in ff_meta.output_files:
+        arg_name = of.get('workflow_argument_name')
+        if of.get('type') == 'Output processed file':
+            args['output_target'][arg_name] = of.get('upload_key')
+        else:
+            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
+
+    # output bucket
+    args['output_S3_bucket'] = event.get('output_bucket')
+
     # let's not pass keys in plain text parameters
     return {"input_file_args": input_file_list,
             "ff_meta": ff_meta.as_dict(),
             'pf_meta': [meta.as_dict() for meta in pf_meta],
             "_tibanna": tibanna.as_dict(),
             "config": event.get("config"),
-            "args": event.get("args")
+            "args": args
             }
