@@ -159,12 +159,12 @@ def handler(event, context):
 
     awsem_output = len(awsem.get('output_target'))
     ff_output = len(ff_meta.output_files)
-    if awsem_output !=  ff_output:
+    if awsem_output != ff_output:
         ff_meta.run_status = 'error'
         ff_meta.description = "%d files output expected %s" % (ff_output, awsem_output)
         ff_meta.post(key=tibanna.ff_keys)
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
-                        (awsem_output, ff_output)
+                        (awsem_output, ff_output))
 
     for idx, export in enumerate(sbg.export_report):
         upload_key = export['upload_key']
