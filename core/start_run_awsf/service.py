@@ -117,9 +117,9 @@ def handler(event, context):
 
             object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
         else:
-            raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " + 
-                            "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']), 
-                            len(input_file['uuid']), len(input_file['object_key'])))
+            raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " +
+                            "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']),
+                                                         len(input_file['uuid']), len(input_file['object_key'])))
         args['input_files'].update({input_file['workflow_argument_name']: {
                                     'bucket_name': input_file['bucket_name'],
                                     'object_key': object_key}})
