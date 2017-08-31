@@ -14,7 +14,7 @@
       "launch_instance" : true,
       "log_bucket": "tibanna-output"
     },
-    "parameters" :  {}
+    "parameters" :  {},
     "_tibanna": {
       "env": "fourfront-webdev",
       "run_type": "md5"
