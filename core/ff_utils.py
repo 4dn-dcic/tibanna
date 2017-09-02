@@ -76,37 +76,45 @@ class WorkflowRunMetadata(object):
                  sbg_mounted_volume_ids=None, uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='SBG', title=None, output_files=None,
-                 run_status='started',
+                 run_status='started', awsem_job_id=None,
                  run_url='', **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
         """
-        self.sbg_app_name = app_name
-        self.app_name = app_name
+        if run_platform == 'SBG':
+            self.sbg_app_name = app_name
+            if sbg_task_id is None:
+                self.sbg_task_id = ''
+            else:
+                self.sbg_task_id = sbg_task_id
+            if sbg_mounted_volume_ids is None:
+                self.sbg_mounted_volume_ids = []
+            else:
+                self.sbg_mounted_volume_ids = sbg_mounted_volume_ids
+            if sbg_import_ids is None:
+                self.sbg_import_ids = []
+            else:
+                self.sbg_import_ids = sbg_import_ids
+            if sbg_export_ids is None:
+                self.sbg_export_ids = []
+            else:
+                self.sbg_export_ids = sbg_export_ids
+        elif run_platform == 'AWSEM':
+            self.awsem_app_name = app_name
+            if awsem_job_id is None:
+                self.awsem_job_id = ''
+            else:
+                self.awsem_job_id = job_id
+        else:
+            raise Exception("invalid run_platform {} - it must be either SBG or AWSEM".format(run_platform))
+
         self.run_status = run_status
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
         self.run_platform = run_platform
         if run_url:
             self.run_url = run_url
-        if sbg_task_id is None:
-            self.sbg_task_id = ''
-        else:
-            self.sbg_task_id = sbg_task_id
-
-        if sbg_mounted_volume_ids is None:
-            self.sbg_mounted_volume_ids = []
-        else:
-            self.sbg_mounted_volume_ids = sbg_mounted_volume_ids
-        if sbg_import_ids is None:
-            self.sbg_import_ids = []
-        else:
-            self.sbg_import_ids = sbg_import_ids
-        if sbg_export_ids is None:
-            self.sbg_export_ids = []
-        else:
-            self.sbg_export_ids = sbg_export_ids
 
         self.title = title
         self.input_files = input_files
