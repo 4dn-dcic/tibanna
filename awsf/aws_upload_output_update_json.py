@@ -21,6 +21,11 @@ with open(json_out, 'r') as json_out_f:
     cwl_output = json.load(json_out_f)
     old_dict['Job']['Output'].update({'Output files': cwl_output})
 
+## sanity check for output target, this skips secondary files - we assume secondary files are not explicitly specified in output_target.
+for k in output_target:
+    if k not in cwl_output:
+        raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
+
 ## upload output file
 s3 = boto3.client('s3')
 for k in cwl_output:
