@@ -105,7 +105,7 @@ class WorkflowRunMetadata(object):
             if awsem_job_id is None:
                 self.awsem_job_id = ''
             else:
-                self.awsem_job_id = job_id
+                self.awsem_job_id = awsem_job_id
         else:
             raise Exception("invalid run_platform {} - it must be either SBG or AWSEM".format(run_platform))
 
