@@ -142,11 +142,20 @@ def handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
+    event.update({"ff_meta": ff_meta.as_dict(),
+                  'pf_meta': [meta.as_dict() for meta in pf_meta],
+                  "_tibanna": tibanna.as_dict(),
+                  "args": args
+                  })
+    return(event)
+
     # let's not pass keys in plain text parameters
-    return {"input_file_args": input_file_list,
-            "ff_meta": ff_meta.as_dict(),
-            'pf_meta': [meta.as_dict() for meta in pf_meta],
-            "_tibanna": tibanna.as_dict(),
-            "config": event.get("config"),
-            "args": args
-            }
+    # return {"input_file_args": input_file_list,
+    #        "ff_meta": ff_meta.as_dict(),
+    #        'pf_meta': [meta.as_dict() for meta in pf_meta],
+    #        "_tibanna": tibanna.as_dict(),
+    #        "config": event.get("config"),
+    #        "args": args,
+    #        "workflow_uuid": workflow_uuid,
+    #        "app_name": app_name
+    #        }
