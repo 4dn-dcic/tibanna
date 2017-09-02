@@ -83,6 +83,7 @@ class WorkflowRunMetadata(object):
         Workflow_run uuid is auto-generated when the object is created.
         """
         self.sbg_app_name = app_name
+        self.app_name = app_name
         self.run_status = run_status
         self.uuid = uuid if uuid else str(uuid4())
         self.workflow = workflow
