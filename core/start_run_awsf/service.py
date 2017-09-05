@@ -24,7 +24,7 @@ def handler(event, context):
     print(app_name)
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
-    parameters = convert_param(event.get('parameters'))
+    parameters = ff_utils.convert_param(event.get('parameters'))
     tibanna_settings = event.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
@@ -96,7 +96,7 @@ def handler(event, context):
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files,
                                            run_url=tibanna.settings.get('url', ''),
-                                           output_files=output_files)
+                                           output_files=output_files, parameters=parameters)
 
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 

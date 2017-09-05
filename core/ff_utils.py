@@ -9,7 +9,7 @@ from wranglertools import fdnDCIC
 
 def convert_param(parameter_dict, vals_as_string=False):
     '''
-    converts dictionary format {argument_name: value, argument_name: value, ...} 
+    converts dictionary format {argument_name: value, argument_name: value, ...}
     to {'workflow_argument_name': argument_name, 'value': value}
     '''
     metadata_parameters = []
