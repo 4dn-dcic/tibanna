@@ -7,6 +7,30 @@ import random
 from wranglertools import fdnDCIC
 
 
+def convert_param(parameter_dict, vals_as_string=False):
+    '''
+    converts dictionary format {argument_name: value, argument_name: value, ...} 
+    to {'workflow_argument_name': argument_name, 'value': value}
+    '''
+    metadata_parameters = []
+    metadata_input = []
+    for k, v in parameter_dict.iteritems():
+        # we need this to be a float or integer if it really is, else a string
+        if not vals_as_string:
+            try:
+                v = float(v)
+                if v % 1 == 0:
+                    v = int(v)
+            except ValueError:
+                v = str(v)
+        else:
+            v = str(v)
+
+        metadata_parameters.append({"workflow_argument_name": k, "value": v})
+
+    return (metadata_parameters, metadata_input)
+
+
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', **kwargs):
