@@ -13,7 +13,6 @@ def convert_param(parameter_dict, vals_as_string=False):
     to {'workflow_argument_name': argument_name, 'value': value}
     '''
     metadata_parameters = []
-    metadata_input = []
     for k, v in parameter_dict.iteritems():
         # we need this to be a float or integer if it really is, else a string
         if not vals_as_string:
@@ -28,7 +27,7 @@ def convert_param(parameter_dict, vals_as_string=False):
 
         metadata_parameters.append({"workflow_argument_name": k, "value": v})
 
-    return (metadata_parameters, metadata_input)
+    return metadata_parameters
 
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
@@ -160,7 +159,13 @@ class WorkflowRunMetadata(object):
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    def post(self, key, type_name='workflow_run_sbg'):
+    def post(self, key):
+        if self.run_platform == 'SBG':
+            type_name = 'workflow_run_sbg'
+        elif self.run_platform == 'AWSEM':
+            type_name = 'workflow_run_awsem'
+        else:
+            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
         return post_to_metadata(self.as_dict(), type_name, key=key)
 
     def post_plain_wrf(self, key, type_name='workflow_run'):
@@ -172,6 +177,13 @@ class WorkflowRunMetadata(object):
                 del data[akey]
         print("snipped")
         print(data)
+
+        if self.run_platform == 'SBG':
+            type_name = 'workflow_run_sbg'
+        elif self.run_platform == 'AWSEM':
+            type_name = 'workflow_run_awsem'
+        else:
+            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
 
         return post_to_metadata(data, type_name, key=key)
 
