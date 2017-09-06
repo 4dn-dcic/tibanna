@@ -101,7 +101,7 @@ def handler(event, context):
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
-    ff_meta.post_plain_wrf(key=tibanna.ff_keys)
+    ff_meta.post(key=tibanna.ff_keys)
 
     # input file args for awsem
     args['input_files'] = dict()
@@ -149,14 +149,3 @@ def handler(event, context):
                   "args": args
                   })
     return(event)
-
-    # let's not pass keys in plain text parameters
-    # return {"input_file_args": input_file_list,
-    #        "ff_meta": ff_meta.as_dict(),
-    #        'pf_meta': [meta.as_dict() for meta in pf_meta],
-    #        "_tibanna": tibanna.as_dict(),
-    #        "config": event.get("config"),
-    #        "args": args,
-    #        "workflow_uuid": workflow_uuid,
-    #        "app_name": app_name
-    #        }

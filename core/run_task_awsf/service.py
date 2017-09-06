@@ -69,7 +69,3 @@ def handler(event, context):
 
     event.update({'jobid': jobid})
     return(event)
-    # return ({'args': args, 'config': cfg, 'jobid': jobid,
-    #         'ff_meta': event.get('ff_meta'),
-    #         '_tibanna': event.get('_tibanna'),
-    #         'pf_meta': event.get('pf_meta')})

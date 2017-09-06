@@ -33,10 +33,10 @@ def test_check_task_awsf_fails_if_no_job_started(check_task_input, s3):
     job_started = "%s.job_started" % jobid
     s3.delete_key(job_started)
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(service.EC2StartingException) as excinfo:
         service.handler(check_task_input, '')
 
-    assert 'Failed to find any evidence' in str(excinfo.value)
+    assert 'Failed to find jobid' in str(excinfo.value)
 
 
 @valid_env
