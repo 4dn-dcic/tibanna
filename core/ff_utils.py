@@ -7,6 +7,29 @@ import random
 from wranglertools import fdnDCIC
 
 
+def convert_param(parameter_dict, vals_as_string=False):
+    '''
+    converts dictionary format {argument_name: value, argument_name: value, ...}
+    to {'workflow_argument_name': argument_name, 'value': value}
+    '''
+    metadata_parameters = []
+    for k, v in parameter_dict.iteritems():
+        # we need this to be a float or integer if it really is, else a string
+        if not vals_as_string:
+            try:
+                v = float(v)
+                if v % 1 == 0:
+                    v = int(v)
+            except ValueError:
+                v = str(v)
+        else:
+            v = str(v)
+
+        metadata_parameters.append({"workflow_argument_name": k, "value": v})
+
+    return metadata_parameters
+
+
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', **kwargs):
@@ -136,7 +159,13 @@ class WorkflowRunMetadata(object):
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    def post(self, key, type_name='workflow_run_sbg'):
+    def post(self, key):
+        if self.run_platform == 'SBG':
+            type_name = 'workflow_run_sbg'
+        elif self.run_platform == 'AWSEM':
+            type_name = 'workflow_run_awsem'
+        else:
+            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
         return post_to_metadata(self.as_dict(), type_name, key=key)
 
     def post_plain_wrf(self, key, type_name='workflow_run'):
@@ -148,6 +177,13 @@ class WorkflowRunMetadata(object):
                 del data[akey]
         print("snipped")
         print(data)
+
+        if self.run_platform == 'SBG':
+            type_name = 'workflow_run_sbg'
+        elif self.run_platform == 'AWSEM':
+            type_name = 'workflow_run_awsem'
+        else:
+            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
 
         return post_to_metadata(data, type_name, key=key)
 
