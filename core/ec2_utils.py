@@ -187,13 +187,14 @@ def create_run_workflow(jobid, userdata_dir, shutdown_min, password='lalala'):
         fout.write(str)
     logger.info(str)
     # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
+    return(str)
 
 
 def launch_instance(par, jobid):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        create_run_workflow(jobid, par['userdata_dir'], par['shutdown_min'], par['password'])
+        userdata_str = create_run_workflow(jobid, par['userdata_dir'], par['shutdown_min'], par['password'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
@@ -204,7 +205,8 @@ def launch_instance(par, jobid):
     launch_args = {'ImageId': par['ami_id'],
                    'InstanceType': par['instance_type'],
                    'IamInstanceProfile': {'Arn': par['s3_access_arn']},
-                   'UserData': 'file://' + Userdata_file,
+                   # 'UserData': 'file://' + Userdata_file,
+                   'UserData': userdata_str,
                    'MaxCount': 1,
                    'MinCount': 1,
                    'InstanceInitiatedShutdownBehavior': 'terminate',
