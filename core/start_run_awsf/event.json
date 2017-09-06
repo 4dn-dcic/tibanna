@@ -14,25 +14,6 @@
       "launch_instance" : true,
       "log_bucket": "tibanna-output"
     },
-  "args": {
-    "app_name": "md5",
-    "input_parameters": {},
-    "cwl_child_filenames": [],
-    "output_target": {
-      "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
-    },
-    "cwl_main_filename": "md5.5.cwl",
-    "secondary_files": {},
-    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "app_version": "5",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
-    "input_files": {
-      "input_file": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
-      }
-    }
-  },
     "parameters" :  {},
     "_tibanna": {
       "env": "fourfront-webdev",
