@@ -29,7 +29,7 @@ def handler(event, context):
 
     # check to see ensure this job has started else fail
     if not s3.does_key_exist(job_started):
-        raise EC2StartingException("Failed to find jobid, ec2 is probably still booting" % jobid)
+        raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
 
     # check to see if job has error, report if so
     if s3.does_key_exist(job_error):

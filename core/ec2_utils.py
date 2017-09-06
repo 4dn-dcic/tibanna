@@ -55,8 +55,6 @@ def launch_and_get_instance_id(launch_command, jobid):
         logger.info(x.main(['s3', 'ls']))
         launch_res = x.main(launch_command_arr)
         logger.info(launch_res)
-        import pdb
-        pdb.set_trace()
         # logs = run(launch_command)
         # logstr += logs.stdout
         # logstr += logs.stderr
