@@ -107,6 +107,7 @@ class WorkflowRunMetadata(object):
         """
         if run_platform == 'SBG':
             self.sbg_app_name = app_name
+            self.app_name = app_name
             if sbg_task_id is None:
                 self.sbg_task_id = ''
             else:
@@ -125,6 +126,7 @@ class WorkflowRunMetadata(object):
                 self.sbg_export_ids = sbg_export_ids
         elif run_platform == 'AWSEM':
             self.awsem_app_name = app_name
+            self.app_name = app_name
             if awsem_job_id is None:
                 self.awsem_job_id = ''
             else:
