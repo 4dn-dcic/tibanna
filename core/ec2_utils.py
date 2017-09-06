@@ -53,7 +53,10 @@ def launch_and_get_instance_id(launch_command, jobid):
         os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
         x = awscli.clidriver.create_clidriver()
         logger.info(x.main(['s3', 'ls']))
-        logger.info(x.main(launch_command_arr))
+        launch_res = x.main(launch_command_arr)
+        logger.info(launch_res)
+        import pdb
+        pdb.set_trace()
         # logs = run(launch_command)
         # logstr += logs.stdout
         # logstr += logs.stderr

@@ -156,6 +156,8 @@ class s3Utils(object):
         if not dest_dir.endswith('/'):
             dest_dir += '/'
 
+        import pdb
+        pdb.set_trace()
         s3_stream = self.read_s3(zipped_s3key)
         # read this badboy to memory, don't go to disk
         bytestream = BytesIO(s3_stream)
