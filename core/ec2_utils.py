@@ -168,7 +168,7 @@ def create_json(input_dict, jobid):
     return(jobid)
 
 
-def create_run_workflow(jobid, shutdown_min, 
+def create_run_workflow(jobid, shutdown_min,
                         script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
                         password='lalala'):
     str = ''
