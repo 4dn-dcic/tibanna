@@ -7,6 +7,10 @@ class StillRunningException(Exception):
     pass
 
 
+class EC2StartingException(Exception):
+    pass
+
+
 def handler(event, context):
     '''
     somewhere in the event data should be a jobid
@@ -25,7 +29,7 @@ def handler(event, context):
 
     # check to see ensure this job has started else fail
     if not s3.does_key_exist(job_started):
-        raise Exception("Failed to find any evidence that jobid %s ever started" % jobid)
+        raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
 
     # check to see if job has error, report if so
     if s3.does_key_exist(job_error):

@@ -159,33 +159,15 @@ class WorkflowRunMetadata(object):
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
-    def post(self, key):
-        if self.run_platform == 'SBG':
-            type_name = 'workflow_run_sbg'
-        elif self.run_platform == 'AWSEM':
-            type_name = 'workflow_run_awsem'
-        else:
-            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
+    def post(self, key, type_name=None):
+        if not type_name:
+            if self.run_platform == 'SBG':
+                type_name = 'workflow_run_sbg'
+            elif self.run_platform == 'AWSEM':
+                type_name = 'workflow_run_awsem'
+            else:
+                raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
         return post_to_metadata(self.as_dict(), type_name, key=key)
-
-    def post_plain_wrf(self, key, type_name='workflow_run'):
-        from copy import deepcopy
-        data = deepcopy(self.as_dict())
-        print(data)
-        for akey in data.keys():
-            if akey.startswith("sbg"):
-                del data[akey]
-        print("snipped")
-        print(data)
-
-        if self.run_platform == 'SBG':
-            type_name = 'workflow_run_sbg'
-        elif self.run_platform == 'AWSEM':
-            type_name = 'workflow_run_awsem'
-        else:
-            raise Exception("cannot determine workflow schema type: SBG or AWSEM?")
-
-        return post_to_metadata(data, type_name, key=key)
 
 
 class ProcessedFileMetadata(object):

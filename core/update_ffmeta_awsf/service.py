@@ -152,7 +152,7 @@ def handler(event, context):
     if len(awsem_output) != ff_output:
         ff_meta.run_status = 'error'
         ff_meta.description = "%d files output expected %s" % (ff_output, len(awsem_output))
-        ff_meta.post_plain_wrf(key=tibanna.ff_keys)
+        ff_meta.post(key=tibanna.ff_keys)
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
@@ -167,7 +167,7 @@ def handler(event, context):
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[awsem.app_name]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
-            ff_meta.post_plain_wrf(key=tibanna.ff_keys)
+            ff_meta.post(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
@@ -179,7 +179,7 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    ff_meta.post_plain_wrf(key=tibanna.ff_keys)
+    ff_meta.post(key=tibanna.ff_keys)
 
     return {'args': event['args'],
             'config': event['config'],
