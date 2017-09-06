@@ -12,7 +12,8 @@
       "shutdown_min" : 30,
       "copy_to_s3" : true,
       "launch_instance" : true,
-      "log_bucket": "tibanna-output"
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
     },
     "parameters" :  {},
     "_tibanna": {
