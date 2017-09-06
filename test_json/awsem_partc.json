@@ -26,7 +26,8 @@
       "EBS_optimized" : false,
       "shutdown_min" : "120",
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
     },
     "_tibanna": {
       "run_type": "partc"

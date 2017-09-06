@@ -168,25 +168,19 @@ def create_json(input_dict, jobid):
     return(jobid)
 
 
-def create_run_workflow(jobid, userdata_dir, shutdown_min, password='lalala'):
-    if not os.path.exists(userdata_dir):
-        os.mkdir(userdata_dir)
-    run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
-    script_url = 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/'
-    with open(run_workflow_file, 'w') as fout:
-        str = ''
-        str += "#!/bin/bash\n"
-        str += "JOBID={}\n".format(jobid)
-        str += "RUN_SCRIPT=aws_run_workflow.sh\n"
-        str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
-        str += "PASSWORD={}\n".format(password)
-        str += "SCRIPT_URL={}\n".format(script_url)
-        str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
-        str += "chmod +x $RUN_SCRIPT\n"
-        str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD\n"
-        fout.write(str)
-    logger.info(str)
-    # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
+def create_run_workflow(jobid, shutdown_min, 
+                        script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
+                        password='lalala'):
+    str = ''
+    str += "#!/bin/bash\n"
+    str += "JOBID={}\n".format(jobid)
+    str += "RUN_SCRIPT=aws_run_workflow.sh\n"
+    str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
+    str += "PASSWORD={}\n".format(password)
+    str += "SCRIPT_URL={}\n".format(script_url)
+    str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+    str += "chmod +x $RUN_SCRIPT\n"
+    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD\n"
     return(str)
 
 
@@ -194,14 +188,11 @@ def launch_instance(par, jobid):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        userdata_str = create_run_workflow(jobid, par['userdata_dir'], par['shutdown_min'], par['password'])
+        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'], par['password'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
     # creating a launch command
-    Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
-    logger.info(Userdata_file)
-
     launch_args = {'ImageId': par['ami_id'],
                    'InstanceType': par['instance_type'],
                    'IamInstanceProfile': {'Arn': par['s3_access_arn']},

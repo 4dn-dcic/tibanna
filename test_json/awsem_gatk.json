@@ -11,7 +11,8 @@
       "EBS_optimized" : false,
       "shutdown_min" : "now",
       "copy_to_s3" : true,
-      "launch_instance" : true
+      "launch_instance" : true,
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
     },
     "args" : {
       "cwl" : "gatk-gvcf.cwl",

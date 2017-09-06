@@ -13,7 +13,8 @@
       "shutdown_min" : "30",
       "copy_to_s3" : true,
       "launch_instance" : true,
-      "log_bucket": "tibanna-output"
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
     },
     "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
     "input_files": [
