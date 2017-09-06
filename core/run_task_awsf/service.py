@@ -65,7 +65,8 @@ def handler(event, context):
 
     # launch instance and execute workflow
     if cfg.get('launch_instance'):
-        utils.launch_instance(cfg, jobid)
+        launch_instance_log = utils.launch_instance(cfg, jobid)
 
     event.update({'jobid': jobid})
+    event.update(launch_instance_log)
     return(event)
