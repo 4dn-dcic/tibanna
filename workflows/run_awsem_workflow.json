@@ -21,7 +21,7 @@
 					"IntervalSeconds": 300,
 					"MaxAttempts" : 4,
 					"BackoffRate" : 1.0
-				   }
+				   },
 				  {
 					"ErrorEquals": ["StillRunningException"],
 					"IntervalSeconds": 600,
