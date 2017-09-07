@@ -220,8 +220,6 @@ def launch_instance(par, jobid):
     # get public IP for the instance (This may not happen immediately)
     session = botocore.session.get_session()
     x = session.create_client('ec2')
-    instance_desc_log = x.describe_instances(InstanceIds=[instance_id])
-    instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
 
     try_again = True
     while try_again:    # keep trying until you get the result.
