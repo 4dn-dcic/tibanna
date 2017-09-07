@@ -2,7 +2,7 @@
     "config" : {
       "log_bucket" : "tibanna-output",
       "instance_type" : "t2.nano",
-      "ebs_size" : 20,
+      "ebs_size" : 40,
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",

@@ -202,7 +202,9 @@ def launch_instance(par, jobid):
                    'MinCount': 1,
                    'InstanceInitiatedShutdownBehavior': 'terminate',
                    'DisableApiTermination': False,
-                   'TagSpecification': "awsem-" + jobid
+                   'TagSpecifications': [{'ResourceType': 'instance',
+                                          "Tags": [{"Key": "Name", "Value": "awsem-" + jobid},
+                                                   {"Key": "Type", "Value": "awsem"}]}]
                    }
 
     # EBS options
