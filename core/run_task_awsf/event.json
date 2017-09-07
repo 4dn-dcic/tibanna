@@ -29,7 +29,7 @@
     "EBS_optimized": false,
     "ebs_iops": 500,
     "shutdown_min": 300,
-    "instance_type": "t2.medium",
+    "instance_type": "t2.tato",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "ami_id": "ami-7ff26968",
     "copy_to_s3": true,
