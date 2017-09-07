@@ -10,6 +10,7 @@ import logging
 # from invoke import run
 import awscli.clidriver
 from core import utils
+import botocore.session
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -44,27 +45,28 @@ def run_command_out_check(command):
             return([False, ''])
 
 
-def launch_and_get_instance_id(launch_command, jobid):
-    logstr = ''
+def launch_and_get_instance_id(launch_args, jobid):
     try:  # capturing stdout from the launch command
-        launch_command_arr = launch_command.split(' ')
-        logger.info(launch_command)
-        logger.info(str(launch_command_arr))
-        os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-        x = awscli.clidriver.create_clidriver()
-        logger.info(x.main(['s3', 'ls']))
-        launch_res = x.main(launch_command_arr)
-        logger.info(launch_res)
-        # logs = run(launch_command)
-        # logstr += logs.stdout
-        # logstr += logs.stderr
+        os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
+        session = botocore.session.get_session()
+        x = session.create_client('ec2')
+
+    except Exception as e:
+        raise Exception("Failed to create a client for EC2")
+    try:
+        res = 0
+        res = x.run_instances(**launch_args)
 
     except Exception as e:
         raise Exception("failed to launch instance for job {jobid}: {log}. %s"
-                        .format(jobid=jobid, log=logstr) % e)
-    # log = json.loads(logstr)
-    # return log['Instances'][0]['InstanceId']
-    return 0
+                        .format(jobid=jobid, log=res) % e)
+
+    try:
+        instance_id = res['Instances'][0]['InstanceId']
+    except Exception as e:
+        raise Exception("failed to retrieve instance ID for job {jobid}".format(jobid=jobid))
+
+    return instance_id
 
 
 def read_config(CONFIG_FILE, CONFIG_KEYS):
@@ -166,109 +168,73 @@ def create_json(input_dict, jobid):
     return(jobid)
 
 
-def create_run_workflow(jobid, userdata_dir, shutdown_min, password='lalala'):
-    if not os.path.exists(userdata_dir):
-        os.mkdir(userdata_dir)
-    run_workflow_file = userdata_dir + '/run_workflow.' + jobid + '.sh'
-    script_url = 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/'
-    with open(run_workflow_file, 'w') as fout:
-        str = ''
-        str += "#!/bin/bash\n"
-        str += "JOBID={}\n".format(jobid)
-        str += "RUN_SCRIPT=aws_run_workflow.sh\n"
-        str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
-        str += "PASSWORD={}\n".format(password)
-        str += "SCRIPT_URL={}\n".format(script_url)
-        str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
-        str += "chmod +x $RUN_SCRIPT\n"
-        str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD\n"
-        fout.write(str)
-    logger.info(str)
-    # run_command_out_check("aws s3 cp {} s3://4dn-tool-evaluation-files/{}".format(run_workflow_file, 'mmm'))  # Soo
+def create_run_workflow(jobid, shutdown_min,
+                        script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
+                        password='lalala'):
+    str = ''
+    str += "#!/bin/bash\n"
+    str += "JOBID={}\n".format(jobid)
+    str += "RUN_SCRIPT=aws_run_workflow.sh\n"
+    str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
+    str += "PASSWORD={}\n".format(password)
+    str += "SCRIPT_URL={}\n".format(script_url)
+    str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+    str += "chmod +x $RUN_SCRIPT\n"
+    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD\n"
+    return(str)
 
 
 def launch_instance(par, jobid):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        create_run_workflow(jobid, par['userdata_dir'], par['shutdown_min'], par['password'])
+        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'], par['password'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
     # creating a launch command
-    Userdata_file = "{dir}/run_workflow.{jobid}.sh".format(jobid=jobid, dir=par['userdata_dir'])
-    logger.info(Userdata_file)
-
-    launch_args = {'ami': par['ami_id'],
-                   'instance_type': par['instance_type'],
-                   'arn': par['s3_access_arn'],
-                   'userdata': 'file://' + Userdata_file,
+    launch_args = {'ImageId': par['ami_id'],
+                   'InstanceType': par['instance_type'],
+                   'IamInstanceProfile': {'Arn': par['s3_access_arn']},
+                   # 'UserData': 'file://' + Userdata_file,
+                   'UserData': userdata_str,
+                   'MaxCount': 1,
+                   'MinCount': 1,
+                   'InstanceInitiatedShutdownBehavior': 'terminate',
+                   'DisableApiTermination': False
                    }
-    launch_command = "ec2 run-instances --image-id {ami} --instance-type {instance_type}" + \
-                     " --instance-initiated-shutdown-behavior terminate --count 1 --enable-api-termination" + \
-                     " --iam-instance-profile Arn={arn} --user-data={userdata}"
-    launch_command = launch_command.format(**launch_args)
+
+    # EBS options
     if par['EBS_optimized'] is True:
-        launch_command += " --ebs-optimized"
+        launch_args.update({"EbsOptimized": True})
 
-    # storage iops option
+    launch_args.update({"BlockDeviceMappings": [{'DeviceName': '/dev/sdb',
+                                                 'Ebs': {'DeleteOnTermination': True,
+                                                         'VolumeSize': par['ebs_size'],
+                                                         'VolumeType': par['ebs_type']}}]})
     if par['ebs_iops']:    # io1 type, specify iops
-        options_ebs = " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
-                          "VolumeType={EBS_TYPE},Iops={EBS_IOPS},DeleteOnTermination=true}}"
-        options_ebs = options_ebs.format(EBS_SIZE=par['ebs_size'], EBS_TYPE=par['ebs_type'],
-                                         EBS_IOPS=par['ebs_iops'])
-    else:  # gp type or other type? do not specify iops
-        options_ebs += " --block-device-mappings DeviceName=/dev/sdb,Ebs={{VolumeSize={EBS_SIZE}," + \
-                       "VolumeType={EBS_TYPE},DeleteOnTermination=true}}"
-        options_ebs = options_ebs.format(EBS_SIZE=par['ebs_size'], EBS_TYPE=par['ebs_type'])
-    launch_command += options_ebs
-    launch_command = launch_command.encode('utf-8')
-    logger.info(launch_command)
-    # launch_command_arr = launch_command.split(' ')
-    # os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-    # x = awscli.clidriver.create_clidriver()
-    # x.main(launch_command_arr)
+        launch_args["BlockDeviceMappings"][0]["Ebs"]['Iops'] = par['ebs_iops']
 
-    # launch instance and get id
-    # logger.info(launch_command)
-    # logger.info(subprocess.check_output("aws s3 ls", shell=True))
-    # logger.info(run('ls').stdout)
-    # os.environ['PATH'] = os.environ['PATH'] + ":" + os.environ['LAMBDA_TASK_ROOT']
-
-    # logger.info(run('/bin/echo $PATH; /bin/echo $LAMBDA_TASK_ROOT').stdout)
-    # logger.info(run('/bin/ls -R /').stdout)
-    # logger.info(run('/bin/ls').stdout)
-    # logger.info(run('/bin/ls /usr/local/bin/').stdout)
-
-    instance_id = launch_and_get_instance_id(launch_command, jobid)
-    return(0)
+    instance_id = launch_and_get_instance_id(launch_args, jobid)
 
     # get public IP for the instance (This may not happen immediately)
-    instance_desc_command = "ec2 describe-instances --instance-id={instance_id}".format(instance_id=instance_id)
-    instance_desc_command_arr = instance_desc_command.split(' ')
-    x = awscli.clidriver.create_clidriver()
-    x.main(instance_desc_command_arr)
+    session = botocore.session.get_session()
+    x = session.create_client('ec2')
+    instance_desc_log = x.describe_instances(InstanceIds=[instance_id])
+    instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
 
     try_again = True
     while try_again:    # keep trying until you get the result.
         time.sleep(1)  # wait for one second before trying again.
         try:
             # sometimes you don't get a description immediately
-            instance_desc_logstr = x.main(instance_desc_command_arr)
-            instance_desc_log = json.loads(instance_desc_logstr[1])
-            # sometimes you get a description but PublicIP is not available yet
+            instance_desc_log = x.describe_instances(InstanceIds=[instance_id])
             instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
             try_again = False
         except:
             try_again = True
 
-    print("instance_id={}, instance_ip={}".format(instance_id, instance_ip))
-    # 5. Add to the job list
-    with open(par['job_list_file'], 'a') as fo:
-        fo.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(jobid, instance_id,
-                                                       par['instance_type'],
-                                                       instance_ip, par['job_tag'],
-                                                       get_start_time(), par['outbucket']))
+    return({'instance_id': instance_id, 'instance_ip': instance_ip, 'start_time': get_start_time()})
 
 
 class WorkflowFile(object):

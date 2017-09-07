@@ -132,7 +132,7 @@ def handler(event, context):
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
     # sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
-    ff_meta = ff_utils.create_ffmeta_awsem(**event.get('ff_meta'))
+    ff_meta = ff_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
     pf_meta = event.get('pf_meta')
     # ensure this bad boy is always initialized
     patch_meta = False

@@ -37,6 +37,7 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["s3_access_arn", "EBS_optimized", "shutdown_min", "copy_to_s3",
                    "ami_id", "instance_type", "ebs_size", "launch_instance",
+                   "script_url",
                    "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
@@ -65,7 +66,8 @@ def handler(event, context):
 
     # launch instance and execute workflow
     if cfg.get('launch_instance'):
-        utils.launch_instance(cfg, jobid)
+        launch_instance_log = utils.launch_instance(cfg, jobid)
 
     event.update({'jobid': jobid})
+    event.update(launch_instance_log)
     return(event)
