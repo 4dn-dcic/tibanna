@@ -54,8 +54,11 @@
     "app_version": "5",
     "cwl_children": "",
     "input_files": {
-      "input_file": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
-    }
+	  "input_file": {
+		"bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+		"object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
+	  }
+	}
   },
   "jobid": "8fRIlIfwRNDT",
   "pf_meta": [],
