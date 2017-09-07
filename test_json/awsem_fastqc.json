@@ -10,7 +10,7 @@
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha",
       "EBS_optimized" : false,
-      "shutdown_min" : "30",
+      "shutdown_min" : "300",
       "copy_to_s3" : true,
       "launch_instance" : true,
       "log_bucket": "tibanna-output",
