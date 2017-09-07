@@ -239,11 +239,12 @@ def launch_instance(par, jobid):
 
 class WorkflowFile(object):
 
-    def __init__(self, bucket, key, runner):
+    def __init__(self, bucket, key, runner, accession=None):
         self.bucket = bucket
         self.key = key
         self.s3 = utils.s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
+        self.accession = accession
 
     @property
     def status(self):
@@ -275,7 +276,19 @@ class Awsem(object):
             files.append(wff)
         return files
 
+    def input_files(self):
+        files = []
+        for item in utils.ensure_list(self.args.get('input_files')):
+            item = item['input_file']
+            file_name = item.get('object_key').split('/')[-1]
+            accession = file_name.split('.')[0].strip('/')
+            wff = WorkflowFile(item.get('bucket_name'),
+                               item.get('object_key'),
+                               self,
+                               accession)
+            files.append(wff)
+        return files
+
     @property
     def inputfile_accession(self):
-        filename = self.args['input_files']['input_file'].split('/')[-1]
-        return filename.split('.')[0].strip('/')
+        return self.input_files()[0].accession
