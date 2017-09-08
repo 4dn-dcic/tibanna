@@ -277,18 +277,17 @@ class Awsem(object):
         return files
 
     def input_files(self):
-        files = []
-        for item in utils.ensure_list(self.args.get('input_files')):
-            item = item['input_file']
+        files = dict()
+        for arg_name, item in self.args.get('input_files').iteritems():
             file_name = item.get('object_key').split('/')[-1]
             accession = file_name.split('.')[0].strip('/')
-            wff = WorkflowFile(item.get('bucket_name'),
-                               item.get('object_key'),
-                               self,
-                               accession)
-            files.append(wff)
+            wff = {arg_name: WorkflowFile(item.get('bucket_name'),
+                                          item.get('object_key'),
+                                          self,
+                                          accession)}
+            files.update(wff)
         return files
 
     @property
-    def inputfile_accession(self):
-        return self.input_files()[0].accession
+    def inputfile_accessions(self):
+        return [v.accession for k, v in self.input_files().iteritems()]

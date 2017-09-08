@@ -38,7 +38,7 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
-    accession = wf_file.runner.inputfile_accession
+    accession = wf_file.runner.inputfile_accessions[0]
     zipped_report = wf_file.key
     files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
     LOG.info("accession is %s" % accession)
@@ -88,7 +88,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
-    accession = wf_file.runner.inputfile_accession
+    accession = wf_file.runner.inputfile_accessions[0]
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status.lower() == 'uploaded':
