@@ -28,11 +28,14 @@
       "shutdown_min" : "120",
       "copy_to_s3" : true,
       "launch_instance" : true,
+      "log_bucket": "tibanna-output",
       "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
     },
     "_tibanna": {
       "run_type": "partc",
       "env": "fourfront-webdev"
-    }
+    },
+    "app_name": "hi-c-processing-partc",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
-  
+
