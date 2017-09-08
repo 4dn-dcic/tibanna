@@ -11,7 +11,7 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
-from core.utils import _tibanna
+from core.utils import _tibanna, s3Utils
 from time import sleep
 from contextlib import contextmanager
 import aws_lambda
@@ -477,11 +477,23 @@ _workflows = {'md5':
               }
 
 
+def calc_ebs_size(bucket, key):
+    s3 = s3Utils(bucket, bucket, bucket)
+    import pdb
+    pdb.set_trace()
+    size = s3.get_file_size(key, bucket, add_gb=3, size_in_gb=True)
+    if size < 10:
+        size = 10
+    return size
+
+
 def make_input(env, workflow, accession, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
+    key = "%s/%s" % (uuid, accession)
+    ebs_size = calc_ebs_size(bucket, key)
 
     data = {"parameters": {},
             "app_name": workflow,
@@ -494,6 +506,22 @@ def make_input(env, workflow, accession, uuid):
                  }
              ],
             "output_bucket": output_bucket,
+            "config": {
+                "ebs_size": ebs_size,
+                "ebs_type": "io1",
+                "json_bucket": "4dn-aws-pipeline-run-json",
+                "EBS_optimized": False,
+                "ebs_iops": 500,
+                "shutdown_min": 30,
+                "instance_type": "t2.nano",
+                "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+                "ami_id": "ami-7ff26968",
+                "copy_to_s3": True,
+                "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+                "launch_instance": True,
+                "password": "hahaha",
+                "log_bucket": "tibanna-output"
+              },
             }
     data.update(_tibanna_settings({'run_id': str(accession),
                                    'run_type': workflow,

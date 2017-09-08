@@ -83,6 +83,22 @@ class s3Utils(object):
             return False
         return file_metadata
 
+    def get_file_size(self, key, bucket=None, add_bytes=0, add_gb=0,
+                      size_in_gb=False):
+        '''
+        default returns file size in bytes,
+        unless size_in_gb = True
+        '''
+        meta = self.does_key_exist(key, bucket)
+        if not meta:
+            raise Exception("key not found")
+        one_gb = 1073741824
+        add = add_bytes + (add_gb * one_gb)
+        size = meta['ContentLength'] + add
+        if size_in_gb:
+            size = size / one_gb
+        return size
+
     def delete_key(self, key, bucket=None):
         if not bucket:
             bucket = self.outfile_bucket
@@ -190,7 +206,7 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_sbg_workflow_5',
+def run_workflow(input_json, accession='', workflow='run_awsem_workflow_with_ponies',
                  env='fourfront-webdev'):
     '''
     accession is unique name that we be part of run id
