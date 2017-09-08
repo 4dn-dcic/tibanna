@@ -24,7 +24,7 @@ def handler(event, context):
     print(app_name)
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
-    parameters = ff_utils.convert_param(event.get('parameters'))
+    parameters = ff_utils.convert_param(event.get('parameters'), True)
     tibanna_settings = event.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
