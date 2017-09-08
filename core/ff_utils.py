@@ -12,6 +12,7 @@ def convert_param(parameter_dict, vals_as_string=False):
     converts dictionary format {argument_name: value, argument_name: value, ...}
     to {'workflow_argument_name': argument_name, 'value': value}
     '''
+    print(str(parameter_dict))
     metadata_parameters = []
     for k, v in parameter_dict.iteritems():
         # we need this to be a float or integer if it really is, else a string
@@ -27,6 +28,7 @@ def convert_param(parameter_dict, vals_as_string=False):
 
         metadata_parameters.append({"workflow_argument_name": k, "value": v})
 
+    print(str(metadata_parameters))
     return metadata_parameters
 
 
