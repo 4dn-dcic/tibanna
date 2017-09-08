@@ -270,11 +270,10 @@ class Awsem(object):
         self.app_name = self.args['app_name']
 
     def output_files(self):
-        files = []
-        for item in utils.ensure_list(self.args.get('output_target')):
-            wff = WorkflowFile(self.output_s3, item.get('report'),
-                               self)
-            files.append(wff)
+        files = dict()
+        for k, v in self.args.get('output_target').iteritems():
+            wff = {k: WorkflowFile(self.output_s3, v, self)}
+            files.update(wff)
         return files
 
     def input_files(self):
