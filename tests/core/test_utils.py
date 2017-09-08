@@ -106,6 +106,22 @@ def test_read_s3(s3_utils):
 
 @valid_env
 @pytest.mark.webtest
+def test_get_file_size(s3_utils):
+    filename = '__test_data/test_file.txt'
+    size = s3_utils.get_file_size(filename)
+    assert size == 12
+
+
+@valid_env
+@pytest.mark.webtest
+def test_get_file_size_in_bg(s3_utils):
+    filename = '__test_data/test_file.txt'
+    size = s3_utils.get_file_size(filename, add_gb=2, size_in_gb=True)
+    assert size == 2
+
+
+@valid_env
+@pytest.mark.webtest
 def test_read_s3_zip(s3_utils):
     filename = '__test_data/fastqc_report.zip'
     files = s3_utils.read_s3_zipfile(filename, ['summary.txt', 'fastqc_data.txt'])
