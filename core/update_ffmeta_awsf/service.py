@@ -156,7 +156,8 @@ def handler(event, context):
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
-    for arg_name, export in awsem_output.iteritems():
+    # for arg_name, export in awsem_output.iteritems():
+    for export in awsem_output.value():
         upload_key = export.key
         status = export.status
         print("export res is %s", status)
