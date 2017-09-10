@@ -117,7 +117,7 @@ def create_json(input_dict, jobid):
                         },
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
-                                 'output_target': a['output_target']
+                                 'output_target': a['output_target'],
                                  'secondary_output_target': a['secondary_output_target']
                         },
                         'Log': {
