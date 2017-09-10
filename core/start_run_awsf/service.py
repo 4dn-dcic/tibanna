@@ -79,6 +79,10 @@ def handler(event, context):
                         of['format'] = arg.get('argument_format')
                         of['extension'] = fe_map.get(arg.get('argument_format'))
                         pf_meta.append(pf)
+                    if 'secondary_file_formats' in arg:
+                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                        pf['extra_files'] = [{"file_formats": v} for v in of['secondary_file_formats']]
+                        pf_meta.append(pf)
                     output_files.append(of)
 
     except Exception as e:
@@ -133,12 +137,17 @@ def handler(event, context):
 
     # output target
     args['output_target'] = dict()
+    args['secondary_output_target'] = dict()
     for of in ff_meta.output_files:
         arg_name = of.get('workflow_argument_name')
         if of.get('type') == 'Output processed file':
             args['output_target'][arg_name] = of.get('upload_key')
         else:
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
+        if 'secondary_file_formats' in of:
+            args['secondary_output_target'][arg_name] \
+                = [of.get('upload_key').replace(of.get('extension'), ext) for ext in of.get('secondary_file_formats')]
+
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
