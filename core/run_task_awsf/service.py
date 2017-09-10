@@ -42,7 +42,7 @@ def handler(event, context):
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
                  "input_files", "output_S3_bucket", "cwl_directory_url",
-                 "input_parameters", "secondary_files", "output_target"]
+                 "input_parameters", "secondary_files", "output_target", "secondary_output_target"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
