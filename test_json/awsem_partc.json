@@ -1,17 +1,17 @@
 {
     "workflow_uuid": "c6480905-49e5-4c33-afab-9ec90d65faf3",
-    "parameters" :  {"ncores": 1, "nres": 13},
+    "parameters" :  {"ncores": 1, "nres": 6},
     "input_files" : [
        {
-           "object_key": "4DNFIP5NE7E4.cool",
+           "object_key": "4DNFI2SQQGU7.cool",
            "workflow_argument_name": "input_cool",
-           "uuid": "db256c9b-a712-4dd5-b9ee-4b0a4735341c",
+           "uuid": "976823d0-7f03-4f45-8aea-a464188937fb",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        },
        {
-           "object_key": "4DNFIDHBC4TC.hic",
+           "object_key": "4DNFISNLMQWI.hic",
            "workflow_argument_name": "input_hic",
-           "uuid": "3e352ebb-2e91-44e8-90c1-9c4e6568bf45",
+           "uuid": "593bef3f-eb63-4ef9-a371-c9cff0a29662",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        }
     ],
