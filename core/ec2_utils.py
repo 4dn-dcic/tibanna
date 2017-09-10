@@ -277,6 +277,13 @@ class Awsem(object):
             files.update(wff)
         return files
 
+    def secondary_output_files(self):
+        files = dict()
+        for k, v in self.args.get('secondary_output_target').iteritems():
+            wff = {k: WorkflowFile(self.output_s3, v, self)}
+            files.update(wff)
+        return files
+
     def input_files(self):
         files = dict()
         for arg_name, item in self.args.get('input_files').iteritems():
