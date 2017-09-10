@@ -10,6 +10,7 @@
       }
     },
     "output_target": {},
+    "secondary_output_target": {},
     "secondary_files": {},
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
     "output_S3_bucket": "tibanna-output",

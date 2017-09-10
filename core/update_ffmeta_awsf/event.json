@@ -47,6 +47,7 @@
     "output_target": {
       "report": "lalala/md5_report"
     },
+    "secondary_output_target": {},
     "cwl": "md5.5.cwl",
     "secondary_files": {},
     "cwl_directory": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",

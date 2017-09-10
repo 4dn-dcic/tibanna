@@ -145,9 +145,9 @@ def handler(event, context):
         else:
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
         if 'secondary_file_formats' in of:
+            # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = [of.get('upload_key').replace(of.get('extension'), ext) for ext in of.get('secondary_file_formats')]
-
+                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_formats')[0])
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')

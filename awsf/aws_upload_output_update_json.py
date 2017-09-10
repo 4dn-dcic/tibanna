@@ -15,6 +15,7 @@ with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
     output_target = old_dict.get('Job').get('Output').get('output_target')
     output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
+    secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
 
 ## read cwl output json file
 with open(json_out, 'r') as json_out_f:
@@ -44,6 +45,25 @@ for k in cwl_output:
         cwl_output[k]['target'] = target
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
+
+    if 'secondaryFiles' in cwl_output[k]:
+        sf = cwl_output[k]['secondaryFiles']
+        for kk in sf:
+            source = sf[kk].get('path')
+            source_name = source.replace(source_directory, '')
+            if k in secondary_output_target:
+                target = secondary_output_target[k]  # change file name to what's specified in secondary_output_target
+            else:
+                target = source_name  # do not change file name
+            try:
+                print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
+                s3.upload_file(source, output_bucket, target)
+            except Exception as e:
+                raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e )
+            try:
+                sf[kk]['target'] = target
+            except Exception as e:
+                raise Exception("cannot update target info to json %s" % e)
 
 ## write to new json file
 with open(json_new, 'w') as json_new_f:

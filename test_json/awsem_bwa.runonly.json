@@ -10,6 +10,7 @@
     "output_target": {
       "out_bam": "lalala/out.bam"
     },
+    "secondary_output_target": {},
     "cwl_main_filename": "bwa-mem.11.cwl",
     "secondary_files": {},
     "output_S3_bucket": "tibanna-output",

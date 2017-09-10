@@ -10,6 +10,7 @@
     "output_target": {
       "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
     },
+    "secondary_output_target": {},
     "cwl_main_filename": "md5.cwl",
     "secondary_files": {},
     "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
