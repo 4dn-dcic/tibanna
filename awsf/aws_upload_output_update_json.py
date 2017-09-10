@@ -47,7 +47,7 @@ for k in cwl_output:
         raise Exception("cannot update target info to json %s" % e)
 
     if 'secondaryFiles' in cwl_output[k]:
-        sf = cwl_output[k]['secondaryFiles']
+        sf = cwl_output[k]['secondaryFiles'][0]
         for kk in sf:
             source = sf[kk].get('path')
             source_name = source.replace(source_directory, '')
