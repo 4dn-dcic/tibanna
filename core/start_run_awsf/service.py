@@ -45,53 +45,8 @@ def handler(event, context):
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
 
-    # get format-extension map
-    try:
-        fp_schema = ff_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys)
-        fe_map = fp_schema.get('file_format_file_extension')
-    except Exception as e:
-        LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
-
     # processed file metadata
-    output_files = []
-    try:
-        if 'arguments' in workflow_info:
-            pf_meta = []
-            for arg in workflow_info.get('arguments'):
-                if (arg.get('argument_type') in
-                   ['Output processed file', 'Output report file', 'Output QC file']):
-
-                    of = dict()
-                    of['workflow_argument_name'] = arg.get('workflow_argument_name')
-                    of['type'] = arg.get('argument_type')
-                    if 'argument_format' in arg:
-                        # These are not processed files but report or QC files.
-                        if 'secondary_file_formats' in arg:
-                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
-                            extra_files = [{"file_formats": v} for v in of['secondary_file_formats']]
-                        else:
-                            extra_files = []
-                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
-                                                            extra_files=extra_files)
-                        try:
-                            resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
-                            resp = resp.get('@graph')[0]
-                            of['upload_key'] = resp.get('upload_key')
-                            of['value'] = resp.get('uuid')
-                        except Exception as e:
-                            LOG.error("Failed to post Processed file metadata. %s\n" % e)
-                            LOG.error("resp" + str(resp) + "\n")
-                            raise e
-                        of['format'] = arg.get('argument_format')
-                        of['extension'] = fe_map.get(arg.get('argument_format'))
-                        pf_meta.append(pf)
-                    output_files.append(of)
-
-    except Exception as e:
-        LOG.error("output_files = " + str(output_files) + "\n")
-        LOG.error("Can't prepare output_files information. %s\n" % e)
-        raise e
+    output_files, pf_meta = handle_processed_files(workflow_info, ff_utils, tibanna)
 
     # create the ff_meta output info
     input_files = []
@@ -149,6 +104,8 @@ def handler(event, context):
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
+            import pdb
+            pdb.set_trace()
             args['secondary_output_target'][arg_name] \
                 = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_extensions')[0])
 
@@ -161,3 +118,59 @@ def handler(event, context):
                   "args": args
                   })
     return(event)
+
+
+def get_format_extension_map(tibanna):
+    # get format-extension map
+    try:
+        fp_schema = ff_utils.get_metadata("profiles/file_processed.json", key=tibanna.ff_keys)
+        fe_map = fp_schema.get('file_format_file_extension')
+    except Exception as e:
+        LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
+
+    return fe_map
+
+
+def handle_processed_files(workflow_info, tibanna):
+
+    fe_map = get_format_extension_map(tibanna)
+    output_files = []
+    pf_meta = []
+    try:
+        for arg in workflow_info.get('arguments', []):
+            if (arg.get('argument_type') in ['Output processed file',
+                                             'Output report file',
+                                             'Output QC file']):
+
+                of = dict()
+                of['workflow_argument_name'] = arg.get('workflow_argument_name')
+                of['type'] = arg.get('argument_type')
+                if 'argument_format' in arg:
+                    # These are not processed files but report or QC files.
+                    if 'secondary_file_formats' in arg:
+                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                        of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
+                        extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
+                    else:
+                        extra_files = []
+                    pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
+                                                        extra_files=extra_files)
+                    try:
+                        resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
+                        resp = resp.get('@graph')[0]
+                        of['upload_key'] = resp.get('upload_key')
+                        of['value'] = resp.get('uuid')
+                    except Exception as e:
+                        LOG.error("Failed to post Processed file metadata. %s\n" % e)
+                        LOG.error("resp" + str(resp) + "\n")
+                        raise e
+                    of['format'] = arg.get('argument_format')
+                    of['extension'] = fe_map.get(arg.get('argument_format'))
+                    pf_meta.append(pf)
+                output_files.append(of)
+
+    except Exception as e:
+        LOG.error("output_files = " + str(output_files) + "\n")
+        LOG.error("Can't prepare output_files information. %s\n" % e)
+        raise e
+    return output_files, pf_meta
