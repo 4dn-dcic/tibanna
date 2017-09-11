@@ -91,6 +91,11 @@ def run_awsf_event_data(sbg_keys, ff_keys):
 
 
 @pytest.fixture(scope='session')
+def run_awsf_event_data_secondary_files(sbg_keys, ff_keys):
+    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event2.json')
+
+
+@pytest.fixture(scope='session')
 def update_ffmeta_event_data(sbg_keys, ff_keys):
     return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys)
 
@@ -101,9 +106,9 @@ def get_test_json(file_name):
     return read_event_file(event_file_name, sbg_keys, ff_keys)
 
 
-def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None):
+def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None, event_file='event.json'):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    event_file_name = os.path.join(dir_path, '..', '..', 'core', lambda_name, 'event.json')
+    event_file_name = os.path.join(dir_path, '..', '..', 'core', lambda_name, event_file)
     return read_event_file(event_file_name, sbg_keys, ff_keys)
 
 

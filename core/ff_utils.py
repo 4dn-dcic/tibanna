@@ -176,7 +176,7 @@ class WorkflowRunMetadata(object):
 
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
-                 extra_files=[],
+                 extra_files=None,
                  award='1U01CA200059-01', status='to be uploaded by workflow'):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
@@ -184,7 +184,8 @@ class ProcessedFileMetadata(object):
         self.lab = lab
         self.award = award
         self.file_format = file_format
-        self.extra_files = extra_files
+        if extra_files:
+            self.extra_files = extra_files
 
     def as_dict(self):
         return self.__dict__
