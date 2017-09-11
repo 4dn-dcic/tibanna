@@ -46,7 +46,7 @@ def handler(event, context):
         args[k] = workflow_info.get(k)
 
     # processed file metadata
-    output_files, pf_meta = handle_processed_files(workflow_info, ff_utils, tibanna)
+    output_files, pf_meta = handle_processed_files(workflow_info, tibanna)
 
     # create the ff_meta output info
     input_files = []
@@ -105,7 +105,7 @@ def handler(event, context):
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_extensions')[0])
+                = of.get('extra_files', []).get('upload_key')
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
@@ -158,6 +158,7 @@ def handle_processed_files(workflow_info, tibanna):
                         resp = resp.get('@graph')[0]
                         of['upload_key'] = resp.get('upload_key')
                         of['value'] = resp.get('uuid')
+                        of['extra_files'] = resp.get('extra_files')
                     except Exception as e:
                         LOG.error("Failed to post Processed file metadata. %s\n" % e)
                         LOG.error("resp" + str(resp) + "\n")
