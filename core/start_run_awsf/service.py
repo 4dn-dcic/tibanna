@@ -68,7 +68,10 @@ def handler(event, context):
                         # These are not processed files but report or QC files.
                         if 'secondary_file_formats' in arg:
                             of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
                             extra_files = [{"file_formats": v} for v in of['secondary_file_formats']]
+                        else:
+                            extra_files = []
                         pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
                                                             extra_files=extra_files)
                         try:
@@ -147,7 +150,7 @@ def handler(event, context):
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_formats')[0])
+                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_extensions')[0])
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
