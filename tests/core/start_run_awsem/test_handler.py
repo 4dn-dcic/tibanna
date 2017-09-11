@@ -54,7 +54,8 @@ def test_handle_processed_files(run_awsf_event_data_secondary_files):
             assert of['secondary_file_extensions'] == ['.pairs.gz.px2']
             assert of['secondary_file_formats'] == ['pairs_px2']
         else:
-            assert 'secondary_files_extension' not in of.keys()
+            assert 'secondary_files_extension' not in of
+            assert 'secondary_files_formats' not in of
 
     assert(pf_meta)
     assert len(pf_meta) == 3
@@ -63,4 +64,4 @@ def test_handle_processed_files(run_awsf_event_data_secondary_files):
         if pdict['file_format'] == 'pairs':
             assert pdict['extra_files'] == [{'file_format': 'pairs_px2'}]
         else:
-            assert pdict['extra_files'] == []
+            assert 'extra_files' not in pdict

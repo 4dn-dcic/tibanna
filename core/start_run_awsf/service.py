@@ -104,8 +104,6 @@ def handler(event, context):
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
-            import pdb
-            pdb.set_trace()
             args['secondary_output_target'][arg_name] \
                 = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_extensions')[0])
 
@@ -152,7 +150,7 @@ def handle_processed_files(workflow_info, tibanna):
                         of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
                         extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                     else:
-                        extra_files = []
+                        extra_files = None
                     pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
                                                         extra_files=extra_files)
                     try:
