@@ -66,7 +66,10 @@ def handler(event, context):
                     of['type'] = arg.get('argument_type')
                     if 'argument_format' in arg:
                         # These are not processed files but report or QC files.
-                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
+                        if 'secondary_file_formats' in arg:
+                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                            extra_files = [{"file_formats": v} for v in of['secondary_file_formats']]
+                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'), extra_files=extra_files)
                         try:
                             resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                             resp = resp.get('@graph')[0]
@@ -78,10 +81,6 @@ def handler(event, context):
                             raise e
                         of['format'] = arg.get('argument_format')
                         of['extension'] = fe_map.get(arg.get('argument_format'))
-                        pf_meta.append(pf)
-                    if 'secondary_file_formats' in arg:
-                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                        pf['extra_files'] = [{"file_formats": v} for v in of['secondary_file_formats']]
                         pf_meta.append(pf)
                     output_files.append(of)
 
