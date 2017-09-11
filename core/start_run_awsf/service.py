@@ -3,7 +3,9 @@ import logging
 # import json
 import boto3
 from core import ff_utils
-from core.utils import Tibanna, ensure_list
+from core.utils import Tibanna, ensure_list, s3Utils
+from Benchmark import Benchmark as B
+import copy
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -110,6 +112,9 @@ def handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
+    event['config'] = update_config(event.get('config'), event.get('app'),
+                                    event.get('input_files'), event.get('parameters'))
+
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
                   "_tibanna": tibanna.as_dict(),
@@ -173,3 +178,39 @@ def handle_processed_files(workflow_info, tibanna):
         LOG.error("Can't prepare output_files information. %s\n" % e)
         raise e
     return output_files, pf_meta
+
+
+def update_config(old_config, app_name, input_files, parameters):
+
+    config = copy.deepcopy(old_config)
+    input_size_in_bp = dict()
+    try:
+        for f in input_files:
+            argname = f['workflow_argument_name']
+            bucket = f['bucket_name']
+            key = f['uuid'] + '/' + f['object_key']
+            s3 = s3Utils(bucket, bucket, bucket)
+            size = s3.get_file_size(key, bucket)
+            input_size_in_bp.update({argname: size})
+    except:
+        raise Exception("Can't get input file size")
+
+    res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bp, 'parameters': parameters})
+    if res is not None:
+        instance_type = res['aws']['recommended_instance_type']
+        ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
+        ebs_opt = res['aws']['EBS_optimized']
+
+        if 'instance_type' not in old_config:
+            config['instance_type'] = instance_type
+            config['ebs_size'] = ebs_size
+            config['EBS_optimized'] = ebs_opt
+
+    elif 'instance_type' not in old_config:
+        raise Exception("instance type cannot be determined nor given")
+    elif 'ebs_size' not in old_config:
+        raise Exception("ebs_size cannot be determined nor given")
+    elif 'EBS_optimized' not in old_config:
+        raise Exception("EBS_optimized cannot be determined nor given")
+
+    return(config)

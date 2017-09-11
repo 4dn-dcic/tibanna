@@ -2,7 +2,8 @@ import pytest
 from core.start_run_awsf.service import (
     handler,
     get_format_extension_map,
-    handle_processed_files
+    handle_processed_files,
+    update_config
 )
 from ..conftest import valid_env
 from core.utils import Tibanna
@@ -72,3 +73,14 @@ def test_handle_processed_files(run_awsf_event_data_secondary_files):
             assert pdict['extra_files'] == [{'file_format': 'pairs_px2'}]
         else:
             assert 'extra_files' not in pdict
+
+
+@valid_env
+@pytest.mark.webtest
+def test_update_config(run_awsf_event_data):
+    data = run_awsf_event_data
+    config = update_config(data['config'], data['app_name'], data['input_files'], data['parameters'])
+    assert config['instance_type'] == 't2.nano'
+    assert config['EBS_optimized'] is False
+    assert config['ebs_size'] == 10
+    assert config['copy_to_s3'] is True  # check the other fields are preserved in the returned config
