@@ -66,7 +66,14 @@ def handler(event, context):
                     of['type'] = arg.get('argument_type')
                     if 'argument_format' in arg:
                         # These are not processed files but report or QC files.
-                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'))
+                        if 'secondary_file_formats' in arg:
+                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
+                            extra_files = [{"file_formats": v} for v in of['secondary_file_formats']]
+                        else:
+                            extra_files = []
+                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
+                                                            extra_files=extra_files)
                         try:
                             resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                             resp = resp.get('@graph')[0]
@@ -78,10 +85,6 @@ def handler(event, context):
                             raise e
                         of['format'] = arg.get('argument_format')
                         of['extension'] = fe_map.get(arg.get('argument_format'))
-                        pf_meta.append(pf)
-                    if 'secondary_file_formats' in arg:
-                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                        pf['extra_files'] = [{"file_formats": v} for v in of['secondary_file_formats']]
                         pf_meta.append(pf)
                     output_files.append(of)
 
@@ -147,7 +150,7 @@ def handler(event, context):
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_formats')[0])
+                = of.get('upload_key').replace(of.get('extension'), of.get('secondary_file_extensions')[0])
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
