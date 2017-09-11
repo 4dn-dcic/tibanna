@@ -18,6 +18,12 @@ def test_start_awsem_handler(run_awsf_event_data):
 
 @valid_env
 @pytest.mark.webtest
+def test_start_awsem_handler_secondary_files(run_awsf_event_data_secondary_files):
+    handler(run_awsf_event_data_secondary_files, '')
+
+
+@valid_env
+@pytest.mark.webtest
 def test_get_format_extension_map(run_awsf_event_data):
     tibanna_settings = run_awsf_event_data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket

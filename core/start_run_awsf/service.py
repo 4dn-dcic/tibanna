@@ -105,7 +105,7 @@ def handler(event, context):
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = of.get('extra_files', []).get('upload_key')
+                = of.get('extra_files', [{}, ])[0].get('upload_key')
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
