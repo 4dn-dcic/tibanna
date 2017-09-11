@@ -69,7 +69,8 @@ def handler(event, context):
                         if 'secondary_file_formats' in arg:
                             of['secondary_file_formats'] = arg.get('secondary_file_formats')
                             extra_files = [{"file_formats": v} for v in of['secondary_file_formats']]
-                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'), extra_files=extra_files)
+                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
+                                                            extra_files=extra_files)
                         try:
                             resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                             resp = resp.get('@graph')[0]
