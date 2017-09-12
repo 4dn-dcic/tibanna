@@ -112,7 +112,7 @@ def handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
-    event['config'] = update_config(event.get('config'), event.get('app'),
+    event['config'] = update_config(event.get('config'), event.get('app_name'),
                                     event.get('input_files'), event.get('parameters'))
 
     event.update({"ff_meta": ff_meta.as_dict(),
@@ -183,7 +183,7 @@ def handle_processed_files(workflow_info, tibanna):
 def update_config(old_config, app_name, input_files, parameters):
 
     config = copy.deepcopy(old_config)
-    input_size_in_bp = dict()
+    input_size_in_bytes = dict()
     try:
         for f in input_files:
             argname = f['workflow_argument_name']
@@ -191,11 +191,13 @@ def update_config(old_config, app_name, input_files, parameters):
             key = f['uuid'] + '/' + f['object_key']
             s3 = s3Utils(bucket, bucket, bucket)
             size = s3.get_file_size(key, bucket)
-            input_size_in_bp.update({argname: size})
+            input_size_in_bytes.update({str(argname): size})
     except:
         raise Exception("Can't get input file size")
 
-    res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bp, 'parameters': parameters})
+    print(input_size_in_bytes)
+    res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
+    print(res)
     if res is not None:
         instance_type = res['aws']['recommended_instance_type']
         ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
