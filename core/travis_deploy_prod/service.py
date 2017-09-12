@@ -25,10 +25,10 @@ def handler(event, context):
     # by adding the tibanna-deploy env variable, which will trigger the deploy
     body = {
             "request": {
-                "message": "Your Tibanna triggered build has started.  Have a nice day! :)",
+                "message": "Tibanna triggered build to webprod has started.  Have a nice day! :)",
                 "branch": branch,
                 "config": {
-                    "before_install": ["export tibanna_deploy=fourfront-webdev",
+                    "before_install": ["export tibanna_deploy=fourfront-webprod",
                                        "echo $tibanna_deploy",
                                        "postgres --version",
                                        "initdb --version",
