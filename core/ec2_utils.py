@@ -10,6 +10,7 @@ import logging
 # from invoke import run
 from core import utils
 import botocore.session
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
