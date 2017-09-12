@@ -492,7 +492,6 @@ def make_input(env, workflow, accession, uuid):
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
-    key = "%s/%s" % (uuid, accession)
 
     data = {"parameters": {},
             "app_name": workflow,
