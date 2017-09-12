@@ -1,14 +1,11 @@
 {
     "config" : {
-      "instance_type" : "t2.nano",
-      "ebs_size" : 20,
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
       "ami_id" : "ami-7ff26968",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha",
-      "EBS_optimized" : false,
       "shutdown_min" : 30,
       "copy_to_s3" : true,
       "launch_instance" : true,
