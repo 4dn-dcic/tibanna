@@ -493,7 +493,6 @@ def make_input(env, workflow, accession, uuid):
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
     key = "%s/%s" % (uuid, accession)
-    ebs_size = calc_ebs_size(bucket, key)
 
     data = {"parameters": {},
             "app_name": workflow,
@@ -507,13 +506,10 @@ def make_input(env, workflow, accession, uuid):
              ],
             "output_bucket": output_bucket,
             "config": {
-                "ebs_size": ebs_size,
                 "ebs_type": "io1",
                 "json_bucket": "4dn-aws-pipeline-run-json",
-                "EBS_optimized": False,
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "instance_type": "t2.nano",
                 "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
                 "ami_id": "ami-7ff26968",
                 "copy_to_s3": True,
