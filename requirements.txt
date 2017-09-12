@@ -1,9 +1,9 @@
 boto3
 botocore
 awscli
--e git://github.com/j1z0/python-lambda.git#egg=python_lambda
+-e git+https://github.com/j1z0/python-lambda.git#egg=python_lambda
 submit4dn
--e git://github.com/4dn-dcic/pipelines-cwl.git#egg=Benchmark
+-e git+https://github.com/4dn-dcic/pipelines-cwl.git#egg=Benchmark
 
 # Build tasks
 invoke==0.18.1
