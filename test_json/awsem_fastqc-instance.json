@@ -1,0 +1,28 @@
+{
+    "config" : {
+      "log_bucket" : "tibanna-output",
+      "ebs_type" : "io1",
+      "ebs_iops" : 500,
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "ami_id" : "ami-7ff26968",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "hahaha",
+      "shutdown_min" : "300",
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+    },
+    "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
+    "input_files": [
+                    {"workflow_argument_name": "input_fastq", 
+                     "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+                     "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+                     "object_key": "4DNFIRSRJH45.fastq.gz"
+                    }
+    ],
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "app_name": "fastqc-0-11-4-1",
+    "parameters": {}
+}
+  
