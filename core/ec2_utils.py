@@ -8,9 +8,9 @@ import os
 import subprocess
 import logging
 # from invoke import run
-import awscli.clidriver
 from core import utils
 import botocore.session
+import boto3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -155,14 +155,13 @@ def create_json(input_dict, jobid):
     logger.info(copy_to_s3)
 
     if json_bucket:
-        args = {'json_bucket': json_bucket, 'jobid': jobid, 'json_dir': json_dir}
         if copy_to_s3 is True:
-            command = "s3 cp {json_dir}/{jobid}.run.json s3://{json_bucket}/{jobid}.run.json".format(**args)
-            command_arr = command.encode('utf-8').split(' ')
-            logger.info(command_arr)
-            x = awscli.clidriver.create_clidriver()
-            logger.info(x.main(command_arr))
-            # subprocess.check_output(command, shell=True)
+            runjson_file = "{jobid}.run.json".format(jobid=jobid)
+            try:
+                s3 = boto3.client('s3')
+                s3.upload_file(json_dir + runjson_file, json_bucket, runjson_file)
+            except:
+                raise Exception("Failed to upload run.json file {} to s3".format(runjson_file))
 
     # print & retur JOBID
     print("jobid={}".format(jobid))

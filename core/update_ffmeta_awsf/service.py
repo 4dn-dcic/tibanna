@@ -171,7 +171,7 @@ def handler(event, context):
             raise Exception("Failed to export file %s" % (upload_key))
 
     # if we got all the exports let's go ahead and update our ff_metadata object
-    ff_meta.run_status = "output_file_transfer_finished"
+    ff_meta.run_status = "complete"
 
     # allow for a simple way for updater to add appropriate meta_data
     if patch_meta:
@@ -179,7 +179,10 @@ def handler(event, context):
 
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
-    ff_meta.post(key=tibanna.ff_keys)
+    try:
+        ff_meta.post(key=tibanna.ff_keys)
+    except:
+        raise Exception("Failed to update run_status")
 
     return {'args': event['args'],
             'config': event['config'],
