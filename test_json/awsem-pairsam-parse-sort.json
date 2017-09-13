@@ -32,7 +32,7 @@
       "run_type": "pairsam-parse-sort",
       "env": "fourfront-webdev"
     },
-    "app_name": "65586d4b-1e3b-4b31-891e-11f48c816545",
+    "app_name": "pairsam-parse-sort",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
 
