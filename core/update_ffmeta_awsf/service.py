@@ -102,6 +102,8 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             new_file = {}
             new_file['status'] = 'uploaded'
             new_file['content_md5sum'] = md5
+            if not original_file.get('md5sum'):
+                new_file['md5sum'] = md5
 
             try:
                 ff_utils.patch_metadata(new_file, accession, key=ff_key)
