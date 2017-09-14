@@ -53,7 +53,10 @@ def get_all_core_lambdas():
             'tibanna_slackbot',
             'start_run_awsf',
             'run_task_awsf',
+            'check_task_awsf',
+            'update_ffmeta_awsf',
             'travis_deploy',
+            'travis_deploy_prod'
             ]
 
 
