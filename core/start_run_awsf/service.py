@@ -191,9 +191,15 @@ def update_config(old_config, app_name, input_files, parameters):
             for f in input_files:
                 argname = f['workflow_argument_name']
                 bucket = f['bucket_name']
-                key = f['uuid'] + '/' + f['object_key']
                 s3 = s3Utils(bucket, bucket, bucket)
-                size = s3.get_file_size(key, bucket)
+                if isinstance(f['uuid']) and isinstance(f['object_key']):
+                    size = []
+                    for u, k in zip(f['uuid'], f['object_key']):
+                        key = u + '/' + k
+                        size.append(s3.get_file_size(key, bucket))
+                else:
+                    key = f['uuid'] + '/' + f['object_key']
+                    size = s3.get_file_size(key, bucket)
                 input_size_in_bytes.update({str(argname): size})
         except:
             raise Exception("Can't get input file size")
