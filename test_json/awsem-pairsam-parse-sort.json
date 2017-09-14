@@ -1,6 +1,6 @@
 {
     "workflow_uuid": "65586d4b-1e3b-4b31-891e-11f48c816545",
-    "parameters" :  {"nThreads": 1},
+    "parameters" :  {"nThreads": 16},
     "input_files" : [
        {
            "object_key": "4DNFIPVLYEEM.bam",
@@ -16,6 +16,9 @@
       }
     ],
     "config" : {
+      "instance_type": "c4.8xlarge",
+      "EBS_optimized": true,
+      "ebs_size": 100,
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
