@@ -187,24 +187,27 @@ def update_config(old_config, app_name, input_files, parameters):
         pass
     else:
         input_size_in_bytes = dict()
-        try:
-            for f in input_files:
-                argname = f['workflow_argument_name']
-                bucket = f['bucket_name']
-                s3 = s3Utils(bucket, bucket, bucket)
-                if isinstance(f['uuid']) and isinstance(f['object_key']):
-                    size = []
-                    for u, k in zip(f['uuid'], f['object_key']):
-                        key = u + '/' + k
+        for f in input_files:
+            argname = f['workflow_argument_name']
+            bucket = f['bucket_name']
+            s3 = s3Utils(bucket, bucket, bucket)
+            if isinstance(f['uuid'], list) and isinstance(f['object_key'], list):
+                size = []
+                for u, k in zip(f['uuid'], f['object_key']):
+                    key = u + '/' + k
+                    try:
                         size.append(s3.get_file_size(key, bucket))
-                else:
-                    key = f['uuid'] + '/' + f['object_key']
+                    except:
+                        raise Exception("Can't get input file size")
+            else:
+                key = f['uuid'] + '/' + f['object_key']
+                try:
                     size = s3.get_file_size(key, bucket)
-                input_size_in_bytes.update({str(argname): size})
-        except:
-            raise Exception("Can't get input file size")
+                except:
+                    raise Exception("Can't get input file size")
+            input_size_in_bytes.update({str(argname): size})
 
-        print(input_size_in_bytes)
+        print({"input_size_in_bytes": input_size_in_bytes})
         res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
         print(res)
         if res is not None:
