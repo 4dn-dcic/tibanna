@@ -1,0 +1,34 @@
+{
+    "parameters" :  {"nThreads": 32 },
+    "config" : {
+      "ebs_type" : "io1",
+      "ebs_iops" : 500,
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "ami_id" : "ami-7ff26968",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "hahaha",
+      "shutdown_min" : "30",
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+    },
+    "_tibanna": {
+      "run_type": "pairsam-merge",
+      "env": "fourfront-webdev"
+    },
+    "workflow_uuid": "af8908bf-fdcb-40be-8bca-f1a49226bd20",
+    "input_files": [
+      {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "workflow_argument_name": "input_pairsams",
+        "uuid": ["dcb79052-3df0-4f4d-aa85-14cf9eb9d868",
+                 "824937ad-10ae-4b7d-8f3f-9c480acdf47e"],
+        "object_key": ["4DNFI1G8XMZU.sam.pairs.gz",
+                       "4DNFIWIC32MN.sam.pairs.gz"]
+      }
+    ],
+    "app_name": "pairsam-merge",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
+}
+  

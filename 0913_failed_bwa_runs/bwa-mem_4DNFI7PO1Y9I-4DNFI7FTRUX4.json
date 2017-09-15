@@ -1,0 +1,48 @@
+{
+  "app_name": "bwa-mem",
+  "parameters": {
+    "nThreads": 32
+  },
+  "_tibanna": {
+    "run_type": "bwa-mem",
+    "run_id": "4DNFI7PO1Y9I-4DNFI7FTRUX4",
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow_with_ponies:bwa-mem_4DNFI7PO1Y9I-4DNFI7FTRUX4",
+    "env": "fourfront-webprod",
+    "run_name": "bwa-mem_4DNFI7PO1Y9I-4DNFI7FTRUX4"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+  "config": {
+    "ebs_type": "io1",
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output",
+    "ami_id": "ami-7ff26968",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+  },
+  "workflow_uuid": "0fbe4db8-0b5f-448e-8b58-3f8c84baabf5",
+  "input_files": [
+    {
+      "workflow_argument_name": "fastq1",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "uuid": "fc80b065-332b-4ff7-849f-38e50d156462",
+      "object_key": "4DNFI7PO1Y9I.fastq.gz"
+    },
+    {
+      "workflow_argument_name": "fastq2",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "uuid": "b8424a3d-058e-4444-88d5-0b7d490f6187",
+      "object_key": "4DNFI7FTRUX4.fastq.gz"
+    },
+    {
+      "workflow_argument_name": "bwa_index",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
+      "object_key": "4DNFIZQZ39L9.bwaIndex.tgz"
+    }
+  ]
+}
