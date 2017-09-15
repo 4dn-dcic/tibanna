@@ -217,7 +217,9 @@ def update_config(old_config, app_name, input_files, parameters):
 
             if 'instance_type' not in old_config:
                 config['instance_type'] = instance_type
+            if 'ebs_size' not in old_config:
                 config['ebs_size'] = ebs_size
+            if 'EBS_optimized' not in old_config:
                 config['EBS_optimized'] = ebs_opt
 
         elif 'instance_type' not in old_config:

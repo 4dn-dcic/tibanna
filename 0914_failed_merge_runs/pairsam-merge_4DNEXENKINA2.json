@@ -1,0 +1,59 @@
+{
+  "app_name": "pairsam-merge",
+  "parameters": {
+    "nThreads": 1
+  },
+  "_tibanna": {
+    "run_type": "pairsam-merge",
+    "run_id": "4DNEXENKINA2",
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow_with_ponies:pairsam-merge_4DNEXENKINA2",
+    "env": "fourfront-webprod",
+    "run_name": "pairsam-merge_4DNEXENKINA2"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+  "config": {
+    "EBS_optimized": true,
+    "instance_type": "m4.16xlarge",
+    "ebs_type": "io1",
+    "ebs_iops": 5000,
+    "shutdown_min": 30,
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output",
+    "ami_id": "ami-7ff26968",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+  },
+  "workflow_uuid": "af8908bf-fdcb-40be-8bca-f1a49226bd20",
+  "input_files": [
+    {
+      "workflow_argument_name": "input_pairsams",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-wfoutput",
+      "uuid": [
+        "d70d2ca5-a2d1-4672-beb2-0a2f00ebde5c",
+        "3f39bb5f-6578-4adb-b566-f343547e7064",
+        "036677c3-ac38-4053-86b3-41ce31fc9cd2",
+        "db16935f-58ba-4102-9b5f-e167f2252aef",
+        "1c7293b5-9cce-4573-9d1b-5d5dc058631b",
+        "68df37fd-e928-427e-8017-d83ff986028e",
+        "d20a717f-8acf-4c2d-a1bd-cf3d858bf9e9",
+        "c4344ac3-75ea-49e0-978c-004901d2cce5",
+        "3f0a3c15-0472-4333-8155-e868bec4b750"
+      ],
+      "object_key": [
+        "4DNFI9WS86S8.sam.pairs.gz",
+        "4DNFIEETHTV1.sam.pairs.gz",
+        "4DNFI4KKUMD5.sam.pairs.gz",
+        "4DNFIFHNKCWJ.sam.pairs.gz",
+        "4DNFIRQEP34S.sam.pairs.gz",
+        "4DNFIYDDB5JA.sam.pairs.gz",
+        "4DNFIURNAAMK.sam.pairs.gz",
+        "4DNFIAB8UKC5.sam.pairs.gz",
+        "4DNFIUKJWRUI.sam.pairs.gz"
+      ]
+    }
+  ]
+}
+

@@ -1,0 +1,32 @@
+{
+    "parameters" :  {},
+    "config" : {
+      "ebs_type" : "io1",
+      "ebs_iops" : 500,
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "ami_id" : "ami-7ff26968",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "hahaha",
+      "shutdown_min" : "30",
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+    },
+    "_tibanna": {
+      "run_type": "pairsam-markasdup",
+      "env": "fourfront-webdev"
+    },
+    "workflow_uuid": "a18978fa-7e78-488f-8e6b-bfb6f63b8861",
+    "input_files": [
+      {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "workflow_argument_name": "input_pairsam",
+        "uuid": "dcb79052-3df0-4f4d-aa85-14cf9eb9d868",
+        "object_key": "4DNFI1G8XMZU.sam.pairs.gz"
+      }
+    ],
+    "app_name": "pairsam-markasdup",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
+}
+  
