@@ -160,7 +160,7 @@ def create_json(input_dict, jobid):
             try:
                 s3 = boto3.client('s3')
                 s3.upload_file(json_dir + runjson_file, json_bucket, runjson_file)
-            except Exception as e:
+            except Exception:
                 raise Exception("Failed to upload run.json file {} to s3".format(runjson_file))
 
     # print & retur JOBID
