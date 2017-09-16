@@ -465,7 +465,7 @@ def batch_fastqc(ctx, env, batch_size=20):
 def run_fastqc(ctx, env, accession, uuid):
     if not accession.endswith(".fastq.gz"):
         accession += ".fastq.gz"
-    input_json = make_input(env=env, workflow='fastqc-0-11-4-1/1', accession=accession, uuid=uuid)
+    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', accession=accession, uuid=uuid)
     return _run_workflow(input_json, accession)
 
 
@@ -473,7 +473,7 @@ _workflows = {'md5':
               {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
                'arg_name': 'input_file'
                },
-              'fastqc-0-11-4-1/1':
+              'fastqc-0-11-4-1':
               {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
                'arg_name': 'input_fastq'
                },
