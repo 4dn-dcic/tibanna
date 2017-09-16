@@ -12,7 +12,7 @@
   "config": {
     "ebs_type": "io1",
     "EBS_optimized": true,
-    "ebs_iops": 5000,
+    "ebs_iops": 500,
     "shutdown_min": "30",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "launch_instance": true,
@@ -20,7 +20,7 @@
     "log_bucket": "tibanna-output",
     "ami_id": "ami-7ff26968",
     "json_bucket": "4dn-aws-pipeline-run-json",
-    "instance_type": "m4.16xlarge",
+    "instance_type": "c4.8xlarge",
     "copy_to_s3": true,
     "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
   },
