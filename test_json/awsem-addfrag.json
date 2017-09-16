@@ -3,9 +3,9 @@
     "workflow_uuid": "ef125750-8df2-418e-a1ee-402285f9dd93",
     "input_files" : [
        {
-           "object_key": "4DNFIIA76WLN.sam.pairs.gz",
+           "object_key": "4DNFI544HU2X.pairs.gz",
            "workflow_argument_name": "input_pairs",
-           "uuid": "1f32cb12-acc4-4363-a3db-ea149c185d4f",
+           "uuid": "e35089dc-1134-4b56-a52d-f379e9ac3181",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        },
        {
