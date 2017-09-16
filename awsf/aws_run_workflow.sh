@@ -43,6 +43,12 @@ cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
 
+### sshd configure for password recognition		
+echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user		
+cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp		
+exl mv tmpp /etc/ssh/sshd_config		
+exl service sshd restart
+
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
