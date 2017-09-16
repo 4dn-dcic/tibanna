@@ -37,6 +37,7 @@
     "launch_instance": true,
     "password": "hahaha",
     "log_bucket": "tibanna-output",
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "key_name": "4dn-encode"
   }
 }

@@ -200,13 +200,15 @@ def launch_instance(par, jobid):
                    'UserData': userdata_str,
                    'MaxCount': 1,
                    'MinCount': 1,
-                   'KeyName': '4dn-encode',
                    'InstanceInitiatedShutdownBehavior': 'terminate',
                    'DisableApiTermination': False,
                    'TagSpecifications': [{'ResourceType': 'instance',
                                           "Tags": [{"Key": "Name", "Value": "awsem-" + jobid},
                                                    {"Key": "Type", "Value": "awsem"}]}]
                    }
+
+    if par['key_name']:
+        launch_args.update({'KeyName': par['key_name']})
 
     # EBS options
     if par['EBS_optimized'] is True:
