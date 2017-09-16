@@ -1,5 +1,5 @@
 {
-    "parameters" :  {"ncores": 1, "min_res": 5000, "binsize": 5000, "maxmem": "1900g" },
+    "parameters" :  {"ncores": 12, "min_res": 5000, "binsize": 5000, "maxmem": "460g" },
     "config" : {
       "ebs_type" : "io1",
       "ebs_iops" : 500,
