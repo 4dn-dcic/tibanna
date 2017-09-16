@@ -45,8 +45,8 @@ exl date  ## start logging
 
 
 ### sshd configure for password recognition
-exl echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user
-exl cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
+echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user
+cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
 exl mv tmpp /etc/ssh/sshd_config
 exl service sshd restart
  

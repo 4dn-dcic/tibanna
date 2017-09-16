@@ -1,5 +1,5 @@
 {
-    "parameters" :  {"ncores": 12, "min_res": 5000, "binsize": 5000, "maxmem": "460g" },
+    "parameters" :  {"ncores": 32, "min_res": 5000, "binsize": 5000, "maxmem": "1900g" },
     "config" : {
       "ebs_type" : "io1",
       "ebs_iops" : 500,
@@ -28,8 +28,10 @@
       {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": ["e0b32fa9-a54e-4f62-86dc-039f60b34812"],
-        "object_key": ["4DNFIIQN4FKO.pairs.gz"]
+        "uuid": ["caeecb26-d925-4875-9841-8a1ab129f44c",
+                 "20b6421b-4eb1-4cf0-8104-bf87bf1b2b43"],
+        "object_key": ["4DNFI7IYIJV9.pairs.gz",
+                       "4DNFIHOIT6WW.pairs.gz"]
       }
     ],
     "app_name": "hi-c-processing-partb",
