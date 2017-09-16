@@ -160,7 +160,7 @@ def create_json(input_dict, jobid):
             try:
                 s3 = boto3.client('s3')
                 s3.upload_file(json_dir + runjson_file, json_bucket, runjson_file)
-            except:
+            except Exception as e:
                 raise Exception("Failed to upload run.json file {} to s3".format(runjson_file))
 
     # print & retur JOBID
@@ -200,6 +200,7 @@ def launch_instance(par, jobid):
                    'UserData': userdata_str,
                    'MaxCount': 1,
                    'MinCount': 1,
+                   'KeyName': '4dn-encode',
                    'InstanceInitiatedShutdownBehavior': 'terminate',
                    'DisableApiTermination': False,
                    'TagSpecifications': [{'ResourceType': 'instance',
