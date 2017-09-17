@@ -164,7 +164,8 @@ def create_json(input_dict, jobid):
             try:
                 s3.upload_file(json_dir + '/' + runjson_file, json_bucket, runjson_file)
             except Exception as e:
-                raise Exception("file upload error: Failed to upload run.json file {} to s3 %s".format(runjson_file) %e)
+                raise Exception("file upload error: Failed to upload run.json file {} to s3 %s"
+                                .format(runjson_file) % e)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
