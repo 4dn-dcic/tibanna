@@ -518,7 +518,8 @@ def make_input(env, workflow, accession, uuid):
                 "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
                 "launch_instance": True,
                 "password": "hahaha",
-                "log_bucket": "tibanna-output"
+                "log_bucket": "tibanna-output",
+                "key_name": "4dn-encode"
               },
             }
     data.update(_tibanna_settings({'run_id': str(accession),
