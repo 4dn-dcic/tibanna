@@ -165,6 +165,8 @@ invoke run_workflow --workflow=run_awsem_workflow_with_unicorns --input-json=<js
 ```
 The link to the step function run is printed out to STDOUT and you can copy and paste it onto your browser to check the status of your run.
 
+![Step Function](images/stepfunction_unicorn_screenshot.png)
+
 
 * checking progress
 Once the step function passes the first step ('RunTaskAsem'), you can check the 'input' of the 'CheckTaskAwsem' which contains a field called 'jobid'. This is your job ID and you can check your S3 bucket to see if you can find a file named `<jobid>.log`. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress.
