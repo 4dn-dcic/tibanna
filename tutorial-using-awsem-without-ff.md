@@ -67,21 +67,23 @@
 ### 4. Sent her this user instruction
 
 * set up AWS CLI
-    * have your AWS keys in file `.aws/credentials` with the following content - replace the keys with the keys I sent you.
-    ```
-    [default]
-    aws_access_key_id=<your_access_key>
-    aws_secret_access_key=<your_secret_key>
-    ```
-    
-    * Also create file `.aws/config` with the following content.
-    ```
-    [default]
-    region=us-east-2
-    output=json
-    ```
-    
     * Install `awscli` on your computer (or your server) (https://aws.amazon.com/cli/)
+    * Create your credential and config files in one of the two ways below:
+        * Option 1: `aws configure` and enter your access key, secret key, region('us-east-1'), output type('json'). This will automatically create the files described in Option 2.
+        * Option 2: 
+            * have your AWS keys in file `~/.aws/credentials` with the following content - replace the keys with the keys I sent you.
+            ```
+            [default]
+            aws_access_key_id=<your_access_key>
+            aws_secret_access_key=<your_secret_key>
+            ```
+            
+            * Also create file `~/.aws/config` with the following content.
+            ```
+            [default]
+            region=us-east-2
+            output=json
+            ```
     
     * Upload your files to S3 by using the following
     ```
@@ -94,6 +96,11 @@
         * login: suwang
         * password: <your_password>
 
+    * You can check your bucket content on the Console by going to https://s3.console.aws.amazon.com/s3/buckets/<bucket_name>/. In this case, https://s3.console.aws.amazon.com/s3/buckets/suwang/. Alternatively, from the command line:
+    ```
+    aws s3 ls s3://suwang
+    ```
+
 
 * set up Tibanna
     * clone tibanna repo
@@ -101,7 +108,7 @@
     git clone https://github.com/4dn-dcic/tibanna
     ```
 
-    * create an input json file with the following content, replace output and input file names and 'ebs_size'. The 'ebs_size' should be in GB and to be safe use input_size * 21 for now - we will have a better space estimate later - we will have this calculation automated very soon as well.
+    * create an input json file with the following content, replace output ('output_target') and input file names and 'ebs_size'. The 'ebs_size' should be in GB and to be safe use input_size * 21 for now - we will have a better space estimate later - we will have this calculation automated very soon as well.
     ```
     {
       "config": {
@@ -172,5 +179,6 @@
 
     You can also check from the Console the instance that is running which has a name 'awsem-<jobid>'. It will terminate itself when the run finishes. You won't have access to terminate this or any other instance, but if something is hanging for too long, please contact the admin to resolve the issue.
 
+    When the run finishes successfully, you'll see in your bucket a file <jobid>.success. If there was an error, you will see a file <jobid>.error instead. The step functions will look green on every step, if the run was successful. If one of the steps is red, it means it failed at that step.
 
 
