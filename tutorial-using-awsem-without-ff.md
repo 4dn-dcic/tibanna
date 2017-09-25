@@ -59,6 +59,26 @@
     }
     ```
 
+    * In addition, I created another policy 'passrole_s3_suwang' that looks as below and added it to her permissions.
+    ```
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+            "Sid": "Stmt1478801396000",
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "arn:aws:iam::643366669028:role/s3_access_suwang"
+            ]
+        }
+      ]
+    }
+    ```
+
+
 ### 2. Created a bucket named 'suwang' to which she is granted access.
 
 ### 3. Created a role to attach to an EC2 instance for the specific bucket access, to be fed to tibanna.
