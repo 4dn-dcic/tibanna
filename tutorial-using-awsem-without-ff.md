@@ -67,6 +67,7 @@
 ### 4. Sent her this user instruction
 
 #### set up AWS CLI
+
     * Install `awscli` on your computer (or your server) (https://aws.amazon.com/cli/)
     * Create your credential and config files in one of the two ways below:
         * Option 1: `aws configure` and enter your access key, secret key, region('us-east-1'), output type('json'). This will automatically create the files described in Option 2.
@@ -103,6 +104,7 @@
 
 
 #### set up Tibanna
+
     * clone tibanna repo
     ```
     git clone https://github.com/4dn-dcic/tibanna
