@@ -165,8 +165,6 @@ invoke run_workflow --workflow=run_awsem_workflow_with_unicorns --input-json=<js
 ```
 The link to the step function run is printed out to STDOUT and you can copy and paste it onto your browser to check the status of your run.
 
-![Step Function](images/stepfunction_unicorn_screenshot.png)
-
 
 * checking progress
 Once the step function passes the first step ('RunTaskAsem'), you can check the 'input' of the 'CheckTaskAwsem' which contains a field called 'jobid'. This is your job ID and you can check your S3 bucket to see if you can find a file named `<jobid>.log`. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress.
@@ -184,5 +182,8 @@ The purpose of the ssh is to monitor things, so refrain from doing various thing
 You can also check from the Console the instance that is running which has a name `awsem-<jobid>`. It will terminate itself when the run finishes. You won't have access to terminate this or any other instance, but if something is hanging for too long, please contact the admin to resolve the issue.
 
 When the run finishes successfully, you'll see in your bucket a file `<jobid>.success`. If there was an error, you will see a file `<jobid>.error` instead. The step functions will look green on every step, if the run was successful. If one of the steps is red, it means it failed at that step.
+
+
+![Success](images/stepfunction_unicorn_screenshot.png) ![Fail](images/stepfunction_unicorn_screenshot_fail.png)
 
 
