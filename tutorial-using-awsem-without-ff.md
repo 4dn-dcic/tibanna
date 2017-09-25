@@ -59,7 +59,7 @@
     }
     ```
 
-    * In addition, I created another policy 'passrole_s3_suwang' that looks as below and added it to her permissions.
+    * In addition, I modified the IAM-Passrole policy of the lambda as below (adding the new role)
     ```
     {
       "Version": "2012-10-17",
@@ -71,13 +71,13 @@
                 "iam:PassRole"
             ],
             "Resource": [
+                "arn:aws:iam::643366669028:role/S3_access",
                 "arn:aws:iam::643366669028:role/s3_access_suwang"
             ]
         }
       ]
     }
     ```
-
 
 ### 2. Created a bucket named 'suwang' to which she is granted access.
 
