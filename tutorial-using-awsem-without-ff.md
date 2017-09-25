@@ -184,6 +184,8 @@ You can also check from the Console the instance that is running which has a nam
 When the run finishes successfully, you'll see in your bucket a file `<jobid>.success`. If there was an error, you will see a file `<jobid>.error` instead. The step functions will look green on every step, if the run was successful. If one of the steps is red, it means it failed at that step.
 
 
-![Success](images/stepfunction_unicorn_screenshot.png) ![Fail](images/stepfunction_unicorn_screenshot_fail.png)
+Success                                                |Fail
+:-----------------------------------------------------:|:--------------------------------------------------------:
+![Success](images/stepfunction_unicorn_screenshot.png) | ![Fail](images/stepfunction_unicorn_screenshot_fail.png)
 
 
