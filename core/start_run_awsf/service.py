@@ -113,7 +113,7 @@ def handler(event, context):
     if 'instance_type' not in event['config']:
         event['config']['instance_type'] = ''
     if 'EBS_optimized' not in event['config']:
-        event['config']['EBS_optimizd'] = ''
+        event['config']['EBS_optimized'] = ''
     if 'ebs_size' not in event['config']:
         event['config']['ebs_size'] = 0
 
