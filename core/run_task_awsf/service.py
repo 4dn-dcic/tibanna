@@ -61,12 +61,8 @@ def handler(event, context):
     # local directory in which the json file will be first created.
     cfg['json_dir'] = '/tmp/json'
 
-    print(cfg)
-    event['cfg'] = utils.update_config(cfg, args['app_name'],
+    utils.update_config(cfg, args['app_name'],
                                        args['input_files'], args['input_parameters'])
-
-    print(event['cfg'])
-
 
     # create json and copy to s3
     jobid = utils.create_json(event, '')

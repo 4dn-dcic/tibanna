@@ -12,7 +12,6 @@ from core import utils
 import botocore.session
 import boto3
 from Benchmark import Benchmark as B
-import copy
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -250,10 +249,9 @@ def launch_instance(par, jobid):
     return({'instance_id': instance_id, 'instance_ip': instance_ip, 'start_time': get_start_time()})
 
 
-def update_config(old_config, app_name, input_files, parameters):
+def update_config(config, app_name, input_files, parameters):
 
-    config = copy.deepcopy(old_config)
-    if old_config['instance_type'] != '' and old_config['ebs_size'] != 0 and old_config['EBS_optimized'] != '':
+    if config['instance_type'] != '' and config['ebs_size'] != 0 and config['EBS_optimized'] != '':
         pass
     else:
         input_size_in_bytes = dict()
@@ -282,22 +280,19 @@ def update_config(old_config, app_name, input_files, parameters):
             ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
             ebs_opt = res['aws']['EBS_optimized']
 
-            if old_config['instance_type'] == '':
+            if config['instance_type'] == '':
                 config['instance_type'] = instance_type
-            if old_config['ebs_size'] == 0:
+            if config['ebs_size'] == 0:
                 config['ebs_size'] = ebs_size
-            if old_config['EBS_optimized'] == '':
+            if config['EBS_optimized'] == '':
                 config['EBS_optimized'] = ebs_opt
 
-        elif old_config['instance_type'] == '':
+        elif config['instance_type'] == '':
             raise Exception("instance type cannot be determined nor given")
-        elif old_config['ebs_size'] == 0:
+        elif config['ebs_size'] == 0:
             raise Exception("ebs_size cannot be determined nor given")
-        elif old_config['EBS_optimized'] == '':
+        elif config['EBS_optimized'] == '':
             raise Exception("EBS_optimized cannot be determined nor given")
-
-    print(config)
-    return(config)
 
 
 class WorkflowFile(object):
