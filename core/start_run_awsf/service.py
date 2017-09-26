@@ -112,8 +112,12 @@ def handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
-    event['config'] = update_config(event.get('config'), event.get('app_name'),
-                                    event.get('input_files'), event.get('parameters'))
+    if 'instance_type' not in event['config']:
+        event['config']['instance_type']=''
+    if 'EBS_optimized' not in event['config']:
+        event['config']['EBS_optimizd']=''
+    if 'ebs_size' not in event['config']:
+        event['config']['ebs_size']=0
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
@@ -180,53 +184,3 @@ def handle_processed_files(workflow_info, tibanna):
     return output_files, pf_meta
 
 
-def update_config(old_config, app_name, input_files, parameters):
-
-    config = copy.deepcopy(old_config)
-    if 'instance_type' in old_config and 'ebs_size' in old_config and 'EBS_optimized' in old_config:
-        pass
-    else:
-        input_size_in_bytes = dict()
-        for f in input_files:
-            argname = f['workflow_argument_name']
-            bucket = f['bucket_name']
-            s3 = s3Utils(bucket, bucket, bucket)
-            if isinstance(f['uuid'], list) and isinstance(f['object_key'], list):
-                size = []
-                for u, k in zip(f['uuid'], f['object_key']):
-                    key = u + '/' + k
-                    try:
-                        size.append(s3.get_file_size(key, bucket))
-                    except:
-                        raise Exception("Can't get input file size")
-            else:
-                key = f['uuid'] + '/' + f['object_key']
-                try:
-                    size = s3.get_file_size(key, bucket)
-                except:
-                    raise Exception("Can't get input file size")
-            input_size_in_bytes.update({str(argname): size})
-
-        print({"input_size_in_bytes": input_size_in_bytes})
-        res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
-        print(res)
-        if res is not None:
-            instance_type = res['aws']['recommended_instance_type']
-            ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
-            ebs_opt = res['aws']['EBS_optimized']
-
-            if 'instance_type' not in old_config:
-                config['instance_type'] = instance_type
-            if 'ebs_size' not in old_config:
-                config['ebs_size'] = ebs_size
-            if 'EBS_optimized' not in old_config:
-                config['EBS_optimized'] = ebs_opt
-
-        elif 'instance_type' not in old_config:
-            raise Exception("instance type cannot be determined nor given")
-        elif 'ebs_size' not in old_config:
-            raise Exception("ebs_size cannot be determined nor given")
-        elif 'EBS_optimized' not in old_config:
-            raise Exception("EBS_optimized cannot be determined nor given")
-
-    return(config)
