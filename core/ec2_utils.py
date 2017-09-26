@@ -11,6 +11,7 @@ import logging
 from core import utils
 import botocore.session
 import boto3
+from Benchmark import Benchmark as B
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -194,7 +195,8 @@ def launch_instance(par, jobid):
 
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
-        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'], par['password'], par['json_bucket'])
+        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
+                                           par['password'], par['json_bucket'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
@@ -245,6 +247,52 @@ def launch_instance(par, jobid):
             try_again = True
 
     return({'instance_id': instance_id, 'instance_ip': instance_ip, 'start_time': get_start_time()})
+
+
+def update_config(config, app_name, input_files, parameters):
+
+    if config['instance_type'] != '' and config['ebs_size'] != 0 and config['EBS_optimized'] != '':
+        pass
+    else:
+        input_size_in_bytes = dict()
+        for argname, f in input_files.iteritems():
+            bucket = f['bucket_name']
+            s3 = utils.s3Utils(bucket, bucket, bucket)
+            if isinstance(f['object_key'], list):
+                size = []
+                for key in f['object_key']:
+                    try:
+                        size.append(s3.get_file_size(key, bucket))
+                    except:
+                        raise Exception("Can't get input file size")
+            else:
+                try:
+                    size = s3.get_file_size(f['object_key'], bucket)
+                except:
+                    raise Exception("Can't get input file size")
+            input_size_in_bytes.update({str(argname): size})
+
+        print({"input_size_in_bytes": input_size_in_bytes})
+        res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
+        print(res)
+        if res is not None:
+            instance_type = res['aws']['recommended_instance_type']
+            ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
+            ebs_opt = res['aws']['EBS_optimized']
+
+            if config['instance_type'] == '':
+                config['instance_type'] = instance_type
+            if config['ebs_size'] == 0:
+                config['ebs_size'] = ebs_size
+            if config['EBS_optimized'] == '':
+                config['EBS_optimized'] = ebs_opt
+
+        elif config['instance_type'] == '':
+            raise Exception("instance type cannot be determined nor given")
+        elif config['ebs_size'] == 0:
+            raise Exception("ebs_size cannot be determined nor given")
+        elif config['EBS_optimized'] == '':
+            raise Exception("EBS_optimized cannot be determined nor given")
 
 
 class WorkflowFile(object):
