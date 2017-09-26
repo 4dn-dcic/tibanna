@@ -55,7 +55,6 @@ def handler(event, context):
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
     cfg['job_tag'] = args.get('app_name')
-    cfg['outbucket'] = args.get('output_bucket')
     cfg['userdata_dir'] = '/tmp/userdata'
 
     # local directory in which the json file will be first created.
