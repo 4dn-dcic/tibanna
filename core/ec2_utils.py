@@ -11,6 +11,8 @@ import logging
 from core import utils
 import botocore.session
 import boto3
+from Benchmark import Benchmark as B
+import copy
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -257,7 +259,7 @@ def update_config(old_config, app_name, input_files, parameters):
         input_size_in_bytes = dict()
         for argname, f in input_files.iteritems():
             bucket = f['bucket_name']
-            s3 = s3Utils(bucket, bucket, bucket)
+            s3 = utils.s3Utils(bucket, bucket, bucket)
             if isinstance(f['object_key'], list):
                 size = []
                 for key in f['object_key']:

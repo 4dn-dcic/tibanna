@@ -3,9 +3,7 @@ import logging
 # import json
 import boto3
 from core import ff_utils
-from core.utils import Tibanna, ensure_list, s3Utils
-from Benchmark import Benchmark as B
-import copy
+from core.utils import Tibanna, ensure_list
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -113,11 +111,11 @@ def handler(event, context):
     args['output_S3_bucket'] = event.get('output_bucket')
 
     if 'instance_type' not in event['config']:
-        event['config']['instance_type']=''
+        event['config']['instance_type'] = ''
     if 'EBS_optimized' not in event['config']:
-        event['config']['EBS_optimizd']=''
+        event['config']['EBS_optimizd'] = ''
     if 'ebs_size' not in event['config']:
-        event['config']['ebs_size']=0
+        event['config']['ebs_size'] = 0
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
@@ -182,5 +180,3 @@ def handle_processed_files(workflow_info, tibanna):
         LOG.error("Can't prepare output_files information. %s\n" % e)
         raise e
     return output_files, pf_meta
-
-
