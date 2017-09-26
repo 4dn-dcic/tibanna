@@ -61,7 +61,7 @@ def handler(event, context):
     cfg['json_dir'] = '/tmp/json'
 
     utils.update_config(cfg, args['app_name'],
-                                       args['input_files'], args['input_parameters'])
+                        args['input_files'], args['input_parameters'])
 
     # create json and copy to s3
     jobid = utils.create_json(event, '')
