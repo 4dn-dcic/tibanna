@@ -2,8 +2,8 @@
 export JOBID=$1
 export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
 export PASSWORD=$3  # Password for ssh connection for user ec2-user
+export JSON_BUCKET_NAME=$4  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
 export EBS_DEVICE=/dev/xvdb
-export JSON_BUCKET_NAME=4dn-aws-pipeline-run-json
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
@@ -42,6 +42,15 @@ LOGFILE=$LOGFILE1
 cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
+
+
+### sshd configure for password recognition
+if [ ! -z $PASSWORD ]; then
+  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ec2-user
+  cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
+  mv tmpp /etc/ssh/sshd_config
+  exl service sshd restart
+fi
 
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
