@@ -252,10 +252,8 @@ def launch_instance(par, jobid):
 
 def update_config(old_config, app_name, input_files, parameters):
 
-    print(app_name)
-    app_name = str(app_name)
     config = copy.deepcopy(old_config)
-    if 'instance_type' in old_config and 'ebs_size' in old_config and 'EBS_optimized' in old_config:
+    if old_config['instance_type'] != '' and old_config['ebs_size'] != 0 and old_config['EBS_optimized'] != '':
         pass
     else:
         input_size_in_bytes = dict()
