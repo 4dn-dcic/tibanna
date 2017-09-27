@@ -58,7 +58,7 @@ exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
 exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 
-
+exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod +x ./*py
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
@@ -66,7 +66,8 @@ exl source $ENV_FILE
 
 # first create an output bucket/directory
 touch $JOBID.job_started
-aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
+exl echo $LOGBUCKET
+exl aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 
 ###  mount the EBS volume to the EBS_DIR
@@ -122,7 +123,6 @@ mkdir -p $LOCAL_CWL_TMPDIR
 yum install -y git gcc
 git clone https://github.com/SooLee/cwltool
 cd cwltool
-git checkout tmp0927
 pip install .
 cd ..
 send_log_regularly &
