@@ -122,6 +122,7 @@ mkdir -p $LOCAL_CWL_TMPDIR
 yum install -y git gcc
 git clone https://github.com/SooLee/cwltool
 cd cwltool
+git checkout tmp0927
 pip install .
 cd ..
 send_log_regularly &
