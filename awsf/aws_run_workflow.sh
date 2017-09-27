@@ -120,7 +120,7 @@ cd $LOCAL_CWLDIR
 mkdir -p $LOCAL_CWL_TMPDIR
 #pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
 yum install -y git gcc
-git clone https://github.com/SooLee/cwltool
+git clone https://github.com/4dn-dcic/cwltool
 cd cwltool
 pip install .
 cd ..
