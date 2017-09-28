@@ -1,0 +1,52 @@
+{
+  "args": {
+    "secondary_output_target": {},
+    "app_name": "pairsam-parse-sort",
+    "input_parameters": {
+      "nThreads": 16
+    },
+    "cwl_child_filenames": [],
+    "output_target": {
+      "out_pairsam": "T47D/pairs/ENC_T47D_merged.sam.pairs.gz"
+    },
+    "cwl_main_filename": "pairsam-parse-sort.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "suwang",
+    "app_version": "0.2.0",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+    "input_files": {
+      "bam": {
+        "bucket_name": "suwang",
+        "object_key": "T47D/Bam/ENC_T47D_merged.bam"
+      },
+      "chromsize": {
+        "bucket_name": "suwang",
+        "object_key": "refData/hg19/hg19.chrom.sizes"
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 500,
+    "ami_id": "ami-7ff26968",
+    "json_bucket": "suwang",
+    "EBS_optimized": true,
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "instance_type": "c4.8xlarge",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
+    "ebs_type": "io1",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "key_name": "",
+    "launch_instance": true,
+    "password": "dragonglass",
+    "log_bucket": "suwang"
+  },
+  "_tibanna": {
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow_with_unicorns:generic_3f1bf4e4-169e-4d3b-b51b-da728e8335b9",
+    "run_type": "generic",
+    "run_name": "generic_3f1bf4e4-169e-4d3b-b51b-da728e8335b9",
+    "env": "fourfront-webdev",
+    "run_id": "3f1bf4e4-169e-4d3b-b51b-da728e8335b9"
+  }
+}
