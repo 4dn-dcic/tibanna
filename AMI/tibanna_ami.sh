@@ -35,7 +35,8 @@ cd cwltool
 pip install .
 pip install -e git+https://github.com/4dn-dcic/schema_salad#5d6365b3a6246a5a503c341e0043d6456d949769#egg=schema_salad
 pip install avro==1.8.2  # 1.8.2 got installed
-alias cwl-runner=cwltool
+echo "" >> /home/ec2-user/.bashrc
+echo "alias cwl-runner=cwltool" >> /home/ec2-user/.bashrc
 
 #chmod -R 777 /home/ec2-user/
 chown -R ec2-user /home/ec2-user/

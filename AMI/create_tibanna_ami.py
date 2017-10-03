@@ -52,5 +52,6 @@ if __name__ == '__main__':
     parser.add_argument("-a", "--ami_name", help="ami_name")
     args = parser.parse_args()
 
-    create_ami_from_tibanna(args.key_name, ami_name=args.ami_name)
- 
+    res = create_ami_from_tibanna(args.key_name, ami_name=args.ami_name)
+    print(res)
+
