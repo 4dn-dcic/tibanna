@@ -15,7 +15,6 @@ from core.utils import _tibanna, s3Utils
 from time import sleep
 from contextlib import contextmanager
 import aws_lambda
-import AMI
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -575,10 +574,3 @@ def notebook(ctx):
         print("If notebook does not open on your chorme automagically, try adding this to your bash_profie")
         print("export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome")
         print("*for MacOS and Chrome only")
-
-
-@task
-def create_tibanna_ami(ctx, keyname,
-                       userdata_file='AMI/tibanna_ami.sh',
-                       ami_name='docker_cwlrunner2'):
-    return AMI.create_tibanna_ami(keyname, userdata_file, ami_name)
