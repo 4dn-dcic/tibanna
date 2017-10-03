@@ -32,7 +32,7 @@
     "shutdown_min": 120,
     "instance_type": "t2.micro",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "ami_id": "ami-5c4eb526",
+    "ami_id": "ami-ea45be90",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "dragonfly",
