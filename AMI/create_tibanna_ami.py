@@ -41,8 +41,12 @@ def create_ami_from_tibanna(keyname,
     ec2 = boto3.client('ec2')
     print("creating an image...")
     res = ec2.create_image(**create_image_args)
-    
-    return(res)
+    print(res)
+
+    print("waiting for 10min for the image to be created..")
+    time.sleep(10 * 60)
+    res_term = ec2.terminate_instances(InstanceIds=[instance_id])
+    print(res_term)
 
 
 if __name__ == '__main__':
@@ -54,5 +58,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     res = create_ami_from_tibanna(args.key_name, ami_name=args.ami_name)
-    print(res)
 

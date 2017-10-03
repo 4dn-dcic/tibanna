@@ -1,7 +1,7 @@
 
 ## Creating AMI for Tibanna
 A Tibanna AWSEM AMI can be created automatically using `AMI/create_tibanna_ami.py`.
-
+You need to have an AWS account and a permission (access_key and secret_key) in order to do this operation. It involves launching an instance, creating an image out of an instance and terminating an instance.
 
 ### Usage:
 ```
