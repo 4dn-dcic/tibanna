@@ -37,7 +37,8 @@ pip install -e git+https://github.com/4dn-dcic/schema_salad#5d6365b3a6246a5a503c
 pip install avro==1.8.2  # 1.8.2 got installed
 alias cwl-runner=cwltool
 
-chmod -R 777 /home/ec2-user/
+#chmod -R 777 /home/ec2-user/
+chown -R ec2-user /home/ec2-user/
 
 reboot
 

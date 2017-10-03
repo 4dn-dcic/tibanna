@@ -7,7 +7,7 @@ def launch_instance_for_tibanna_ami(keyname, userdata_file='AMI/tibanna_ami.sh')
     
     with open(userdata_file, 'r') as f:
         userdata_str=f.read()
-    print(userdata_str)
+    # print(userdata_str)
     
     launch_args = {'ImageId': amazon_linux_ami_id,
                                    'InstanceType': 't2.micro',
@@ -34,7 +34,7 @@ def create_ami_from_tibanna(keyname,
     # launch an instance
     instance_id = launch_instance_for_tibanna_ami(keyname, userdata_file)
 
-    time.sleep(20)
+    time.sleep(10 * 60)
     
     # create an image from the instance
     create_image_args = {'InstanceId': instance_id, 'Name':  ami_name}
