@@ -33,12 +33,13 @@ def create_ami_from_tibanna(keyname,
 
     # launch an instance
     instance_id = launch_instance_for_tibanna_ami(keyname, userdata_file)
-
+    print("waiting for 10min for the instance to install everything and reboot..")
     time.sleep(10 * 60)
     
     # create an image from the instance
     create_image_args = {'InstanceId': instance_id, 'Name':  ami_name}
     ec2 = boto3.client('ec2')
+    print("creating an image...")
     res = ec2.create_image(**create_image_args)
     
     return(res)

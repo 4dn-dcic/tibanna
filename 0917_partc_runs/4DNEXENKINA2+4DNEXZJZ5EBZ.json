@@ -1,0 +1,47 @@
+{
+    "workflow_uuid": "c6480905-49e5-4c33-afab-9ec90d65faf3",
+    "parameters" :  {"ncores": 32},
+    "input_files" : [
+       {
+           "object_key": "4DNFIZ4CHMSU.cool",
+           "workflow_argument_name": "input_cool",
+           "uuid": "c4d73780-663b-47f6-baf7-1e7fdde32f7a",
+           "bucket_name": "elasticbeanstalk-fourfront-webprod-wfoutput"
+       },
+       {
+           "object_key": "4DNFI3RIKRUJ.hic",
+           "workflow_argument_name": "input_hic",
+           "uuid": "aff4c78b-b07a-4fb0-b568-388f0a8ff0e3",
+           "bucket_name": "elasticbeanstalk-fourfront-webprod-wfoutput"
+       },
+       {
+           "object_key": "4DNFI823LSII.chrom.sizes",
+           "workflow_argument_name": "chromsize",
+           "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+           "bucket_name": "elasticbeanstalk-fourfront-webprod-files"
+      }
+    ],
+    "config" : {
+      "ebs_type" : "io1",
+      "ebs_iops" : 20000,
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "ami_id" : "ami-7ff26968",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "dragonfly",
+      "shutdown_min" : "30",
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "key_name": ""
+    },
+    "_tibanna": {
+      "run_type": "partc",
+      "env": "fourfront-webprod",
+      "run_id": "4DNEXENKINA2+4DNEXZJZ5EBZ",
+      "run_name": "partc_4DNEXENKINA2+4DNEXZJZ5EBZ"
+    },
+    "app_name": "hi-c-processing-partc",
+    "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput"
+}
+
