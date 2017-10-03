@@ -32,20 +32,31 @@ def create_ami_from_tibanna(keyname,
                             ami_name='docker_cwlrunner2'):
 
     # launch an instance
-    instance_id = launch_instance_for_tibanna_ami(keyname, userdata_file)
+    try:
+       instance_id = launch_instance_for_tibanna_ami(keyname, userdata_file)
+    except:
+       Exception("Failed to launch an instance")
+
     print("waiting for 10min for the instance to install everything and reboot..")
     time.sleep(10 * 60)
     
     # create an image from the instance
-    create_image_args = {'InstanceId': instance_id, 'Name':  ami_name}
-    ec2 = boto3.client('ec2')
-    print("creating an image...")
-    res = ec2.create_image(**create_image_args)
+    try:
+        create_image_args = {'InstanceId': instance_id, 'Name':  ami_name}
+        ec2 = boto3.client('ec2')
+        print("creating an image...")
+        res = ec2.create_image(**create_image_args)
+    except:
+        Exception("Failed to create an image")
     print(res)
 
     print("waiting for 10min for the image to be created..")
     time.sleep(10 * 60)
-    res_term = ec2.terminate_instances(InstanceIds=[instance_id])
+
+    try:
+        res_term = ec2.terminate_instances(InstanceIds=[instance_id])
+    except:
+        Exception("Failed to terminate the instance")
     print(res_term)
 
 
