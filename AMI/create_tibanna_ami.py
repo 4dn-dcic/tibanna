@@ -1,9 +1,13 @@
+import boto3
+import time
+
 def launch_instance_for_tibanna_ami(keyname, userdata_file='AMI/tibanna_ami.sh'):
 
     amazon_linux_ami_id='ami-4fffc834'
     
     with open(userdata_file, 'r') as f:
-        userdata_str=f.read().replace('\n', '')
+        userdata_str=f.read()
+    print(userdata_str)
     
     launch_args = {'ImageId': amazon_linux_ami_id,
                                    'InstanceType': 't2.micro',
@@ -13,8 +17,8 @@ def launch_instance_for_tibanna_ami(keyname, userdata_file='AMI/tibanna_ami.sh')
                                    'TagSpecifications': [{'ResourceType': 'instance',
                                               "Tags": [{"Key": "Name", "Value": "tibanna_ami"}]}]
                                    }
-    if key_name:
-        launch_args.update({'KeyName': key_name})
+    if keyname:
+        launch_args.update({'KeyName': keyname})
     
     ec2 = boto3.client('ec2')
     res = ec2.run_instances(**launch_args)
@@ -30,12 +34,23 @@ def create_ami_from_tibanna(keyname,
     # launch an instance
     instance_id = launch_instance_for_tibanna_ami(keyname, userdata_file)
 
-    sleep(20)
+    time.sleep(20)
     
     # create an image from the instance
     create_image_args = {'InstanceId': instance_id, 'Name':  ami_name}
+    ec2 = boto3.client('ec2')
     res = ec2.create_image(**create_image_args)
     
     return(res)
 
 
+if __name__ == '__main__':
+    import argparse
+   
+    parser = argparse.ArgumentParser(description="Arguments")
+    parser.add_argument("-k", "--key_name", help="key_name")
+    parser.add_argument("-a", "--ami_name", help="ami_name")
+    args = parser.parse_args()
+
+    create_ami_from_tibanna(args.key_name, ami_name=args.ami_name)
+ 
