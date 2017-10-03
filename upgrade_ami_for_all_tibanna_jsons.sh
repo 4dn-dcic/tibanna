@@ -9,5 +9,5 @@ ls -1 test_json/*json | xargs -I{} sh -c "mv '{}'.2 '{}'"
 ls -1 core/*awsf/event.json | xargs -I{} sh -c "sed 's/$OLD_AMI/$NEW_AMI/g' '{}' > '{}'.2"
 ls -1 core/*awsf/event.json | xargs -I{} sh -c "mv '{}'.2 '{}'"
 
-ls -1 notebooks/*.ipynb | xargs -I{} sh -c "sed 's/$OLD_AMI/$NEW_AMI/g' '{}' > '{}'.2"
-ls -1 notebooks/*.ipynb | xargs -I{} sh -c "mv '{}'.2 '{}'"
+ls -1 notebooks/*.ipynb notebooks/*/*.ipynb | xargs -I{} sh -c "sed 's/$OLD_AMI/$NEW_AMI/g' '{}' > '{}'.2"
+ls -1 notebooks/*.ipynb notebooks/*/*.ipynb | xargs -I{} sh -c "mv '{}'.2 '{}'"
