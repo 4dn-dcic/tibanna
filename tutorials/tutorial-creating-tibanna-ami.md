@@ -16,9 +16,10 @@ python AMI/create_tibanna_ami.py -k duplexa.4dn -a docker_cwlrunner3
 ```
 * The return value from a create-image operation is printed as after the run completes. The output contains AMI ID that you can use in the 'config' field of Tibanna input json.
 * Alternatively, check the AWS Console the following two.
-    1. An ec2 instance named 'tibanna-ami' must have been launched and you should be able to see it from the EC2 Console.
-      ![](images/tibanna_ami_instance_scsh.png)
+    1. An ec2 instance named 'tibanna-ami' must have been launched and you should be able to see it from the EC2 Console. It uses a t2.micro instance.
+      * ![](../images/tibanna_ami_instance_scsh.png)
     2. After 10min or so, an AMI named your `ami_name` must have been created and you should be able to see it from the AMI Console.
-      ![](images/tibanna_ami_image_scsh.png)
+      * ![](../images/tibanna_ami_image_scsh.png)
+
 
 
