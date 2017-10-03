@@ -206,7 +206,7 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_awsem_workflow_with_ponies',
+def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
                  env='fourfront-webdev'):
     '''
     accession is unique name that we be part of run id
