@@ -29,4 +29,8 @@ waiting for 10min for the image to be created..
       * ![](../images/tibanna_ami_image_scsh.png)
 
 
-
+### Update json files inside tibanna repo
+* Once you have a new AMI, the following command would automatically update all json files so they use the new AMI.
+```
+upgrade_ami_for_all_tibanna_jsons.sh <old_ami_id> <new_ami_id>
+```

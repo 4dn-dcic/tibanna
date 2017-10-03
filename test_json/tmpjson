@@ -27,7 +27,7 @@
   },
   "config": {
     "ebs_size": 500,
-    "ami_id": "ami-7ff26968",
+    "ami_id": "ami-cfb14bb5",
     "json_bucket": "suwang",
     "EBS_optimized": true,
     "ebs_iops": 500,
