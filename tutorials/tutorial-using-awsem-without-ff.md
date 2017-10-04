@@ -208,6 +208,6 @@ The link to the step function run is printed out to STDOUT and you can copy and 
     
     Success                                                |Fail
     :-----------------------------------------------------:|:--------------------------------------------------------:
-    ![Success](images/stepfunction_unicorn_screenshot.png) | ![Fail](images/stepfunction_unicorn_screenshot_fail.png)
+    ![Success](../images/stepfunction_unicorn_screenshot.png) | ![Fail](../images/stepfunction_unicorn_screenshot_fail.png)
     
     
