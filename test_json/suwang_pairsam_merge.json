@@ -7,7 +7,7 @@
     },
     "cwl_child_filenames": [],
     "output_target": {
-      "out_pairsam": "T47D/pairs/test-ENC_T47D_merged2.sam.pairs.gz"
+      "merged_pairsam": "T47D/pairs/test-ENC_T47D_merged2.sam.pairs.gz"
     },
     "cwl_main_filename": "pairsam-merge.cwl",
     "secondary_files": {},
