@@ -26,13 +26,13 @@
     }
   },
   "config": {
-    "ebs_size": 500,
+    "ebs_size": 0,
     "ami_id": "ami-cfb14bb5",
     "json_bucket": "suwang",
-    "EBS_optimized": true,
+    "EBS_optimized": "",
     "ebs_iops": 500,
     "shutdown_min": 30,
-    "instance_type": "c4.8xlarge",
+    "instance_type": "",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
     "ebs_type": "io1",
     "copy_to_s3": true,
@@ -43,10 +43,6 @@
     "log_bucket": "suwang"
   },
   "_tibanna": {
-    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow_with_unicorns:generic_3f1bf4e4-169e-4d3b-b51b-da728e8335b9",
-    "run_type": "generic",
-    "run_name": "generic_3f1bf4e4-169e-4d3b-b51b-da728e8335b9",
-    "env": "fourfront-webdev",
-    "run_id": "3f1bf4e4-169e-4d3b-b51b-da728e8335b9"
+    "run_type": "pairsam-parse-sort"
   }
 }
