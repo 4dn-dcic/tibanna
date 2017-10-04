@@ -513,13 +513,13 @@ def make_input(env, workflow, accession, uuid):
                 "ebs_iops": 500,
                 "shutdown_min": 30,
                 "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-                "ami_id": "ami-7ff26968",
+                "ami_id": "ami-cfb14bb5",
                 "copy_to_s3": True,
                 "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
                 "launch_instance": True,
-                "password": "hahaha",
+                "password": "thisisnotmypassword",
                 "log_bucket": "tibanna-output",
-                "key_name": "4dn-encode"
+                "key_name": ""
               },
             }
     data.update(_tibanna_settings({'run_id': str(accession),
