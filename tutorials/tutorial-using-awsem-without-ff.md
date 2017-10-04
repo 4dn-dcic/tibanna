@@ -137,7 +137,7 @@ pip install -r requirements.txt
 {
   "config": {
     "ebs_size": 0,
-    "ami_id": "ami-7ff26968",
+    "ami_id": "ami-cfb14bb5",
     "json_bucket": "suwang",
     "EBS_optimized": "",
     "ebs_iops": 500,
