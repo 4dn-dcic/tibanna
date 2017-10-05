@@ -27,10 +27,7 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
 # first create an output bucket/directory
 touch $JOBID.job_started
-exl echo $LOGBUCKET
-exl aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
-
-source /root/.bash_profile
+aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
@@ -39,7 +36,13 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
-send_log_regularly(){  watch -n 60 "top -b | head -15 >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; }  ## usage: send_log_regularly (no argument)
+send_log_regularly(){  
+    watch -n 60 "top -b | head -15 >> $LOGFILE; 
+    df -ch /data1/input/ >> $LOGFILE; 
+    df -ch /data1/tmp* >> $LOGFILE; 
+    df -ch /ata1/out >> $LOGFILE;
+    aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; 
+}  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
@@ -50,7 +53,7 @@ LOGFILE=$LOGFILE1
 cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
-
+exl env  ## record all environmental variables being used
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
