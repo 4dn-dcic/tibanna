@@ -3,6 +3,7 @@ export JOBID=$1
 export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
 export PASSWORD=$3  # Password for ssh connection for user ec2-user
 export JSON_BUCKET_NAME=$4  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
+export LOGBUCKET=$5  # bucket for sending log file
 export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
@@ -23,6 +24,11 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+
+# first create an output bucket/directory
+touch $JOBID.job_started
+exl echo $LOGBUCKET
+exl aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 source /root/.bash_profile
 
@@ -65,11 +71,6 @@ exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod +x ./*py
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
-
-# first create an output bucket/directory
-touch $JOBID.job_started
-exl echo $LOGBUCKET
-exl aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 
 ###  mount the EBS volume to the EBS_DIR
