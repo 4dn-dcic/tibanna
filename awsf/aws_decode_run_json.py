@@ -68,6 +68,3 @@ with open(env_filename, 'w') as f_env:
     f_env.write("MAIN_CWL={}\n".format(dict["Job"]["App"]["main_cwl"])) ## main cwl to be run (the other cwl files will be called by this one)
     f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(dict["Job"]["App"]["other_cwl_files"].split(',')))) ## list of cwl files in an array delimited by a space
     f_env.write("OUTBUCKET={}\n".format(dict["Job"]["Output"]["output_bucket_directory"]))
-    f_env.write("LOGBUCKET={}\n".format(dict["Job"]["Log"]["log_bucket_directory"]))
- 
-
