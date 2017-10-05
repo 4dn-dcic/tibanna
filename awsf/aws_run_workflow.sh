@@ -1,9 +1,9 @@
 #!/bin/bash
 export JOBID=$1
 export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
-export PASSWORD=$3  # Password for ssh connection for user ec2-user
-export JSON_BUCKET_NAME=$4  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
-export LOGBUCKET=$5  # bucket for sending log file
+export JSON_BUCKET_NAME=$3  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
+export LOGBUCKET=$4  # bucket for sending log file
+export PASSWORD=$5  # Password for ssh connection for user ec2-user
 export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
