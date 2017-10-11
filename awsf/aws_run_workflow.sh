@@ -37,10 +37,10 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 send_log_regularly(){  
-    watch -n 60 "top -b | head -15 >> $LOGFILE; 
-    df -ch /data1/input/ >> $LOGFILE; 
-    df -ch /data1/tmp* >> $LOGFILE; 
-    df -ch /ata1/out >> $LOGFILE;
+    watch -n 60 "top -b | head -15 >> $LOGFILE; \
+    df -ch /data1/input/ >> $LOGFILE; \
+    df -ch /data1/tmp* >> $LOGFILE; \
+    df -ch /ata1/out >> $LOGFILE; \
     aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; 
 }  ## usage: send_log_regularly (no argument)
 
@@ -71,7 +71,7 @@ exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chmod +x ./*py
+exl chown -R ec2-user .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
 
@@ -81,7 +81,7 @@ exl lsblk $TMPLOGFILE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
-exl chmod 777 $EBS_DIR
+exl chown -R ec2-user $EBS_DIR
 
 ### restart docker so the mounting can take effect
 exl service docker restart

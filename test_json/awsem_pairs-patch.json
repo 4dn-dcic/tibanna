@@ -7,7 +7,7 @@
       "ami_id" : "ami-cfb14bb5",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "",
-      "shutdown_min" : 10,
+      "shutdown_min" : 120,
       "copy_to_s3" : true,
       "launch_instance" : true,
       "log_bucket": "tibanna-output",
