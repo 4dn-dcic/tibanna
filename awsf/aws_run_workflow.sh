@@ -72,6 +72,7 @@ exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chown -R ec2-user .
+exl chmod -R 777 .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
 
@@ -82,6 +83,7 @@ exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
 exl chown -R ec2-user $EBS_DIR
+exl chmod -R 777 $EBS_DIR
 
 ### restart docker so the mounting can take effect
 exl service docker restart
