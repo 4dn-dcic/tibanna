@@ -1,25 +1,26 @@
 {
   "_tibanna": {
     "env": "fourfront-webdev",
-    "run_type": "md5"
+    "run_type": "clip"
   },
   "args": {
-    "app_name": "md5",
+    "app_name": "clip",
     "input_parameters": {},
     "cwl_child_filenames": [],
     "output_target": {
-      "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
+       "out_clipped_fastq": "gm12878_rep2_early.clipped.fq.gz",
+       "out_log": "gm12878_rep2_early.clip.log"
     },
     "secondary_output_target": {},
-    "cwl_main_filename": "md5.cwl",
+    "cwl_main_filename": "clip.cwl",
     "secondary_files": {},
-    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "app_version": "0.0.4",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
+    "output_S3_bucket": "tibanna-testinput",
+    "app_version": "dev",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/",
     "input_files": {
-      "input_file": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
+      "input_fastq": {
+        "bucket_name": "tibanna-testinput",
+        "object_key": "gm12878_rep2_early.fq.gz"
       }
     }
   },
@@ -37,7 +38,7 @@
     "launch_instance": true,
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/dev/awsf/",
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "key_name": ""
   }
 }
