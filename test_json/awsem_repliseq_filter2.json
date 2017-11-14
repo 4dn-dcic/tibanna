@@ -20,6 +20,10 @@
       "input_bg": {
         "bucket_name": "tibanna-testinput",
         "object_key": "gm12878_rep1_late.clipped.q20_sorted.rmdup.w5000.bg"
+      },
+      "filtered_bed": {
+        "bucket_name": "tibanna-testinput",
+        "object_key": "gm12878.clipped.q20_sorted.rmdup.w5000.filtered.bed"
       }
     }
   },
