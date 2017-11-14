@@ -21,7 +21,7 @@
     "input_files": {
       "fastq1": {
         "bucket_name": "tibanna-testinput",
-        "object_key": "gm12878_rep2_early.clipped.fq.gz"
+        "object_key": "gm12878_rep2_early.clipped.fq"
       },
       "bwa_index": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",

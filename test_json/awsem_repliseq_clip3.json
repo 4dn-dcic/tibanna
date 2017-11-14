@@ -8,7 +8,7 @@
     "input_parameters": {},
     "cwl_child_filenames": [],
     "output_target": {
-       "out_clipped_fastq": "gm12878_rep2_early.clipped.fq.gz",
+       "out_clipped_fastq": "gm12878_rep2_early.clipped.fq",
        "out_log": "gm12878_rep2_early.clip.log"
     },
     "secondary_output_target": {},
