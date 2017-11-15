@@ -6,7 +6,8 @@
   "args": {
     "app_name": "filtersort",
     "input_parameters": {
-        "memperthread": "2G"
+        "memperthread": "2G",
+        "nextrathreads": 3
     },
     "cwl_child_filenames": [],
     "output_target": {
@@ -26,13 +27,13 @@
     }
   },
   "config": {
-    "ebs_size": 10,
+    "ebs_size": 100,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": 500,
     "shutdown_min": 120,
-    "instance_type": "t2.micro",
+    "instance_type": "c5.xlarge",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "ami_id": "ami-cfb14bb5",
     "copy_to_s3": true,
