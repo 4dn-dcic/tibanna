@@ -23,7 +23,7 @@
       },
       "filtered_bed": {
         "bucket_name": "tibanna-testinput",
-        "object_key": "gm12878.clipped.q20_sorted.rmdup.w5000.filtered.bed"
+        "object_key": "gm12878.filtered.bed"
       }
     }
   },
