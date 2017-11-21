@@ -20,6 +20,10 @@
       "input_bam": {
         "bucket_name": "tibanna-testinput",
         "object_key": "gm12878_rep1_late.clipped.q20_sorted.rmdup.bam"
+      },
+      "chrsizes": {
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
       }
     }
   },
