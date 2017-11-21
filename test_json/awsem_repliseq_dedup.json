@@ -8,7 +8,7 @@
     "input_parameters": {},
     "cwl_child_filenames": [],
     "output_target": {
-       "out_deduped_bam": "gm12878_rep1_early.clipped.q20_sorted.rmdup.bam"
+       "out_deduped_bam": "gm12878_rep1_early.clipped.q20_sorted.rmdup.bam",
        "out_log": "gm12878_rep1_early.clipped.q20_sorted.rmdup.log"
     },
     "secondary_output_target": {},
