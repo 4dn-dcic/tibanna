@@ -8,7 +8,8 @@
     "input_parameters": {},
     "cwl_child_filenames": [],
     "output_target": {
-       "out_norm_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.qnorm.bg"
+       "out_norm_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.qnorm.bg",
+       "out_reference_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.inorm.bg"
     },
     "secondary_output_target": {},
     "cwl_main_filename": "normalize.cwl",
