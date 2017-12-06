@@ -14,7 +14,7 @@
     "cwl_main_filename": "smooth.cwl",
     "secondary_files": {},
     "output_S3_bucket": "tibanna-testinput",
-    "app_version": "dev",
+    "app_version": "0.2.2",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/",
     "input_files": {
       "input_bg": {

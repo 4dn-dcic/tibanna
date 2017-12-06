@@ -8,14 +8,13 @@
     "input_parameters": {},
     "cwl_child_filenames": [],
     "output_target": {
-       "out_norm_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.qnorm.bg",
-       "out_reference_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.inorm.bg"
+       "out_norm_bg": "gm12878_rep1.clipped.q20_sorted.rmdup.w5000.l2r.qnorm.bg"
     },
     "secondary_output_target": {},
     "cwl_main_filename": "normalize.cwl",
     "secondary_files": {},
     "output_S3_bucket": "tibanna-testinput",
-    "app_version": "dev",
+    "app_version": "0.2.2",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/",
     "input_files": {
       "input": {
@@ -24,7 +23,7 @@
       },
       "reference_bg": {
         "bucket_name": "tibanna-testinput",
-        "object_key": "reference.bg"
+        "object_key": "gm12878.inorm.bg"
       }
     }
   },
