@@ -189,7 +189,7 @@ def create_run_workflow(jobid, shutdown_min,
     str += "SCRIPT_URL={}\n".format(script_url)
     str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
     str += "chmod +x $RUN_SCRIPT\n"
-    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $JSON_BUCKET_NAME $LOGBUCKET $PASSWORD\n"
+    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $JSON_BUCKET_NAME $LOGBUCKET $PASSWORD $SCRIPT_URL\n"
     print(str)
     return(str)
 
