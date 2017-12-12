@@ -26,6 +26,7 @@ def handler(event, context):
     output_bucket = event.get('output_bucket')
     parameters = ff_utils.convert_param(event.get('parameters'), True)
     tibanna_settings = event.get('_tibanna', {})
+    tag = event.get('tag')
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
     # tibanna provides access to keys based on env and stuff like that
@@ -56,7 +57,7 @@ def handler(event, context):
                                 'value': uuid, 'ordinal': idx + 1})
     LOG.info("input_files is %s" % input_files)
 
-    ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files,
+    ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
                                            run_url=tibanna.settings.get('url', ''),
                                            output_files=output_files, parameters=parameters)
 

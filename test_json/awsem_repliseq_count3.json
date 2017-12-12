@@ -1,0 +1,47 @@
+{
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "count"
+  },
+  "args": {
+    "app_name": "count",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "output_target": {
+       "out_count_bg": "gm12878_rep2_early.clipped.q20_sorted.rmdup.w5000.bg"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "count.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-testinput",
+    "app_version": "0.2.2",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/",
+    "input_files": {
+      "input_bam": {
+        "bucket_name": "tibanna-testinput",
+        "object_key": "gm12878_rep2_early.clipped.q20_sorted.rmdup.bam"
+      },
+      "chrsizes": {
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 10,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": false,
+    "ebs_iops": 500,
+    "shutdown_min": 120,
+    "instance_type": "t2.micro",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "launch_instance": true,
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "key_name": ""
+  }
+}

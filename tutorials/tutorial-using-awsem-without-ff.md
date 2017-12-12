@@ -132,17 +132,17 @@ cd tibanna
 pip install -r requirements.txt
 ```
 
-* create an input json file with the following content, replace output ('output_target') and input file names and 'ebs_size'. The 'ebs_size' should be in GB and to be safe use input_size * 21 for now - we will have a better space estimate later - we will have this calculation automated very soon as well.
+* create an input json file with the following content, replace output ('output_target') and input file names and 'ebs_size'. The 'ebs_size' should be in GB and if it is set to 0, it will be auto-determined by the benchmark function. Likewise, 'instance_type' and 'EBS_optimized' can be set to be "", which allows the Benchmark function to auto-determine these parameters. One could override it by specifically assigning values to these fields (e.g. "EBS_optimized": true, "instance_type": "c2.xlarge", "ebs_size": 500). For a high IO performance, it is recommended to use "ebs_iops" to be higher (e.g. 20000), but 500 should be fine for regular jobs. More examples are in `test_json/suwang*json`. 
 ```
 {
   "config": {
-    "ebs_size": 778,
-    "ami_id": "ami-7ff26968",
+    "ebs_size": 0,
+    "ami_id": "ami-cfb14bb5",
     "json_bucket": "suwang",
-    "EBS_optimized": true,
+    "EBS_optimized": "",
     "ebs_iops": 500,
     "shutdown_min": 30,
-    "instance_type": "c4.8xlarge",
+    "instance_type": "",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
     "ebs_type": "io1",
     "copy_to_s3": true,
@@ -208,6 +208,6 @@ The link to the step function run is printed out to STDOUT and you can copy and 
     
     Success                                                |Fail
     :-----------------------------------------------------:|:--------------------------------------------------------:
-    ![Success](images/stepfunction_unicorn_screenshot.png) | ![Fail](images/stepfunction_unicorn_screenshot_fail.png)
+    ![Success](../images/stepfunction_unicorn_screenshot.png) | ![Fail](../images/stepfunction_unicorn_screenshot_fail.png)
     
     

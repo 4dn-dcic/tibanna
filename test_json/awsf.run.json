@@ -35,7 +35,7 @@
     }, 
     "config": {
         "EBS_optimized": false, 
-        "ami_id": "ami-7ff26968", 
+        "ami_id": "ami-cfb14bb5", 
         "copy_to_s3": true, 
         "ebs_iops": 500, 
         "ebs_size": 20, 

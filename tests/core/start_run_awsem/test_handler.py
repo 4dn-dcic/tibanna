@@ -2,7 +2,9 @@ import pytest
 from core.start_run_awsf.service import (
     handler,
     get_format_extension_map,
-    handle_processed_files,
+    handle_processed_files
+)
+from core.run_task_awsf.service import (
     update_config
 )
 from ..conftest import valid_env

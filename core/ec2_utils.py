@@ -176,7 +176,8 @@ def create_json(input_dict, jobid):
 def create_run_workflow(jobid, shutdown_min,
                         script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
                         password='lalala',
-                        json_bucket='4dn-aws-pipeline-run-json'):
+                        json_bucket='4dn-aws-pipeline-run-json',
+                        log_bucket='tibanna-output'):
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
@@ -184,10 +185,12 @@ def create_run_workflow(jobid, shutdown_min,
     str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
     str += "PASSWORD={}\n".format(password)
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
+    str += "LOGBUCKET={}\n".format(log_bucket)
     str += "SCRIPT_URL={}\n".format(script_url)
     str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
     str += "chmod +x $RUN_SCRIPT\n"
-    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $PASSWORD $JSON_BUCKET_NAME\n"
+    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $JSON_BUCKET_NAME $LOGBUCKET $PASSWORD\n"
+    print(str)
     return(str)
 
 
@@ -196,7 +199,7 @@ def launch_instance(par, jobid):
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
         userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
-                                           par['password'], par['json_bucket'])
+                                           par['password'], par['json_bucket'], par['log_bucket'])
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 

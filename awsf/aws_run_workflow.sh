@@ -1,8 +1,9 @@
 #!/bin/bash
 export JOBID=$1
 export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
-export PASSWORD=$3  # Password for ssh connection for user ec2-user
-export JSON_BUCKET_NAME=$4  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
+export JSON_BUCKET_NAME=$3  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
+export LOGBUCKET=$4  # bucket for sending log file
+export PASSWORD=$5  # Password for ssh connection for user ec2-user
 export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
@@ -24,6 +25,10 @@ export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
+# first create an output bucket/directory
+touch $JOBID.job_started
+aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
+
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
 exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one separates stdout to json as well.
@@ -31,7 +36,13 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
-send_log_regularly(){  watch -n 60 "top -b | head -15 >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; }  ## usage: send_log_regularly (no argument)
+send_log_regularly(){  
+    watch -n 60 "top -b | head -15 >> $LOGFILE; \
+    df -ch /data1/input/ >> $LOGFILE; \
+    df -ch /data1/tmp* >> $LOGFILE; \
+    df -ch /ata1/out >> $LOGFILE; \
+    aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; 
+}  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
@@ -64,14 +75,10 @@ exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chmod +x ./*py
+exl chown -R ec2-user .
+exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
-
-# first create an output bucket/directory
-touch $JOBID.job_started
-exl echo $LOGBUCKET
-exl aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 
 ###  mount the EBS volume to the EBS_DIR
@@ -79,7 +86,8 @@ exl lsblk $TMPLOGFILE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
-exl chmod 777 $EBS_DIR
+exl chown -R ec2-user $EBS_DIR
+exl chmod -R +x $EBS_DIR
 
 ### restart docker so the mounting can take effect
 exl service docker restart
@@ -124,14 +132,16 @@ cwd0=$(pwd)
 cd $LOCAL_CWLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
 #pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
-yum install -y git gcc
-git clone https://github.com/SooLee/cwltool
-cd cwltool
-pip install .
-cd ..
+#yum install -y git gcc
+#git clone https://github.com/SooLee/cwltool
+#cd cwltool
+#pip install .
+#cd ..
 send_log_regularly &
 #exl cwltool --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
-exlj cwl-runner --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
+alias cwl-runner=cwltool
+#exlj cwl-runner --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
+exlj cwltool --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
 #exl cwl-runner $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 deactivate
 cd $cwd0

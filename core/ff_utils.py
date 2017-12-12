@@ -34,13 +34,16 @@ def convert_param(parameter_dict, vals_as_string=False):
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
-                        run_status='started', run_platform='AWSEM', run_url='', **kwargs):
+                        run_status='started', run_platform='AWSEM', run_url='', tag=None, **kwargs):
 
     input_files = [] if input_files is None else input_files
     parameters = [] if parameters is None else parameters
 
     if title is None:
-        title = app_name + " run " + str(datetime.datetime.now())
+        if tag is None:
+            title = app_name + " run " + str(datetime.datetime.now())
+        else:
+            title = app_name + ' ' + tag + " run " + str(datetime.datetime.now())
 
     return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,
