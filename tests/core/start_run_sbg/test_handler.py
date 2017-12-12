@@ -51,14 +51,6 @@ def sbg_project():
     return "4dn-dcic/dev"
 
 
-@pytest.fixture
-def md5_sbg_wfrun(sbg_keys):
-    try:
-        return sbg_utils.create_sbg_workflow('md5', token=sbg_keys)
-    except:
-        print("generally this test fails if you haven't set aws keys in your terminal")
-
-
 @valid_env
 @pytest.mark.webtest
 def test_mount_on_sbg(md5_event_data, md5_sbg_wfrun, s3_keys):

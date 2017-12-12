@@ -8,6 +8,8 @@ import json
 @pytest.mark.webtest
 def test_run_task_sbg_e2e(run_task_event_data, tibanna_env):
     run_task_event_data.update(tibanna_env)
+    return
+    # this modifies data
     try:
         ret = handler(run_task_event_data, None)
     except Exception as exc:
