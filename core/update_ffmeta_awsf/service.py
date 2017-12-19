@@ -3,7 +3,7 @@ import logging
 from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
-from core.fastqc_utils import parse_fastqc
+from core.fastqc_utils import parse_fastqc, parse_qc_table
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -78,6 +78,64 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
     retval = {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
+              'output_files': output_files}
+
+    LOG.info("retval is %s" % retval)
+    return retval
+
+
+def pairsqc_updater(status, wf_file, ff_meta, tibanna, quality_metric="quality_metric_pairsqc"):
+    if status == 'uploading':
+        # wait until this bad boy is finished
+        return
+    # keys
+    ff_key = tibanna.ff_keys
+    # move files to proper s3 location
+    # need to remove sbg from this line
+    accession = wf_file.runner.inputfile_accessions[0]
+    zipped_report = wf_file.key
+    files_to_parse = [accession + '.summary.out', 'pairsqc_report.html']
+    LOG.info("accession is %s" % accession)
+
+    try:
+        files = wf_file.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
+                                          acl='public-read')
+    except Exception as e:
+        LOG.info(tibanna.s3.__dict__)
+        raise Exception("%s (key={})\n".format(zipped_report) % e)
+
+    # schema
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
+
+    # parse fastqc metadata
+    meta = parse_qc_table([files[accession + '.summary.out']['data']],
+                          url=files['pairsqc_report.html']['s3key'],
+                          qc_Schema=qc_schema.get('properties'))
+    LOG.info("fastqc meta is %s" % meta)
+
+    # post fastq metadata
+    qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
+    if qc_meta.get('@graph'):
+        qc_meta = qc_meta['@graph'][0]
+
+    LOG.info("qc_meta is %s" % qc_meta)
+    # update original file as well
+    try:
+        original_file = ff_utils.get_metadata(accession, key=ff_key)
+        LOG.info("original_file is %s" % original_file)
+    except Exception as e:
+        raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
+    patch_file = {'quality_metric': qc_meta['@id']}
+    try:
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+    except Exception as e:
+        raise Exception("patch_metadata failed in pairsqc_updater." + str(e) +
+                        "original_file ={}\n".format(str(original_file)))
+
+    # patch the workflow run, value_qc is used to make drawing graphs easier.
+    output_files = ff_meta.output_files
+    output_files[0]['value_qc'] = qc_meta['@id']
+    retval = {"output_quality_metrics": [{"name": "quality_metric_pairsqc", "value": qc_meta['@id']}],
               'output_files': output_files}
 
     LOG.info("retval is %s" % retval)
@@ -201,3 +259,4 @@ OUTFILE_UPDATERS['md5'] = md5_updater
 OUTFILE_UPDATERS['validatefiles'] = md5_updater
 OUTFILE_UPDATERS['fastqc-0-11-4-1/1'] = fastqc_updater
 OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater
+OUTFILE_UPDATERS['pairsqc-single'] = pairsqc_updater

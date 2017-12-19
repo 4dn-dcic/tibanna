@@ -1,5 +1,5 @@
 {
-    "parameters" :  { "enzyme": "6", "sample_name": "Selveraj-GM12878-HindIII" },
+    "parameters" :  { "enzyme": "6", "sample_name": "4DNFIUJGSOOU" },
     "config" : {
       "instance_type": "t2.medium",
       "EBS_optimized": false,
