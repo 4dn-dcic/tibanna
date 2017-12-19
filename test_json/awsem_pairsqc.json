@@ -1,6 +1,9 @@
 {
     "parameters" :  { "enzyme": "6", "sample_name": "Selveraj-GM12878-HindIII" },
     "config" : {
+      "instance_type": "t2.medium",
+      "EBS_optimized": false,
+      "ebs_size": 20,
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
