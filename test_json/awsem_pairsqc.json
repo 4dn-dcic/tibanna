@@ -1,0 +1,39 @@
+{
+    "parameters" :  { "enzyme": "6", "sample_name": "Selveraj-GM12878-HindIII" },
+    "config" : {
+      "ebs_type" : "io1",
+      "ebs_iops" : 500,
+      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
+      "ami_id" : "ami-cfb14bb5",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "",
+      "shutdown_min" : 120,
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "key_name": "4dn-encode"
+    },
+    "_tibanna": {
+      "run_type": "pairsqc-single",
+      "env": "fourfront-webdev"
+    },
+    "workflow_uuid": "ae3a87cb-3fa2-469e-97c7-540fc2d0a117",
+    "input_files": [
+      {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "workflow_argument_name": "input_pairs",
+        "uuid": "aeee6285-0250-498f-bfdf-fd48c44728ed",
+        "object_key": "4DNFIUJGSOOU.pairs.gz"
+      },
+      {
+        "object_key": "4DNFI823LSII.chrom.sizes",
+        "workflow_argument_name": "chrsizes",
+        "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+      }
+    ],
+    "app_name": "pairsqc-single",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
+}
+  
