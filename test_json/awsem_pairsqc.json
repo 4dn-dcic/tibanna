@@ -1,5 +1,5 @@
 {
-    "parameters" :  { "enzyme": "6", "sample_name": "4DNFIUJGSOOU" },
+    "parameters" :  { "enzyme": "6", "sample_name": "4DNFIWNURADE" },
     "config" : {
       "instance_type": "t2.medium",
       "EBS_optimized": false,
@@ -26,8 +26,8 @@
       {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": "aeee6285-0250-498f-bfdf-fd48c44728ed",
-        "object_key": "4DNFIUJGSOOU.pairs.gz"
+        "uuid": "96124a4f-197d-4657-9140-3c742fda4d87",
+        "object_key": "4DNFIWNURADE.pairs.gz"
       },
       {
         "object_key": "4DNFI823LSII.chrom.sizes",
