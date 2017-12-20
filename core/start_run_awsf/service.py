@@ -68,6 +68,8 @@ def handler(event, context):
 
     # input file args for awsem
     args['input_files'] = dict()
+    args['secondary_files'] = dict()
+    fe_map = get_format_extension_map(tibanna)
     for input_file in input_file_list:
         if isinstance(input_file['uuid'], unicode):
             input_file['uuid'] = input_file['uuid'].encode('utf-8')
@@ -87,9 +89,18 @@ def handler(event, context):
         args['input_files'].update({input_file['workflow_argument_name']: {
                                     'bucket_name': input_file['bucket_name'],
                                     'object_key': object_key}})
+        infile_meta = ff_utils.get_metadata(input_file['uuid'], key=tibanna.ff_keys)
+        if infile_meta.get('extra_files'):
+            extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
+            extra_file_extension = fe_map.get(extra_file_format)
+            infile_format = infile_meta.get('file_format')
+            infile_extension = fe_map.get(infile_format)
+            extra_file_key = object_key.replace(infile_extension, extra_file_extension)
+            args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                           'bucket_name': input_file['bucket_name'],
+                                           'object_key': extra_file_key}})
 
     LOG.info("input_file_args is %s" % args['input_files'])
-    args['secondary_files'] = dict()   # temporary, later fill in based on the attachment information
 
     # parameters
     args['input_parameters'] = event.get('parameters')
