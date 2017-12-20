@@ -110,7 +110,7 @@ def pairsqc_updater(status, wf_file, ff_meta, tibanna, quality_metric="quality_m
     # parse fastqc metadata
     meta = parse_qc_table([files[accession + '.summary.out']['data']],
                           url=files['pairsqc_report.html']['s3key'],
-                          qc_Schema=qc_schema.get('properties'))
+                          qc_schema=qc_schema.get('properties'))
     LOG.info("fastqc meta is %s" % meta)
 
     # post fastq metadata
