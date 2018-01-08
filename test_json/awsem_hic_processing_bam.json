@@ -1,0 +1,69 @@
+{
+  "app_name": "hi-c-processing-bam",
+  "parameters": {
+    "nthreads_parse_sort": 8,
+    "nthreads_merge": 8
+  },
+  "args": {
+    "app_name": "hi-c-processing-bam",
+    "input_parameters": {
+      "nthreads_parse_sort": 8,
+      "nthreads_merge": 8
+    },
+    "cwl_child_filenames": [
+      "pairsam-parse-sort.cwl",
+      "pairsam-merge.cwl",
+      "pairsam-markasdup.cwl",
+      "pairsam-filter.cwl",
+      "addfragtopairs.cwl"
+    ],
+    "output_target": {
+      "out_pairs": "hicprocessingbam_test.out.pairs.gz",
+      "merged_annotated_bam": "hicprocessingbam_test.out.bam"
+    },
+    "secondary_output_target": {
+      "out_pairs": "hicprocessingbam_test.out.pairs.gz.px2"
+    },
+    "cwl_main_filename": "hi-c-processing-bam.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-output",
+    "app_version": "dev",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/",
+    "input_files": {
+      "chromsize": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      },
+      "input_bams": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "object_key": [
+          "26452011-469d-4aef-aed0-6020a49b2740/4DNFIPVLYEEM.bam"
+        ]
+      },
+      "restriction_file": {
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d582084/4DNFI823L812.txt"
+        }
+    }
+  },
+  "_tibanna": {
+    "env": "fourfront-webdev"
+  },
+  "config": {
+    "ebs_size": 100,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": false,
+    "ebs_iops": 500,
+    "shutdown_min": "120",
+    "instance_type": "t2.2xlarge",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode"
+  }
+}
