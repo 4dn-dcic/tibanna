@@ -15,7 +15,7 @@ import logging
 ###########################
 s3 = boto3.client('s3')
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
-WORKFLOW_NAME = 'run_sbg_workflow_5'
+WORKFLOW_NAME = 'run_awsem_new_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 LOG = logging.getLogger(__name__)
 
