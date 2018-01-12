@@ -11,7 +11,8 @@
       "copy_to_s3" : true,
       "launch_instance" : true,
       "log_bucket": "tibanna-output",
-      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "key_name": "4dn-encode"
     },
     "_tibanna": {
       "run_type": "pairsam-merge",

@@ -103,7 +103,11 @@ def handler(event, context):
                 infile_extension = fe_map.get(infile_format)
                 extra_file_key = object_key.replace(infile_extension, extra_file_extension)
                 if input_file['workflow_argument_name'] in args['secondary_files']:
-                    args['secondary_files']['object_key'].add(extra_file_key)
+                    if isinstance(args['secondary_files']['object_key'], list):
+                        args['secondary_files']['object_key'].add(extra_file_key)
+                    else:
+                        existing_extra_file_key = args['secondary_files']['object_key']
+                        args['secondary_files']['object_key'] = [existing_extra_file_key, extra_file_key]
                 else:
                     args['secondary_files'].update({input_file['workflow_argument_name']: {
                                                     'bucket_name': input_file['bucket_name'],
