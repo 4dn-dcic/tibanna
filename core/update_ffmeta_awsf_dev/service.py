@@ -30,7 +30,14 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
     return pf_meta
 
 
-def fastqc_updater(status, wf_file, ff_meta, tibanna):
+def qc_updater(status, wf_file, ff_meta, tibanna):
+    if ff_meta.app_name == 'fastqc-0-11-4-1':
+        return fastqc_updater(status, wf_file, ff_meta, tibanna)
+    elif ff_meta.app_name == 'pairsqc-single':
+        return pairsqc_updater(status, wf_file, ff_meta, tibanna)
+
+
+def fastqc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metric_fastqc'):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
@@ -56,7 +63,7 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     LOG.info("fastqc meta is %s" % meta)
 
     # post fastq metadata
-    qc_meta = ff_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
@@ -77,7 +84,7 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
+    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
 
     LOG.info("retval is %s" % retval)
@@ -135,7 +142,7 @@ def pairsqc_updater(status, wf_file, ff_meta, tibanna, quality_metric="quality_m
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": "quality_metric_pairsqc", "value": qc_meta['@id']}],
+    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
 
     LOG.info("retval is %s" % retval)
@@ -222,11 +229,11 @@ def handler(event, context):
         status = export.status
         print("export res is %s", status)
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('uploaded', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[export.output_type]('uploaded', export, ff_meta, tibanna)
             if pf_meta:
                 pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('upload failed', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[export.output_type]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
             ff_meta.post(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
@@ -255,8 +262,5 @@ def handler(event, context):
 
 # Cardinal knowledge of all workflow updaters
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
-OUTFILE_UPDATERS['md5'] = md5_updater
-OUTFILE_UPDATERS['validatefiles'] = md5_updater
-OUTFILE_UPDATERS['fastqc-0-11-4-1/1'] = fastqc_updater
-OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater
-OUTFILE_UPDATERS['pairsqc-single'] = pairsqc_updater
+OUTFILE_UPDATERS['Output report file'] = md5_updater
+OUTFILE_UPDATERS['Output QC file'] = qc_updater

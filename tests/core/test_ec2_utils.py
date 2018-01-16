@@ -49,4 +49,3 @@ def test_update_config(run_task_awsf_event_data):
     assert config['EBS_optimized'] is False
     assert config['ebs_size'] >= 10
     assert config['copy_to_s3'] is True  # check the other fields are preserved in the returned config
-
