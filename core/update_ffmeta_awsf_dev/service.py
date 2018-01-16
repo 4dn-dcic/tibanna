@@ -31,9 +31,9 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
 
 
 def qc_updater(status, wf_file, ff_meta, tibanna):
-    if ff_meta.app_name == 'fastqc-0-11-4-1':
+    if ff_meta.awsem_app_name == 'fastqc-0-11-4-1':
         return fastqc_updater(status, wf_file, ff_meta, tibanna)
-    elif ff_meta.app_name == 'pairsqc-single':
+    elif ff_meta.awsem_app_name == 'pairsqc-single':
         return pairsqc_updater(status, wf_file, ff_meta, tibanna)
 
 
