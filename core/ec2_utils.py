@@ -366,4 +366,4 @@ class Awsem(object):
 
     @property
     def inputfile_accessions(self):
-        return [v.accession for k, v in self.input_files().iteritems()]
+        return {k:v.accession for k, v in self.input_files().iteritems()}
