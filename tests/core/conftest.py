@@ -86,17 +86,22 @@ def check_export_event_data(sbg_keys, ff_keys):
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data(sbg_keys, ff_keys):
+def run_awsf_event_data(ff_keys):
     return get_event_file_for('start_run_awsf', ff_keys=ff_keys)
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data_secondary_files(sbg_keys, ff_keys):
+def run_task_awsf_event_data(ff_keys):
+    return get_event_file_for('run_task_awsf', ff_keys=ff_keys)
+
+
+@pytest.fixture(scope='session')
+def run_awsf_event_data_secondary_files(ff_keys):
     return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event2.json')
 
 
 @pytest.fixture(scope='session')
-def update_ffmeta_event_data(sbg_keys, ff_keys):
+def update_ffmeta_event_data(ff_keys):
     return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys)
 
 

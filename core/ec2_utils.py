@@ -300,12 +300,13 @@ def update_config(config, app_name, input_files, parameters):
 
 class WorkflowFile(object):
 
-    def __init__(self, bucket, key, runner, accession=None):
+    def __init__(self, bucket, key, runner, accession=None, output_type=None):
         self.bucket = bucket
         self.key = key
         self.s3 = utils.s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
         self.accession = accession
+        self.output_type = output_type
 
     @property
     def status(self):
@@ -328,11 +329,19 @@ class Awsem(object):
         self.config = json['config']
         self.output_s3 = self.args['output_S3_bucket']
         self.app_name = self.args['app_name']
+        self.output_files_meta = json['ff_meta']['output_files']
 
     def output_files(self):
         files = dict()
+        output_types = dict()
+        for x in self.output_files_meta:
+            output_types[x['workflow_argument_name']] = x['type']
         for k, v in self.args.get('output_target').iteritems():
-            wff = {k: WorkflowFile(self.output_s3, v, self)}
+            if k in output_types:
+                out_type = output_types[k]
+            else:
+                out_type = None
+            wff = {k: WorkflowFile(self.output_s3, v, self, output_type=out_type)}
             files.update(wff)
         return files
 
