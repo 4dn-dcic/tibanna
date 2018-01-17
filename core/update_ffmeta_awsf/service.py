@@ -58,7 +58,8 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     # need to remove sbg from this line
     accession = wf_file.runner.inputfile_accessions[inputfile_argument]
     zipped_report = wf_file.key
-    files_to_parse = datafiles.extend(report_html)
+    files_to_parse = datafiles
+    files_to_parse.append(report_html)
     LOG.info("accession is %s" % accession)
 
     try:
@@ -72,7 +73,7 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
 
     # parse fastqc metadata
-    filedata = [_['data'] for _ in datafiles]
+    filedata = [files[_]['data'] for _ in datafiles]
     meta = parse_qc_table(filedata,
                           url=files[report_html]['s3key'],
                           qc_schema=qc_schema.get('properties'))
