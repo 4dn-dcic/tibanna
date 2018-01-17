@@ -3,7 +3,7 @@ import logging
 from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
-from core.fastqc_utils import parse_fastqc, parse_qc_table
+from core.fastqc_utils import parse_qc_table
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -56,10 +56,15 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_me
     except Exception as e:
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
+
+    # schema
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
+
     # parse fastqc metadata
-    meta = parse_fastqc(files['summary.txt']['data'],
-                        files['fastqc_data.txt']['data'],
-                        url=files['fastqc_report.html']['s3key'])
+    meta = parse_qc_table([files['summary.txt']['data'],
+                           files['fastqc_data.txt']['data']],
+                          url=files['fastqc_report.html']['s3key'],
+                          qc_schema=qc_schema)
     LOG.info("fastqc meta is %s" % meta)
 
     # post fastq metadata

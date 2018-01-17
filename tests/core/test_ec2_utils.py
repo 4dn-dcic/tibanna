@@ -38,7 +38,7 @@ def test_get_input_files(update_ffmeta_event_data, tibanna_env):
 def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
     update_ffmeta_event_data.update(tibanna_env)
     awsem = Awsem(update_ffmeta_event_data)
-    assert awsem.inputfile_accessions[0] == '4DNFIRSRJH45'
+    assert awsem.inputfile_accessions['input_file'] == '4DNFIRSRJH45'
 
 
 def test_update_config(run_task_awsf_event_data):
