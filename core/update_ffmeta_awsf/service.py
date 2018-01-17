@@ -39,7 +39,7 @@ def qc_updater(status, wf_file, ff_meta, tibanna):
                            datafiles=['summary.txt', 'fastqc_data.txt'])
     elif ff_meta.awsem_app_name == 'pairsqc-single':
         inputfile_argument = 'input_pairs'
-        input_accession = wf_file.runer.inputfile_accessions[inputfile_argument]
+        input_accession = str(wf_file.runner.inputfile_accessions[inputfile_argument])
         return _qc_updater(status, wf_file, ff_meta, tibanna,
                            quality_metric="quality_metric_pairsqc",
                            inputfile_argument=inputfile_argument, report_html='pairsqc_report.html',
