@@ -73,6 +73,7 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
 
     # parse fastqc metadata
+    LOG.info("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
     meta = parse_qc_table(filedata,
                           url=files[report_html]['s3key'],
