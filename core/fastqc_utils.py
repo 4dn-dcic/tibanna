@@ -68,7 +68,11 @@ def parse_qc_table(data_list, url, qc_schema):
                 if a[0] in qc_schema and qc_schema.get(a[0]).get('type') == 'string':
                     qc_json.update({a[0]: str(a[1])})
                 elif a[0] in qc_schema and qc_schema.get(a[0]).get('type') == 'number':
-                    qc_json.update({a[0]: number(a[1])})
+                    qc_json.update({a[0]: number(a[1].replace(',', ''))})
+                if a[1] in qc_schema and qc_schema.get(a[1]).get('type') == 'string':
+                    qc_json.update({a[1]: str(a[0])})
+                elif a[1] in qc_schema and qc_schema.get(a[1]).get('type') == 'number':
+                    qc_json.update({a[1]: number(a[0].replace(',', ''))})
             except IndexError:  # pragma: no cover
                 # maybe a blank line or something
                 pass

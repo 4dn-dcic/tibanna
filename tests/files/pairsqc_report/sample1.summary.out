@@ -1,0 +1,8 @@
+Total reads	651,962
+Short cis reads (<20kb)	221,017
+Cis reads (>20kb)	276,411
+Trans reads	154,534
+Cis/Trans ratio	64.141
+% Long-range intrachromosomal reads	42.397
+convergence	Good
+slope	-0.95

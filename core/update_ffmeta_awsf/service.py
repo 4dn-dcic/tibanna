@@ -3,7 +3,7 @@ import logging
 from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
-from core.fastqc_utils import parse_fastqc, parse_qc_table
+from core.fastqc_utils import parse_qc_table
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -30,7 +30,25 @@ def update_processed_file_metadata(status, pf_meta, tibanna):
     return pf_meta
 
 
-def fastqc_updater(status, wf_file, ff_meta, tibanna):
+def qc_updater(status, wf_file, ff_meta, tibanna):
+    if ff_meta.awsem_app_name == 'fastqc-0-11-4-1':
+        return _qc_updater(status, wf_file, ff_meta, tibanna,
+                           quality_metric='quality_metric_fastqc',
+                           inputfile_argument='input_fastq',
+                           report_html='fastqc_report.html',
+                           datafiles=['summary.txt', 'fastqc_data.txt'])
+    elif ff_meta.awsem_app_name == 'pairsqc-single':
+        inputfile_argument = 'input_pairs'
+        input_accession = str(wf_file.runner.inputfile_accessions[inputfile_argument])
+        return _qc_updater(status, wf_file, ff_meta, tibanna,
+                           quality_metric="quality_metric_pairsqc",
+                           inputfile_argument=inputfile_argument, report_html='pairsqc_report.html',
+                           datafiles=[input_accession + '.summary.out'])
+
+
+def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
+                inputfile_argument='input_fastq', report_html='fastqc_report.html',
+                datafiles=['summary.txt', 'fastqc_data.txt']):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
@@ -38,9 +56,10 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
-    accession = wf_file.runner.inputfile_accessions[0]
+    accession = wf_file.runner.inputfile_accessions[inputfile_argument]
     zipped_report = wf_file.key
-    files_to_parse = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
+    files_to_parse = datafiles
+    files_to_parse.append(report_html)
     LOG.info("accession is %s" % accession)
 
     try:
@@ -49,14 +68,20 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     except Exception as e:
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
+
+    # schema
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
+
     # parse fastqc metadata
-    meta = parse_fastqc(files['summary.txt']['data'],
-                        files['fastqc_data.txt']['data'],
-                        url=files['fastqc_report.html']['s3key'])
+    LOG.info("files : %s" % str(files))
+    filedata = [files[_]['data'] for _ in datafiles]
+    meta = parse_qc_table(filedata,
+                          url=files[report_html]['s3key'],
+                          qc_schema=qc_schema.get('properties'))
     LOG.info("fastqc meta is %s" % meta)
 
     # post fastq metadata
-    qc_meta = ff_utils.post_to_metadata(meta, 'quality_metric_fastqc', key=ff_key)
+    qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
@@ -77,65 +102,7 @@ def fastqc_updater(status, wf_file, ff_meta, tibanna):
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": "quality_metric_fastqc", "value": qc_meta['@id']}],
-              'output_files': output_files}
-
-    LOG.info("retval is %s" % retval)
-    return retval
-
-
-def pairsqc_updater(status, wf_file, ff_meta, tibanna, quality_metric="quality_metric_pairsqc"):
-    if status == 'uploading':
-        # wait until this bad boy is finished
-        return
-    # keys
-    ff_key = tibanna.ff_keys
-    # move files to proper s3 location
-    # need to remove sbg from this line
-    accession = wf_file.runner.inputfile_accessions[0]
-    zipped_report = wf_file.key
-    files_to_parse = [accession + '.summary.out', 'pairsqc_report.html']
-    LOG.info("accession is %s" % accession)
-
-    try:
-        files = wf_file.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
-                                          acl='public-read')
-    except Exception as e:
-        LOG.info(tibanna.s3.__dict__)
-        raise Exception("%s (key={})\n".format(zipped_report) % e)
-
-    # schema
-    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
-
-    # parse fastqc metadata
-    meta = parse_qc_table([files[accession + '.summary.out']['data']],
-                          url=files['pairsqc_report.html']['s3key'],
-                          qc_schema=qc_schema.get('properties'))
-    LOG.info("fastqc meta is %s" % meta)
-
-    # post fastq metadata
-    qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
-    if qc_meta.get('@graph'):
-        qc_meta = qc_meta['@graph'][0]
-
-    LOG.info("qc_meta is %s" % qc_meta)
-    # update original file as well
-    try:
-        original_file = ff_utils.get_metadata(accession, key=ff_key)
-        LOG.info("original_file is %s" % original_file)
-    except Exception as e:
-        raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
-    patch_file = {'quality_metric': qc_meta['@id']}
-    try:
-        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
-    except Exception as e:
-        raise Exception("patch_metadata failed in pairsqc_updater." + str(e) +
-                        "original_file ={}\n".format(str(original_file)))
-
-    # patch the workflow run, value_qc is used to make drawing graphs easier.
-    output_files = ff_meta.output_files
-    output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": "quality_metric_pairsqc", "value": qc_meta['@id']}],
+    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
 
     LOG.info("retval is %s" % retval)
@@ -146,7 +113,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
-    accession = wf_file.runner.inputfile_accessions[0]
+    accession = wf_file.runner.inputfile_accessions['input_file']
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status.lower() == 'uploaded':
@@ -222,11 +189,11 @@ def handler(event, context):
         status = export.status
         print("export res is %s", status)
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('uploaded', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[export.output_type]('uploaded', export, ff_meta, tibanna)
             if pf_meta:
                 pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[awsem.app_name]('upload failed', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[export.output_type]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
             ff_meta.post(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
@@ -255,8 +222,5 @@ def handler(event, context):
 
 # Cardinal knowledge of all workflow updaters
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
-OUTFILE_UPDATERS['md5'] = md5_updater
-OUTFILE_UPDATERS['validatefiles'] = md5_updater
-OUTFILE_UPDATERS['fastqc-0-11-4-1/1'] = fastqc_updater
-OUTFILE_UPDATERS['fastqc-0-11-4-1'] = fastqc_updater
-OUTFILE_UPDATERS['pairsqc-single'] = pairsqc_updater
+OUTFILE_UPDATERS['Output report file'] = md5_updater
+OUTFILE_UPDATERS['Output QC file'] = qc_updater
