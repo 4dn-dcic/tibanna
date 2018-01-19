@@ -11,7 +11,8 @@
       "copy_to_s3" : true,
       "launch_instance" : true,
       "log_bucket": "tibanna-output",
-      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "key_name": "4dn-encode"
     },
     "_tibanna": {
       "run_type": "pairsam-merge",
@@ -22,10 +23,8 @@
       {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairsams",
-        "uuid": ["dcb79052-3df0-4f4d-aa85-14cf9eb9d868",
-                 "824937ad-10ae-4b7d-8f3f-9c480acdf47e"],
-        "object_key": ["4DNFI1G8XMZU.sam.pairs.gz",
-                       "4DNFIWIC32MN.sam.pairs.gz"]
+        "uuid": ["6ad758a1-a6e3-4c7e-acd9-55a843b7f9bc"],
+        "object_key": ["4DNFIUWMF9A1.sam.pairs.gz"]
       }
     ],
     "app_name": "pairsam-merge",

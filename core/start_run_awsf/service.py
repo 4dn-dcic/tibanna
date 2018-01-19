@@ -89,16 +89,29 @@ def handler(event, context):
         args['input_files'].update({input_file['workflow_argument_name']: {
                                     'bucket_name': input_file['bucket_name'],
                                     'object_key': object_key}})
-        infile_meta = ff_utils.get_metadata(input_file['uuid'], key=tibanna.ff_keys)
-        if infile_meta.get('extra_files'):
-            extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
-            extra_file_extension = fe_map.get(extra_file_format)
-            infile_format = infile_meta.get('file_format')
-            infile_extension = fe_map.get(infile_format)
-            extra_file_key = object_key.replace(infile_extension, extra_file_extension)
-            args['secondary_files'].update({input_file['workflow_argument_name']: {
-                                           'bucket_name': input_file['bucket_name'],
-                                           'object_key': extra_file_key}})
+
+        if isinstance(input_file['uuid'], list):
+            inf_uuids = input_file['uuid']
+        else:
+            inf_uuids = [input_file['uuid']]
+        for inf_uuid in inf_uuids:
+            infile_meta = ff_utils.get_metadata(inf_uuid, key=tibanna.ff_keys)
+            if infile_meta.get('extra_files'):
+                extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
+                extra_file_extension = fe_map.get(extra_file_format)
+                infile_format = infile_meta.get('file_format')
+                infile_extension = fe_map.get(infile_format)
+                extra_file_key = object_key.replace(infile_extension, extra_file_extension)
+                if input_file['workflow_argument_name'] in args['secondary_files']:
+                    if isinstance(args['secondary_files']['object_key'], list):
+                        args['secondary_files']['object_key'].add(extra_file_key)
+                    else:
+                        existing_extra_file_key = args['secondary_files']['object_key']
+                        args['secondary_files']['object_key'] = [existing_extra_file_key, extra_file_key]
+                else:
+                    args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                                    'bucket_name': input_file['bucket_name'],
+                                                    'object_key': extra_file_key}})
 
     LOG.info("input_file_args is %s" % args['input_files'])
 
