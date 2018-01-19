@@ -9,10 +9,6 @@ from datetime import datetime
 
 def test_build_req_parameters(s3_trigger_event_data):
     params = make_input(s3_trigger_event_data)
-    import pdb
-    pdb.set_trace()
-    import pprint
-    pprint.pprint(params)
     assert params['app_name'] == 'md5'
     input_file = params['input_files'][0]
     assert input_file['bucket_name'] == 'elasticbeanstalk-fourfront-webprod-files'
