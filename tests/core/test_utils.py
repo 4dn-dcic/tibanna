@@ -155,6 +155,8 @@ def test_unzip_s3_to_s3(s3_utils):
 @valid_env
 @pytest.mark.webtest
 def test_unzip_s3_to_s3_pairsqc(s3_utils):
+    import pdb
+    pdb.set_trace()
     prefix = '__test_data/extracted'
     filename = '23d0a314-e401-4826-a76b-4356e019b059/report'
     s3_utils.s3_delete_dir(prefix)
