@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import boto3
-import json
 from core.utils import STEP_FUNCTION_ARN
+from core.utils import _tibanna_settings
+import json
 
 client = boto3.client('stepfunctions', region_name='us-east-1')
 
@@ -24,7 +25,7 @@ def handler(event, context):
     response = client.start_execution(
         stateMachineArn=STEP_FUNCTION_ARN,
         name=run_name,
-        input=make_input(event),
+        input=json.dumps(make_input(event)),
     )
 
     # pop no json serializable stuff...
@@ -39,7 +40,6 @@ def get_outbucket_name(bucket):
 
 def make_input(event):
     upload_key = event['Records'][0]['s3']['object']['key']
-    bucket = event['Records'][0]['s3']['bucket']['name']
 
     uuid, accession = upload_key.split('/')
     return _make_input('fourfront-webprod', 'md5', accession, uuid)
