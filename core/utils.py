@@ -367,3 +367,27 @@ def current_env():
 
 def is_prod():
     return current_env().lower() == 'prod'
+
+
+def powerup(lambda_name, metadata_only_func):
+    '''
+    friendly wrapper for your lambda functions... allows for fun with
+    input json amongst other stuff
+    '''
+    def decorator(function):
+        import logging
+        logging.basicConfig()
+        logger = logging.getLogger('logger')
+
+        def wrapper(event, context):
+            logger.info(context)
+            logger.info(event)
+            if lambda_name in event.get('skip', []):
+                logger.info('skiping %s since skip was set in input_json' % lambda_name)
+            elif (lambda_name in event.get('metadata_only') or event.get('metadata_only') == 'all'):
+                return metadata_only_func(event)
+            else:
+                return function(event, context)
+
+        return wrapper
+    return decorator

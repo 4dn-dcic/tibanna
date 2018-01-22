@@ -1,7 +1,8 @@
 from core import sbg_utils, ff_utils
-from core.utils import Tibanna, ensure_list
+from core.utils import Tibanna, ensure_list, powerup
 import pytest
 from conftest import valid_env
+import mock
 
 
 @pytest.fixture
@@ -227,3 +228,28 @@ def test_ensure_list():
     assert ensure_list('hello') == ['hello']
     assert ensure_list(['hello']) == ['hello']
     assert ensure_list({'a': 'b'}) == [{'a': 'b'}]
+
+
+@powerup("wrapped_fun", mock.Mock(side_effect=Exception("metadata")))
+def wrapped_fun(event, context):
+    raise Exception("I should not be called")
+
+
+def test_powerup_skips_when_appropriate():
+    wrapped_fun({'skip': 'wrapped_fun'}, None)
+
+
+def test_powerup_skips_in_list():
+    wrapped_fun({'skip': ['wrapped_fun', 'fun2']}, None)
+
+
+def test_powerup_normally_doesnt_skip():
+    with pytest.raises(Exception) as exec_nfo:
+        wrapped_fun({'skip': 'somebody_else'}, None)
+    assert 'should not be called' in str(exec_nfo.value)
+
+
+def test_powerup_calls_metadata_only_func():
+    with pytest.raises(Exception) as exec_nfo:
+        wrapped_fun({'skip': 'somebody_else', 'metadata_only': 'wrapped_fun'}, None)
+    assert 'metadata' in str(exec_nfo.value)

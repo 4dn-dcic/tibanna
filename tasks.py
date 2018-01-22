@@ -41,13 +41,8 @@ def setenv(**kwargs):
 
 
 def get_all_core_lambdas():
-    return ['start_run_sbg',
-            'check_import_sbg',
-            'run_task_sbg',
-            'check_task_sbg',
+    return [
             'update_metadata_ff',
-            'export_files_sbg',
-            'check_export_sbg',
             'finalize',
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
@@ -55,8 +50,6 @@ def get_all_core_lambdas():
             'run_task_awsf',
             'check_task_awsf',
             'update_ffmeta_awsf',
-            'travis_deploy',
-            'travis_deploy_prod'
             ]
 
 
