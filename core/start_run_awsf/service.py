@@ -70,6 +70,7 @@ def handler(event, context):
     args['input_files'] = dict()
     args['secondary_files'] = dict()
     fe_map = get_format_extension_map(tibanna)
+    processedfile_source_experiments = dict()
     for input_file in input_file_list:
         if isinstance(input_file['uuid'], unicode):
             input_file['uuid'] = input_file['uuid'].encode('utf-8')
@@ -96,6 +97,8 @@ def handler(event, context):
             inf_uuids = [input_file['uuid']]
         for inf_uuid in inf_uuids:
             infile_meta = ff_utils.get_metadata(inf_uuid, key=tibanna.ff_keys)
+            if infile_meta.get('source_experiments'):
+                processedfile_source_experiments.update({_:1 for _ in infile_meta.get('source_experiments')})
             if infile_meta.get('extra_files'):
                 extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
                 extra_file_extension = fe_map.get(extra_file_format)
@@ -112,6 +115,9 @@ def handler(event, context):
                     args['secondary_files'].update({input_file['workflow_argument_name']: {
                                                     'bucket_name': input_file['bucket_name'],
                                                     'object_key': extra_file_key}})
+
+    for meta in pf_meta:
+        meta.source_experiments = processedfile_source_experiments.keys()
 
     LOG.info("input_file_args is %s" % args['input_files'])
 
