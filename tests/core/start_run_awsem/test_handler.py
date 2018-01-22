@@ -23,7 +23,16 @@ def test_start_awsem_handler_processed_files(run_awsf_event_data_processed_files
     res = handler(run_awsf_event_data_processed_files, '')
     assert(res)
     assert('pf_meta' in res)
-    assert('source_experiments' in res['pf_meta'][0])    
+    assert('source_experiments' in res['pf_meta'][0])
+
+
+@valid_env
+@pytest.mark.webtest
+def test_start_awsem_handler_processed_files2(run_awsf_event_data_processed_files2):
+    res = handler(run_awsf_event_data_processed_files2, '')
+    assert(res)
+    assert('pf_meta' in res)
+    assert('source_experiments' in res['pf_meta'][0])
 
 
 @valid_env

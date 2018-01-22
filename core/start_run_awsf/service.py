@@ -46,9 +46,6 @@ def handler(event, context):
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
 
-    # processed file metadata
-    output_files, pf_meta = handle_processed_files(workflow_info, tibanna)
-
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
@@ -57,20 +54,11 @@ def handler(event, context):
                                 'value': uuid, 'ordinal': idx + 1})
     LOG.info("input_files is %s" % input_files)
 
-    ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
-                                           run_url=tibanna.settings.get('url', ''),
-                                           output_files=output_files, parameters=parameters)
-
-    LOG.info("ff_meta is %s" % ff_meta.__dict__)
-
-    # store metadata so we know the run has started
-    ff_meta.post(key=tibanna.ff_keys)
-
     # input file args for awsem
     args['input_files'] = dict()
     args['secondary_files'] = dict()
     fe_map = get_format_extension_map(tibanna)
-    processedfile_source_experiments = dict()
+    pf_source_experiments_dict = dict()
     for input_file in input_file_list:
         if isinstance(input_file['uuid'], unicode):
             input_file['uuid'] = input_file['uuid'].encode('utf-8')
@@ -100,9 +88,9 @@ def handler(event, context):
             if infile_meta.get('experiments'):
                 for exp in infile_meta.get('experiments'):
                     exp_uuid = ff_utils.get_metadata(exp, key=tibanna.ff_keys).get('uuid')
-                    processedfile_source_experiments.update({exp_uuid: 1})
+                    pf_source_experiments_dict.update({exp_uuid: 1})
             if infile_meta.get('source_experiments'):
-                processedfile_source_experiments.update({_:1 for _ in infile_meta.get('source_experiments')})
+                pf_source_experiments_dict.update({_: 1 for _ in infile_meta.get('source_experiments')})
             if infile_meta.get('extra_files'):
                 extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
                 extra_file_extension = fe_map.get(extra_file_format)
@@ -120,13 +108,17 @@ def handler(event, context):
                                                     'bucket_name': input_file['bucket_name'],
                                                     'object_key': extra_file_key}})
 
+    # processed file metadata
+    output_files, pf_meta = handle_processed_files(workflow_info, tibanna, pf_source_experiments_dict.keys())
 
-    LOG.info("Processed_file_source_experiments is %s" % processedfile_source_experiments)
-    for meta in pf_meta:
-        meta.source_experiments = processedfile_source_experiments.keys()
-        LOG.info("meta.source_experiments is %s" % meta.source_experiments)
+    ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
+                                           run_url=tibanna.settings.get('url', ''),
+                                           output_files=output_files, parameters=parameters)
 
-    LOG.info("input_file_args is %s" % args['input_files'])
+    LOG.info("ff_meta is %s" % ff_meta.__dict__)
+
+    # store metadata so we know the run has started
+    ff_meta.post(key=tibanna.ff_keys)
 
     # parameters
     args['input_parameters'] = event.get('parameters')
@@ -174,7 +166,7 @@ def get_format_extension_map(tibanna):
     return fe_map
 
 
-def handle_processed_files(workflow_info, tibanna):
+def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None):
 
     fe_map = get_format_extension_map(tibanna)
     output_files = []
@@ -197,7 +189,8 @@ def handle_processed_files(workflow_info, tibanna):
                     else:
                         extra_files = None
                     pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
-                                                        extra_files=extra_files)
+                                                        extra_files=extra_files,
+                                                        source_experiments=pf_source_experiments)
                     try:
                         resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
                         resp = resp.get('@graph')[0]
