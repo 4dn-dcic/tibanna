@@ -97,6 +97,10 @@ def handler(event, context):
             inf_uuids = [input_file['uuid']]
         for inf_uuid in inf_uuids:
             infile_meta = ff_utils.get_metadata(inf_uuid, key=tibanna.ff_keys)
+            if infile_meta.get('experiments'):
+                for exp in infile_meta.get('experiments'):
+                    exp_uuid = ff_utils.get_metadata(exp, key=tibanna.ff_keys).get('uuid')
+                    processedfile_source_experiments.update({exp_uuid: 1})
             if infile_meta.get('source_experiments'):
                 processedfile_source_experiments.update({_:1 for _ in infile_meta.get('source_experiments')})
             if infile_meta.get('extra_files'):
@@ -116,8 +120,11 @@ def handler(event, context):
                                                     'bucket_name': input_file['bucket_name'],
                                                     'object_key': extra_file_key}})
 
+
+    LOG.info("Processed_file_source_experiments is %s" % processedfile_source_experiments)
     for meta in pf_meta:
         meta.source_experiments = processedfile_source_experiments.keys()
+        LOG.info("meta.source_experiments is %s" % meta.source_experiments)
 
     LOG.info("input_file_args is %s" % args['input_files'])
 

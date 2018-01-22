@@ -99,6 +99,10 @@ def run_task_awsf_event_data(ff_keys):
 def run_awsf_event_data_secondary_files(ff_keys):
     return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event2.json')
 
+@pytest.fixture(scope='session')
+def run_awsf_event_data_processed_files(ff_keys):
+    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event3.json')
+
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data(ff_keys):
