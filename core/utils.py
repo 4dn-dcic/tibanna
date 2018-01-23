@@ -20,6 +20,15 @@ STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 LOG = logging.getLogger(__name__)
 
 
+# custom exceptions to control retry logic in step functions
+class StillRunningException(Exception):
+    pass
+
+
+class EC2StartingException(Exception):
+    pass
+
+
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
         return val
@@ -244,7 +253,6 @@ def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
     input_json[_tibanna]['url'] = url
 
     aws_input = json.dumps(input_json)
-
     print("about to start run %s" % run_name)
     # trigger the step function to run
     try:
@@ -264,6 +272,7 @@ def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
                 url = "%s%s%s%s" % (base_url, (BASE_ARN % 'execution'), ":", run_name)
                 input_json[_tibanna]['url'] = url
                 aws_input = json.dumps(input_json)
+
                 response = client.start_execution(
                     stateMachineArn=STEP_FUNCTION_ARN,
                     name=run_name,
@@ -384,10 +393,16 @@ def powerup(lambda_name, metadata_only_func):
             logger.info(event)
             if lambda_name in event.get('skip', []):
                 logger.info('skiping %s since skip was set in input_json' % lambda_name)
-            elif (lambda_name in event.get('metadata_only') or event.get('metadata_only') == 'all'):
+            elif (lambda_name in event.get('metadata_only', []) or event.get('metadata_only') == 'all'):
                 return metadata_only_func(event)
             else:
-                return function(event, context)
-
+                try:
+                    return function(event, context)
+                except Exception as e:
+                    if type(e) in [EC2StartingException, StillRunningException]:
+                        raise e
+                    # else
+                    event['error'] = str(e)
+                    return event
         return wrapper
     return decorator
