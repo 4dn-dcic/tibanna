@@ -212,12 +212,9 @@ def handler(event, context):
     except:
         raise Exception("Failed to update run_status")
 
-    return {'args': event['args'],
-            'config': event['config'],
-            'ff_meta': ff_meta.as_dict(),
-            'pf_meta': pf_meta,
-            '_tibanna': tibanna.as_dict()
-            }
+    event['ff_meta'] = ff_meta.as_dict()
+    event['pf_meta'] = pf_meta
+    return event
 
 
 # Cardinal knowledge of all workflow updaters
