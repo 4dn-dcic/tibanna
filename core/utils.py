@@ -244,6 +244,7 @@ def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
     input_json[_tibanna]['url'] = url
 
     aws_input = json.dumps(input_json)
+
     print("about to start run %s" % run_name)
     # trigger the step function to run
     try:
@@ -263,7 +264,6 @@ def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
                 url = "%s%s%s%s" % (base_url, (BASE_ARN % 'execution'), ":", run_name)
                 input_json[_tibanna]['url'] = url
                 aws_input = json.dumps(input_json)
-
                 response = client.start_execution(
                     stateMachineArn=STEP_FUNCTION_ARN,
                     name=run_name,
