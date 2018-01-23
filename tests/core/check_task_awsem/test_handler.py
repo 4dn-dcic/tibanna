@@ -69,7 +69,13 @@ def test_check_task_awsf(check_task_input, s3, job_started):
     jobid = check_task_input['jobid']
     job_success = "%s.success" % jobid
     s3.s3_put('', job_success)
+    postrunjson = "%s.postrun.json" % jobid
+    s3.s3_put('{"test":"test"}', postrunjson)
 
     retval = service.handler(check_task_input, '')
     s3.delete_key(job_success)
+    s3.delete_key(postrunjson)
+    assert 'postrunjson' in retval
+    assert retval['postrunjson'] == {"test":"test"}
+    del retval['postrunjson']
     assert retval == check_task_input
