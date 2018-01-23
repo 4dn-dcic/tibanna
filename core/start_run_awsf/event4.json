@@ -9,8 +9,8 @@
        {
            "workflow_argument_name": "input_bams",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-           "uuid": ["68f38e45-8c66-41e2-99ab-b0b2fcd20d45","563fb839-97e7-4917-ba3e-238b3006104d"],
-           "object_key": ["4DNFI9H51IRL.bam","4DNFIW5PE9LY.bam"]
+           "uuid": ["68f38e45-8c66-41e2-99ab-b0b2fcd20d45","7420a20a-aa77-4ea8-b0b0-32a8e80c9bcb"],
+           "object_key": ["4DNFI9H51IRL.bam","4DNFIP16HHGH.bam"]
        },
        {
            "workflow_argument_name": "chromsize",
@@ -21,14 +21,14 @@
   ],
   "app_name": "hi-c-processing-bam",
   "parameters": {
-    "nthreads_parse_sort": 16,
-    "nthreads_merge": 16
+    "nthreads_parse_sort": 32,
+    "nthreads_merge": 32
   },
   "config": {
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",
     "ebs_iops": 500,
-    "shutdown_min": "30",
+    "shutdown_min": "120",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "ami_id": "ami-cfb14bb5",
     "copy_to_s3": true,

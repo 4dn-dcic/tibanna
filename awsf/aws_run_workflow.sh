@@ -38,9 +38,9 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 send_log_regularly(){  
     watch -n 60 "top -b | head -15 >> $LOGFILE; \
-    df -ch /data1/input/ >> $LOGFILE; \
-    df -ch /data1/tmp* >> $LOGFILE; \
-    df -ch /ata1/out >> $LOGFILE; \
+    du -h /data1/input/ >> $LOGFILE; \
+    du -h /data1/tmp* >> $LOGFILE; \
+    du -h /ata1/out >> $LOGFILE; \
     aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; 
 }  ## usage: send_log_regularly (no argument)
 
@@ -164,6 +164,10 @@ send_log
 if [ `echo $STATUS| sed 's/0//g' | sed 's/,//g'` ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
 # This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
 ### 8. create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
+export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
+export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
+export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
+
 exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
