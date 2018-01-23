@@ -1,16 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from core import utils
-
-
-class StillRunningException(Exception):
-    pass
-
-
-class EC2StartingException(Exception):
-    pass
-
-
+from core.utils import StillRunningException, EC2StartingException
 def handler(event, context):
     '''
     somewhere in the event data should be a jobid

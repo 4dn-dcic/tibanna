@@ -249,6 +249,11 @@ def test_powerup_errors_are_dumped_into_return_dict():
     assert res['error'] == 'lambda made a mess'
 
 
+def test_powerup_skips_if_error_set_in_input_json():
+    res = wrapped_fun({'error': 'same like skip'}, None)
+    assert res['error'] == 'same like skip'
+
+
 def test_powerup_skips_when_appropriate():
     wrapped_fun({'skip': 'wrapped_fun'}, None)
 

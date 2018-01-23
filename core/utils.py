@@ -378,28 +378,41 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
-def powerup(lambda_name, metadata_only_func):
+def powerup(lambda_name, metadata_only_func, run_if_error=False):
     '''
-    friendly wrapper for your lambda functions... allows for fun with
-    input json amongst other stuff
+    friendly wrapper for your lambda functions, based on input_json / event comming in...
+    1. Logs basic input for all functions
+    2. if 'skip' key == 'lambda_name', skip the function
+    3. catch exceptions raised by labmda, and if not in  list of ignored exceptions, added
+       the exception to output json
+    4. if input json has 'error' key, skip function unless `run_if_error` is provided
+    5. 'metadata' only parameter, if set to `all` or lambda_name then call  `metadata_only_func`
+    instead of normal function.
+
     '''
     def decorator(function):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
+        ignored_exceptions = [EC2StartingException, StillRunningException]
 
         def wrapper(event, context):
             logger.info(context)
             logger.info(event)
             if lambda_name in event.get('skip', []):
                 logger.info('skiping %s since skip was set in input_json' % lambda_name)
+                return event
+            elif event.get('error', False) and not run_if_error:
+                logger.info('error entry fournd in input_json and run_if_error set to false skipping %s' %
+                            lambda_name)
+                return event
             elif (lambda_name in event.get('metadata_only', []) or event.get('metadata_only') == 'all'):
                 return metadata_only_func(event)
             else:
                 try:
                     return function(event, context)
                 except Exception as e:
-                    if type(e) in [EC2StartingException, StillRunningException]:
+                    if type(e) in ignored_exceptions:
                         raise e
                     # else
                     event['error'] = str(e)
