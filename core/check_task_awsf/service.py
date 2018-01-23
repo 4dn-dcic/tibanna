@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from core import utils
+import json
 
 
 class StillRunningException(Exception):
@@ -39,8 +40,10 @@ def handler(event, context):
 
     # check to see if job has completed if not throw retry error
     if s3.does_key_exist(job_success):
+        if not s3.does_key_exist(postrunjson):
+            raise Exception("Postrun json not found at %s" % postrunjson_location)
+        event['postrunjson'] = json.loads(s3.read_s3(postrunjson))
         print("completed successfully")
-        # TODO: add postrunjson to even
         return event
     else:
         raise StillRunningException("job %s still running" % jobid)
