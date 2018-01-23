@@ -47,4 +47,3 @@ def handler(event, context):
         return event
     else:
         raise StillRunningException("job %s still running" % jobid)
-
