@@ -14,6 +14,9 @@ with open(json_old, 'r') as json_old_f:
 dict['Job']['end_time'] = time.strftime("%Y%m%d-%H:%M:%S-%Z")
 dict['Job']['status'] = os.getenv('JOB_STATUS')
 dict['Job']['instance_id'] = os.getenv('INSTANCE_ID')
+dict['Job']['total_input_size'] = os.getenv('INPUTSIZE')
+dict['Job']['total_tmp_size'] = os.getenv('TEMPSIZE')
+dict['Job']['total_output_size'] = os.getenv('OUTPUTSIZE')
  
 ## write to new json file
 with open(json_new, 'w') as json_new_f:
