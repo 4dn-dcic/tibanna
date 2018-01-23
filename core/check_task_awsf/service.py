@@ -25,7 +25,9 @@ def handler(event, context):
     job_success = "%s.success" % jobid
     job_error = "%s.error" % jobid
     job_log = "%s.log" % jobid
+    postrunjson = "%s.postrun.json" % jobid
     job_log_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, job_log)
+    postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
 
     # check to see ensure this job has started else fail
     if not s3.does_key_exist(job_started):
@@ -38,6 +40,8 @@ def handler(event, context):
     # check to see if job has completed if not throw retry error
     if s3.does_key_exist(job_success):
         print("completed successfully")
+        # TODO: add postrunjson to even
         return event
     else:
         raise StillRunningException("job %s still running" % jobid)
+
