@@ -85,5 +85,5 @@
   * The role (named 's3_access_suwang') contains the policy I created above ('s3-access-suwang')
 
 ### 4. Sent her this user instruction
-  * [../README.md#how_to_use_awsem]
+  * [README](tibanna_unicorn.md)
 
