@@ -39,26 +39,6 @@ def ff_keys(s3_utils):
 
 
 @pytest.fixture(scope='session')
-def check_import_event_data(sbg_keys):
-    return get_event_file_for('check_import_sbg', sbg_keys)
-
-
-@pytest.fixture(scope='session')
-def run_task_event_data(sbg_keys):
-    return get_event_file_for('run_task_sbg', sbg_keys)
-
-
-@pytest.fixture(scope='session')
-def finalize_event_data(sbg_keys):
-    return get_event_file_for('finalize', sbg_keys)
-
-
-@pytest.fixture(scope='session')
-def check_task_event_data(sbg_keys):
-    return get_event_file_for('check_task_sbg', sbg_keys)
-
-
-@pytest.fixture(scope='session')
 def s3_trigger_event_data(sbg_keys):
     return get_event_file_for('validate_md5_s3_trigger', sbg_keys)
 
@@ -93,6 +73,11 @@ def run_awsf_event_data(ff_keys):
 @pytest.fixture(scope='session')
 def run_task_awsf_event_data(ff_keys):
     return get_event_file_for('run_task_awsf', ff_keys=ff_keys)
+
+
+@pytest.fixture(scope='session')
+def run_task_awsf_psuedo_workflow_event_data(ff_keys):
+    return get_event_file_for('run_task_awsf', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
 
 @pytest.fixture(scope='session')

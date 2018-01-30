@@ -3,12 +3,17 @@ import logging
 # import json
 import boto3
 from core import ff_utils
-from core.utils import Tibanna, ensure_list
+from core.utils import Tibanna, ensure_list, powerup
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
+def metadata_only(event, context):
+    return handler(event, context)
+
+
+@powerup('start_run_awsf', metadata_only)
 def handler(event, context):
     '''
     this is generic function to run awsem workflow
@@ -166,7 +171,17 @@ def get_format_extension_map(tibanna):
     return fe_map
 
 
-def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None):
+def proc_file_for_arg_name(output_files, arg_name, tibanna):
+    of = [output for output in output_files if output.get('workflow_argument_name') == arg_name]
+    if of:
+        if len(of) > 1:
+            raise Exception("multiple output files supplied with same workflow_argument_name")
+        of = of[0]
+        return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys)
+
+
+def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
+                           user_supplied_output_files=None):
 
     fe_map = get_format_extension_map(tibanna)
     output_files = []
@@ -188,19 +203,31 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None):
                         extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                     else:
                         extra_files = None
-                    pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
-                                                        extra_files=extra_files,
-                                                        source_experiments=pf_source_experiments)
-                    try:
-                        resp = pf.post(key=tibanna.ff_keys)  # actually post processed file metadata here
-                        resp = resp.get('@graph')[0]
+
+                    # see if user supplied the output file already
+                    # this is often the case for pseudo workflow runs (run externally)
+                    # TODO move this down next to post of pf
+                    resp = proc_file_for_arg_name(user_supplied_output_files,
+                                                  arg.get('workflow_argument_name'),
+                                                  tibanna)
+
+                    # if it wasn't supplied as output we have to create a new one
+                    if not resp:
+                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
+                                                            extra_files=extra_files,
+                                                            source_experiments=pf_source_experiments)
+                        try:
+                            # actually post processed file metadata here
+                            resp = pf.post(key=tibanna.ff_keys)
+                            resp = resp.get('@graph')[0]
+
+                        except Exception as e:
+                            LOG.error("Failed to post Processed file metadata. %s\n" % e)
+                            LOG.error("resp" + str(resp) + "\n")
+                            raise e
                         of['upload_key'] = resp.get('upload_key')
                         of['value'] = resp.get('uuid')
                         of['extra_files'] = resp.get('extra_files')
-                    except Exception as e:
-                        LOG.error("Failed to post Processed file metadata. %s\n" % e)
-                        LOG.error("resp" + str(resp) + "\n")
-                        raise e
                     of['format'] = arg.get('argument_format')
                     of['extension'] = fe_map.get(arg.get('argument_format'))
                     pf_meta.append(pf)

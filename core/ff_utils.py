@@ -206,7 +206,7 @@ class ProcessedFileMetadata(object):
         data = get_metadata(uuid, key=key)
         if type(data) is not dict:
             raise Exception("unable to find object with unique key of %s" % uuid)
-        if 'FileProcessed' not in data.get('@type'):
+        if 'FileProcessed' not in data.get('@type', {}):
             raise Exception("you can only load ProcessedFiles into this object")
 
         return ProcessedFileMetadata(**data)

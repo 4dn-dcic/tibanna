@@ -76,6 +76,6 @@ def test_check_task_awsf(check_task_input, s3, job_started):
     s3.delete_key(job_success)
     s3.delete_key(postrunjson)
     assert 'postrunjson' in retval
-    assert retval['postrunjson'] == {"test":"test"}
+    assert retval['postrunjson'] == {"test": "test"}
     del retval['postrunjson']
     assert retval == check_task_input

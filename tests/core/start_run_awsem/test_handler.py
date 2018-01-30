@@ -2,11 +2,13 @@ import pytest
 from core.start_run_awsf.service import (
     handler,
     get_format_extension_map,
-    handle_processed_files
+    handle_processed_files,
+    proc_file_for_arg_name,
 )
 from ..conftest import valid_env
 from core.utils import Tibanna
 from core import ff_utils
+import mock
 
 
 @valid_env
@@ -26,9 +28,49 @@ def test_start_awsem_handler_processed_files(run_awsf_event_data_processed_files
     assert('source_experiments' in res['pf_meta'][0])
 
 
+@pytest.fixture()
+def proc_file_in_webdev():
+    return {'status': 'released',
+            'uuid': 'f6d5ba22-aaf9-48e9-8df4-bc5c131c96af',
+            'file_format': 'normvector_juicerformat',
+            'accession': '4DNFIRO3UX7I',
+            'award': '/awards/1U01CA200059-01/',
+            'lab': '/labs/4dn-dcic-lab/'}
+
+
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler_processed_files2(run_awsf_event_data_processed_files2):
+def test_proc_file_for_arg_name(run_awsf_event_data_processed_files, proc_file_in_webdev):
+    of = [{"workflow_argument_name": "output_file1",
+           "uuid": proc_file_in_webdev['uuid']
+           },
+          {"workflow_argument_name": "output_file2",
+           "uuid": "f4864029-a8ad-4bb8-93e7-5108f46bbbbb"
+           }]
+
+    tibanna_settings = run_awsf_event_data_processed_files.get('_tibanna', {})
+    # if they don't pass in env guess it from output_bucket
+    env = tibanna_settings.get('env')
+    # tibanna provides access to keys based on env and stuff like that
+    tibanna = Tibanna(env, s3_keys=run_awsf_event_data_processed_files.get('s3_keys'),
+                      ff_keys=run_awsf_event_data_processed_files.get('ff_keys'),
+                      settings=tibanna_settings)
+
+    file_with_type = proc_file_in_webdev.copy()
+    file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
+    with mock.patch('core.ff_utils.get_metadata', return_value=file_with_type):
+        pf = proc_file_for_arg_name(of, 'output_file1', tibanna)
+        assert type(pf) == ff_utils.ProcessedFileMetadata
+        assert pf.__dict__ == proc_file_in_webdev
+
+
+def test_psuedo_run(run_task_awsf_psuedo_workflow_event_data):
+    pass
+
+
+@valid_env
+@pytest.mark.webtest
+def test_start_awsem_handle_processed_files2(run_awsf_event_data_processed_files2):
     res = handler(run_awsf_event_data_processed_files2, '')
     assert(res)
     assert('pf_meta' in res)
