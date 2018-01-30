@@ -1,3 +1,5 @@
+* Note that this README is outdated
+
 # awsf
 Awsf is a set of tools that allows running and monitoring docker- and cwl-based pipelines on AWS.
 
