@@ -77,7 +77,7 @@ def run_task_awsf_event_data(ff_keys):
 
 @pytest.fixture(scope='session')
 def run_task_awsf_psuedo_workflow_event_data(ff_keys):
-    return get_event_file_for('run_task_awsf', ff_keys=ff_keys, event_file='event_metadata_only.json')
+    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
 
 @pytest.fixture(scope='session')
