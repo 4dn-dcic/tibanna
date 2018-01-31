@@ -65,7 +65,8 @@ def test_proc_file_for_arg_name(run_awsf_event_data_processed_files, proc_file_i
 
 
 def test_psuedo_run(run_task_awsf_psuedo_workflow_event_data):
-    pass
+    res = handler(run_task_awsf_psuedo_workflow_event_data, '')
+    assert(res)
 
 
 @valid_env

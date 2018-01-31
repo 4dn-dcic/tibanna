@@ -9,12 +9,19 @@ LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
-def metadata_only(event, context):
-    return handler(event, context)
+def metadata_only(event):
+    # this relies on the fact that event contains and output key with output files
+    assert event['metadata_only']
+    assert event['output_files']
+    return real_handler(event, None)
 
 
 @powerup('start_run_awsf', metadata_only)
 def handler(event, context):
+    return real_handler(event, context)
+
+
+def real_handler(event, context):
     '''
     this is generic function to run awsem workflow
     based on the data passed in
@@ -172,6 +179,8 @@ def get_format_extension_map(tibanna):
 
 
 def proc_file_for_arg_name(output_files, arg_name, tibanna):
+    if not output_files:
+        return
     of = [output for output in output_files if output.get('workflow_argument_name') == arg_name]
     if of:
         if len(of) > 1:

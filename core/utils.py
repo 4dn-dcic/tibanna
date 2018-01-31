@@ -386,8 +386,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
     3. catch exceptions raised by labmda, and if not in  list of ignored exceptions, added
        the exception to output json
     4. if input json has 'error' key, skip function unless `run_if_error` is provided
-    5. 'metadata' only parameter, if set to `all` or lambda_name then call  `metadata_only_func`
-    instead of normal function.
+    5. 'metadata' only parameter, if set to true, just create metadata instead of run workflow
 
     '''
     def decorator(function):
@@ -406,7 +405,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                 logger.info('error entry fournd in input_json and run_if_error set to false skipping %s' %
                             lambda_name)
                 return event
-            elif (lambda_name in event.get('metadata_only', []) or event.get('metadata_only') == 'all'):
+            elif event.get('metadata_only', False):
                 return metadata_only_func(event)
             else:
                 try:
