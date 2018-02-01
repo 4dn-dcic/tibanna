@@ -1,0 +1,41 @@
+{
+  "_tibanna": {
+      "run_type": "hi-c-processing-bam",
+      "env": "fourfront-webdev"
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "workflow_uuid": "023bfb3e-9a8b-42b9-a9d4-216079526f68",
+  "input_files" : [
+       {
+           "workflow_argument_name": "input_bams",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+           "uuid": ["68f38e45-8c66-41e2-99ab-b0b2fcd20d45","7420a20a-aa77-4ea8-b0b0-32a8e80c9bcb"],
+           "object_key": ["4DNFI9H51IRL.bam","4DNFIP16HHGH.bam"]
+       },
+       {
+           "workflow_argument_name": "chromsize",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+           "object_key": "4DNFI823LSII.chrom.sizes"
+       }
+  ],
+  "app_name": "hi-c-processing-bam",
+  "parameters": {
+    "nthreads_parse_sort": 32,
+    "nthreads_merge": 32
+  },
+  "config": {
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "ebs_iops": 500,
+    "shutdown_min": "120",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode"
+  }
+}
