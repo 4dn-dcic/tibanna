@@ -43,17 +43,12 @@ def setenv(**kwargs):
 def get_all_core_lambdas():
     return [
             'update_metadata_ff',
-            'finalize',
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
             'start_run_awsf',
             'run_task_awsf',
             'check_task_awsf',
             'update_ffmeta_awsf',
-            'start_run_awsf_dev',
-            'run_task_awsf_dev',
-            'check_task_awsf_dev',
-            'update_ffmeta_awsf_dev'
             ]
 
 
