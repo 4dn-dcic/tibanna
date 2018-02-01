@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 
 from core import ec2_utils as utils
+from core.utils import powerup
 
 
+def metadata_only(event):
+    event.update({'jobid': 'metadata_only'})
+    return event
+
+
+@powerup('run_task_awsf', metadata_only)
 def handler(event, context):
     '''
     config:

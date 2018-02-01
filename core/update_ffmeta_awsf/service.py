@@ -149,8 +149,29 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     return None
 
 
-# check the status and other details of import
+def metadata_only(event):
+    # just create a fake awsem config so the handler function does it's magic
+    '''
+    if not event.get('args'):
+        event['args'] = {'app_name': event['ff_meta'].get('awsem_app_name'),
+                         'output_S3_bucket': 'metadata_only',
+                         'output_target': {'metadata_only': 'metadata_only'}
+                         }
+
+    if not event.get('config'):
+        event['config'] = {'runmode': 'metadata_only'}
+    '''
+
+    return real_handler(event, None)
+
+
+@utils.powerup('update_ffmeta_awsem', metadata_only)
 def handler(event, context):
+    return real_handler(event, context)
+
+
+def real_handler(event, context):
+    # check the status and other details of import
     '''
     this is to check if the task run is done:
     http://docs.sevenbridges.com/reference#get-task-execution-details

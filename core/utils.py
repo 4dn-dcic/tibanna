@@ -29,6 +29,10 @@ class EC2StartingException(Exception):
     pass
 
 
+class AWSEMJobErrorException(Exception):
+    pass
+
+
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
         return val
@@ -393,7 +397,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException]
+        ignored_exceptions = [EC2StartingException, StillRunningException, AWSEMJobErrorException]
 
         def wrapper(event, context):
             logger.info(context)

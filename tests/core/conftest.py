@@ -110,6 +110,11 @@ def update_ffmeta_event_data_fastqc(ff_keys):
     return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys, event_file='event_fastqc.json')
 
 
+@pytest.fixture(scope='session')
+def update_ffmeta_metaonly_data(ff_keys):
+    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys, event_file='event_metadataonly.json')
+
+
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)

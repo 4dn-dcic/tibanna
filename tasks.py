@@ -475,8 +475,6 @@ _workflows = {'md5':
 
 def calc_ebs_size(bucket, key):
     s3 = s3Utils(bucket, bucket, bucket)
-    import pdb
-    pdb.set_trace()
     size = s3.get_file_size(key, bucket, add_gb=3, size_in_gb=True)
     if size < 10:
         size = 10

@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from core import utils
-from core.utils import StillRunningException, EC2StartingException
+from core.utils import StillRunningException, EC2StartingException, AWSEMJobErrorException
 import json
 
 
+def metadata_only(event):
+    event.update({'postrunjson': 'metadata_only'})
+    return event
+
+
+@utils.powerup('check_task_awsem', metadata_only)
 def handler(event, context):
     '''
     somewhere in the event data should be a jobid
@@ -29,7 +35,7 @@ def handler(event, context):
 
     # check to see if job has error, report if so
     if s3.does_key_exist(job_error):
-        raise Exception("Job encountered an error check log at %s" % job_log_location)
+        raise AWSEMJobErrorException("Job encountered an error check log at %s" % job_log_location)
 
     # check to see if job has completed if not throw retry error
     if s3.does_key_exist(job_success):
