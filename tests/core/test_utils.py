@@ -1,7 +1,9 @@
 from core import sbg_utils, ff_utils
-from core.utils import Tibanna, ensure_list
+from core.utils import Tibanna, ensure_list, powerup
 import pytest
 from conftest import valid_env
+import mock
+from core.utils import StillRunningException
 
 
 @pytest.fixture
@@ -227,3 +229,49 @@ def test_ensure_list():
     assert ensure_list('hello') == ['hello']
     assert ensure_list(['hello']) == ['hello']
     assert ensure_list({'a': 'b'}) == [{'a': 'b'}]
+
+
+# we need to use StillRunningException cause that's one of the special exceptions we don't
+# catch in our powerup wrapper
+@powerup("wrapped_fun", mock.Mock(side_effect=StillRunningException("metadata")))
+def wrapped_fun(event, context):
+    raise StillRunningException("I should not be called")
+
+
+@powerup('error_fun', mock.Mock())
+def error_fun(event, context):
+    raise Exception("lambda made a mess")
+
+
+def test_powerup_errors_are_dumped_into_return_dict():
+    res = error_fun({'some': 'data'}, None)
+    assert res['some'] == 'data'
+    assert res['error'] == 'lambda made a mess'
+
+
+def test_powerup_skips_if_error_set_in_input_json():
+    res = wrapped_fun({'error': 'same like skip'}, None)
+    assert res['error'] == 'same like skip'
+
+
+def test_powerup_skips_when_appropriate():
+    wrapped_fun({'skip': 'wrapped_fun'}, None)
+
+
+def test_powerup_skips_in_list():
+    wrapped_fun({'skip': ['wrapped_fun', 'fun2']}, None)
+
+
+def test_powerup_normally_doesnt_skip():
+    with pytest.raises(StillRunningException) as exec_nfo:
+        wrapped_fun({'skip': 'somebody_else'}, None)
+    assert exec_nfo
+    assert 'should not be called' in str(exec_nfo.value)
+
+
+def test_powerup_calls_metadata_only_func():
+    with pytest.raises(StillRunningException) as exec_nfo:
+        wrapped_fun({'skip': 'somebody_else', 'metadata_only': 'wrapped_fun'}, None)
+
+    assert exec_nfo
+    assert 'metadata' in str(exec_nfo.value)

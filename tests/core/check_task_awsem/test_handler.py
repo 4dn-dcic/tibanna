@@ -2,6 +2,7 @@ from core.check_task_awsf import service
 from ..conftest import valid_env
 import pytest
 from core import utils
+from core.utils import AWSEMJobErrorException
 
 
 @pytest.fixture(scope='session')
@@ -46,7 +47,7 @@ def test_check_task_awsf_fails_if_job_error_found(check_task_input, s3, job_star
     job_error = "%s.error" % jobid
     s3.s3_put('', job_error)
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(AWSEMJobErrorException) as excinfo:
         service.handler(check_task_input, '')
 
     s3.delete_key(job_error)

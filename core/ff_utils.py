@@ -34,7 +34,8 @@ def convert_param(parameter_dict, vals_as_string=False):
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
-                        run_status='started', run_platform='AWSEM', run_url='', tag=None, **kwargs):
+                        run_status='started', run_platform='AWSEM', run_url='', tag=None,
+                        alias=None, **kwargs):
 
     input_files = [] if input_files is None else input_files
     parameters = [] if parameters is None else parameters
@@ -48,7 +49,8 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, t
     return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,
                                lab=lab, run_platform=run_platform, run_url=run_url,
-                               title=title, output_files=output_files, run_status=run_status)
+                               title=title, output_files=output_files, run_status=run_status,
+                               alias=alias)
 
 
 def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, sbg_task_id=None,
@@ -105,7 +107,7 @@ class WorkflowRunMetadata(object):
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='SBG', title=None, output_files=None,
                  run_status='started', awsem_job_id=None,
-                 run_url='', **kwargs):
+                 run_url='', alias=None, **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -147,6 +149,8 @@ class WorkflowRunMetadata(object):
             self.run_url = run_url
 
         self.title = title
+        if alias:
+            self.alias = alias
         self.input_files = input_files
         if output_files:
             self.output_files = output_files
@@ -180,7 +184,7 @@ class WorkflowRunMetadata(object):
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  extra_files=None, source_experiments=None,
-                 award='1U01CA200059-01', status='to be uploaded by workflow'):
+                 award='1U01CA200059-01', status='to be uploaded by workflow', **kwargs):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
         self.status = status
@@ -200,6 +204,16 @@ class ProcessedFileMetadata(object):
 
     def post(self, key):
         return post_to_metadata(self.as_dict(), "file_processed", key=key)
+
+    @classmethod
+    def get(cls, uuid, key):
+        data = get_metadata(uuid, key=key)
+        if type(data) is not dict:
+            raise Exception("unable to find object with unique key of %s" % uuid)
+        if 'FileProcessed' not in data.get('@type', {}):
+            raise Exception("you can only load ProcessedFiles into this object")
+
+        return ProcessedFileMetadata(**data)
 
 
 def fdn_connection(key='', connection=None):

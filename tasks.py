@@ -41,13 +41,14 @@ def setenv(**kwargs):
 
 
 def get_all_core_lambdas():
-    return ['finalize',
+    return [
+            'update_metadata_ff',
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
             'start_run_awsf',
             'run_task_awsf',
             'check_task_awsf',
-            'update_ffmeta_awsf'
+            'update_ffmeta_awsf',
             ]
 
 
@@ -473,8 +474,6 @@ _workflows = {'md5':
 
 def calc_ebs_size(bucket, key):
     s3 = s3Utils(bucket, bucket, bucket)
-    import pdb
-    pdb.set_trace()
     size = s3.get_file_size(key, bucket, add_gb=3, size_in_gb=True)
     if size < 10:
         size = 10

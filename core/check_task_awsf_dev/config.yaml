@@ -1,9 +1,9 @@
 region: us-east-1
 
-function_name: finalize 
+function_name: check_task_awsf_dev
 handler: service.handler
 role: lambda_full_s3
-description: finalize the workflow run by updating the status to pass, donig some checks, maybe clean up sbg, that sort of stuff 
+description: check status of AWSEM run by interegating appropriate files on S3 
 
 # if access key and secret are left blank, boto will use the credentials
 # defined in the [default] section of ~/.aws/credentials.
@@ -12,4 +12,4 @@ aws_secret_access_key:
 
 # dist_directory: dist
 timeout: 300 
-memory_size: 128 
+memory_size: 256
