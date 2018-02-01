@@ -125,7 +125,8 @@ def real_handler(event, context):
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
                                            run_url=tibanna.settings.get('url', ''),
-                                           output_files=output_files, parameters=parameters)
+                                           output_files=output_files, parameters=parameters,
+                                           alias=event.get('wfr_alisa'))
 
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
