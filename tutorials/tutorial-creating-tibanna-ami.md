@@ -32,5 +32,5 @@ waiting for 10min for the image to be created..
 ### Update json files inside tibanna repo
 * Once you have a new AMI, the following command would automatically update all json files and notebooks so they use the new AMI.
 ```
-upgrade_ami_for_all_tibanna_jsons.sh <old_ami_id> <new_ami_id>
+AMI/upgrade_ami_for_all_tibanna_jsons.sh <old_ami_id> <new_ami_id>
 ```
