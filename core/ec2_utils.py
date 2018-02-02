@@ -342,7 +342,7 @@ class Awsem(object):
             else:
                 out_type = None
             if out_type == 'Output processed file':
-                file_name = item.get('object_key').split('/')[-1]
+                file_name = v.get('object_key').split('/')[-1]
                 accession = file_name.split('.')[0].strip('/')
             else:
                 accession = None
@@ -373,7 +373,7 @@ class Awsem(object):
         files = dict()
         files.update(self.input_files())
         files.update(self.output_files())
-    
+
     @property
     def inputfile_accessions(self):
         return {k: v.accession for k, v in self.input_files().iteritems()}
@@ -381,4 +381,3 @@ class Awsem(object):
     @property
     def all_file_accessions(self):
         return {k: v.accession for k, v in self.all_files().iteritems()}
-
