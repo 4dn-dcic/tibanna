@@ -6,9 +6,33 @@ import time
 import boto3
 json_old=sys.argv[1]
 json_out=sys.argv[2]
-json_new=sys.argv[3]
+logfile = sys.argv[3]
+json_new=sys.argv[4]
 
 source_directory = '/data1/out/'
+
+ 
+def parse_command(logfile):
+    """
+    parse commands from the log file and returns the commands as a list
+    of command line lists, each corresponding to a step run.
+    """
+    command_list = []
+    command = []
+    in_command = False
+    with open(logfile, 'r') as f:
+        for line in f:
+            line = line.strip('\n')
+            if line.startswith('[job') and line.endswith('docker \\'):
+                in_command = True
+            if in_command:
+                command.append(line)
+                if not line.endswith('\\'):
+                    in_command = False
+                    command_list.append(command)
+                    command = []
+    return(command_list)
+ 
  
 ## read old json file
 with open(json_old, 'r') as json_old_f:
@@ -63,6 +87,9 @@ for k in cwl_output:
             sf['target'] = target
         except Exception as e:
             raise Exception("cannot update target info to json %s" % e)
+
+## add commands
+old_dict['commands'] = parse_command(logfile)
 
 ## write to new json file
 with open(json_new, 'w') as json_new_f:
