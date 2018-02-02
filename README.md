@@ -26,7 +26,7 @@ A set of tools for running docker- and cwl-based pipelines on AWS (AWSEM, Autono
 
 ## lambda_sbg (deprecated)
 A lambda function integrated with APIGateway, for managing pipelines on AWS and SBG
-* [README](lambda_sbg/README.md) for more details
+* [README](old/lambda_sbg/README.md) for more details
 
 
 ## How to use Tibanna without 4DN metadata

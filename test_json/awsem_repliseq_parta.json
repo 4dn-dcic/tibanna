@@ -11,6 +11,7 @@
        "bam": "gm12878_rep1_early.bam",
        "filtered_sorted_bam": "gm12878_rep1_early.filtered_sorted.bam",
        "filtered_sorted_deduped_bam": "gm12878_rep1_early.filtered_sorted.deduped.bam",
+       "dedup_qc_report": "gm12878_rep1_early.filtered_sorted.rmdup.log.qc_report.zip",
        "count_bg": "gm12878_rep1_early.count.bg"
     },
     "secondary_output_target": {},
