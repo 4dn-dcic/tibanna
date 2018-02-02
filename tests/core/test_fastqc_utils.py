@@ -38,12 +38,6 @@ def quality_metric_fastqc_schema():
     return qc_schema
 
 
-def test_parse_fastqc(summary, data):
-    meta = fastqc_utils.parse_fastqc(summary, data, url='test_url')
-    assert meta['url'] == 'test_url'
-    assert meta['overall_quality_status'] == 'PASS'
-
-
 def test_parse_qc_table_pairsqc(pairsqc_summary, quality_metric_pairsqc_schema):
     meta = fastqc_utils.parse_qc_table([pairsqc_summary], url='test_url',
                                        qc_schema=quality_metric_pairsqc_schema)
