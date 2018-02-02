@@ -1,0 +1,32 @@
+{
+  "Comment": "Start a workflow run on awsem, (later) track it independently of our metadata to reflect whats going on",
+  "StartAt": "RunTaskAwsem",
+  "States": {
+        "RunTaskAwsem": {
+                "Type": "Task",
+                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_awsf",
+                "Next": "CheckTaskAwsem"
+        },
+		"CheckTaskAwsem": {
+				"Type": "Task",
+				"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_awsf",
+				"Retry": [
+				  {
+					"ErrorEquals": ["EC2StartingException"],
+					"IntervalSeconds": 300,
+					"MaxAttempts" : 4,
+					"BackoffRate" : 1.0
+				   },
+				  {
+					"ErrorEquals": ["StillRunningException"],
+					"IntervalSeconds": 600,
+					"MaxAttempts" : 10000,
+					"BackoffRate" : 1.0
+				   }
+				  ],
+				"End": true
+		}
+  }
+}
+
+
