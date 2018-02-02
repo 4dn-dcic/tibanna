@@ -4,6 +4,7 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
+import json
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -232,6 +233,9 @@ def real_handler(event, context):
     if patch_meta:
         ff_meta.__dict__.update(patch_meta)
 
+    # add postrunjson log file to ff_meta as an attachment
+    ff_meta.documents = [add_postrunjson_to_ff_meta(event, tibanna.ff_keys)]
+
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
     try:
@@ -241,7 +245,15 @@ def real_handler(event, context):
 
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = pf_meta
+
     return event
+
+
+def add_postrunjson_to_ff_meta(event, ff_key):
+    tmp_postrunjson_file = '/tmp/postrun.json.txt'
+    with open(tmp_postrunjson_file, 'w') as of_postrun:
+        json.dump(event['postrunjson'], of_postrun, indent=4, sort_keys=True)
+    return(ff_utils.create_attachment(tmp_postrunjson_file, ff_key))
 
 
 # Cardinal knowledge of all workflow updaters

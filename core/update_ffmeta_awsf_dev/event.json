@@ -80,5 +80,10 @@
     "userdata_dir": "/tmp/userdata",
     "launch_instance": true,
     "password": "hahaha"
+  },
+  "postrunjson": {
+    "Job": {
+        "status": "0"
+    }
   }
-}  
+} 
