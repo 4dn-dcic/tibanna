@@ -341,7 +341,12 @@ class Awsem(object):
                 out_type = output_types[k]
             else:
                 out_type = None
-            wff = {k: WorkflowFile(self.output_s3, v, self, output_type=out_type)}
+            if out_type == 'Output processed file':
+                file_name = item.get('object_key').split('/')[-1]
+                accession = file_name.split('.')[0].strip('/')
+            else:
+                accession = None
+            wff = {k: WorkflowFile(self.output_s3, v, self, accession, output_type=out_type)}
             files.update(wff)
         return files
 
@@ -364,6 +369,16 @@ class Awsem(object):
             files.update(wff)
         return files
 
+    def all_files(self):
+        files = dict()
+        files.update(self.input_files())
+        files.update(self.output_files())
+    
     @property
     def inputfile_accessions(self):
         return {k: v.accession for k, v in self.input_files().iteritems()}
+
+    @property
+    def all_file_accessions(self):
+        return {k: v.accession for k, v in self.all_files().iteritems()}
+
