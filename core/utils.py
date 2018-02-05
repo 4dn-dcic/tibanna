@@ -408,7 +408,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
             elif event.get('error', False) and not run_if_error:
                 logger.info('error entry fournd in input_json and run_if_error set to false skipping %s' %
                             lambda_name)
-                return event
+                raise Exception(event.get('error'))
             elif event.get('metadata_only', False):
                 return metadata_only_func(event)
             else:
