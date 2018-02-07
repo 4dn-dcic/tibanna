@@ -79,6 +79,12 @@
     "job_tag": "md5",
     "userdata_dir": "/tmp/userdata",
     "launch_instance": true,
-    "password": "hahaha"
+    "password": "hahaha",
+    "log_bucket": "tibanna-output"
+  },
+  "postrunjson": {
+    "Job": {
+        "status": "0"
+    }
   }
-}  
+} 
