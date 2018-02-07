@@ -3,15 +3,15 @@
     "parameters" :  {"ncores": 1, "nres": 6},
     "input_files" : [
        {
-           "object_key": "4DNFI2SQQGU7.cool",
+           "object_key": "4DNFIM2D3GLA.cool",
            "workflow_argument_name": "input_cool",
-           "uuid": "976823d0-7f03-4f45-8aea-a464188937fb",
+           "uuid": "151ffe3a-53c6-479b-a68a-6f2ca9f96e47",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        },
        {
-           "object_key": "4DNFISNLMQWI.hic",
+           "object_key": "4DNFINCQ71YN.hic",
            "workflow_argument_name": "input_hic",
-           "uuid": "593bef3f-eb63-4ef9-a371-c9cff0a29662",
+           "uuid": "a402541c-22da-48b3-baef-7c123d059630",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        },
        {

@@ -232,6 +232,9 @@ def real_handler(event, context):
     if patch_meta:
         ff_meta.__dict__.update(patch_meta)
 
+    # add postrunjson log file to ff_meta as a url
+    ff_meta.awsem_postrun_json = get_postrunjson_url(event)
+
     # make all the file export meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
     try:
@@ -241,7 +244,15 @@ def real_handler(event, context):
 
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = pf_meta
+
     return event
+
+
+def get_postrunjson_url(event):
+    logbucket = event['config']['log_bucket']
+    jobid = event['jobid']
+    postrunjson_url = 'https://s3.amazonaws.com/' + logbucket + '/' + jobid + '.postrun.json'
+    return postrunjson_url
 
 
 # Cardinal knowledge of all workflow updaters
