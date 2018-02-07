@@ -16,7 +16,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@powerup('start_run_awsf', metadata_only)
+@powerup('start_run_awsem', metadata_only)
 def handler(event, context):
     return real_handler(event, context)
 

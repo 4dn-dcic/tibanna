@@ -9,7 +9,7 @@ def metadata_only(event):
     return event
 
 
-@powerup('run_task_awsf', metadata_only)
+@powerup('run_task_awsem', metadata_only)
 def handler(event, context):
     '''
     config:

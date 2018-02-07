@@ -41,8 +41,8 @@ def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
     assert awsem.inputfile_accessions['input_file'] == '4DNFIRSRJH45'
 
 
-def test_update_config(run_task_awsf_event_data):
-    data = run_task_awsf_event_data
+def test_update_config(run_task_awsem_event_data):
+    data = run_task_awsem_event_data
     config = data['config']
     update_config(config, data['args']['app_name'], data['args']['input_files'], data['args']['input_parameters'])
     assert config['instance_type'] == 't2.micro'

@@ -1,5 +1,5 @@
 import pytest
-from core.start_run_awsf.service import (
+from core.start_run_awsem.service import (
     handler,
     get_format_extension_map,
     handle_processed_files,
@@ -13,16 +13,16 @@ import mock
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler(run_awsf_event_data):
-    # data = service.handler(run_awsf_event_data, '')
-    res = handler(run_awsf_event_data, '')
+def test_start_awsem_handler(run_awsem_event_data):
+    # data = service.handler(run_awsem_event_data, '')
+    res = handler(run_awsem_event_data, '')
     assert(res)
 
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler_processed_files(run_awsf_event_data_processed_files):
-    res = handler(run_awsf_event_data_processed_files, '')
+def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_files):
+    res = handler(run_awsem_event_data_processed_files, '')
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
@@ -40,7 +40,7 @@ def proc_file_in_webdev():
 
 @valid_env
 @pytest.mark.webtest
-def test_proc_file_for_arg_name(run_awsf_event_data_processed_files, proc_file_in_webdev):
+def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_in_webdev):
     of = [{"workflow_argument_name": "output_file1",
            "uuid": proc_file_in_webdev['uuid']
            },
@@ -48,12 +48,12 @@ def test_proc_file_for_arg_name(run_awsf_event_data_processed_files, proc_file_i
            "uuid": "f4864029-a8ad-4bb8-93e7-5108f46bbbbb"
            }]
 
-    tibanna_settings = run_awsf_event_data_processed_files.get('_tibanna', {})
+    tibanna_settings = run_awsem_event_data_processed_files.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=run_awsf_event_data_processed_files.get('s3_keys'),
-                      ff_keys=run_awsf_event_data_processed_files.get('ff_keys'),
+    tibanna = Tibanna(env, s3_keys=run_awsem_event_data_processed_files.get('s3_keys'),
+                      ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
                       settings=tibanna_settings)
 
     file_with_type = proc_file_in_webdev.copy()
@@ -64,15 +64,15 @@ def test_proc_file_for_arg_name(run_awsf_event_data_processed_files, proc_file_i
         assert pf.__dict__ == proc_file_in_webdev
 
 
-def test_pseudo_run(run_task_awsf_psuedo_workflow_event_data):
-    res = handler(run_task_awsf_psuedo_workflow_event_data, '')
+def test_pseudo_run(run_task_awsem_psuedo_workflow_event_data):
+    res = handler(run_task_awsem_psuedo_workflow_event_data, '')
     assert(res)
 
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handle_processed_files2(run_awsf_event_data_processed_files2):
-    res = handler(run_awsf_event_data_processed_files2, '')
+def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_files2):
+    res = handler(run_awsem_event_data_processed_files2, '')
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
@@ -80,9 +80,9 @@ def test_start_awsem_handle_processed_files2(run_awsf_event_data_processed_files
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler_secondary_files(run_awsf_event_data_secondary_files):
+def test_start_awsem_handler_secondary_files(run_awsem_event_data_secondary_files):
     try:
-        handler(run_awsf_event_data_secondary_files, '')
+        handler(run_awsem_event_data_secondary_files, '')
     except Exception as e:
         print(e)
         pytest.skip("seems data is not in place")
@@ -90,13 +90,13 @@ def test_start_awsem_handler_secondary_files(run_awsf_event_data_secondary_files
 
 @valid_env
 @pytest.mark.webtest
-def test_get_format_extension_map(run_awsf_event_data):
-    tibanna_settings = run_awsf_event_data.get('_tibanna', {})
+def test_get_format_extension_map(run_awsem_event_data):
+    tibanna_settings = run_awsem_event_data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=run_awsf_event_data.get('s3_keys'),
-                      ff_keys=run_awsf_event_data.get('ff_keys'),
+    tibanna = Tibanna(env, s3_keys=run_awsem_event_data.get('s3_keys'),
+                      ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
     fe_map = get_format_extension_map(tibanna)
@@ -106,8 +106,8 @@ def test_get_format_extension_map(run_awsf_event_data):
 
 @valid_env
 @pytest.mark.webtest
-def test_handle_processed_files(run_awsf_event_data_secondary_files):
-    data = run_awsf_event_data_secondary_files
+def test_handle_processed_files(run_awsem_event_data_secondary_files):
+    data = run_awsem_event_data_secondary_files
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')

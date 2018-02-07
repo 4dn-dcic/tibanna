@@ -66,53 +66,53 @@ def check_export_event_data(sbg_keys, ff_keys):
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data(ff_keys):
-    return get_event_file_for('start_run_awsf', ff_keys=ff_keys)
+def run_awsem_event_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys)
 
 
 @pytest.fixture(scope='session')
-def run_task_awsf_event_data(ff_keys):
-    return get_event_file_for('run_task_awsf', ff_keys=ff_keys)
+def run_task_awsem_event_data(ff_keys):
+    return get_event_file_for('run_task_awsem', ff_keys=ff_keys)
 
 
 @pytest.fixture(scope='session')
-def run_task_awsf_psuedo_workflow_event_data(ff_keys):
-    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event_metadata_only.json')
+def run_task_awsem_psuedo_workflow_event_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data_secondary_files(ff_keys):
-    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event2.json')
+def run_awsem_event_data_secondary_files(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event2.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data_processed_files(ff_keys):
-    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event3.json')
+def run_awsem_event_data_processed_files(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event3.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsf_event_data_processed_files2(ff_keys):
-    return get_event_file_for('start_run_awsf', ff_keys=ff_keys, event_file='event4.json')
+def run_awsem_event_data_processed_files2(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event4.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data(ff_keys):
-    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys)
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys)
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_pairsqc(ff_keys):
-    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys, event_file='event_pairsqc.json')
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_pairsqc.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_fastqc(ff_keys):
-    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys, event_file='event_fastqc.json')
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_metaonly_data(ff_keys):
-    return get_event_file_for('update_ffmeta_awsf', ff_keys=ff_keys, event_file='event_metadataonly.json')
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadataonly.json')
 
 
 def get_test_json(file_name):

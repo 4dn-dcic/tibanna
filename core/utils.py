@@ -15,7 +15,7 @@ import logging
 ###########################
 s3 = boto3.client('s3')
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
-WORKFLOW_NAME = 'run_awsem_new_pony'
+WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 LOG = logging.getLogger(__name__)
 
@@ -219,7 +219,7 @@ def find_file(name, zipstream):
             return zipped_filename
 
 
-def run_workflow(input_json, accession='', workflow='run_awsem_new_pony',
+def run_workflow(input_json, accession='', workflow='tibanna_pony',
                  env='fourfront-webdev'):
     '''
     accession is unique name that we be part of run id
