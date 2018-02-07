@@ -342,7 +342,7 @@ class Awsem(object):
             else:
                 out_type = None
             if out_type == 'Output processed file':
-                file_name = v.get('object_key').split('/')[-1]
+                file_name = v.split('/')[-1]
                 accession = file_name.split('.')[0].strip('/')
             else:
                 accession = None

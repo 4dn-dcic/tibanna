@@ -187,7 +187,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
-        return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys)
+        return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys, return_data=True)
 
 
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
@@ -217,9 +217,9 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                     # see if user supplied the output file already
                     # this is often the case for pseudo workflow runs (run externally)
                     # TODO move this down next to post of pf
-                    resp = proc_file_for_arg_name(user_supplied_output_files,
-                                                  arg.get('workflow_argument_name'),
-                                                  tibanna)
+                    pf, resp = proc_file_for_arg_name(user_supplied_output_files,
+                                                      arg.get('workflow_argument_name'),
+                                                      tibanna)
 
                     # if it wasn't supplied as output we have to create a new one
                     if not resp:
@@ -235,9 +235,9 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                             LOG.error("Failed to post Processed file metadata. %s\n" % e)
                             LOG.error("resp" + str(resp) + "\n")
                             raise e
-                        of['upload_key'] = resp.get('upload_key')
-                        of['value'] = resp.get('uuid')
-                        of['extra_files'] = resp.get('extra_files')
+                    of['upload_key'] = resp.get('upload_key')
+                    of['value'] = resp.get('uuid')
+                    of['extra_files'] = resp.get('extra_files')
                     of['format'] = arg.get('argument_format')
                     of['extension'] = fe_map.get(arg.get('argument_format'))
                     pf_meta.append(pf)
