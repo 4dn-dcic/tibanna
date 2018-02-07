@@ -1,9 +1,8 @@
-from core.update_ffmeta_awsf.service import handler, add_postrunjson_to_ff_meta
+from core.update_ffmeta_awsf.service import handler, get_postrunjson_url
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
-import uuid
 
 
 @valid_env

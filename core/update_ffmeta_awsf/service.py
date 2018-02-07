@@ -4,7 +4,6 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
-import json
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')

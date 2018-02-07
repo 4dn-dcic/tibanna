@@ -5,7 +5,6 @@ from uuid import uuid4
 import random
 
 from wranglertools import fdnDCIC
-from wranglertools import import_data as imp
 
 
 def convert_param(parameter_dict, vals_as_string=False):
