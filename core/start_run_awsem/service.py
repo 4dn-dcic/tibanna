@@ -181,13 +181,15 @@ def get_format_extension_map(tibanna):
 
 def proc_file_for_arg_name(output_files, arg_name, tibanna):
     if not output_files:
-        return
+        return None, None
     of = [output for output in output_files if output.get('workflow_argument_name') == arg_name]
     if of:
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
         return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys, return_data=True)
+    else:
+        return None, None
 
 
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
