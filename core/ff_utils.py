@@ -281,12 +281,6 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
     return response
 
 
-def create_attachment(att_file, ff_key):
-    att_obj = {'attachment': imp.attachment(att_file), 'award': '1U01CA200059-01', 'lab': '4dn-dcic-lab'}
-    att_resp = post_to_metadata(att_obj, 'document', key=ff_key)
-    return(att_resp.get('@graph')[0].get('uuid'))
-
-
 def delete_field(post_json, del_field, connection=None):
     """Does a put to delete the given field."""
     my_uuid = post_json.get("uuid")
