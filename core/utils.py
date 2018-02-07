@@ -429,8 +429,11 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                             except:
                                 print("failed to update workflow run with failed status")
                         raise e
-                    # else
-                    event['error'] = str(e)
-                    return event
+                    elif lambda_name == 'update_ffmeta_awsem':
+                        # for last step just pit out error
+                        raise e
+                    else:
+                        event['error'] = str(e)
+                        return event
         return wrapper
     return decorator
