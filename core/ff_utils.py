@@ -208,14 +208,18 @@ class ProcessedFileMetadata(object):
         return post_to_metadata(self.as_dict(), "file_processed", key=key)
 
     @classmethod
-    def get(cls, uuid, key):
+    def get(cls, uuid, key, return_data=False):
         data = get_metadata(uuid, key=key)
         if type(data) is not dict:
             raise Exception("unable to find object with unique key of %s" % uuid)
         if 'FileProcessed' not in data.get('@type', {}):
             raise Exception("you can only load ProcessedFiles into this object")
 
-        return ProcessedFileMetadata(**data)
+        pf = ProcessedFileMetadata(**data)
+        if return_data:
+            return pf, data
+        else:
+            return pf
 
 
 def fdn_connection(key='', connection=None):
