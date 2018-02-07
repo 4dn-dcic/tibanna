@@ -418,15 +418,16 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     if type(e) in ignored_exceptions:
                         # update ff_meta to error status
 
-                        try:
-                            tibanna_settings = event.get('_tibanna', {})
-                            tibanna = Tibanna(**tibanna_settings)
-                            ff_meta = create_ffmeta_awsem(
-                                app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-                            ff_meta.run_status = 'error'
-                            ff_meta.post(key=tibanna.ff_keys)
-                        except:
-                            print("failed to update workflow run with failed status")
+                        if type(e) is AWSEMJobErrorException:
+                            try:
+                                tibanna_settings = event.get('_tibanna', {})
+                                tibanna = Tibanna(**tibanna_settings)
+                                ff_meta = create_ffmeta_awsem(
+                                    app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
+                                ff_meta.run_status = 'error'
+                                ff_meta.post(key=tibanna.ff_keys)
+                            except:
+                                print("failed to update workflow run with failed status")
                         raise e
                     # else
                     event['error'] = str(e)
