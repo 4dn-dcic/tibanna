@@ -41,7 +41,7 @@ send_log_regularly(){
     du -h /data1/input/ >> $LOGFILE; \
     du -h /data1/tmp* >> $LOGFILE; \
     du -h /ata1/out >> $LOGFILE; \
-    aws s3 cp $LOGFILE s3://$LOGBUCKET" &>/dev/null; 
+    send_log &>/dev/null;"
 }  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
@@ -169,7 +169,7 @@ export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
 exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
-exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
+exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
 
