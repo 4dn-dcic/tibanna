@@ -416,6 +416,8 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     return function(event, context)
                 except Exception as e:
                     if type(e) in ignored_exceptions:
+                        # update ff_meta to error status
+
                         raise e
                     # else
                     event['error'] = str(e)
