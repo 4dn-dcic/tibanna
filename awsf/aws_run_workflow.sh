@@ -41,7 +41,7 @@ send_log_regularly(){
     du -h /data1/input/ >> $LOGFILE; \
     du -h /data1/tmp* >> $LOGFILE; \
     du -h /ata1/out >> $LOGFILE; \
-    send_log() &>/dev/null;
+    send_log &>/dev/null;"
 }  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
