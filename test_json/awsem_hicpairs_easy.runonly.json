@@ -1,0 +1,79 @@
+{
+  "app_name": "hi-c-processing-pairs",
+  "parameters": {
+    "ncores": 1,
+    "custom_res": "100000,200000,500000",
+    "min_res": 100000,
+    "maxmem": "8g"
+  },
+  "args": {
+    "app_name": "hi-c-processing-pairs",
+    "input_parameters": {
+      "custom_res": "100000,200000,500000",
+      "min_res": 100000,
+      "ncores": 1,
+      "maxmem": "8g"
+    },
+    "cwl_child_filenames": [
+      "merge-pairs.cwl",
+      "addfragtopairs.cwl",
+      "pairs2hic.cwl",
+      "cooler.cwl",
+      "cool2mcool.cwl",
+      "extract-mcool-normvector-for-juicebox.cwl",
+      "add-hic-normvector-to-mcool.cwl"
+    ],
+    "output_target": {
+      "mcool": "976823d0-7f03-4f45-8aea-a464188937fb/4DNFI2SQQGU7.cool",
+      "merged_pairs": "f874820f-9b27-4018-8f3a-dab35455edc0/4DNFISY6XCC2.pairs.gz",
+      "hic": "593bef3f-eb63-4ef9-a371-c9cff0a29662/4DNFISNLMQWI.hic",
+      "cooler_normvector": "normvector"
+    },
+    "secondary_output_target": {
+      "output_pairs": "f874820f-9b27-4018-8f3a-dab35455edc0/4DNFISY6XCC2.pairs.gz.px2"
+    },
+    "cwl_main_filename": "hi-c-processing-pairs.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "app_version": "dev",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/",
+    "input_files": {
+      "chrsizes": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      },
+      "input_pairs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "object_key": [
+          "e0b32fa9-a54e-4f62-86dc-039f60b34812/4DNFIIQN4FKO.pairs.gz"
+        ]
+      }
+    }
+  },
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "run_type": "hicpairs",
+      "run_id": "b1c18dee-d172-4b53-bf81-042a0124eeac",
+      "env": "fourfront-webdev",
+      "run_name": "hicpairs"
+    }
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "config": {
+    "ebs_size": 0,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": "",
+    "ebs_iops": 500,
+    "shutdown_min": "120",
+    "instance_type": "",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output"
+  }
+}
