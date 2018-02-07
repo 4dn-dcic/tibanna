@@ -1,4 +1,4 @@
-from core.update_ffmeta_awsf.service import handler, get_postrunjson_url
+from core.update_ffmeta_awsem.service import handler, get_postrunjson_url
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
