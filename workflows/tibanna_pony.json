@@ -4,17 +4,17 @@
   "States": {
         "StartRunAwsem": {
                 "Type": "Task",
-                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:start_run_awsf",
+                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:start_run_awswem",
                 "Next": "RunTaskAwsem"
         },
         "RunTaskAwsem": {
                 "Type": "Task",
-                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_awsf",
+                "Resource": "arn:aws:lambda:us-east-1:643366669028:function:run_task_awsem",
                 "Next": "CheckTaskAwsem"
         },
 		"CheckTaskAwsem": {
 				"Type": "Task",
-				"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_awsf",
+				"Resource": "arn:aws:lambda:us-east-1:643366669028:function:check_task_awsem",
 				"Retry": [
 				  {
 					"ErrorEquals": ["EC2StartingException"],
@@ -33,9 +33,8 @@
 		},
 		"UpdateFFMetaAwsem": {
 				"Type": "Task",
-				"Resource":"arn:aws:lambda:us-east-1:643366669028:function:update_ffmeta_awsf",
+				"Resource":"arn:aws:lambda:us-east-1:643366669028:function:update_ffmeta_awsem",
 				"End": true 
 		}
   }
 }
-

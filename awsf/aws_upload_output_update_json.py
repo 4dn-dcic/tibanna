@@ -26,7 +26,7 @@ def parse_command(logfile):
             if line.startswith('[job') and line.endswith('docker \\'):
                 in_command = True
             if in_command:
-                command.append(line)
+                command.append(line.strip('\\'))
                 if not line.endswith('\\'):
                     in_command = False
                     command_list.append(command)

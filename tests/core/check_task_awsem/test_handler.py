@@ -1,4 +1,4 @@
-from core.check_task_awsf import service
+from core.check_task_awsem import service
 from ..conftest import valid_env
 import pytest
 from core import utils
@@ -28,7 +28,7 @@ def job_started(check_task_input, s3):
 
 @valid_env
 @pytest.mark.webtest
-def test_check_task_awsf_fails_if_no_job_started(check_task_input, s3):
+def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     # ensure there is no job started
     jobid = check_task_input['jobid']
     job_started = "%s.job_started" % jobid
@@ -42,7 +42,7 @@ def test_check_task_awsf_fails_if_no_job_started(check_task_input, s3):
 
 @valid_env
 @pytest.mark.webtest
-def test_check_task_awsf_fails_if_job_error_found(check_task_input, s3, job_started):
+def test_check_task_awsem_fails_if_job_error_found(check_task_input, s3, job_started):
     jobid = check_task_input['jobid']
     job_error = "%s.error" % jobid
     s3.s3_put('', job_error)
@@ -56,7 +56,7 @@ def test_check_task_awsf_fails_if_job_error_found(check_task_input, s3, job_star
 
 @valid_env
 @pytest.mark.webtest
-def test_check_task_awsf_throws_exception_if_not_done(check_task_input, s3, job_started):
+def test_check_task_awsem_throws_exception_if_not_done(check_task_input, s3, job_started):
 
     with pytest.raises(service.StillRunningException) as excinfo:
         service.handler(check_task_input, '')
@@ -66,7 +66,7 @@ def test_check_task_awsf_throws_exception_if_not_done(check_task_input, s3, job_
 
 @valid_env
 @pytest.mark.webtest
-def test_check_task_awsf(check_task_input, s3, job_started):
+def test_check_task_awsem(check_task_input, s3, job_started):
     jobid = check_task_input['jobid']
     job_success = "%s.success" % jobid
     s3.s3_put('', job_success)

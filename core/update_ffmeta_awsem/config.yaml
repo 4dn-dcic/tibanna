@@ -1,6 +1,6 @@
 region: us-east-1
 
-function_name: update_ffmeta_awsf_dev
+function_name: update_ffmeta_awsem
 handler: service.handler
 role: lambda_full_s3
 description: update ffmeta data as per result of awsf workflow run 
