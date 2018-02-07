@@ -373,6 +373,7 @@ class Awsem(object):
         files = dict()
         files.update(self.input_files())
         files.update(self.output_files())
+        return files
 
     @property
     def inputfile_accessions(self):

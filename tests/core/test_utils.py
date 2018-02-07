@@ -3,12 +3,54 @@ from core.utils import Tibanna, ensure_list, powerup
 import pytest
 from conftest import valid_env
 import mock
-from core.utils import StillRunningException
+from core.utils import StillRunningException, AWSEMJobErrorException
 
 
 @pytest.fixture
 def sbg_project():
     return "4dn-dcic/dev"
+
+
+@pytest.fixture
+def ff_metadata():
+    return {
+      "app_name": "md5",
+      "_tibanna": {
+        "env": "fourfront-webprod",
+        "settings": {
+          "url": "",
+          "run_type": "md5",
+          "run_name": "md5_4DNFIIE1QWPL.fastq.gz",
+          "env": "fourfront-webprod",
+          "run_id": "4DNFIIE1QWPL.fastq.gz"
+        }
+      },
+      "ff_meta": {
+        "run_platform": "AWSEM",
+        "uuid": "71d4d068-1b17-4e99-8b59-cfc561266b45",
+        "parameters": [],
+        "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41",
+        "title": "md5 run 2018-02-06 21:41:42.750987",
+        "award": "1U01CA200059-01",
+        "awsem_job_id": "",
+        "awsem_app_name": "md5",
+        "lab": "4dn-dcic-lab",
+        "run_status": "started",
+        "output_files": [
+          {
+            "type": "Output report file",
+            "workflow_argument_name": "report"
+          }
+        ],
+        "input_files": [
+          {
+            "ordinal": 1,
+            "workflow_argument_name": "input_file",
+            "value": "b4f6807c-6f93-4b7d-91ff-ff95e801165c"
+          }
+        ]
+      }
+    }
 
 
 @pytest.fixture
@@ -243,15 +285,20 @@ def error_fun(event, context):
     raise Exception("lambda made a mess")
 
 
+@powerup('awsem_error_fun', mock.Mock())
+def awsem_error_fun(event, context):
+    raise AWSEMJobErrorException()
+
+
 def test_powerup_errors_are_dumped_into_return_dict():
     res = error_fun({'some': 'data'}, None)
     assert res['some'] == 'data'
     assert res['error'] == 'lambda made a mess'
 
 
-def test_powerup_skips_if_error_set_in_input_json():
-    res = wrapped_fun({'error': 'same like skip'}, None)
-    assert res['error'] == 'same like skip'
+def test_powerup_throws_if_error_set_in_input_json():
+    with pytest.raises(Exception):
+        wrapped_fun({'error': 'same like skip'}, None)
 
 
 def test_powerup_skips_when_appropriate():
@@ -275,3 +322,10 @@ def test_powerup_calls_metadata_only_func():
 
     assert exec_nfo
     assert 'metadata' in str(exec_nfo.value)
+
+
+def test_powerup_updates_workflow_run_metadata_on_ignored_exceptions(ff_metadata):
+    with mock.patch('core.ff_utils.WorkflowRunMetadata.post') as metadata_post:
+        with pytest.raises(AWSEMJobErrorException):
+            awsem_error_fun(ff_metadata, None)
+    assert metadata_post.was_called_once()

@@ -251,14 +251,16 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
 
 
 def get_metadata(obj_id, key='', connection=None, frame="object"):
+    # default to always get from database
+    url_addon = '&datastore=database'
     connection = fdn_connection(key, connection)
-    res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
+    res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon=url_addon)
     retry = 1
     sleep = [2, 4, 12]
     while 'error' in res.get('@type', []) and retry < 3:
         time.sleep(sleep[retry])
         retry += 1
-        res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
+        res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon=url_addon)
 
     return res
 
@@ -282,9 +284,11 @@ def post_to_metadata(post_item, schema_name, key='', connection=None):
 
 def delete_field(post_json, del_field, connection=None):
     """Does a put to delete the given field."""
+    # make sure we get from database
+    url_addon = '&datastore=database'
     my_uuid = post_json.get("uuid")
     my_accession = post_json.get("accesion")
-    raw_json = fdnDCIC.get_FDN(my_uuid, connection, frame="raw")
+    raw_json = fdnDCIC.get_FDN(my_uuid, connection, frame="raw", url_addon=url_addon)
     # check if the uuid is in the raw_json
     if not raw_json.get("uuid"):
         raw_json["uuid"] = my_uuid
