@@ -249,7 +249,7 @@ def real_handler(event, context):
 
 
 def get_postrunjson_url(event):
-    logbucket = event['config']['log_bucket']
+    logbucket = event['config'].get('log_bucket', 'tibanna-output')
     jobid = event['jobid']
     postrunjson_url = 'https://s3.amazonaws.com/' + logbucket + '/' + jobid + '.postrun.json'
     return postrunjson_url

@@ -28,7 +28,7 @@
       "object_key": "4DNFI823LSII.chrom.sizes"
     }
   ],
-  "config": {},
+  "config": {"log_bucket": "tibanna-output" },
   "workflow_uuid": "023bfb3e-9a8b-42b9-a9d4-216079526f68",
   "output_files": [
     {
