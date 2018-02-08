@@ -8,6 +8,9 @@
   "args": {},
   "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
   "metadata_only": true,
+  "wfr_user": "dcic:xiaopeng_zhu",
+  "wfr_lab": "david-gilbert-lab",
+  "wfr_award": "91b694c3-f4d7-4ddd-8278-16f94e15c1c5",
   "input_files": [
     {
       "workflow_argument_name": "input_bams",

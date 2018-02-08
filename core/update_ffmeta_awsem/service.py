@@ -239,8 +239,8 @@ def real_handler(event, context):
     # TODO: fix bugs with ff_meta mapping for output and input file
     try:
         ff_meta.post(key=tibanna.ff_keys)
-    except:
-        raise Exception("Failed to update run_status")
+    except Exception as e:
+        raise Exception("Failed to update run_status %s" % str(e))
 
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = pf_meta
@@ -257,7 +257,7 @@ def get_postrunjson_url(event):
     except Exception as e:
         # we don't need this for pseudo runs so just ignore
         if event.get('metadata_only'):
-            pass
+            return 'metadata_only run'
         else:
             raise e
 
