@@ -249,10 +249,17 @@ def real_handler(event, context):
 
 
 def get_postrunjson_url(event):
-    logbucket = event['config'].get('log_bucket', 'tibanna-output')
-    jobid = event['jobid']
-    postrunjson_url = 'https://s3.amazonaws.com/' + logbucket + '/' + jobid + '.postrun.json'
-    return postrunjson_url
+    try:
+        logbucket = event['config']['log_bucket']
+        jobid = event['jobid']
+        postrunjson_url = 'https://s3.amazonaws.com/' + logbucket + '/' + jobid + '.postrun.json'
+        return postrunjson_url
+    except Exception as e:
+        # we don't need this for pseudo runs so just ignore
+        if event.get('metadata_only'):
+            pass
+        else:
+            raise e
 
 
 # Cardinal knowledge of all workflow updaters
