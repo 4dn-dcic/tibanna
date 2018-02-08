@@ -140,7 +140,6 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
     Note: --watch requires pytest-xdist to be installed.
     """
     from os import path
-
     import pytest
     if not no_flake:
         flake(ctx)
@@ -150,6 +149,11 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
     args.append(extra)
     if watch:
         args.append('-f')
+    else:
+        args.append('--cov-report')
+        args.append('xml')
+        args.append('--cov-report')
+        args.append('html')
     if last_failing:
         args.append('--lf')
     retcode = pytest.main(args)

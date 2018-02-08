@@ -121,7 +121,9 @@ def real_handler(event, context):
                                                     'object_key': extra_file_key}})
 
     # processed file metadata
-    output_files, pf_meta = handle_processed_files(workflow_info, tibanna, pf_source_experiments_dict.keys())
+    output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
+                                                   pf_source_experiments_dict.keys(),
+                                                   user_supplied_output_files=event.get('output_files'))
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
                                            run_url=tibanna.settings.get('url', ''),
@@ -181,6 +183,7 @@ def get_format_extension_map(tibanna):
 
 def proc_file_for_arg_name(output_files, arg_name, tibanna):
     if not output_files:
+        LOG.info("proc_file_for_arg_name no ouput_files specified")
         return None, None
     of = [output for output in output_files if output.get('workflow_argument_name') == arg_name]
     if of:
@@ -189,6 +192,10 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         of = of[0]
         return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys, return_data=True)
     else:
+        LOG.info("no output_files found in input_json matching arg_name")
+        LOG.info("output_files: %s" % str(output_files))
+        LOG.info("arg_name: %s" % str(arg_name))
+        LOG.info("tibanna is %s" % str(tibanna))
         return None, None
 
 
@@ -222,9 +229,17 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                     pf, resp = proc_file_for_arg_name(user_supplied_output_files,
                                                       arg.get('workflow_argument_name'),
                                                       tibanna)
+                    if pf:
+                        LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                                 % (str(pf.__dict__), str(resp)))
+                    else:
+                        LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                                 % (str(pf), str(resp)))
 
                     # if it wasn't supplied as output we have to create a new one
                     if not resp:
+                        LOG.info("creating new processedfile")
+                        assert user_supplied_output_files is None
                         pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
                                                             extra_files=extra_files,
                                                             source_experiments=pf_source_experiments)

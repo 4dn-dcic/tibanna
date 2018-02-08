@@ -64,9 +64,18 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
         assert pf.__dict__ == proc_file_in_webdev
 
 
-def test_pseudo_run(run_task_awsem_psuedo_workflow_event_data):
-    res = handler(run_task_awsem_psuedo_workflow_event_data, '')
+def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
+    res = handler(run_task_awsem_pseudo_workflow_event_data, '')
     assert(res)
+    # check pf_meta
+    user_supplied_of = [of['uuid'] for of in
+                        run_task_awsem_pseudo_workflow_event_data['output_files']]
+
+    for pf in res['pf_meta']:
+        assert pf['uuid'] in user_supplied_of
+
+    for of in res['ff_meta']['output_files']:
+        assert of['value'] in user_supplied_of
 
 
 @valid_env
