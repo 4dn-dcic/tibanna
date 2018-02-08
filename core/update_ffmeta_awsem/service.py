@@ -257,7 +257,7 @@ def get_postrunjson_url(event):
     except Exception as e:
         # we don't need this for pseudo runs so just ignore
         if event.get('metadata_only'):
-            return 'metadata_only run'
+            return ''
         else:
             raise e
 
