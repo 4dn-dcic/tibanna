@@ -72,53 +72,7 @@ def real_handler(event, context):
     fe_map = get_format_extension_map(tibanna)
     pf_source_experiments_dict = dict()
     for input_file in input_file_list:
-        if isinstance(input_file['uuid'], unicode):
-            input_file['uuid'] = input_file['uuid'].encode('utf-8')
-        if isinstance(input_file['object_key'], unicode):
-            input_file['object_key'] = input_file['object_key'].encode('utf-8')
-        if isinstance(input_file['uuid'], str) and isinstance(input_file['object_key'], str):
-            object_key = input_file['uuid'] + '/' + input_file['object_key']
-        elif (isinstance(input_file['uuid'], list) and
-              isinstance(input_file['object_key'], list) and
-              len(input_file['uuid']) == len(input_file['object_key'])):
-
-            object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
-        else:
-            raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " +
-                            "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']),
-                                                         len(input_file['uuid']), len(input_file['object_key'])))
-        args['input_files'].update({input_file['workflow_argument_name']: {
-                                    'bucket_name': input_file['bucket_name'],
-                                    'object_key': object_key}})
-
-        if isinstance(input_file['uuid'], list):
-            inf_uuids = input_file['uuid']
-        else:
-            inf_uuids = [input_file['uuid']]
-        for inf_uuid in inf_uuids:
-            infile_meta = ff_utils.get_metadata(inf_uuid, key=tibanna.ff_keys)
-            if infile_meta.get('experiments'):
-                for exp in infile_meta.get('experiments'):
-                    exp_uuid = ff_utils.get_metadata(exp, key=tibanna.ff_keys).get('uuid')
-                    pf_source_experiments_dict.update({exp_uuid: 1})
-            if infile_meta.get('source_experiments'):
-                pf_source_experiments_dict.update({_: 1 for _ in infile_meta.get('source_experiments')})
-            if infile_meta.get('extra_files'):
-                extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
-                extra_file_extension = fe_map.get(extra_file_format)
-                infile_format = infile_meta.get('file_format')
-                infile_extension = fe_map.get(infile_format)
-                extra_file_key = object_key.replace(infile_extension, extra_file_extension)
-                if input_file['workflow_argument_name'] in args['secondary_files']:
-                    if isinstance(args['secondary_files']['object_key'], list):
-                        args['secondary_files']['object_key'].add(extra_file_key)
-                    else:
-                        existing_extra_file_key = args['secondary_files']['object_key']
-                        args['secondary_files']['object_key'] = [existing_extra_file_key, extra_file_key]
-                else:
-                    args['secondary_files'].update({input_file['workflow_argument_name']: {
-                                                    'bucket_name': input_file['bucket_name'],
-                                                    'object_key': extra_file_key}})
+        process_input_file_info(input_file, tibanna.ff_keys, args)
 
     # processed file metadata
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
@@ -169,6 +123,58 @@ def real_handler(event, context):
                   "args": args
                   })
     return(event)
+
+
+def process_input_file_info(input_file, ff_keys, args):
+    if isinstance(input_file['uuid'], unicode):
+        input_file['uuid'] = input_file['uuid'].encode('utf-8')
+    if isinstance(input_file['object_key'], unicode):
+        input_file['object_key'] = input_file['object_key'].encode('utf-8')
+    if isinstance(input_file['uuid'], str) and isinstance(input_file['object_key'], str):
+        object_key = input_file['uuid'] + '/' + input_file['object_key']
+    elif (isinstance(input_file['uuid'], list) and
+          isinstance(input_file['object_key'], list) and
+          len(input_file['uuid']) == len(input_file['object_key'])):
+
+        object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
+    else:
+        raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " +
+                        "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']),
+                                                     len(input_file['uuid']), len(input_file['object_key'])))
+    args['input_files'].update({input_file['workflow_argument_name']: {
+                                'bucket_name': input_file['bucket_name'],
+                                'object_key': object_key}})
+
+    if isinstance(input_file['uuid'], list):
+        inf_uuids = input_file['uuid']
+        inf_object_keys = input_file['object_key']
+    else:
+        inf_uuids = [input_file['uuid']]
+        inf_object_keys = [input_file['object_key']]
+    for i, inf_uuid in enumerate(inf_uuids):
+        infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
+        if infile_meta.get('experiments'):
+            for exp in infile_meta.get('experiments'):
+                exp_uuid = ff_utils.get_metadata(exp, key=ff_keys).get('uuid')
+                pf_source_experiments_dict.update({exp_uuid: 1})
+        if infile_meta.get('source_experiments'):
+            pf_source_experiments_dict.update({_: 1 for _ in infile_meta.get('source_experiments')})
+        if infile_meta.get('extra_files'):
+            extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
+            extra_file_extension = fe_map.get(extra_file_format)
+            infile_format = infile_meta.get('file_format')
+            infile_extension = fe_map.get(infile_format)
+            extra_file_key = inf_object_keys[i].replace(infile_extension, extra_file_extension)
+            if input_file['workflow_argument_name'] in args['secondary_files']:
+                if isinstance(args['secondary_files']['object_key'], list):
+                    args['secondary_files']['object_key'].add(extra_file_key)
+                else:
+                    existing_extra_file_key = args['secondary_files']['object_key']
+                    args['secondary_files']['object_key'] = [existing_extra_file_key, extra_file_key]
+            else:
+                args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                                'bucket_name': input_file['bucket_name'],
+                                                'object_key': extra_file_key}})
 
 
 def get_format_extension_map(tibanna):
