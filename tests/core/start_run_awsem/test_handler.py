@@ -174,14 +174,15 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
         else:
             assert 'extra_files' not in pdict
 
+
 @valid_env
 @pytest.mark.webtest
 def test_process_input_file_info(run_awsem_event_data):
-    input_file=  {
+    input_file = {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571","d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
-        "object_key": ["4DNFI25JXLLI.pairs.gz","4DNFI25JXLLI.pairs.gz"]
+        "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
+        "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
     }
     args = {'input_files': {}}
     data = run_awsem_event_data
@@ -202,8 +203,8 @@ def test_get_source_experiment(run_awsem_event_data):
     input_file = {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571","d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
-        "object_key": ["4DNFI25JXLLI.pairs.gz","4DNFI25JXLLI.pairs.gz"]
+        "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
+        "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
     }
     data = run_awsem_event_data
     tibanna_settings = data.get('_tibanna', {})
