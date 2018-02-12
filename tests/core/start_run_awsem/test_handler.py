@@ -78,6 +78,30 @@ def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
         assert of['value'] in user_supplied_of
 
 
+def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
+    wfr_meta = {'description': 'test-descrip',
+                'awsem_job_id': 'test-pseudo-run',
+                }
+
+    run_task_awsem_pseudo_workflow_event_data['wfr_meta'] = wfr_meta
+    res = handler(run_task_awsem_pseudo_workflow_event_data, '')
+    assert(res)
+
+    # did we set additional fields correctly
+    for k, v in wfr_meta.iteritems():
+        assert res['ff_meta'][k] == v
+
+    # just to be extra safe, also check pfmeta
+    user_supplied_of = [of['uuid'] for of in
+                        run_task_awsem_pseudo_workflow_event_data['output_files']]
+
+    for pf in res['pf_meta']:
+        assert pf['uuid'] in user_supplied_of
+
+    for of in res['ff_meta']['output_files']:
+        assert of['value'] in user_supplied_of
+
+
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_files2):

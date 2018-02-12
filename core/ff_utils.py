@@ -35,7 +35,8 @@ def convert_param(parameter_dict, vals_as_string=False):
 def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', tag=None,
-                        aliases=None, awsem_postrun_json=None, submitted_by=None, **kwargs):
+                        aliases=None, awsem_postrun_json=None, submitted_by=None, extra_meta=None,
+                        **kwargs):
 
     input_files = [] if input_files is None else input_files
     parameters = [] if parameters is None else parameters
@@ -55,7 +56,7 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None, parameters=None, t
                                lab=lab, run_platform=run_platform, run_url=run_url,
                                title=title, output_files=output_files, run_status=run_status,
                                aliases=aliases, awsem_postrun_json=awsem_postrun_json,
-                               submitted_by=submitted_by)
+                               submitted_by=submitted_by, extra_meta=extra_meta)
 
 
 def create_ffmeta(sbg, workflow, input_files=None, parameters=None, title=None, sbg_task_id=None,
@@ -113,7 +114,7 @@ class WorkflowRunMetadata(object):
                  run_platform='SBG', title=None, output_files=None,
                  run_status='started', awsem_job_id=None,
                  run_url='', aliases=None, awsem_postrun_json=None,
-                 submitted_by=None, **kwargs):
+                 submitted_by=None, extra_meta=None, **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
@@ -169,6 +170,10 @@ class WorkflowRunMetadata(object):
             self.awsem_postrun_json = awsem_postrun_json
         if submitted_by:
             self.submitted_by = submitted_by
+
+        if extra_meta:
+            for k, v in extra_meta.iteritems():
+                self.__dict__[k] = v
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
