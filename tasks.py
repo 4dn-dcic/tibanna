@@ -49,6 +49,7 @@ def get_all_core_lambdas():
             'run_task_awsem',
             'check_task_awsem',
             'update_ffmeta_awsem',
+            'run_workflow',
             ]
 
 
