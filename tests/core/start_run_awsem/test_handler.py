@@ -232,12 +232,17 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
         "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
         "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
     }
-    args = {'input_files': {'input_pairs': {'bucket': 'elasticbeanstalk-fourfront-webdev-wfoutput',
-                                            'object_key': ['d2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz',
-                                                           'd2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz'] 
-                                           }
-                           }
-           }
+    args = {
+        'input_files': {
+            'input_pairs': {
+                'bucket': 'elasticbeanstalk-fourfront-webdev-wfoutput',
+                'object_key': [
+                    'd2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz',
+                    'd2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz'
+                ]
+            }
+        }
+    }
     data = run_awsem_event_data
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
