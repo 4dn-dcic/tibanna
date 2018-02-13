@@ -1,7 +1,7 @@
 {
     "app_name": "hi-c-processing-pairs",
     "parameters": {
-      "ncores": 1,
+      "nthreads": 1,
       "custom_res": "1000,100000,200000,500000",
       "min_res": 1000,
       "maxmem": "64g"
