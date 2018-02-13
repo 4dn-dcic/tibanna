@@ -613,7 +613,7 @@ def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028
     """ killing all the running jobs"""
     import boto3
     client = boto3.client('stepfunctions')
-    stateMachineArn ='arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
+    stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
     for exc in sflist['executions']:
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")

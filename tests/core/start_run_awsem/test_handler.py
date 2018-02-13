@@ -134,7 +134,7 @@ def test_get_format_extension_map(run_awsem_event_data):
                       ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
-    fe_map = get_format_extension_map(tibanna)
+    fe_map = get_format_extension_map(tibanna.ff_keys)
     assert(fe_map)
     assert 'pairs' in fe_map.keys()
 
@@ -184,7 +184,7 @@ def test_process_input_file_info(run_awsem_event_data):
         "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
         "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
     }
-    args = {'input_files': [{}, {}]}
+    args = {'input_files': {"some_input": {}, "some_other_input": {}}}
     data = run_awsem_event_data
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
