@@ -37,14 +37,22 @@ invoke rerun --exec-arn=<stepfunctionrun_arn> [--workflow=<stepfunctionname>]
 ```
 To rerun many jobs that failed after a certain time point
 ```
-invoke rerun_many [--workflow=<stepfunctionname>] [--stopdate=<stopdate>] [--stophour=<stophour>] [--stopminute=<stopminute>] [--sleeptime=<sleeptime>] [--offset=<offset>] [--status=<status>]
-# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
+invoke rerun_many [--workflow=<stepfunctionname>] \
+                  [--stopdate=<stopdate>] \
+                  [--stophour=<stophour>] \
+                  [--stopminute=<stopminute>] \
+                  [--sleeptime=<sleeptime>] \
+                  [--offset=<offset>] \
+                  [--status=<status>]
+# <stepfunctionname> may be one of tibanna_pony (default), tibanna_unicorn or tibanna_pony-dev
 # <stopdate> e.g. '14Feb2018'
 # <stophour> e.g. 14 (24-hour format, EST by default, the time zone can be changed using --offset)
 # <stopminute> e.g. 30 (default 0)
 # <sleeptime> seconds between reruns (eefault 5)
 # <offset> offset for hour (for a different time zone) (default 5, consistent with EST)
 # <status> default 'FAILED', to collect and rerun only failed jobs
+
+# example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
 ```
 To kill all currently running jobs (killing only step functions not the EC2 instances)
 ```
