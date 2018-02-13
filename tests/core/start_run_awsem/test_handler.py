@@ -184,7 +184,7 @@ def test_process_input_file_info(run_awsem_event_data):
         "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
         "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
     }
-    args = {'input_files': {}}
+    args = {'input_files': [{}, {}]}
     data = run_awsem_event_data
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
@@ -194,6 +194,7 @@ def test_process_input_file_info(run_awsem_event_data):
                       ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     process_input_file_info(input_file, tibanna.ff_keys, args)
+    assert len(args['input_files']) == 3
     assert 'secondary_files' in args
 
 

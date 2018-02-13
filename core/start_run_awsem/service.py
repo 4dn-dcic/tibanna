@@ -123,9 +123,10 @@ def real_handler(event, context):
     return(event)
 
 
-def process_input_file_info(input_file, ff_keys, args):
-    args['input_files'] = dict()
-    args['secondary_files'] = dict()
+def process_input_file_info(input_file, ff_keys, args=None):
+    if not args:
+        args['input_files'] = dict()
+        args['secondary_files'] = dict()
     fe_map = get_format_extension_map(ff_keys)
     if isinstance(input_file['uuid'], unicode):
         input_file['uuid'] = input_file['uuid'].encode('utf-8')
