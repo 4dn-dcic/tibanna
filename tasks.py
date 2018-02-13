@@ -15,6 +15,8 @@ from core.utils import _tibanna, s3Utils
 from time import sleep
 from contextlib import contextmanager
 import aws_lambda
+import datetime
+import time
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -598,9 +600,6 @@ def prep_awsem_template(filename, webprod=False, tag=None,
 @task
 def rerun(ctx, exec_arn, workflow='tibanna_pony'):
     """ rerun a specific job"""
-    import boto3
-    import json
-    from core.utils import run_workflow as _run_workflow
     client = boto3.client('stepfunctions')
     res = client.describe_execution(executionArn=exec_arn)
     awsem_template = json.loads(res['input'])
@@ -611,9 +610,32 @@ def rerun(ctx, exec_arn, workflow='tibanna_pony'):
 @task
 def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
     """ killing all the running jobs"""
-    import boto3
     client = boto3.client('stepfunctions')
     stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
     for exc in sflist['executions']:
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
+
+
+@task
+def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13, stopminute=0, offset=5, sleeptime=5, status='FAILED'):
+    """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
+    By default, stophour is in EST. This can be changed by setting a different offset (default 5)
+    Sleeptime is sleep time in seconds between rerun submissions.
+    By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
+    examples)
+    rerun_many('tibanna_pony-dev')
+    rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
+    """
+    stophour = stophour + offset 
+    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute), '%d%b%Y %H:%M')
+    client = boto3.client('stepfunctions')
+    stateMachineArn = 'arn:aws:states:us-east-1:643366669028:stateMachine:' + workflow
+    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
+    k=0
+    for exc in sflist['executions']:
+       if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
+            k = k + 1
+            rerun(ctx, exc['executionArn'], workflow=workflow)
+            time.sleep(sleeptime)
+
