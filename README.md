@@ -53,6 +53,7 @@ invoke rerun_many [--workflow=<stepfunctionname>] \
 # <status> default 'FAILED', to collect and rerun only failed jobs
 
 # example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
+# This example will rerun all failed jobs of tibanna_pony step function that failed after 3pm EST on Feb 14 2018.
 ```
 To kill all currently running jobs (killing only step functions not the EC2 instances)
 ```
