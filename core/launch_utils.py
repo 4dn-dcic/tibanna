@@ -148,8 +148,8 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, fies_for_ep):
 
 
 def create_awsem_json_for_workflowrun(input_entry, awsem_template_file, workflow_argname, 
-                          awsem_tag=None, parameters_to_override=None, parameters_to_delete=None):
-    awsem_template = prep_awsem_template(awsem_template_file, True, tag=awsem_tag)
+                          awsem_tag=None, parameters_to_override=None, parameters_to_delete=None, webprod=False):
+    awsem_template = prep_awsem_template(awsem_template_file, webprod, tag=awsem_tag)
     for inb in awsem_template['input_files']:
         if inb['workflow_argument_name'] == workflow_argname:
             inb['uuid'] = input_entry['uuid']
@@ -165,25 +165,27 @@ def create_awsem_json_for_workflowrun(input_entry, awsem_template_file, workflow
 
 
 
-def  collect_pairs_files_to_run_hi_c_processing_pairs():
+def collect_pairs_files_to_run_hi_c_processing_pairs(
+        keypairs_file,
+        webprod=False,
+        prev_workflow_title = 'Hi-C%20Post-alignment%20Processing',
+        prev_output_argument_name = 'filtered_pairs',
+        awsem_template_json = 'awsem_hicpairs_easy.json',
+        input_argument_name = 'input_pairs',
+        awsem_tag = "0.2.5",
+        parameters_to_override = {'maxmem' : '32g'},
+        parameters_to_delete = ['custom_res', 'min_res'],
+        stepfunction_workflow='tibanna_pony-dev'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
     It will become more generalized soon.
     """
-    prev_workflow_title = 'Hi-C%20Post-alignment%20Processing'
-    prev_output_argument_name = 'filtered_pairs'
-    keypairs_file = keypairs_file_prod
-    awsem_template_json = 'awsem_hicpairs_easy.json'
-    input_argument_name = 'input_pairs'
-    awsem_tag = "0.2.5"
-    parameters_to_override = {'maxmem' : '32g'}
-    parameters_to_delete = ['custom_res', 'min_res']
-    stepfunction_workflow='tibanna_pony-dev'
     
     input_files_list = prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_output_argument_name, keypairs_file)
     for entry in input_files_list:
         awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name, 
                      awsem_tag=awsem_tag, parameters_to_override=parameters_to_override, 
-                     parameters_to_delete=parameters_to_delete)
+                     parameters_to_delete=parameters_to_delete, webprod=webprod)
         resp = _run_workflow(awsem_json, workflow=stepfunction_workflow)
         print(resp)
+
