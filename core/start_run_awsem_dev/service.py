@@ -172,12 +172,12 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
             infile_key = args['input_files'][argname]['object_key'][i]
             extra_file_key.append(infile_key.replace(infile_extension, extra_file_extension))
 
-    if len(extra_file_key) == 1:
-        extra_file_key = extra_file_key[0]
-
-    args['secondary_files'].update({input_file['workflow_argument_name']: {
-                                    'bucket_name': input_file['bucket_name'],
-                                    'object_key': extra_file_key}})
+    if len(extra_file_key) > 0:
+        if len(extra_file_key) == 1:
+            extra_file_key = extra_file_key[0]
+        args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                        'bucket_name': input_file['bucket_name'],
+                                        'object_key': extra_file_key}})
 
 
 def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=None):
