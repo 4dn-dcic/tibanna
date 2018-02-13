@@ -4,7 +4,7 @@ import json
 from core.utils import run_workflow as _run_workflow
 import datetime
 import time
-
+import os
 
 def prep_awsem_template(filename, webprod=False, tag=None,
                         Tibanna_dir=os.path.dirname(os.path.realpath(__file__))):

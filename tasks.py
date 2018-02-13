@@ -12,9 +12,9 @@ import shutil
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
-from launch.utils import rerun as _rerun
-from launch.utils import rerun_many as _rerun_many
-from launch.utils import kill_all as _kill_all
+from core.launch_utils import rerun as _rerun
+from core.launch_utils import rerun_many as _rerun_many
+from core.launch_utils import kill_all as _kill_all
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
