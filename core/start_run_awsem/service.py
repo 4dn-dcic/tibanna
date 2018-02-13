@@ -163,7 +163,9 @@ def process_input_file_info(input_file, ff_keys, args):
             args['secondary_files'] = add_secondary_files_to_args(extra_file_key, input_file, args['secondary_files'])
 
 
-def add_secondary_files_to_args(extra_file_key, input_file, secondary_files_dict=dict()):
+def add_secondary_files_to_args(extra_file_key, input_file, secondary_files_dict=None):
+    if not secondary_files_dict:
+        secondary_files_dict = dict()
     if input_file['workflow_argument_name'] in secondary_files_dict:
         sdict_inf = secondary_files_dict[input_file['workflow_argument_name']]
         if isinstance(sdict_inf['object_key'], list):
@@ -178,12 +180,14 @@ def add_secondary_files_to_args(extra_file_key, input_file, secondary_files_dict
     return secondary_files_dict
 
 
-def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=dict()):
+def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=None):
+    if not pf_source_experiments_dict:
+        pf_source_experiments_dict = dict()
     if isinstance(input_file['uuid'], list):
         inf_uuids = input_file['uuid']
     else:
         inf_uuids = [input_file['uuid']]
-    for i, inf_uuid in enumerate(inf_uuids):
+    for inf_uuid in inf_uuids:
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('experiments'):
             for exp in infile_meta.get('experiments'):
