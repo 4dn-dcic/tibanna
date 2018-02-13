@@ -82,7 +82,8 @@ def real_handler(event, context):
               isinstance(input_file['object_key'], list) and
               len(input_file['uuid']) == len(input_file['object_key'])):
 
-            object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
+            object_key = "".join([a + '/' + b for a, b in zip(input_file['uuid'],
+                                                              input_file['object_key'])])
         else:
             raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " +
                             "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']),
