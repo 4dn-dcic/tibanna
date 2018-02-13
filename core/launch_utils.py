@@ -39,6 +39,15 @@ def get_species_from_expr(expr):
     return(str(fdnDCIC.get_FDN(indv, connection)['organism']))
 
 
+def get_digestion_enzyme_for_expr(expr):
+    """get species for a given experiment
+    Returns enzyme name (e.g. HindIII)
+    """
+    exp_resp = fdnDCIC.get_FDN(expr, connection)
+    re = exp_resp['digestion_enzyme'].replace('/enzymes/','').replace('/','')
+    return(re)
+
+
 def rerun(exec_arn, workflow='tibanna_pony'):
     """rerun a specific job"""
     client = boto3.client('stepfunctions')
@@ -68,7 +77,7 @@ def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     for exc in sflist['executions']:
         if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
-            rerun(ctx, exc['executionArn'], workflow=workflow)
+            rerun(exc['executionArn'], workflow=workflow)
             time.sleep(sleeptime)
 
 
@@ -91,7 +100,7 @@ def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_outp
     return(input_files_list)
 
 
-def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name):
+def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, addon=None):
     """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)"""
     files_for_ep = dict()
     for entry in wfr_search_response['@graph']:
@@ -104,7 +113,11 @@ def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name):
         sep_dict = fdnDCIC.get_FDN(sep, connection)
         sep_id = sep_dict['@id']
         files_for_ep[sep_id] = { 'uuid': pairs_dict['uuid'], 'accession': pairs_dict['accession'],
-                                                        'object_key': pairs_dict['upload_key'].replace(pairs_dict['uuid']+'/','') }
+                                 'object_key': pairs_dict['upload_key'].replace(pairs_dict['uuid']+'/','') }
+        if addon:
+            if 're' in addon:
+                files_for_ep[sep_id]['RE'] = get_digestion_enzyme_for_expr(sep)
+
     return(files_for_ep)
 
 
@@ -167,7 +180,7 @@ def create_awsem_json_for_workflowrun(input_entry, awsem_template_file, workflow
 
 def collect_pairs_files_to_run_hi_c_processing_pairs(
         keypairs_file,
-        webprod=False,
+        webprod=True,
         prev_workflow_title = 'Hi-C%20Post-alignment%20Processing',
         prev_output_argument_name = 'filtered_pairs',
         awsem_template_json = 'awsem_hicpairs_easy.json',
@@ -189,3 +202,27 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         resp = _run_workflow(awsem_json, workflow=stepfunction_workflow)
         print(resp)
 
+
+def collect_pairs_files_to_run_pairsqc(
+        keypairs_file,
+        webprod=True,
+        prev_workflow_title = 'Hi-C%20Post-alignment%20Processing',
+        prev_output_argument_name = 'filtered_pairs',
+        awsem_template_json = 'awsem_pairsqc.json',
+        input_argument_name = 'input_pairs',
+        awsem_tag = "0.2.5",
+        parameters_to_delete = None,
+        stepfunction_workflow='tibanna_pony'):
+    """Very high-level function for collecting all legit
+    pairs files and run hi-c-processing-pairs.
+    It will become more generalized soon.
+    """
+    re_cutter = {'HindIII': '6', 'DpnII': '4', 'MboI': '4', 'NcoI': '6'}
+    input_files_list = prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_output_argument_name, keypairs_file)
+    for entry in input_files_list:
+        parameters_to_override = {'sample_name' : entry['accession'], 'enzyme': re_cutter[entry['RE']},
+        awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name, 
+                     awsem_tag=awsem_tag, parameters_to_override=parameters_to_override, 
+                     parameters_to_delete=parameters_to_delete, webprod=webprod)
+        resp = _run_workflow(awsem_json, workflow=stepfunction_workflow)
+        print(resp)
