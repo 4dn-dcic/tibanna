@@ -97,3 +97,7 @@ logs/
 .chalice/
 
 notebooks/Single use scripts/Jsons/*
+
+# locally installed packages
+src/benchmark
+src/python-lambda
