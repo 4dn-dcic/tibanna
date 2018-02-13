@@ -569,3 +569,51 @@ def notebook(ctx):
         print("If notebook does not open on your chorme automagically, try adding this to your bash_profie")
         print("export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome")
         print("*for MacOS and Chrome only")
+
+
+def clear_awsem_template(awsem_template):
+    if 'response' in awsem_template['_tibanna']:
+        del(awsem_template['_tibanna']['response'])
+    if 'run_name' in awsem_template['_tibanna'] and len(awsem_template['_tibanna']['run_name']) > 50:
+        awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
+
+
+def prep_awsem_template(filename, webprod=False, tag=None,
+                        Tibanna_dir=os.path.dirname(os.path.realpath(__file__))):
+    template = Tibanna_dir + '/test_json/' + filename
+    with open(template, 'r') as f:
+        awsem_template = json.load(f)
+    # webdev ->webprod
+    if webprod:
+        awsem_template['output_bucket'] = 'elasticbeanstalk-fourfront-webprod-wfoutput'
+        awsem_template['_tibanna']['env'] = 'fourfront-webprod'
+        for inb in awsem_template['input_files']:
+            inb['bucket_name'] = inb['bucket_name'].replace('webdev', 'webprod')
+    if tag:
+        awsem_template['tag'] = tag
+        clear_awsem_template(awsem_template)
+    return awsem_template
+
+
+@task
+def rerun(ctx, exec_arn, workflow='tibanna_pony'):
+    """ rerun a specific job"""
+    import boto3
+    import json
+    from core.utils import run_workflow as _run_workflow
+    client = boto3.client('stepfunctions')
+    res = client.describe_execution(executionArn=exec_arn)
+    awsem_template = json.loads(res['input'])
+    clear_awsem_template(awsem_template)
+    return(_run_workflow(awsem_template, workflow=workflow))
+
+
+@task
+def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
+    """ killing all the running jobs"""
+    import boto3
+    client = boto3.client('stepfunctions')
+    stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
+    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+    for exc in sflist['executions']:
+        client.stop_execution(executionArn=exc['executionArn'], error="Aborted")

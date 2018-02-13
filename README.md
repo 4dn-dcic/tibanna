@@ -15,6 +15,32 @@ In addition, Tibanna offers multi-layer real-time monitoring to ensure the workf
 
 Tibanna has been evolving: originally developed for Desktop workflow submitter that launches an autonomous VM, then upgraded to a Chalice/Lambda/API-Gateway-based system that works with the Seven Bridges Genomics (SBG) platform, and it currently consists of the original modules integrated with AWS Step functions for upstream scheduling and monitoring, without SBG.
 
+## Commands
+To run workflow
+```
+invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
+# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
+```
+To deploy lambda functions
+```
+# individual lambda functions
+invoke deploy_core <lambda_name>
+# example <lambda_name> : run_task_awsem
+
+# all lambda functions
+invoke deploy_core all
+```
+To rerun a failed job with the same input json
+```
+invoke rerun --exec-arn=<stepfunctionrun_arn> [--workflow=<stepfunctionname>]
+# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
+```
+To kill all currently running jobs (killing only step functions not the EC2 instances)
+```
+invoke kill_all [--workflow=<stepfunctionname>]
+```
+
+
 ## Directory Structure
 
 ## core

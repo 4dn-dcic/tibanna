@@ -36,7 +36,7 @@
     "secondary_files": {},
     "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
     "app_version": "dev",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/docker-4dn-hic/v42/cwl/",
     "input_files": {
       "chromsizes": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
