@@ -578,10 +578,11 @@ def clear_awsem_template(awsem_template):
         awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
 
 
-def prep_awsem_template(filename, webprod=False, tag=None):
+def prep_awsem_template(filename, webprod=False, tag=None,
+                        Tibanna_dir=os.path.dirname(os.path.realpath(__file__))):
     template = Tibanna_dir + '/test_json/' + filename
     with open(template, 'r') as f:
-         awsem_template = json.load(f)
+        awsem_template = json.load(f)
     # webdev ->webprod
     if webprod:
         awsem_template['output_bucket'] = 'elasticbeanstalk-fourfront-webprod-wfoutput'
@@ -612,7 +613,7 @@ def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028
     """ killing all the running jobs"""
     import boto3
     client = boto3.client('stepfunctions')
-    sflist = client.list_executions(stateMachineArn='arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow, statusFilter='RUNNING')
+    stateMachineArn ='arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
+    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
     for exc in sflist['executions']:
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
-
