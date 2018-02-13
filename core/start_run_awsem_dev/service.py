@@ -124,9 +124,10 @@ def real_handler(event, context):
 
 
 def process_input_file_info(input_file, ff_keys, args):
-    args['input_files'] = dict()
-    args['secondary_files'] = dict()
-    fe_map = get_format_extension_map(ff_keys)
+    if not args or 'input_files' not in args:
+        args['input_files'] = dict()
+    if not args or 'secondary_files' not in args:
+        args['secondary_files'] = dict()
     if isinstance(input_file['uuid'], unicode):
         input_file['uuid'] = input_file['uuid'].encode('utf-8')
     if isinstance(input_file['object_key'], unicode):
@@ -145,13 +146,22 @@ def process_input_file_info(input_file, ff_keys, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'object_key': object_key}})
+    add_secondary_files_to_args(input_file, ff_keys, args)
 
+
+def add_secondary_files_to_args(input_file, ff_keys, args):
+    if not args or 'input_files' not in args:
+        raise Exception("args must contain key 'input_files'")
+    if 'secondary_files'not in args:
+        args['secondary_files'] = dict()
     if isinstance(input_file['uuid'], list):
         inf_uuids = input_file['uuid']
-        inf_object_keys = input_file['object_key']
     else:
         inf_uuids = [input_file['uuid']]
-        inf_object_keys = [input_file['object_key']]
+
+    fe_map = get_format_extension_map(ff_keys)
+    argname = input_file['workflow_argument_name']
+    extra_file_key = []
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('extra_files'):
@@ -159,31 +169,25 @@ def process_input_file_info(input_file, ff_keys, args):
             extra_file_extension = fe_map.get(extra_file_format)
             infile_format = infile_meta.get('file_format')
             infile_extension = fe_map.get(infile_format)
-            extra_file_key = inf_object_keys[i].replace(infile_extension, extra_file_extension)
-            args['secondary_files'] = add_secondary_files_to_args(extra_file_key, input_file, args['secondary_files'])
+            infile_key = args['input_files'][argname]['object_key'][i]
+            extra_file_key.append(infile_key.replace(infile_extension, extra_file_extension))
+
+    if len(extra_file_key) == 1:
+        extra_file_key = extra_file_key[0]
+
+    args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                    'bucket_name': input_file['bucket_name'],
+                                    'object_key': extra_file_key}})
 
 
-def add_secondary_files_to_args(extra_file_key, input_file, secondary_files_dict=dict()):
-    if input_file['workflow_argument_name'] in secondary_files_dict:
-        sdict_inf = secondary_files_dict[input_file['workflow_argument_name']]
-        if isinstance(sdict_inf['object_key'], list):
-            sdict_inf['object_key'].add(extra_file_key)
-        else:
-            existing_extra_file_key = sdict_inf['object_key']
-            sdict_inf['object_key'] = [existing_extra_file_key, extra_file_key]
-    else:
-        secondary_files_dict.update({input_file['workflow_argument_name']: {
-                                     'bucket_name': input_file['bucket_name'],
-                                     'object_key': extra_file_key}})
-    return secondary_files_dict
-
-
-def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=dict()):
+def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=None):
+    if not pf_source_experiments_dict:
+        pf_source_experiments_dict = dict()
     if isinstance(input_file['uuid'], list):
         inf_uuids = input_file['uuid']
     else:
         inf_uuids = [input_file['uuid']]
-    for i, inf_uuid in enumerate(inf_uuids):
+    for inf_uuid in inf_uuids:
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('experiments'):
             for exp in infile_meta.get('experiments'):

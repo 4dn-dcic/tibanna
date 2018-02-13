@@ -6,6 +6,7 @@ from core.start_run_awsem.service import (
     proc_file_for_arg_name,
     process_input_file_info,
     get_source_experiment,
+    add_secondary_files_to_args,
 )
 from ..conftest import valid_env
 from core.utils import Tibanna
@@ -220,3 +221,34 @@ def test_get_source_experiment(run_awsem_event_data):
     print(res0)
     assert 'source_experiments' in res0
     assert 'fake_source_experiment' in res
+
+
+@valid_env
+@pytest.mark.webtest
+def test_add_secondary_files_to_args(run_awsem_event_data):
+    input_file = {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "workflow_argument_name": "input_pairs",
+        "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
+        "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
+    }
+    args = {
+        'input_files': {
+            'input_pairs': {
+                'bucket': 'elasticbeanstalk-fourfront-webdev-wfoutput',
+                'object_key': [
+                    'd2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz',
+                    'd2c897ec-bdb2-47ce-b1b1-845daccaa571/4DNFI25JXLLI.pairs.gz'
+                ]
+            }
+        }
+    }
+    data = run_awsem_event_data
+    tibanna_settings = data.get('_tibanna', {})
+    # if they don't pass in env guess it from output_bucket
+    env = tibanna_settings.get('env')
+    # tibanna provides access to keys based on env and stuff like that
+    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
+                      ff_keys=data.get('ff_keys'),
+                      settings=tibanna_settings)
+    add_secondary_files_to_args(input_file, tibanna.ff_keys, args)
