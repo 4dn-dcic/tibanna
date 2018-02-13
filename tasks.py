@@ -12,11 +12,12 @@ import shutil
 from core.utils import run_workflow as _run_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
-from time import sleep
+from launch.utils import rerun as _rerun
+from launch.utils import rerun_many as _rerun_many
+from launch.utils import kill_all as _kill_all
 from contextlib import contextmanager
 import aws_lambda
-import datetime
-import time
+from time import sleep
 
 docs_dir = 'docs'
 build_dir = os.path.join(docs_dir, '_build')
@@ -573,48 +574,16 @@ def notebook(ctx):
         print("*for MacOS and Chrome only")
 
 
-def clear_awsem_template(awsem_template):
-    if 'response' in awsem_template['_tibanna']:
-        del(awsem_template['_tibanna']['response'])
-    if 'run_name' in awsem_template['_tibanna'] and len(awsem_template['_tibanna']['run_name']) > 50:
-        awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
-
-
-def prep_awsem_template(filename, webprod=False, tag=None,
-                        Tibanna_dir=os.path.dirname(os.path.realpath(__file__))):
-    template = Tibanna_dir + '/test_json/' + filename
-    with open(template, 'r') as f:
-        awsem_template = json.load(f)
-    # webdev ->webprod
-    if webprod:
-        awsem_template['output_bucket'] = 'elasticbeanstalk-fourfront-webprod-wfoutput'
-        awsem_template['_tibanna']['env'] = 'fourfront-webprod'
-        for inb in awsem_template['input_files']:
-            inb['bucket_name'] = inb['bucket_name'].replace('webdev', 'webprod')
-    if tag:
-        awsem_template['tag'] = tag
-        clear_awsem_template(awsem_template)
-    return awsem_template
-
-
 @task
 def rerun(ctx, exec_arn, workflow='tibanna_pony'):
     """ rerun a specific job"""
-    client = boto3.client('stepfunctions')
-    res = client.describe_execution(executionArn=exec_arn)
-    awsem_template = json.loads(res['input'])
-    clear_awsem_template(awsem_template)
-    return(_run_workflow(awsem_template, workflow=workflow))
+    _rerun(exec_arn, workflow=workflow)
 
 
 @task
 def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
     """ killing all the running jobs"""
-    client = boto3.client('stepfunctions')
-    stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
-    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-    for exc in sflist['executions']:
-        client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
+    _kill_all(workflow=workflow, region=region, acc=acc)
 
 
 @task
@@ -628,15 +597,5 @@ def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     rerun_many('tibanna_pony-dev')
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
-    stophour = stophour + offset
-    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute),
-                                                      '%d%b%Y %H:%M')
-    client = boto3.client('stepfunctions')
-    stateMachineArn = 'arn:aws:states:us-east-1:643366669028:stateMachine:' + workflow
-    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
-    k = 0
-    for exc in sflist['executions']:
-        if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
-            k = k + 1
-            rerun(ctx, exc['executionArn'], workflow=workflow)
-            time.sleep(sleeptime)
+    _rerun_many(workflow=workflow, stopdate=stopdate, stophour=stophour,
+                stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
