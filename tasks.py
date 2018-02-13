@@ -618,7 +618,8 @@ def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028
 
 
 @task
-def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13, stopminute=0, offset=5, sleeptime=5, status='FAILED'):
+def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
+               stopminute=0, offset=5, sleeptime=5, status='FAILED'):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour is in EST. This can be changed by setting a different offset (default 5)
     Sleeptime is sleep time in seconds between rerun submissions.
@@ -627,15 +628,15 @@ def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13, 
     rerun_many('tibanna_pony-dev')
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
-    stophour = stophour + offset 
-    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute), '%d%b%Y %H:%M')
+    stophour = stophour + offset
+    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute),
+                                                      '%d%b%Y %H:%M')
     client = boto3.client('stepfunctions')
     stateMachineArn = 'arn:aws:states:us-east-1:643366669028:stateMachine:' + workflow
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
-    k=0
+    k = 0
     for exc in sflist['executions']:
-       if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
+        if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
             rerun(ctx, exc['executionArn'], workflow=workflow)
             time.sleep(sleeptime)
-
