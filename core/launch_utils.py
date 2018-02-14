@@ -353,6 +353,7 @@ def collect_pairs_files_to_run_pairsqc(
         input_argument_name='input_pairs',
         awsem_tag="0.2.5",
         parameters_to_delete=None,
+        datatype_filter=['in situ Hi-C', 'dilution Hi-C'],
         stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
@@ -364,7 +365,8 @@ def collect_pairs_files_to_run_pairsqc(
                                                                  prev_output_argument_name,
                                                                  connection,
                                                                  addon='re',
-                                                                 wfuuid=wfuuid)
+                                                                 wfuuid=wfuuid,
+                                                                 datatype_filter=datatype_filter)
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             parameters_to_override = {'sample_name': entry['accession'], 'enzyme': re_cutter[entry['RE']]}
