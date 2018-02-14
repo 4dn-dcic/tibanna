@@ -136,19 +136,19 @@ def get_connection(keypairs_file):
 
 
 def prep_input_file_entry_list_for_single_exp(prev_workflow_title, prev_output_argument_name, connection,
-                                              addon=None, wfuuid=None):
+                                              addon=None, wfuuid=None, datatype_filter=None):
     schema_name = 'search/?type=WorkflowRunAwsem&workflow.title=' + prev_workflow_title + '&run_status=complete'
     response = fdnDCIC.get_FDN(schema_name, connection)
     files_for_ep = map_exp_to_inputfile_entry(response, prev_output_argument_name, connection,
-                                              addon=addon, wfuuid=wfuuid)
+                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter)
     return(files_for_ep)
 
 
 def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_output_argument_name, connection,
-                                                  addon=None, wfuuid=None):
+                                                  addon=None, wfuuid=None, datatype_filter=None):
     files_for_ep = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
                                                              prev_output_argument_name,
-                                                             connection, addon, wfuuid)
+                                                             connection, addon, wfuuid, datatype_filter)
     print("number of experiments:" + str(len(files_for_ep)))
     ep_lists_per_eps = map_expset_to_allexp(files_for_ep.keys(), connection)
     print("number of experiment sets:" + str(len(ep_lists_per_eps)))
