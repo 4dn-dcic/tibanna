@@ -218,7 +218,8 @@ def get_info_on_workflowrun_as_input(file_dict, connection):
     return(wfr_info)
 
 
-def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection, addon=None, wfuuid=None):
+def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection,
+                               addon=None, wfuuid=None, datatype_filter=None):
     """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     """
@@ -229,7 +230,8 @@ def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, c
                 file_uuid = of['value']
                 break
         print(file_uuid)
-        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon, wfr_input_filter=wfuuid)
+        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon,
+                                            wfr_input_filter=wfuuid, datatype_filter=datatype_filter)
         if file_entry:
             if 'source_experiments' in file_entry and file_entry['source_experiments']:
                 sep_id = file_entry['source_experiments'][0]
