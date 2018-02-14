@@ -8,7 +8,7 @@ import os
 
 
 def prep_awsem_template(filename, webprod=False, tag=None):
-    Tibanna_dir=os.path.dirname(os.path.realpath(__file__)).replace('/core', '')
+    Tibanna_dir = os.path.dirname(os.path.realpath(__file__)).replace('/core', '')
     template = Tibanna_dir + '/test_json/' + filename
     with open(template, 'r') as f:
         awsem_template = json.load(f)
@@ -92,6 +92,16 @@ def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
 
 
+def delete_all_wfr(wf_uuid, keypairs_file):
+    connection = get_connection(keypairs_file)
+    wfrsearch_resp = fdnDCIC.get_FDN('search/?workflow.uuid=' + wf_uuid + '&type=WorkflowRun', connection)
+    for entry in wfrsearch_resp['@graph']:
+        patch_json = {'uuid': entry['uuid'], 'run_status': 'error', 'status': 'deleted'}
+        print(patch_json)
+        patch_resp = fdnDCIC.patch_FDN(entry['uuid'], connection, patch_json)
+        print(patch_resp)
+
+
 def get_connection(keypairs_file):
     key = fdnDCIC.FDN_Key(keypairs_file, "default")
     connection = fdnDCIC.FDN_Connection(key)
@@ -167,7 +177,7 @@ def get_info_on_workflowrun_as_input(file_dict, connection):
                 wf = wfr_dict['workflow'].replace('/workflows/', '').replace('/', '')
                 run_status = wfr_dict['run_status']
                 if wf not in wfr_info:
-                   wfr_info[wf] = dict()
+                    wfr_info[wf] = dict()
                 if run_status not in wfr_info[wf]:
                     wfr_info[wf][run_status] = []
                 wfr_info[wf][run_status].append(wfr)
@@ -243,7 +253,7 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
         input_files = merge_input_file_entry_list_for_exp_list(ep_lists_per_eps[eps], files_for_ep)
         # include only the set that's full (e.g. if only 3 out of 4 exp has an output, do not include)
         if len(ep_lists_per_eps[eps]) == len(input_files):
-            input_files_list['eps'] = input_files
+            input_files_list[eps] = input_files
     return(input_files_list)
 
 
@@ -286,7 +296,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
                                                                      prev_output_argument_name,
                                                                      connection,
                                                                      wfuuid=wfuuid)
-    if input_files_list: 
+    if input_files_list:
         for _, entry in input_files_list.iteritems():
             print(entry)
             awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name,
