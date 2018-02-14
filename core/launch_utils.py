@@ -110,42 +110,83 @@ def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_outp
                                                              prev_output_argument_name,
                                                              connection)
     ep_lists_per_eps = map_expset_to_allexp(files_for_ep.keys(), connection)
-    input_files_list = map_expset_to_inputfile_list(ep_lists_per_eps)
+    input_files_list = map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep)
     return(input_files_list)
 
 
+def create_inputfile_entry(file_uuid, connection, addon=None):
+    """create an input file entry (uuid, accession, object_key)
+    addon : list of following strings (currently only 're' is available to add restriction enzyme info)
+    assumes file is a processed file
+    assumes single source_experiments
+    """
+    file_dict = fdnDCIC.get_FDN(file_uuid, connection)
+    sep = file_dict['source_experiments'][0]
+    sep_dict = fdnDCIC.get_FDN(sep, connection)
+    sep_id = sep_dict['@id']
+    entry = {'uuid': file_dict['uuid'], 'accession': file_dict['accession'],
+             'object_key': file_dict['upload_key'].replace(file_dict['uuid']+'/', ''),
+             'source_experiments': [sep_id]}
+    if addon:
+        if 're' in addon:
+            entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
+    return(entry)
+
+
 def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection, addon=None):
-    """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)"""
+    """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)
+    addon : list of following strings (currently only 're' is available to add restriction enzyme info)
+    """
     files_for_ep = dict()
     for entry in wfr_search_response['@graph']:
         for of in entry['output_files']:
             if of['workflow_argument_name'] == prev_output_argument_name:
-                pairs_file = of['value']
+                file_uuid = of['value']
                 break
-        pairs_dict = fdnDCIC.get_FDN(pairs_file, connection)
-        sep = pairs_dict['source_experiments'][0]
-        sep_dict = fdnDCIC.get_FDN(sep, connection)
-        sep_id = sep_dict['@id']
-        files_for_ep[sep_id] = {'uuid': pairs_dict['uuid'], 'accession': pairs_dict['accession'],
-                                'object_key': pairs_dict['upload_key'].replace(pairs_dict['uuid']+'/', '')}
-        if addon:
-            if 're' in addon:
-                files_for_ep[sep_id]['RE'] = get_digestion_enzyme_for_expr(sep, connection)
+        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon)
+        sep_id = file_entry['source_experiments'][0]
+        files_for_ep[sep_id] = file_entry
     return(files_for_ep)
+
+
+def get_expset_from_exp(expr, connection):
+    """getting the experiment sets of an experiment
+    """
+    sep_dict = fdnDCIC.get_FDN(expr, connection)
+    seps = sep_dict['experiment_sets']
+    return(seps)
+
+
+def get_allexp_from_expset(expset, connection):
+    """getting all the experiments from an experiment set
+    """
+    seps_dict = fdnDCIC.get_FDN(expset, connection)
+    return(seps_dict['experiments_in_set'])
 
 
 def map_expset_to_allexp(exp_list, connection):
     """map of experiment set -> all experiments, for all experiments given
     This function could be useful for a workflow that requires merging
     all experiments in an experiment set.
+    Only the first listed experiment set of a given experiment is used.
     """
     ep_lists_per_eps = dict()
     for sep_id in exp_list:
-        sep_dict = fdnDCIC.get_FDN(sep_id, connection)
-        seps = sep_dict['experiment_sets'][0]
-        seps_dict = fdnDCIC.get_FDN(seps, connection)
-        ep_lists_per_eps[seps] = seps_dict['experiments_in_set']
+        seps = get_expset_from_exp(sep_id, connection)[0]
+        ep_lists_per_eps[seps] = get_allexp_from_expset(seps, connection)
     return(ep_lists_per_eps)
+
+
+def merge_input_file_entry_list_for_exp_list(explist, files_for_ep):
+    input_files = dict()
+    keylist = ['uuid', 'accession', 'object_key']
+    for k in keylist:
+        input_files[k] = []
+    for ep in explist:
+        if ep in files_for_ep:
+            for k in keylist:
+                input_files[k].append(files_for_ep[ep][k])
+    return(input_files)
 
 
 def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
@@ -155,20 +196,9 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
     """
     input_files_list = dict()
     for eps in ep_lists_per_eps:
-        input_files = dict()
-        input_files['uuid'] = []
-        input_files['accession'] = []
-        input_files['object_key'] = []
-        skip = False
-        for ep in ep_lists_per_eps[eps]:
-            if ep in files_for_ep:
-                input_files['uuid'].append(files_for_ep[ep]['uuid'])
-                input_files['accession'].append(files_for_ep[ep]['accession'])
-                input_files['object_key'].append(files_for_ep[ep]['object_key'])
-            else:
-                skip = True
+        input_files = merge_input_file_entry_list_for_exp_list(ep_lists_per_eps[eps], files_for_ep)
         # include only the set that's full (e.g. if only 3 out of 4 exp has an output, do not include)
-        if not skip:
+        if len(ep_lists_per_eps[eps]) == len(input_files):
             input_files_list['eps'] = input_files
     return(input_files_list)
 
