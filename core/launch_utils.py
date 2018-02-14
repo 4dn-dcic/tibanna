@@ -49,6 +49,13 @@ def get_digestion_enzyme_for_expr(expr, connection):
     return(re)
 
 
+def get_datatype_for_expr(expr, connection):
+    """get experiment type (e.g. 'in situ Hi-C') given an experiment id (or uuid)"""
+    exp_resp = fdnDCIC.get_FDN(expr, connection)
+    datatype = exp_resp['experiment_type']
+    return(datatype)
+
+
 def rerun(exec_arn, workflow='tibanna_pony', override_config=None, app_name_filter=None):
     """rerun a specific job
     override_config : dictionary for overriding config (keys are the keys inside config)
@@ -149,7 +156,8 @@ def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_outp
     return(input_files_list)
 
 
-def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=None):
+def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=None,
+                           datatype_filter=None):
     """create an input file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     wfr_input_filter : workflow_uuid, return None if specified and has a completed or
@@ -165,6 +173,7 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
     sep = file_dict['source_experiments'][0]
     sep_dict = fdnDCIC.get_FDN(sep, connection)
     sep_id = sep_dict['@id']
+
     entry = {'uuid': file_dict['uuid'], 'accession': file_dict['accession'],
              'object_key': file_dict['upload_key'].replace(file_dict['uuid']+'/', ''),
              'source_experiments': [sep_id]}
@@ -173,16 +182,17 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
             entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
 
     if wfr_input_filter:
-        skip = False
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
             if 'complete' in wfr_info[wfr_input_filter]:
-                skip = True
+                return(None)
             if 'started' in wfr_info[wfr_input_filter]:
-                skip = True
-        if skip:
-            return(None)
+                return(None)
 
+    if datatype_filter:
+        datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
+        if datatype not in datatype_filter:
+            return(None)
     return(entry)
 
 
