@@ -353,6 +353,7 @@ def collect_pairs_files_to_run_pairsqc(
     input_files_list = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
                                                                  prev_output_argument_name,
                                                                  connection,
+                                                                 addon='re',
                                                                  wfuuid=wfuuid)
     if input_files_list:
         for _, entry in input_files_list.iteritems():
