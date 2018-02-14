@@ -2,7 +2,7 @@ import boto3
 import wranglertools.fdnDCIC as fdnDCIC
 import json
 from core.utils import run_workflow as _run_workflow
-import datetime
+from datetime import datetime
 import time
 import os
 
@@ -49,18 +49,37 @@ def get_digestion_enzyme_for_expr(expr, connection):
     return(re)
 
 
-def rerun(exec_arn, workflow='tibanna_pony'):
-    """rerun a specific job"""
+def rerun(exec_arn, workflow='tibanna_pony', override_config=None, app_name_filter=None):
+    """rerun a specific job
+    override_config : dictionary for overriding config (keys are the keys inside config)
+        e.g. override_config = { 'instance_type': 't2.micro' }
+    app_name_filter : app_name (e.g. hi-c-processing-pairs), if specified,
+    then rerun only if it matches app_name
+    """
     client = boto3.client('stepfunctions')
     res = client.describe_execution(executionArn=exec_arn)
     awsem_template = json.loads(res['input'])
+
+    # filter by app_name
+    if app_name_filter:
+        if 'app_name' not in awsem_template:
+            return(None)
+        if awsem_template['app_name'] != app_name_filter:
+            return(None)
+
     clear_awsem_template(awsem_template)
+
+    # override config
+    if override_config:
+        for k, v in override_config.iteritems():
+            awsem_template['config'][k] = v
+
     return(_run_workflow(awsem_template, workflow=workflow))
 
 
 def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=5, sleeptime=5, status='FAILED',
-               region='us-east-1', acc='643366669028'):
+               region='us-east-1', acc='643366669028', override_config=None, app_name_filter=None):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour is in EST. This can be changed by setting a different offset (default 5)
     Sleeptime is sleep time in seconds between rerun submissions.
@@ -70,8 +89,8 @@ def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
     stophour = stophour + offset
-    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute),
-                                                      '%d%b%Y %H:%M')
+    stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
+    stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M')
     client = boto3.client('stepfunctions')
     stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
@@ -79,7 +98,8 @@ def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     for exc in sflist['executions']:
         if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
-            rerun(exc['executionArn'], workflow=workflow)
+            rerun(exc['executionArn'], workflow=workflow,
+                  override_config=override_config, app_name_filter=app_name_filter)
             time.sleep(sleeptime)
 
 
@@ -122,7 +142,9 @@ def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_outp
     files_for_ep = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
                                                              prev_output_argument_name,
                                                              connection, addon, wfuuid)
+    print("number of experiments:" + str(len(files_for_ep)))
     ep_lists_per_eps = map_expset_to_allexp(files_for_ep.keys(), connection)
+    print("number of experiment sets:" + str(len(ep_lists_per_eps)))
     input_files_list = map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep)
     return(input_files_list)
 
@@ -137,6 +159,8 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
     """
     file_dict = fdnDCIC.get_FDN(file_uuid, connection)
     if 'source_experiments' not in file_dict:
+        return(None)
+    if not file_dict['source_experiments']:
         return(None)
     sep = file_dict['source_experiments'][0]
     sep_dict = fdnDCIC.get_FDN(sep, connection)
@@ -252,7 +276,7 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
     for eps in ep_lists_per_eps:
         input_files = merge_input_file_entry_list_for_exp_list(ep_lists_per_eps[eps], files_for_ep)
         # include only the set that's full (e.g. if only 3 out of 4 exp has an output, do not include)
-        if len(ep_lists_per_eps[eps]) == len(input_files):
+        if len(ep_lists_per_eps[eps]) == len(input_files['uuid']):
             input_files_list[eps] = input_files
     return(input_files_list)
 
@@ -286,7 +310,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         awsem_tag="0.2.5",
         parameters_to_override={'maxmem': '32g'},
         parameters_to_delete=['custom_res', 'min_res'],
-        stepfunction_workflow='tibanna_pony-dev'):
+        stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
     It will become more generalized soon.
