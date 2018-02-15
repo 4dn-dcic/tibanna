@@ -2,7 +2,7 @@ import boto3
 import wranglertools.fdnDCIC as fdnDCIC
 import json
 from core.utils import run_workflow as _run_workflow
-import datetime
+from datetime import datetime
 import time
 import os
 
@@ -49,18 +49,44 @@ def get_digestion_enzyme_for_expr(expr, connection):
     return(re)
 
 
-def rerun(exec_arn, workflow='tibanna_pony'):
-    """rerun a specific job"""
+def get_datatype_for_expr(expr, connection):
+    """get experiment type (e.g. 'in situ Hi-C') given an experiment id (or uuid)"""
+    exp_resp = fdnDCIC.get_FDN(expr, connection)
+    datatype = exp_resp['experiment_type']
+    return(datatype)
+
+
+def rerun(exec_arn, workflow='tibanna_pony', override_config=None, app_name_filter=None):
+    """rerun a specific job
+    override_config : dictionary for overriding config (keys are the keys inside config)
+        e.g. override_config = { 'instance_type': 't2.micro' }
+    app_name_filter : app_name (e.g. hi-c-processing-pairs), if specified,
+    then rerun only if it matches app_name
+    """
     client = boto3.client('stepfunctions')
     res = client.describe_execution(executionArn=exec_arn)
     awsem_template = json.loads(res['input'])
+
+    # filter by app_name
+    if app_name_filter:
+        if 'app_name' not in awsem_template:
+            return(None)
+        if awsem_template['app_name'] != app_name_filter:
+            return(None)
+
     clear_awsem_template(awsem_template)
+
+    # override config
+    if override_config:
+        for k, v in override_config.iteritems():
+            awsem_template['config'][k] = v
+
     return(_run_workflow(awsem_template, workflow=workflow))
 
 
 def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=5, sleeptime=5, status='FAILED',
-               region='us-east-1', acc='643366669028'):
+               region='us-east-1', acc='643366669028', override_config=None, app_name_filter=None):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour is in EST. This can be changed by setting a different offset (default 5)
     Sleeptime is sleep time in seconds between rerun submissions.
@@ -70,8 +96,8 @@ def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
     stophour = stophour + offset
-    stoptime_in_datetime = datetime.datetime.strptime(stopdate + ' ' + str(stophour) + ':' + str(stopminute),
-                                                      '%d%b%Y %H:%M')
+    stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
+    stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M')
     client = boto3.client('stepfunctions')
     stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
@@ -79,7 +105,8 @@ def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     for exc in sflist['executions']:
         if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
-            rerun(exc['executionArn'], workflow=workflow)
+            rerun(exc['executionArn'], workflow=workflow,
+                  override_config=override_config, app_name_filter=app_name_filter)
             time.sleep(sleeptime)
 
 
@@ -92,10 +119,18 @@ def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
 
 
-def delete_all_wfr(wf_uuid, keypairs_file):
+def delete_wfr(wf_uuid, keypairs_file, run_status_filter=['error']):
+    """delete the wfr metadata for all wfr with a specific wf
+    if run_status_filter is set, only those with the specific run_status is deleted
+    run_status_filter : list of run_statuses e.g. ['started', 'error']
+    if run_status_filter is None, it deletes everything
+    """
     connection = get_connection(keypairs_file)
     wfrsearch_resp = fdnDCIC.get_FDN('search/?workflow.uuid=' + wf_uuid + '&type=WorkflowRun', connection)
     for entry in wfrsearch_resp['@graph']:
+        if run_status_filter:
+            if 'run_status' not in entry or entry['run_status'] not in run_status_filter:
+                continue
         patch_json = {'uuid': entry['uuid'], 'run_status': 'error', 'status': 'deleted'}
         print(patch_json)
         patch_resp = fdnDCIC.patch_FDN(entry['uuid'], connection, patch_json)
@@ -120,25 +155,28 @@ def get_connection(keypairs_file):
 
 
 def prep_input_file_entry_list_for_single_exp(prev_workflow_title, prev_output_argument_name, connection,
-                                              addon=None, wfuuid=None):
+                                              addon=None, wfuuid=None, datatype_filter=None):
     schema_name = 'search/?type=WorkflowRunAwsem&workflow.title=' + prev_workflow_title + '&run_status=complete'
     response = fdnDCIC.get_FDN(schema_name, connection)
     files_for_ep = map_exp_to_inputfile_entry(response, prev_output_argument_name, connection,
-                                              addon=addon, wfuuid=wfuuid)
+                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter)
     return(files_for_ep)
 
 
 def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_output_argument_name, connection,
-                                                  addon=None, wfuuid=None):
+                                                  addon=None, wfuuid=None, datatype_filter=None):
     files_for_ep = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
                                                              prev_output_argument_name,
-                                                             connection, addon, wfuuid)
+                                                             connection, addon, wfuuid, datatype_filter)
+    print("number of experiments:" + str(len(files_for_ep)))
     ep_lists_per_eps = map_expset_to_allexp(files_for_ep.keys(), connection)
+    print("number of experiment sets:" + str(len(ep_lists_per_eps)))
     input_files_list = map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep)
     return(input_files_list)
 
 
-def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=None):
+def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=None,
+                           datatype_filter=None):
     """create an input file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     wfr_input_filter : workflow_uuid, return None if specified and has a completed or
@@ -149,9 +187,12 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
     file_dict = fdnDCIC.get_FDN(file_uuid, connection)
     if 'source_experiments' not in file_dict:
         return(None)
+    if not file_dict['source_experiments']:
+        return(None)
     sep = file_dict['source_experiments'][0]
     sep_dict = fdnDCIC.get_FDN(sep, connection)
     sep_id = sep_dict['@id']
+
     entry = {'uuid': file_dict['uuid'], 'accession': file_dict['accession'],
              'object_key': file_dict['upload_key'].replace(file_dict['uuid']+'/', ''),
              'source_experiments': [sep_id]}
@@ -160,16 +201,17 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
             entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
 
     if wfr_input_filter:
-        skip = False
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
             if 'complete' in wfr_info[wfr_input_filter]:
-                skip = True
+                return(None)
             if 'started' in wfr_info[wfr_input_filter]:
-                skip = True
-        if skip:
-            return(None)
+                return(None)
 
+    if datatype_filter:
+        datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
+        if datatype not in datatype_filter:
+            return(None)
     return(entry)
 
 
@@ -195,7 +237,8 @@ def get_info_on_workflowrun_as_input(file_dict, connection):
     return(wfr_info)
 
 
-def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection, addon=None, wfuuid=None):
+def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection,
+                               addon=None, wfuuid=None, datatype_filter=None):
     """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     """
@@ -206,7 +249,8 @@ def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, c
                 file_uuid = of['value']
                 break
         print(file_uuid)
-        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon, wfr_input_filter=wfuuid)
+        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon,
+                                            wfr_input_filter=wfuuid, datatype_filter=datatype_filter)
         if file_entry:
             if 'source_experiments' in file_entry and file_entry['source_experiments']:
                 sep_id = file_entry['source_experiments'][0]
@@ -263,7 +307,7 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
     for eps in ep_lists_per_eps:
         input_files = merge_input_file_entry_list_for_exp_list(ep_lists_per_eps[eps], files_for_ep)
         # include only the set that's full (e.g. if only 3 out of 4 exp has an output, do not include)
-        if len(ep_lists_per_eps[eps]) == len(input_files):
+        if len(ep_lists_per_eps[eps]) == len(input_files['uuid']):
             input_files_list[eps] = input_files
     return(input_files_list)
 
@@ -297,7 +341,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         awsem_tag="0.2.5",
         parameters_to_override={'maxmem': '32g'},
         parameters_to_delete=['custom_res', 'min_res'],
-        stepfunction_workflow='tibanna_pony-dev'):
+        stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
     It will become more generalized soon.
@@ -330,6 +374,7 @@ def collect_pairs_files_to_run_pairsqc(
         input_argument_name='input_pairs',
         awsem_tag="0.2.5",
         parameters_to_delete=None,
+        datatype_filter=['in situ Hi-C', 'dilution Hi-C'],
         stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
@@ -340,7 +385,9 @@ def collect_pairs_files_to_run_pairsqc(
     input_files_list = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
                                                                  prev_output_argument_name,
                                                                  connection,
-                                                                 wfuuid=wfuuid)
+                                                                 addon='re',
+                                                                 wfuuid=wfuuid,
+                                                                 datatype_filter=datatype_filter)
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             parameters_to_override = {'sample_name': entry['accession'], 'enzyme': re_cutter[entry['RE']]}
