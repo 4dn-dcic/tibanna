@@ -102,6 +102,17 @@ def delete_all_wfr(wf_uuid, keypairs_file):
         print(patch_resp)
 
 
+def release_all_wfr(keypairs_file,
+                    searchterm='?run_status=complete&type=WorkflowRunAwsem&status=in+review+by+lab',
+                    releaseterm='released to project'):
+    connection = get_connection(keypairs_file)
+    wfrsearch_resp = fdnDCIC.get_FDN(searchterm, connection)
+    for entry in wfrsearch_resp['@graph']:
+        patch_json = {'uuid': entry['uuid'], 'status': releaseterm}
+        patch_resp = fdnDCIC.patch_FDN(entry['uuid'], connection, patch_json)
+        print(patch_resp)
+
+
 def get_connection(keypairs_file):
     key = fdnDCIC.FDN_Key(keypairs_file, "default")
     connection = fdnDCIC.FDN_Connection(key)
