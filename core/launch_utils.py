@@ -119,10 +119,18 @@ def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
 
 
-def delete_all_wfr(wf_uuid, keypairs_file):
+def delete_wfr(wf_uuid, keypairs_file, run_status_filter=['error']):
+    """delete the wfr metadata for all wfr with a specific wf
+    if run_status_filter is set, only those with the specific run_status is deleted
+    run_status_filter : list of run_statuses e.g. ['started', 'error']
+    if run_status_filter is None, it deletes everything
+    """
     connection = get_connection(keypairs_file)
     wfrsearch_resp = fdnDCIC.get_FDN('search/?workflow.uuid=' + wf_uuid + '&type=WorkflowRun', connection)
     for entry in wfrsearch_resp['@graph']:
+        if run_status_filter:
+            if 'run_status' not in entry or entry['run_status'] not in run_status_filter:
+                continue
         patch_json = {'uuid': entry['uuid'], 'run_status': 'error', 'status': 'deleted'}
         print(patch_json)
         patch_resp = fdnDCIC.patch_FDN(entry['uuid'], connection, patch_json)
