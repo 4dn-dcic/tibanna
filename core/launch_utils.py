@@ -346,7 +346,7 @@ def merge_input_file_entry_list_for_exp_list(explist, files_for_ep):
                 input_files[k].append(files_for_ep[ep][k])
             for k in files_for_ep[ep]:
                 if k not in keylist:
-                    input_files[k] = files_for_ep[ep]
+                    input_files[k] = files_for_ep[ep][k]
     return(input_files)
 
 
