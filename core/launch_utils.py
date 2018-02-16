@@ -247,11 +247,13 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
             sep_dict = fdnDCIC.get_FDN(sep, connection)
             sep_id = sep_dict['@id']
             entry['source_experiments'] = [sep_id]
-
+            if datatype_filter:
+                datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
+                if datatype not in datatype_filter:
+                    return(None)
     if addon:
         if 're' in addon:
             entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
-
     if wfr_input_filter:
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
@@ -259,11 +261,6 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
                 return(None)
             if 'started' in wfr_info[wfr_input_filter]:
                 return(None)
-
-    if datatype_filter:
-        datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
-        if datatype not in datatype_filter:
-            return(None)
     return(entry)
 
 
@@ -417,9 +414,9 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             print(entry)
-            if entry['re'] not in re_restriction_file:
+            if entry['RE'] not in re_restriction_file:
                 continue
-            re_entry = create_inputfile_entry_(re_restriction_file[entry['re']], 'restriction_file', connection)
+            re_entry = create_inputfile_entry_(re_restriction_file[entry['RE']], 'restriction_file', connection)
             entry_list = [entry, re_entry]
             awsem_json = create_awsem_json_for_workflowrun(entry_list, awsem_template_json,
                                                            awsem_tag=awsem_tag,
