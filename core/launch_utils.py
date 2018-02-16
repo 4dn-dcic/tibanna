@@ -251,9 +251,9 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
                 datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
                 if datatype not in datatype_filter:
                     return(None)
-    if addon:
-        if 're' in addon:
-            entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
+            if addon:
+                if 're' in addon:
+                    entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
     if wfr_input_filter:
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
