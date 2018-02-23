@@ -205,11 +205,11 @@ def get_connection(keypairs_file):
 
 
 def prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_title, prev_output_argument_name, connection,
-                                              addon=None, wfuuid=None, datatype_filter=None):
+                                              addon=None, wfuuid=None, datatype_filter=None, single=True):
     schema_name = 'search/?type=WorkflowRunAwsem&workflow.title=' + prev_workflow_title + '&run_status=complete'
     response = fdnDCIC.get_FDN(schema_name, connection)
     files_for_ep = map_exp_to_inputfile_entry(response, input_argname, prev_output_argument_name, connection,
-                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter)
+                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter, single=single)
     return(files_for_ep)
 
 
@@ -288,7 +288,7 @@ def get_info_on_workflowrun_as_input(file_dict, connection):
 
 
 def map_exp_to_inputfile_entry(wfr_search_response, input_argname, prev_output_argument_name, connection,
-                               addon=None, wfuuid=None, datatype_filter=None):
+                               addon=None, wfuuid=None, datatype_filter=None, single=True):
     """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     """
@@ -304,11 +304,22 @@ def map_exp_to_inputfile_entry(wfr_search_response, input_argname, prev_output_a
         if file_entry:
             if 'source_experiments' in file_entry and file_entry['source_experiments']:
                 sep_id = file_entry['source_experiments'][0]
-                if sep_id in files_for_ep:
-                    files_for_ep[sep_id] = merge_input_file_entry(files_for_ep[sep_id], file_entry)
-                else:
+                if single:
                     files_for_ep[sep_id] = file_entry
+                else:
+                    if sep_id in files_for_ep:
+                        files_for_ep[sep_id] = merge_input_file_entry([files_for_ep[sep_id], file_entry])
+                    else:
+                        files_for_ep[sep_id] = merge_input_file_entry([file_entry])
     return(files_for_ep)
+
+
+def get_nrawfiles_from_exp(expr, connection):
+    """getting the number of raw files of an experiment
+    """
+    sep_dict = fdnDCIC.get_FDN(expr, connection)
+    nfiles = len(sep_dict['files'])
+    return(nfiles)
 
 
 def get_expset_from_exp(expr, connection):
@@ -349,12 +360,17 @@ def merge_input_file_entry(entry_list):
     merged_entry = dict()
     for k in keylist:
         merged_entry[k] = []
-        for entry in entry_list:
-            for k in keylist:
+    for entry in entry_list:
+        print(entry)
+        print(merged_entry)
+        for k in keylist:
+            if isinstance(entry[k], list):
                 merged_entry[k].extend(entry[k])
-            for k in entry:
-                if k not in keylist:
-                    merged_entry[k] = entry[k]
+            else:
+                merged_entry[k].append(entry[k])
+        for k in entry:
+            if k not in keylist:
+                merged_entry[k] = entry[k]
     return(merged_entry)
 
 
