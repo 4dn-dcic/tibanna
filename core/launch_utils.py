@@ -364,7 +364,7 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
     return(input_files_list)
 
 
-def create_awsem_json_for_workflowrun(input_entry_list, awsem_template_file, workflow_argname,
+def create_awsem_json_for_workflowrun(input_entry_list, awsem_template_file,
                                       awsem_tag=None, parameters_to_override=None,
                                       parameters_to_delete=None,
                                       inputfiles_to_override=None, 
@@ -419,7 +419,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
             print(entry)
             if entry['RE'] not in re_restriction_file:
                 continue
-            re_entry = create_inputfile_entry_(re_restriction_file[entry['RE']], 'restriction_file', connection)
+            re_entry = create_inputfile_entry(re_restriction_file[entry['RE']], 'restriction_file', connection)
             entry_list = [entry, re_entry]
             awsem_json = create_awsem_json_for_workflowrun(entry_list, awsem_template_json,
                                                            awsem_tag=awsem_tag,
