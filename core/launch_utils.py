@@ -172,7 +172,7 @@ def get_wfr_input_source_experiment(wfr_dict, connection):
 
 
 def delete_wfr(wfr_dict, connection):
-    #delete all the output files first
+    # delete all the output files first
     if 'output_files' in wfr_dict:
         outputfile_ids = [_['value'] for _ in wfr_dict['output_files']]
         for of_id in outputfile_ids:
@@ -248,7 +248,8 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
             sep_id = sep_dict['@id']
             entry['source_experiments'] = [sep_id]
             if datatype_filter:
-                datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
+                # would be faster if it takes sep_dict. Leave it for now
+                datatype = get_datatype_for_expr(sep, connection)
                 if datatype not in datatype_filter:
                     return(None)
             if addon:
@@ -303,7 +304,10 @@ def map_exp_to_inputfile_entry(wfr_search_response, input_argname, prev_output_a
         if file_entry:
             if 'source_experiments' in file_entry and file_entry['source_experiments']:
                 sep_id = file_entry['source_experiments'][0]
-                files_for_ep[sep_id] = file_entry
+                if sep_id in files_for_ep:
+                    files_for_ep[sep_id] = merge_input_file_entry(files_for_ep[sep_id], file_entry)
+                else:
+                    files_for_ep[sep_id] = file_entry
     return(files_for_ep)
 
 
@@ -336,18 +340,22 @@ def map_expset_to_allexp(exp_list, connection):
 
 
 def merge_input_file_entry_list_for_exp_list(explist, files_for_ep):
-    input_files = dict()
-    keylist = ['uuid', 'accession', 'object_key']
-    for k in keylist:
-        input_files[k] = []
-    for ep in explist:
-        if ep in files_for_ep:
-            for k in keylist:
-                input_files[k].append(files_for_ep[ep][k])
-            for k in files_for_ep[ep]:
-                if k not in keylist:
-                    input_files[k] = files_for_ep[ep][k]
+    input_files = merge_input_file_entry([files_for_ep[ep] for ep in explist])
     return(input_files)
+
+
+def merge_input_file_entry(entry_list):
+    keylist = ['uuid', 'accession', 'object_key']
+    merged_entry = dict()
+    for k in keylist:
+        merged_entry[k] = []
+        for entry in entry_list:
+            for k in keylist:
+                merged_entry[k].extend(entry[k])
+            for k in entry:
+                if k not in keylist:
+                    merged_entry[k] = entry[k]
+    return(merged_entry)
 
 
 def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
@@ -367,7 +375,7 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
 def create_awsem_json_for_workflowrun(input_entry_list, awsem_template_file,
                                       awsem_tag=None, parameters_to_override=None,
                                       parameters_to_delete=None,
-                                      inputfiles_to_override=None, 
+                                      inputfiles_to_override=None,
                                       webprod=False):
     """input_entry_list : list of input_file_entry dictionaries
     with 'workflow_argument_name' key-value pair included.
@@ -384,7 +392,7 @@ def create_awsem_json_for_workflowrun(input_entry_list, awsem_template_file,
                 del awsem_template['parameters'][param]
     if parameters_to_override:
         for param in parameters_to_override:
-            awsem_template['parameters'][param] = parameters_to_override[param]    
+            awsem_template['parameters'][param] = parameters_to_override[param]
     return(awsem_template)
 
 
