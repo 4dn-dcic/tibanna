@@ -213,9 +213,9 @@ def prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid,
     return(files_for_ep)
 
 
-def prep_input_file_entry_list_for_merging_expset(input_argname, prev_workflow_title, prev_output_argument_name,
+def prep_input_file_entry_list_for_merging_expset(input_argname, prev_workflow_uuid, prev_output_argument_name,
                                                   connection, addon=None, wfuuid=None, datatype_filter=None):
-    files_for_ep = prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_title,
+    files_for_ep = prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid,
                                                              prev_output_argument_name,
                                                              connection, addon, wfuuid, datatype_filter)
     print("number of experiments:" + str(len(files_for_ep)))
@@ -351,8 +351,15 @@ def map_expset_to_allexp(exp_list, connection):
 
 
 def merge_input_file_entry_list_for_exp_list(explist, files_for_ep):
-    input_files = merge_input_file_entry([files_for_ep[ep] for ep in explist])
-    return(input_files)
+    files_for_ep_list = []
+    for ep in explist:
+        if ep in files_for_ep:
+            files_for_ep_list.append(files_for_ep[ep])
+    if files_for_ep_list:
+        input_files = merge_input_file_entry(files_for_ep_list)
+        return(input_files)
+    else:
+        return(None)
 
 
 def merge_input_file_entry(entry_list):
@@ -416,7 +423,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         keypairs_file,
         webprod=True,
         wfuuid='c9e0e6f7-b0ed-4a42-9466-cadc2dd84df0',
-        prev_workflow_title='Hi-C%20Post-alignment%20Processing',
+        prev_workflow_uuid='023bfb3e-9a8b-42b9-a9d4-216079526f68',
         prev_output_argument_name='filtered_pairs',
         awsem_template_json='awsem_hicpairs_easy.json',
         input_argument_name='input_pairs',
@@ -432,7 +439,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
     re_restriction_file = {'MboI': '4DNFI823L812', 'HindIII': '4DNFI823MBKE', 'DpnII': '4DNFIBNAPW30'}
     connection = get_connection(keypairs_file)
     input_files_list = prep_input_file_entry_list_for_merging_expset(input_argument_name,
-                                                                     prev_workflow_title,
+                                                                     prev_workflow_uuid,
                                                                      prev_output_argument_name,
                                                                      connection,
                                                                      addon='re',
@@ -459,13 +466,13 @@ def collect_pairs_files_to_run_pairsqc(
         keypairs_file,
         webprod=True,
         wfuuid='ae3a87cb-3fa2-469e-97c7-540fc2d0a117',
-        prev_workflow_title='Hi-C%20Post-alignment%20Processing',
+        prev_workflow_uuid='023bfb3e-9a8b-42b9-a9d4-216079526f68',
         prev_output_argument_name='filtered_pairs',
         awsem_template_json='awsem_pairsqc.json',
         input_argument_name='input_pairs',
         awsem_tag="0.2.5",
         parameters_to_delete=None,
-        datatype_filter=['in situ Hi-C', 'dilution Hi-C'],
+        datatype_filter=['in situ Hi-C', 'dilution Hi-C', 'capture Hi-C'],
         stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
@@ -473,7 +480,8 @@ def collect_pairs_files_to_run_pairsqc(
     """
     re_cutter = {'HindIII': '6', 'DpnII': '4', 'MboI': '4', 'NcoI': '6'}
     connection = get_connection(keypairs_file)
-    input_files_list = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
+    input_files_list = prep_input_file_entry_list_for_single_exp(input_argument_name,
+                                                                 prev_workflow_uuid,
                                                                  prev_output_argument_name,
                                                                  connection,
                                                                  addon='re',
@@ -482,7 +490,7 @@ def collect_pairs_files_to_run_pairsqc(
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             parameters_to_override = {'sample_name': entry['accession'], 'enzyme': re_cutter[entry['RE']]}
-            awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name,
+            awsem_json = create_awsem_json_for_workflowrun([entry], awsem_template_json,
                                                            awsem_tag=awsem_tag,
                                                            parameters_to_override=parameters_to_override,
                                                            parameters_to_delete=parameters_to_delete,
