@@ -225,7 +225,7 @@ def prep_input_file_entry_list_for_merging_expset(input_argname, prev_workflow_u
     return(input_files_list)
 
 
-def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_input_filter=None,
+def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_input_filter=None,
                            datatype_filter=None):
     """create an input file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
@@ -234,7 +234,9 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
     assumes file is a processed file (has source_experiments field)
     assumes single source_experiments
     """
-    file_dict = fdnDCIC.get_FDN(file, connection)
+    file_dict = fdnDCIC.get_FDN(fileId, connection)
+    if 'uuid' not in file_dict:
+        raise Exception("key error uuid: " + file_dict)
     file_uuid = file_dict['uuid']
     entry = {'uuid': file_uuid, 'accession': file_dict['accession'],
              'object_key': file_dict['upload_key'].replace(file_uuid + '/', ''),
@@ -254,7 +256,7 @@ def create_inputfile_entry(file, input_argname, connection, addon=None, wfr_inpu
                     return(None)
             if addon:
                 if 're' in addon:
-                    entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
+                    entry['RE'] = get_digestion_enzyme_for_expr(sep_dict, connection)
     if wfr_input_filter:
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
