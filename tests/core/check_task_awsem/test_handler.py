@@ -3,6 +3,11 @@ from ..conftest import valid_env
 import pytest
 from core import utils
 from core.utils import AWSEMJobErrorException
+import random
+import string
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope='session')
@@ -78,5 +83,24 @@ def test_check_task_awsem(check_task_input, s3, job_started):
     s3.delete_key(postrunjson)
     assert 'postrunjson' in retval
     assert retval['postrunjson'] == {"test": "test"}
+    del retval['postrunjson']
+    assert retval == check_task_input
+
+
+@valid_env
+@pytest.mark.webtest
+def test_check_task_awsem_with_long_postrunjson(check_task_input, s3, job_started):
+    jobid = check_task_input['jobid']
+    job_success = "%s.success" % jobid
+    s3.s3_put('', job_success)
+    postrunjson = "%s.postrun.json" % jobid
+    verylongstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(50000))
+    s3.s3_put('{"test": "' + verylongstring + '"}', postrunjson)
+
+    retval = service.handler(check_task_input, '')
+    s3.delete_key(job_success)
+    s3.delete_key(postrunjson)
+    assert 'postrunjson' in retval
+    assert retval['postrunjson'] == "postrun json not included due to data size limit"
     del retval['postrunjson']
     assert retval == check_task_input
