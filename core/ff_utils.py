@@ -271,22 +271,23 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
 
 def get_metadata(obj_id, key='', connection=None, frame="object"):
     # default to always get from database
-    url_addon = '&datastore=database'
     connection = fdn_connection(key, connection)
     sleep = [2, 4, 12]
-    res = {}
     for wait in sleep:
         try:
-            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon=url_addon)
-            if 'error' in res.get('@type', []):
-                time.sleep(wait)
-                continue
+            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
         except:
             time.sleep(wait)
             continue
-        break
 
-    return res
+        if 'error' in res.get('@type', []):
+            time.sleep(wait)
+            continue
+        else:
+            return res
+    # if loop did not solve the problem
+    print('get_metdata is not working for', obj_id)
+    return
 
 
 def post_to_metadata(post_item, schema_name, key='', connection=None):
