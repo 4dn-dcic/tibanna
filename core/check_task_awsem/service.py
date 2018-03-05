@@ -43,9 +43,8 @@ def handler(event, context):
     if s3.does_key_exist(job_success):
         if not s3.does_key_exist(postrunjson):
             raise Exception("Postrun json not found at %s" % postrunjson_location)
-        event['postrunjson'] = 
         postrunjsoncontent = json.loads(s3.read_s3(postrunjson))
-        if len(str(postrunjsonconent)) + len(str(event)) < RESPONSE_JSON_CONTENT_INCLUSION_LIMIT:
+        if len(str(postrunjsoncontent)) + len(str(event)) < RESPONSE_JSON_CONTENT_INCLUSION_LIMIT:
             event['postrunjson'] = postrunjsoncontent
         else:
             event['postrunjson'] = 'postrun json not included due to data size limit'
