@@ -34,7 +34,10 @@ def clear_awsem_template(awsem_template):
 
 def get_species_from_expr(expr, connection):
     """get species for a given experiment"""
-    sep_resp = fdnDCIC.get_FDN(expr, connection)
+    if isinstance(expr, dict):
+        sep_resp = expr
+    else:
+        sep_resp = fdnDCIC.get_FDN(expr, connection)
     sep_resp2 = fdnDCIC.get_FDN(sep_resp["biosample"], connection)["biosource"]
     indv = fdnDCIC.get_FDN(sep_resp2[0], connection)["individual"]
     return(str(fdnDCIC.get_FDN(indv, connection)['organism']))
@@ -44,14 +47,22 @@ def get_digestion_enzyme_for_expr(expr, connection):
     """get species for a given experiment
     Returns enzyme name (e.g. HindIII)
     """
-    exp_resp = fdnDCIC.get_FDN(expr, connection)
+    if isinstance(expr, dict):
+        exp_resp = expr
+    else:
+        exp_resp = fdnDCIC.get_FDN(expr, connection)
+    if 'digestion_enzyme' not in exp_resp:
+        return(None)
     re = exp_resp['digestion_enzyme'].replace('/enzymes/', '').replace('/', '')
     return(re)
 
 
 def get_datatype_for_expr(expr, connection):
     """get experiment type (e.g. 'in situ Hi-C') given an experiment id (or uuid)"""
-    exp_resp = fdnDCIC.get_FDN(expr, connection)
+    if isinstance(expr, dict):
+        exp_resp = expr
+    else:
+        exp_resp = fdnDCIC.get_FDN(expr, connection)
     datatype = exp_resp['experiment_type']
     return(datatype)
 
@@ -119,20 +130,70 @@ def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
 
 
-def delete_wfr(wf_uuid, keypairs_file, run_status_filter=['error']):
+def delete_wfr_many(wf_uuid, keypairs_file, run_status_filter=['error'], input_source_experiment_filter=None,
+                    delete=True):
     """delete the wfr metadata for all wfr with a specific wf
     if run_status_filter is set, only those with the specific run_status is deleted
     run_status_filter : list of run_statuses e.g. ['started', 'error']
     if run_status_filter is None, it deletes everything
+    if input_source_experiment_filter is set (an array, e.g. ['some_uuid', 'some_other_uuid', ...]),
+    only wfr whose input source experiment is one of these specified are deleted.
     """
     connection = get_connection(keypairs_file)
     wfrsearch_resp = fdnDCIC.get_FDN('search/?workflow.uuid=' + wf_uuid + '&type=WorkflowRun', connection)
     for entry in wfrsearch_resp['@graph']:
+        # skip entries that are already deleted
+        if entry['status'] == 'deleted':
+            continue
+        # run_status filter
         if run_status_filter:
             if 'run_status' not in entry or entry['run_status'] not in run_status_filter:
                 continue
-        patch_json = {'uuid': entry['uuid'], 'run_status': 'error', 'status': 'deleted'}
-        print(patch_json)
+        # input_source_experiment_filter
+        if input_source_experiment_filter:
+            sexp = get_wfr_input_source_experiment(entry, connection)
+            if not set(sexp).intersection(input_source_experiment_filter):
+                continue
+        print('\n\ntobedeleted: ' + entry['uuid'] + ':' + str(entry))
+        if delete:
+            delete_wfr(entry, connection)
+
+
+def get_wfr_input_source_experiment(wfr_dict, connection):
+    "returns all the input source experiments in a nonredundant list"
+    if 'input_files' not in wfr_dict:
+        return(None)
+    sexp = []
+    for if_id in [_['value'] for _ in wfr_dict['input_files']]:
+        if_dict = fdnDCIC.get_FDN(if_id, connection)
+        if 'source_experiments' in if_dict:
+            sexp.extend(if_dict['source_experiments'])
+    return(list(set(sexp)))
+
+
+def delete_wfr(wfr_dict, connection):
+    # delete all the output files first
+    if 'output_files' in wfr_dict:
+        outputfile_ids = [_['value'] for _ in wfr_dict['output_files']]
+        for of_id in outputfile_ids:
+            of_uuid = fdnDCIC.get_FDN(of_id, connection)['uuid']
+            output_patch_json = {'uuid': of_uuid, 'status': 'deleted'}
+            patch_resp = fdnDCIC.patch_FDN(of_uuid, connection, output_patch_json)
+            print(patch_resp)
+
+    # then delete the wfr itself
+    patch_json = {'uuid': wfr_dict['uuid'], 'status': 'deleted'}
+    patch_resp = fdnDCIC.patch_FDN(wfr_dict['uuid'], connection, patch_json)
+    print(patch_resp)
+
+
+def release_all_wfr(keypairs_file,
+                    searchterm='?run_status=complete&type=WorkflowRunAwsem&status=in+review+by+lab',
+                    releaseterm='released to project'):
+    connection = get_connection(keypairs_file)
+    wfrsearch_resp = fdnDCIC.get_FDN(searchterm, connection)
+    for entry in wfrsearch_resp['@graph']:
+        patch_json = {'uuid': entry['uuid'], 'status': releaseterm}
         patch_resp = fdnDCIC.patch_FDN(entry['uuid'], connection, patch_json)
         print(patch_resp)
 
@@ -143,18 +204,19 @@ def get_connection(keypairs_file):
     return(connection)
 
 
-def prep_input_file_entry_list_for_single_exp(prev_workflow_title, prev_output_argument_name, connection,
-                                              addon=None, wfuuid=None, datatype_filter=None):
-    schema_name = 'search/?type=WorkflowRunAwsem&workflow.title=' + prev_workflow_title + '&run_status=complete'
+def prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid, prev_output_argument_name, connection,
+                                              addon=None, wfuuid=None, datatype_filter=None, single=True):
+    schema_name = 'search/?type=WorkflowRunAwsem&workflow.uuid=' + prev_workflow_uuid + '&run_status=complete'
     response = fdnDCIC.get_FDN(schema_name, connection)
-    files_for_ep = map_exp_to_inputfile_entry(response, prev_output_argument_name, connection,
-                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter)
+    files_for_ep = map_exp_to_inputfile_entry(response, input_argname, prev_output_argument_name, connection,
+                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter,
+                                              single=single)
     return(files_for_ep)
 
 
-def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_output_argument_name, connection,
-                                                  addon=None, wfuuid=None, datatype_filter=None):
-    files_for_ep = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
+def prep_input_file_entry_list_for_merging_expset(input_argname, prev_workflow_uuid, prev_output_argument_name,
+                                                  connection, addon=None, wfuuid=None, datatype_filter=None):
+    files_for_ep = prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid,
                                                              prev_output_argument_name,
                                                              connection, addon, wfuuid, datatype_filter)
     print("number of experiments:" + str(len(files_for_ep)))
@@ -164,7 +226,7 @@ def prep_input_file_entry_list_for_merging_expset(prev_workflow_title, prev_outp
     return(input_files_list)
 
 
-def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=None,
+def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_input_filter=None,
                            datatype_filter=None):
     """create an input file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
@@ -173,22 +235,29 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
     assumes file is a processed file (has source_experiments field)
     assumes single source_experiments
     """
-    file_dict = fdnDCIC.get_FDN(file_uuid, connection)
-    if 'source_experiments' not in file_dict:
-        return(None)
-    if not file_dict['source_experiments']:
-        return(None)
-    sep = file_dict['source_experiments'][0]
-    sep_dict = fdnDCIC.get_FDN(sep, connection)
-    sep_id = sep_dict['@id']
+    file_dict = fdnDCIC.get_FDN(fileId, connection)
+    if 'uuid' not in file_dict:
+        raise Exception("key error uuid: " + file_dict)
+    file_uuid = file_dict['uuid']
+    entry = {'uuid': file_uuid, 'accession': file_dict['accession'],
+             'object_key': file_dict['upload_key'].replace(file_uuid + '/', ''),
+             'workflow_argument_name': input_argname}
 
-    entry = {'uuid': file_dict['uuid'], 'accession': file_dict['accession'],
-             'object_key': file_dict['upload_key'].replace(file_dict['uuid']+'/', ''),
-             'source_experiments': [sep_id]}
-    if addon:
-        if 're' in addon:
-            entry['RE'] = get_digestion_enzyme_for_expr(sep, connection)
-
+    # add source experiment if exists
+    if 'source_experiments' in file_dict:
+        if file_dict['source_experiments']:
+            sep = file_dict['source_experiments'][0]
+            sep_dict = fdnDCIC.get_FDN(sep, connection)
+            sep_id = sep_dict['@id']
+            entry['source_experiments'] = [sep_id]
+            if datatype_filter:
+                # would be faster if it takes sep_dict. Leave it for now
+                datatype = get_datatype_for_expr(sep, connection)
+                if datatype not in datatype_filter:
+                    return(None)
+            if addon:
+                if 're' in addon:
+                    entry['RE'] = get_digestion_enzyme_for_expr(sep_dict, connection)
     if wfr_input_filter:
         wfr_info = get_info_on_workflowrun_as_input(file_dict, connection)
         if wfr_input_filter in wfr_info:
@@ -196,11 +265,6 @@ def create_inputfile_entry(file_uuid, connection, addon=None, wfr_input_filter=N
                 return(None)
             if 'started' in wfr_info[wfr_input_filter]:
                 return(None)
-
-    if datatype_filter:
-        datatype = get_datatype_for_expr(sep, connection)  # would be faster if it takes sep_dict. Leave it for now
-        if datatype not in datatype_filter:
-            return(None)
     return(entry)
 
 
@@ -226,8 +290,8 @@ def get_info_on_workflowrun_as_input(file_dict, connection):
     return(wfr_info)
 
 
-def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, connection,
-                               addon=None, wfuuid=None, datatype_filter=None):
+def map_exp_to_inputfile_entry(wfr_search_response, input_argname, prev_output_argument_name, connection,
+                               addon=None, wfuuid=None, datatype_filter=None, single=True):
     """single-experiment (id not uuid) -> one output file entry (uuid, accession, object_key)
     addon : list of following strings (currently only 're' is available to add restriction enzyme info)
     """
@@ -238,13 +302,27 @@ def map_exp_to_inputfile_entry(wfr_search_response, prev_output_argument_name, c
                 file_uuid = of['value']
                 break
         print(file_uuid)
-        file_entry = create_inputfile_entry(file_uuid, connection, addon=addon,
+        file_entry = create_inputfile_entry(file_uuid, input_argname, connection, addon=addon,
                                             wfr_input_filter=wfuuid, datatype_filter=datatype_filter)
         if file_entry:
             if 'source_experiments' in file_entry and file_entry['source_experiments']:
                 sep_id = file_entry['source_experiments'][0]
-                files_for_ep[sep_id] = file_entry
+                if single:
+                    files_for_ep[sep_id] = file_entry
+                else:
+                    if sep_id in files_for_ep:
+                        files_for_ep[sep_id] = merge_input_file_entry([files_for_ep[sep_id], file_entry])
+                    else:
+                        files_for_ep[sep_id] = merge_input_file_entry([file_entry])
     return(files_for_ep)
+
+
+def get_nrawfiles_from_exp(expr, connection):
+    """getting the number of raw files of an experiment
+    """
+    sep_dict = fdnDCIC.get_FDN(expr, connection)
+    nfiles = len(sep_dict['files'])
+    return(nfiles)
 
 
 def get_expset_from_exp(expr, connection):
@@ -276,15 +354,34 @@ def map_expset_to_allexp(exp_list, connection):
 
 
 def merge_input_file_entry_list_for_exp_list(explist, files_for_ep):
-    input_files = dict()
-    keylist = ['uuid', 'accession', 'object_key']
-    for k in keylist:
-        input_files[k] = []
+    files_for_ep_list = []
     for ep in explist:
         if ep in files_for_ep:
-            for k in keylist:
-                input_files[k].append(files_for_ep[ep][k])
-    return(input_files)
+            files_for_ep_list.append(files_for_ep[ep])
+    if files_for_ep_list:
+        input_files = merge_input_file_entry(files_for_ep_list)
+        return(input_files)
+    else:
+        return(None)
+
+
+def merge_input_file_entry(entry_list):
+    keylist = ['uuid', 'accession', 'object_key']
+    merged_entry = dict()
+    for k in keylist:
+        merged_entry[k] = []
+    for entry in entry_list:
+        print(entry)
+        print(merged_entry)
+        for k in keylist:
+            if isinstance(entry[k], list):
+                merged_entry[k].extend(entry[k])
+            else:
+                merged_entry[k].append(entry[k])
+        for k in entry:
+            if k not in keylist:
+                merged_entry[k] = entry[k]
+    return(merged_entry)
 
 
 def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
@@ -301,14 +398,20 @@ def map_expset_to_inputfile_list(ep_lists_per_eps, files_for_ep):
     return(input_files_list)
 
 
-def create_awsem_json_for_workflowrun(input_entry, awsem_template_file, workflow_argname,
+def create_awsem_json_for_workflowrun(input_entry_list, awsem_template_file,
                                       awsem_tag=None, parameters_to_override=None,
-                                      parameters_to_delete=None, webprod=False):
+                                      parameters_to_delete=None,
+                                      inputfiles_to_override=None,
+                                      webprod=False):
+    """input_entry_list : list of input_file_entry dictionaries
+    with 'workflow_argument_name' key-value pair included.
+    """
     awsem_template = prep_awsem_template(awsem_template_file, webprod, tag=awsem_tag)
     for inb in awsem_template['input_files']:
-        if inb['workflow_argument_name'] == workflow_argname:
-            inb['uuid'] = input_entry['uuid']
-            inb['object_key'] = input_entry['object_key']
+        for input_entry in input_entry_list:
+            if inb['workflow_argument_name'] == input_entry['workflow_argument_name']:
+                inb['uuid'] = input_entry['uuid']
+                inb['object_key'] = input_entry['object_key']
     if parameters_to_delete:
         for param in parameters_to_delete:
             if param in awsem_template['parameters']:
@@ -323,27 +426,36 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         keypairs_file,
         webprod=True,
         wfuuid='c9e0e6f7-b0ed-4a42-9466-cadc2dd84df0',
-        prev_workflow_title='Hi-C%20Post-alignment%20Processing',
+        prev_workflow_uuid='023bfb3e-9a8b-42b9-a9d4-216079526f68',
         prev_output_argument_name='filtered_pairs',
         awsem_template_json='awsem_hicpairs_easy.json',
         input_argument_name='input_pairs',
         awsem_tag="0.2.5",
         parameters_to_override={'maxmem': '32g'},
         parameters_to_delete=['custom_res', 'min_res'],
+        datatype_filter=['in situ Hi-C', 'dilution Hi-C'],
         stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
     It will become more generalized soon.
     """
+    re_restriction_file = {'MboI': '4DNFI823L812', 'HindIII': '4DNFI823MBKE', 'DpnII': '4DNFIBNAPW30'}
     connection = get_connection(keypairs_file)
-    input_files_list = prep_input_file_entry_list_for_merging_expset(prev_workflow_title,
+    input_files_list = prep_input_file_entry_list_for_merging_expset(input_argument_name,
+                                                                     prev_workflow_uuid,
                                                                      prev_output_argument_name,
                                                                      connection,
-                                                                     wfuuid=wfuuid)
+                                                                     addon='re',
+                                                                     wfuuid=wfuuid,
+                                                                     datatype_filter=datatype_filter)
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             print(entry)
-            awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name,
+            if entry['RE'] not in re_restriction_file:
+                continue
+            re_entry = create_inputfile_entry(re_restriction_file[entry['RE']], 'restriction_file', connection)
+            entry_list = [entry, re_entry]
+            awsem_json = create_awsem_json_for_workflowrun(entry_list, awsem_template_json,
                                                            awsem_tag=awsem_tag,
                                                            parameters_to_override=parameters_to_override,
                                                            parameters_to_delete=parameters_to_delete,
@@ -357,13 +469,13 @@ def collect_pairs_files_to_run_pairsqc(
         keypairs_file,
         webprod=True,
         wfuuid='ae3a87cb-3fa2-469e-97c7-540fc2d0a117',
-        prev_workflow_title='Hi-C%20Post-alignment%20Processing',
+        prev_workflow_uuid='023bfb3e-9a8b-42b9-a9d4-216079526f68',
         prev_output_argument_name='filtered_pairs',
         awsem_template_json='awsem_pairsqc.json',
         input_argument_name='input_pairs',
         awsem_tag="0.2.5",
         parameters_to_delete=None,
-        datatype_filter=['in situ Hi-C', 'dilution Hi-C'],
+        datatype_filter=['in situ Hi-C', 'dilution Hi-C', 'capture Hi-C'],
         stepfunction_workflow='tibanna_pony'):
     """Very high-level function for collecting all legit
     pairs files and run hi-c-processing-pairs.
@@ -371,7 +483,8 @@ def collect_pairs_files_to_run_pairsqc(
     """
     re_cutter = {'HindIII': '6', 'DpnII': '4', 'MboI': '4', 'NcoI': '6'}
     connection = get_connection(keypairs_file)
-    input_files_list = prep_input_file_entry_list_for_single_exp(prev_workflow_title,
+    input_files_list = prep_input_file_entry_list_for_single_exp(input_argument_name,
+                                                                 prev_workflow_uuid,
                                                                  prev_output_argument_name,
                                                                  connection,
                                                                  addon='re',
@@ -380,7 +493,7 @@ def collect_pairs_files_to_run_pairsqc(
     if input_files_list:
         for _, entry in input_files_list.iteritems():
             parameters_to_override = {'sample_name': entry['accession'], 'enzyme': re_cutter[entry['RE']]}
-            awsem_json = create_awsem_json_for_workflowrun(entry, awsem_template_json, input_argument_name,
+            awsem_json = create_awsem_json_for_workflowrun([entry], awsem_template_json,
                                                            awsem_tag=awsem_tag,
                                                            parameters_to_override=parameters_to_override,
                                                            parameters_to_delete=parameters_to_delete,

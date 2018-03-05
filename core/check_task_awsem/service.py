@@ -15,6 +15,8 @@ def handler(event, context):
     '''
     somewhere in the event data should be a jobid
     '''
+    RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
+
     # s3 bucket that stores the output
     bucket_name = event['config']['log_bucket']
     s3 = utils.s3Utils(bucket_name, bucket_name, bucket_name)
@@ -41,7 +43,11 @@ def handler(event, context):
     if s3.does_key_exist(job_success):
         if not s3.does_key_exist(postrunjson):
             raise Exception("Postrun json not found at %s" % postrunjson_location)
-        event['postrunjson'] = json.loads(s3.read_s3(postrunjson))
+        postrunjsoncontent = json.loads(s3.read_s3(postrunjson))
+        if len(str(postrunjsoncontent)) + len(str(event)) < RESPONSE_JSON_CONTENT_INCLUSION_LIMIT:
+            event['postrunjson'] = postrunjsoncontent
+        else:
+            event['postrunjson'] = 'postrun json not included due to data size limit'
         print("completed successfully")
         return event
     else:
