@@ -209,7 +209,8 @@ def prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid,
     schema_name = 'search/?type=WorkflowRunAwsem&workflow.uuid=' + prev_workflow_uuid + '&run_status=complete'
     response = fdnDCIC.get_FDN(schema_name, connection)
     files_for_ep = map_exp_to_inputfile_entry(response, input_argname, prev_output_argument_name, connection,
-                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter, single=single)
+                                              addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter,
+                                              single=single)
     return(files_for_ep)
 
 
