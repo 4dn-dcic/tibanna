@@ -300,13 +300,16 @@ def update_config(config, app_name, input_files, parameters):
 
 class WorkflowFile(object):
 
-    def __init__(self, bucket, key, runner, accession=None, output_type=None):
+    def __init__(self, bucket, key, runner, accession=None, output_type=None,
+                 filesize=None, md5=None):
         self.bucket = bucket
         self.key = key
         self.s3 = utils.s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
         self.accession = accession
         self.output_type = output_type
+        self.filesize = filesize
+        self.md5 = md5
 
     @property
     def status(self):
@@ -330,6 +333,7 @@ class Awsem(object):
         self.output_s3 = self.args['output_S3_bucket']
         self.app_name = self.args['app_name']
         self.output_files_meta = json['ff_meta']['output_files']
+        self.output_info = json['postrunjson']['Job']['Output']['Output files']
 
     def output_files(self):
         files = dict()
@@ -346,7 +350,9 @@ class Awsem(object):
                 accession = file_name.split('.')[0].strip('/')
             else:
                 accession = None
-            wff = {k: WorkflowFile(self.output_s3, v, self, accession, output_type=out_type)}
+            md5 = self.output_info[k]['md5sum']
+            filesize = self.output_info[k]['size']
+            wff = {k: WorkflowFile(self.output_s3, v, self, accession, output_type=out_type, filesize=filesize, md5=md5)}
             files.update(wff)
         return files
 

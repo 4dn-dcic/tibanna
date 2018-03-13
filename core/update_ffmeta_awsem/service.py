@@ -13,21 +13,20 @@ def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def update_processed_file_metadata(status, pf_meta, tibanna):
+def update_processed_file_metadata(status, pf, tibanna, export):
 
     ff_key = tibanna.ff_keys
     try:
-        for pf in pf_meta:
-            pf['status'] = status
+        pf.status = 'uploaded'
+        pf.md5sum = export.md5
+        pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
-        for pf in pf_meta:
-            pfo = ff_utils.ProcessedFileMetadata(**pf)
-            pfo.post(key=ff_key)
+        pf.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
-    return pf_meta
+    return pf
 
 
 def qc_updater(status, wf_file, ff_meta, tibanna):
@@ -188,7 +187,8 @@ def real_handler(event, context):
     tibanna = utils.Tibanna(**tibanna_settings)
     # sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     ff_meta = ff_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-    pf_meta = event.get('pf_meta')
+    pf_meta = [ff_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
+
     # ensure this bad boy is always initialized
     patch_meta = False
     awsem = ec2_utils.Awsem(event)
@@ -218,7 +218,9 @@ def real_handler(event, context):
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[export.output_type]('uploaded', export, ff_meta, tibanna)
             if pf_meta:
-                pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
+                for pf in pf_meta:
+                    if pf.accession == export.accession:
+                        pf = update_processed_file_metadata('uploaded', pf, tibanna, export)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[export.output_type]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
@@ -243,7 +245,7 @@ def real_handler(event, context):
         raise Exception("Failed to update run_status %s" % str(e))
 
     event['ff_meta'] = ff_meta.as_dict()
-    event['pf_meta'] = pf_meta
+    event['pf_meta'] = [_.as_dict() for _ in pf_meta]
 
     return event
 

@@ -47,7 +47,8 @@ def handler(event, context):
         if len(str(postrunjsoncontent)) + len(str(event)) < RESPONSE_JSON_CONTENT_INCLUSION_LIMIT:
             event['postrunjson'] = postrunjsoncontent
         else:
-            event['postrunjson'] = 'postrun json not included due to data size limit'
+            event['postrunjson'] = {'log': 'postrun json not included due to data size limit',
+                                    'Job': {'Output':  postrunjsoncontent['Job']['Output']}}
         print("completed successfully")
         return event
     else:

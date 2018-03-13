@@ -84,6 +84,14 @@
   },
   "postrunjson": {
     "Job": {
+        "Output": {
+            "Output files": {
+                "report": {
+                    "size": 27346,
+                    "md5sum": "ao76b83r7692r7hc928r72ryc2ohr3y2i3"
+                }
+            }
+        },
         "status": "0"
     }
   }

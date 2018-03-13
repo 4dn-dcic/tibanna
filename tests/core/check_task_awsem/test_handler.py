@@ -95,12 +95,15 @@ def test_check_task_awsem_with_long_postrunjson(check_task_input, s3, job_starte
     s3.s3_put('', job_success)
     postrunjson = "%s.postrun.json" % jobid
     verylongstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(50000))
-    s3.s3_put('{"test": "' + verylongstring + '"}', postrunjson)
+    s3.s3_put('{"test": "' + verylongstring + '", "Job": {"Output": {}}}', postrunjson)
 
     retval = service.handler(check_task_input, '')
     s3.delete_key(job_success)
     s3.delete_key(postrunjson)
     assert 'postrunjson' in retval
-    assert retval['postrunjson'] == "postrun json not included due to data size limit"
+    assert 'Job' in retval['postrunjson']
+    assert 'Output' in retval['postrunjson']['Job']
+    assert 'log' in retval['postrunjson']
+    assert retval['postrunjson']['log'] == "postrun json not included due to data size limit"
     del retval['postrunjson']
     assert retval == check_task_input
