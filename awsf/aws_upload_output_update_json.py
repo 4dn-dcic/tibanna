@@ -4,10 +4,11 @@ import sys
 import os
 import time
 import boto3
-json_old=sys.argv[1]
-json_out=sys.argv[2]
+json_old = sys.argv[1]
+cwl_json_out = sys.argv[2]
 logfile = sys.argv[3]
-json_new=sys.argv[4]
+md5file = sys.argv[4]
+json_new = sys.argv[5]
 
 source_directory = '/data1/out/'
 
@@ -42,9 +43,23 @@ with open(json_old, 'r') as json_old_f:
     secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
 
 ## read cwl output json file
-with open(json_out, 'r') as json_out_f:
+with open(cwl_json_out, 'r') as json_out_f:
     cwl_output = json.load(json_out_f)
     old_dict['Job']['Output'].update({'Output files': cwl_output})
+
+## fillig in md5
+with open(md5file, 'r') as md5_f:
+    md5dict = dict()
+    for line in mf5_f:
+        a = line.split()
+        path = a[1]
+        md5sum = a[0]
+        md5dict[path] = md5sum
+
+for of in old_dict['Job']['Output']['Output files']:
+    if of['path'] in md5dict:
+        of['md5sum'] = md5dict[of['path']]
+
 
 ## sanity check for output target, this skips secondary files - we assume secondary files are not explicitly specified in output_target.
 for k in output_target:

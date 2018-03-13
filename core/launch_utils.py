@@ -207,6 +207,7 @@ def get_connection(keypairs_file):
 def prep_input_file_entry_list_for_single_exp(input_argname, prev_workflow_uuid, prev_output_argument_name, connection,
                                               addon=None, wfuuid=None, datatype_filter=None, single=True):
     schema_name = 'search/?type=WorkflowRunAwsem&workflow.uuid=' + prev_workflow_uuid + '&run_status=complete'
+    schema_name = schema_name + '&datastore=database'
     response = fdnDCIC.get_FDN(schema_name, connection)
     files_for_ep = map_exp_to_inputfile_entry(response, input_argname, prev_output_argument_name, connection,
                                               addon=addon, wfuuid=wfuuid, datatype_filter=datatype_filter,
@@ -235,9 +236,9 @@ def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_in
     assumes file is a processed file (has source_experiments field)
     assumes single source_experiments
     """
-    file_dict = fdnDCIC.get_FDN(fileId, connection)
+    file_dict = fdnDCIC.get_FDN(fileId + '?datastore=database', connection)
     if 'uuid' not in file_dict:
-        raise Exception("key error uuid: " + file_dict)
+        raise Exception("key error uuid: " + str(file_dict))
     file_uuid = file_dict['uuid']
     entry = {'uuid': file_uuid, 'accession': file_dict['accession'],
              'object_key': file_dict['upload_key'].replace(file_uuid + '/', ''),
@@ -252,7 +253,7 @@ def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_in
             entry['source_experiments'] = [sep_id]
             if datatype_filter:
                 # would be faster if it takes sep_dict. Leave it for now
-                datatype = get_datatype_for_expr(sep, connection)
+                datatype = get_datatype_for_expr(sep_dict, connection)
                 if datatype not in datatype_filter:
                     return(None)
             if addon:
@@ -263,8 +264,8 @@ def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_in
         if wfr_input_filter in wfr_info:
             if 'complete' in wfr_info[wfr_input_filter]:
                 return(None)
-            if 'started' in wfr_info[wfr_input_filter]:
-                return(None)
+            #if 'started' in wfr_info[wfr_input_filter]:
+            #    return(None)
     return(entry)
 
 
@@ -439,7 +440,9 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
     pairs files and run hi-c-processing-pairs.
     It will become more generalized soon.
     """
-    re_restriction_file = {'MboI': '4DNFI823L812', 'HindIII': '4DNFI823MBKE', 'DpnII': '4DNFIBNAPW30'}
+    re_restriction_file = {'MboI': 'files-reference/4DNFI823L812',
+                           'HindIII': 'files-reference/4DNFI823MBKE',
+                           'DpnII': 'files-reference/4DNFIBNAPW30'}
     connection = get_connection(keypairs_file)
     input_files_list = prep_input_file_entry_list_for_merging_expset(input_argument_name,
                                                                      prev_workflow_uuid,
@@ -452,6 +455,7 @@ def collect_pairs_files_to_run_hi_c_processing_pairs(
         for _, entry in input_files_list.iteritems():
             print(entry)
             if entry['RE'] not in re_restriction_file:
+                print('RE not found, skipping.. : ' + entry['RE'])
                 continue
             re_entry = create_inputfile_entry(re_restriction_file[entry['RE']], 'restriction_file', connection)
             entry_list = [entry, re_entry]
