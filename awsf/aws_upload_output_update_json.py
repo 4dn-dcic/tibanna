@@ -50,7 +50,7 @@ with open(cwl_json_out, 'r') as json_out_f:
 ## fillig in md5
 with open(md5file, 'r') as md5_f:
     md5dict = dict()
-    for line in mf5_f:
+    for line in md5_f:
         a = line.split()
         path = a[1]
         md5sum = a[0]
