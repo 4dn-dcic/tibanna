@@ -1,4 +1,6 @@
-from core.update_ffmeta_awsem.service import handler, get_postrunjson_url
+from core.update_ffmeta_awsem.service import handler, get_postrunjson_url, md5_updater
+from core.ec2_utils import Awsem
+from core import utils
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
@@ -6,6 +8,17 @@ import json
 import mock
 
 
+@valid_env
+@pytest.mark.webtest
+def test_md5_updater(update_ffmeta_event_data):
+    event = update_ffmeta_event_data
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    awsem = Awsem(update_ffmeta_event_data)
+    ouf = awsem.output_files()['report']
+    md5_updater('uploaded', ouf, None, tibanna)
+
+    
 @valid_env
 @pytest.mark.webtest
 def test_get_postrunjson_url(update_ffmeta_event_data):

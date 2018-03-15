@@ -149,7 +149,9 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             print("report has no content")
             return md5_updater("upload failed", wf_file, ff_meta, tibanna)
         md5 = md5_array[0]
-        if len(md5_array) > 0:
+        if len(md5_array) > 1:
+            LOG.info("md5_array = %s" % str(md5_array))
+            LOG.info("md5_array length = %s" % str(len(md5_array)))
             content_md5 = md5_array[1]
         else:
             content_md5 = None
