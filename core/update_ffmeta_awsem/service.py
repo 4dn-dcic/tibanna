@@ -169,8 +169,9 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             # change status to uploaded only if it is uploading or upload failed
             if current_status in ["uploading", "upload failed"]:
                 new_file['status'] = 'uploaded'
-            new_file['md5sum'] = md5
-            if content_md5:
+            if not original_md5:
+                new_file['md5sum'] = md5
+            if content_md5 and not original_content_md5:
                 new_file['content_md5sum'] = content_md5
 
             try:
