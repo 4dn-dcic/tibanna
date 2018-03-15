@@ -31,7 +31,6 @@ def update_processed_file_metadata(status, pf, tibanna, export):
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
         pf.post(key=ff_key)
-        pass
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
 
@@ -72,7 +71,10 @@ def qc_updater(status, wf_file, ff_meta, tibanna):
 
 def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
-                datafiles=['summary.txt', 'fastqc_data.txt']):
+                datafiles=None):
+    # avoid using [] as default argument
+    if datafiles is None:
+        datafiles = ['summary.txt', 'fastqc_data.txt']
     if status == 'uploading':
         # wait until this bad boy is finished
         return
