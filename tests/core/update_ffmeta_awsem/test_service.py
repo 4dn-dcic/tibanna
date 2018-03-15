@@ -18,7 +18,7 @@ def test_md5_updater(update_ffmeta_event_data):
     ouf = awsem.output_files()['report']
     md5_updater('uploaded', ouf, None, tibanna)
 
-    
+
 @valid_env
 @pytest.mark.webtest
 def test_get_postrunjson_url(update_ffmeta_event_data):
