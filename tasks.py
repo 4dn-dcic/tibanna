@@ -48,10 +48,10 @@ def get_all_core_lambdas():
             'update_metadata_ff',
             'validate_md5_s3_trigger',
             'tibanna_slackbot',
-            'start_run_awsem_dev',
-            'run_task_awsem_dev',
-            'check_task_awsem_dev',
-            'update_ffmeta_awsem_dev',
+            'start_run_awsem',
+            'run_task_awsem',
+            'check_task_awsem',
+            'update_ffmeta_awsem',
             'run_workflow',
             ]
 
