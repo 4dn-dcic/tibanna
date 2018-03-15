@@ -4,30 +4,48 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
+import requests
+import os
+import json
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
+HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
+HIGLASS_USER = os.environ.get("HIGLASS_USER")
+HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
+HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput', ]
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def update_processed_file_metadata(status, pf_meta, tibanna):
+def update_processed_file_metadata(status, pf, tibanna, export):
 
     ff_key = tibanna.ff_keys
     try:
-        for pf in pf_meta:
-            pf['status'] = status
+        pf.status = 'uploaded'
+        pf.md5sum = export.md5
+        pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
-        for pf in pf_meta:
-            pfo = ff_utils.ProcessedFileMetadata(**pf)
-            pfo.post(key=ff_key)
+        pf.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
-    return pf_meta
+
+    # register mcool with fourfront-higlass
+    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
+        payload = {"filepath": export.key}
+        authentication = (HIGLASS_USER, HIGLASS_PASS)
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
+        res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
+                            data=json.dumps(payload), auth=authentication,
+                            headers=headers)
+        print(res)
+
+    return pf
 
 
 def qc_updater(status, wf_file, ff_meta, tibanna):
@@ -53,7 +71,10 @@ def qc_updater(status, wf_file, ff_meta, tibanna):
 
 def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
-                datafiles=['summary.txt', 'fastqc_data.txt']):
+                datafiles=None):
+    # avoid using [] as default argument
+    if datafiles is None:
+        datafiles = ['summary.txt', 'fastqc_data.txt']
     if status == 'uploading':
         # wait until this bad boy is finished
         return
@@ -123,10 +144,16 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status.lower() == 'uploaded':
-        md5 = wf_file.read()
-        original_md5 = original_file.get('content_md5sum', False)
+        md5 = wf_file.readline()
+        content_md5 = wf_file.readline()
+        original_md5 = original_file.get('md5sum', False)
+        original_content_md5 = original_file.get('content_md5sum', False)
         current_status = original_file.get('status', "uploading")
         if original_md5 and original_md5 != md5:
+            # file status to be upload failed / md5 mismatch
+            print("no matcho")
+            md5_updater("upload failed", wf_file, ff_meta, tibanna)
+        elif original_content_md5 and original_content_md5 != md5:
             # file status to be upload failed / md5 mismatch
             print("no matcho")
             md5_updater("upload failed", wf_file, ff_meta, tibanna)
@@ -135,7 +162,8 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             # change status to uploaded only if it is uploading or upload failed
             if current_status in ["uploading", "upload failed"]:
                 new_file['status'] = 'uploaded'
-            new_file['content_md5sum'] = md5
+            new_file['md5sum'] = md5
+            new_file['content_md5sum'] = content_md5
 
             try:
                 ff_utils.patch_metadata(new_file, accession, key=ff_key)
@@ -188,7 +216,8 @@ def real_handler(event, context):
     tibanna = utils.Tibanna(**tibanna_settings)
     # sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
     ff_meta = ff_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-    pf_meta = event.get('pf_meta')
+    pf_meta = [ff_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
+
     # ensure this bad boy is always initialized
     patch_meta = False
     awsem = ec2_utils.Awsem(event)
@@ -218,7 +247,9 @@ def real_handler(event, context):
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[export.output_type]('uploaded', export, ff_meta, tibanna)
             if pf_meta:
-                pf_meta = update_processed_file_metadata('uploaded', pf_meta, tibanna)
+                for pf in pf_meta:
+                    if pf.accession == export.accession:
+                        pf = update_processed_file_metadata('uploaded', pf, tibanna, export)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[export.output_type]('upload failed', export, ff_meta, tibanna)
             ff_meta.run_status = 'error'
@@ -243,7 +274,7 @@ def real_handler(event, context):
         raise Exception("Failed to update run_status %s" % str(e))
 
     event['ff_meta'] = ff_meta.as_dict()
-    event['pf_meta'] = pf_meta
+    event['pf_meta'] = [_.as_dict() for _ in pf_meta]
 
     return event
 

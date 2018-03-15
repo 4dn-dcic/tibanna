@@ -5,7 +5,7 @@
   },
   "app_name": "repliseq-parta",
   "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-  "workflow_uuid": "",
+  "workflow_uuid": "146da22a-502d-4500-bf57-a7cf0b4b2364",
   "parameters" :  { "nthreads": 4, "memperthread": "2G" },
   "input_files" : [
        {

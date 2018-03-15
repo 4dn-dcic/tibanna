@@ -144,10 +144,16 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status.lower() == 'uploaded':
-        md5 = wf_file.read()
-        original_md5 = original_file.get('content_md5sum', False)
+        md5 = wf_file.readline()
+        content_md5 = wf_file.readline()
+        original_md5 = original_file.get('md5sum', False)
+        original_content_md5 = original_file.get('content_md5sum', False)
         current_status = original_file.get('status', "uploading")
         if original_md5 and original_md5 != md5:
+            # file status to be upload failed / md5 mismatch
+            print("no matcho")
+            md5_updater("upload failed", wf_file, ff_meta, tibanna)
+        elif original_content_md5 and original_content_md5 != md5:
             # file status to be upload failed / md5 mismatch
             print("no matcho")
             md5_updater("upload failed", wf_file, ff_meta, tibanna)
@@ -156,7 +162,8 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             # change status to uploaded only if it is uploading or upload failed
             if current_status in ["uploading", "upload failed"]:
                 new_file['status'] = 'uploaded'
-            new_file['content_md5sum'] = md5
+            new_file['md5sum'] = md5
+            new_file['content_md5sum'] = content_md5
 
             try:
                 ff_utils.patch_metadata(new_file, accession, key=ff_key)
