@@ -264,7 +264,7 @@ def create_inputfile_entry(fileId, input_argname, connection, addon=None, wfr_in
         if wfr_input_filter in wfr_info:
             if 'complete' in wfr_info[wfr_input_filter]:
                 return(None)
-            #if 'started' in wfr_info[wfr_input_filter]:
+            # if 'started' in wfr_info[wfr_input_filter]:
             #    return(None)
     return(entry)
 

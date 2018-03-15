@@ -4,9 +4,16 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
+import requests
+import os
+import json
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
+HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
+HIGLASS_USER = os.environ.get("HIGLASS_USER")
+HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
+HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput', ]
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
@@ -24,8 +31,21 @@ def update_processed_file_metadata(status, pf, tibanna, export):
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
         pf.post(key=ff_key)
+        pass
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
+
+    # register mcool with fourfront-higlass
+    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
+        payload = {"filepath": export.key}
+        authentication = (HIGLASS_USER, HIGLASS_PASS)
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
+        res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
+                            data=json.dumps(payload), auth=authentication,
+                            headers=headers)
+        print(res)
+
     return pf
 
 

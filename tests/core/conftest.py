@@ -106,6 +106,11 @@ def update_ffmeta_event_data_pairsqc(ff_keys):
 
 
 @pytest.fixture(scope='session')
+def update_ffmeta_mcool(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_mcool.json')
+
+
+@pytest.fixture(scope='session')
 def update_ffmeta_event_data_fastqc(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc.json')
 
