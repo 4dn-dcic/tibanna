@@ -350,9 +350,10 @@ class Awsem(object):
                 accession = file_name.split('.')[0].strip('/')
             else:
                 accession = None
-            md5 = self.output_info[k]['md5sum']
-            filesize = self.output_info[k]['size']
-            wff = {k: WorkflowFile(self.output_s3, v, self, accession, output_type=out_type, filesize=filesize, md5=md5)}
+            md5 = self.output_info[k].get('md5sum', '')
+            filesize = self.output_info[k].get('size', 0)
+            wff = {k: WorkflowFile(self.output_s3, v, self, accession,
+                                   output_type=out_type, filesize=filesize, md5=md5)}
             files.update(wff)
         return files
 
