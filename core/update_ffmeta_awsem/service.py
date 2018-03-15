@@ -144,8 +144,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     original_file = ff_utils.get_metadata(accession, key=ff_key)
 
     if status.lower() == 'uploaded':
-        md5 = wf_file.readline()
-        content_md5 = wf_file.readline()
+        md5, content_md5 = wf_file.read().split('\n')
         original_md5 = original_file.get('md5sum', False)
         original_content_md5 = original_file.get('content_md5sum', False)
         current_status = original_file.get('status', "uploading")
