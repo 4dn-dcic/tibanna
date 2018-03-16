@@ -45,8 +45,6 @@ def update_processed_file_metadata(status, pf, tibanna, export):
                             data=json.dumps(payload), auth=authentication,
                             headers=headers)
 
-        import pdb
-        pdb.set_trace()
         print(res)
 
     return pf
