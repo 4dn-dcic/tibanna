@@ -13,7 +13,8 @@ s3 = boto3.resource('s3')
 HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
 HIGLASS_USER = os.environ.get("HIGLASS_USER")
 HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
-HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput', ]
+HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
+                   'elasticbeanstalk-fourfront-webprod-wfoutput']
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
@@ -36,13 +37,16 @@ def update_processed_file_metadata(status, pf, tibanna, export):
 
     # register mcool with fourfront-higlass
     if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
-        payload = {"filepath": export.key}
+        payload = {"filepath": export.bucket + "/" + export.key}
         authentication = (HIGLASS_USER, HIGLASS_PASS)
         headers = {'Content-Type': 'application/json',
                    'Accept': 'application/json'}
         res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
                             data=json.dumps(payload), auth=authentication,
                             headers=headers)
+
+        import pdb
+        pdb.set_trace()
         print(res)
 
     return pf
