@@ -6,6 +6,7 @@ import boto3
 from wranglertools import fdnDCIC
 import time
 
+
 def post_random_file(bucket, keypairs_file):
     uuid = str(uuid4())
     accession = generate_rand_accession()
@@ -21,15 +22,16 @@ def post_random_file(bucket, keypairs_file):
     tmpfilename = 'alsjekvjf.gz'
     with gzip.open(tmpfilename, 'wb') as f:
         f.write(uuid)
- 
+
     key = fdnDCIC.FDN_Key(keypairs_file, "default")
     connection = fdnDCIC.FDN_Connection(key)
     response = fdnDCIC.new_FDN(connection, 'FileProcessed', newfile)
+    print(response)
     s3 = boto3.resource('s3')
     s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
 
     return newfile
-   
+
 
 def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
     bucket = "elasticbeanstalk-fourfront-" + env + "-wfoutput"
@@ -37,16 +39,16 @@ def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
     uuid = newfile['uuid']
     accession = newfile['accession']
     input_json = {
-        "config" : {
-          "ebs_type" : "io1",
-          "ebs_iops" : 500,
-          "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
-          "ami_id" : "ami-cfb14bb5",
+        "config": {
+          "ebs_type": "io1",
+          "ebs_iops": 500,
+          "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+          "ami_id": "ami-cfb14bb5",
           "json_bucket": "4dn-aws-pipeline-run-json",
-          "shutdown_min" : 30,
-          "copy_to_s3" : True,
-          "launch_instance" : True,
-          "log_bucket" : "tibanna-output",
+          "shutdown_min": 30,
+          "copy_to_s3": True,
+          "launch_instance": True,
+          "log_bucket": "tibanna-output",
           "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
           "key_name": "4dn-encode",
           "password": ""
@@ -55,15 +57,15 @@ def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
           "env": "fourfront-webdev",
           "run_type": "md5"
         },
-        "parameters": {}, 
-        "app_name": "md5", 
-        "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6", 
+        "parameters": {},
+        "app_name": "md5",
+        "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
         "input_files": [
-                        {"workflow_argument_name": "input_file", 
+                        {"workflow_argument_name": "input_file",
                          "bucket_name": bucket,
                          "uuid": uuid,
                          "object_key": accession + '.pairs.gz'
-                        }
+                         }
         ],
         "output_bucket": bucket
     }
@@ -74,10 +76,10 @@ def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
     key = fdnDCIC.FDN_Key(keypairs_file, "default")
     connection = fdnDCIC.FDN_Connection(key)
     time.sleep(6*60)  # wait for 6 minutes
-    filemeta = fdnDCIC.get_FDN(uuid)
+    filemeta = fdnDCIC.get_FDN(uuid, connection)
     content_md5sum = filemeta.get('content_md5sum')
     md5sum = filemeta.get('md5sum')
-    if content_md5sum and m5sum:
+    if content_md5sum and md5sum:
         print(content_md5sum)
         print(md5sum)
     else:
