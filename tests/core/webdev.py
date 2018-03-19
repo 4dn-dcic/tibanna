@@ -8,6 +8,11 @@ import time
 
 
 def post_random_file(bucket, keypairs_file):
+    """Generates a fake pairs.gz file with random uuid and accession
+    and posts it to fourfront. The content is unique since it contains
+    its own uuid. The file metadata does not contain md5sum or
+    content_md5sum.
+    """
     uuid = str(uuid4())
     accession = generate_rand_accession()
     newfile = {
@@ -34,6 +39,10 @@ def post_random_file(bucket, keypairs_file):
 
 
 def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
+    """Creates a random file object with no md5sum/content_md5sum and run md5 workflow.
+    It waits for 6 mintues till the workflow run finishes and checks the input file object
+    has been updated.
+    """
     bucket = "elasticbeanstalk-fourfront-" + env + "-wfoutput"
     newfile = post_random_file(bucket, keypairs_file)
     uuid = newfile['uuid']
