@@ -64,7 +64,7 @@ def test__md5_updater_5():
     assert new_file['content_md5sum'] == '5678'
     assert 'md5sum' not in new_file
     assert 'status' in new_file
-    assert new_file['status']=='uploaded'
+    assert new_file['status'] == 'uploaded'
 
 
 def test__md5_updater_6():
@@ -79,7 +79,7 @@ def test__md5_updater_6():
     assert new_file['md5sum'] == '1234'
     assert 'content_md5sum' not in new_file
     assert 'status' in new_file
-    assert new_file['status']=='uploaded'
+    assert new_file['status'] == 'uploaded'
 
 
 def test__md5_updater_7():
@@ -94,7 +94,7 @@ def test__md5_updater_7():
     assert new_file['content_md5sum'] == '5678'
     assert 'md5sum' not in new_file
     assert 'status' in new_file
-    assert new_file['status']=='uploaded'
+    assert new_file['status'] == 'uploaded'
 
 
 def test__md5_updater_8():
