@@ -7,6 +7,14 @@ def handler(event, context):
     env_name = event['env_name']
     workflow = event.get('step_function_name')
     if workflow:
-        utils.run_workflow(event, env=env_name, workflow=workflow)
+        res = utils.run_workflow(event, env=env_name, workflow=workflow)
     else:
-        utils.run_workflow(event, env=env_name)
+        res = utils.run_workflow(event, env=env_name)
+
+    try:
+        start = str(res['_tibanna']['response']['startDate'])
+        res['_tibanna']['response']['startDate'] = start
+    except:
+        pass
+
+    return res
