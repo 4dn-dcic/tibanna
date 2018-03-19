@@ -21,6 +21,17 @@ def test_md5_updater(update_ffmeta_event_data):
 
 @valid_env
 @pytest.mark.webtest
+def test_md5_updater(update_ffmeta_event_data_newmd5):
+    event = update_ffmeta_event_data_newmd5
+    tibanna_settings = event.get('_tibanna', {})
+    tibanna = utils.Tibanna(**tibanna_settings)
+    awsem = Awsem(update_ffmeta_event_data_newmd5)
+    ouf = awsem.output_files()['report']
+    md5_updater('uploaded', ouf, None, tibanna)
+
+
+@valid_env
+@pytest.mark.webtest
 def test_get_postrunjson_url(update_ffmeta_event_data):
     url = get_postrunjson_url(update_ffmeta_event_data)
     assert url == 'https://s3.amazonaws.com/tibanna-output/8fRIlIfwRNDT.postrun.json'
