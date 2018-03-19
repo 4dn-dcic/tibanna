@@ -10,7 +10,7 @@ import mock
 
 @valid_env
 @pytest.mark.webtest
-def test_md5_updater(update_ffmeta_event_data):
+def test_md5_updater_oldmd5(update_ffmeta_event_data):
     event = update_ffmeta_event_data
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
@@ -21,7 +21,7 @@ def test_md5_updater(update_ffmeta_event_data):
 
 @valid_env
 @pytest.mark.webtest
-def test_md5_updater(update_ffmeta_event_data_newmd5):
+def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
     event = update_ffmeta_event_data_newmd5
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
