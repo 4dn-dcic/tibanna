@@ -2,14 +2,13 @@
   "ff_meta": {
     "awsem_app_name": "md5",
     "run_platform": "AWSEM",
-    "uuid": "2d18f2cc-62fb-442d-a4ce-4fa06166630e",
+    "uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
     "parameters": [],
     "title": "md5 run 2017-08-24 22:20:54.399728",
     "sbg_import_ids": [],
     "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41",
     "award": "1U01CA200059-01",
     "sbg_task_id": "",
-    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow-2:md5_c01492ab-ffff-4b88-b6fa-5dbb74b8ae7e",
     "lab": "4dn-dcic-lab",
     "sbg_mounted_volume_ids": [],
     "run_status": "started",
@@ -31,7 +30,6 @@
   "_tibanna": {
     "env": "fourfront-webdev",
     "settings": {
-      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow-2:md5_c01492ab-ffff-4b88-b6fa-5dbb74b8ae7e",
       "run_type": "md5",
       "run_name": "md5_c01492ab-ffff-4b88-b6fa-5dbb74b8ae7e",
       "env": "fourfront-webdev",
