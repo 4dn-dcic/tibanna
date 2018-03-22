@@ -57,6 +57,8 @@ def real_handler(event, context):
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
+    if not args['cwl_child_filenames']:
+        args['cwl_child_filenames'] = []
 
     # create the ff_meta output info
     input_files = []

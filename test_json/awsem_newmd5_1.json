@@ -19,12 +19,12 @@
     },
     "parameters": {}, 
     "app_name": "md5", 
-    "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
+    "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
     "input_files": [
                     {"workflow_argument_name": "input_file", 
-                     "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-                     "uuid": "56b52219-32b9-40db-af38-80233c4717ec",
-                     "object_key": "4DNFICGOY5GV.pairs.gz"
+                     "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+                     "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+                     "object_key": "4DNFIRSRJH45.fastq.gz"
                     }
     ],
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"

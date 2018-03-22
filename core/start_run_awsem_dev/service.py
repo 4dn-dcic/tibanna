@@ -57,6 +57,8 @@ def real_handler(event, context):
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
+    if not args['cwl_child_filenames']:
+        args['cwl_child_filenames'] = []
 
     # create the ff_meta output info
     input_files = []
@@ -162,6 +164,11 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
     fe_map = get_format_extension_map(ff_keys)
     argname = input_file['workflow_argument_name']
     extra_file_key = []
+    inf_object_key = args['input_files'][argname]['object_key']
+    if isinstance(inf_object_key, list):
+        inf_keys = inf_object_key
+    else:
+        inf_keys = [inf_object_key]
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('extra_files'):
@@ -169,7 +176,7 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
             extra_file_extension = fe_map.get(extra_file_format)
             infile_format = infile_meta.get('file_format')
             infile_extension = fe_map.get(infile_format)
-            infile_key = args['input_files'][argname]['object_key'][i]
+            infile_key = inf_keys[i]
             extra_file_key.append(infile_key.replace(infile_extension, extra_file_extension))
 
     if len(extra_file_key) > 0:
