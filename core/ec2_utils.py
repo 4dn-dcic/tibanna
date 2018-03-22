@@ -11,7 +11,7 @@ import logging
 from core import utils
 import botocore.session
 import boto3
-from Benchmark import Benchmark as B
+from Benchmark import run as B
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -276,9 +276,17 @@ def update_config(config, app_name, input_files, parameters):
             input_size_in_bytes.update({str(argname): size})
 
         print({"input_size_in_bytes": input_size_in_bytes})
-        res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
-        print(res)
+        try:
+            res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
+        except:
+            try:
+                res
+                raise Exception("Benchmarking not working. : {}".format(str(res)))
+            except:
+                raise Exception("Benchmarking not working. : None")
+
         if res is not None:
+            logger.info(str(res))
             instance_type = res['aws']['recommended_instance_type']
             ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
             ebs_opt = res['aws']['EBS_optimized']

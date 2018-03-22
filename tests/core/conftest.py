@@ -76,6 +76,11 @@ def run_task_awsem_event_data(ff_keys):
 
 
 @pytest.fixture(scope='session')
+def run_task_awsem_event_data2(ff_keys):
+    return get_event_file_for('run_task_awsem', ff_keys=ff_keys, event_file='event_repliseq.json')
+
+
+@pytest.fixture(scope='session')
 def run_task_awsem_pseudo_workflow_event_data(ff_keys):
     return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_metadata_only.json')
 

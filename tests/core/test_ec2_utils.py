@@ -49,3 +49,13 @@ def test_update_config(run_task_awsem_event_data):
     assert config['EBS_optimized'] is False
     assert config['ebs_size'] >= 10
     assert config['copy_to_s3'] is True  # check the other fields are preserved in the returned config
+
+
+def test_update_config2(run_task_awsem_event_data2):
+    data = run_task_awsem_event_data2
+    config = data['config']
+    update_config(config, data['args']['app_name'], data['args']['input_files'], data['args']['input_parameters'])
+    assert config['instance_type'] == 't2.micro'
+    assert config['EBS_optimized'] is False
+    assert config['ebs_size'] >= 10
+    assert config['copy_to_s3'] is True  # check the other fields are preserved in the returned config

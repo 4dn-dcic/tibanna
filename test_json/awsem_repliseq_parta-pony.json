@@ -10,7 +10,7 @@
   "input_files" : [
        {
            "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
-           "workflow_argument_name": "bwa_index",
+           "workflow_argument_name": "bwaIndex",
            "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
        },

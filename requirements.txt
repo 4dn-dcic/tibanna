@@ -2,7 +2,7 @@ boto3
 botocore==1.7.4
 -e git+https://github.com/j1z0/python-lambda.git#egg=python_lambda
 submit4dn
--e git+https://github.com/4dn-dcic/pipelines-cwl.git#egg=Benchmark
+-e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
 # Build tasks
 invoke==0.18.1
 # Syntax checking
