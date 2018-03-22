@@ -159,4 +159,4 @@ def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
         with mock.patch('requests.post') as mock_request:
             ret = handler(update_ffmeta_mcool, None)
             mock_request.assert_called_once()
-            assert json.dumps(ret)
+            assert ret

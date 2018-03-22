@@ -23,6 +23,20 @@ def donothing(status, sbg, ff_meta, ff_key=None):
 
 def update_processed_file_metadata(status, pf, tibanna, export):
 
+    # register mcool with fourfront-higlass
+    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
+        payload = {"filepath": export.bucket + "/" + export.key,
+                   "filetype": "cooler", "datatype": "matrix"}
+        authentication = (HIGLASS_USER, HIGLASS_PASS)
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
+        res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
+                            data=json.dumps(payload), auth=authentication,
+                            headers=headers)
+
+        pf.__dict__['higlass_uid'] = res.json()['uuid']
+        print(res)
+
     ff_key = tibanna.ff_keys
     try:
         pf.status = 'uploaded'
@@ -34,18 +48,6 @@ def update_processed_file_metadata(status, pf, tibanna, export):
         pf.post(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
-
-    # register mcool with fourfront-higlass
-    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
-        payload = {"filepath": export.bucket + "/" + export.key}
-        authentication = (HIGLASS_USER, HIGLASS_PASS)
-        headers = {'Content-Type': 'application/json',
-                   'Accept': 'application/json'}
-        res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
-                            data=json.dumps(payload), auth=authentication,
-                            headers=headers)
-
-        print(res)
 
     return pf
 
