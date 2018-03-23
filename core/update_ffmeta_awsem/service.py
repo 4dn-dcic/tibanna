@@ -300,11 +300,6 @@ def real_handler(event, context):
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = [_.as_dict() for _ in pf_meta]
 
-    # call next workflow if asked to do so
-    if event['trigger_workflow']:
-
-        pass
-
     return event
 
 
