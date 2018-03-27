@@ -32,6 +32,9 @@ def real_handler(event, context):
     '''
     # get incomming data
     input_file_list = event.get('input_files')
+    for infile in input_file_list:
+        if not infile:
+            raise("mailformed input, check your input_files")
     app_name = event.get('app_name')
     print(app_name)
     workflow_uuid = event.get('workflow_uuid')
