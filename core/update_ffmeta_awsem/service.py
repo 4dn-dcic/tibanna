@@ -149,14 +149,14 @@ def _md5_updater(original_file, md5, content_md5):
     if md5 and original_md5 and original_md5 != md5:
         # file status to be upload failed / md5 mismatch
         print("no matcho")
-        return None
+        return "Failed"
     elif md5 and not original_md5:
         new_file['md5sum'] = md5
 
     if content_md5 and original_content_md5 and original_content_md5 != content_md5:
         # file status to be upload failed / md5 mismatch
         print("no matcho")
-        return None
+        return "Failed"
     elif content_md5 and not original_content_md5:
         new_file['content_md5sum'] = content_md5
 
@@ -186,7 +186,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             md5 = md5_array[0]
             content_md5 = md5_array[1]
         new_file = _md5_updater(original_file, md5, content_md5)
-        if new_file:
+        if new_file and new_file != "Failed":
             try:
                 ff_utils.patch_metadata(new_file, accession, key=ff_key)
             except Exception as e:
@@ -196,7 +196,9 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
                 new_file['status'] = 'upload failed'
                 new_file['description'] = str(e)
                 ff_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
-        else:
+        elif new_file == "Failed":
+            # we may not have to update the file, cause it already correct info
+            # so we return Failed when we know upload failed
             md5_updater("upload failed", wf_file, ff_meta, tibanna)
     elif status == 'upload failed':
             new_file = {}
