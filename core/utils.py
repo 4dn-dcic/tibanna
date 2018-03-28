@@ -92,6 +92,7 @@ class s3Utils(object):
             file_metadata = s3.head_object(Bucket=bucket,
                                            Key=key)
         except Exception as e:
+            print("object %s not found on bucket %s" % (str(key), str(bucket)))
             print(str(e))
             return False
         return file_metadata
