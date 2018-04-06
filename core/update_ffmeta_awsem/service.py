@@ -106,10 +106,14 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
+    if report_html in files:
+        qc_url = files[report_html]['s3key']
+    else:
+        qc_url = None
     meta = parse_qc_table(filedata,
-                          url=files[report_html]['s3key'],
-                          qc_schema=qc_schema.get('properties'))
-    LOG.info("fastqc meta is %s" % meta)
+                          qc_schema=qc_schema.get('properties'),
+                          url=qc_url)
+    LOG.info("qc meta is %s" % meta)
 
     # post fastq metadata
     qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
