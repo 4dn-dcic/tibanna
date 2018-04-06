@@ -11,7 +11,7 @@ def number(astring):
         return astring
 
 
-def parse_qc_table(data_list, url, qc_schema):
+def parse_qc_table(data_list, url=None, qc_schema):
     """ Return a quality_metric metadata dictionary
     given a list of qc table file dumps (data_list),
     url for the report html and
@@ -43,8 +43,9 @@ def parse_qc_table(data_list, url, qc_schema):
     # add uuid, lab & award
     qc_json.update({"award": "1U01CA200059-01",
                     "lab": "4dn-dcic-lab",
-                    "uuid": str(uuid.uuid4()),
-                    "url": url})
+                    "uuid": str(uuid.uuid4())})
+    if url:
+        qc_json.update({"url": url})
 
     return(qc_json)
 

@@ -35,8 +35,8 @@
       {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": ["e0b32fa9-a54e-4f62-86dc-039f60b34812","e0b32fa9-a54e-4f62-86dc-039f60b34812"],
-        "object_key": ["4DNFIIQN4FKO.pairs.gz","4DNFIIQN4FKO.pairs.gz"]
+        "uuid": ["e0b32fa9-a54e-4f62-86dc-039f60b34812","e0b32fa9-a54e-4f62-86dc-039f60b34812","e0b32fa9-a54e-4f62-86dc-039f60b34812"],
+        "object_key": ["4DNFIIQN4FKO.pairs.gz","4DNFIIQN4FKO.pairs.gz","4DNFIIQN4FKO.pairs.gz"]
       }
     ],
     "app_name": "hi-c-processing-pairs-nore",
