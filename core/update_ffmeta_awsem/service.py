@@ -111,8 +111,8 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     else:
         qc_url = None
     meta = parse_qc_table(filedata,
-                          url=qc_url,
-                          qc_schema=qc_schema.get('properties'))
+                          qc_schema=qc_schema.get('properties'),
+                          url=qc_url)
     LOG.info("qc meta is %s" % meta)
 
     # post fastq metadata

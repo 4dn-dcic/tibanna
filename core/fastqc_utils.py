@@ -11,13 +11,12 @@ def number(astring):
         return astring
 
 
-def parse_qc_table(data_list, url=None, qc_schema):
+def parse_qc_table(data_list, qc_schema, url=None):
     """ Return a quality_metric metadata dictionary
     given a list of qc table file dumps (data_list),
     url for the report html and
     quality_metric property as a dictionary
     """
-
     qc_json = {}
     for data in data_list:
         for line in data.split('\n'):
