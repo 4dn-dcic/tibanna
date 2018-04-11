@@ -302,9 +302,9 @@ class Tibanna(object):
         self.env = env
         self.s3 = s3Utils(env=env)
 
-        if not s3_keys:
-            s3_keys = self.s3.get_s3_keys()
-        self.s3_keys = s3_keys
+        # if not s3_keys:
+        #     s3_keys = self.s3.get_s3_keys()
+        # self.s3_keys = s3_keys
 
         if not ff_keys:
             ff_keys = self.s3.get_access_keys()
