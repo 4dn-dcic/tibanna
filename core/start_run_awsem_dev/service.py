@@ -72,14 +72,16 @@ def real_handler(event, context):
     LOG.info("input_files is %s" % input_files)
 
     # input file args for awsem
-    pf_source_experiments_dict = dict()
     for input_file in input_file_list:
         process_input_file_info(input_file, tibanna.ff_keys, args)
-        pf_source_experiments_dict = get_source_experiment(input_file, tibanna.ff_keys, pf_source_experiments_dict)
+
+    # source experiments
+    input_file_uuids = [_['uuid'] for _ in input_file_list]
+    pf_source_experiments = ff_utils.merge_source_experiments(input_file_uuids, tibanna.ff_keys)
 
     # processed file metadata
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
-                                                   pf_source_experiments_dict.keys(),
+                                                   pf_source_experiments,
                                                    user_supplied_output_files=event.get('output_files'))
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
@@ -159,64 +161,28 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
         raise Exception("args must contain key 'input_files'")
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
-    if isinstance(input_file['uuid'], list):
-        inf_uuids = input_file['uuid']
-    else:
-        inf_uuids = [input_file['uuid']]
-
-    fe_map = get_format_extension_map(ff_keys)
+    inf_uuids = ff_utils.aslist(input_file['uuid'])
+    fe_map = ff_utils.get_format_extension_map(ff_keys)
     argname = input_file['workflow_argument_name']
-    extra_file_key = []
+    extra_file_keys = []
     inf_object_key = args['input_files'][argname]['object_key']
-    if isinstance(inf_object_key, list):
-        inf_keys = inf_object_key
-    else:
-        inf_keys = [inf_object_key]
+    inf_keys = ff_utils.aslist(inf_object_key)
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('extra_files'):
-            extra_file_format = infile_meta.get('extra_files')[0].get('file_format')  # only the first extra file
-            extra_file_extension = fe_map.get(extra_file_format)
             infile_format = infile_meta.get('file_format')
-            infile_extension = fe_map.get(infile_format)
             infile_key = inf_keys[i]
-            extra_file_key.append(infile_key.replace(infile_extension, extra_file_extension))
+            for extra_file in infile_meta.get('extra_files'):
+                extra_file_format = extra_file.get('file_format')
+                extra_file_key = ff_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+                extra_file_keys.append(extra_file_key)
 
-    if len(extra_file_key) > 0:
-        if len(extra_file_key) == 1:
-            extra_file_key = extra_file_key[0]
+    if len(extra_file_keys) > 0:
+        if len(extra_file_keys) == 1:
+            extra_file_keys = extra_file_keys[0]
         args['secondary_files'].update({input_file['workflow_argument_name']: {
                                         'bucket_name': input_file['bucket_name'],
-                                        'object_key': extra_file_key}})
-
-
-def get_source_experiment(input_file, ff_keys, pf_source_experiments_dict=None):
-    if not pf_source_experiments_dict:
-        pf_source_experiments_dict = dict()
-    if isinstance(input_file['uuid'], list):
-        inf_uuids = input_file['uuid']
-    else:
-        inf_uuids = [input_file['uuid']]
-    for inf_uuid in inf_uuids:
-        infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
-        if infile_meta.get('experiments'):
-            for exp in infile_meta.get('experiments'):
-                exp_uuid = ff_utils.get_metadata(exp, key=ff_keys).get('uuid')
-                pf_source_experiments_dict.update({exp_uuid: 1})
-        if infile_meta.get('source_experiments'):
-            pf_source_experiments_dict.update({_: 1 for _ in infile_meta.get('source_experiments')})
-    return pf_source_experiments_dict
-
-
-def get_format_extension_map(ff_keys):
-    # get format-extension map
-    try:
-        fp_schema = ff_utils.get_metadata("profiles/file_processed.json", key=ff_keys)
-        fe_map = fp_schema.get('file_format_file_extension')
-    except Exception as e:
-        LOG.error("Can't get format-extension map from file_processed schema. %s\n" % e)
-
-    return fe_map
+                                        'object_key': extra_file_keys}})
 
 
 def proc_file_for_arg_name(output_files, arg_name, tibanna):
@@ -240,7 +206,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                            user_supplied_output_files=None):
 
-    fe_map = get_format_extension_map(tibanna.ff_keys)
+    fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
     output_files = []
     pf_meta = []
     try:
