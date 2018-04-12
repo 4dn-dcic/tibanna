@@ -255,7 +255,7 @@ def fdn_connection(key='', connection=None):
     return connection
 
 
-def patch_metadata(patch_item, obj_id='', key='', connection=None):
+def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=None):
     '''
     obj_id can be uuid or @id for most object
     '''
@@ -265,7 +265,7 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
     obj_id = obj_id if obj_id else patch_item['uuid']
 
     try:
-        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item)
+        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item, url_addon=url_addon)
 
         if response.get('status') == 'error':
             raise Exception("error %s \n unable to patch obj: %s \n with  data: %s" %
@@ -281,7 +281,7 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
     sleep = [2, 4, 12]
     for wait in sleep:
         try:
-            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
+            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon='?datastore=database')
         except:
             time.sleep(wait)
             continue
@@ -298,12 +298,15 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
 
 def post_to_metadata(post_item, schema_name, key='', connection=None):
     connection = fdn_connection(key, connection)
-
+    if schema_name == 'file_processed':
+        url_addon = '?force_md5'
+    else:
+        url_addon = None
     try:
-        response = fdnDCIC.new_FDN(connection, schema_name, post_item)
+        response = fdnDCIC.new_FDN(connection, schema_name, post_item, url_addon=url_addon)
         if (response.get('status') == 'error' and response.get('detail') == 'UUID conflict'):
             # item already posted lets patch instead
-            response = patch_metadata(post_item, connection=connection)
+            response = patch_metadata(post_item, connection=connection, url_addon=url_addon)
         elif response.get('status') == 'error':
             raise Exception("error %s \n unable to post data to schema %s, data: %s" %
                             (response, schema_name, post_item))
