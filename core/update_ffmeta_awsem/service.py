@@ -21,23 +21,40 @@ def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
+def register_to_higlass(export_bucket, export_key, filetype, datatype):
+    payload = {"filepath": export_bucket + "/" + export_key,
+               "filetype": filetype, "datatype": datatype}
+    authentication = (HIGLASS_USER, HIGLASS_PASS)
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json'}
+    res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
+                        data=json.dumps(payload), auth=authentication,
+                        headers=headers)
+    print(res)
+    return res.json()['uuid']
+
+
 def update_processed_file_metadata(status, pf, tibanna, export):
 
-    # register mcool with fourfront-higlass
-    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
-        payload = {"filepath": export.bucket + "/" + export.key,
-                   "filetype": "cooler", "datatype": "matrix"}
-        authentication = (HIGLASS_USER, HIGLASS_PASS)
-        headers = {'Content-Type': 'application/json',
-                   'Accept': 'application/json'}
-        res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
-                            data=json.dumps(payload), auth=authentication,
-                            headers=headers)
-
-        pf.__dict__['higlass_uid'] = res.json()['uuid']
-        print(res)
-
     ff_key = tibanna.ff_keys
+
+    # register mcool/bigwig with fourfront-higlass
+    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
+                                                         'cooler', 'matrix')
+    if pf.file_format == "bw" and export.bucket in HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
+                                                         'bigwig', 'vector')
+
+    # bedgraph: register extra bigwig file to higlass (if such extra file exists)
+    if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
+        for pfextra in pf.extra_files:
+            if pfextra.file_format == 'bw':
+                fe_map = ff_utils.get_format_extension_map(ff_key)
+                extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
+                pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
+                                                                 'bigwig', 'vector')
+
     try:
         pf.status = 'uploaded'
         pf.md5sum = export.md5
@@ -106,10 +123,14 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
+    if report_html in files:
+        qc_url = files[report_html]['s3key']
+    else:
+        qc_url = None
     meta = parse_qc_table(filedata,
-                          url=files[report_html]['s3key'],
-                          qc_schema=qc_schema.get('properties'))
-    LOG.info("fastqc meta is %s" % meta)
+                          qc_schema=qc_schema.get('properties'),
+                          url=qc_url)
+    LOG.info("qc meta is %s" % meta)
 
     # post fastq metadata
     qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)

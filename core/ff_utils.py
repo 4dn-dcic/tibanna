@@ -255,7 +255,7 @@ def fdn_connection(key='', connection=None):
     return connection
 
 
-def patch_metadata(patch_item, obj_id='', key='', connection=None):
+def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=None):
     '''
     obj_id can be uuid or @id for most object
     '''
@@ -265,7 +265,7 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None):
     obj_id = obj_id if obj_id else patch_item['uuid']
 
     try:
-        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item)
+        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item, url_addon=url_addon)
 
         if response.get('status') == 'error':
             raise Exception("error %s \n unable to patch obj: %s \n with  data: %s" %
@@ -281,7 +281,7 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
     sleep = [2, 4, 12]
     for wait in sleep:
         try:
-            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
+            res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon='?datastore=database')
         except:
             time.sleep(wait)
             continue
@@ -298,12 +298,15 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
 
 def post_to_metadata(post_item, schema_name, key='', connection=None):
     connection = fdn_connection(key, connection)
-
+    if schema_name == 'file_processed':
+        url_addon = '?force_md5'
+    else:
+        url_addon = None
     try:
-        response = fdnDCIC.new_FDN(connection, schema_name, post_item)
+        response = fdnDCIC.new_FDN(connection, schema_name, post_item, url_addon=url_addon)
         if (response.get('status') == 'error' and response.get('detail') == 'UUID conflict'):
             # item already posted lets patch instead
-            response = patch_metadata(post_item, connection=connection)
+            response = patch_metadata(post_item, connection=connection, url_addon=url_addon)
         elif response.get('status') == 'error':
             raise Exception("error %s \n unable to post data to schema %s, data: %s" %
                             (response, schema_name, post_item))
@@ -349,3 +352,53 @@ def generate_rand_accession():
         rand_accession += r
     accession = "4DNFI"+rand_accession
     return accession
+
+
+def aslist(x):
+    if isinstance(x, list):
+        return x
+    else:
+        return [x]
+
+
+def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
+    infile_extension = fe_map.get(infile_format)
+    extra_file_extension = fe_map.get(extra_file_format)
+    return infile_key.replace(infile_extension, extra_file_extension)
+
+
+def merge_source_experiments(input_file_uuids, ff_keys):
+    """Connects to fourfront and get source experiment info as a unique list
+    Takes a list of input file uuids
+    """
+    pf_source_experiments = set()
+    for input_file_uuid in input_file_uuids:
+        pf_source_experiments.update(get_source_experiment(input_file_uuid, ff_keys))
+    return list(pf_source_experiments)
+
+
+def get_source_experiment(input_file_uuid, ff_keys):
+    """Connects to fourfront and get source experiment info as a unique list
+    Takes a single input file uuid
+    """
+    pf_source_experiments_set = set()
+    inf_uuids = aslist(input_file_uuid)
+    for inf_uuid in inf_uuids:
+        infile_meta = get_metadata(inf_uuid, key=ff_keys)
+        if infile_meta.get('experiments'):
+            for exp in infile_meta.get('experiments'):
+                exp_uuid = get_metadata(exp, key=ff_keys).get('uuid')
+                pf_source_experiments_set.add(exp_uuid)
+        if infile_meta.get('source_experiments'):
+            pf_source_experiments_set.update(infile_meta.get('source_experiments'))
+    return list(pf_source_experiments_set)
+
+
+def get_format_extension_map(ff_keys):
+    """get format-extension map"""
+    try:
+        fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
+        fe_map = fp_schema.get('file_format_file_extension')
+    except Exception as e:
+        raise Exception("Can't get format-extension map from file_processed schema. %s\n" % e)
+    return fe_map
