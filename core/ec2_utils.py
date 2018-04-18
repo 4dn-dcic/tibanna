@@ -341,7 +341,9 @@ class Awsem(object):
         self.output_s3 = self.args['output_S3_bucket']
         self.app_name = self.args['app_name']
         self.output_files_meta = json['ff_meta']['output_files']
-        self.output_info = json['postrunjson']['Job']['Output']['Output files']
+        self.output_info = None
+        if isinstance(json.get('postrunjson'), dict):
+            self.output_info = json['postrunjson']['Job']['Output']['Output files']
 
     def output_files(self):
         files = dict()
@@ -358,8 +360,15 @@ class Awsem(object):
                 accession = file_name.split('.')[0].strip('/')
             else:
                 accession = None
-            md5 = self.output_info[k].get('md5sum', '')
-            filesize = self.output_info[k].get('size', 0)
+            if self.output_info:
+                md5 = self.output_info[k].get('md5sum', '')
+                filesize = self.output_info[k].get('size', 0)
+                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
+                                       output_type=out_type, filesize=filesize, md5=md5)}
+            else:
+                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
+                                       output_type=out_type)}
+
             wff = {k: WorkflowFile(self.output_s3, v, self, accession,
                                    output_type=out_type, filesize=filesize, md5=md5)}
             files.update(wff)

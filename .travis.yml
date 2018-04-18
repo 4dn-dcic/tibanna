@@ -5,7 +5,6 @@ cache:
 python:
 - '2.7'
 install:
-- pip install pip --upgrade
 - pip install six
 - pip install -U -r requirements.txt
 - pip install -U -r requirements-develop.txt
