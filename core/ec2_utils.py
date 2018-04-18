@@ -341,6 +341,7 @@ class Awsem(object):
         self.output_s3 = self.args['output_S3_bucket']
         self.app_name = self.args['app_name']
         self.output_files_meta = json['ff_meta']['output_files']
+        self.output_info = None
         if isinstance(json.get('postrunjson'), dict):
             self.output_info = json['postrunjson']['Job']['Output']['Output files']
 
