@@ -198,30 +198,6 @@ def test_unzip_s3_to_s3(s3_utils):
 
 @valid_env
 @pytest.mark.webtest
-def test_unzip_s3_to_s3_pairsqc(s3_utils):
-    prefix = '__test_data/extracted'
-    filename = '23d0a314-e401-4826-a76b-4356e019b059/report'
-    s3_utils.s3_delete_dir(prefix)
-
-    # ensure this thing was deleted
-    # if no files there will be no Contents in response
-    objs = s3_utils.s3_read_dir(prefix)
-    assert [] == objs.get('Contents', [])
-
-    # now copy to that dir we just deleted
-    retfile_list = ['4DNFI1ZLO9D7.summary.out', 'pairsqc_report.html']
-    ret_files = s3_utils.unzip_s3_to_s3(filename, prefix, retfile_list)
-    return
-    # TODO: fix this test
-    assert 3 == len(ret_files.keys())
-    assert ret_files['pairsqc_report.html']['s3key'].startswith("https://s3.amazonaws.com")
-
-    objs = s3_utils.s3_read_dir(prefix)
-    assert objs.get('Contents', None)
-
-
-@valid_env
-@pytest.mark.webtest
 def test_create_sbg_workflow(sbg_project, sbg_keys):
     sbg = sbg_utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
     assert sbg.header
