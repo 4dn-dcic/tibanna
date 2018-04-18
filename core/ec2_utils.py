@@ -341,7 +341,7 @@ class Awsem(object):
         self.output_s3 = self.args['output_S3_bucket']
         self.app_name = self.args['app_name']
         self.output_files_meta = json['ff_meta']['output_files']
-        if json.get('postrunjson') != 'pseudo-workflow-run':
+        if isinstance(json.get('postrunjson'), dict):
             self.output_info = json['postrunjson']['Job']['Output']['Output files']
 
     def output_files(self):
