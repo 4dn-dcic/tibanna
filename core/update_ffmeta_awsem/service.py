@@ -14,7 +14,7 @@ HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
 HIGLASS_USER = os.environ.get("HIGLASS_USER")
 HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
 HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
-                   'elasticbeanstalk-fourfront-webprod-wfoutput']
+                   'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
@@ -59,7 +59,7 @@ def update_processed_file_metadata(status, pf, tibanna, export):
         pf.status = 'uploaded'
         if export.md5:
             pf.md5sum = export.md5
-        if export.file_size:
+        if export.filesize:
             pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
