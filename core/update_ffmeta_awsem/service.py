@@ -49,7 +49,7 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
     if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
-            if pfextra.file_format == 'bw':
+            if pfextra.get('file_format') == 'bw':
                 fe_map = ff_utils.get_format_extension_map(ff_key)
                 extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
