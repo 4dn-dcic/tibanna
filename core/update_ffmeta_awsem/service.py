@@ -57,8 +57,10 @@ def update_processed_file_metadata(status, pf, tibanna, export):
 
     try:
         pf.status = 'uploaded'
-        pf.md5sum = export.md5
-        pf.file_size = export.filesize
+        if export.md5:
+            pf.md5sum = export.md5
+        if export.file_size:
+            pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
