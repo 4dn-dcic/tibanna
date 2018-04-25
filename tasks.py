@@ -35,9 +35,7 @@ def get_random_line_in_gist(url):
 
 @task
 def play(ctx, positive=False):
-    type_url = POSITIVE
-    if not positive:
-        type_url = NEGATIVE
+    type_url = POSITIVE if positive else NEGATIVE
     # no spaces in url
     media_url = '%20'.join(get_random_line_in_gist(type_url).split())
     run("vlc -I rc %s --play-and-exit -q" % (media_url))

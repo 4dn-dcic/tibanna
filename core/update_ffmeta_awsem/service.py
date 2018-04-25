@@ -14,7 +14,7 @@ HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
 HIGLASS_USER = os.environ.get("HIGLASS_USER")
 HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
 HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
-                   'elasticbeanstalk-fourfront-webprod-wfoutput']
+                   'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
@@ -49,7 +49,7 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
     if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
-            if pfextra.file_format == 'bw':
+            if pfextra.get('file_format') == 'bw':
                 fe_map = ff_utils.get_format_extension_map(ff_key)
                 extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
@@ -57,8 +57,10 @@ def update_processed_file_metadata(status, pf, tibanna, export):
 
     try:
         pf.status = 'uploaded'
-        pf.md5sum = export.md5
-        pf.file_size = export.filesize
+        if export.md5:
+            pf.md5sum = export.md5
+        if export.filesize:
+            pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:

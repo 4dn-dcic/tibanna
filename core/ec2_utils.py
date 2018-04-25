@@ -368,7 +368,6 @@ class Awsem(object):
             else:
                 wff = {k: WorkflowFile(self.output_s3, v, self, accession,
                                        output_type=out_type)}
-
             files.update(wff)
         return files
 

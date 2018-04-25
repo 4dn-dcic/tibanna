@@ -14,7 +14,7 @@ HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
 HIGLASS_USER = os.environ.get("HIGLASS_USER")
 HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
 HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
-                   'elasticbeanstalk-fourfront-webprod-wfoutput']
+                   'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
