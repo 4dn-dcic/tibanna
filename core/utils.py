@@ -32,6 +32,7 @@ class EC2StartingException(Exception):
 class AWSEMJobErrorException(Exception):
     pass
 
+
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
         return val
