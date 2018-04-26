@@ -29,10 +29,6 @@ class EC2StartingException(Exception):
     pass
 
 
-class AWSEMJobErrorException(Exception):
-    pass
-
-
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
         return val
@@ -398,7 +394,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException, AWSEMJobErrorException]
+        ignored_exceptions = [EC2StartingException, StillRunningException]
 
         def wrapper(event, context):
             logger.info(context)
@@ -417,20 +413,22 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     return function(event, context)
                 except Exception as e:
                     if type(e) in ignored_exceptions:
-                        # update ff_meta to error status
-
-                        if type(e) is AWSEMJobErrorException:
-                            try:
-                                tibanna_settings = event.get('_tibanna', {})
-                                tibanna = Tibanna(**tibanna_settings)
-                                ff_meta = create_ffmeta_awsem(
-                                    app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-                                ff_meta.run_status = 'error'
-                                ff_meta.description = str(e)
-                                ff_meta.post(key=tibanna.ff_keys)
-                            except:
-                                print("failed to update workflow run with failed status")
                         raise e
+                        # update ff_meta to error status
+                    elif type(e) is AWSEMJobErrorException:
+                        try:
+                            tibanna_settings = event.get('_tibanna', {})
+                            tibanna = Tibanna(**tibanna_settings)
+                            ff_meta = create_ffmeta_awsem(
+                                app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
+                            ff_meta.run_status = 'error'
+                            ff_meta.description = str(e)
+                            ff_meta.post(key=tibanna.ff_keys)
+                            event['error'] = str(e)
+                            event['ff_meta'] = ff_meta.as_dict()
+                            return event
+                        except:
+                            print("failed to update workflow run with failed status")
                     elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
                         raise e
