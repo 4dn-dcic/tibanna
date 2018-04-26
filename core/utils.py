@@ -424,9 +424,9 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                             ff_meta.run_status = 'error'
                             ff_meta.description = str(e)
                             ff_meta.post(key=tibanna.ff_keys)
-                            event['error'] = str(e)
-                            event['ff_meta'] = ff_meta.as_dict()
-                            return event
+                            # event['error'] = str(e)
+                            # event['ff_meta'] = ff_meta.as_dict()
+                            raise e  # don't pass to update_ffmeta_awsem, for unicorn should raise this at check_task
                         except:
                             print("failed to update workflow run with failed status")
                     elif lambda_name == 'update_ffmeta_awsem':
