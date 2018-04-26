@@ -29,6 +29,14 @@ class EC2StartingException(Exception):
     pass
 
 
+class AWSEMJobErrorException(Exception):
+    pass
+
+
+class AWSEMJobErrorHandlingException(Exception):
+    pass
+
+
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
         return val
@@ -418,17 +426,29 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     elif type(e) is AWSEMJobErrorException:
                         try:
                             tibanna_settings = event.get('_tibanna', {})
+                        except:
+                            raise AWSEMJobErrorHandlingException("failed to get tibanna_settings information")
+                        try:
                             tibanna = Tibanna(**tibanna_settings)
+                        except:
+                            raise AWSEMJobErrorHandlingException("failed to create tibanna class object")
+                        try:
                             ff_meta = create_ffmeta_awsem(
                                 app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
+                        except:
+                            raise AWSEMJobErrorHandlingException("failed to create workflow run class object")
+                        try:
                             ff_meta.run_status = 'error'
                             ff_meta.description = str(e)
+                        except:
+                            raise AWSEMJobErrorHandlingException("failed to update workflow run class object")
+                        try:
                             ff_meta.post(key=tibanna.ff_keys)
                             # event['error'] = str(e)
                             # event['ff_meta'] = ff_meta.as_dict()
                             raise e  # don't pass to update_ffmeta_awsem, for unicorn should raise this at check_task
                         except:
-                            print("failed to update workflow run with failed status")
+                            raise AWSEMJobErrorHandlingException("failed to update workflow run with failed status")
                     elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
                         raise e
