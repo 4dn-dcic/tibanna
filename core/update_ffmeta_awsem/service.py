@@ -280,6 +280,12 @@ def real_handler(event, context):
     # runner.output_files.file.loc
     # runner.output_files.file.get
 
+    if event.get('error', False):
+        ff_meta.run_status = 'error'
+        ff_meta.description = event.get('error')
+        ff_meta.post(key=tibanna.ff_keys)
+        raise Exception(event.get('error'))
+
     awsem_output = awsem.output_files()
     ff_output = len(ff_meta.output_files)
     if len(awsem_output) != ff_output:

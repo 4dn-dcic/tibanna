@@ -6,7 +6,7 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
-from .ff_utils import get_metadata, create_ffmeta_awsem
+from .ff_utils import get_metadata
 import logging
 
 
@@ -31,11 +31,6 @@ class EC2StartingException(Exception):
 
 class AWSEMJobErrorException(Exception):
     pass
-
-
-class AWSEMJobErrorHandlingException(Exception):
-    pass
-
 
 def ensure_list(val):
     if isinstance(val, (list, tuple)):
@@ -410,10 +405,6 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
             if lambda_name in event.get('skip', []):
                 logger.info('skiping %s since skip was set in input_json' % lambda_name)
                 return event
-            elif event.get('error', False) and not run_if_error:
-                logger.info('error entry fournd in input_json and run_if_error set to false skipping %s' %
-                            lambda_name)
-                raise Exception(event.get('error'))
             elif event.get('metadata_only', False):
                 return metadata_only_func(event)
             else:
@@ -423,39 +414,12 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     if type(e) in ignored_exceptions:
                         raise e
                         # update ff_meta to error status
-                    elif type(e) is AWSEMJobErrorException:
-                        try:
-                            tibanna_settings = event.get('_tibanna', {})
-                        except:
-                            raise AWSEMJobErrorHandlingException("failed to get tibanna_settings information")
-                        try:
-                            tibanna = Tibanna(**tibanna_settings)
-                        except Exception as e2:
-                            raise AWSEMJobErrorHandlingException("failed to create tibanna class object" +
-                                                                 "from tibanna_settings" +
-                                                                 "{} %s".format(str(tibanna_settings)) % e2)
-                        try:
-                            ff_meta = create_ffmeta_awsem(
-                                app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-                        except:
-                            raise AWSEMJobErrorHandlingException("failed to create workflow run class object")
-                        try:
-                            ff_meta.run_status = 'error'
-                            ff_meta.description = str(e)
-                        except:
-                            raise AWSEMJobErrorHandlingException("failed to update workflow run class object")
-                        try:
-                            ff_meta.post(key=tibanna.ff_keys)
-                            # event['error'] = str(e)
-                            # event['ff_meta'] = ff_meta.as_dict()
-                            raise e  # don't pass to update_ffmeta_awsem, for unicorn should raise this at check_task
-                        except Exception as e3:
-                            raise AWSEMJobErrorHandlingException("failed to update workflow run with failed status %s" % e3)
                     elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
                         raise e
                     else:
                         event['error'] = str(e)
+                        logger.info(e)
                         return event
         return wrapper
     return decorator
