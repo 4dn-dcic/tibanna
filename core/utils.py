@@ -430,8 +430,8 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                             raise AWSEMJobErrorHandlingException("failed to get tibanna_settings information")
                         try:
                             tibanna = Tibanna(**tibanna_settings)
-                        except:
-                            raise AWSEMJobErrorHandlingException("failed to create tibanna class object")
+                        except Exception as e2:
+                            raise AWSEMJobErrorHandlingException("failed to create tibanna class object %s" % e2)
                         try:
                             ff_meta = create_ffmeta_awsem(
                                 app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
