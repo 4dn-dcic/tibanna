@@ -11,6 +11,7 @@ install:
 - pip install codacy-coverage
 script:
 - invoke test
+- source tests/awsf/test.sh
 - echo "finished running tests on repo"
 - echo " now deploy core lambda pacakges"
 - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";

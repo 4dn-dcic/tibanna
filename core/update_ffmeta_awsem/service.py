@@ -30,7 +30,7 @@ def register_to_higlass(export_bucket, export_key, filetype, datatype):
     res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=authentication,
                         headers=headers)
-    print(res)
+    LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
