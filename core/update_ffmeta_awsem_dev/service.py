@@ -30,7 +30,7 @@ def register_to_higlass(export_bucket, export_key, filetype, datatype):
     res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=authentication,
                         headers=headers)
-    print(res)
+    LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
@@ -279,6 +279,12 @@ def real_handler(event, context):
     # runner.output_files.file.status
     # runner.output_files.file.loc
     # runner.output_files.file.get
+
+    if event.get('error', False):
+        ff_meta.run_status = 'error'
+        ff_meta.description = event.get('error')
+        ff_meta.post(key=tibanna.ff_keys)
+        raise Exception(event.get('error'))
 
     awsem_output = awsem.output_files()
     ff_output = len(ff_meta.output_files)
