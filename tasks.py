@@ -10,6 +10,7 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
+from core.utils import create_workflow as _create_workflow
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
 from core.launch_utils import rerun as _rerun
@@ -64,7 +65,6 @@ def get_all_core_lambdas():
     return [
             'update_metadata_ff',
             'validate_md5_s3_trigger',
-            'tibanna_slackbot',
             'start_run_awsem',
             'run_task_awsem',
             'check_task_awsem',
@@ -208,7 +208,7 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, no_tests=False):
+def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
     print("preparing for deploy...")
     print("make sure tests pass")
     if no_tests is False:
@@ -233,7 +233,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
             print("clean up previous builds.")
             clean(ctx)
             print("building lambda package")
-            deploy_lambda_package(ctx, name)
+            deploy_lambda_package(ctx, name, suffix=suffix)
             # need to clean up all dist, otherwise, installing local package takes forever
             clean(ctx)
         print("next get version information")
@@ -245,8 +245,23 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 
 
 @task
-def deploy_lambda_package(ctx, name):
-    aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+def deploy_lambda_package(ctx, name, suffix):
+    if suffix:
+        new_name = name + '_' + suffix
+        new_src = '../' + new_name
+        cmd_mkdir = "rm -fr %s; mkdir -p %s" % (new_src, new_src)
+        cmd_copy = "cp -r * %s" % new_src
+        cmd_cd = "cd %s" % new_src
+        cmd_modify_cfg = "sed 's/%s/%s/g' config.yaml > config.yaml#" % (name, new_name)
+        cmd_replace_cfg = "mv config.yaml# config.yaml"
+        cmd = ';'.join([cmd_mkdir, cmd_copy, cmd_cd, cmd_modify_cfg, cmd_replace_cfg])
+        print(cmd)
+        run(cmd)
+    with chdir(new_src):
+        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+    if suffix:
+        old_src = '../' + name
+        run('cd %s; rm -rf %s' % (old_src, new_src))
 
 
 @task
@@ -548,6 +563,15 @@ def run_workflow(ctx, input_json='', workflow=''):
         else:
             resp = _run_workflow(data, workflow=workflow)
         run('open %s' % resp[_tibanna]['url'])
+
+
+@task
+def create_workflow(ctx, suffix='dev', type='pony', version=None, no_tests=False):
+    print("creating a new workflow..")
+    res = _create_workflow(suffix, type)
+    print(res)
+    print("deploying lambdas..")
+    deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix)
 
 
 @task
