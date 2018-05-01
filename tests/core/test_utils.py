@@ -300,8 +300,6 @@ def test_powerup_calls_metadata_only_func():
     assert 'metadata' in str(exec_nfo.value)
 
 
-def test_powerup_updates_workflow_run_metadata_on_ignored_exceptions(ff_metadata):
-    with mock.patch('core.ff_utils.WorkflowRunMetadata.post') as metadata_post:
-        with pytest.raises(AWSEMJobErrorException):
-            awsem_error_fun(ff_metadata, None)
-    assert metadata_post.was_called_once()
+def test_powerup_add_awsem_error_to_output(ff_metadata):
+    res = awsem_error_fun(ff_metadata, None)
+    assert ('error' in res)
