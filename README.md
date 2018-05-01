@@ -16,20 +16,42 @@ In addition, Tibanna offers multi-layer real-time monitoring to ensure the workf
 Tibanna has been evolving: originally developed for Desktop workflow submitter that launches an autonomous VM, then upgraded to a Chalice/Lambda/API-Gateway-based system that works with the Seven Bridges Genomics (SBG) platform, and it currently consists of the original modules integrated with AWS Step functions for upstream scheduling and monitoring, without SBG.
 
 ## Commands
+To create a copy of tibanna (step function + lambdas)
+```
+invoke create_workflow [--suffix=<suffixname>] [--type=<type>] [--no-tests]
+# (use suffix for development version)
+# example <suffixname> : dev
+# <type> is either 'pony' or 'unicorn' (default pony)
+```
+* example
+```
+invoke create_workflow --suffix=dev2
+```
+The above command will create a step function named `tibanna_pony_dev2` that uses a set of lambdas with suffix `_dev2`, and deploys these lambdas.
+
+* example 2
+```
+invoke create_workflow --suffix=lululala --type=unicorn
+```
+This example creates a step function named `tibanna_unicorn_lululala` that uses a set of lambdas with suffix `_lululala`, and deploys these lambdas.
+
 To run workflow
 ```
 invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
-# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
+# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or any tibanna step function name that was created by the create_workflow command.
 ```
-To deploy lambda functions
+To deploy lambda functions (use suffix for development version lambdas)
 ```
 # individual lambda functions
-invoke deploy_core <lambda_name>
+invoke deploy_core <lambda_name> [--suffix=<suffixname>]
 # example <lambda_name> : run_task_awsem
+# example <suffixname> : dev
 
 # all lambda functions
-invoke deploy_core all
+invoke deploy_core all [--suffix=<suffixname>]
+# example <suffixname> : dev
 ```
+
 To rerun a failed job with the same input json
 ```
 invoke rerun --exec-arn=<stepfunctionrun_arn> [--workflow=<stepfunctionname>]
