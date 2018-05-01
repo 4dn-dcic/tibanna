@@ -30,7 +30,7 @@ def register_to_higlass(export_bucket, export_key, filetype, datatype):
     res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=authentication,
                         headers=headers)
-    print(res)
+    LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
@@ -49,7 +49,7 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
     if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
-            if pfextra.file_format == 'bw':
+            if pfextra.get('file_format') == 'bw':
                 fe_map = ff_utils.get_format_extension_map(ff_key)
                 extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
@@ -57,8 +57,10 @@ def update_processed_file_metadata(status, pf, tibanna, export):
 
     try:
         pf.status = 'uploaded'
-        pf.md5sum = export.md5
-        pf.file_size = export.filesize
+        if export.md5:
+            pf.md5sum = export.md5
+        if export.filesize:
+            pf.file_size = export.filesize
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
@@ -277,6 +279,12 @@ def real_handler(event, context):
     # runner.output_files.file.status
     # runner.output_files.file.loc
     # runner.output_files.file.get
+
+    if event.get('error', False):
+        ff_meta.run_status = 'error'
+        ff_meta.description = event.get('error')
+        ff_meta.post(key=tibanna.ff_keys)
+        raise Exception(event.get('error'))
 
     awsem_output = awsem.output_files()
     ff_output = len(ff_meta.output_files)

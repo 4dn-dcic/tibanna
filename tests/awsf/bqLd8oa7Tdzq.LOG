@@ -1,0 +1,655 @@
+Mon Apr 30 18:50:55 UTC 2018
+Stopping sshd:  [  OK  ]
+Starting sshd: [  OK  ]
+--2018-04-30 18:50:57--  https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf//aws_decode_run_json.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 3212 (3.1K) [text/plain]
+Saving to: ‘aws_decode_run_json.py’
+
+     0K ...                                                   100% 95.7M=0s
+
+2018-04-30 18:50:57 (95.7 MB/s) - ‘aws_decode_run_json.py’ saved [3212/3212]
+
+--2018-04-30 18:50:57--  https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf//aws_update_run_json.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 700 [text/plain]
+Saving to: ‘aws_update_run_json.py’
+
+     0K                                                       100%  287M=0s
+
+2018-04-30 18:50:58 (287 MB/s) - ‘aws_update_run_json.py’ saved [700/700]
+
+--2018-04-30 18:50:58--  https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf//aws_upload_output_update_json.py
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4007 (3.9K) [text/plain]
+Saving to: ‘aws_upload_output_update_json.py’
+
+     0K ...                                                   100%  122M=0s
+
+2018-04-30 18:50:58 (122 MB/s) - ‘aws_upload_output_update_json.py’ saved [4007/4007]
+
+4dn-aws-pipeline-run-json
+Completed 3.0 KiB/3.0 KiB (28.6 KiB/s) with 1 file(s) remainingdownload: s3://4dn-aws-pipeline-run-json/bqLd8oa7Tdzq.run.json to ./bqLd8oa7Tdzq.run.json
+NAME    MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+xvda    202:0    0   8G  0 disk 
+└─xvda1 202:1    0   8G  0 part /
+xvdb    202:16   0  20G  0 disk 
+mke2fs 1.42.12 (29-Aug-2014)
+Creating filesystem with 5242880 4k blocks and 1310720 inodes
+Filesystem UUID: 1b3876ae-b268-409f-8d85-1c34b91c1f6b
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
+	4096000
+
+Allocating group tables:   0/160       done                            
+Writing inode tables:   0/160       done                            
+Creating journal (32768 blocks): done
+Writing superblocks and filesystem accounting information:   0/160       done
+
+Stopping docker: [  OK  ]
+Starting docker:	.[  OK  ]
+--2018-04-30 18:51:02--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/repliseq-parta.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 6884 (6.7K) [text/plain]
+Saving to: ‘/data1/cwl/repliseq-parta.cwl’
+
+     0K ......                                                100%  128M=0s
+
+2018-04-30 18:51:02 (128 MB/s) - ‘/data1/cwl/repliseq-parta.cwl’ saved [6884/6884]
+
+--2018-04-30 18:51:02--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/clip.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1258 (1.2K) [text/plain]
+Saving to: ‘/data1/cwl/clip.cwl’
+
+     0K .                                                     100%  634M=0s
+
+2018-04-30 18:51:02 (634 MB/s) - ‘/data1/cwl/clip.cwl’ saved [1258/1258]
+
+--2018-04-30 18:51:02--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/align.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1342 (1.3K) [text/plain]
+Saving to: ‘/data1/cwl/align.cwl’
+
+     0K .                                                     100%  619M=0s
+
+2018-04-30 18:51:02 (619 MB/s) - ‘/data1/cwl/align.cwl’ saved [1342/1342]
+
+--2018-04-30 18:51:02--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/filtersort.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1444 (1.4K) [text/plain]
+Saving to: ‘/data1/cwl/filtersort.cwl’
+
+     0K .                                                     100%  622M=0s
+
+2018-04-30 18:51:02 (622 MB/s) - ‘/data1/cwl/filtersort.cwl’ saved [1444/1444]
+
+--2018-04-30 18:51:02--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/dedup.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1276 (1.2K) [text/plain]
+Saving to: ‘/data1/cwl/dedup.cwl’
+
+     0K .                                                     100%  482M=0s
+
+2018-04-30 18:51:03 (482 MB/s) - ‘/data1/cwl/dedup.cwl’ saved [1276/1276]
+
+--2018-04-30 18:51:03--  https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/count.cwl
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 151.101.200.133
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|151.101.200.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1498 (1.5K) [text/plain]
+Saving to: ‘/data1/cwl/count.cwl’
+
+     0K .                                                     100%  573M=0s
+
+2018-04-30 18:51:03 (573 MB/s) - ‘/data1/cwl/count.cwl’ saved [1498/1498]
+
+aws s3 cp s3://elasticbeanstalk-fourfront-webdev-files/a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz /data1/input/a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz
+aws s3 cp s3://elasticbeanstalk-fourfront-webdev-files/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes /data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes
+aws s3 cp s3://elasticbeanstalk-fourfront-webdev-files/1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz /data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz
+Mon Apr 30 18:51:03 UTC 2018
+Mon Apr 30 18:51:34 UTC 2018
+aws_decode_run_json.py
+aws_update_run_json.py
+aws_upload_output_update_json.py
+bqLd8oa7Tdzq.run.json
+cwltool
+download_command_list.txt
+env_command_list.txt
+inputs.yml
+venv
+Filesystem     1K-blocks    Used Available Use% Mounted on
+devtmpfs         8208220      60   8208160   1% /dev
+tmpfs            8217136       0   8217136   0% /dev/shm
+/dev/xvda1       8123812 1362332   6661232  17% /
+/dev/xvdb       20511356 3419360  16027036  18% /data1
+/home/ec2-user
+total 124K
+-rwxr-xr-x   1 root     root 8.6K Apr 30 18:50 aws_run_workflow.sh
+dr-xr-xr-x   2 root     root 4.0K Oct  3  2017 bin
+dr-xr-xr-x   4 root     root 4.0K Oct  3  2017 boot
+-rw-r--r--   1 root     root    0 Apr 30 18:50 bqLd8oa7Tdzq.job_started
+drwxr-xr-x  11 root     root 4.0K Oct  3  2017 cgroup
+drwxr-xr-x   7 ec2-user root 4.0K Apr 30 18:51 data1
+drwxr-xr-x  16 root     root 2.5K Apr 30 18:50 dev
+drwxr-xr-x  78 root     root 4.0K Apr 30 18:50 etc
+drwxr-xr-x   3 root     root 4.0K Oct  3  2017 home
+dr-xr-xr-x   7 root     root 4.0K Oct  3  2017 lib
+dr-xr-xr-x  10 root     root  12K Apr 30 18:50 lib64
+drwxr-xr-x   2 root     root 4.0K Aug 13  2017 local
+drwx------   2 root     root  16K Aug 13  2017 lost+found
+drwxr-xr-x   2 root     root 4.0K Jan  6  2012 media
+drwxr-xr-x   2 root     root 4.0K Jan  6  2012 mnt
+drwxr-xr-x   3 root     root 4.0K Aug 13  2017 opt
+dr-xr-xr-x 112 root     root    0 Apr 30 18:50 proc
+dr-xr-x---   4 root     root 4.0K Apr 30 18:50 root
+drwxr-xr-x   4 root     root 4.0K Oct  3  2017 run
+dr-xr-xr-x   2 root     root  12K Apr 30 18:50 sbin
+drwxr-xr-x   2 root     root 4.0K Jan  6  2012 selinux
+drwxr-xr-x   2 root     root 4.0K Jan  6  2012 srv
+dr-xr-xr-x  13 root     root    0 Apr 30 18:50 sys
+drwxrwxrwt   4 root     root 4.0K Apr 30 18:50 tmp
+drwxr-xr-x  13 root     root 4.0K Aug 13  2017 usr
+drwxr-xr-x  19 root     root 4.0K Aug 13  2017 var
+/data1:
+total 32K
+drwxr-xr-x 2 root     root 4.0K Apr 30 18:51 cwl
+drwxr-xr-x 5 root     root 4.0K Apr 30 18:51 input
+drwx--x--x 2 ec2-user root  16K Apr 30 18:50 lost+found
+drwxr-xr-x 2 root     root 4.0K Apr 30 18:51 out
+drwxr-xr-x 2 root     root 4.0K Apr 30 18:51 reference
+
+/data1/cwl:
+total 28K
+-rw-r--r-- 1 root root 1.4K Apr 30 18:51 align.cwl
+-rw-r--r-- 1 root root 1.3K Apr 30 18:51 clip.cwl
+-rw-r--r-- 1 root root 1.5K Apr 30 18:51 count.cwl
+-rw-r--r-- 1 root root 1.3K Apr 30 18:51 dedup.cwl
+-rw-r--r-- 1 root root 1.5K Apr 30 18:51 filtersort.cwl
+-rw-r--r-- 1 root root 6.8K Apr 30 18:51 repliseq-parta.cwl
+
+/data1/input:
+total 12K
+drwxr-xr-x 2 root root 4.0K Apr 30 18:51 1f53df95-4cf3-41cc-971d-81bb16c486dd
+drwxr-xr-x 2 root root 4.0K Apr 30 18:51 4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+drwxr-xr-x 2 root root 4.0K Apr 30 18:51 a6ffb820-c600-4c32-9d99-249ed8029022
+
+/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd:
+total 3.3G
+-rw-r--r-- 1 root root 3.3G May 26  2017 4DNFIZQZ39L9.bwaIndex.tgz
+
+/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9:
+total 4.0K
+-rw-r--r-- 1 root root 365 May 31  2017 4DNFI823LSII.chrom.sizes
+
+/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022:
+total 9.6M
+-rw-r--r-- 1 root root 9.6M Apr 30 17:09 4DNFI2ZDNVFL.fastq.gz
+
+/data1/lost+found:
+total 0
+
+/data1/out:
+total 12K
+-rwxr-xr-x 1 ec2-user root 8.6K Apr 30 18:51 bqLd8oa7Tdzq.log
+
+/data1/reference:
+total 0
+/home/ec2-user/venv/cwl/bin/cwltool 1.0.20170927210141
+Resolved 'repliseq-parta.cwl' to 'file:///data1/cwl/repliseq-parta.cwl'
+top - 18:51:35 up 1 min,  1 user,  load average: 0.96, 0.28, 0.10
+Tasks: 105 total,   2 running, 103 sleeping,   0 stopped,   0 zombie
+Cpu(s):  7.3%us,  3.8%sy,  0.0%ni, 68.1%id,  9.5%wa,  0.0%hi,  1.4%si, 10.0%st
+Mem:  16434272k total,  3979456k used, 12454816k free,    20176k buffers
+Swap:        0k total,        0k used,        0k free,  3672304k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 3383 root      20   0  271m  60m 8028 R 79.6  0.4   0:00.40 cwltool            
+    1 root      20   0 19516 2492 2196 S  0.0  0.0   0:01.28 init               
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      20   0     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0        
+    5 root       0 -20     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0H       
+    6 root      20   0     0    0    0 S  0.0  0.0   0:00.28 kworker/u30:0      
+    7 root      20   0     0    0    0 S  0.0  0.0   0:00.01 rcu_sched          
+3.3G	/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd
+8.0K	/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+9.6M	/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022
+3.3G	/data1/input/
+4.0K	/data1/tmp
+repliseq-parta.cwl:50:7: invalid field `fdn_format`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'inputBinding', 'default'
+repliseq-parta.cwl:57:7: invalid field `fdn_format`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'inputBinding', 'default'
+repliseq-parta.cwl:64:7: invalid field `fdn_format`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'inputBinding', 'default'
+repliseq-parta.cwl:19:7: invalid field `fdn_output_type`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:20:7: invalid field `fdn_format`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:28:7: invalid field `fdn_output_type`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:36:7: invalid field `fdn_output_type`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:37:7: invalid field `fdn_format`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:38:7: invalid field `fdn_secondary_file_formats`, expected one of: 'secondaryFiles', 'format', 'streamable', 'type', 'label', 'description', 'id', 'outputBinding', 'source', 'linkMerge'
+repliseq-parta.cwl:104:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:105:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:106:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:95:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:96:11: invalid field `fdn_format`, expected one of: 'id'
+repliseq-parta.cwl:110:7: invalid field `fdn_step_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'run', 'scatter', 'scatterMethod'
+repliseq-parta.cwl:133:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:134:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:139:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:140:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:141:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:146:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:147:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:124:11: invalid field `fdn_format`, expected one of: 'id'
+repliseq-parta.cwl:125:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:152:7: invalid field `fdn_step_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'run', 'scatter', 'scatterMethod'
+repliseq-parta.cwl:175:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:176:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:181:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:182:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:187:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:188:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:166:11: invalid field `fdn_format`, expected one of: 'id'
+repliseq-parta.cwl:167:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:193:7: invalid field `fdn_step_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'run', 'scatter', 'scatterMethod'
+repliseq-parta.cwl:223:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:224:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:208:11: invalid field `fdn_format`, expected one of: 'id'
+repliseq-parta.cwl:209:11: invalid field `fdn_type`, expected one of: 'id'
+repliseq-parta.cwl:210:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:215:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:216:11: invalid field `fdn_type`, expected one of: 'id'
+repliseq-parta.cwl:229:7: invalid field `fdn_step_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'run', 'scatter', 'scatterMethod'
+repliseq-parta.cwl:253:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:254:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:255:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:260:11: invalid field `fdn_format`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:261:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:262:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:267:11: invalid field `fdn_type`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:268:11: invalid field `fdn_cardinality`, expected one of: 'source', 'linkMerge', 'id', 'default', 'valueFrom'
+repliseq-parta.cwl:243:11: invalid field `fdn_format`, expected one of: 'id'
+repliseq-parta.cwl:244:11: invalid field `fdn_type`, expected one of: 'id'
+repliseq-parta.cwl:245:11: invalid field `fdn_cardinality`, expected one of: 'id'
+repliseq-parta.cwl:273:7: invalid field `fdn_step_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'run', 'scatter', 'scatterMethod'
+repliseq-parta.cwl:2:3: invalid field `fdn_meta`, expected one of: 'id', 'inputs', 'outputs', 'requirements', 'hints', 'label', 'description', 'cwlVersion', 'class', 'steps'
+[workflow repliseq-parta.cwl] start
+[step clip] start
+['docker', 'pull', 'duplexa/4dn-repliseq:v13']
+v13: Pulling from duplexa/4dn-repliseq
+22dc81ace0ea: Pulling fs layer
+1a8b3c87dba3: Pulling fs layer
+91390a1c435a: Pulling fs layer
+07844b14977e: Pulling fs layer
+b78396653dae: Pulling fs layer
+8d538149ee6a: Pulling fs layer
+d8f858c73e66: Pulling fs layer
+0875f25e55e4: Pulling fs layer
+e07322f04a0a: Pulling fs layer
+d5203fc2f3f9: Pulling fs layer
+4ef5a110c866: Pulling fs layer
+6f3f5df6a39f: Pulling fs layer
+f403967d0be3: Pulling fs layer
+b78396653dae: Waiting
+8d538149ee6a: Waiting
+d8f858c73e66: Waiting
+0875f25e55e4: Waiting
+e07322f04a0a: Waiting
+d5203fc2f3f9: Waiting
+07844b14977e: Waiting
+f403967d0be3: Waiting
+4ef5a110c866: Waiting
+6f3f5df6a39f: Waiting
+1a8b3c87dba3: Download complete
+07844b14977e: Verifying Checksum
+07844b14977e: Download complete
+91390a1c435a: Verifying Checksum
+91390a1c435a: Download complete
+b78396653dae: Download complete
+d8f858c73e66: Verifying Checksum
+d8f858c73e66: Download complete
+0875f25e55e4: Verifying Checksum
+0875f25e55e4: Download complete
+22dc81ace0ea: Download complete
+d5203fc2f3f9: Download complete
+e07322f04a0a: Verifying Checksum
+e07322f04a0a: Download complete
+6f3f5df6a39f: Verifying Checksum
+6f3f5df6a39f: Download complete
+f403967d0be3: Verifying Checksum
+f403967d0be3: Download complete
+8d538149ee6a: Verifying Checksum
+8d538149ee6a: Download complete
+22dc81ace0ea: Pull complete
+1a8b3c87dba3: Pull complete
+91390a1c435a: Pull complete
+07844b14977e: Pull complete
+b78396653dae: Pull complete
+4ef5a110c866: Verifying Checksum
+4ef5a110c866: Download complete
+8d538149ee6a: Pull complete
+d8f858c73e66: Pull complete
+0875f25e55e4: Pull complete
+e07322f04a0a: Pull complete
+d5203fc2f3f9: Pull complete
+top - 18:52:36 up 2 min,  1 user,  load average: 1.51, 0.60, 0.22
+Tasks: 107 total,   1 running, 106 sleeping,   0 stopped,   0 zombie
+Cpu(s): 16.3%us,  3.4%sy,  0.0%ni, 60.1%id, 13.5%wa,  0.0%hi,  1.5%si,  5.3%st
+Mem:  16434272k total,  8220980k used,  8213292k free,    55788k buffers
+Swap:        0k total,        0k used,        0k free,  7644252k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 3170 root      20   0  448m  61m  25m S 109.6  0.4   1:12.71 dockerd           
+ 3489 root      20   0  176m  27m  21m S  8.0  0.2   0:01.96 exe                
+    1 root      20   0 19516 2492 2196 S  0.0  0.0   0:01.28 init               
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      20   0     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0        
+    5 root       0 -20     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0H       
+    6 root      20   0     0    0    0 S  0.0  0.0   0:00.49 kworker/u30:0      
+3.3G	/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd
+8.0K	/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+9.6M	/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022
+3.3G	/data1/input/
+4.0K	/data1/tmp
+4.0K	/data1/tmp6UeUMW
+4.0K	/data1/tmp8iLp9i
+4.0K	/data1/tmpQM7Ol5
+4.0K	/data1/tmpy9odSG
+4ef5a110c866: Pull complete
+6f3f5df6a39f: Pull complete
+f403967d0be3: Pull complete
+Digest: sha256:b07198206d2be75d377f18d8c36ea8be669294d05d102b78b1b52b925db3a252
+Status: Downloaded newer image for duplexa/4dn-repliseq:v13
+[job clip] /data1/tmpQM7Ol5$ docker \
+    run \
+    -i \
+    --volume=/data1/tmpQM7Ol5:/var/spool/cwl:rw \
+    --volume=/data1/tmpy9odSG:/tmp:rw \
+    --volume=/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz:/var/lib/cwl/stg45ba0ee4-b7b5-44b8-8867-683929d49f6c/4DNFI2ZDNVFL.fastq.gz:ro \
+    --workdir=/var/spool/cwl \
+    --rm \
+    --env=TMPDIR=/tmp \
+    --env=HOME=/var/spool/cwl \
+    duplexa/4dn-repliseq:v13 \
+    clip \
+    /var/lib/cwl/stg45ba0ee4-b7b5-44b8-8867-683929d49f6c/4DNFI2ZDNVFL.fastq.gz \
+    . \
+    out
+Pulled Docker image node:slim slim: Pulling from library/node
+f2b6b4884fc8: Pulling fs layer
+4fb899b4df21: Pulling fs layer
+c669d5da499d: Pulling fs layer
+03e8ff4c8721: Pulling fs layer
+642c4f779f80: Pulling fs layer
+f1acd1daffb4: Pulling fs layer
+642c4f779f80: Waiting
+f1acd1daffb4: Waiting
+03e8ff4c8721: Waiting
+c669d5da499d: Verifying Checksum
+c669d5da499d: Download complete
+4fb899b4df21: Verifying Checksum
+4fb899b4df21: Download complete
+f2b6b4884fc8: Download complete
+642c4f779f80: Verifying Checksum
+642c4f779f80: Download complete
+03e8ff4c8721: Verifying Checksum
+03e8ff4c8721: Download complete
+f1acd1daffb4: Verifying Checksum
+f1acd1daffb4: Download complete
+f2b6b4884fc8: Pull complete
+4fb899b4df21: Pull complete
+c669d5da499d: Pull complete
+03e8ff4c8721: Pull complete
+642c4f779f80: Pull complete
+f1acd1daffb4: Pull complete
+Digest: sha256:15d9f3da833c50dbf926fc71f4d12457928ab354d33b72bfc7d2bf9ba4b71426
+Status: Downloaded newer image for node:slim
+
+[job clip] completed success
+[step clip] completed success
+[step align] start
+unrecognized extension field `http://commonwl.org/cwltool#generation`.  Did you include a $schemas section?
+[job align] /data1/tmp2EQtm2$ docker \
+    run \
+    -i \
+    --volume=/data1/tmp2EQtm2:/var/spool/cwl:rw \
+    --volume=/data1/tmpZ_I2pY:/tmp:rw \
+    --volume=/data1/tmpQM7Ol5/./out.clip.fastq:/var/lib/cwl/stgeb2b1d8b-28e3-49ab-9788-e8a34335d907/out.clip.fastq:ro \
+    --volume=/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz:/var/lib/cwl/stge4d26f0f-6528-4052-a1e4-03554011a768/4DNFIZQZ39L9.bwaIndex.tgz:ro \
+    --workdir=/var/spool/cwl \
+    --rm \
+    --env=TMPDIR=/tmp \
+    --env=HOME=/var/spool/cwl \
+    duplexa/4dn-repliseq:v13 \
+    run-align.sh \
+    /var/lib/cwl/stgeb2b1d8b-28e3-49ab-9788-e8a34335d907/out.clip.fastq \
+    /var/lib/cwl/stge4d26f0f-6528-4052-a1e4-03554011a768/4DNFIZQZ39L9.bwaIndex.tgz \
+    . \
+    out \
+    4
+top - 18:53:39 up 3 min,  1 user,  load average: 2.06, 0.91, 0.36
+Tasks: 116 total,   2 running, 114 sleeping,   0 stopped,   0 zombie
+Cpu(s): 18.4%us,  2.9%sy,  0.0%ni, 57.7%id, 16.5%wa,  0.0%hi,  1.0%si,  3.6%st
+Mem:  16434272k total, 11963240k used,  4471032k free,    79596k buffers
+Swap:        0k total,        0k used,        0k free, 11206448k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 4022 root      20   0  4760  732  668 R 99.5  0.0   0:30.27 gzip               
+ 4021 root      20   0 27940 2892 2660 S 11.9  0.0   0:04.42 tar                
+    1 root      20   0 19516 2492 2196 S  0.0  0.0   0:01.28 init               
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      20   0     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0        
+    5 root       0 -20     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0H       
+    6 root      20   0     0    0    0 S  0.0  0.0   0:00.93 kworker/u30:0      
+3.3G	/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd
+8.0K	/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+9.6M	/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022
+3.3G	/data1/input/
+4.0K	/data1/tmp
+3.3G	/data1/tmp2EQtm2
+4.0K	/data1/tmp6UeUMW
+4.0K	/data1/tmpkAazZq
+41M	/data1/tmpQM7Ol5
+4.0K	/data1/tmpZ_I2pY
+fastq is not interleaved, treating as single-end
+top - 18:54:40 up 4 min,  1 user,  load average: 1.58, 1.00, 0.42
+Tasks: 117 total,   1 running, 116 sleeping,   0 stopped,   0 zombie
+Cpu(s): 19.7%us,  2.6%sy,  0.0%ni, 58.5%id, 15.8%wa,  0.0%hi,  0.7%si,  2.7%st
+Mem:  16434272k total, 16270580k used,   163692k free,    79756k buffers
+Swap:        0k total,        0k used,        0k free,  9673700k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+ 4044 root      20   0 5871m 5.6g 2524 S 99.5 35.6   0:43.13 bwa                
+    1 root      20   0 19516 2492 2196 S  0.0  0.0   0:01.28 init               
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      20   0     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0        
+    5 root       0 -20     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0H       
+    6 root      20   0     0    0    0 S  0.0  0.0   0:01.36 kworker/u30:0      
+    7 root      20   0     0    0    0 S  0.0  0.0   0:00.04 rcu_sched          
+3.3G	/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd
+8.0K	/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+9.6M	/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022
+3.3G	/data1/input/
+4.0K	/data1/tmp
+5.1G	/data1/tmp2EQtm2
+4.0K	/data1/tmp6UeUMW
+4.0K	/data1/tmpkAazZq
+41M	/data1/tmpQM7Ol5
+4.0K	/data1/tmpZ_I2pY
+[main] Version: 0.7.15-r1140
+[main] CMD: bwa mem -v 2 -t . GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta fastq1
+[main] Real time: 65.070 sec; CPU: 64.424 sec
+./out.bam
+[job align] completed success
+[step align] completed success
+[step filtersort] start
+unrecognized extension field `http://commonwl.org/cwltool#generation`.  Did you include a $schemas section?
+[job filtersort] /data1/tmp57Iwhj$ docker \
+    run \
+    -i \
+    --volume=/data1/tmp57Iwhj:/var/spool/cwl:rw \
+    --volume=/data1/tmpTI_e6Y:/tmp:rw \
+    --volume=/data1/tmp2EQtm2/out.bam:/var/lib/cwl/stg0dc113c3-3ed1-4d3d-aa50-458005864163/out.bam:ro \
+    --workdir=/var/spool/cwl \
+    --rm \
+    --env=TMPDIR=/tmp \
+    --env=HOME=/var/spool/cwl \
+    duplexa/4dn-repliseq:v13 \
+    filtersort \
+    /var/lib/cwl/stg0dc113c3-3ed1-4d3d-aa50-458005864163/out.bam \
+    2G \
+    4 \
+    . \
+    out
+[job filtersort] completed success
+[step filtersort] completed success
+[step dedup] start
+unrecognized extension field `http://commonwl.org/cwltool#generation`.  Did you include a $schemas section?
+[job dedup] /data1/tmpix0vqm$ docker \
+    run \
+    -i \
+    --volume=/data1/tmpix0vqm:/var/spool/cwl:rw \
+    --volume=/data1/tmpsU3VHy:/tmp:rw \
+    --volume=/data1/tmp57Iwhj/./out.q20_sort.bam:/var/lib/cwl/stg48477ad2-cca9-454c-aba0-da8331ef1f7a/out.q20_sort.bam:ro \
+    --workdir=/var/spool/cwl \
+    --rm \
+    --env=TMPDIR=/tmp \
+    --env=HOME=/var/spool/cwl \
+    duplexa/4dn-repliseq:v13 \
+    run-dedup.sh \
+    /var/lib/cwl/stg48477ad2-cca9-454c-aba0-da8331ef1f7a/out.q20_sort.bam \
+    . \
+    out
+  adding: out.rmdup.log.qc_report/ (stored 0%)
+  adding: out.rmdup.log.qc_report/summary.txt (deflated 20%)
+[job dedup] completed success
+[step dedup] completed success
+[step count] start
+unrecognized extension field `http://commonwl.org/cwltool#generation`.  Did you include a $schemas section?
+[job count] /data1/tmpNuuCUR$ docker \
+    run \
+    -i \
+    --volume=/data1/tmpNuuCUR:/var/spool/cwl:rw \
+    --volume=/data1/tmpn9X_1T:/tmp:rw \
+    --volume=/data1/tmpix0vqm/./out.rmdup.bam:/var/lib/cwl/stgb6f7ce70-d9a8-45a9-937d-3cd332c9a47c/out.rmdup.bam:ro \
+    --volume=/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes:/var/lib/cwl/stgc8be90bd-31fb-434a-83b1-a5c0508c0b65/4DNFI823LSII.chrom.sizes:ro \
+    --workdir=/var/spool/cwl \
+    --rm \
+    --env=TMPDIR=/tmp \
+    --env=HOME=/var/spool/cwl \
+    duplexa/4dn-repliseq:v13 \
+    run-count.sh \
+    /var/lib/cwl/stgb6f7ce70-d9a8-45a9-937d-3cd332c9a47c/out.rmdup.bam \
+    /var/lib/cwl/stgc8be90bd-31fb-434a-83b1-a5c0508c0b65/4DNFI823LSII.chrom.sizes \
+    . \
+    out \
+    5000
+ERROR: Database file /var/lib/cwl/stgb6f7ce70-d9a8-45a9-937d-3cd332c9a47c/out.rmdup.bam contains chromosome chr14_GL000009v2_random, but the query file does not.
+       Please re-reun with the -g option for a genome file.
+       See documentation for details.
+[job count] completed success
+[step count] completed success
+[workflow repliseq-parta.cwl] completed success
+Final process status is success
+{
+    "dedup_qc_report": {
+        "checksum": "sha1$c9b75e1f6ceafe93a476464a33c4bc79f68d1759", 
+        "basename": "out.rmdup.log.qc_report.zip", 
+        "location": "file:///data1/out/out.rmdup.log.qc_report.zip", 
+        "path": "/data1/out/out.rmdup.log.qc_report.zip", 
+        "class": "File", 
+        "size": 470
+    }, 
+    "filtered_sorted_deduped_bam": {
+        "checksum": "sha1$2f127689d566c12badf1be63aaafd22fa32b8c2c", 
+        "basename": "out.rmdup.bam", 
+        "location": "file:///data1/out/out.rmdup.bam", 
+        "path": "/data1/out/out.rmdup.bam", 
+        "class": "File", 
+        "size": 11061946
+    }, 
+    "count_bg": {
+        "checksum": "sha1$e520dbce9c8351e64b0bc16248886aee2ca83ae5", 
+        "basename": "out.w5000.bedGraph.gz", 
+        "location": "file:///data1/out/out.w5000.bedGraph.gz", 
+        "path": "/data1/out/out.w5000.bedGraph.gz", 
+        "secondaryFiles": [
+            {
+                "checksum": "sha1$213ddf927f049f96ee6a16913b614170d8eee344", 
+                "basename": "out.w5000.bw", 
+                "location": "file:///data1/out/out.w5000.bw", 
+                "path": "/data1/out/out.w5000.bw", 
+                "class": "File", 
+                "size": 3120059
+            }, 
+            {
+                "checksum": "sha1$08ee022f6327d4d47f5bc737c24b64d88578747a", 
+                "basename": "out.w5000.bedGraph.gz.px2", 
+                "location": "file:///data1/out/out.w5000.bedGraph.gz.px2", 
+                "path": "/data1/out/out.w5000.bedGraph.gz.px2", 
+                "class": "File", 
+                "size": 991610
+            }
+        ], 
+        "class": "File", 
+        "size": 2864324
+    }
+}
+Mon Apr 30 18:55:15 UTC 2018
+total 18M
+-rw-r--r-- 1 root     root  11M Apr 30 18:55 out.rmdup.bam
+-rw-r--r-- 1 root     root  470 Apr 30 18:55 out.rmdup.log.qc_report.zip
+-rw-r--r-- 1 root     root 3.0M Apr 30 18:55 out.w5000.bw
+-rw-r--r-- 1 root     root 2.8M Apr 30 18:55 out.w5000.bedGraph.gz
+-rw-r--r-- 1 root     root 969K Apr 30 18:55 out.w5000.bedGraph.gz.px2
+-rw-r--r-- 1 root     root 1.7K Apr 30 18:55 bqLd8oa7Tdzq.log.json
+-rw-r--r-- 1 root     root  328 Apr 30 18:55 bqLd8oa7Tdzq.md5sum.txt
+-rwxr-xr-x 1 ec2-user root  32K Apr 30 18:55 bqLd8oa7Tdzq.log
+Traceback (most recent call last):
+  File "./aws_upload_output_update_json.py", line 100, in <module>
+    raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e )
+TypeError: coercing to Unicode: need string or buffer, list found
+top - 18:55:40 up 5 min,  0 users,  load average: 1.26, 1.04, 0.48
+Tasks: 111 total,   1 running, 109 sleeping,   0 stopped,   1 zombie
+Cpu(s): 19.0%us,  2.3%sy,  0.0%ni, 63.4%id, 12.6%wa,  0.0%hi,  0.6%si,  2.2%st
+Mem:  16434272k total, 10390016k used,  6044256k free,    84472k buffers
+Swap:        0k total,        0k used,        0k free,  9736924k cached
+
+  PID USER      PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND            
+    1 root      20   0 19516 2492 2196 S  0.0  0.0   0:01.28 init               
+    2 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kthreadd           
+    3 root      20   0     0    0    0 S  0.0  0.0   0:00.00 ksoftirqd/0        
+    4 root      20   0     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0        
+    5 root       0 -20     0    0    0 S  0.0  0.0   0:00.00 kworker/0:0H       
+    6 root      20   0     0    0    0 S  0.0  0.0   0:01.37 kworker/u30:0      
+    7 root      20   0     0    0    0 S  0.0  0.0   0:00.05 rcu_sched          
+    8 root      20   0     0    0    0 S  0.0  0.0   0:00.00 rcu_bh             
+3.3G	/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd
+8.0K	/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9
+9.6M	/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022
+3.3G	/data1/input/
+4.0K	/data1/tmp
+5.2G	/data1/tmp2EQtm2
+22M	/data1/tmp57Iwhj
+8.0K	/data1/tmpix0vqm/out.rmdup.log.qc_report
+11M	/data1/tmpix0vqm
+36M	/data1/tmpNuuCUR
+41M	/data1/tmpQM7Ol5

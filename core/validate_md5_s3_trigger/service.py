@@ -41,8 +41,8 @@ def get_outbucket_name(bucket):
 def make_input(event):
     upload_key = event['Records'][0]['s3']['object']['key']
 
-    uuid, accession = upload_key.split('/')
-    return _make_input('fourfront-webprod', 'md5', accession, uuid)
+    uuid, object_key = upload_key.split('/')
+    return _make_input('fourfront-webprod', 'md5', object_key, uuid)
 
 
 _workflows = {'md5':
@@ -56,7 +56,7 @@ _workflows = {'md5':
               }
 
 
-def _make_input(env, workflow, accession, uuid):
+def _make_input(env, workflow, object_key, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
@@ -69,7 +69,7 @@ def _make_input(env, workflow, accession, uuid):
                 {"workflow_argument_name": workflow_arg_name,
                  "bucket_name": bucket,
                  "uuid": uuid,
-                 "object_key": accession,
+                 "object_key": object_key,
                  }
              ],
             "output_bucket": output_bucket,
@@ -88,7 +88,7 @@ def _make_input(env, workflow, accession, uuid):
                 "key_name": ""
               },
             }
-    data.update(_tibanna_settings({'run_id': str(accession),
+    data.update(_tibanna_settings({'run_id': str(object_key),
                                    'run_type': workflow,
                                    'env': env,
                                    }))

@@ -1,0 +1,81 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "repliseq-parta", 
+            "App_version": null, 
+            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq", 
+            "main_cwl": "repliseq-parta.cwl", 
+            "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl"
+        }, 
+        "Input": {
+            "Input_files_data": {
+                "bwaIndex": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
+                }, 
+                "chromsizes": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+                }, 
+                "fastq": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz"
+                }
+            }, 
+            "Input_files_reference": {}, 
+            "Input_parameters": {
+                "memperthread": "2G", 
+                "nthreads": 4
+            }, 
+            "Secondary_files_data": {}
+        }, 
+        "JOBID": "bqLd8oa7Tdzq", 
+        "Log": {
+            "log_bucket_directory": "tibanna-output"
+        }, 
+        "Output": {
+            "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+            "output_target": {
+                "count_bg": "d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz", 
+                "dedup_qc_report": "e02a8550-5773-4391-8052-868082a1a6ff/dedup_qc_report", 
+                "filtered_sorted_deduped_bam": "ca56a9c8-46c3-4351-aa63-390b29e9798f/4DNFIXU55ATC.bam"
+            }, 
+            "secondary_output_target": {
+                "count_bg": [
+                    "d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2", 
+                    "d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
+                ]
+            }
+        }, 
+        "end_time": "20180430-18:55:20-UTC", 
+        "instance_id": "", 
+        "start_time": "20180430-18:50:18-UTC", 
+        "status": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1", 
+        "total_input_size": "3.3G", 
+        "total_output_size": "18M", 
+        "total_tmp_size": "5.3G"
+    }, 
+    "config": {
+        "EBS_optimized": false, 
+        "ami_id": "ami-cfb14bb5", 
+        "copy_to_s3": true, 
+        "ebs_iops": 500, 
+        "ebs_size": 20, 
+        "ebs_type": "io1", 
+        "instance_type": "t2.xlarge", 
+        "job_tag": "repliseq-parta", 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "json_dir": "/tmp/json", 
+        "key_name": "", 
+        "launch_instance": true, 
+        "log_bucket": "tibanna-output", 
+        "password": "dragonfly", 
+        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access", 
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/", 
+        "shutdown_min": 120, 
+        "userdata_dir": "/tmp/userdata"
+    }
+}
