@@ -1,0 +1,88 @@
+{
+  "args": {
+    "secondary_output_target": {},
+    "app_name": "md5",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "output_target": {
+      "report": "3c5eb494-38de-472c-a596-c50dde2fd51e/report"
+    },
+    "cwl_main_filename": "md5.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+    "app_version": "0.0.4",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
+    "input_files": {
+      "input_file": {
+        "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+        "object_key": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.fastq.gz"
+      }
+    }
+  },
+  "app_name": "md5",
+  "_tibanna": {
+    "env": "fourfront-webprod",
+    "settings": {
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:md5_4DNFIZQZ39L9.fastq.gz907f88e0-9adf-4d27-aed0-562401e6ed78",
+      "run_type": "md5",
+      "run_name": "md5_4DNFIZQZ39L9.fastq.gz907f88e0-9adf-4d27-aed0-562401e6ed78",
+      "env": "fourfront-webprod",
+      "run_id": "4DNFIZQZ39L9.fastq.gz"
+    }
+  },
+  "ff_meta": {
+    "run_platform": "AWSEM",
+    "uuid": "3c5eb494-38de-472c-a596-c50dde2fd51e",
+    "parameters": [],
+    "workflow": "d3f25cd3-e726-4b3c-a022-48f844474b41",
+    "title": "md5 run 2018-04-03 14:37:57.994992",
+    "award": "1U01CA200059-01",
+    "awsem_job_id": "",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:md5_4DNFIZQZ39L9.fastq.gz907f88e0-9adf-4d27-aed0-562401e6ed78",
+    "awsem_app_name": "md5",
+    "lab": "4dn-dcic-lab",
+    "run_status": "started",
+    "output_files": [
+      {
+        "type": "Output report file",
+        "workflow_argument_name": "report"
+      }
+    ],
+    "input_files": [
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "input_file",
+        "value": "1f53df95-4cf3-41cc-971d-81bb16c486dd"
+      }
+    ]
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
+  "pf_meta": [],
+  "parameters": {},
+  "config": {
+    "ebs_size": 0,
+    "ebs_type": "io1",
+    "key_name": "",
+    "EBS_optimized": "",
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "instance_type": "",
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "launch_instance": true,
+    "password": "thisisnotmypassword",
+    "log_bucket": "tibanna-output"
+  },
+  "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41",
+  "input_files": [
+    {
+      "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "workflow_argument_name": "input_file",
+      "object_key": "4DNFIZQZ39L9.fastq.gz"
+    }
+  ]
+}
