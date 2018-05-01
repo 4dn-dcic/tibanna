@@ -86,22 +86,22 @@ for k in cwl_output:
         raise Exception("cannot update target info to json %s" % e)
 
     if 'secondaryFiles' in cwl_output[k]:
-        sf = cwl_output[k]['secondaryFiles'][0]  # only the first secondary file
-        source = sf.get('path')
-        source_name = source.replace(source_directory, '')
-        if k in secondary_output_target:
-            target = secondary_output_target[k]  # change file name to what's specified in secondary_output_target
-        else:
-            target = source_name  # do not change file name
-        try:
-            print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-            s3.upload_file(source, output_bucket, target)
-        except Exception as e:
-            raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e )
-        try:
-            sf['target'] = target
-        except Exception as e:
-            raise Exception("cannot update target info to json %s" % e)
+        for i, sf in enumerate(cwl_output[k]['secondaryFiles']):
+            source = sf.get('path')
+            source_name = source.replace(source_directory, '')
+            if k in secondary_output_target:
+                target = secondary_output_target[k][i]
+            else:
+                target = source_name  # do not change file name
+            try:
+                print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
+                s3.upload_file(source, output_bucket, target)
+            except Exception as e:
+                raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e )
+            try:
+                sf['target'] = target
+            except Exception as e:
+                raise Exception("cannot update target info to json %s" % e)
 
 ## add commands
 old_dict['commands'] = parse_command(logfile)

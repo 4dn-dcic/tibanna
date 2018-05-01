@@ -6,7 +6,7 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
-from .ff_utils import get_metadata, create_ffmeta_awsem
+from .ff_utils import get_metadata
 import logging
 
 
@@ -398,7 +398,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException, AWSEMJobErrorException]
+        ignored_exceptions = [EC2StartingException, StillRunningException]
 
         def wrapper(event, context):
             logger.info(context)
@@ -406,10 +406,6 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
             if lambda_name in event.get('skip', []):
                 logger.info('skiping %s since skip was set in input_json' % lambda_name)
                 return event
-            elif event.get('error', False) and not run_if_error:
-                logger.info('error entry fournd in input_json and run_if_error set to false skipping %s' %
-                            lambda_name)
-                raise Exception(event.get('error'))
             elif event.get('metadata_only', False):
                 return metadata_only_func(event)
             else:
@@ -417,25 +413,14 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                     return function(event, context)
                 except Exception as e:
                     if type(e) in ignored_exceptions:
-                        # update ff_meta to error status
-
-                        if type(e) is AWSEMJobErrorException:
-                            try:
-                                tibanna_settings = event.get('_tibanna', {})
-                                tibanna = Tibanna(**tibanna_settings)
-                                ff_meta = create_ffmeta_awsem(
-                                    app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-                                ff_meta.run_status = 'error'
-                                ff_meta.description = str(e)
-                                ff_meta.post(key=tibanna.ff_keys)
-                            except:
-                                print("failed to update workflow run with failed status")
                         raise e
+                        # update ff_meta to error status
                     elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
                         raise e
                     else:
                         event['error'] = str(e)
+                        logger.info(e)
                         return event
         return wrapper
     return decorator
