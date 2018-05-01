@@ -2,7 +2,6 @@ from core.check_task_awsem import service
 from ..conftest import valid_env
 import pytest
 from core import utils
-from core.utils import AWSEMJobErrorException
 import random
 import string
 import logging
@@ -23,7 +22,7 @@ def s3(check_task_input):
     return utils.s3Utils(bucket_name, bucket_name, bucket_name)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def job_started(check_task_input, s3):
     jobid = check_task_input['jobid']
     job_started_name = "%s.job_started" % jobid
@@ -52,11 +51,10 @@ def test_check_task_awsem_fails_if_job_error_found(check_task_input, s3, job_sta
     job_error = "%s.error" % jobid
     s3.s3_put('', job_error)
 
-    with pytest.raises(AWSEMJobErrorException) as excinfo:
-        service.handler(check_task_input, '')
+    res = service.handler(check_task_input, '')
+    assert ('error' in res)
 
     s3.delete_key(job_error)
-    assert 'Job encountered an error' in str(excinfo.value)
 
 
 @valid_env
