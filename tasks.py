@@ -16,6 +16,7 @@ from core.utils import _tibanna, s3Utils
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
+from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS, SECRET
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -71,6 +72,17 @@ def get_all_core_lambdas():
             'update_ffmeta_awsem',
             'run_workflow',
             ]
+
+
+def env_list(name):
+    envlist = {
+        'start_run_awsem': {'SECRET': SECRET},
+        'update_ffmeta_awsem': {'SECRET': SECRET,
+                                'HIGLASS_SERVER': HIGLASS_SERVER,
+                                'HIGLASS_USER': HIGLASS_USER,
+                                'HIGLASS_PASS': HIGLASS_PASS}
+    }
+    return envlist.get(name, '')
 
 
 @contextlib.contextmanager
@@ -246,6 +258,7 @@ def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
 
 @task
 def deploy_lambda_package(ctx, name, suffix):
+    # create the temporary local dev lambda directories
     if suffix:
         new_name = name + '_' + suffix
         new_src = '../' + new_name
@@ -257,8 +270,20 @@ def deploy_lambda_package(ctx, name, suffix):
         cmd = ';'.join([cmd_mkdir, cmd_copy, cmd_cd, cmd_modify_cfg, cmd_replace_cfg])
         print(cmd)
         run(cmd)
+    else:
+        new_name = name
     with chdir(new_src):
         aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+    # add roles and environment variables
+    role_arn = 'arn:aws:iam::643366669028:role/lambda_full_s3'  # temporarily hardcorded
+    lambda_update_config = {'FunctionName': new_name, 'Role': role_arn}
+    envs = env_list(name)
+    if envs:
+        lambda_update_config['Environment'] = {'Variables': envs}
+    client = boto3.client('lambda')
+    resp = client.update_function_configuration(**lambda_update_config)
+    print(resp)
+    # delete the temporary local dev lambda directories 
     if suffix:
         old_src = '../' + name
         run('cd %s; rm -rf %s' % (old_src, new_src))
