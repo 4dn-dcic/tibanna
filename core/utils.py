@@ -481,7 +481,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException]
+        ignored_exceptions = [EC2StartingException, StillRunningException, ]
 
         def wrapper(event, context):
             logger.info(context)

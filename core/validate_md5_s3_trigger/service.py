@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import boto3
 from core.utils import STEP_FUNCTION_ARN
-from core.utils import _tibanna_settings
+from core.utils import _tibanna_settings, Tibanna
+from core.ff_utils import get_metadata
 import json
 
 client = boto3.client('stepfunctions', region_name='us-east-1')
@@ -21,16 +22,40 @@ def handler(event, context):
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
 
-    # trigger the step function to run
-    response = client.start_execution(
-        stateMachineArn=STEP_FUNCTION_ARN,
-        name=run_name,
-        input=json.dumps(make_input(event)),
-    )
+    # only run if status is uploading...
+    is_uploading = is_status_uploading(event)
+    if event.get('force_run'):
+        is_uploading = True
+    if is_uploading:
+        # trigger the step function to run
+        response = client.start_execution(
+            stateMachineArn=STEP_FUNCTION_ARN,
+            name=run_name,
+            input=json.dumps(make_input(event)),
+        )
 
-    # pop no json serializable stuff...
-    response.pop('startDate')
-    return response
+        # pop no json serializable stuff...
+        response.pop('startDate')
+        return response
+    else:
+        return {'info': 'status is not uploading'}
+
+
+def is_status_uploading(event):
+    upload_key = event['Records'][0]['s3']['object']['key']
+    uuid, object_key = upload_key.split('/')
+    accession = object_key.split('.')[0]
+
+    # guess env from bucket name
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    env = '-'.join(bucket.split('-')[1:3])
+
+    tibanna = Tibanna(env=env)
+    meta = get_metadata(accession, key=tibanna.ff_keys)
+    if meta:
+        return meta.get('status', '') == 'uploading'
+    else:
+        return False
 
 
 def get_outbucket_name(bucket):
@@ -41,8 +66,13 @@ def get_outbucket_name(bucket):
 def make_input(event):
     upload_key = event['Records'][0]['s3']['object']['key']
 
-    uuid, accession = upload_key.split('/')
-    return _make_input('fourfront-webprod', 'md5', accession, uuid)
+    uuid, object_key = upload_key.split('/')
+
+    # guess env from bucket name
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    env = '-'.join(bucket.split('-')[1:3])
+
+    return _make_input(env, bucket, 'md5', object_key, uuid)
 
 
 _workflows = {'md5':
@@ -56,8 +86,7 @@ _workflows = {'md5':
               }
 
 
-def _make_input(env, workflow, accession, uuid):
-    bucket = "elasticbeanstalk-%s-files" % env
+def _make_input(env, bucket, workflow, object_key, uuid):
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
@@ -69,7 +98,7 @@ def _make_input(env, workflow, accession, uuid):
                 {"workflow_argument_name": workflow_arg_name,
                  "bucket_name": bucket,
                  "uuid": uuid,
-                 "object_key": accession,
+                 "object_key": object_key,
                  }
              ],
             "output_bucket": output_bucket,
@@ -88,7 +117,7 @@ def _make_input(env, workflow, accession, uuid):
                 "key_name": ""
               },
             }
-    data.update(_tibanna_settings({'run_id': str(accession),
+    data.update(_tibanna_settings({'run_id': str(object_key),
                                    'run_type': workflow,
                                    'env': env,
                                    }))

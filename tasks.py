@@ -13,6 +13,7 @@ from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
+from core.ff_utils import get_metadata
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
@@ -194,8 +195,10 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
         play(ctx, good)
     except:
         print("install vlc for more exciting test runs...")
-        pass
-    return(retcode)
+
+    if retcode != 0:
+        print("test failed exiting")
+        sys.exit(retcode)
 
 
 @task
@@ -421,9 +424,11 @@ def publish(ctx, test=False):
 
 @task
 def run_md5(ctx, env, accession, uuid):
-    if not accession.endswith(".fastq.gz"):
-        accession += ".fastq.gz"
-    input_json = make_input(env=env, workflow='md5', accession=accession, uuid=uuid)
+    tibanna = Tibanna(env=env)
+    meta_data = get_metadata(accession, key=tibanna.ff_keys)
+    file_name = meta_data['upload_key'].split('/')[-1]
+
+    input_json = make_input(env=env, workflow='md5', object_key=file_name, uuid=uuid)
     return _run_workflow(input_json, accession)
 
 
@@ -517,7 +522,7 @@ def batch_fastqc(ctx, env, batch_size=20):
 def run_fastqc(ctx, env, accession, uuid):
     if not accession.endswith(".fastq.gz"):
         accession += ".fastq.gz"
-    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', accession=accession, uuid=uuid)
+    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', object_key=accession, uuid=uuid)
     return _run_workflow(input_json, accession)
 
 
@@ -540,7 +545,7 @@ def calc_ebs_size(bucket, key):
     return size
 
 
-def make_input(env, workflow, accession, uuid):
+def make_input(env, workflow, object_key, uuid):
     bucket = "elasticbeanstalk-%s-files" % env
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
@@ -553,7 +558,7 @@ def make_input(env, workflow, accession, uuid):
                 {"workflow_argument_name": workflow_arg_name,
                  "bucket_name": bucket,
                  "uuid": uuid,
-                 "object_key": accession,
+                 "object_key": object_key,
                  }
              ],
             "output_bucket": output_bucket,
@@ -572,7 +577,7 @@ def make_input(env, workflow, accession, uuid):
                 "key_name": ""
               },
             }
-    data.update(_tibanna_settings({'run_id': str(accession),
+    data.update(_tibanna_settings({'run_id': str(object_key),
                                    'run_type': workflow,
                                    'env': env,
                                    }))
