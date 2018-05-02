@@ -16,7 +16,7 @@ from core.utils import _tibanna, s3Utils
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
-from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS, SECRET
+from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, SECRET
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -283,7 +283,7 @@ def deploy_lambda_package(ctx, name, suffix):
     client = boto3.client('lambda')
     resp = client.update_function_configuration(**lambda_update_config)
     print(resp)
-    # delete the temporary local dev lambda directories 
+    # delete the temporary local dev lambda directories
     if suffix:
         old_src = '../' + name
         run('cd %s; rm -rf %s' % (old_src, new_src))
