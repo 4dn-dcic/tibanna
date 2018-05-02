@@ -10,7 +10,7 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
-from core.utils import create_workflow as _create_workflow
+from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
 from core.launch_utils import rerun as _rerun
@@ -591,9 +591,9 @@ def run_workflow(ctx, input_json='', workflow=''):
 
 
 @task
-def create_workflow(ctx, suffix='dev', type='pony', version=None, no_tests=False):
+def deploy_tibanna(ctx, suffix='dev', type='pony', version=None, no_tests=False):
     print("creating a new workflow..")
-    res = _create_workflow(suffix, type)
+    res = _create_stepfunction(suffix, type)
     print(res)
     print("deploying lambdas..")
     deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix)

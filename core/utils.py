@@ -297,10 +297,10 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
     return input_json
 
 
-def create_workflow(dev_suffix='dev',
-                    sfn_type='pony',  # vs 'unicorn'
-                    region_name='us-east-1',
-                    aws_acc='643366669028'):
+def create_stepfunction(dev_suffix='dev',
+                        sfn_type='pony',  # vs 'unicorn'
+                        region_name='us-east-1',
+                        aws_acc='643366669028'):
     lambda_suffix = '_' + dev_suffix
     sfn_name = 'tibanna_' + sfn_type + lambda_suffix
     lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
