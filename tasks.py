@@ -596,9 +596,9 @@ def run_workflow(ctx, input_json='', workflow=''):
 
 
 @task
-def deploy_tibanna(ctx, suffix='dev', type='pony', version=None, no_tests=False):
+def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', version=None, no_tests=False):
     print("creating a new workflow..")
-    res = _create_stepfunction(suffix, type)
+    res = _create_stepfunction(suffix, sfn_type)
     print(res)
     print("deploying lambdas..")
     deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix)
