@@ -6,7 +6,6 @@ from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
 from ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS
 import requests
-import os
 import json
 
 LOG = logging.getLogger(__name__)
