@@ -19,30 +19,34 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 Please contact us. :)
 
 ## Commands
+### Deploying Tibanna
+* To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
+```
+SECRET  # aws secret key
+HIGLASS_SERVER  # higlass server e.g. https://higlass.4dnucleome.org
+HIGLASS_USER  # higlass username e.g. higlass-admin
+HIGLASS_PASS  # higlass password
+```
+
 To create a copy of tibanna (step function + lambdas)
 ```
-invoke create_workflow [--suffix=<suffixname>] [--type=<type>] [--no-tests]
+invoke deploy_tibanna [--suffix=<suffixname>] [--type=<type>] [--no-tests]
 # (use suffix for development version)
 # example <suffixname> : dev
 # <type> is either 'pony' or 'unicorn' (default pony)
 ```
 * example
 ```
-invoke create_workflow --suffix=dev2
+invoke deploy_tibanna --suffix=dev2
 ```
 The above command will create a step function named `tibanna_pony_dev2` that uses a set of lambdas with suffix `_dev2`, and deploys these lambdas.
 
 * example 2
 ```
-invoke create_workflow --suffix=lululala --type=unicorn
+invoke deploy_tibanna --suffix=lululala --type=unicorn
 ```
 This example creates a step function named `tibanna_unicorn_lululala` that uses a set of lambdas with suffix `_lululala`, and deploys these lambdas.
 
-To run workflow
-```
-invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
-# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or any tibanna step function name that was created by the create_workflow command.
-```
 To deploy lambda functions (use suffix for development version lambdas)
 ```
 # individual lambda functions
@@ -53,6 +57,13 @@ invoke deploy_core <lambda_name> [--suffix=<suffixname>]
 # all lambda functions
 invoke deploy_core all [--suffix=<suffixname>]
 # example <suffixname> : dev
+```
+
+### Execution of workflows using Tibanna
+To run workflow
+```
+invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
+# <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or any tibanna step function name that was created by the create_workflow command.
 ```
 
 To rerun a failed job with the same input json
