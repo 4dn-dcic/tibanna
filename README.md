@@ -30,10 +30,10 @@ HIGLASS_PASS  # higlass password
 
 To create a copy of tibanna (step function + lambdas)
 ```
-invoke deploy_tibanna [--suffix=<suffixname>] [--type=<type>] [--no-tests]
+invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--no-tests]
 # (use suffix for development version)
 # example <suffixname> : dev
-# <type> is either 'pony' or 'unicorn' (default pony)
+# <sfn_type> (step function type) is either 'pony' or 'unicorn' (default pony)
 ```
 * example
 ```
@@ -43,9 +43,9 @@ The above command will create a step function named `tibanna_pony_dev2` that use
 
 * example 2
 ```
-invoke deploy_tibanna --suffix=lululala --type=unicorn
+invoke deploy_tibanna --suffix=dev --sfn_type=unicorn
 ```
-This example creates a step function named `tibanna_unicorn_lululala` that uses a set of lambdas with suffix `_lululala`, and deploys these lambdas.
+This example creates a step function named `tibanna_unicorn_dev` that uses a set of lambdas with suffix `_dev`, and deploys these lambdas.
 
 To deploy lambda functions (use suffix for development version lambdas)
 ```
