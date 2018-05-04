@@ -277,9 +277,8 @@ def deploy_lambda_package(ctx, name, suffix):
         new_name = name
     with chdir(new_src):
         aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
-    # add roles and environment variables
-    role_arn = 'arn:aws:iam::643366669028:role/lambda_full_s3'  # temporarily hardcorded
-    lambda_update_config = {'FunctionName': new_name, 'Role': role_arn}
+    # add environment variables
+    lambda_update_config = {'FunctionName': new_name}
     envs = env_list(name)
     if envs:
         lambda_update_config['Environment'] = {'Variables': envs}
