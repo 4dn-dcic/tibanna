@@ -3,8 +3,15 @@ import json
 import time
 from uuid import uuid4
 import random
-
+import os
 from wranglertools import fdnDCIC
+
+SECRET = os.environ.get("SECRET", '')
+HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
+HIGLASS_USER = os.environ.get("HIGLASS_USER")
+HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
+HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
+                   'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
 def convert_param(parameter_dict, vals_as_string=False):

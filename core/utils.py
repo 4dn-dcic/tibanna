@@ -14,9 +14,13 @@ import logging
 # Config
 ###########################
 s3 = boto3.client('s3')
+
+# production step function
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
+
+# logger
 LOG = logging.getLogger(__name__)
 
 
@@ -293,6 +297,85 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
     return input_json
 
 
+def create_stepfunction(dev_suffix='dev',
+                        sfn_type='pony',  # vs 'unicorn'
+                        region_name='us-east-1',
+                        aws_acc='643366669028'):
+    lambda_suffix = '_' + dev_suffix
+    sfn_name = 'tibanna_' + sfn_type + lambda_suffix
+    lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
+    sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
+    sfn_check_task_retry_conditions = [
+        {
+            "ErrorEquals": ["EC2StartingException"],
+            "IntervalSeconds": 300,
+            "MaxAttempts": 4,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["StillRunningException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 10000,
+            "BackoffRate": 1.0
+        }
+    ]
+    sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
+    sfn_state_defs = dict()
+    sfn_state_defs['pony'] = {
+        "StartRunAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
+            "Next": "RunTaskAwsem"
+        },
+        "RunTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Next": "CheckTaskAwsem"
+        },
+        "CheckTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
+            "Retry": sfn_check_task_retry_conditions,
+            "Next": "UpdateFFMetaAwsem"
+        },
+        "UpdateFFMetaAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
+            "End": True
+        }
+    }
+    sfn_state_defs['unicorn'] = {
+        "RunTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Next": "CheckTaskAwsem"
+        },
+        "CheckTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
+            "Retry": sfn_check_task_retry_conditions,
+            "End": True
+        }
+    }
+    definition = {
+      "Comment": "Start a workflow run on awsem, (later) track it and update our metadata to reflect whats going on",
+      "StartAt": sfn_start_lambda[sfn_type],
+      "States": sfn_state_defs[sfn_type]
+    }
+    client = boto3.client('stepfunctions', region_name=region_name)
+    try:
+        response = client.create_state_machine(
+            name=sfn_name,
+            definition=json.dumps(definition, indent=4, sort_keys=True),
+            roleArn=sfn_role_arn
+        )
+    except Exception as e:
+        # sfn_arn=None
+        raise(e)
+    # sfn_arn = response['stateMachineArn']
+    return(response)
+
+
 # just store this in one place
 _tibanna = '_tibanna'
 
@@ -398,7 +481,7 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException]
+        ignored_exceptions = [EC2StartingException, StillRunningException, ]
 
         def wrapper(event, context):
             logger.info(context)

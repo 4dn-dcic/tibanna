@@ -10,12 +10,14 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
+from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
 from core.utils import _tibanna, s3Utils
 from core.ff_utils import get_metadata
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
+from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, SECRET
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -65,13 +67,23 @@ def get_all_core_lambdas():
     return [
             'update_metadata_ff',
             'validate_md5_s3_trigger',
-            'tibanna_slackbot',
             'start_run_awsem',
             'run_task_awsem',
             'check_task_awsem',
             'update_ffmeta_awsem',
             'run_workflow',
             ]
+
+
+def env_list(name):
+    envlist = {
+        'start_run_awsem': {'SECRET': SECRET},
+        'update_ffmeta_awsem': {'SECRET': SECRET,
+                                'HIGLASS_SERVER': HIGLASS_SERVER,
+                                'HIGLASS_USER': HIGLASS_USER,
+                                'HIGLASS_PASS': HIGLASS_PASS}
+    }
+    return envlist.get(name, '')
 
 
 @contextlib.contextmanager
@@ -183,8 +195,10 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
         play(ctx, good)
     except:
         print("install vlc for more exciting test runs...")
-        pass
-    return(retcode)
+
+    if retcode != 0:
+        print("test failed exiting")
+        sys.exit(retcode)
 
 
 @task
@@ -209,7 +223,7 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, no_tests=False):
+def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
     print("preparing for deploy...")
     print("make sure tests pass")
     if no_tests is False:
@@ -234,7 +248,7 @@ def deploy_core(ctx, name, version=None, no_tests=False):
             print("clean up previous builds.")
             clean(ctx)
             print("building lambda package")
-            deploy_lambda_package(ctx, name)
+            deploy_lambda_package(ctx, name, suffix=suffix)
             # need to clean up all dist, otherwise, installing local package takes forever
             clean(ctx)
         print("next get version information")
@@ -246,8 +260,35 @@ def deploy_core(ctx, name, version=None, no_tests=False):
 
 
 @task
-def deploy_lambda_package(ctx, name):
-    aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+def deploy_lambda_package(ctx, name, suffix):
+    # create the temporary local dev lambda directories
+    if suffix:
+        new_name = name + '_' + suffix
+        new_src = '../' + new_name
+        cmd_mkdir = "rm -fr %s; mkdir -p %s" % (new_src, new_src)
+        cmd_copy = "cp -r * %s" % new_src
+        cmd_cd = "cd %s" % new_src
+        cmd_modify_cfg = "sed 's/%s/%s/g' config.yaml > config.yaml#" % (name, new_name)
+        cmd_replace_cfg = "mv config.yaml# config.yaml"
+        cmd = ';'.join([cmd_mkdir, cmd_copy, cmd_cd, cmd_modify_cfg, cmd_replace_cfg])
+        print(cmd)
+        run(cmd)
+    else:
+        new_name = name
+    with chdir(new_src):
+        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+    # add environment variables
+    lambda_update_config = {'FunctionName': new_name}
+    envs = env_list(name)
+    if envs:
+        lambda_update_config['Environment'] = {'Variables': envs}
+    client = boto3.client('lambda')
+    resp = client.update_function_configuration(**lambda_update_config)
+    print(resp)
+    # delete the temporary local dev lambda directories
+    if suffix:
+        old_src = '../' + name
+        run('cd %s; rm -rf %s' % (old_src, new_src))
 
 
 @task
@@ -551,6 +592,15 @@ def run_workflow(ctx, input_json='', workflow=''):
         else:
             resp = _run_workflow(data, workflow=workflow)
         run('open %s' % resp[_tibanna]['url'])
+
+
+@task
+def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', version=None, no_tests=False):
+    print("creating a new workflow..")
+    res = _create_stepfunction(suffix, sfn_type)
+    print(res)
+    print("deploying lambdas..")
+    deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix)
 
 
 @task

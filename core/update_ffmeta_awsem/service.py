@@ -4,17 +4,12 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
+from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS
 import requests
-import os
 import json
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
-HIGLASS_SERVER = os.environ.get("HIGLASS_SERVER", "localhost")
-HIGLASS_USER = os.environ.get("HIGLASS_USER")
-HIGLASS_PASS = os.environ.get("HIGLASS_PASS")
-HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
-                   'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
 def donothing(status, sbg, ff_meta, ff_key=None):
