@@ -265,7 +265,7 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=Non
     obj_id = obj_id if obj_id else patch_item['uuid']
 
     try:
-        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item, url_addon=url_addon)
+        response = fdnDCIC.patch_FDN(obj_id, connection, patch_item)
 
         if response.get('status') == 'error':
             raise Exception("error %s \n unable to patch obj: %s \n with  data: %s" %
