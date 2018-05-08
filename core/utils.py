@@ -394,10 +394,6 @@ class Tibanna(object):
             ff_keys = self.s3.get_access_keys()
         self.ff_keys = ff_keys
 
-        # we don't need this unless we switch back to sbg, let's remove for now
-        # if not sbg_keys:
-        #    sbg_keys = self.s3.get_sbg_keys()
-
         if not settings:
             settings = {}
         self.settings = settings
