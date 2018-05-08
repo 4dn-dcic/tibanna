@@ -195,10 +195,10 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
         play(ctx, good)
     except:
         print("install vlc for more exciting test runs...")
-
     if retcode != 0:
         print("test failed exiting")
         sys.exit(retcode)
+    return retcode
 
 
 @task

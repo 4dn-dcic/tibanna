@@ -77,9 +77,6 @@ class s3Utils(object):
             # maybe its not json after all
             return akey
 
-    def get_sbg_keys(self):
-        return self.get_key('sbgkey')
-
     def get_s3_keys(self):
         return self.get_key('sbgs3key')
 
@@ -397,7 +394,6 @@ class Tibanna(object):
         # we don't need this unless we switch back to sbg, let's remove for now
         # if not sbg_keys:
         #    sbg_keys = self.s3.get_sbg_keys()
-        self.sbg_keys = sbg_keys
 
         if not settings:
             settings = {}
