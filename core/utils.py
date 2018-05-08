@@ -77,6 +77,9 @@ class s3Utils(object):
             # maybe its not json after all
             return akey
 
+    def get_sbg_keys(self):
+        return self.get_key('sbgkey')
+
     def get_s3_keys(self):
         return self.get_key('sbgs3key')
 

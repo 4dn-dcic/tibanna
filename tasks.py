@@ -65,7 +65,6 @@ def setenv(**kwargs):
 
 def get_all_core_lambdas():
     return [
-            'update_metadata_ff',
             'validate_md5_s3_trigger',
             'start_run_awsem',
             'run_task_awsem',
@@ -275,6 +274,7 @@ def deploy_lambda_package(ctx, name, suffix):
         run(cmd)
     else:
         new_name = name
+        new_src = '../' + new_name
     with chdir(new_src):
         aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
     # add environment variables
