@@ -12,8 +12,11 @@ chr_size = {"human": "4DNFI823LSII",
 
 re_nz = {"human": {'MboI': '/files-reference/4DNFI823L812/',
                    'DpnII': '/files-reference/4DNFIBNAPW30/',
-                   'HindIII': '/files-reference/4DNFI823MBKE/'},
-         "mouse": {}
+                   'HindIII': '/files-reference/4DNFI823MBKE/',
+                   'NcoI': '/files-reference/4DNFI3HVU20D/'
+                   },
+         "mouse": {'MboI': '/files-reference/4DNFI0NK4G14/',
+                   'DpnII': '/files-reference/4DNFI3HVC1SE/'}
          }
 
 
@@ -113,7 +116,8 @@ def find_pairs(my_rep_set, exclude_miseq, ff, tibanna):
                 break
         exp_files = exp_resp['files']
         enzyme = exp_resp.get('digestion_enzyme')
-        enzymes.append(enzyme)
+        if enzyme:
+            enzymes.append(enzyme)
         for fastq_file in exp_files:
             file_resp = ff_utils.get_metadata(fastq_file, connection=ff)
             if not file_resp.get('file_size'):
@@ -159,14 +163,12 @@ def find_pairs(my_rep_set, exclude_miseq, ff, tibanna):
         organism = organisms[0]
     else:
         organism = None
-        print('problematic organism', set(organisms))
 
     # get the enzyme
     if len(list(set(enzymes))) == 1:
         enz = enzymes[0].split('/')[2]
     else:
         enz = None
-        print('problematic enzyme', set(enzymes))
 
     bwa = bwa_index.get(organism)
     chrsize = chr_size.get(organism)
@@ -210,7 +212,7 @@ def get_wfr_out(file_id, wfr_name, file_format, ff, run=100):
         else:
             return 'complete'
     elif run_status != 'error' and run_duration < run:
-        print(run_duration)
+        # print(run_duration)
         return "running"
     else:
         return "no completed run"
