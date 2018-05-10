@@ -285,7 +285,7 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=Non
 def get_metadata(obj_id, key='', connection=None, frame="object"):
     # default to always get from database
     connection = fdn_connection(key, connection)
-    sleep = [2, 4, 12]
+    sleep = [2, 4, 6]
     for wait in sleep:
         try:
             res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon='?datastore=database')

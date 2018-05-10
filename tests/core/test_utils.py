@@ -218,8 +218,8 @@ def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
     assert sbg.output_volume_id == wf['output_volume_id']
 
 
-def test_create_workflowrun_from_event_parameter(ff_meta_event_data):
-    meta = ff_meta_event_data['ff_meta'].copy()
+def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5):
+    meta = update_ffmeta_event_data_newmd5['ff_meta'].copy()
     meta['app_name'] = 'md5'
     ff_wfr = ff_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
