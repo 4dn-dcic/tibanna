@@ -42,7 +42,11 @@ def handler(event, context):
 
 
 def is_status_uploading(event):
+    print("is status uploading: %s" % event)
     upload_key = event['Records'][0]['s3']['object']['key']
+    if upload_key.endswith('html'):
+        return False
+
     uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
 

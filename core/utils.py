@@ -53,7 +53,15 @@ class s3Utils(object):
         '''
         if we pass in env set the outfile and sys bucket from the environment
         '''
+        self.url = ''
+        # avoid circular ref, import as needed
+        from dcicutils import beanstalk_utils as bs
         if sys_bucket is None:
+            # staging and production share same buckets
+            if env:
+                if 'webprod' in env or env in ['staging', 'stagging', 'data']:
+                    self.url = bs.get_beanstalk_real_url(env)
+                    env = 'fourfront-webprod'
             # we use standardized naming schema, so s3 buckets always have same prefix
             sys_bucket = "elasticbeanstalk-%s-system" % env
             outfile_bucket = "elasticbeanstalk-%s-wfoutput" % env
@@ -66,7 +74,13 @@ class s3Utils(object):
     def get_access_keys(self):
         name = 'illnevertell'
         keys = self.get_key(keyfile_name=name)
-        return keys
+
+        if isinstance(keys.get('default'), dict):
+            keys = keys['default']
+        if self.url:
+            keys['server'] = self.url
+
+        return {'default': keys}
 
     def get_key(self, keyfile_name='illnevertell'):
         # Share secret encrypted S3 File
@@ -406,17 +420,16 @@ class Tibanna(object):
         self.s3 = s3Utils(env=env)
 
         if not s3_keys:
-            s3_keys = self.s3.get_s3_keys()
+            try:
+                # we don't actually need this key anymore
+                s3_keys = self.s3.get_s3_keys()
+            except:  # noqa
+                pass
         self.s3_keys = s3_keys
 
         if not ff_keys:
             ff_keys = self.s3.get_access_keys()
         self.ff_keys = ff_keys
-
-        # we don't need this unless we switch back to sbg, let's remove for now
-        # if not sbg_keys:
-        #    sbg_keys = self.s3.get_sbg_keys()
-        self.sbg_keys = sbg_keys
 
         if not settings:
             settings = {}

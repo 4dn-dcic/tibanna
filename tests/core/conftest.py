@@ -44,11 +44,6 @@ def s3_trigger_event_data(sbg_keys):
 
 
 @pytest.fixture(scope='session')
-def ff_meta_event_data(sbg_keys, ff_keys):
-    return get_event_file_for('update_metadata_ff', sbg_keys, ff_keys)
-
-
-@pytest.fixture(scope='session')
 def md5_event_data():
     # I want this to go through the tibanna env lookup, to ensure it gets
     # appropriate keys

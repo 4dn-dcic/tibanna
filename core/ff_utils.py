@@ -292,7 +292,7 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
         connection = fdn_connection(key, connection)
     except Exception as e:
         raise FdnConnectionException("%s" % e)
-    sleep = [2, 4, 12]
+    sleep = [2, 4, 6]
     for wait in sleep:
         try:
             res = fdnDCIC.get_FDN(obj_id, connection, frame=frame, url_addon='?datastore=database')
