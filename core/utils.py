@@ -357,7 +357,7 @@ def create_stepfunction(dev_suffix='dev',
         "StartRunAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
-            #"Retry": sfn_start_run_retry_conditions,
+            "Retry": sfn_start_run_retry_conditions,
             "Next": "RunTaskAwsem"
         },
         "RunTaskAwsem": {
