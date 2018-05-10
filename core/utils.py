@@ -6,7 +6,7 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
-from .ff_utils import get_metadata
+from .ff_utils import get_metadata, FdnConnectionException
 import logging
 
 
@@ -34,6 +34,10 @@ class EC2StartingException(Exception):
 
 
 class AWSEMJobErrorException(Exception):
+    pass
+
+
+class TibannaStartException(Exception):
     pass
 
 
@@ -319,12 +323,27 @@ def create_stepfunction(dev_suffix='dev',
             "BackoffRate": 1.0
         }
     ]
+    sfn_start_run_retry_conditions = [
+        {
+            "ErrorEquals": ["TibannaStartException"],
+            "IntervalSeconds": 300,
+            "MaxAttempts": 50,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["FdnConnectionException"],
+            "IntervalSeconds": 300,
+            "MaxAttempts": 50,
+            "BackoffRate": 1.0
+        }
+    ]
     sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
     sfn_state_defs = dict()
     sfn_state_defs['pony'] = {
         "StartRunAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
+            #"Retry": sfn_start_run_retry_conditions,
             "Next": "RunTaskAwsem"
         },
         "RunTaskAwsem": {
@@ -481,7 +500,8 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
         import logging
         logging.basicConfig()
         logger = logging.getLogger('logger')
-        ignored_exceptions = [EC2StartingException, StillRunningException, ]
+        ignored_exceptions = [EC2StartingException, StillRunningException,
+                              TibannaStartException, FdnConnectionException]
 
         def wrapper(event, context):
             logger.info(context)

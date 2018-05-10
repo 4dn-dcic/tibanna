@@ -14,6 +14,10 @@ HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
                    'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
+class FdnConnectionException(Exception):
+    pass
+
+
 def convert_param(parameter_dict, vals_as_string=False):
     '''
     converts dictionary format {argument_name: value, argument_name: value, ...}
@@ -284,7 +288,10 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=Non
 
 def get_metadata(obj_id, key='', connection=None, frame="object"):
     # default to always get from database
-    connection = fdn_connection(key, connection)
+    try:
+        connection = fdn_connection(key, connection)
+    except Exception as e:
+        raise FdnConnectionException("%s" % e)
     sleep = [2, 4, 12]
     for wait in sleep:
         try:
