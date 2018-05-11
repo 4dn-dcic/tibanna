@@ -340,14 +340,14 @@ def create_stepfunction(dev_suffix='dev',
     sfn_start_run_retry_conditions = [
         {
             "ErrorEquals": ["TibannaStartException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 50,
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
             "BackoffRate": 1.0
         },
         {
             "ErrorEquals": ["FdnConnectionException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 50,
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
             "BackoffRate": 1.0
         }
     ]
