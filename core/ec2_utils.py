@@ -16,6 +16,9 @@ from Benchmark import run as B
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+###########################################
+# These utils exclusively live in Tibanna #
+###########################################
 
 # random string generator
 def randomword(length):
