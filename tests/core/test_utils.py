@@ -1,14 +1,10 @@
-from core import sbg_utils, ff_utils
+from core import ff_utils
+# from dcicutils import ff_utils
 from core.utils import Tibanna, ensure_list, powerup
 import pytest
 from conftest import valid_env
 import mock
 from core.utils import StillRunningException, AWSEMJobErrorException
-
-
-@pytest.fixture
-def sbg_project():
-    return "4dn-dcic/dev"
 
 
 @pytest.fixture
@@ -102,44 +98,6 @@ def workflow_event_data():
                          "export_id_list": [], "output_volume_id": "4dn-labor/4dn_s32588y8f7"}}
 
 
-def test_create_ff_meta_base_sbg_data(json_request, sbg_keys):
-    app_name = json_request['app_name']
-    sbg = sbg_utils.create_sbg_workflow(app_name, sbg_keys)
-    parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = ff_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                     input_files, parameters)
-
-    assert ff_meta.title.startswith(app_name)
-    assert ff_meta.input_files == input_files
-    assert ff_meta.parameters == parameters
-
-
-def test_create_ff_meta_pulls_data_from_sbg_object(workflow_event_data, json_request):
-    sbg = sbg_utils.create_sbg_workflow(**workflow_event_data['workflow'])
-    parameters, input_files = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
-    ff_meta = ff_utils.create_ffmeta(sbg, json_request['workflow_uuid'],
-                                     input_files, parameters)
-    assert ff_meta
-    assert ff_meta.title.startswith(sbg.app_name)
-    assert ff_meta.input_files == input_files
-    assert ff_meta.parameters == parameters
-    assert ff_meta.sbg_import_ids == sbg.import_id_list
-    vols_in_test_data = [item['name'] for item in sbg.volume_list]
-    for vol in ff_meta.sbg_mounted_volume_ids:
-        assert vol in vols_in_test_data
-    assert ff_meta.sbg_task_id == sbg.task_id
-
-
-def test_to_sbg_workflow_args(json_request):
-    sbg_args, sbg_input = sbg_utils.to_sbg_workflow_args(json_request['parameters'])
-    assert sbg_args[0]['workflow_argument_name'] == 'nThreads'
-    assert sbg_args[0]['value'] == 8
-    assert sbg_args[1]['workflow_argument_name'] == 'teststring'
-    assert sbg_args[1]['value'] == 'test'
-    assert len(sbg_args) == 2
-    assert sbg_input == []
-
-
 @valid_env
 @pytest.mark.webtest
 def test_read_s3(s3_utils):
@@ -196,28 +154,6 @@ def test_unzip_s3_to_s3(s3_utils):
     assert objs.get('Contents', None)
 
 
-@valid_env
-@pytest.mark.webtest
-def test_create_sbg_workflow(sbg_project, sbg_keys):
-    sbg = sbg_utils.SBGWorkflowRun(app_name='md5', token=sbg_keys, project_id=sbg_project)
-    assert sbg.header
-    assert sbg.header['X-SBG-Auth-Token'] == sbg_keys
-    assert sbg.app_name == 'md5'
-
-
-def test_create_sbg_workflow_from_event_parameter(workflow_event_data):
-    wf = workflow_event_data['workflow']
-    sbg = sbg_utils.create_sbg_workflow(**wf)
-    assert sbg.export_id_list == wf['export_id_list']
-    assert sbg.volume_list == wf['volume_list']
-    assert sbg.import_id_list == wf['import_id_list']
-    assert sbg.project_id == wf['project_id']
-    assert sbg.app_name == wf['app_name']
-    assert sbg.header == wf['header']
-    assert sbg.task_input.__dict__ == wf['task_input']
-    assert sbg.output_volume_id == wf['output_volume_id']
-
-
 def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5):
     meta = update_ffmeta_event_data_newmd5['ff_meta'].copy()
     meta['app_name'] = 'md5'
@@ -231,15 +167,6 @@ def test_tibanna():
     tibanna = Tibanna(**data)
     assert tibanna
     assert tibanna.as_dict() == data
-
-
-def test_sbg_workflow_as_dict_clears_secrets(workflow_event_data):
-    wf = workflow_event_data['workflow']
-    sbg = sbg_utils.create_sbg_workflow(**wf)
-    sbg_dict = sbg.as_dict()
-    assert not sbg_dict.get('header')
-    assert not sbg_dict.get('token')
-    assert sbg_dict.get('output_volume_id') == wf['output_volume_id']
 
 
 def test_ensure_list():

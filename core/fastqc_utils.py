@@ -1,5 +1,8 @@
 import uuid
 
+###########################################
+# These utils exclusively live in Tibanna #
+###########################################
 
 def number(astring):
     try:

@@ -7,19 +7,25 @@ from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
 from .ff_utils import get_metadata, FdnConnectionException
+# from dcicutils.ff_utils import get_metadata, ensure_list
+# from dcicutils.submit_utils import FdnConnectionException
 import logging
 # from s3_utils import s3Utils, find_file
 
+###########################################
+# These utils exclusively live in Tibanna #
+###########################################
 
 ###########################
 # Config
 ###########################
-s3 = boto3.client('s3')
 
 # production step function
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
+# just store this in one place
+_tibanna = '_tibanna'
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -40,12 +46,6 @@ class AWSEMJobErrorException(Exception):
 
 class TibannaStartException(Exception):
     pass
-
-
-def ensure_list(val):
-    if isinstance(val, (list, tuple)):
-        return val
-    return [val]
 
 
 def run_workflow(input_json, accession='', workflow='tibanna_pony',
@@ -213,10 +213,6 @@ def create_stepfunction(dev_suffix='dev',
         raise(e)
     # sfn_arn = response['stateMachineArn']
     return(response)
-
-
-# just store this in one place
-_tibanna = '_tibanna'
 
 
 class Tibanna(object):
