@@ -4,7 +4,8 @@ from core import utils, ff_utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
-from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS
+from core.ff_utils import HIGLASS_BUCKETS
+# from dcicutils.ff_utils import HIGLASS_BUCKETS
 import requests
 import json
 
@@ -16,15 +17,17 @@ def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def register_to_higlass(export_bucket, export_key, filetype, datatype):
+def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
     payload = {"filepath": export_bucket + "/" + export_key,
                "filetype": filetype, "datatype": datatype}
-    authentication = (HIGLASS_USER, HIGLASS_PASS)
+    higlass_keys = tibanna.s3.get_higlass_key()
+    if not isinstance(higlass_keys, dict):
+        raise Exception("Bad higlass keys found: %s" % higlass_keys)
+    auth = (higlass_keys['key'], higlass_keys['secret'])
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
-                        data=json.dumps(payload), auth=authentication,
-                        headers=headers)
+    res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
+                        data=json.dumps(payload), auth=auth, headers=headers)
     LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
@@ -35,11 +38,9 @@ def update_processed_file_metadata(status, pf, tibanna, export):
 
     # register mcool/bigwig with fourfront-higlass
     if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
-                                                         'cooler', 'matrix')
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'cooler', 'matrix')
     if pf.file_format == "bw" and export.bucket in HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
-                                                         'bigwig', 'vector')
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'bigwig', 'vector')
 
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
     if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
@@ -47,8 +48,7 @@ def update_processed_file_metadata(status, pf, tibanna, export):
             if pfextra.get('file_format') == 'bw':
                 fe_map = ff_utils.get_format_extension_map(ff_key)
                 extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
-                pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
-                                                                 'bigwig', 'vector')
+                pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, extra_file_key, 'bigwig', 'vector')
 
     try:
         pf.status = 'uploaded'

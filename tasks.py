@@ -17,7 +17,6 @@ from core.ff_utils import get_metadata
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
-from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, SECRET
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -75,12 +74,13 @@ def get_all_core_lambdas():
 
 
 def env_list(name):
+    # don't set this as a global, since not all tasks require it
+    secret = os.environ.get("SECRET")
+    if secret is None:
+        raise RuntimeError("SECRET should be defined in env")
     envlist = {
-        'start_run_awsem': {'SECRET': SECRET},
-        'update_ffmeta_awsem': {'SECRET': SECRET,
-                                'HIGLASS_SERVER': HIGLASS_SERVER,
-                                'HIGLASS_USER': HIGLASS_USER,
-                                'HIGLASS_PASS': HIGLASS_PASS}
+        'start_run_awsem': {'SECRET': secret},
+        'update_ffmeta_awsem': {'SECRET': secret}
     }
     return envlist.get(name, '')
 
@@ -97,7 +97,7 @@ def chdir(dirname=None):
 
 
 def upload(keyname, data, s3bucket, secret=None):
-
+    # don't set this as a global, since not all tasks require it
     if secret is None:
         secret = os.environ.get("SECRET")
         if secret is None:
