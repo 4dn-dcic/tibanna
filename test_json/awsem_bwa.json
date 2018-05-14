@@ -41,6 +41,11 @@
     "log_bucket": "tibanna-output",
     "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "key_name": ""
+  },
+  "custom_pf_fields": {
+    "out_bam": {
+        "genome_assembly": "GRCh38"
+    }
   }
 }
 
