@@ -1,0 +1,222 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "repliseq-parta", 
+            "App_version": null, 
+            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq", 
+            "main_cwl": "repliseq-parta.cwl", 
+            "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl"
+        }, 
+        "Input": {
+            "Input_files_data": {
+                "bwaIndex": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
+                }, 
+                "chromsizes": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+                }, 
+                "fastq": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz"
+                }
+            }, 
+            "Input_files_reference": {}, 
+            "Input_parameters": {
+                "memperthread": "2G", 
+                "nthreads": 4
+            }, 
+            "Secondary_files_data": {}
+        }, 
+        "JOBID": "bqLd8oa7Tdzq", 
+        "Log": {
+            "log_bucket_directory": "tibanna-output"
+        }, 
+        "Output": {
+            "Output files": {
+                "count_bg": {
+                    "basename": "out.w5000.bedGraph.gz", 
+                    "checksum": "sha1$e520dbce9c8351e64b0bc16248886aee2ca83ae5", 
+                    "class": "File", 
+                    "location": "file://tests/awsf/out.w5000.bedGraph.gz", 
+                    "md5sum": "98dcc13a138f8642d68d0532d1f9193e", 
+                    "path": "tests/awsf/out.w5000.bedGraph.gz", 
+                    "secondaryFiles": [
+                        {
+                            "basename": "out.w5000.bw", 
+                            "checksum": "sha1$213ddf927f049f96ee6a16913b614170d8eee344", 
+                            "class": "File", 
+                            "location": "file://tests/awsf/out.w5000.bw", 
+                            "path": "tests/awsf/out.w5000.bw", 
+                            "size": 3120059, 
+                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2"
+                        }, 
+                        {
+                            "basename": "out.w5000.bedGraph.gz.px2", 
+                            "checksum": "sha1$08ee022f6327d4d47f5bc737c24b64d88578747a", 
+                            "class": "File", 
+                            "location": "file://tests/awsf/out.w5000.bedGraph.gz.px2", 
+                            "path": "tests/awsf/out.w5000.bedGraph.gz.px2", 
+                            "size": 991610, 
+                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
+                        }
+                    ], 
+                    "size": 2864324, 
+                    "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz"
+                }, 
+                "dedup_qc_report": {
+                    "basename": "out.rmdup.log.qc_report.zip", 
+                    "checksum": "sha1$c9b75e1f6ceafe93a476464a33c4bc79f68d1759", 
+                    "class": "File", 
+                    "location": "file://tests/awsf/out.rmdup.log.qc_report.zip", 
+                    "md5sum": "652d421f445d6987700f3b3a453202aa", 
+                    "path": "tests/awsf/out.rmdup.log.qc_report.zip", 
+                    "size": 470, 
+                    "target": "test-e02a8550-5773-4391-8052-868082a1a6ff/dedup_qc_report"
+                }, 
+                "filtered_sorted_deduped_bam": {
+                    "basename": "out.rmdup.bam", 
+                    "checksum": "sha1$2f127689d566c12badf1be63aaafd22fa32b8c2c", 
+                    "class": "File", 
+                    "location": "file://tests/awsf/out.rmdup.bam", 
+                    "md5sum": "b9934e1aa545dec551a2caba78d3e6bd", 
+                    "path": "tests/awsf/out.rmdup.bam", 
+                    "size": 11061946, 
+                    "target": "test-ca56a9c8-46c3-4351-aa63-390b29e9798f/4DNFIXU55ATC.bam"
+                }
+            }, 
+            "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+            "output_target": {
+                "count_bg": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz", 
+                "dedup_qc_report": "test-e02a8550-5773-4391-8052-868082a1a6ff/dedup_qc_report", 
+                "filtered_sorted_deduped_bam": "test-ca56a9c8-46c3-4351-aa63-390b29e9798f/4DNFIXU55ATC.bam"
+            }, 
+            "secondary_output_target": {
+                "count_bg": [
+                    "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2", 
+                    "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
+                ]
+            }
+        }, 
+        "start_time": "20180430-18:50:18-UTC"
+    }, 
+    "commands": [
+        [
+            "[job clip] /data1/tmpQM7Ol5$ docker ", 
+            "    run ", 
+            "    -i ", 
+            "    --volume=/data1/tmpQM7Ol5:/var/spool/cwl:rw ", 
+            "    --volume=/data1/tmpy9odSG:/tmp:rw ", 
+            "    --volume=/data1/input/a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz:/var/lib/cwl/stg45ba0ee4-b7b5-44b8-8867-683929d49f6c/4DNFI2ZDNVFL.fastq.gz:ro ", 
+            "    --workdir=/var/spool/cwl ", 
+            "    --rm ", 
+            "    --env=TMPDIR=/tmp ", 
+            "    --env=HOME=/var/spool/cwl ", 
+            "    duplexa/4dn-repliseq:v13 ", 
+            "    clip ", 
+            "    /var/lib/cwl/stg45ba0ee4-b7b5-44b8-8867-683929d49f6c/4DNFI2ZDNVFL.fastq.gz ", 
+            "    . ", 
+            "    out"
+        ], 
+        [
+            "[job align] /data1/tmp2EQtm2$ docker ", 
+            "    run ", 
+            "    -i ", 
+            "    --volume=/data1/tmp2EQtm2:/var/spool/cwl:rw ", 
+            "    --volume=/data1/tmpZ_I2pY:/tmp:rw ", 
+            "    --volume=/data1/tmpQM7Ol5/./out.clip.fastq:/var/lib/cwl/stgeb2b1d8b-28e3-49ab-9788-e8a34335d907/out.clip.fastq:ro ", 
+            "    --volume=/data1/input/1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz:/var/lib/cwl/stge4d26f0f-6528-4052-a1e4-03554011a768/4DNFIZQZ39L9.bwaIndex.tgz:ro ", 
+            "    --workdir=/var/spool/cwl ", 
+            "    --rm ", 
+            "    --env=TMPDIR=/tmp ", 
+            "    --env=HOME=/var/spool/cwl ", 
+            "    duplexa/4dn-repliseq:v13 ", 
+            "    run-align.sh ", 
+            "    /var/lib/cwl/stgeb2b1d8b-28e3-49ab-9788-e8a34335d907/out.clip.fastq ", 
+            "    /var/lib/cwl/stge4d26f0f-6528-4052-a1e4-03554011a768/4DNFIZQZ39L9.bwaIndex.tgz ", 
+            "    . ", 
+            "    out ", 
+            "    4"
+        ], 
+        [
+            "[job filtersort] /data1/tmp57Iwhj$ docker ", 
+            "    run ", 
+            "    -i ", 
+            "    --volume=/data1/tmp57Iwhj:/var/spool/cwl:rw ", 
+            "    --volume=/data1/tmpTI_e6Y:/tmp:rw ", 
+            "    --volume=/data1/tmp2EQtm2/out.bam:/var/lib/cwl/stg0dc113c3-3ed1-4d3d-aa50-458005864163/out.bam:ro ", 
+            "    --workdir=/var/spool/cwl ", 
+            "    --rm ", 
+            "    --env=TMPDIR=/tmp ", 
+            "    --env=HOME=/var/spool/cwl ", 
+            "    duplexa/4dn-repliseq:v13 ", 
+            "    filtersort ", 
+            "    /var/lib/cwl/stg0dc113c3-3ed1-4d3d-aa50-458005864163/out.bam ", 
+            "    2G ", 
+            "    4 ", 
+            "    . ", 
+            "    out"
+        ], 
+        [
+            "[job dedup] /data1/tmpix0vqm$ docker ", 
+            "    run ", 
+            "    -i ", 
+            "    --volume=/data1/tmpix0vqm:/var/spool/cwl:rw ", 
+            "    --volume=/data1/tmpsU3VHy:/tmp:rw ", 
+            "    --volume=/data1/tmp57Iwhj/./out.q20_sort.bam:/var/lib/cwl/stg48477ad2-cca9-454c-aba0-da8331ef1f7a/out.q20_sort.bam:ro ", 
+            "    --workdir=/var/spool/cwl ", 
+            "    --rm ", 
+            "    --env=TMPDIR=/tmp ", 
+            "    --env=HOME=/var/spool/cwl ", 
+            "    duplexa/4dn-repliseq:v13 ", 
+            "    run-dedup.sh ", 
+            "    /var/lib/cwl/stg48477ad2-cca9-454c-aba0-da8331ef1f7a/out.q20_sort.bam ", 
+            "    . ", 
+            "    out"
+        ], 
+        [
+            "[job count] /data1/tmpNuuCUR$ docker ", 
+            "    run ", 
+            "    -i ", 
+            "    --volume=/data1/tmpNuuCUR:/var/spool/cwl:rw ", 
+            "    --volume=/data1/tmpn9X_1T:/tmp:rw ", 
+            "    --volume=/data1/tmpix0vqm/./out.rmdup.bam:/var/lib/cwl/stgb6f7ce70-d9a8-45a9-937d-3cd332c9a47c/out.rmdup.bam:ro ", 
+            "    --volume=/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes:/var/lib/cwl/stgc8be90bd-31fb-434a-83b1-a5c0508c0b65/4DNFI823LSII.chrom.sizes:ro ", 
+            "    --workdir=/var/spool/cwl ", 
+            "    --rm ", 
+            "    --env=TMPDIR=/tmp ", 
+            "    --env=HOME=/var/spool/cwl ", 
+            "    duplexa/4dn-repliseq:v13 ", 
+            "    run-count.sh ", 
+            "    /var/lib/cwl/stgb6f7ce70-d9a8-45a9-937d-3cd332c9a47c/out.rmdup.bam ", 
+            "    /var/lib/cwl/stgc8be90bd-31fb-434a-83b1-a5c0508c0b65/4DNFI823LSII.chrom.sizes ", 
+            "    . ", 
+            "    out ", 
+            "    5000"
+        ]
+    ], 
+    "config": {
+        "EBS_optimized": false, 
+        "ami_id": "ami-cfb14bb5", 
+        "copy_to_s3": true, 
+        "ebs_iops": 500, 
+        "ebs_size": 20, 
+        "ebs_type": "io1", 
+        "instance_type": "t2.xlarge", 
+        "job_tag": "repliseq-parta", 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "json_dir": "/tmp/json", 
+        "key_name": "", 
+        "launch_instance": true, 
+        "log_bucket": "tibanna-output", 
+        "password": "dragonfly", 
+        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access", 
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/", 
+        "shutdown_min": 120, 
+        "userdata_dir": "/tmp/userdata"
+    }
+}

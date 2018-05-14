@@ -86,6 +86,7 @@ def real_handler(event, context):
     # processed file metadata
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
                                                    pf_source_experiments,
+                                                   custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
@@ -210,6 +211,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
 
 
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
+                           custom_fields=None,
                            user_supplied_output_files=None):
 
     output_files = []
@@ -222,7 +224,7 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                                              'Output QC file']):
 
                 of = dict()
-                of['workflow_argument_name'] = arg.get('workflow_argument_name')
+                argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
                 of['type'] = arg.get('argument_type')
                 if 'argument_format' in arg:
                     if not fe_map:
@@ -234,6 +236,13 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                         extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                     else:
                         extra_files = None
+
+                    pf_other_fields = dict()
+                    if custom_fields:
+                        if argname in custom_fields:
+                            pf_other_fields.update(custom_fields[argname])
+                        if 'ALL' in custom_fields:
+                            pf_other_fields.update(custom_fields['ALL'])
 
                     # see if user supplied the output file already
                     # this is often the case for pseudo workflow runs (run externally)
@@ -254,7 +263,8 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                         assert user_supplied_output_files is None
                         pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
                                                             extra_files=extra_files,
-                                                            source_experiments=pf_source_experiments)
+                                                            source_experiments=pf_source_experiments,
+                                                            other_fields=pf_other_fields)
                         try:
                             # actually post processed file metadata here
                             resp = pf.post(key=tibanna.ff_keys)

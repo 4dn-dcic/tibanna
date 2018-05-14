@@ -214,6 +214,7 @@ class ProcessedFileMetadata(object):
                  extra_files=None, source_experiments=None,
                  award='1U01CA200059-01', status='to be uploaded by workflow',
                  md5sum=None, file_size=None,
+                 other_fields=None,
                  **kwargs):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
@@ -229,6 +230,9 @@ class ProcessedFileMetadata(object):
             self.md5sum = md5sum
         if file_size:
             self.file_size = file_size
+        if other_fields:
+            for field in other_fields:
+                setattr(self, field, other_fields[field])
 
     def as_dict(self):
         return self.__dict__
