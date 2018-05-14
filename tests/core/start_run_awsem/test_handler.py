@@ -181,6 +181,7 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
                                                    custom_fields=data.get('custom_pf_fields'))
     assert(pf_meta)
+    assert(output_files)
     for pf in pf_meta:
         pdict = pf.__dict__
         assert 'genome_assembly' in pdict
