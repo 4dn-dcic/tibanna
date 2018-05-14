@@ -167,7 +167,7 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
 @valid_env
 @pytest.mark.webtest
 def test_handle_processed_files2(run_awsem_event_data_processed_files2):
-    data = run_awsem_event_data_processed_files2 
+    data = run_awsem_event_data_processed_files2
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
