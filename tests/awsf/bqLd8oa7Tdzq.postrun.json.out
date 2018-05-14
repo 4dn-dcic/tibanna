@@ -53,7 +53,7 @@
                             "location": "file://tests/awsf/out.w5000.bw", 
                             "path": "tests/awsf/out.w5000.bw", 
                             "size": 3120059, 
-                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2"
+                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
                         }, 
                         {
                             "basename": "out.w5000.bedGraph.gz.px2", 
@@ -62,7 +62,7 @@
                             "location": "file://tests/awsf/out.w5000.bedGraph.gz.px2", 
                             "path": "tests/awsf/out.w5000.bedGraph.gz.px2", 
                             "size": 991610, 
-                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
+                            "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2"
                         }
                     ], 
                     "size": 2864324, 
