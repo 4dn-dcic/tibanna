@@ -35,7 +35,7 @@ def real_handler(event, context):
     input_file_list = event.get('input_files')
     for infile in input_file_list:
         if not infile:
-            raise("mailformed input, check your input_files")
+            raise("malformed input, check your input_files")
     app_name = event.get('app_name')
     print(app_name)
     workflow_uuid = event.get('workflow_uuid')
@@ -58,7 +58,7 @@ def real_handler(event, context):
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
-        raise Exception("FATAL, can't lookup workflow info for % fourfront" % workflow_uuid)
+        raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
@@ -88,6 +88,7 @@ def real_handler(event, context):
                                                    pf_source_experiments,
                                                    user_supplied_output_files=event.get('output_files'))
 
+    # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
                                            run_url=tibanna.settings.get('url', ''),
                                            output_files=output_files, parameters=parameters,
