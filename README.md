@@ -93,6 +93,63 @@ To kill all currently running jobs (killing only step functions not the EC2 inst
 invoke kill_all [--workflow=<stepfunctionname>]
 ```
 
+## Example Input Json for Pony
+```
+{
+    "app_name": "bwa-mem",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "workflow_uuid": "0fbe4db8-0b5f-448e-8b58-3f8c84baabf5",
+    "parameters" :  {"nThreads": 4},
+    "input_files" : [
+       {
+           "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
+           "workflow_argument_name": "bwa_index",
+           "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+       },
+       { 
+           "workflow_argument_name": "fastq1", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "1150b428-272b-4a0c-b3e6-4b405c148f7c", 
+           "object_key": "4DNFIVOZN511.fastq.gz"
+       },
+       { 
+           "workflow_argument_name": "fastq2", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+           "object_key": "4DNFIRSRJH45.fastq.gz"
+       }
+  ],
+  "config": {
+    "ebs_size": 30,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+    "ami_id": "ami-cfb14bb5",
+    "copy_to_s3": true,
+    "launch_instance": true,
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "key_name": ""
+  },
+  "custom_pf_fields": {
+    "out_bam": {
+        "genome_assembly": "GRCh38"
+    }
+  }
+}
+```
+* The 'app_name' field contains the name of the workflow.
+* The 'output_bucket' field specifies the bucket where all the output files go to.
+* The 'workflow_uuid' field contains the uuid of the 4DN workflow metadata.
+* The 'parameters' field contains a set of workflow-specific parameters in a dictionary.
+* The 'input_files' field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
+* The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
+* The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
+
 
 ## Directory Structure
 
