@@ -67,6 +67,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
         assert pf.__dict__ == proc_file_in_webdev
 
 
+@pytest.mark.webtest
 def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
     res = handler(run_task_awsem_pseudo_workflow_event_data, '')
     assert(res)
@@ -81,6 +82,7 @@ def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
         assert of['value'] in user_supplied_of
 
 
+@pytest.mark.webtest
 def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
     wfr_meta = {'description': 'test-descrip',
                 'awsem_job_id': 'test-pseudo-run',

@@ -168,7 +168,7 @@ def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
 
 @valid_env
 @pytest.mark.webtest
-def test_metadata_only_update(update_ffmeta_metaonly_data2, tibanna_env):
+def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
     update_ffmeta_metaonly_data2.update(tibanna_env)
     # with mock.patch('core.ff_utils.post_to_metadata'):
     #    with mock.patch('requests.post') as mock_request:
