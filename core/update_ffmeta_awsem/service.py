@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
-from core import utils, ff_utils, ec2_utils
+from dcicutils import ff_utils, tibanna_utils
+from core import utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
-from core.ff_utils import HIGLASS_BUCKETS
-# from dcicutils.ff_utils import HIGLASS_BUCKETS
 import requests
 import json
 
@@ -37,17 +36,17 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     ff_key = tibanna.ff_keys
 
     # register mcool/bigwig with fourfront-higlass
-    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
+    if pf.file_format == "mcool" and export.bucket in ff_utils.HIGLASS_BUCKETS:
         pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'cooler', 'matrix')
-    if pf.file_format == "bw" and export.bucket in HIGLASS_BUCKETS:
+    if pf.file_format == "bw" and export.bucket in ff_utils.HIGLASS_BUCKETS:
         pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'bigwig', 'vector')
 
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
-    if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
+    if pf.file_format == 'bg' and export.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == 'bw':
-                fe_map = ff_utils.get_format_extension_map(ff_key)
-                extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
+                fe_map = tibanna_utils.get_format_extension_map(ff_key)
+                extra_file_key = tibanna_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, extra_file_key, 'bigwig', 'vector')
 
     try:
@@ -258,8 +257,8 @@ def real_handler(event, context):
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
-    ff_meta = ff_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-    pf_meta = [ff_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
+    ff_meta = tibanna_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
+    pf_meta = [tibanna_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized
     patch_meta = False

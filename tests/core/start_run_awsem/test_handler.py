@@ -55,8 +55,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=run_awsem_event_data_processed_files.get('s3_keys'),
-                      ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
                       settings=tibanna_settings)
 
     file_with_type = proc_file_in_webdev.copy()
@@ -136,8 +135,7 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
@@ -172,8 +170,7 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
@@ -203,8 +200,7 @@ def test_process_input_file_info(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     process_input_file_info(input_file, tibanna.ff_keys, args)
     assert len(args['input_files']) == 3
@@ -236,7 +232,6 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     add_secondary_files_to_args(input_file, tibanna.ff_keys, args)

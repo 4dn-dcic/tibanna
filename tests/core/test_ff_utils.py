@@ -45,8 +45,7 @@ def test_get_format_extension_map(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=run_awsem_event_data.get('s3_keys'),
-                      ff_keys=run_awsem_event_data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
     fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
@@ -68,8 +67,7 @@ def test_merge_source_experiment(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     res = ff_utils.merge_source_experiments(input_file['uuid'], tibanna.ff_keys)
     LOG.info(res)

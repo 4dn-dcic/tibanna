@@ -291,19 +291,6 @@ def deploy_lambda_package(ctx, name, suffix):
         run('cd %s; rm -rf %s' % (old_src, new_src))
 
 
-@task
-def upload_sbg_keys(ctx, sbgkey=None, env='fourfront-webprod'):
-    if sbgkey is None:
-        sbgkey = os.environ.get('SBG_KEY')
-
-    if sbgkey is None:
-        print("error no sbgkey found in environment")
-        return 1
-
-    s3bucket = "elasticbeanstalk-%s-system" % env
-    return upload_keys(ctx, sbgkey, 'sbgkey', s3bucket)
-
-
 def _PROD():
     return _tbenv() == 'PROD'
 
@@ -312,26 +299,6 @@ def _tbenv(env_data=None):
     if env_data and env_data.get('env'):
         return env_data('env')
     return os.environ.get('ENV_NAME')
-
-
-def upload_keys(ctx, keys, name, s3bucket=None):
-    if not s3bucket:
-        s3bucket = 'elasticbeanstalk-fourfront-webprod-system'
-    print("uploading sbkey to %s as %s" % (s3bucket, name))
-    upload(name, keys, s3bucket)
-
-
-@task
-def upload_s3_keys(ctx, key=None, secret=None, env="fourfront-webprod"):
-    if key is None:
-        key = os.environ.get("SBG_S3_KEY")
-    if secret is None:
-        secret = os.environ.get("SBG_S3_SECRET")
-
-    pckt = {'key': key,
-            'secret': secret}
-    s3bucket = "elasticbeanstalk-%s-system" % env
-    return upload_keys(ctx, json.dumps(pckt), 'sbgs3key', s3bucket)
 
 
 @task

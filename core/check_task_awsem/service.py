@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from core import utils
-from core.utils import StillRunningException, EC2StartingException, AWSEMJobErrorException
+from dcicutils import s3_utils
+from core.utils import (
+    StillRunningException,
+    EC2StartingException,
+    AWSEMJobErrorException
+)
 import json
 
 
@@ -19,7 +23,7 @@ def handler(event, context):
 
     # s3 bucket that stores the output
     bucket_name = event['config']['log_bucket']
-    s3 = utils.s3Utils(bucket_name, bucket_name, bucket_name)
+    s3 = s3_utils.s3Utils(bucket_name, bucket_name, bucket_name)
 
     # info about the jobby job
     jobid = event['jobid']

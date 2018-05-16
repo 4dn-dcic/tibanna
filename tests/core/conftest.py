@@ -23,16 +23,6 @@ def s3_utils():
     return s3Utils(env=tibanna_env()['_tibanna']['env'])
 
 
-# @pytest.fixture(scope='session')
-# def s3_keys(s3_utils):
-#     return s3_utils.get_s3_keys()
-#
-#
-# @pytest.fixture(scope='session')
-# def sbg_keys(s3_utils):
-#     return s3_utils.get_sbg_keys()
-
-
 @pytest.fixture(scope='session')
 def ff_keys(s3_utils):
     return s3_utils.get_access_keys()

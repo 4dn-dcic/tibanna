@@ -217,17 +217,9 @@ def create_stepfunction(dev_suffix='dev',
 
 class Tibanna(object):
 
-    def __init__(self, env, s3_keys=None, ff_keys=None, sbg_keys=None, settings=None):
+    def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
         self.env = env
         self.s3 = s3Utils(env=env)
-
-        if not s3_keys:
-            try:
-                # we don't actually need this key anymore
-                s3_keys = self.s3.get_s3_keys()
-            except:  # noqa
-                pass
-        self.s3_keys = s3_keys
 
         if not ff_keys:
             ff_keys = self.s3.get_access_keys()
