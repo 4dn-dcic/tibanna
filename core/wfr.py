@@ -1,6 +1,7 @@
 from core import ff_utils
 from core.utils import run_workflow
 from datetime import datetime
+import time
 
 
 # Reference Files
@@ -249,6 +250,7 @@ def run_missing_wfr(wf_info, input_files, run_name, ff, env, tibanna):
     input_json = run_json(all_inputs, env, parameters, wf_uuid, wf_name, run_name, tibanna)
     # print input_json
     run_workflow(input_json)
+    time.sleep(30)
 
 
 def extract_nz_file(acc, ff):
