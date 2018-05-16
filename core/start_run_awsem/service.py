@@ -4,6 +4,7 @@ import logging
 import boto3
 from core import ff_utils
 from core.utils import Tibanna, ensure_list, powerup
+from core.utils import TibannaStartException
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -43,10 +44,13 @@ def real_handler(event, context):
     tibanna_settings = event.get('_tibanna', {})
     tag = event.get('tag')
     # if they don't pass in env guess it from output_bucket
-    env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
-    # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
-                      settings=tibanna_settings)
+    try:
+        env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
+        # tibanna provides access to keys based on env and stuff like that
+        tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
+                          settings=tibanna_settings)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
 
     args = dict()
 
@@ -82,6 +86,7 @@ def real_handler(event, context):
     # processed file metadata
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
                                                    pf_source_experiments,
+                                                   custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
 
     ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
@@ -162,16 +167,18 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
     inf_uuids = ff_utils.aslist(input_file['uuid'])
-    fe_map = ff_utils.get_format_extension_map(ff_keys)
     argname = input_file['workflow_argument_name']
     extra_file_keys = []
     inf_object_key = args['input_files'][argname]['object_key']
     inf_keys = ff_utils.aslist(inf_object_key)
+    fe_map = None
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
         if infile_meta.get('extra_files'):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]
+            if not fe_map:
+                fe_map = ff_utils.get_format_extension_map(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
                 extra_file_format = extra_file.get('file_format')
                 extra_file_key = ff_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
@@ -204,11 +211,12 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
 
 
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
+                           custom_fields=None,
                            user_supplied_output_files=None):
 
-    fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
     output_files = []
     pf_meta = []
+    fe_map = None
     try:
         for arg in workflow_info.get('arguments', []):
             if (arg.get('argument_type') in ['Output processed file',
@@ -216,9 +224,11 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                                              'Output QC file']):
 
                 of = dict()
-                of['workflow_argument_name'] = arg.get('workflow_argument_name')
+                argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
                 of['type'] = arg.get('argument_type')
                 if 'argument_format' in arg:
+                    if not fe_map:
+                        fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
                     # These are not processed files but report or QC files.
                     if 'secondary_file_formats' in arg:
                         of['secondary_file_formats'] = arg.get('secondary_file_formats')
@@ -226,6 +236,13 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                         extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                     else:
                         extra_files = None
+
+                    pf_other_fields = dict()
+                    if custom_fields:
+                        if argname in custom_fields:
+                            pf_other_fields.update(custom_fields[argname])
+                        if 'ALL' in custom_fields:
+                            pf_other_fields.update(custom_fields['ALL'])
 
                     # see if user supplied the output file already
                     # this is often the case for pseudo workflow runs (run externally)
@@ -246,7 +263,8 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                         assert user_supplied_output_files is None
                         pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
                                                             extra_files=extra_files,
-                                                            source_experiments=pf_source_experiments)
+                                                            source_experiments=pf_source_experiments,
+                                                            other_fields=pf_other_fields)
                         try:
                             # actually post processed file metadata here
                             resp = pf.post(key=tibanna.ff_keys)

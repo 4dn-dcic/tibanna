@@ -27,6 +27,8 @@ def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_file
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
+    assert('genome_assembly' in res['pf_meta'][0])
+    assert(res['pf_meta'][0]['genome_assembly'] == 'GRCh38')
 
 
 @pytest.fixture()
@@ -65,6 +67,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
         assert pf.__dict__ == proc_file_in_webdev
 
 
+@pytest.mark.webtest
 def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
     res = handler(run_task_awsem_pseudo_workflow_event_data, '')
     assert(res)
@@ -79,6 +82,7 @@ def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
         assert of['value'] in user_supplied_of
 
 
+@pytest.mark.webtest
 def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
     wfr_meta = {'description': 'test-descrip',
                 'awsem_job_id': 'test-pseudo-run',
@@ -110,6 +114,10 @@ def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_file
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
+    assert('genome_assembly' in res['pf_meta'][0])
+    assert(res['pf_meta'][0]['genome_assembly'] == 'GRCh38')
+    assert('genome_assembly' in res['pf_meta'][1])
+    assert(res['pf_meta'][1]['genome_assembly'] == 'GRCh38')
 
 
 @valid_env
@@ -156,6 +164,30 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
             assert pdict['extra_files'] == [{'file_format': 'pairs_px2'}]
         else:
             assert 'extra_files' not in pdict
+
+
+@valid_env
+@pytest.mark.webtest
+def test_handle_processed_files2(run_awsem_event_data_processed_files2):
+    data = run_awsem_event_data_processed_files2
+    tibanna_settings = data.get('_tibanna', {})
+    # if they don't pass in env guess it from output_bucket
+    env = tibanna_settings.get('env')
+    # tibanna provides access to keys based on env and stuff like that
+    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
+                      ff_keys=data.get('ff_keys'),
+                      settings=tibanna_settings)
+    workflow_uuid = data['workflow_uuid']
+    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+
+    output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
+                                                   custom_fields=data.get('custom_pf_fields'))
+    assert(pf_meta)
+    assert(output_files)
+    for pf in pf_meta:
+        pdict = pf.__dict__
+        assert 'genome_assembly' in pdict
+        assert pdict['genome_assembly'] == 'GRCh38'
 
 
 @valid_env

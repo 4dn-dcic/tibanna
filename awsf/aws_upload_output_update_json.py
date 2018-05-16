@@ -86,11 +86,20 @@ for k in cwl_output:
         raise Exception("cannot update target info to json %s" % e)
 
     if 'secondaryFiles' in cwl_output[k]:
+        n_assigned = 0
+        n_target = sum([len(v) for u, v in secondary_output_target.items()])
         for i, sf in enumerate(cwl_output[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
             if k in secondary_output_target:
-                target = secondary_output_target[k][i]
+                if len(secondary_output_target[k])==1:  # one extra file
+                    target = secondary_output_target[k][i]
+                else:
+                    for targ in secondary_output_target[k]:
+                        if targ[-3:] == source_name[-3:]:  # matching the last three letters
+                            target = targ
+                            n_assigned = n_assigned + 1
+                            break
             else:
                 target = source_name  # do not change file name
             try:
@@ -102,6 +111,8 @@ for k in cwl_output:
                 sf['target'] = target
             except Exception as e:
                 raise Exception("cannot update target info to json %s" % e)
+        if n_assigned != n_target:
+            raise Exception("Error: Not all secondary output targets are uploaded! {} vs {}".format(n_assigned, n_target))
 
 ## add commands
 old_dict['commands'] = parse_command(logfile)

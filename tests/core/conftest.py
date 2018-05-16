@@ -44,11 +44,6 @@ def s3_trigger_event_data(sbg_keys):
 
 
 @pytest.fixture(scope='session')
-def ff_meta_event_data(sbg_keys, ff_keys):
-    return get_event_file_for('update_metadata_ff', sbg_keys, ff_keys)
-
-
-@pytest.fixture(scope='session')
 def md5_event_data():
     # I want this to go through the tibanna env lookup, to ensure it gets
     # appropriate keys
@@ -133,6 +128,11 @@ def update_ffmeta_event_data_fastqc(ff_keys):
 @pytest.fixture(scope='session')
 def update_ffmeta_metaonly_data(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadataonly.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_metaonly_data2(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadata_2.json')
 
 
 def get_test_json(file_name):

@@ -14,6 +14,10 @@ HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
                    'elasticbeanstalk-fourfront-webdev-wfoutput']
 
 
+class FdnConnectionException(Exception):
+    pass
+
+
 def convert_param(parameter_dict, vals_as_string=False):
     '''
     converts dictionary format {argument_name: value, argument_name: value, ...}
@@ -210,6 +214,7 @@ class ProcessedFileMetadata(object):
                  extra_files=None, source_experiments=None,
                  award='1U01CA200059-01', status='to be uploaded by workflow',
                  md5sum=None, file_size=None,
+                 other_fields=None,
                  **kwargs):
         self.uuid = uuid if uuid else str(uuid4())
         self.accession = accession if accession else generate_rand_accession()
@@ -225,6 +230,9 @@ class ProcessedFileMetadata(object):
             self.md5sum = md5sum
         if file_size:
             self.file_size = file_size
+        if other_fields:
+            for field in other_fields:
+                setattr(self, field, other_fields[field])
 
     def as_dict(self):
         return self.__dict__
@@ -284,8 +292,11 @@ def patch_metadata(patch_item, obj_id='', key='', connection=None, url_addon=Non
 
 def get_metadata(obj_id, key='', connection=None, frame="object"):
     # default to always get from database
-    connection = fdn_connection(key, connection)
-    sleep = [2, 4, 12]
+    try:
+        connection = fdn_connection(key, connection)
+    except Exception as e:
+        raise FdnConnectionException("%s" % e)
+    sleep = [2, 4, 6]
     for wait in sleep:
         try:
             res = fdnDCIC.get_FDN(obj_id, connection, frame=frame)
@@ -298,6 +309,7 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
         else:
             return res
     # if loop did not solve the problem
+    # TODO: throw error here
     print('get_metdata is not working for', obj_id)
     return
 
