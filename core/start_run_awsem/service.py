@@ -88,11 +88,12 @@ def real_handler(event, context):
                                                    user_supplied_output_files=event.get('output_files'))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
-    ff_meta = tibanna_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
-                                           run_url=tibanna.settings.get('url', ''),
-                                           output_files=output_files, parameters=parameters,
-                                           extra_meta=event.get('wfr_meta'),
-                                           )
+    ff_meta = tibanna_utils.create_ffmeta_awsem(
+        workflow_uuid, app_name, input_files, tag=tag,
+        run_url=tibanna.settings.get('url', ''),
+        output_files=output_files, parameters=parameters,
+        extra_meta=event.get('wfr_meta'),
+    )
 
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
@@ -260,10 +261,12 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                     if not resp:
                         LOG.info("creating new processedfile")
                         assert user_supplied_output_files is None
-                        pf = tibanna_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
-                                                            extra_files=extra_files,
-                                                            source_experiments=pf_source_experiments,
-                                                            other_fields=pf_other_fields)
+                        pf = tibanna_utils.ProcessedFileMetadata(
+                            file_format=arg.get('argument_format'),
+                            extra_files=extra_files,
+                            source_experiments=pf_source_experiments,
+                            other_fields=pf_other_fields
+                        )
                         try:
                             # actually post processed file metadata here
                             resp = pf.post(key=tibanna.ff_keys)

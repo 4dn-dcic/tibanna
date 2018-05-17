@@ -1,4 +1,4 @@
-from dcicutils import ff_utils, tibanna_utils
+from dcicutils import tibanna_utils
 import pytest
 import mock
 from .conftest import valid_env
@@ -33,7 +33,7 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type) as ff:
         pf = tibanna_utils.ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert pf.__dict__ == proc_file_in_webdev
-        assert type(pf) is ProcessedFileMetadata
+        assert type(pf) is tibanna_utils.ProcessedFileMetadata
         ff.was_called_once()
 
 

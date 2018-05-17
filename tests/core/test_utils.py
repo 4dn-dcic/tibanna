@@ -8,7 +8,6 @@ from core.utils import (
 import pytest
 from conftest import valid_env
 import mock
-from core.utils import
 
 
 @pytest.fixture

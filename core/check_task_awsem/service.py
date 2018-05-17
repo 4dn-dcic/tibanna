@@ -4,7 +4,8 @@ from dcicutils import s3_utils
 from core.utils import (
     StillRunningException,
     EC2StartingException,
-    AWSEMJobErrorException
+    AWSEMJobErrorException,
+    powerup
 )
 import json
 
@@ -14,7 +15,7 @@ def metadata_only(event):
     return event
 
 
-@utils.powerup('check_task_awsem', metadata_only)
+@powerup('check_task_awsem', metadata_only)
 def handler(event, context):
     '''
     somewhere in the event data should be a jobid

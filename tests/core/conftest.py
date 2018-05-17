@@ -128,7 +128,7 @@ def update_ffmeta_metaonly_data2(ff_keys):
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)
-    return read_event_file(event_file_name, sbg_keys, ff_keys)
+    return read_event_file(event_file_name, None, ff_keys)
 
 
 def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None, event_file='event.json'):

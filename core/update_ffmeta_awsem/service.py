@@ -47,7 +47,9 @@ def update_processed_file_metadata(status, pf, tibanna, export):
             if pfextra.get('file_format') == 'bw':
                 fe_map = tibanna_utils.get_format_extension_map(ff_key)
                 extra_file_key = tibanna_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
-                pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, extra_file_key, 'bigwig', 'vector')
+                pf.__dict__['higlass_uid'] = register_to_higlass(
+                    tibanna, export.bucket, extra_file_key, 'bigwig', 'vector'
+                )
 
     try:
         pf.status = 'uploaded'
@@ -257,7 +259,10 @@ def real_handler(event, context):
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(**tibanna_settings)
-    ff_meta = tibanna_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
+    ff_meta = tibanna_utils.create_ffmeta_awsem(
+        app_name=event.get('ff_meta').get('awsem_app_name'),
+        **event.get('ff_meta')
+    )
     pf_meta = [tibanna_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized

@@ -2,9 +2,6 @@ from __future__ import print_function
 import json
 import boto3
 import os
-import mimetypes
-from zipfile import ZipFile
-from io import BytesIO
 from uuid import uuid4
 from dcicutils.ff_utils import get_metadata
 from dcicutils.submit_utils import FdnConnectionException
