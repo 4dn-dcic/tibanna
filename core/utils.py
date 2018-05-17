@@ -6,11 +6,10 @@ import mimetypes
 from zipfile import ZipFile
 from io import BytesIO
 from uuid import uuid4
-from .ff_utils import get_metadata, FdnConnectionException
-# from dcicutils.ff_utils import get_metadata, ensure_list
-# from dcicutils.submit_utils import FdnConnectionException
+from dcicutils.ff_utils import get_metadata
+from dcicutils.submit_utils import FdnConnectionException
+from dcicutils.s3_utils import s3Utils
 import logging
-# from s3_utils import s3Utils, find_file
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -281,7 +280,7 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
 
 
 def get_files_to_match(tibanna, query, frame='object'):
-    return get_metadata(query, key=tibanna.ff_keys)
+    return get_metadata(query, key=tibanna.ff_keys, frame=frame, ensure=True)
 
 
 def current_env():

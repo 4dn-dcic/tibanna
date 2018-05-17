@@ -53,7 +53,7 @@ def real_handler(event, context):
     args = dict()
 
     # get argument format & type info from workflow
-    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys, frame='object', ensure=True)
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
@@ -172,7 +172,7 @@ def add_secondary_files_to_args(input_file, ff_keys, args):
     inf_keys = tibanna_utils.aslist(inf_object_key)
     fe_map = None
     for i, inf_uuid in enumerate(inf_uuids):
-        infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
+        infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys, frame='object', ensure=True)
         if infile_meta.get('extra_files'):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]

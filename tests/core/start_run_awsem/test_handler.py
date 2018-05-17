@@ -8,7 +8,7 @@ from core.start_run_awsem.service import (
 )
 from ..conftest import valid_env
 from core.utils import Tibanna
-from core import ff_utils
+from dcicutils import ff_utils, tibanna_utils
 import mock
 
 
@@ -60,9 +60,9 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
 
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('core.ff_utils.get_metadata', return_value=file_with_type):
+    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type):
         pf, resp = proc_file_for_arg_name(of, 'output_file1', tibanna)
-        assert type(pf) == ff_utils.ProcessedFileMetadata
+        assert type(pf) == tibanna_utils.ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
 
 

@@ -1,5 +1,5 @@
 import pytest
-from core.utils import s3Utils
+from dcicutils.s3_utils import s3Utils
 import os
 import json
 

@@ -6,6 +6,9 @@ from datetime import datetime
 import time
 import os
 
+# Launch utils still use Submit4DN. Change at some point?
+# Not high priority because these aren't used in the actual workflows
+
 ###########################################
 # These utils exclusively live in Tibanna #
 ###########################################

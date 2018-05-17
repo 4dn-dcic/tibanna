@@ -1,5 +1,4 @@
-from core import ff_utils
-from core.ff_utils import ProcessedFileMetadata
+from dcicutils import ff_utils, tibanna_utils
 import pytest
 import mock
 from .conftest import valid_env
@@ -21,9 +20,9 @@ def proc_file_in_webdev():
 
 def test_create_ProcessedFileMetadata_from_get_error_if_no_at_type(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
-    with mock.patch('core.ff_utils.get_metadata', return_value=proc_file_in_webdev):
+    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=proc_file_in_webdev):
         with pytest.raises(Exception) as expinfo:
-            ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
+            tibanna_utils.ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert "only load ProcessedFiles" in str(expinfo.value)
 
 
@@ -31,8 +30,8 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('core.ff_utils.get_metadata', return_value=file_with_type) as ff:
-        pf = ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
+    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type) as ff:
+        pf = tibanna_utils.ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert pf.__dict__ == proc_file_in_webdev
         assert type(pf) is ProcessedFileMetadata
         ff.was_called_once()
@@ -48,7 +47,7 @@ def test_get_format_extension_map(run_awsem_event_data):
     tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
-    fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
+    fe_map = tibanna_utils.get_format_extension_map(tibanna.ff_keys)
     assert(fe_map)
     assert 'pairs' in fe_map.keys()
 
@@ -69,7 +68,7 @@ def test_merge_source_experiment(run_awsem_event_data):
     # tibanna provides access to keys based on env and stuff like that
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    res = ff_utils.merge_source_experiments(input_file['uuid'], tibanna.ff_keys)
+    res = tibanna_utils.merge_source_experiments(input_file['uuid'], tibanna.ff_keys)
     LOG.info(res)
     assert 'fake_source_experiment' in res
 
@@ -79,5 +78,5 @@ def test_get_extra_file_key():
     infile_key = 'hahaha/lalala.bedGraph.gz'
     infile_format = 'bg'
     extra_file_format = 'bw'
-    extra_file_key = ff_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+    extra_file_key = tibanna_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
     assert extra_file_key == 'hahaha/lalala.bw'

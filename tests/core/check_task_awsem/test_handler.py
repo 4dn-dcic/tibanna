@@ -1,7 +1,7 @@
 from core.check_task_awsem import service
 from ..conftest import valid_env
 import pytest
-from core import utils
+from dcicutils import s3_utils
 import random
 import string
 import logging
@@ -19,7 +19,7 @@ def check_task_input():
 @pytest.fixture(scope='session')
 def s3(check_task_input):
     bucket_name = check_task_input['config']['log_bucket']
-    return utils.s3Utils(bucket_name, bucket_name, bucket_name)
+    return s3_utils.s3Utils(bucket_name, bucket_name, bucket_name)
 
 
 @pytest.fixture(scope='session')

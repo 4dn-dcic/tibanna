@@ -12,8 +12,9 @@ import shutil
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna, get_files_to_match
-from core.utils import _tibanna, s3Utils
-from core.ff_utils import get_metadata
+from core.utils import _tibanna
+from dcicutils.s3_utils import s3Utils
+from dcicutils.ff_utils import get_metadata
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all

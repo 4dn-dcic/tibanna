@@ -8,7 +8,7 @@ import os
 import subprocess
 import logging
 # from invoke import run
-from core import utils
+from dcicutils import s3_utils
 import botocore.session
 import boto3
 from Benchmark import run as B
@@ -263,7 +263,7 @@ def update_config(config, app_name, input_files, parameters):
         input_size_in_bytes = dict()
         for argname, f in input_files.iteritems():
             bucket = f['bucket_name']
-            s3 = utils.s3Utils(bucket, bucket, bucket)
+            s3 = s3_utils.s3Utils(bucket, bucket, bucket)
             if isinstance(f['object_key'], list):
                 size = []
                 for key in f['object_key']:
@@ -315,7 +315,7 @@ class WorkflowFile(object):
                  filesize=None, md5=None):
         self.bucket = bucket
         self.key = key
-        self.s3 = utils.s3Utils(self.bucket, self.bucket, self.bucket)
+        self.s3 = s3_utils.s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
         self.accession = accession
         self.output_type = output_type

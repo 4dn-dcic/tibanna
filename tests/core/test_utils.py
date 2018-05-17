@@ -1,10 +1,14 @@
-from core import ff_utils
-# from dcicutils import ff_utils
-from core.utils import Tibanna, ensure_list, powerup
+from dcicutils import tibanna_utils, s3_utils
+from core.utils import (
+    Tibanna,
+    powerup,
+    StillRunningException,
+    AWSEMJobErrorException
+)
 import pytest
 from conftest import valid_env
 import mock
-from core.utils import StillRunningException, AWSEMJobErrorException
+from core.utils import
 
 
 @pytest.fixture
@@ -157,7 +161,7 @@ def test_unzip_s3_to_s3(s3_utils):
 def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5):
     meta = update_ffmeta_event_data_newmd5['ff_meta'].copy()
     meta['app_name'] = 'md5'
-    ff_wfr = ff_utils.WorkflowRunMetadata(**meta)
+    ff_wfr = tibanna_utils.WorkflowRunMetadata(**meta)
     assert ff_wfr
 
 
@@ -170,10 +174,10 @@ def test_tibanna():
 
 
 def test_ensure_list():
-    assert ensure_list(5) == [5]
-    assert ensure_list('hello') == ['hello']
-    assert ensure_list(['hello']) == ['hello']
-    assert ensure_list({'a': 'b'}) == [{'a': 'b'}]
+    assert tibanna_utils.ensure_list(5) == [5]
+    assert tibanna_utils.ensure_list('hello') == ['hello']
+    assert tibanna_utils.ensure_list(['hello']) == ['hello']
+    assert tibanna_utils.ensure_list({'a': 'b'}) == [{'a': 'b'}]
 
 
 # we need to use StillRunningException cause that's one of the special exceptions we don't
