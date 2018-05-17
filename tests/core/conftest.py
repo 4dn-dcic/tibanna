@@ -120,6 +120,11 @@ def update_ffmeta_metaonly_data(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadataonly.json')
 
 
+@pytest.fixture(scope='session')
+def update_ffmeta_metaonly_data2(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadata_2.json')
+
+
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)

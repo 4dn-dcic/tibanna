@@ -48,6 +48,7 @@ def get_metadata(obj_id, key='', connection=None, frame="object"):
         else:
             return res
     # if loop did not solve the problem
+    # TODO: throw error here
     print('get_metdata is not working for', obj_id)
     return
 

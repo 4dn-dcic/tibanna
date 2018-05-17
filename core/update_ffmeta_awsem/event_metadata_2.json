@@ -1,0 +1,192 @@
+{
+  "args": {
+    "secondary_output_target": {
+      "filtered_pairs": [
+        "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz.px2"
+      ]
+    },
+    "app_name": "hi-c-processing-bam",
+    "input_parameters": {},
+    "cwl_child_filenames": [
+      "pairsam-parse-sort.cwl",
+      "pairsam-merge.cwl",
+      "pairsam-markasdup.cwl",
+      "pairsam-filter.cwl"
+    ],
+    "output_target": {
+      "annotated_bam": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45/4DNFI9H51IRL.bam",
+      "filtered_pairs": "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz"
+    },
+    "cwl_main_filename": "hi-c-processing-bam.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "app_version": null,
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.5/cwl_awsem/",
+    "input_files": {
+      "input_bams": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "object_key": [
+          "68f38e45-8c66-41e2-99ab-b0b2fcd20d45/4DNFI9H51IRL.bam",
+          "7420a20a-aa77-4ea8-b0b0-32a8e80c9bcb/4DNFIP16HHGH.bam"
+        ]
+      },
+      "chromsize": {
+        "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      }
+    }
+  },
+  "app_name": "hi-c-processing-bam",
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:generic_54e3c2b6-b2dc-4bb5-a72b-22975b5a1010",
+      "run_type": "generic",
+      "run_id": "54e3c2b6-b2dc-4bb5-a72b-22975b5a1010",
+      "env": "fourfront-webdev",
+      "run_name": "generic_54e3c2b6-b2dc-4bb5-a72b-22975b5a1010"
+    }
+  },
+  "postrunjson": "metadata_only",
+  "env_name": "fourfront-webdev",
+  "ff_meta": {
+    "run_platform": "AWSEM",
+    "uuid": "fd86c15b-84b7-40d4-8c73-0547821bbb1f",
+    "parameters": [],
+    "workflow": "023bfb3e-9a8b-42b9-a9d4-216079526f68",
+    "title": "hi-c-processing-bam 0.2.5 run 2018-05-15 15:08:48.344959",
+    "award": "1U01CA200059-01",
+    "awsem_job_id": "",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:generic_54e3c2b6-b2dc-4bb5-a72b-22975b5a1010",
+    "awsem_app_name": "hi-c-processing-bam",
+    "lab": "4dn-dcic-lab",
+    "run_status": "started",
+    "output_files": [
+      {
+        "extension": ".bam",
+        "format": "bam",
+        "workflow_argument_name": "annotated_bam",
+        "value": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45",
+        "upload_key": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45/4DNFI9H51IRL.bam",
+        "type": "Output processed file",
+        "extra_files": []
+      },
+      {
+        "secondary_file_formats": [
+          "pairs_px2"
+        ],
+        "extension": ".pairs.gz",
+        "format": "pairs",
+        "workflow_argument_name": "filtered_pairs",
+        "value": "7054061b-e87d-4ca4-9693-d186348f5206",
+        "upload_key": "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz",
+        "secondary_file_extensions": [
+          ".pairs.gz.px2"
+        ],
+        "type": "Output processed file",
+        "extra_files": [
+          {
+            "status": "deleted",
+            "uuid": "7054061b-e87d-4ca4-9693-d186348f5206",
+            "file_format": "pairs_px2",
+            "accession": "4DNFIDKVQKP7",
+            "filename": "4DNFIDKVQKP7",
+            "upload_key": "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz.px2",
+            "href": "/files-processed/4DNFIDKVQKP7@@download/4DNFIDKVQKP7.pairs.gz.px2"
+          }
+        ]
+      }
+    ],
+    "input_files": [
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "input_bams",
+        "value": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45"
+      },
+      {
+        "ordinal": 2,
+        "workflow_argument_name": "input_bams",
+        "value": "7420a20a-aa77-4ea8-b0b0-32a8e80c9bcb"
+      },
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chromsize",
+        "value": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9"
+      }
+    ]
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "input_files": [
+    {
+      "object_key": [
+        "4DNFI9H51IRL.bam",
+        "4DNFIP16HHGH.bam"
+      ],
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+      "workflow_argument_name": "input_bams",
+      "uuid": [
+        "68f38e45-8c66-41e2-99ab-b0b2fcd20d45",
+        "7420a20a-aa77-4ea8-b0b0-32a8e80c9bcb"
+      ]
+    },
+    {
+      "object_key": "4DNFI823LSII.chrom.sizes",
+      "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+      "workflow_argument_name": "chromsize",
+      "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9"
+    }
+  ],
+  "jobid": "metadata_only",
+  "tag": "0.2.5",
+  "metadata_only": true,
+  "pf_meta": [
+    {
+      "status": "uploaded",
+      "uuid": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45",
+      "file_format": "bam",
+      "accession": "4DNFI9H51IRL",
+      "award": "/awards/1U01CA200059-01/",
+      "lab": "/labs/4dn-dcic-lab/",
+      "file_size": 302097578
+    },
+    {
+      "status": "deleted",
+      "source_experiments": [
+        "b2e77ae2-8d67-4fd6-a812-94f9bdfc9dd8"
+      ],
+      "uuid": "7054061b-e87d-4ca4-9693-d186348f5206",
+      "file_format": "pairs",
+      "accession": "4DNFIDKVQKP7",
+      "award": "/awards/1U01CA200059-01/",
+      "lab": "/labs/4dn-dcic-lab/",
+      "extra_files": [
+        {
+          "status": "deleted",
+          "uuid": "7054061b-e87d-4ca4-9693-d186348f5206",
+          "file_format": "pairs_px2",
+          "accession": "4DNFIDKVQKP7",
+          "filename": "4DNFIDKVQKP7",
+          "upload_key": "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz.px2",
+          "href": "/files-processed/4DNFIDKVQKP7@@download/4DNFIDKVQKP7.pairs.gz.px2"
+        }
+      ]
+    }
+  ],
+  "parameters": {},
+  "config": {
+    "ebs_size": 0,
+    "instance_type": "",
+    "EBS_optimized": ""
+  },
+  "workflow_uuid": "023bfb3e-9a8b-42b9-a9d4-216079526f68",
+  "output_files": [
+    {
+      "workflow_argument_name": "annotated_bam",
+      "uuid": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45"
+    },
+    {
+      "workflow_argument_name": "filtered_pairs",
+      "uuid": "7054061b-e87d-4ca4-9693-d186348f5206"
+    }
+  ]
+}
