@@ -115,12 +115,11 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
 
-    # schema
+    # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
                                       ff_env=tibanna.env,
-                                      frame='object',
-                                      ensure=True)
+                                      frame='object')
 
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
@@ -146,7 +145,7 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
                                               key=ff_key,
                                               ff_env=tibanna.env,
                                               frame='object',
-                                              ensure=True)
+                                              check_queue=True)
         LOG.info("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
@@ -203,7 +202,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
                                           key=ff_key,
                                           ff_env=tibanna.env,
                                           frame='object',
-                                          ensure=True)
+                                          check_queue=True)
 
     if status.lower() == 'uploaded':
         md5_array = wf_file.read().split('\n')

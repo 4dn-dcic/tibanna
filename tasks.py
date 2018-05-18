@@ -400,45 +400,6 @@ def run_md5(ctx, env, accession, uuid):
 
 
 @task
-def batch_md5(ctx, env, batch_size=20):
-    '''
-    try to run fastqc on everythign that needs it ran
-    '''
-    tibanna = Tibanna(env=env)
-    file_bucket = tibanna.s3.outfile_bucket.replace('wfoutput', 'files')
-    tibanna.s3.outfile_bucket = file_bucket
-    uploaded_files = get_files_to_match(tibanna,
-                                        "search/?type=File&status=uploading",
-                                        frame="embedded")
-
-    limited_files = uploaded_files['@graph']
-
-    files_processed = 0
-    total_files = len(limited_files)
-    skipped_files = 0
-    for ufile in limited_files:
-        if files_processed >= batch_size:
-            print("we have done enough here")
-            sys.exit(0)
-
-        if not tibanna.s3.does_key_exist(ufile.get('upload_key')):
-            print("******** no file for %s on s3, can't run md5, skipping" %
-                  ufile.get('accession'))
-            skipped_files += 1
-            continue
-        else:
-            print("running md5 for %s" % ufile.get('accession'))
-            run_md5(ctx, env, ufile.get('accession'), ufile.get('uuid'))
-            files_processed += 1
-            sleep(10)
-            if files_processed % 10 == 0:
-                sleep(60)
-
-    print("Total Files: %s, Processed Files: %s, Skipped Files: %s" %
-          (total_files, files_processed, skipped_files))
-
-
-@task
 def batch_fastqc(ctx, env, batch_size=20):
     '''
     try to run fastqc on everythign that needs it ran

@@ -56,15 +56,13 @@ def get_source_experiment(input_file_uuid, ff_keys, ff_env):
         infile_meta = get_metadata(inf_uuid,
                                    key=ff_keys,
                                    ff_env=ff_env,
-                                   frame='object',
-                                   ensure=True)
+                                   frame='object')
         if infile_meta.get('experiments'):
             for exp in infile_meta.get('experiments'):
                 exp_obj = get_metadata(exp,
                                        key=ff_keys,
                                        ff_env=ff_env,
-                                       frame='raw',
-                                       ensure=True)
+                                       frame='raw')
                 pf_source_experiments_set.add(exp_obj['uuid'])
         if infile_meta.get('source_experiments'):
             # this field is an array of strings, not linkTo's
@@ -315,14 +313,6 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
         return {_tibanna: tibanna}
 
 
-def get_files_to_match(tibanna, query, frame='object'):
-    return get_metadata(query,
-                        key=tibanna.ff_keys,
-                        ff_env=tibanna.env,
-                        frame=frame,
-                        ensure=True)
-
-
 def current_env():
     return os.environ.get('ENV_NAME', 'test')
 
@@ -353,7 +343,10 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
             logger.info(context)
             logger.info(event)
             if lambda_name in event.get('skip', []):
-                logger.info('skiping %s since skip was set in input_json' % lambda_name)
+                logger.info('skipping %s since skip was set in input_json' % lambda_name)
+                return event
+            elif event.get('error', False) and lambda_name != 'update_ffmeta_awsem':
+                logger.info('skipping %s since a value for "error" is in input json' % lambda_name)
                 return event
             elif event.get('metadata_only', False):
                 return metadata_only_func(event)
