@@ -116,7 +116,11 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
         raise Exception("%s (key={})\n".format(zipped_report) % e)
 
     # schema
-    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key, frame='object', ensure=True)
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
+                                      key=ff_key,
+                                      ff_env=tibanna.env,
+                                      frame='object',
+                                      ensure=True)
 
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
@@ -138,7 +142,11 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     LOG.info("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
-        original_file = ff_utils.get_metadata(accession, key=ff_key, frame='object', ensure=True)
+        original_file = ff_utils.get_metadata(accession,
+                                              key=ff_key,
+                                              ff_env=tibanna.env,
+                                              frame='object',
+                                              ensure=True)
         LOG.info("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
@@ -191,7 +199,11 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # get metadata about original input file
     accession = wf_file.runner.inputfile_accessions['input_file']
-    original_file = ff_utils.get_metadata(accession, key=ff_key, frame='object', ensure=True)
+    original_file = ff_utils.get_metadata(accession,
+                                          key=ff_key,
+                                          ff_env=tibanna.env,
+                                          frame='object',
+                                          ensure=True)
 
     if status.lower() == 'uploaded':
         md5_array = wf_file.read().split('\n')

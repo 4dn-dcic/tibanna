@@ -1,4 +1,4 @@
-from dcicutils import tibanna_utils, s3_utils
+from dcicutils import tibanna_utils
 from core.utils import (
     Tibanna,
     powerup,

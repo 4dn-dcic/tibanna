@@ -13,14 +13,19 @@ valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
                                reason='Required environment not setup to run test')
 
 
-@pytest.fixture()
-def tibanna_env():
-    return {'_tibanna': {'env': 'fourfront-webdev'}}
+@pytest.fixture(scope='session')
+def used_env():
+    return 'fourfront-webdev'
 
 
 @pytest.fixture(scope='session')
-def s3_utils():
-    return s3Utils(env=tibanna_env()['_tibanna']['env'])
+def tibanna_env(used_env):
+    return {'_tibanna': {'env': used_env}}
+
+
+@pytest.fixture(scope='session')
+def s3_utils(used_env):
+    return s3Utils(env=used_env)
 
 
 @pytest.fixture(scope='session')
@@ -29,8 +34,8 @@ def ff_keys(s3_utils):
 
 
 @pytest.fixture(scope='session')
-def s3_trigger_event_data(sbg_keys):
-    return get_event_file_for('validate_md5_s3_trigger', sbg_keys)
+def s3_trigger_event_data():
+    return get_event_file_for('validate_md5_s3_trigger')
 
 
 @pytest.fixture(scope='session')

@@ -54,7 +54,10 @@ def is_status_uploading(event):
     env = '-'.join(bucket.split('-')[1:3])
 
     tibanna = Tibanna(env=env)
-    meta = get_metadata(accession, key=tibanna.ff_keys)
+    meta = get_metadata(accession,
+                        key=tibanna.ff_keys,
+                        ff_env=env,
+                        ensure=True)
     if meta:
         return meta.get('status', '') == 'uploading'
     else:

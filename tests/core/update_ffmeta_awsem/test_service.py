@@ -1,5 +1,10 @@
-from core.update_ffmeta_awsem.service import handler, get_postrunjson_url, md5_updater, _md5_updater
-from core.update_ffmeta_awsem.service import register_to_higlass
+from core.update_ffmeta_awsem.service import (
+    handler,
+    get_postrunjson_url,
+    register_to_higlass,
+    md5_updater,
+    _md5_updater
+)
 from core.ec2_utils import Awsem
 from core import utils
 # from core.check_export_sbg.service import get_inputfile_accession
@@ -178,22 +183,24 @@ def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
 
 
 @pytest.mark.webtest
-def test_register_to_higlass():
+def test_register_to_higlass(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     mcool_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.mcool'
+    tibanna = utils.Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
-        res = register_to_higlass(bucket, mcool_key, 'cooler', 'matrix')
+        res = register_to_higlass(tibanna, bucket, mcool_key, 'cooler', 'matrix')
         mock_request.assert_called_once()
         LOG.info(res)
         assert res
 
 
 @pytest.mark.webtest
-def test_register_to_higlass2():
+def test_register_to_higlass2(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigwig_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.bw'
+    tibanna = utils.Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
-        res = register_to_higlass(bucket, bigwig_key, 'bigwig', 'vector')
+        res = register_to_higlass(tibanna, bucket, bigwig_key, 'bigwig', 'vector')
         mock_request.assert_called_once()
         LOG.info(res)
         assert res

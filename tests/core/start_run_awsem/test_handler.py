@@ -15,7 +15,6 @@ import mock
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler(run_awsem_event_data):
-    # data = service.handler(run_awsem_event_data, '')
     res = handler(run_awsem_event_data, '')
     assert(res)
 
@@ -204,7 +203,7 @@ def test_process_input_file_info(run_awsem_event_data):
     # tibanna provides access to keys based on env and stuff like that
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    process_input_file_info(input_file, tibanna.ff_keys, args)
+    process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
     assert len(args['input_files']) == 3
     assert 'secondary_files' in args
 
@@ -236,4 +235,4 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
     # tibanna provides access to keys based on env and stuff like that
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    add_secondary_files_to_args(input_file, tibanna.ff_keys, args)
+    add_secondary_files_to_args(input_file, tibanna.ff_keys, tibanna.env, args)

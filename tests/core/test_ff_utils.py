@@ -2,7 +2,7 @@ from dcicutils import tibanna_utils
 import pytest
 import mock
 from .conftest import valid_env
-from core.utils import Tibanna
+from core.utils import Tibanna, merge_source_experiments
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ def test_merge_source_experiment(run_awsem_event_data):
     # tibanna provides access to keys based on env and stuff like that
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    res = tibanna_utils.merge_source_experiments(input_file['uuid'], tibanna.ff_keys)
+    res = merge_source_experiments(input_file['uuid'], tibanna.ff_keys, tibanna.env)
     LOG.info(res)
     assert 'fake_source_experiment' in res
 

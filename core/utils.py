@@ -4,6 +4,7 @@ import boto3
 import os
 from uuid import uuid4
 from dcicutils.ff_utils import get_metadata
+from dcicutils.tibanna_utils import aslist
 from dcicutils.submit_utils import FdnConnectionException
 from dcicutils.s3_utils import s3Utils
 import logging
@@ -42,6 +43,44 @@ class AWSEMJobErrorException(Exception):
 
 class TibannaStartException(Exception):
     pass
+
+
+def get_source_experiment(input_file_uuid, ff_keys, ff_env):
+    """
+    Connects to fourfront and get source experiment info as a unique list
+    Takes a single input file uuid.
+    """
+    pf_source_experiments_set = set()
+    inf_uuids = aslist(input_file_uuid)
+    for inf_uuid in inf_uuids:
+        infile_meta = get_metadata(inf_uuid,
+                                   key=ff_keys,
+                                   ff_env=ff_env,
+                                   frame='object',
+                                   ensure=True)
+        if infile_meta.get('experiments'):
+            for exp in infile_meta.get('experiments'):
+                exp_obj = get_metadata(exp,
+                                       key=ff_keys,
+                                       ff_env=ff_env,
+                                       frame='raw',
+                                       ensure=True)
+                pf_source_experiments_set.add(exp_obj['uuid'])
+        if infile_meta.get('source_experiments'):
+            # this field is an array of strings, not linkTo's
+            pf_source_experiments_set.update(infile_meta.get('source_experiments'))
+    return list(pf_source_experiments_set)
+
+
+def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
+    """
+    Connects to fourfront and get source experiment info as a unique list
+    Takes a list of input file uuids.
+    """
+    pf_source_experiments = set()
+    for input_file_uuid in input_file_uuids:
+        pf_source_experiments.update(get_source_experiment(input_file_uuid, ff_keys, ff_env))
+    return list(pf_source_experiments)
 
 
 def run_workflow(input_json, accession='', workflow='tibanna_pony',
@@ -277,7 +316,11 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
 
 
 def get_files_to_match(tibanna, query, frame='object'):
-    return get_metadata(query, key=tibanna.ff_keys, frame=frame, ensure=True)
+    return get_metadata(query,
+                        key=tibanna.ff_keys,
+                        ff_env=tibanna.env,
+                        frame=frame,
+                        ensure=True)
 
 
 def current_env():
