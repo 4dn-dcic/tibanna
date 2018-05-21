@@ -8,6 +8,7 @@ from dcicutils.tibanna_utils import aslist
 from dcicutils.submit_utils import FdnConnectionException
 from dcicutils.s3_utils import s3Utils
 import logging
+import traceback
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -361,8 +362,9 @@ def powerup(lambda_name, metadata_only_func):
                         # for last step just pit out error
                         raise e
                     else:
-                        event['error'] = str(e)
-                        logger.info(e)
+                        error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
+                        event['error'] = str(error_msg)
+                        logger.info(error_msg)
                         return event
         return wrapper
     return decorator

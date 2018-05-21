@@ -269,7 +269,7 @@ def real_handler(event, context):
     # get data
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = utils.Tibanna(**tibanna_settings)
+    tibanna = utils.Tibanna(tibanna_settings['env'], settings=tibanna_settings)
     ff_meta = tibanna_utils.create_ffmeta_awsem(
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
