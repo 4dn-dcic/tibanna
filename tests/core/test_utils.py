@@ -179,11 +179,15 @@ def test_ensure_list():
     assert tibanna_utils.ensure_list({'a': 'b'}) == [{'a': 'b'}]
 
 
-# we need to use StillRunningException cause that's one of the special exceptions we don't
-# catch in our powerup wrapper
 @powerup("wrapped_fun", mock.Mock(side_effect=StillRunningException("metadata")))
 def wrapped_fun(event, context):
     raise StillRunningException("I should not be called")
+
+
+# this will raise an error
+@powerup("update_ffmeta_awsem", mock.Mock())
+def update_ffmeta_error_fun(event, context):
+    raise Exception("I should raise an error")
 
 
 @powerup('error_fun', mock.Mock())
@@ -203,8 +207,23 @@ def test_powerup_errors_are_dumped_into_return_dict():
 
 
 def test_powerup_throws_if_error_set_in_input_json():
+    # only throw the error because lambda name is update_ffmeta_awsem
     with pytest.raises(Exception):
-        wrapped_fun({'error': 'same like skip'}, None)
+        update_ffmeta_error_fun({'error': 'same like skip'}, None)
+
+
+def test_powerup_error_thrown_if_ignored_exceptions():
+    # throw an error because this is an ignored exception and
+    # no 'error' in event json
+    with pytest.raises(Exception):
+        wrapped_fun({}, None)
+
+
+def test_powerup_error_propogates():
+    # skip throwing an error because 'error' is in event json and the
+    # lambda name != update_ffmeta_awsem. error is propagated to the res
+    res = wrapped_fun({'error': 'should not raise'}, None)
+    assert res['error'] == 'should not raise'
 
 
 def test_powerup_skips_when_appropriate():

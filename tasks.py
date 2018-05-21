@@ -11,10 +11,13 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
-from core.utils import _tibanna_settings, Tibanna, get_files_to_match
+from core.utils import _tibanna_settings, Tibanna
 from core.utils import _tibanna
 from dcicutils.s3_utils import s3Utils
-from dcicutils.ff_utils import get_metadata
+from dcicutils.ff_utils import (
+    get_metadata,
+    search_metadata
+)
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
@@ -417,9 +420,8 @@ def batch_fastqc(ctx, env, batch_size=20):
     signal.signal(signal.SIGINT, report)
 
     tibanna = Tibanna(env=env)
-    uploaded_files = get_files_to_match(tibanna,
-                                        "search/?type=File&status=uploaded&limit=%s" % batch_size,
-                                        frame="embedded")
+    uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
+                                     key=tibanna.ff_key, ff_env=tibanna.env)
 
     # TODO: need to change submit 4dn to not overwrite my limit
     if len(uploaded_files['@graph']) > batch_size:
