@@ -94,6 +94,7 @@ for k in cwl_output:
             if k in secondary_output_target:
                 if len(secondary_output_target[k])==1:  # one extra file
                     target = secondary_output_target[k][i]
+                    n_assigned = n_assigned + 1
                 else:
                     for targ in secondary_output_target[k]:
                         if targ[-3:] == source_name[-3:]:  # matching the last three letters
