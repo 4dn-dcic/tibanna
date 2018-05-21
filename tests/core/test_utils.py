@@ -204,6 +204,8 @@ def test_powerup_errors_are_dumped_into_return_dict():
     res = error_fun({'some': 'data'}, None)
     assert res['some'] == 'data'
     assert res['error'] == 'lambda made a mess'
+    assert res['error_detail']
+    assert 'Error on step: error_fun' in res['error_detail']
 
 
 def test_powerup_throws_if_error_set_in_input_json():
