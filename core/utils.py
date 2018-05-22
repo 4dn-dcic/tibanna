@@ -363,8 +363,7 @@ def powerup(lambda_name, metadata_only_func):
                         raise e
                     else:
                         error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
-                        event['error_detail'] = error_msg
-                        event['error'] = str(e)
+                        event['error'] = error_msg
                         logger.info(error_msg)
                         return event
         return wrapper

@@ -22,7 +22,9 @@ def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
     higlass_keys = tibanna.s3.get_higlass_key()
     if not isinstance(higlass_keys, dict):
         raise Exception("Bad higlass keys found: %s" % higlass_keys)
-    auth = (higlass_keys['key'], higlass_keys['secret'])
+    # authentication seems to be a bit backwards from s3.get_higlass_key()
+    # usual fourfront form is (key, secret). TODO maybe make it match
+    auth = (higlass_keys['secret'], higlass_keys['key'])
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
     res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
