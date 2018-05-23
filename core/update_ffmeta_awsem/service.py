@@ -274,7 +274,7 @@ def real_handler(event, context):
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
     )
-    pf_meta = [tibanna_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
+    pf_meta = [tibanna_utils.ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized
     patch_meta = False
