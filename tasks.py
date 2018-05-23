@@ -11,13 +11,16 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
-from core.utils import _tibanna_settings, Tibanna, get_files_to_match
-from core.utils import _tibanna, s3Utils
-from core.ff_utils import get_metadata
+from core.utils import _tibanna_settings, Tibanna
+from core.utils import _tibanna
+from dcicutils.s3_utils import s3Utils
+from dcicutils.ff_utils import (
+    get_metadata,
+    search_metadata
+)
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
-from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, SECRET
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -75,12 +78,13 @@ def get_all_core_lambdas():
 
 
 def env_list(name):
+    # don't set this as a global, since not all tasks require it
+    secret = os.environ.get("SECRET")
+    if secret is None:
+        raise RuntimeError("SECRET should be defined in env")
     envlist = {
-        'start_run_awsem': {'SECRET': SECRET},
-        'update_ffmeta_awsem': {'SECRET': SECRET,
-                                'HIGLASS_SERVER': HIGLASS_SERVER,
-                                'HIGLASS_USER': HIGLASS_USER,
-                                'HIGLASS_PASS': HIGLASS_PASS}
+        'start_run_awsem': {'SECRET': secret},
+        'update_ffmeta_awsem': {'SECRET': secret}
     }
     return envlist.get(name, '')
 
@@ -97,7 +101,7 @@ def chdir(dirname=None):
 
 
 def upload(keyname, data, s3bucket, secret=None):
-
+    # don't set this as a global, since not all tasks require it
     if secret is None:
         secret = os.environ.get("SECRET")
         if secret is None:
@@ -291,19 +295,6 @@ def deploy_lambda_package(ctx, name, suffix):
         run('cd %s; rm -rf %s' % (old_src, new_src))
 
 
-@task
-def upload_sbg_keys(ctx, sbgkey=None, env='fourfront-webprod'):
-    if sbgkey is None:
-        sbgkey = os.environ.get('SBG_KEY')
-
-    if sbgkey is None:
-        print("error no sbgkey found in environment")
-        return 1
-
-    s3bucket = "elasticbeanstalk-%s-system" % env
-    return upload_keys(ctx, sbgkey, 'sbgkey', s3bucket)
-
-
 def _PROD():
     return _tbenv() == 'PROD'
 
@@ -312,26 +303,6 @@ def _tbenv(env_data=None):
     if env_data and env_data.get('env'):
         return env_data('env')
     return os.environ.get('ENV_NAME')
-
-
-def upload_keys(ctx, keys, name, s3bucket=None):
-    if not s3bucket:
-        s3bucket = 'elasticbeanstalk-fourfront-webprod-system'
-    print("uploading sbkey to %s as %s" % (s3bucket, name))
-    upload(name, keys, s3bucket)
-
-
-@task
-def upload_s3_keys(ctx, key=None, secret=None, env="fourfront-webprod"):
-    if key is None:
-        key = os.environ.get("SBG_S3_KEY")
-    if secret is None:
-        secret = os.environ.get("SBG_S3_SECRET")
-
-    pckt = {'key': key,
-            'secret': secret}
-    s3bucket = "elasticbeanstalk-%s-system" % env
-    return upload_keys(ctx, json.dumps(pckt), 'sbgs3key', s3bucket)
 
 
 @task
@@ -432,45 +403,6 @@ def run_md5(ctx, env, accession, uuid):
 
 
 @task
-def batch_md5(ctx, env, batch_size=20):
-    '''
-    try to run fastqc on everythign that needs it ran
-    '''
-    tibanna = Tibanna(env=env)
-    file_bucket = tibanna.s3.outfile_bucket.replace('wfoutput', 'files')
-    tibanna.s3.outfile_bucket = file_bucket
-    uploaded_files = get_files_to_match(tibanna,
-                                        "search/?type=File&status=uploading",
-                                        frame="embedded")
-
-    limited_files = uploaded_files['@graph']
-
-    files_processed = 0
-    total_files = len(limited_files)
-    skipped_files = 0
-    for ufile in limited_files:
-        if files_processed >= batch_size:
-            print("we have done enough here")
-            sys.exit(0)
-
-        if not tibanna.s3.does_key_exist(ufile.get('upload_key')):
-            print("******** no file for %s on s3, can't run md5, skipping" %
-                  ufile.get('accession'))
-            skipped_files += 1
-            continue
-        else:
-            print("running md5 for %s" % ufile.get('accession'))
-            run_md5(ctx, env, ufile.get('accession'), ufile.get('uuid'))
-            files_processed += 1
-            sleep(10)
-            if files_processed % 10 == 0:
-                sleep(60)
-
-    print("Total Files: %s, Processed Files: %s, Skipped Files: %s" %
-          (total_files, files_processed, skipped_files))
-
-
-@task
 def batch_fastqc(ctx, env, batch_size=20):
     '''
     try to run fastqc on everythign that needs it ran
@@ -488,9 +420,8 @@ def batch_fastqc(ctx, env, batch_size=20):
     signal.signal(signal.SIGINT, report)
 
     tibanna = Tibanna(env=env)
-    uploaded_files = get_files_to_match(tibanna,
-                                        "search/?type=File&status=uploaded&limit=%s" % batch_size,
-                                        frame="embedded")
+    uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
+                                     key=tibanna.ff_key, ff_env=tibanna.env)
 
     # TODO: need to change submit 4dn to not overwrite my limit
     if len(uploaded_files['@graph']) > batch_size:

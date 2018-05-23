@@ -2,23 +2,28 @@ from __future__ import print_function
 import json
 import boto3
 import os
-import mimetypes
-from zipfile import ZipFile
-from io import BytesIO
 from uuid import uuid4
-from .ff_utils import get_metadata, FdnConnectionException
+from dcicutils.ff_utils import get_metadata
+from dcicutils.tibanna_utils import aslist
+from dcicutils.submit_utils import FdnConnectionException
+from dcicutils.s3_utils import s3Utils
 import logging
+import traceback
 
+###########################################
+# These utils exclusively live in Tibanna #
+###########################################
 
 ###########################
 # Config
 ###########################
-s3 = boto3.client('s3')
 
 # production step function
 BASE_ARN = 'arn:aws:states:us-east-1:643366669028:%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
+# just store this in one place
+_tibanna = '_tibanna'
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -41,205 +46,40 @@ class TibannaStartException(Exception):
     pass
 
 
-def ensure_list(val):
-    if isinstance(val, (list, tuple)):
-        return val
-    return [val]
+def get_source_experiment(input_file_uuid, ff_keys, ff_env):
+    """
+    Connects to fourfront and get source experiment info as a unique list
+    Takes a single input file uuid.
+    """
+    pf_source_experiments_set = set()
+    inf_uuids = aslist(input_file_uuid)
+    for inf_uuid in inf_uuids:
+        infile_meta = get_metadata(inf_uuid,
+                                   key=ff_keys,
+                                   ff_env=ff_env,
+                                   frame='object')
+        if infile_meta.get('experiments'):
+            for exp in infile_meta.get('experiments'):
+                exp_obj = get_metadata(exp,
+                                       key=ff_keys,
+                                       ff_env=ff_env,
+                                       frame='raw')
+                pf_source_experiments_set.add(exp_obj['uuid'])
+        if infile_meta.get('source_experiments'):
+            # this field is an array of strings, not linkTo's
+            pf_source_experiments_set.update(infile_meta.get('source_experiments'))
+    return list(pf_source_experiments_set)
 
 
-class s3Utils(object):
-
-    def __init__(self, outfile_bucket=None, sys_bucket=None, raw_file_bucket=None, env=None):
-        '''
-        if we pass in env set the outfile and sys bucket from the environment
-        '''
-        self.url = ''
-        # avoid circular ref, import as needed
-        from dcicutils import beanstalk_utils as bs
-        if sys_bucket is None:
-            # staging and production share same buckets
-            if env:
-                if 'webprod' in env or env in ['staging', 'stagging', 'data']:
-                    self.url = bs.get_beanstalk_real_url(env)
-                    env = 'fourfront-webprod'
-            # we use standardized naming schema, so s3 buckets always have same prefix
-            sys_bucket = "elasticbeanstalk-%s-system" % env
-            outfile_bucket = "elasticbeanstalk-%s-wfoutput" % env
-            raw_file_bucket = "elasticbeanstalk-%s-files" % env
-
-        self.sys_bucket = sys_bucket
-        self.outfile_bucket = outfile_bucket
-        self.raw_file_bucket = raw_file_bucket
-
-    def get_access_keys(self):
-        name = 'illnevertell'
-        keys = self.get_key(keyfile_name=name)
-
-        if isinstance(keys.get('default'), dict):
-            keys = keys['default']
-        if self.url:
-            keys['server'] = self.url
-
-        return {'default': keys}
-
-    def get_key(self, keyfile_name='illnevertell'):
-        # Share secret encrypted S3 File
-        response = s3.get_object(Bucket=self.sys_bucket,
-                                 Key=keyfile_name,
-                                 SSECustomerKey=os.environ.get("SECRET"),
-                                 SSECustomerAlgorithm='AES256')
-        akey = response['Body'].read()
-        try:
-            return json.loads(akey)
-        except (ValueError, TypeError):
-            # maybe its not json after all
-            return akey
-
-    def get_sbg_keys(self):
-        return self.get_key('sbgkey')
-
-    def get_s3_keys(self):
-        return self.get_key('sbgs3key')
-
-    def read_s3(self, filename):
-        response = s3.get_object(Bucket=self.outfile_bucket,
-                                 Key=filename)
-        LOG.info(str(response))
-        return response['Body'].read()
-
-    def does_key_exist(self, key, bucket=None):
-        if not bucket:
-            bucket = self.outfile_bucket
-        try:
-            file_metadata = s3.head_object(Bucket=bucket,
-                                           Key=key)
-        except Exception as e:
-            print("object %s not found on bucket %s" % (str(key), str(bucket)))
-            print(str(e))
-            return False
-        return file_metadata
-
-    def get_file_size(self, key, bucket=None, add_bytes=0, add_gb=0,
-                      size_in_gb=False):
-        '''
-        default returns file size in bytes,
-        unless size_in_gb = True
-        '''
-        meta = self.does_key_exist(key, bucket)
-        if not meta:
-            raise Exception("key not found")
-        one_gb = 1073741824
-        add = add_bytes + (add_gb * one_gb)
-        size = meta['ContentLength'] + add
-        if size_in_gb:
-            size = size / one_gb
-        return size
-
-    def delete_key(self, key, bucket=None):
-        if not bucket:
-            bucket = self.outfile_bucket
-        s3.delete_object(Bucket=bucket, Key=key)
-
-    def size(self, bucket):
-        sbuck = boto3.resource('s3').Bucket(bucket)
-        # get only head of objects so we can count them
-        return sum(1 for _ in sbuck.objects.all())
-
-    def s3_put(self, obj, upload_key, acl=None):
-        '''
-        try to guess content type
-        '''
-        content_type = mimetypes.guess_type(upload_key)[0]
-        if content_type is None:
-            content_type = 'binary/octet-stream'
-        if acl:
-            # we use this to set some of the object as public
-            s3.put_object(Bucket=self.outfile_bucket,
-                          Key=upload_key,
-                          Body=obj,
-                          ContentType=content_type,
-                          ACL=acl
-                          )
-        else:
-            s3.put_object(Bucket=self.outfile_bucket,
-                          Key=upload_key,
-                          Body=obj,
-                          ContentType=content_type
-                          )
-
-    def s3_read_dir(self, prefix):
-        return s3.list_objects(Bucket=self.outfile_bucket,
-                               Prefix=prefix)
-
-    def s3_delete_dir(self, prefix):
-        # one query get list of all the files we want to delete
-        obj_list = s3.list_objects(Bucket=self.outfile_bucket,
-                                   Prefix=prefix)
-        files = obj_list.get('Contents', [])
-
-        # morph file list into format that boto3 wants
-        delete_keys = {'Objects': []}
-        delete_keys['Objects'] = [{'Key': k} for k in
-                                  [obj['Key'] for obj in files]]
-
-        # second query deletes all the files, NOTE: Max 1000 files
-        if delete_keys['Objects']:
-            s3.delete_objects(Bucket=self.outfile_bucket,
-                              Delete=delete_keys)
-
-    def read_s3_zipfile(self, s3key, files_to_extract):
-        s3_stream = self.read_s3(s3key)
-        bytestream = BytesIO(s3_stream)
-        zipstream = ZipFile(bytestream, 'r')
-        ret_files = {}
-
-        for name in files_to_extract:
-            # search subdirectories for file with name
-            # so I don't have to worry about figuring out the subdirs
-            zipped_filename = find_file(name, zipstream)
-            if zipped_filename:
-                ret_files[name] = zipstream.open(zipped_filename).read()
-        return ret_files
-
-    def unzip_s3_to_s3(self, zipped_s3key, dest_dir, retfile_names=None, acl=None):
-        if retfile_names is None:
-            retfile_names = []
-
-        if not dest_dir.endswith('/'):
-            dest_dir += '/'
-
-        s3_stream = self.read_s3(zipped_s3key)
-        # read this badboy to memory, don't go to disk
-        bytestream = BytesIO(s3_stream)
-        zipstream = ZipFile(bytestream, 'r')
-
-        # directory should be first name in the list
-        file_list = zipstream.namelist()
-        basedir_name = file_list.pop(0)
-        assert basedir_name.endswith('/')
-
-        ret_files = {}
-        for file_name in file_list:
-            # don't copy dirs just files
-            if not file_name.endswith('/'):
-                s3_file_name = file_name.replace(basedir_name, dest_dir)
-                s3_key = "https://s3.amazonaws.com/%s/%s" % (self.outfile_bucket, s3_file_name)
-                # just perf optimization so we don't have to copy
-                # files twice that we want to further interogate
-                the_file = zipstream.open(file_name, 'r').read()
-                file_to_find = file_name.split('/')[-1]
-                if file_to_find in retfile_names:
-                    ret_files[file_to_find] = {'s3key': s3_key,
-                                               'data': the_file}
-                self.s3_put(the_file, s3_file_name, acl=acl)
-
-        return ret_files
-
-
-def find_file(name, zipstream):
-    for zipped_filename in zipstream.namelist():
-        if zipped_filename.endswith(name):
-            return zipped_filename
+def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
+    """
+    Connects to fourfront and get source experiment info as a unique list
+    Takes a list of input file uuids.
+    """
+    pf_source_experiments = set()
+    for input_file_uuid in input_file_uuids:
+        pf_source_experiments.update(get_source_experiment(input_file_uuid, ff_keys, ff_env))
+    return list(pf_source_experiments)
 
 
 def run_workflow(input_json, accession='', workflow='tibanna_pony',
@@ -409,23 +249,11 @@ def create_stepfunction(dev_suffix='dev',
     return(response)
 
 
-# just store this in one place
-_tibanna = '_tibanna'
-
-
 class Tibanna(object):
 
-    def __init__(self, env, s3_keys=None, ff_keys=None, sbg_keys=None, settings=None):
+    def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
         self.env = env
         self.s3 = s3Utils(env=env)
-
-        if not s3_keys:
-            try:
-                # we don't actually need this key anymore
-                s3_keys = self.s3.get_s3_keys()
-            except:  # noqa
-                pass
-        self.s3_keys = s3_keys
 
         if not ff_keys:
             ff_keys = self.s3.get_access_keys()
@@ -486,10 +314,6 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
         return {_tibanna: tibanna}
 
 
-def get_files_to_match(tibanna, query, frame='object'):
-    return get_metadata(query, key=tibanna.ff_keys)
-
-
 def current_env():
     return os.environ.get('ENV_NAME', 'test')
 
@@ -498,15 +322,14 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
-def powerup(lambda_name, metadata_only_func, run_if_error=False):
+def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
     1. Logs basic input for all functions
     2. if 'skip' key == 'lambda_name', skip the function
     3. catch exceptions raised by labmda, and if not in  list of ignored exceptions, added
        the exception to output json
-    4. if input json has 'error' key, skip function unless `run_if_error` is provided
-    5. 'metadata' only parameter, if set to true, just create metadata instead of run workflow
+    4. 'metadata' only parameter, if set to true, just create metadata instead of run workflow
 
     '''
     def decorator(function):
@@ -520,7 +343,11 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
             logger.info(context)
             logger.info(event)
             if lambda_name in event.get('skip', []):
-                logger.info('skiping %s since skip was set in input_json' % lambda_name)
+                logger.info('skipping %s since skip was set in input_json' % lambda_name)
+                return event
+            elif event.get('error', False) and lambda_name != 'update_ffmeta_awsem':
+                logger.info('skipping %s since a value for "error" is in input json '
+                            'and lambda is not update_ffmeta_awsem' % lambda_name)
                 return event
             elif event.get('metadata_only', False):
                 return metadata_only_func(event)
@@ -535,8 +362,9 @@ def powerup(lambda_name, metadata_only_func, run_if_error=False):
                         # for last step just pit out error
                         raise e
                     else:
-                        event['error'] = str(e)
-                        logger.info(e)
+                        error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
+                        event['error'] = error_msg
+                        logger.info(error_msg)
                         return event
         return wrapper
     return decorator

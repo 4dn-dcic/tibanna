@@ -2,9 +2,13 @@
 import logging
 # import json
 import boto3
-from core import ff_utils
-from core.utils import Tibanna, ensure_list, powerup
-from core.utils import TibannaStartException
+from dcicutils import ff_utils, tibanna_utils
+from core.utils import (
+    Tibanna,
+    powerup,
+    TibannaStartException,
+    merge_source_experiments
+)
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -35,7 +39,7 @@ def real_handler(event, context):
     input_file_list = event.get('input_files')
     for infile in input_file_list:
         if not infile:
-            raise("mailformed input, check your input_files")
+            raise("malformed input, check your input_files")
     app_name = event.get('app_name')
     print(app_name)
     workflow_uuid = event.get('workflow_uuid')
@@ -47,18 +51,20 @@ def real_handler(event, context):
     try:
         env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
         # tibanna provides access to keys based on env and stuff like that
-        tibanna = Tibanna(env, s3_keys=event.get('s3_keys'), ff_keys=event.get('ff_keys'),
-                          settings=tibanna_settings)
+        tibanna = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
     except Exception as e:
         raise TibannaStartException("%s" % e)
 
     args = dict()
 
     # get argument format & type info from workflow
-    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    workflow_info = ff_utils.get_metadata(workflow_uuid,
+                                          key=tibanna.ff_keys,
+                                          ff_env=tibanna.env,
+                                          frame='object')
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
-        raise Exception("FATAL, can't lookup workflow info for % fourfront" % workflow_uuid)
+        raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
@@ -70,18 +76,20 @@ def real_handler(event, context):
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
-        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
+        for idx, uuid in enumerate(tibanna_utils.ensure_list(input_file['uuid'])):
             input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
                                 'value': uuid, 'ordinal': idx + 1})
     LOG.info("input_files is %s" % input_files)
 
     # input file args for awsem
     for input_file in input_file_list:
-        process_input_file_info(input_file, tibanna.ff_keys, args)
+        process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
 
     # source experiments
     input_file_uuids = [_['uuid'] for _ in input_file_list]
-    pf_source_experiments = ff_utils.merge_source_experiments(input_file_uuids, tibanna.ff_keys)
+    pf_source_experiments = merge_source_experiments(input_file_uuids,
+                                                     tibanna.ff_keys,
+                                                     tibanna.env)
 
     # processed file metadata
     output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
@@ -89,11 +97,13 @@ def real_handler(event, context):
                                                    custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
 
-    ff_meta = ff_utils.create_ffmeta_awsem(workflow_uuid, app_name, input_files, tag=tag,
-                                           run_url=tibanna.settings.get('url', ''),
-                                           output_files=output_files, parameters=parameters,
-                                           extra_meta=event.get('wfr_meta'),
-                                           )
+    # 4DN dcic award and lab are used here, unless provided in wfr_meta
+    ff_meta = tibanna_utils.create_ffmeta_awsem(
+        workflow_uuid, app_name, input_files, tag=tag,
+        run_url=tibanna.settings.get('url', ''),
+        output_files=output_files, parameters=parameters,
+        extra_meta=event.get('wfr_meta'),
+    )
 
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
@@ -135,7 +145,7 @@ def real_handler(event, context):
     return(event)
 
 
-def process_input_file_info(input_file, ff_keys, args):
+def process_input_file_info(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         args['input_files'] = dict()
     if not args or 'secondary_files' not in args:
@@ -158,30 +168,33 @@ def process_input_file_info(input_file, ff_keys, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'object_key': object_key}})
-    add_secondary_files_to_args(input_file, ff_keys, args)
+    add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 
-def add_secondary_files_to_args(input_file, ff_keys, args):
+def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         raise Exception("args must contain key 'input_files'")
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
-    inf_uuids = ff_utils.aslist(input_file['uuid'])
+    inf_uuids = tibanna_utils.aslist(input_file['uuid'])
     argname = input_file['workflow_argument_name']
     extra_file_keys = []
     inf_object_key = args['input_files'][argname]['object_key']
-    inf_keys = ff_utils.aslist(inf_object_key)
+    inf_keys = tibanna_utils.aslist(inf_object_key)
     fe_map = None
     for i, inf_uuid in enumerate(inf_uuids):
-        infile_meta = ff_utils.get_metadata(inf_uuid, key=ff_keys)
+        infile_meta = ff_utils.get_metadata(inf_uuid,
+                                            key=ff_keys,
+                                            ff_env=ff_env,
+                                            frame='object')
         if infile_meta.get('extra_files'):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]
             if not fe_map:
-                fe_map = ff_utils.get_format_extension_map(ff_keys)
+                fe_map = tibanna_utils.get_format_extension_map(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
                 extra_file_format = extra_file.get('file_format')
-                extra_file_key = ff_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+                extra_file_key = tibanna_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
 
     if len(extra_file_keys) > 0:
@@ -201,7 +214,8 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
-        return ff_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys, return_data=True)
+        return tibanna_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
+                                                       tibanna.env, return_data=True)
     else:
         LOG.info("no output_files found in input_json matching arg_name")
         LOG.info("output_files: %s" % str(output_files))
@@ -211,9 +225,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
 
 
 def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
-                           custom_fields=None,
-                           user_supplied_output_files=None):
-
+                           custom_fields=None, user_supplied_output_files=None):
     output_files = []
     pf_meta = []
     fe_map = None
@@ -228,7 +240,7 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                 of['type'] = arg.get('argument_type')
                 if 'argument_format' in arg:
                     if not fe_map:
-                        fe_map = ff_utils.get_format_extension_map(tibanna.ff_keys)
+                        fe_map = tibanna_utils.get_format_extension_map(tibanna.ff_keys)
                     # These are not processed files but report or QC files.
                     if 'secondary_file_formats' in arg:
                         of['secondary_file_formats'] = arg.get('secondary_file_formats')
@@ -261,10 +273,12 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                     if not resp:
                         LOG.info("creating new processedfile")
                         assert user_supplied_output_files is None
-                        pf = ff_utils.ProcessedFileMetadata(file_format=arg.get('argument_format'),
-                                                            extra_files=extra_files,
-                                                            source_experiments=pf_source_experiments,
-                                                            other_fields=pf_other_fields)
+                        pf = tibanna_utils.ProcessedFileMetadata(
+                            file_format=arg.get('argument_format'),
+                            extra_files=extra_files,
+                            source_experiments=pf_source_experiments,
+                            other_fields=pf_other_fields
+                        )
                         try:
                             # actually post processed file metadata here
                             resp = pf.post(key=tibanna.ff_keys)

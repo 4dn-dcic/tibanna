@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import boto3
-from core.utils import STEP_FUNCTION_ARN
-from core.utils import _tibanna_settings, Tibanna
-from core.ff_utils import get_metadata
+from core.utils import _tibanna_settings, Tibanna, STEP_FUNCTION_ARN
+from dcicutils.ff_utils import get_metadata
 import json
 
 client = boto3.client('stepfunctions', region_name='us-east-1')
@@ -55,7 +54,11 @@ def is_status_uploading(event):
     env = '-'.join(bucket.split('-')[1:3])
 
     tibanna = Tibanna(env=env)
-    meta = get_metadata(accession, key=tibanna.ff_keys)
+    meta = get_metadata(accession,
+                        key=tibanna.ff_keys,
+                        ff_env=env,
+                        frame='object',
+                        check_queue=True)
     if meta:
         return meta.get('status', '') == 'uploading'
     else:
