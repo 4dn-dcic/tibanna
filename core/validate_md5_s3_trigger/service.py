@@ -57,7 +57,7 @@ def is_status_uploading(event):
     meta = get_metadata(accession,
                         key=tibanna.ff_keys,
                         ff_env=env,
-                        frame='object',
+                        add_on='frame=object',
                         check_queue=True)
     if meta:
         return meta.get('status', '') == 'uploading'

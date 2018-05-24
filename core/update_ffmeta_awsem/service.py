@@ -118,8 +118,7 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
-                                      ff_env=tibanna.env,
-                                      frame='object')
+                                      ff_env=tibanna.env)
 
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
@@ -144,7 +143,7 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
         original_file = ff_utils.get_metadata(accession,
                                               key=ff_key,
                                               ff_env=tibanna.env,
-                                              frame='object',
+                                              add_on='frame=object',
                                               check_queue=True)
         LOG.info("original_file is %s" % original_file)
     except Exception as e:
@@ -201,7 +200,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     original_file = ff_utils.get_metadata(accession,
                                           key=ff_key,
                                           ff_env=tibanna.env,
-                                          frame='object',
+                                          add_on='frame=object',
                                           check_queue=True)
 
     if status.lower() == 'uploaded':
