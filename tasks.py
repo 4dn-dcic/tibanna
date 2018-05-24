@@ -393,13 +393,9 @@ def publish(ctx, test=False):
 
 
 @task
-def run_md5(ctx, env, accession, uuid):
-    tibanna = Tibanna(env=env)
-    meta_data = get_metadata(accession, key=tibanna.ff_keys)
-    file_name = meta_data['upload_key'].split('/')[-1]
-
-    input_json = make_input(env=env, workflow='md5', object_key=file_name, uuid=uuid)
-    return _run_workflow(input_json, accession)
+def run_md5(ctx, env, objectkey, uuid):
+    input_json = make_input(env=env, workflow='md5', object_key=objectkey, uuid=uuid)
+    return _run_workflow(input_json, objectkey)
 
 
 @task
