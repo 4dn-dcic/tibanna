@@ -14,7 +14,7 @@
       "pairsam-filter.cwl"
     ],
     "output_target": {
-      "annotated_bam": "09a5815a-82ff-43ce-a8e9-98530fbbc842/4DNFIXP8U2EP.bam",
+      "annotated_bam": "73ec3093-dd6e-4dac-88d9-0523de1f7e8d/4DNFI93NEJYA.bam",
       "filtered_pairs": "7054061b-e87d-4ca4-9693-d186348f5206/4DNFIDKVQKP7.pairs.gz"
     },
     "cwl_main_filename": "hi-c-processing-bam.cwl",
@@ -66,8 +66,8 @@
         "extension": ".bam",
         "format": "bam",
         "workflow_argument_name": "annotated_bam",
-        "value": "09a5815a-82ff-43ce-a8e9-98530fbbc842",
-        "upload_key": "09a5815a-82ff-43ce-a8e9-98530fbbc842/4DNFIXP8U2EP.bam",
+        "value": "73ec3093-dd6e-4dac-88d9-0523de1f7e8d",
+        "upload_key": "73ec3093-dd6e-4dac-88d9-0523de1f7e8d/4DNFI93NEJYA.bam",
         "type": "Output processed file",
         "extra_files": []
       },
@@ -182,7 +182,7 @@
   "output_files": [
     {
       "workflow_argument_name": "annotated_bam",
-      "uuid": "09a5815a-82ff-43ce-a8e9-98530fbbc842"
+      "uuid": "73ec3093-dd6e-4dac-88d9-0523de1f7e8d"
     },
     {
       "workflow_argument_name": "filtered_pairs",
