@@ -8,14 +8,13 @@ from core.start_run_awsem.service import (
 )
 from ..conftest import valid_env
 from core.utils import Tibanna
-from core import ff_utils
+from dcicutils import ff_utils, tibanna_utils
 import mock
 
 
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler(run_awsem_event_data):
-    # data = service.handler(run_awsem_event_data, '')
     res = handler(run_awsem_event_data, '')
     assert(res)
 
@@ -55,15 +54,14 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=run_awsem_event_data_processed_files.get('s3_keys'),
-                      ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
                       settings=tibanna_settings)
 
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('core.ff_utils.get_metadata', return_value=file_with_type):
+    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type):
         pf, resp = proc_file_for_arg_name(of, 'output_file1', tibanna)
-        assert type(pf) == ff_utils.ProcessedFileMetadata
+        assert type(pf) == tibanna_utils.ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
 
 
@@ -138,8 +136,7 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
@@ -174,8 +171,7 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
@@ -205,10 +201,9 @@ def test_process_input_file_info(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    process_input_file_info(input_file, tibanna.ff_keys, args)
+    process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
     assert len(args['input_files']) == 3
     assert 'secondary_files' in args
 
@@ -238,7 +233,6 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, s3_keys=data.get('s3_keys'),
-                      ff_keys=data.get('ff_keys'),
+    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
-    add_secondary_files_to_args(input_file, tibanna.ff_keys, args)
+    add_secondary_files_to_args(input_file, tibanna.ff_keys, tibanna.env, args)

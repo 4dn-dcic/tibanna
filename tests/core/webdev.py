@@ -1,5 +1,5 @@
 from uuid import uuid4
-from core.ff_utils import generate_rand_accession
+from dcicutils.ff_utils import generate_rand_accession
 from core.utils import run_workflow
 import gzip
 import boto3

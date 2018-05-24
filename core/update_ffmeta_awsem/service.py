@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
-from core import utils, ff_utils, ec2_utils
+from dcicutils import ff_utils, tibanna_utils
+from core import utils, ec2_utils
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
-from core.ff_utils import HIGLASS_SERVER, HIGLASS_USER, HIGLASS_PASS, HIGLASS_BUCKETS
 import requests
 import json
 
@@ -16,15 +16,17 @@ def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def register_to_higlass(export_bucket, export_key, filetype, datatype):
+def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
     payload = {"filepath": export_bucket + "/" + export_key,
                "filetype": filetype, "datatype": datatype}
-    authentication = (HIGLASS_USER, HIGLASS_PASS)
+    higlass_keys = tibanna.s3.get_higlass_key()
+    if not isinstance(higlass_keys, dict):
+        raise Exception("Bad higlass keys found: %s" % higlass_keys)
+    auth = (higlass_keys['key'], higlass_keys['secret'])
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    res = requests.post(HIGLASS_SERVER + '/api/v1/link_tile/',
-                        data=json.dumps(payload), auth=authentication,
-                        headers=headers)
+    res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
+                        data=json.dumps(payload), auth=auth, headers=headers)
     LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
@@ -34,21 +36,20 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     ff_key = tibanna.ff_keys
 
     # register mcool/bigwig with fourfront-higlass
-    if pf.file_format == "mcool" and export.bucket in HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
-                                                         'cooler', 'matrix')
-    if pf.file_format == "bw" and export.bucket in HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, export.key,
-                                                         'bigwig', 'vector')
+    if pf.file_format == "mcool" and export.bucket in ff_utils.HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'cooler', 'matrix')
+    if pf.file_format == "bw" and export.bucket in ff_utils.HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'bigwig', 'vector')
 
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
-    if pf.file_format == 'bg' and export.bucket in HIGLASS_BUCKETS:
+    if pf.file_format == 'bg' and export.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == 'bw':
-                fe_map = ff_utils.get_format_extension_map(ff_key)
-                extra_file_key = ff_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
-                pf.__dict__['higlass_uid'] = register_to_higlass(export.bucket, extra_file_key,
-                                                                 'bigwig', 'vector')
+                fe_map = tibanna_utils.get_format_extension_map(ff_key)
+                extra_file_key = tibanna_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
+                pf.__dict__['higlass_uid'] = register_to_higlass(
+                    tibanna, export.bucket, extra_file_key, 'bigwig', 'vector'
+                )
 
     try:
         pf.status = 'uploaded'
@@ -114,8 +115,11 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
 
-    # schema
-    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json", key=ff_key)
+    # schema. do not need to check_queue
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
+                                      key=ff_key,
+                                      ff_env=tibanna.env,
+                                      frame='object')
 
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
@@ -130,14 +134,18 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     LOG.info("qc meta is %s" % meta)
 
     # post fastq metadata
-    qc_meta = ff_utils.post_to_metadata(meta, quality_metric, key=ff_key)
+    qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
 
     LOG.info("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
-        original_file = ff_utils.get_metadata(accession, key=ff_key)
+        original_file = ff_utils.get_metadata(accession,
+                                              key=ff_key,
+                                              ff_env=tibanna.env,
+                                              frame='object',
+                                              check_queue=True)
         LOG.info("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
@@ -190,7 +198,11 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # get metadata about original input file
     accession = wf_file.runner.inputfile_accessions['input_file']
-    original_file = ff_utils.get_metadata(accession, key=ff_key)
+    original_file = ff_utils.get_metadata(accession,
+                                          key=ff_key,
+                                          ff_env=tibanna.env,
+                                          frame='object',
+                                          check_queue=True)
 
     if status.lower() == 'uploaded':
         md5_array = wf_file.read().split('\n')
@@ -257,10 +269,12 @@ def real_handler(event, context):
     # get data
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = utils.Tibanna(**tibanna_settings)
-    # sbg = sbg_utils.create_sbg_workflow(token=tibanna.sbg_keys, **event.get('workflow'))
-    ff_meta = ff_utils.create_ffmeta_awsem(app_name=event.get('ff_meta').get('awsem_app_name'), **event.get('ff_meta'))
-    pf_meta = [ff_utils.ProcessedFileMetadata(**_) for _ in event.get('pf_meta')]
+    tibanna = utils.Tibanna(tibanna_settings['env'], settings=tibanna_settings)
+    ff_meta = tibanna_utils.create_ffmeta_awsem(
+        app_name=event.get('ff_meta').get('awsem_app_name'),
+        **event.get('ff_meta')
+    )
+    pf_meta = [tibanna_utils.ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized
     patch_meta = False
