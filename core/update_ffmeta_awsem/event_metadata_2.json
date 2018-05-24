@@ -66,8 +66,8 @@
         "extension": ".bam",
         "format": "bam",
         "workflow_argument_name": "annotated_bam",
-        "value": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45",
-        "upload_key": "68f38e45-8c66-41e2-99ab-b0b2fcd20d45/4DNFI9H51IRL.bam",
+        "value": "09a5815a-82ff-43ce-a8e9-98530fbbc842",
+        "upload_key": "09a5815a-82ff-43ce-a8e9-98530fbbc842/4DNFIXP8U2EP.bam",
         "type": "Output processed file",
         "extra_files": []
       },

@@ -82,17 +82,19 @@ def run_task_awsem_pseudo_workflow_event_data(ff_keys):
 
 @pytest.fixture(scope='session')
 def run_awsem_event_data_secondary_files(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event2.json')
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_hicprocessingpartb.json')
 
 
 @pytest.fixture(scope='session')
 def run_awsem_event_data_processed_files(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event3.json')
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
+                              event_file='event_hicprocessingbam_customfield_wArgname.json')
 
 
 @pytest.fixture(scope='session')
 def run_awsem_event_data_processed_files2(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event4.json')
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
+                              event_file='event_hicprocessingbam_customfield_wALL.json')
 
 
 @pytest.fixture(scope='session')
