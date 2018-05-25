@@ -57,13 +57,13 @@ def get_source_experiment(input_file_uuid, ff_keys, ff_env):
         infile_meta = get_metadata(inf_uuid,
                                    key=ff_keys,
                                    ff_env=ff_env,
-                                   frame='object')
+                                   add_on='frame=object')
         if infile_meta.get('experiments'):
             for exp in infile_meta.get('experiments'):
                 exp_obj = get_metadata(exp,
                                        key=ff_keys,
                                        ff_env=ff_env,
-                                       frame='raw')
+                                       add_on='frame=raw')
                 pf_source_experiments_set.add(exp_obj['uuid'])
         if infile_meta.get('source_experiments'):
             # this field is an array of strings, not linkTo's
