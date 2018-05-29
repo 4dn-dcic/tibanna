@@ -7,4 +7,4 @@ submit4dn==1.0.2
 invoke==0.18.1
 # Syntax checking
 flake8==2.4.1
-dcicutils>=0.2.1
+dcicutils>=0.2.2
