@@ -201,9 +201,6 @@ class ProcessedFileMetadata(object):
 
 
 def aslist(x):
-    """
-    From tibanna
-    """
     if isinstance(x, list):
         return x
     else:
@@ -211,28 +208,18 @@ def aslist(x):
 
 
 def ensure_list(val):
-    """
-    From tibanna
-    """
     if isinstance(val, (list, tuple)):
         return val
     return [val]
 
 
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
-    """
-    From tibanna
-    """
     infile_extension = fe_map.get(infile_format)
     extra_file_extension = fe_map.get(extra_file_format)
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
 def get_format_extension_map(ff_keys):
-    """
-    get format-extension map
-    From tibanna
-    """
     try:
         fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
         fe_map = fp_schema.get('file_format_file_extension')
