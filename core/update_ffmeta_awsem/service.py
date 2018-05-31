@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from dcicutils import ff_utils, tibanna_utils
+from dcicutils import ff_utils
 from core import utils, ec2_utils
 import boto3
 from collections import defaultdict
@@ -45,8 +45,8 @@ def update_processed_file_metadata(status, pf, tibanna, export):
     if pf.file_format == 'bg' and export.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == 'bw':
-                fe_map = tibanna_utils.get_format_extension_map(ff_key)
-                extra_file_key = tibanna_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
+                fe_map = utils.get_format_extension_map(ff_key)
+                extra_file_key = utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(
                     tibanna, export.bucket, extra_file_key, 'bigwig', 'vector'
                 )
@@ -269,11 +269,11 @@ def real_handler(event, context):
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
     tibanna = utils.Tibanna(tibanna_settings['env'], settings=tibanna_settings)
-    ff_meta = tibanna_utils.create_ffmeta_awsem(
+    ff_meta = utils.create_ffmeta_awsem(
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
     )
-    pf_meta = [tibanna_utils.ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
+    pf_meta = [utils.ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized
     patch_meta = False

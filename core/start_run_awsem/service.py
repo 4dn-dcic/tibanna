@@ -2,12 +2,19 @@
 import logging
 # import json
 import boto3
-from dcicutils import ff_utils, tibanna_utils
+from dcicutils import ff_utils
 from core.utils import (
     Tibanna,
     powerup,
     TibannaStartException,
-    merge_source_experiments
+    merge_source_experiments,
+    ensure_list,
+    create_ffmeta_awsem,
+    aslist,
+    ProcessedFileMetadata,
+    get_format_extension_map,
+    ProcessedFileMetadata,
+    get_extra_file_key
 )
 
 LOG = logging.getLogger(__name__)
@@ -76,7 +83,7 @@ def real_handler(event, context):
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
-        for idx, uuid in enumerate(tibanna_utils.ensure_list(input_file['uuid'])):
+        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
             input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
                                 'value': uuid, 'ordinal': idx + 1})
     LOG.info("input_files is %s" % input_files)
@@ -98,7 +105,7 @@ def real_handler(event, context):
                                                    user_supplied_output_files=event.get('output_files'))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
-    ff_meta = tibanna_utils.create_ffmeta_awsem(
+    ff_meta = create_ffmeta_awsem(
         workflow_uuid, app_name, input_files, tag=tag,
         run_url=tibanna.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
@@ -176,11 +183,11 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
         raise Exception("args must contain key 'input_files'")
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
-    inf_uuids = tibanna_utils.aslist(input_file['uuid'])
+    inf_uuids = aslist(input_file['uuid'])
     argname = input_file['workflow_argument_name']
     extra_file_keys = []
     inf_object_key = args['input_files'][argname]['object_key']
-    inf_keys = tibanna_utils.aslist(inf_object_key)
+    inf_keys = aslist(inf_object_key)
     fe_map = None
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid,
@@ -191,10 +198,10 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]
             if not fe_map:
-                fe_map = tibanna_utils.get_format_extension_map(ff_keys)
+                fe_map = get_format_extension_map(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
                 extra_file_format = extra_file.get('file_format')
-                extra_file_key = tibanna_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+                extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
 
     if len(extra_file_keys) > 0:
@@ -214,7 +221,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
-        return tibanna_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
+        return ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
                                                        tibanna.env, return_data=True)
     else:
         LOG.info("no output_files found in input_json matching arg_name")
@@ -256,7 +263,7 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                     if 'argument_format' not in arg:
                         raise Exception("argument format for processed file must be provided")
                     if not fe_map:
-                        fe_map = tibanna_utils.get_format_extension_map(tibanna.ff_keys)
+                        fe_map = get_format_extension_map(tibanna.ff_keys)
                     # These are not processed files but report or QC files.
                     of['format'] = arg.get('argument_format')
                     of['extension'] = fe_map.get(arg.get('argument_format'))
@@ -272,7 +279,7 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                             pf_other_fields.update(custom_fields[argname])
                         if 'ALL' in custom_fields:
                             pf_other_fields.update(custom_fields['ALL'])
-                    pf = tibanna_utils.ProcessedFileMetadata(
+                    pf = ProcessedFileMetadata(
                         file_format=arg.get('argument_format'),
                         extra_files=extra_files,
                         source_experiments=pf_source_experiments,
