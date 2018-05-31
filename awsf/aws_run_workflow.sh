@@ -4,7 +4,7 @@ export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for
 export JSON_BUCKET_NAME=$3  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
 export LOGBUCKET=$4  # bucket for sending log file
 export SCRIPTS_URL=$5  # Tibanna repo url (e.g. https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)
-export PASSWORD=$6  # Password for ssh connection for user ec2-user
+export PASSWORD=$6  # Password for ssh connection for user ubuntu
 export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
@@ -48,23 +48,23 @@ send_log_regularly(){
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
 
-### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
+### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
 LOGFILE=$LOGFILE1
-cd /home/ec2-user/
+cd /home/ubuntu/
 touch $LOGFILE 
 exl date  ## start logging
 
 ### sshd configure for password recognition
--echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user
+-echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ubuntu
 -sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
--exl service sshd restart
+-exl service ssh restart
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
-  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ec2-user
+  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
   cat /etc/ssh/sshd_config | sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
   mv tmpp /etc/ssh/sshd_config
-  exl service sshd restart
+  exl service ssh restart
 fi
 
 
@@ -75,7 +75,7 @@ exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chown -R ec2-user .
+exl chown -R ubuntu .
 exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
@@ -86,11 +86,9 @@ exl lsblk $TMPLOGFILE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
-exl chown -R ec2-user $EBS_DIR
+exl chown -R ubuntu $EBS_DIR
 exl chmod -R +x $EBS_DIR
 
-### restart docker so the mounting can take effect
-exl service docker restart
 
 ### create subdirectories under the mounted ebs directory and move log file into that output directory
 exl mkdir -p $LOCAL_OUTDIR
@@ -123,27 +121,13 @@ exl ls -lh /
 exl ls -lhR $EBS_DIR
 send_log
 
-### activate cwl-runner environment
-exl source /home/ec2-user/venv/cwl/bin/activate
-#exl source /home/ec2-user/venv/toil/bin/activate  # use toil instaed
-
 ### run command
 cwd0=$(pwd)
 cd $LOCAL_CWLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
-#pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
-#yum install -y git gcc
-#git clone https://github.com/SooLee/cwltool
-#cd cwltool
-#pip install .
-#cd ..
 send_log_regularly &
-#exl cwltool --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 alias cwl-runner=cwltool
-#exlj cwl-runner --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
 exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
-#exl cwl-runner $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
-deactivate
 cd $cwd0
 send_log 
 
