@@ -13,7 +13,6 @@ from core.utils import (
     aslist,
     ProcessedFileMetadata,
     get_format_extension_map,
-    ProcessedFileMetadata,
     get_extra_file_key
 )
 
@@ -222,7 +221,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
         return ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
-                                                       tibanna.env, return_data=True)
+                                         tibanna.env, return_data=True)
     else:
         LOG.info("no output_files found in input_json matching arg_name")
         LOG.info("output_files: %s" % str(output_files))

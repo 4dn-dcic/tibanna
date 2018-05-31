@@ -184,10 +184,10 @@ class ProcessedFileMetadata(object):
     @classmethod
     def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
         data = get_metadata(uuid,
-                                     key=key,
-                                     ff_env=ff_env,
-                                     add_on='frame=object',
-                                     check_queue=check_queue)
+                            key=key,
+                            ff_env=ff_env,
+                            add_on='frame=object',
+                            check_queue=check_queue)
         if type(data) is not dict:
             raise Exception("unable to find object with unique key of %s" % uuid)
         if 'FileProcessed' not in data.get('@type', {}):
