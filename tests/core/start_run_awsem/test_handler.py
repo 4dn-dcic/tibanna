@@ -59,7 +59,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
 
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type):
+    with mock.patch('core.utils.get_metadata', return_value=file_with_type):
         pf, resp = proc_file_for_arg_name(of, 'output_file1', tibanna)
         assert type(pf) == ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
