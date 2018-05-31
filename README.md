@@ -151,6 +151,22 @@ invoke kill_all [--workflow=<stepfunctionname>]
 * The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
 
 
+## CWL versions
+* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested using `test_json/awsem_bwa.runonly.json`
+* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested using `test_json/awsem_bwa.runonly.v1.json`
+
+## Webdev testing for Pony
+```
+test_json/awsem_md5.json  
+test_json/awsem_fastqc.json
+test_json/awsem_bwa.json
+test_json/awsem_pairsqc.json
+test_json/awsem_hicpairs_easy.json
+test_json/awsem_hic_processing_bam-2.pony.json
+test_json/awsem_repliseq_parta-pony.json
+```
+
+
 ## Directory Structure
 
 ## core
