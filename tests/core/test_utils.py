@@ -1,9 +1,11 @@
-from dcicutils import tibanna_utils
 from core.utils import (
     Tibanna,
     powerup,
     StillRunningException,
-    AWSEMJobErrorException
+    AWSEMJobErrorException,
+    WorkflowRunMetadata,
+    ensure_list,
+
 )
 import pytest
 from conftest import valid_env
@@ -160,7 +162,7 @@ def test_unzip_s3_to_s3(s3_utils):
 def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5):
     meta = update_ffmeta_event_data_newmd5['ff_meta'].copy()
     meta['app_name'] = 'md5'
-    ff_wfr = tibanna_utils.WorkflowRunMetadata(**meta)
+    ff_wfr = WorkflowRunMetadata(**meta)
     assert ff_wfr
 
 
@@ -173,10 +175,10 @@ def test_tibanna():
 
 
 def test_ensure_list():
-    assert tibanna_utils.ensure_list(5) == [5]
-    assert tibanna_utils.ensure_list('hello') == ['hello']
-    assert tibanna_utils.ensure_list(['hello']) == ['hello']
-    assert tibanna_utils.ensure_list({'a': 'b'}) == [{'a': 'b'}]
+    assert ensure_list(5) == [5]
+    assert ensure_list('hello') == ['hello']
+    assert ensure_list(['hello']) == ['hello']
+    assert ensure_list({'a': 'b'}) == [{'a': 'b'}]
 
 
 @powerup("wrapped_fun", mock.Mock(side_effect=StillRunningException("metadata")))
