@@ -159,7 +159,7 @@ invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.
 * v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested as below.
 ```
 invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
-``
+```
 * The AMI ID and script directory is specified inside the input json (`config`).
 
 ## Webdev testing for Pony
