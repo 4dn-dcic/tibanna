@@ -160,7 +160,7 @@ invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.
 ```
 invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
 ```
-* The AMI ID and script directory is specified inside the input json (`config`).
+* The AMI ID and script directory are specified inside the input json (`config`).
 
 ## Webdev testing for Pony
 ```
