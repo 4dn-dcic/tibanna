@@ -152,8 +152,15 @@ invoke kill_all [--workflow=<stepfunctionname>]
 
 
 ## CWL versions
-* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested using `test_json/awsem_bwa.runonly.json`
-* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested using `test_json/awsem_bwa.runonly.v1.json`
+* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested as below:
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.json`
+```
+* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested as below.
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
+``
+* The AMI ID and script directory is specified inside the input json (`config`).
 
 ## Webdev testing for Pony
 ```
