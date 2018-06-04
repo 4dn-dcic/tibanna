@@ -249,8 +249,6 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
             if (arg.get('argument_type') in ['Output processed file',
                                              'Output report file',
                                              'Output QC file']):
-                print("Processed file")
-                LOG.info("Processed file")
                 of = dict()
                 argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
                 of['type'] = arg.get('argument_type')
@@ -266,53 +264,56 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                           % (str(pf.__dict__), str(resp)))
                     LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
                              % (str(pf.__dict__), str(resp)))
+                    pf_meta.append(pf)
                 else:
                     print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
                           % (str(pf), str(resp)))
                     LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
                              % (str(pf), str(resp)))
                 if not resp:  # if it wasn't supplied as output we have to create a new one
-                    print("creating new processedfile")
-                    LOG.info("creating new processedfile")
                     assert user_supplied_output_files is None
-                    if 'argument_format' not in arg:
-                        raise Exception("argument format for processed file must be provided")
-                    if not fe_map:
-                        fe_map = get_format_extension_map(tibanna.ff_keys)
-                    # These are not processed files but report or QC files.
-                    of['format'] = arg.get('argument_format')
-                    of['extension'] = fe_map.get(arg.get('argument_format'))
-                    if 'secondary_file_formats' in arg:
-                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                        of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
-                        extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
-                    else:
-                        extra_files = None
-                    pf_other_fields = dict()
-                    if custom_fields:
-                        if argname in custom_fields:
-                            pf_other_fields.update(custom_fields[argname])
-                        if 'ALL' in custom_fields:
-                            pf_other_fields.update(custom_fields['ALL'])
-                    pf = ProcessedFileMetadata(
-                        file_format=arg.get('argument_format'),
-                        extra_files=extra_files,
-                        source_experiments=pf_source_experiments,
-                        other_fields=pf_other_fields
-                    )
-                    try:
-                        # actually post processed file metadata here
-                        resp = pf.post(key=tibanna.ff_keys)
-                        resp = resp.get('@graph')[0]
-                    except Exception as e:
-                        LOG.error("Failed to post Processed file metadata. %s\n" % e)
-                        LOG.error("resp" + str(resp) + "\n")
-                        raise e
-                of['upload_key'] = resp.get('upload_key')
-                of['value'] = resp.get('uuid')
-                of['extra_files'] = resp.get('extra_files')
+                    if of['type'] == 'Output processed file':
+                        print("creating new processedfile")
+                        LOG.info("creating new processedfile")
+                        if 'argument_format' not in arg:
+                            raise Exception("argument format for processed file must be provided")
+                        if not fe_map:
+                            fe_map = get_format_extension_map(tibanna.ff_keys)
+                        # These are not processed files but report or QC files.
+                        of['format'] = arg.get('argument_format')
+                        of['extension'] = fe_map.get(arg.get('argument_format'))
+                        if 'secondary_file_formats' in arg:
+                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
+                            extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
+                        else:
+                            extra_files = None
+                        pf_other_fields = dict()
+                        if custom_fields:
+                            if argname in custom_fields:
+                                pf_other_fields.update(custom_fields[argname])
+                            if 'ALL' in custom_fields:
+                                pf_other_fields.update(custom_fields['ALL'])
+                        pf = ProcessedFileMetadata(
+                            file_format=arg.get('argument_format'),
+                            extra_files=extra_files,
+                            source_experiments=pf_source_experiments,
+                            other_fields=pf_other_fields
+                        )
+                        try:
+                            # actually post processed file metadata here
+                            resp = pf.post(key=tibanna.ff_keys)
+                            resp = resp.get('@graph')[0]
+                        except Exception as e:
+                            LOG.error("Failed to post Processed file metadata. %s\n" % e)
+                            LOG.error("resp" + str(resp) + "\n")
+                            raise e
+                        pf_meta.append(pf)
+                if resp:
+                    of['upload_key'] = resp.get('upload_key')
+                    of['value'] = resp.get('uuid')
+                    of['extra_files'] = resp.get('extra_files')
                 output_files.append(of)
-                pf_meta.append(pf)
 
     except Exception as e:
         LOG.error("output_files = " + str(output_files) + "\n")
