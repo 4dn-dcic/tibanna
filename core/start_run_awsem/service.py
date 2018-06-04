@@ -68,12 +68,14 @@ def real_handler(event, context):
                                           key=tibanna.ff_keys,
                                           ff_env=tibanna.env,
                                           add_on='frame=object')
+    print("workflow info  %s" % workflow_info)
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+        print(workflow_info.get(k))
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
     if not args['cwl_child_filenames']:
@@ -85,6 +87,7 @@ def real_handler(event, context):
         for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
             input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
                                 'value': uuid, 'ordinal': idx + 1})
+    print("input_files is %s" % input_files)
     LOG.info("input_files is %s" % input_files)
 
     # input file args for awsem
@@ -102,6 +105,7 @@ def real_handler(event, context):
                                                    pf_source_experiments,
                                                    custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
+    print("output files= %s" % str(output_files))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = create_ffmeta_awsem(
@@ -111,6 +115,7 @@ def real_handler(event, context):
         extra_meta=event.get('wfr_meta'),
     )
 
+    print("ff_meta is %s" % ff_meta.__dict__)
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
@@ -236,10 +241,16 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
     pf_meta = []
     fe_map = None
     try:
+        print("Inside handle_processed_files")
+        LOG.info("Inside handle_processed_files")
         for arg in workflow_info.get('arguments', []):
+            print("processing arguments %s" % str(arg))
+            LOG.info("processing arguments %s" % str(arg))
             if (arg.get('argument_type') in ['Output processed file',
                                              'Output report file',
                                              'Output QC file']):
+                print("Processed file")
+                LOG.info("Processed file")
                 of = dict()
                 argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
                 of['type'] = arg.get('argument_type')
@@ -251,12 +262,17 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                                                   arg.get('workflow_argument_name'),
                                                   tibanna)
                 if pf:
+                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                          % (str(pf.__dict__), str(resp)))
                     LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
                              % (str(pf.__dict__), str(resp)))
                 else:
+                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                          % (str(pf), str(resp)))
                     LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
                              % (str(pf), str(resp)))
                 if not resp:  # if it wasn't supplied as output we have to create a new one
+                    print("creating new processedfile")
                     LOG.info("creating new processedfile")
                     assert user_supplied_output_files is None
                     if 'argument_format' not in arg:
