@@ -148,6 +148,9 @@ class WorkflowRunMetadata(object):
                 raise Exception("cannot determine workflow schema type from the run platform: should be AWSEM.")
         return post_metadata(self.as_dict(), type_name, key=key)
 
+    def patch(self, key, type_name=None):
+        return patch_metadata(self.as_dict(), key=key)
+
 
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
