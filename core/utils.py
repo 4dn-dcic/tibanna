@@ -7,6 +7,7 @@ from uuid import uuid4
 from dcicutils.ff_utils import (
     get_metadata,
     post_metadata,
+    patch_metadata,
     generate_rand_accession
 )
 from dcicutils.submit_utils import FdnConnectionException
@@ -183,6 +184,9 @@ class ProcessedFileMetadata(object):
 
     def post(self, key):
         return post_metadata(self.as_dict(), "file_processed", key=key, add_on='force_md5')
+
+    def patch(self, key):
+        return patch_metadata(self.as_dict(), key=key, add_on='force_md5')
 
     @classmethod
     def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
