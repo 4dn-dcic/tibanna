@@ -67,6 +67,7 @@
   "pf_meta": [],
   "parameters": {},
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 10,
     "password": "",
     "ebs_type": "io1",
@@ -80,10 +81,10 @@
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "fastqc-0-11-4-1",
     "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+
     "key_name": "4dn-encode",
     "launch_instance": true,
-    "ami_id": "ami-cfb14bb5",
+
     "log_bucket": "tibanna-output"
   },
   "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
