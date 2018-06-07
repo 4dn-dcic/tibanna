@@ -35,7 +35,7 @@ NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/ne
 AMI_ID_CWL_V1 = 'ami-31caa14e'
 AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
 TIBANNA_REPO_NAME = '4dn-dcic/tibanna'
-TIBANNA_REPO_BRANCH' = 'master'
+TIBANNA_REPO_BRANCH = 'master'
 
 
 def get_random_line_in_gist(url):
