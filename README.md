@@ -170,6 +170,10 @@ test_json/awsem_hicpairs_easy.json
 test_json/awsem_hic_processing_bam-2.pony.json
 test_json/awsem_repliseq_parta-pony.json
 ```
+* note: these files are listed in `webdevtestlist`. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace `tibanna_pony_uno` with your step function mame).
+```
+cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
+```
 
 
 ## Directory Structure
