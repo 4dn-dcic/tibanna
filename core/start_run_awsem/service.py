@@ -2,7 +2,6 @@
 import logging
 # import json
 import boto3
-import os
 from dcicutils import ff_utils
 from core.utils import (
     Tibanna,
@@ -148,7 +147,6 @@ def real_handler(event, context):
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
-
 
     # initialize config parameters as null for benchmarking
     config = event['config']

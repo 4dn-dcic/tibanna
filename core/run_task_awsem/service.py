@@ -2,6 +2,7 @@
 
 from core import ec2_utils as utils
 from core.utils import powerup
+import os
 
 
 def metadata_only(event):
