@@ -1,0 +1,10 @@
+test_json/awsem_partb.json
+test_json/awsem_md5-instance.json
+test_json/awsem_gatk.runonly.json
+test_json/awsem_fastqc-instance2.json
+test_json/awsem_fastqc-instance.json
+test_json/awsem_bwa.runonly-werror.json
+test_json/awsem_bwa-instance3.json
+test_json/awsem_bwa-instance2.json
+test_json/awsem_bwa-instance.json
+test_json/awsem-pairsam-parse-sort.json
