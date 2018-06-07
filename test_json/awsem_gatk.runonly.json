@@ -1,5 +1,6 @@
 {
-    "config" : {
+    "config": {
+    "cwl_version": "draft3",
       "instance_type" : "t2.medium",
       "ebs_size" : 100,
       "ebs_type" : "gp2",

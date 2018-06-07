@@ -155,6 +155,7 @@
     "binsize": 500000
   },
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 0,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",

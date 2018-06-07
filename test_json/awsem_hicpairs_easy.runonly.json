@@ -65,6 +65,7 @@
   },
   "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 100,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",

@@ -1,5 +1,6 @@
 {
-    "config" : {
+    "config": {
+    "cwl_version": "draft3",
       "log_bucket" : "tibanna-output",
       "ebs_type" : "io1",
       "ebs_iops" : 500,

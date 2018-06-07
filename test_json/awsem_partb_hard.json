@@ -1,6 +1,7 @@
 {
     "parameters" :  {"ncores": 16, "min_res": 5000, "binsize": 5000, "maxmem": "900g" },
-    "config" : {
+    "config": {
+    "cwl_version": "draft3",
       "ebs_type" : "io1",
       "ebs_iops" : 5000,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",

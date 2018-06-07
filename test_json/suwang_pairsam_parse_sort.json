@@ -26,6 +26,7 @@
     }
   },
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 0,
     "json_bucket": "suwang",
     "EBS_optimized": "",

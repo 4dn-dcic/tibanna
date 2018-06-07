@@ -26,6 +26,7 @@
     }
   },
   "config": {
+    "cwl_version": "draft3",
     "instance_type": "",
     "EBS_optimized": "",
     "ebs_size": 0,

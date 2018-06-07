@@ -1,6 +1,7 @@
 {
     "parameters" :  {"ncores": 1, "min_res": 5000, "binsize": 5000, "maxmem": "8g" },
-    "config" : {
+    "config": {
+    "cwl_version": "draft3",
       "instance_type" : "t2.2xlarge",
       "ebs_size" : 100,
       "ebs_type" : "io1",
