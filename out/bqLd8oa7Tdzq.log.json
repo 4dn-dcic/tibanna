@@ -1,0 +1,44 @@
+{
+    "dedup_qc_report": {
+        "checksum": "sha1$c9b75e1f6ceafe93a476464a33c4bc79f68d1759", 
+        "basename": "out.rmdup.log.qc_report.zip", 
+        "location": "file:///data1/out/out.rmdup.log.qc_report.zip", 
+        "path": "/data1/out/out.rmdup.log.qc_report.zip", 
+        "class": "File", 
+        "size": 470
+    }, 
+    "filtered_sorted_deduped_bam": {
+        "checksum": "sha1$2f127689d566c12badf1be63aaafd22fa32b8c2c", 
+        "basename": "out.rmdup.bam", 
+        "location": "file:///data1/out/out.rmdup.bam", 
+        "path": "/data1/out/out.rmdup.bam", 
+        "class": "File", 
+        "size": 11061946
+    }, 
+    "count_bg": {
+        "checksum": "sha1$e520dbce9c8351e64b0bc16248886aee2ca83ae5", 
+        "basename": "out.w5000.bedGraph.gz", 
+        "location": "file:///data1/out/out.w5000.bedGraph.gz", 
+        "path": "/data1/out/out.w5000.bedGraph.gz", 
+        "secondaryFiles": [
+            {
+                "checksum": "sha1$213ddf927f049f96ee6a16913b614170d8eee344", 
+                "basename": "out.w5000.bw", 
+                "location": "file:///data1/out/out.w5000.bw", 
+                "path": "/data1/out/out.w5000.bw", 
+                "class": "File", 
+                "size": 3120059
+            }, 
+            {
+                "checksum": "sha1$08ee022f6327d4d47f5bc737c24b64d88578747a", 
+                "basename": "out.w5000.bedGraph.gz.px2", 
+                "location": "file:///data1/out/out.w5000.bedGraph.gz.px2", 
+                "path": "/data1/out/out.w5000.bedGraph.gz.px2", 
+                "class": "File", 
+                "size": 991610
+            }
+        ], 
+        "class": "File", 
+        "size": 2864324
+    }
+}

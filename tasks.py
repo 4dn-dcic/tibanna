@@ -32,6 +32,10 @@ build_dir = os.path.join(docs_dir, '_build')
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
 NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
+AMI_ID_CWL_V1 = 'ami-31caa14e'
+AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
+TIBANNA_REPO_NAME = '4dn-dcic/tibanna'
+TIBANNA_REPO_BRANCH' = 'master'
 
 
 def get_random_line_in_gist(url):
@@ -84,6 +88,10 @@ def env_list(name):
         raise RuntimeError("SECRET should be defined in env")
     envlist = {
         'start_run_awsem': {'SECRET': secret},
+        'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
+                           'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
+                           'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
+                           'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
         'update_ffmeta_awsem': {'SECRET': secret}
     }
     return envlist.get(name, '')

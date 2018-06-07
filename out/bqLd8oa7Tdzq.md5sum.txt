@@ -1,0 +1,5 @@
+b9934e1aa545dec551a2caba78d3e6bd  /data1/out/out.rmdup.bam
+652d421f445d6987700f3b3a453202aa  /data1/out/out.rmdup.log.qc_report.zip
+98dcc13a138f8642d68d0532d1f9193e  /data1/out/out.w5000.bedGraph.gz
+aa8e2848e1f022b197fe31c804de08bf  /data1/out/out.w5000.bedGraph.gz.px2
+f08575a366c14dbc949d35e415151cfd  /data1/out/out.w5000.bw

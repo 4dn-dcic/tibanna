@@ -2,6 +2,7 @@
 import logging
 # import json
 import boto3
+import os
 from dcicutils import ff_utils
 from core.utils import (
     Tibanna,
@@ -81,6 +82,13 @@ def real_handler(event, context):
     if not args['cwl_child_filenames']:
         args['cwl_child_filenames'] = []
 
+    # switch to v1 if available
+    if 'cwl_directory_url_v1' in workflow_info:  # use CWL v1
+        args['cwl_directory_url'] = workflow_info['cwl_directory_url_v1']
+        args['cwl_version'] = 'v1'
+    else:
+        args['cwl_version'] = 'draft3'
+
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
@@ -141,12 +149,15 @@ def real_handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
-    if 'instance_type' not in event['config']:
-        event['config']['instance_type'] = ''
-    if 'EBS_optimized' not in event['config']:
-        event['config']['EBS_optimized'] = ''
-    if 'ebs_size' not in event['config']:
-        event['config']['ebs_size'] = 0
+
+    # initialize config parameters as null for benchmarking
+    config = event['config']
+    if 'instance_type' not in config:
+        config['instance_type'] = ''
+    if 'EBS_optimized' not in config:
+        config['EBS_optimized'] = ''
+    if 'ebs_size' not in config:
+        config['ebs_size'] = 0
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
