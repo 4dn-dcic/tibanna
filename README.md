@@ -164,7 +164,7 @@ invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.
 ```
 test_json/awsem_md5.json  
 test_json/awsem_fastqc.json
-test_json/awsem_bwa.json
+test_json/awsem_bwa_new.json
 test_json/awsem_pairsqc.json
 test_json/awsem_hicpairs_easy.json
 test_json/awsem_hic_processing_bam-2.pony.json
