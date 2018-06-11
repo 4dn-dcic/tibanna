@@ -34,8 +34,8 @@
         "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_workflow-3:generic_b1e46d56-9f70-4a5e-87e2-11f1d1cdaeb7"
     }, 
     "config": {
+    
         "EBS_optimized": false, 
-        "ami_id": "ami-cfb14bb5", 
         "copy_to_s3": true, 
         "ebs_iops": 500, 
         "ebs_size": 20, 

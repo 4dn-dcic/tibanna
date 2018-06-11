@@ -62,6 +62,7 @@
   "jobid": "8fRIlIfwRNDT",
   "pf_meta": [],
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 20,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",
@@ -72,7 +73,7 @@
     "shutdown_min": 30,
     "instance_type": "t2.nano",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "ami_id": "ami-cfb14bb5",
+
     "copy_to_s3": true,
     "job_tag": "md5",
     "userdata_dir": "/tmp/userdata",

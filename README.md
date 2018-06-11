@@ -127,12 +127,10 @@ invoke kill_all [--workflow=<stepfunctionname>]
     "ebs_iops": 500,
     "shutdown_min": 30,
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "ami_id": "ami-cfb14bb5",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "key_name": ""
   },
   "custom_pf_fields": {
@@ -166,11 +164,15 @@ invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.
 ```
 test_json/awsem_md5.json  
 test_json/awsem_fastqc.json
-test_json/awsem_bwa.json
+test_json/awsem_bwa_new.json
 test_json/awsem_pairsqc.json
 test_json/awsem_hicpairs_easy.json
 test_json/awsem_hic_processing_bam-2.pony.json
 test_json/awsem_repliseq_parta-pony.json
+```
+* note: these files are listed in `webdevtestlist`. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace `tibanna_pony_uno` with your step function mame).
+```
+cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
 ```
 
 
