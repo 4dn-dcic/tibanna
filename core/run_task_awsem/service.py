@@ -67,7 +67,7 @@ def handler(event, context):
     cfg['json_dir'] = '/tmp/json'
 
     # AMI and script directory according to cwl version
-    if cfg['cwl_version'] == 'v1':
+    if args['cwl_version'] == 'v1':
         cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
         cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
             os.environ.get('TIBANNA_REPO_NAME') + '/' + \

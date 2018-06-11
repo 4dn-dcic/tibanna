@@ -16,7 +16,7 @@
       }
     ],
     "config": {
-    "cwl_version": "draft3",
+    
       "instance_type": "c4.8xlarge",
       "EBS_optimized": true,
       "ebs_size": 100,

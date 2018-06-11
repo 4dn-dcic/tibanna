@@ -100,6 +100,7 @@
     "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
     "app_version": "dev",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/",
+    "cwl_version": "draft3",
     "input_files": {
       "chrsizes": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
@@ -151,7 +152,7 @@
     }
   ],
   "config": {
-    "cwl_version": "draft3",
+    
     "ebs_size": 100,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",
