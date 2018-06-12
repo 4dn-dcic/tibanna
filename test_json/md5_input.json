@@ -11,4 +11,3 @@
     "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
     "_tibanna": {"env": "fourfront-webprod"}
 }
-

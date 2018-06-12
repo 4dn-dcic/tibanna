@@ -127,12 +127,10 @@ invoke kill_all [--workflow=<stepfunctionname>]
     "ebs_iops": 500,
     "shutdown_min": 30,
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "ami_id": "ami-cfb14bb5",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "key_name": ""
   },
   "custom_pf_fields": {
@@ -149,6 +147,33 @@ invoke kill_all [--workflow=<stepfunctionname>]
 * The 'input_files' field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
 * The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 * The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
+
+
+## CWL versions
+* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested as below:
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.json`
+```
+* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested as below.
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
+```
+* The AMI ID and script directory are specified inside the input json (`config`).
+
+## Webdev testing for Pony
+```
+test_json/awsem_md5.json  
+test_json/awsem_fastqc.json
+test_json/awsem_bwa_new.json
+test_json/awsem_pairsqc.json
+test_json/awsem_hicpairs_easy.json
+test_json/awsem_hic_processing_bam-2.pony.json
+test_json/awsem_repliseq_parta-pony.json
+```
+* note: these files are listed in `webdevtestlist`. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace `tibanna_pony_uno` with your step function mame).
+```
+cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
+```
 
 
 ## Directory Structure

@@ -2,12 +2,18 @@
 import logging
 # import json
 import boto3
-from dcicutils import ff_utils, tibanna_utils
+from dcicutils import ff_utils
 from core.utils import (
     Tibanna,
     powerup,
     TibannaStartException,
-    merge_source_experiments
+    merge_source_experiments,
+    ensure_list,
+    create_ffmeta_awsem,
+    aslist,
+    ProcessedFileMetadata,
+    get_format_extension_map,
+    get_extra_file_key
 )
 
 LOG = logging.getLogger(__name__)
@@ -62,23 +68,33 @@ def real_handler(event, context):
                                           key=tibanna.ff_keys,
                                           ff_env=tibanna.env,
                                           add_on='frame=object')
+    print("workflow info  %s" % workflow_info)
     LOG.info("workflow info  %s" % workflow_info)
     if 'error' in workflow_info.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from workflow_info
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+        print(workflow_info.get(k))
         LOG.info(workflow_info.get(k))
         args[k] = workflow_info.get(k)
     if not args['cwl_child_filenames']:
         args['cwl_child_filenames'] = []
 
+    # switch to v1 if available
+    if 'cwl_directory_url_v1' in workflow_info:  # use CWL v1
+        args['cwl_directory_url'] = workflow_info['cwl_directory_url_v1']
+        args['cwl_version'] = 'v1'
+    else:
+        args['cwl_version'] = 'draft3'
+
     # create the ff_meta output info
     input_files = []
     for input_file in input_file_list:
-        for idx, uuid in enumerate(tibanna_utils.ensure_list(input_file['uuid'])):
+        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
             input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
                                 'value': uuid, 'ordinal': idx + 1})
+    print("input_files is %s" % input_files)
     LOG.info("input_files is %s" % input_files)
 
     # input file args for awsem
@@ -96,15 +112,17 @@ def real_handler(event, context):
                                                    pf_source_experiments,
                                                    custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
+    print("output files= %s" % str(output_files))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
-    ff_meta = tibanna_utils.create_ffmeta_awsem(
+    ff_meta = create_ffmeta_awsem(
         workflow_uuid, app_name, input_files, tag=tag,
         run_url=tibanna.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=event.get('wfr_meta'),
     )
 
+    print("ff_meta is %s" % ff_meta.__dict__)
     LOG.info("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
@@ -130,12 +148,14 @@ def real_handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
-    if 'instance_type' not in event['config']:
-        event['config']['instance_type'] = ''
-    if 'EBS_optimized' not in event['config']:
-        event['config']['EBS_optimized'] = ''
-    if 'ebs_size' not in event['config']:
-        event['config']['ebs_size'] = 0
+    # initialize config parameters as null for benchmarking
+    config = event['config']
+    if 'instance_type' not in config:
+        config['instance_type'] = ''
+    if 'EBS_optimized' not in config:
+        config['EBS_optimized'] = ''
+    if 'ebs_size' not in config:
+        config['ebs_size'] = 0
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
@@ -176,11 +196,11 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
         raise Exception("args must contain key 'input_files'")
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
-    inf_uuids = tibanna_utils.aslist(input_file['uuid'])
+    inf_uuids = aslist(input_file['uuid'])
     argname = input_file['workflow_argument_name']
     extra_file_keys = []
     inf_object_key = args['input_files'][argname]['object_key']
-    inf_keys = tibanna_utils.aslist(inf_object_key)
+    inf_keys = aslist(inf_object_key)
     fe_map = None
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid,
@@ -191,10 +211,10 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]
             if not fe_map:
-                fe_map = tibanna_utils.get_format_extension_map(ff_keys)
+                fe_map = get_format_extension_map(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
                 extra_file_format = extra_file.get('file_format')
-                extra_file_key = tibanna_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+                extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
 
     if len(extra_file_keys) > 0:
@@ -214,8 +234,8 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
-        return tibanna_utils.ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
-                                                       tibanna.env, return_data=True)
+        return ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
+                                         tibanna.env, return_data=True)
     else:
         LOG.info("no output_files found in input_json matching arg_name")
         LOG.info("output_files: %s" % str(output_files))
@@ -230,50 +250,60 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
     pf_meta = []
     fe_map = None
     try:
+        print("Inside handle_processed_files")
+        LOG.info("Inside handle_processed_files")
         for arg in workflow_info.get('arguments', []):
+            print("processing arguments %s" % str(arg))
+            LOG.info("processing arguments %s" % str(arg))
             if (arg.get('argument_type') in ['Output processed file',
                                              'Output report file',
                                              'Output QC file']):
-
                 of = dict()
                 argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
                 of['type'] = arg.get('argument_type')
-                if 'argument_format' in arg:
-                    if not fe_map:
-                        fe_map = tibanna_utils.get_format_extension_map(tibanna.ff_keys)
-                    # These are not processed files but report or QC files.
-                    if 'secondary_file_formats' in arg:
-                        of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                        of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
-                        extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
-                    else:
-                        extra_files = None
 
-                    pf_other_fields = dict()
-                    if custom_fields:
-                        if argname in custom_fields:
-                            pf_other_fields.update(custom_fields[argname])
-                        if 'ALL' in custom_fields:
-                            pf_other_fields.update(custom_fields['ALL'])
-
-                    # see if user supplied the output file already
-                    # this is often the case for pseudo workflow runs (run externally)
-                    # TODO move this down next to post of pf
-                    pf, resp = proc_file_for_arg_name(user_supplied_output_files,
-                                                      arg.get('workflow_argument_name'),
-                                                      tibanna)
-                    if pf:
-                        LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                                 % (str(pf.__dict__), str(resp)))
-                    else:
-                        LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                                 % (str(pf), str(resp)))
-
-                    # if it wasn't supplied as output we have to create a new one
-                    if not resp:
+                # see if user supplied the output file already
+                # this is often the case for pseudo workflow runs (run externally)
+                # TODO move this down next to post of pf
+                pf, resp = proc_file_for_arg_name(user_supplied_output_files,
+                                                  arg.get('workflow_argument_name'),
+                                                  tibanna)
+                if pf:
+                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                          % (str(pf.__dict__), str(resp)))
+                    LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                             % (str(pf.__dict__), str(resp)))
+                    pf_meta.append(pf)
+                else:
+                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                          % (str(pf), str(resp)))
+                    LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                             % (str(pf), str(resp)))
+                if not resp:  # if it wasn't supplied as output we have to create a new one
+                    assert user_supplied_output_files is None
+                    if of['type'] == 'Output processed file':
+                        print("creating new processedfile")
                         LOG.info("creating new processedfile")
-                        assert user_supplied_output_files is None
-                        pf = tibanna_utils.ProcessedFileMetadata(
+                        if 'argument_format' not in arg:
+                            raise Exception("argument format for processed file must be provided")
+                        if not fe_map:
+                            fe_map = get_format_extension_map(tibanna.ff_keys)
+                        # These are not processed files but report or QC files.
+                        of['format'] = arg.get('argument_format')
+                        of['extension'] = fe_map.get(arg.get('argument_format'))
+                        if 'secondary_file_formats' in arg:
+                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
+                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
+                            extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
+                        else:
+                            extra_files = None
+                        pf_other_fields = dict()
+                        if custom_fields:
+                            if argname in custom_fields:
+                                pf_other_fields.update(custom_fields[argname])
+                            if 'ALL' in custom_fields:
+                                pf_other_fields.update(custom_fields['ALL'])
+                        pf = ProcessedFileMetadata(
                             file_format=arg.get('argument_format'),
                             extra_files=extra_files,
                             source_experiments=pf_source_experiments,
@@ -283,17 +313,15 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                             # actually post processed file metadata here
                             resp = pf.post(key=tibanna.ff_keys)
                             resp = resp.get('@graph')[0]
-
                         except Exception as e:
                             LOG.error("Failed to post Processed file metadata. %s\n" % e)
                             LOG.error("resp" + str(resp) + "\n")
                             raise e
+                        pf_meta.append(pf)
+                if resp:
                     of['upload_key'] = resp.get('upload_key')
                     of['value'] = resp.get('uuid')
                     of['extra_files'] = resp.get('extra_files')
-                    of['format'] = arg.get('argument_format')
-                    of['extension'] = fe_map.get(arg.get('argument_format'))
-                    pf_meta.append(pf)
                 output_files.append(of)
 
     except Exception as e:

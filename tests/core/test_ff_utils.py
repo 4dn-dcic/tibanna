@@ -1,8 +1,13 @@
-from dcicutils import tibanna_utils
 import pytest
 import mock
 from .conftest import valid_env
-from core.utils import Tibanna, merge_source_experiments
+from core.utils import (
+    Tibanna,
+    merge_source_experiments,
+    ProcessedFileMetadata,
+    get_format_extension_map,
+    get_extra_file_key
+)
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -20,9 +25,9 @@ def proc_file_in_webdev():
 
 def test_create_ProcessedFileMetadata_from_get_error_if_no_at_type(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
-    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=proc_file_in_webdev):
+    with mock.patch('core.utils.get_metadata', return_value=proc_file_in_webdev):
         with pytest.raises(Exception) as expinfo:
-            tibanna_utils.ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
+            ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert "only load ProcessedFiles" in str(expinfo.value)
 
 
@@ -30,10 +35,10 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('dcicutils.ff_utils.get_metadata', return_value=file_with_type) as ff:
-        pf = tibanna_utils.ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
+    with mock.patch('core.utils.get_metadata', return_value=file_with_type) as ff:
+        pf = ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert pf.__dict__ == proc_file_in_webdev
-        assert type(pf) is tibanna_utils.ProcessedFileMetadata
+        assert type(pf) is ProcessedFileMetadata
         ff.was_called_once()
 
 
@@ -47,7 +52,7 @@ def test_get_format_extension_map(run_awsem_event_data):
     tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
-    fe_map = tibanna_utils.get_format_extension_map(tibanna.ff_keys)
+    fe_map = get_format_extension_map(tibanna.ff_keys)
     assert(fe_map)
     assert 'pairs' in fe_map.keys()
 
@@ -78,5 +83,5 @@ def test_get_extra_file_key():
     infile_key = 'hahaha/lalala.bedGraph.gz'
     infile_format = 'bg'
     extra_file_format = 'bw'
-    extra_file_key = tibanna_utils.get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+    extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
     assert extra_file_key == 'hahaha/lalala.bw'

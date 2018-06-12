@@ -93,6 +93,7 @@
     "sample_name": "4DNFI1ZLO9D7"
   },
   "config": {
+    "cwl_version": "draft3",
     "ebs_size": 13,
     "password": "dragonfly",
     "ebs_type": "io1",
@@ -106,10 +107,10 @@
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "pairsqc-single",
     "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+
     "key_name": "4dn-encode",
     "launch_instance": true,
-    "ami_id": "ami-cfb14bb5",
+
     "log_bucket": "tibanna-output"
   },
   "workflow_uuid": "ae3a87cb-3fa2-469e-97c7-540fc2d0a117",

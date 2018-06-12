@@ -11,14 +11,15 @@
   "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
   "tag": "0.2.5",
   "config": {
-    "ami_id": "ami-cfb14bb5",
+    "cwl_version": "draft3",
+
     "json_bucket": "4dn-aws-pipeline-run-json",
     "ebs_iops": 500,
     "shutdown_min": "30",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "ebs_type": "io1",
     "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+
     "key_name": "4dn-encode",
     "launch_instance": true,
     "password": "hahaha",

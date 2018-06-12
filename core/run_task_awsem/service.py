@@ -2,6 +2,7 @@
 
 from core import ec2_utils as utils
 from core.utils import powerup
+import os
 
 
 def metadata_only(event):
@@ -18,8 +19,6 @@ def handler(event, context):
     ebs_type: EBS storage type (available values: gp2, io1, st1, sc1, standard (default: io1)
     ebs_iops: EBS storage IOPS
     s3_access_arn: IAM instance profile for S3 access
-    ami_id: ID of AMI used for the instance - it should have docker daemon and
-            cwl-runner (either toil or cwltools) installed
     password: password for ssh connection for user ec2-user
     EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
@@ -33,6 +32,7 @@ def handler(event, context):
     app_name: name of the app
     app_version: version of the app
     cwl_directory_url: the url and subdirectories for the main cwl file
+    cwl_version: the version of cwl (either 'draft3' or 'v1')
     input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
     input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
@@ -43,8 +43,7 @@ def handler(event, context):
     # read default variables in config
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["s3_access_arn", "EBS_optimized", "shutdown_min", "copy_to_s3",
-                   "ami_id", "instance_type", "ebs_size", "launch_instance",
-                   "script_url", "key_name",
+                   "instance_type", "ebs_size", "launch_instance", "key_name",
                    "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
@@ -66,6 +65,18 @@ def handler(event, context):
 
     # local directory in which the json file will be first created.
     cfg['json_dir'] = '/tmp/json'
+
+    # AMI and script directory according to cwl version
+    if args['cwl_version'] == 'v1':
+        cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
+        cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
+            os.environ.get('TIBANNA_REPO_NAME') + '/' + \
+            os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf_cwl_v1/'
+    else:
+        cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
+        cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
+            os.environ.get('TIBANNA_REPO_NAME') + '/' + \
+            os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf_cwl_draft3/'
 
     utils.update_config(cfg, args['app_name'],
                         args['input_files'], args['input_parameters'])
