@@ -1,7 +1,6 @@
 {
     "parameters" :  { "enzyme": "6", "sample_name": "4DNFI1ZLO9D7", "max_distance": 8.2 },
     "config": {
-    
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
@@ -22,8 +21,8 @@
       {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
-        "uuid": "817f3faa-0573-45c0-8230-02ec19de6544",
-        "object_key": "4DNFI1ZLO9D7.pairs.gz"
+        "uuid": "6c4f4a12-2597-49a1-84bc-f4510ba94fa0",
+        "object_key": "4DNFIGKYRZBT.pairs.gz"
       },
       {
         "object_key": "4DNFI823LSII.chrom.sizes",
