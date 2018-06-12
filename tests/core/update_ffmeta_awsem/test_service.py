@@ -175,10 +175,10 @@ def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
 @pytest.mark.webtest
 def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
     update_ffmeta_metaonly_data2.update(tibanna_env)
-    # with mock.patch('core.ff_utils.post_to_metadata'):
-    #    with mock.patch('requests.post') as mock_request:
-    ret = handler(update_ffmeta_metaonly_data2, None)
-    # mock_request.assert_called_once()
+    with mock.patch('core.utils.patch_metadata') as mock_request:
+        ret = handler(update_ffmeta_metaonly_data2, None)
+        # once for patch pf once for workflow run
+        mock_request.call_count == 2
     assert ret
 
 

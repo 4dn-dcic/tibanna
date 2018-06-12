@@ -1,7 +1,7 @@
 import pytest
 from core.run_workflow import service
 from ..conftest import valid_env
-import json
+import mock
 
 
 @pytest.fixture
@@ -71,5 +71,8 @@ def run_workflow_input():
 @valid_env
 @pytest.mark.webtest
 def test_run_workflow(run_workflow_input):
-    res = service.handler(run_workflow_input, '')
-    assert(json.dumps(res))
+    with mock.patch('core.utils.run_workflow') as mock_run:
+        res = service.handler(run_workflow_input, '')
+        env = run_workflow_input['env_name']
+        mock_run.assert_called_once_with(run_workflow_input, env=env)
+        assert(res)
