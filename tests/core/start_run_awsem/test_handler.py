@@ -68,6 +68,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
 @pytest.mark.webtest
 def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
     res = handler(run_task_awsem_pseudo_workflow_event_data, '')
+    import pdb; pdb.set_trace()
     assert(res)
     # check pf_meta
     user_supplied_of = [of['uuid'] for of in
