@@ -51,6 +51,7 @@
     "env": "fourfront-webdev"
   },
   "config": {
+    
     "ebs_size": 100,
     "ebs_type": "io1",
     "json_bucket": "4dn-aws-pipeline-run-json",
@@ -59,9 +60,7 @@
     "shutdown_min": "120",
     "instance_type": "t2.2xlarge",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "ami_id": "ami-cfb14bb5",
     "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "launch_instance": true,
     "password": "hahaha",
     "log_bucket": "tibanna-output",

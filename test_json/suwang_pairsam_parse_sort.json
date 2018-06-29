@@ -26,8 +26,8 @@
     }
   },
   "config": {
+    
     "ebs_size": 0,
-    "ami_id": "ami-cfb14bb5",
     "json_bucket": "suwang",
     "EBS_optimized": "",
     "ebs_iops": 500,
@@ -36,7 +36,6 @@
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
     "ebs_type": "io1",
     "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
     "key_name": "",
     "launch_instance": true,
     "password": "dragonglass",

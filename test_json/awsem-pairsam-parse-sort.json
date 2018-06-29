@@ -15,21 +15,20 @@
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
       }
     ],
-    "config" : {
+    "config": {
+    
       "instance_type": "c4.8xlarge",
       "EBS_optimized": true,
       "ebs_size": 100,
       "ebs_type" : "io1",
       "ebs_iops" : 500,
       "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
-      "ami_id" : "ami-cfb14bb5",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha",
       "shutdown_min" : "120",
       "copy_to_s3" : true,
       "launch_instance" : true,
-      "log_bucket": "tibanna-output",
-      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/"
+      "log_bucket": "tibanna-output"
     },
     "_tibanna": {
       "run_type": "pairsam-parse-sort",
@@ -38,4 +37,3 @@
     "app_name": "pairsam-parse-sort",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
-
