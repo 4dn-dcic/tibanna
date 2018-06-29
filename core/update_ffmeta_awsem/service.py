@@ -17,8 +17,10 @@ def donothing(status, sbg, ff_meta, ff_key=None):
 
 
 def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
+    file_id = export_key.split('/')[0]  # this should be file uuid
     payload = {"filepath": export_bucket + "/" + export_key,
-               "filetype": filetype, "datatype": datatype}
+               "filetype": filetype, "datatype": datatype,
+               "uuid": file_id}
     higlass_keys = tibanna.s3.get_higlass_key()
     if not isinstance(higlass_keys, dict):
         raise Exception("Bad higlass keys found: %s" % higlass_keys)
