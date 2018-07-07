@@ -564,10 +564,16 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 @task
 def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', usergroup=None, version=None, no_tests=False):
     print("creating a new workflow..")
+    if sfn_type not in ['pony', 'unicorn']:
+        raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type)
     print(res)
     print("deploying lambdas..")
-    deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+    if sfn_type == 'pony':
+        deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+    else:
+        deploy_core(ctx, 'run_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'check_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
 
 
 @task

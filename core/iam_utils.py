@@ -74,6 +74,7 @@ def generate_policy_bucket_access(bucket_names):
     }
     return policy_bucket_access
 
+
 def generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix):
     role_resource = ['arn:aws:iam::' + account_id + ':role/' + tibanna_policy_prefix + '_s3']
     policy_iam_passrole_s3 = {
