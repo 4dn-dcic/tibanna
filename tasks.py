@@ -13,6 +13,7 @@ from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna
 from core.utils import _tibanna
+from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
 from dcicutils.s3_utils import s3Utils
 from dcicutils.ff_utils import (
     get_metadata,
@@ -87,12 +88,20 @@ def env_list(name):
     if secret is None:
         raise RuntimeError("SECRET should be defined in env")
     envlist = {
-        'start_run_awsem': {'SECRET': secret},
+        'start_run_awsem': {'SECRET': secret,
+                            'AWS_DEFAULT_REGION': AWS_REGION,
+                            'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
         'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                            'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                            'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
-                           'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
-        'update_ffmeta_awsem': {'SECRET': secret}
+                           'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
+                           'AWS_DEFAULT_REGION': AWS_REGION,
+                           'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
+        'check_task_awsem': {'AWS_DEFAULT_REGION': AWS_REGION,
+                             'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
+        'update_ffmeta_awsem': {'SECRET': secret,
+                            'AWS_DEFAULT_REGION': AWS_REGION,
+                            'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID}
     }
     return envlist.get(name, '')
 
@@ -505,7 +514,7 @@ def make_input(env, workflow, object_key, uuid):
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
+                "s3_access_arn": "arn:aws:iam::" + AWS_ACCOUNT_NUMBER + ":instance-profile/S3_access",
                 "ami_id": "ami-cfb14bb5",
                 "copy_to_s3": True,
                 "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
@@ -585,7 +594,7 @@ def rerun(ctx, exec_arn, workflow='tibanna_pony'):
 
 
 @task
-def kill_all(ctx, workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
+def kill_all(ctx, workflow='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER):
     """ killing all the running jobs"""
     _kill_all(workflow=workflow, region=region, acc=acc)
 
