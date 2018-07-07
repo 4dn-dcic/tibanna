@@ -23,7 +23,8 @@ from dcicutils.ff_utils import (
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
-from core.iam_utils import create_tibanna_iam, create_bucket_role_name
+from core.iam_utils import create_tibanna_iam
+from core.iam_utils import get_bucket_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -283,8 +284,13 @@ def deploy_core(ctx, name, version=None, no_tests=False, suffix=None, usergroup=
 
 
 @task
-def deploy_lambda_package(ctx, name, suffix, usergroup=None):
+def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     # create the temporary local dev lambda directories
+    if usergroup:
+        if suffix:
+            suffix = usergroup + suffix
+        else:
+            suffix = usergroup
     if suffix:
         new_name = name + '_' + suffix
         new_src = '../' + new_name
@@ -309,9 +315,15 @@ def deploy_lambda_package(ctx, name, suffix, usergroup=None):
     if name == 'run_task_awsem':
         if usergroup:
             lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                = create_bucket_role_name('tibanna_' + usergroup)
+                = get_bucket_role_name('tibanna_' + usergroup)
         else:
             lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
+    # add role
+    print('name=%s' % name)
+    if name in ['run_task_awsem', 'check_task_awsem']:
+        role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + get_lambda_role_name('tibanna_' + usergroup, name)
+        print(role_arn)
+        lambda_update_config['Role'] = role_arn
     client = boto3.client('lambda')
     resp = client.update_function_configuration(**lambda_update_config)
     print(resp)
@@ -523,7 +535,6 @@ def make_input(env, workflow, object_key, uuid):
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "s3_access_arn": "arn:aws:iam::" + AWS_ACCOUNT_NUMBER + ":instance-profile/S3_access",
                 "ami_id": "ami-cfb14bb5",
                 "copy_to_s3": True,
                 "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
@@ -562,11 +573,16 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 
 @task
-def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', usergroup=None, version=None, no_tests=False):
+def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, no_tests=False):
     print("creating a new workflow..")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
-    res = _create_stepfunction(suffix, sfn_type)
+    if usergroup:
+        if suffix:
+            sfn_suffix = usergroup + suffix
+        else:
+            sfn_suffix = usergroup
+    res = _create_stepfunction(sfn_suffix, sfn_type)
     print(res)
     print("deploying lambdas..")
     if sfn_type == 'pony':

@@ -110,14 +110,33 @@ def generate_assume_role_policy_document(service):
     return AssumeRolePolicyDocument
 
 
-def create_bucket_role_name(tibanna_policy_prefix):
+def get_bucket_role_name(tibanna_policy_prefix):
     return tibanna_policy_prefix + '_s3'
 
+
+def get_lambda_role_name(tibanna_policy_prefix, lambda_name):
+    return tibanna_policy_prefix + '_' + lambda_name
+
+
+def create_empty_role_for_lambda(iam, verbose=False):
+    client = iam.meta.client
+    role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
+    empty_role_name = 'tibanna_lambda_init_role'
+    try:
+        client.get_role(RoleName=empty_role_name)
+    except:
+        print("creating %s", empty_role_name)
+        response = client.create_role(
+           RoleName=empty_role_name,
+           AssumeRolePolicyDocument=json.dumps(role_policy_doc_lambda)
+        )
+    if verbose:
+        print(response)
 
 def create_role_for_bucket(iam, tibanna_policy_prefix, account_id,
                            bucket_policy_name, verbose=False):
     client = iam.meta.client
-    bucket_role_name = create_bucket_role_name(tibanna_policy_prefix)
+    bucket_role_name = get_bucket_role_name(tibanna_policy_prefix)
     role_policy_doc_ec2 = generate_assume_role_policy_document('ec2')
     response = client.create_role(
         RoleName=bucket_role_name,
@@ -138,7 +157,7 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    list_policy_name, passrole_policy_name,
                                    verbose=False):
     client = iam.meta.client
-    lambda_run_role_name = tibanna_policy_prefix + '_run_task_awsem'
+    lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, 'run_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     response = client.create_role(
         RoleName=lambda_run_role_name,
@@ -176,7 +195,7 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
                                      verbose=False):
     client = iam.meta.client
-    lambda_check_role_name = tibanna_policy_prefix + '_check_task_awsem'
+    lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, 'check_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     response = client.create_role(
         RoleName=lambda_check_role_name,
@@ -279,6 +298,16 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, verbose=False)
                                    list_policy_name, passrole_policy_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name)
+    create_empty_role_for_lambda(iam)
+    # instance profile
+    instance_profile_name = get_bucket_role_name(tibanna_policy_prefix)
+    client.create_instance_profile(
+        InstanceProfileName=instance_profile_name
+    )
+    ip = iam.InstanceProfile(instance_profile_name)
+    ip.add_role(
+        RoleName=instance_profile_name
+    )
     # create IAM group for users who share permission
     create_user_group(iam, tibanna_policy_prefix, bucket_policy_name, account_id)
     return tibanna_policy_prefix

@@ -9,9 +9,13 @@ except:
     pass  # don't know why this fails with tox
 
 requires = [
-    'boto3==1.4.2',
-    'botocore==1.4.52',
-    'invoke'
+    'boto3==1.7.52',
+    'botocore===1.10.52',
+    'invoke==0.18.1',
+    'dcicutils>=0.2.6',
+    'flake8==2.4.1',
+    'submit4dn==1.0.2',
+    'urllib3',
 ]
 
 tests_require = [
@@ -43,4 +47,8 @@ setup(
         'test': tests_require,
     },
     setup_requires=['pytest-runner', ],
+    dependency_links=[
+        'git+https://github.com/j1z0/python-lambda.git#egg=python_lambda',
+        'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
+    ]
 )
