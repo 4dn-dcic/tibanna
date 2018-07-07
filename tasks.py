@@ -91,19 +91,19 @@ def env_list(name):
         raise RuntimeError("SECRET should be defined in env")
     envlist = {
         'start_run_awsem': {'SECRET': secret,
-                            'AWS_DEFAULT_REGION': AWS_REGION,
+                            'TIBANNA_AWS_REGION': AWS_REGION,
                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                            'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                            'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                            'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
-                           'AWS_DEFAULT_REGION': AWS_REGION,
+                           'TIBANNA_AWS_REGION': AWS_REGION,
                            'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER,
                            'AWS_S3_ROLE_NAME': AWS_S3_ROLE_NAME},
-        'check_task_awsem': {'AWS_DEFAULT_REGION': AWS_REGION,
+        'check_task_awsem': {'TIBANNA_AWS_REGION': AWS_REGION,
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'update_ffmeta_awsem': {'SECRET': secret,
-                                'AWS_DEFAULT_REGION': AWS_REGION,
+                                'TIBANNA_AWS_REGION': AWS_REGION,
                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
     return envlist.get(name, '')

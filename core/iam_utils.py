@@ -272,7 +272,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, verbose=False)
     if verbose:
         print(response)
     # roles
-    create_role_for_bucket(iam, tibanna_policy_prefix, bucket_policy_name)
+    create_role_for_bucket(iam, tibanna_policy_prefix, account_id, bucket_policy_name)
     create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    cloudwatch_policy_name, bucket_policy_name,
                                    list_policy_name, passrole_policy_name)
