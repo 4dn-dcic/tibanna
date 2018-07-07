@@ -20,6 +20,10 @@ logger.setLevel(logging.INFO)
 # These utils exclusively live in Tibanna #
 ###########################################
 
+AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
+AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME')
+S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
+
 
 # random string generator
 def randomword(length):
@@ -210,7 +214,7 @@ def launch_instance(par, jobid):
     # creating a launch command
     launch_args = {'ImageId': par['ami_id'],
                    'InstanceType': par['instance_type'],
-                   'IamInstanceProfile': {'Arn': par['s3_access_arn']},
+                   'IamInstanceProfile': {'Arn': S3_ACCESS_ARN},
                    # 'UserData': 'file://' + Userdata_file,
                    'UserData': userdata_str,
                    'MaxCount': 1,

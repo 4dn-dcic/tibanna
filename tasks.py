@@ -14,6 +14,7 @@ from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna_settings, Tibanna
 from core.utils import _tibanna
 from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
+from core.ec2_utils import AWS_S3_ROLE_NAME
 from dcicutils.s3_utils import s3Utils
 from dcicutils.ff_utils import (
     get_metadata,
@@ -96,7 +97,8 @@ def env_list(name):
                            'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                            'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
                            'AWS_DEFAULT_REGION': AWS_REGION,
-                           'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
+                           'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER,
+                           'AWS_S3_ROLE_NAME': AWS_S3_ROLE_NAME},
         'check_task_awsem': {'AWS_DEFAULT_REGION': AWS_REGION,
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'update_ffmeta_awsem': {'SECRET': secret,
