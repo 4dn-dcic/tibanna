@@ -25,6 +25,7 @@ Please contact us. :)
 SECRET  # aws secret key
 AWS_DEFAULT_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
+AWS_S3_ROLE_NAME   # name of the role defining bucket permission that will be attached to your EC2 instances.
 ```
 
 To create a copy of tibanna (step function + lambdas)

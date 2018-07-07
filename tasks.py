@@ -23,6 +23,7 @@ from dcicutils.ff_utils import (
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
+from core.iam_utils import create_tibanna_iam
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -245,7 +246,7 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
+def deploy_core(ctx, name, version=None, no_tests=False, suffix=None, usergroup=None):
     print("preparing for deploy...")
     print("make sure tests pass")
     if no_tests is False:
@@ -270,7 +271,7 @@ def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
             print("clean up previous builds.")
             clean(ctx)
             print("building lambda package")
-            deploy_lambda_package(ctx, name, suffix=suffix)
+            deploy_lambda_package(ctx, name, suffix=suffix, usergroup=usergroup)
             # need to clean up all dist, otherwise, installing local package takes forever
             clean(ctx)
         print("next get version information")
@@ -282,7 +283,7 @@ def deploy_core(ctx, name, version=None, no_tests=False, suffix=None):
 
 
 @task
-def deploy_lambda_package(ctx, name, suffix):
+def deploy_lambda_package(ctx, name, suffix, usergroup=None):
     # create the temporary local dev lambda directories
     if suffix:
         new_name = name + '_' + suffix
@@ -305,6 +306,12 @@ def deploy_lambda_package(ctx, name, suffix):
     envs = env_list(name)
     if envs:
         lambda_update_config['Environment'] = {'Variables': envs}
+    if name=='run_task_awsem':
+        if usergroup:
+            lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
+                = create_bucket_role_name('tibanna_' + usergroup)
+        else:
+            lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
     client = boto3.client('lambda')
     resp = client.update_function_configuration(**lambda_update_config)
     print(resp)
@@ -545,12 +552,22 @@ def run_workflow(ctx, input_json='', workflow=''):
 
 
 @task
-def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', version=None, no_tests=False):
+def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
+    '''The very first function to run as admin to set up environment on AWS'''
+    print("setting up tibanna environment on AWS...")
+    bucket_names = buckets.split(',')
+    tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names, user_group_tag)
+    tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
+    print("Tibanna usergroup %s has been created on AWS.") % tibanna_usergroup
+
+
+@task
+def deploy_tibanna(ctx, suffix='dev', sfn_type='pony', usergroup=None, version=None, no_tests=False):
     print("creating a new workflow..")
     res = _create_stepfunction(suffix, sfn_type)
     print(res)
     print("deploying lambdas..")
-    deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix)
+    deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
 
 
 @task
