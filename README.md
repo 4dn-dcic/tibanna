@@ -23,6 +23,8 @@ Please contact us. :)
 * To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
 ```
 SECRET  # aws secret key
+AWS_DEFAULT_REGION  # aws region (e.g. us-east-1)
+AWS_ACCOUNT_NUMBER  # aws account number
 ```
 
 To create a copy of tibanna (step function + lambdas)

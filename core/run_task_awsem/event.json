@@ -32,7 +32,6 @@
     "ebs_iops": 500,
     "shutdown_min": 120,
     "instance_type": "",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
 
     "copy_to_s3": true,
     "launch_instance": true,

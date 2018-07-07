@@ -1,9 +1,8 @@
 {
-    "parameters" :  { "enzyme": "6", "sample_name": "4DNFI1ZLO9D7", "max_distance": 8.2 },
+    "parameters" :  { "enzyme": "6", "sample_name": "4DNFIGKYRZBT", "max_distance": 8.2 },
     "config": {
       "ebs_type" : "io1",
       "ebs_iops" : 500,
-      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "dragonfly",
       "shutdown_min" : 30,

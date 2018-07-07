@@ -18,7 +18,6 @@ def handler(event, context):
     ebs_size: EBS storage size in GB
     ebs_type: EBS storage type (available values: gp2, io1, st1, sc1, standard (default: io1)
     ebs_iops: EBS storage IOPS
-    s3_access_arn: IAM instance profile for S3 access
     password: password for ssh connection for user ec2-user
     EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
@@ -42,7 +41,7 @@ def handler(event, context):
 
     # read default variables in config
     CONFIG_FIELD = "config"
-    CONFIG_KEYS = ["s3_access_arn", "EBS_optimized", "shutdown_min", "copy_to_s3",
+    CONFIG_KEYS = ["EBS_optimized", "shutdown_min", "copy_to_s3",
                    "instance_type", "ebs_size", "launch_instance", "key_name",
                    "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"

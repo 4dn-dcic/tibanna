@@ -5,7 +5,6 @@
       "ebs_size" : 100,
       "ebs_type" : "gp2",
       "ebs_iops" : 5000,
-      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
       "password": "hahaha",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "EBS_optimized" : false,

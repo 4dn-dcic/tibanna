@@ -28,7 +28,6 @@
     "log_bucket": "tibanna-output",
     "shutdown_min": "30",
     "instance_type": "t2.nano",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
 
     "copy_to_s3": true,
     "job_tag": "fastqc-0-11-4-1",

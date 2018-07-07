@@ -47,7 +47,6 @@
         "launch_instance": true, 
         "outbucket": null, 
         "password": "hahaha", 
-        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access", 
         "shutdown_min": 30, 
         "userdata_dir": "/tmp/userdata"
     }

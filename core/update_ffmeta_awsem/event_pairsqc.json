@@ -104,7 +104,6 @@
     "userdata_dir": "/tmp/userdata",
     "shutdown_min": 120,
     "instance_type": "t2.micro",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "pairsqc-single",
     "copy_to_s3": true,
 
