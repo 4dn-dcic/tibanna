@@ -23,7 +23,7 @@ from dcicutils.ff_utils import (
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
-from core.iam_utils import create_tibanna_iam
+from core.iam_utils import create_tibanna_iam, create_bucket_role_name
 from contextlib import contextmanager
 import aws_lambda
 from time import sleep
@@ -306,7 +306,7 @@ def deploy_lambda_package(ctx, name, suffix, usergroup=None):
     envs = env_list(name)
     if envs:
         lambda_update_config['Environment'] = {'Variables': envs}
-    if name=='run_task_awsem':
+    if name == 'run_task_awsem':
         if usergroup:
             lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
                 = create_bucket_role_name('tibanna_' + usergroup)
@@ -556,7 +556,7 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
     bucket_names = buckets.split(',')
-    tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names, user_group_tag)
+    tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names, usergroup_tag)
     tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
     print("Tibanna usergroup %s has been created on AWS.") % tibanna_usergroup
 
