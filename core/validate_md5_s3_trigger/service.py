@@ -114,7 +114,6 @@ def _make_input(env, bucket, workflow, object_key, uuid):
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
                 "copy_to_s3": True,
                 "launch_instance": True,
                 "password": "thisisnotmypassword",

@@ -4,7 +4,6 @@
     
       "ebs_type" : "io1",
       "ebs_iops" : 500,
-      "s3_access_arn" : "arn:aws:iam::643366669028:instance-profile/S3_access",
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "",
       "shutdown_min" : 120,

@@ -282,7 +282,6 @@
       "userdata_dir": "/tmp/userdata",
       "shutdown_min": 10,
       "instance_type": "t2.2xlarge",
-      "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
       "ebs_type": "io1",
       "copy_to_s3": true,
 
@@ -616,7 +615,6 @@
     "userdata_dir": "/tmp/userdata",
     "shutdown_min": 10,
     "instance_type": "t2.2xlarge",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "hi-c-processing-pairs",
     "copy_to_s3": true,
 

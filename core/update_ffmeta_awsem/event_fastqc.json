@@ -78,7 +78,6 @@
     "userdata_dir": "/tmp/userdata",
     "shutdown_min": "300",
     "instance_type": "t2.micro",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "fastqc-0-11-4-1",
     "copy_to_s3": true,
 

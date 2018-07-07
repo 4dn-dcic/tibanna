@@ -33,7 +33,6 @@
     "ebs_iops": 500,
     "shutdown_min": 30,
     "instance_type": "",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
     "ebs_type": "io1",
     "copy_to_s3": true,
     "key_name": "",
