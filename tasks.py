@@ -90,18 +90,18 @@ def env_list(name):
     envlist = {
         'start_run_awsem': {'SECRET': secret,
                             'AWS_DEFAULT_REGION': AWS_REGION,
-                            'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
+                            'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                            'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                            'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                            'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
                            'AWS_DEFAULT_REGION': AWS_REGION,
-                           'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
+                           'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'check_task_awsem': {'AWS_DEFAULT_REGION': AWS_REGION,
-                             'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID},
+                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'update_ffmeta_awsem': {'SECRET': secret,
-                            'AWS_DEFAULT_REGION': AWS_REGION,
-                            'AWS_ACCOUNT_ID': AWS_ACCOUNT_ID}
+                                'AWS_DEFAULT_REGION': AWS_REGION,
+                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
     return envlist.get(name, '')
 
