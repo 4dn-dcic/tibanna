@@ -86,10 +86,12 @@ e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=c
 ### Deploying Tibanna
 * To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
 ```
-SECRET  # aws secret key
 TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
-AWS_S3_ROLE_NAME   # name of the role defining bucket permission that will be attached to your EC2 instances.
+```
+If you're 4DN-DCIC and using Tibanna Pony, you need the additional environmental variables
+```
+SECRET  # aws secret key
 ```
 
 To create a copy of tibanna (step function + lambdas)
