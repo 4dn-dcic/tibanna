@@ -17,12 +17,13 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 
 ## Installation
 ```
-# Dependency
+### Dependency
 * Python 2.7
 * Pip 9.0.3
 * The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
 ```
 
+### Admin
 As admin, you need to first set up Tibanna environment on your AWS account and create a usergroup with a shared permission to the environment.
 ```
 # install tibanna package
@@ -37,7 +38,7 @@ pip install -r requirements.txt -e .
 pip install -r requirements-develop.txt 
 ```
 
-* To set up and deploy Tibanna, you need the following environmental variables set on your local machine from which you're setting up/deploying Tibanna.
+To set up and deploy Tibanna, you need the following environmental variables set on your local machine from which you're setting up/deploying Tibanna.
 ```
 TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
@@ -59,9 +60,9 @@ e.g.) invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unico
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
 e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
 ```
+Then, add users to the usergroup.
 
-Add users to the usergroup.
-
+### User
 As a user, you need to set up your awscli. You can only use `run_workflow` and you don't have permission to setup or deploy tibanna.
 ```
 virtualenv -p python2.7 ~/venv/tibanna
