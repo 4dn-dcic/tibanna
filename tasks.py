@@ -321,8 +321,11 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     # add role
     print('name=%s' % name)
     if name in ['run_task_awsem', 'check_task_awsem']:
-        role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + get_lambda_role_name('tibanna_' + usergroup, name)
-        print(role_arn)
+        if usergroup:
+            role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + get_lambda_role_name('tibanna_' + usergroup, name)
+        else:
+            role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + 'lambda_full_s3'  #4dn-dcic default(temp)
+            print(role_arn)
         lambda_update_config['Role'] = role_arn
     client = boto3.client('lambda')
     resp = client.update_function_configuration(**lambda_update_config)
@@ -582,6 +585,8 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
             sfn_suffix = usergroup + suffix
         else:
             sfn_suffix = usergroup
+    else:
+        sfn_suffix = suffix
     res = _create_stepfunction(sfn_suffix, sfn_type)
     print(res)
     print("deploying lambdas..")

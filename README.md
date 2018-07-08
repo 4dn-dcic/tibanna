@@ -38,11 +38,13 @@ pip install -r requirements-develop.txt
 
 # set up user group and permission on AWS
 invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the buckets your input/output files and log files will go to. The buckets must already exist.
-e.g.) invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
+e.g.) invoke setup_tibanna_env --buckets=my-tibanna-test-bucket (the public has permission to this bucket - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
+e.g.) invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json  # this is for 4dn-dcic. (the public does not have permission to these buckets)
 # This command will create a usergroup that shares the permission to use a single tibanna environment. Multiple users can be added to this usergroup and multiple tibanna instances (step functions / lambdas) can be deployed. The usergroup created will be printed out on the screen after the command. (e.g. as below).
 Tibanna usergroup default_6206 has been created on AWS.
 
 # deploy tibanna (unicorn) to your aws account for a specific user group (for more details about tibanna deployment, see below)
+# Note: you can only use unicorn (the core with no communication with 4DN portal). Pony is reserved for 4DN-DCIC.
 invoke deploy_tibanna --usergroup=<usergroup> --no-tests --sfn-type=unicorn
 e.g.) invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
 
