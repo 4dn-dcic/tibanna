@@ -321,10 +321,11 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     # add role
     print('name=%s' % name)
     if name in ['run_task_awsem', 'check_task_awsem']:
+        role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
         if usergroup:
-            role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + get_lambda_role_name('tibanna_' + usergroup, name)
+            role_arn = role_arn_prefix + get_lambda_role_name('tibanna_' + usergroup, name)
         else:
-            role_arn = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/' + 'lambda_full_s3'  #4dn-dcic default(temp)
+            role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
             print(role_arn)
         lambda_update_config['Role'] = role_arn
     client = boto3.client('lambda')
