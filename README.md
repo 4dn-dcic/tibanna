@@ -49,7 +49,7 @@ source ~/venv/tibanna/bin/activate
 python -m pip install pip==9.0.3
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
-pip install -r requirements.txt -e .
+pip install -r requirements.txt
 
 # for developing/testing/deploying tibanna, you need to install additional packages. (You'd need this to set up tibanna)
 pip install -r requirements-develop.txt 
