@@ -55,8 +55,7 @@ pip install -r requirements.txt -e .
 pip install -r requirements-develop.txt 
 ```
 
-Set up `awscli`: see below link for more details
-https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
+Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
 To set up and deploy Tibanna, you need the following environmental variables set on your local machine from which you're setting up/deploying Tibanna.
 ```
@@ -113,15 +112,18 @@ cd tibanna
 pip install -r requirements.txt -e .
 ```
 
-Set up `awscli`: see below link for more details
-https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
+Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
+To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
 ```
-# To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
-e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
+```
+As an example,
+```
+invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
 ```
 * For more details, see[Tutorials/tibanna_unicorn.md](tutorials/tibanna_unicorn.md)
+
 
 ## Commands
 ### Deploying Tibanna
