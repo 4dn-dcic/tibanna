@@ -79,7 +79,7 @@ https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set
 ```
 # To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
-e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.jsonPlease contact us. :)
+e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
 ```
 
 ## Commands
