@@ -35,7 +35,14 @@ pip install -r requirements.txt -e .
 
 # for developing/testing/deploying tibanna, you need to install additional packages. (You'd need this to set up tibanna)
 pip install -r requirements-develop.txt 
+```
 
+* To set up and deploy Tibanna, you need the following environmental variables set on your local machine from which you're setting up/deploying Tibanna.
+```
+TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
+AWS_ACCOUNT_NUMBER  # aws account number
+```
+```
 # set up user group and permission on AWS
 invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the buckets your input/output files and log files will go to. The buckets must already exist.
 e.g.) invoke setup_tibanna_env --buckets=my-tibanna-test-bucket (the public has permission to this bucket - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
@@ -79,7 +86,7 @@ e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=c
 * To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
 ```
 SECRET  # aws secret key
-AWS_DEFAULT_REGION  # aws region (e.g. us-east-1)
+TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
 AWS_S3_ROLE_NAME   # name of the role defining bucket permission that will be attached to your EC2 instances.
 ```
