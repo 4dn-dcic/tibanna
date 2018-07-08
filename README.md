@@ -22,7 +22,6 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
   * [Webdev testing for Pony](#Webdev-testing-for-pony)
   * [Example Input Json for Pony](#example-input-json-for-pony)
 * [Directory Structure](#directory-structure)
-* [How to use Tibanna without 4DN metadata](#how-to-use-tibanna-without-4dn-metadata)
 
 
 ***
@@ -122,6 +121,7 @@ https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
 e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
 ```
+* For more details, see[Tutorials/tibanna_unicorn.md](tutorials/tibanna_unicorn.md)
 
 ## Commands
 ### Deploying Tibanna
@@ -301,8 +301,3 @@ A set of tools for running docker- and cwl-based pipelines on AWS (AWSEM, Autono
 ## lambda_sbg (deprecated)
 A lambda function integrated with APIGateway, for managing pipelines on AWS and SBG
 * [README](old/lambda_sbg/README.md) for more details
-
-
-## How to use Tibanna without 4DN metadata
-To use Tibanna independently of 4DN data portal, you can use the two-step system that consists of `run_task` and `check_task`. Instructions are provided below.
-* [README](tutorials/tibanna_unicorn.md)
