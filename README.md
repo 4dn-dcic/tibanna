@@ -21,7 +21,10 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 * Python 2.7
 * Pip 9.0.3
 * The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
+```
 
+As admin, you need to first set up Tibanna environment on your AWS account and create a usergroup with a shared permission to the environment.
+```
 # install tibanna package
 virtualenv -p python2.7 ~/venv/tibanna
 source ~/venv/tibanna/bin/activate
@@ -34,18 +37,40 @@ pip install -r requirements.txt -e .
 pip install -r requirements-develop.txt 
 
 # set up user group and permission on AWS
-invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
-
+invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the buckets your input/output files and log files will go to. The buckets must already exist.
+e.g.) invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
+# This command will create a usergroup that shares the permission to use a single tibanna environment. Multiple users can be added to this usergroup and multiple tibanna instances (step functions / lambdas) can be deployed. The usergroup created will be printed out on the screen after the command. (e.g. as below).
 Tibanna usergroup default_6206 has been created on AWS.
 
-# deploy tibanna (unicorn) to your aws account for a specific user group
-invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
+# deploy tibanna (unicorn) to your aws account for a specific user group (for more details about tibanna deployment, see below)
+invoke deploy_tibanna --usergroup=<usergroup> --no-tests --sfn-type=unicorn
+e.g.) invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
 
-# To run workflow on the tibanna (unicorn) deployed for the usergroup
-invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
+# To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
+invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
+e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
 ```
 
-Please contact us. :)
+Add users to the usergroup.
+
+As a user, you need to set up your awscli. You can only use `run_workflow` and you don't have permission to setup or deploy tibanna.
+```
+virtualenv -p python2.7 ~/venv/tibanna
+source ~/venv/tibanna/bin/activate
+python -m pip install pip==9.0.3
+git clone https://github.com/4dn-dcic/tibanna
+cd tibanna
+pip install -r requirements.txt -e .
+```
+
+Set up `awscli`: see below link for more details
+https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
+
+```
+# To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
+invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
+e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.jsonPlease contact us. :)
+```
 
 ## Commands
 ### Deploying Tibanna
@@ -94,6 +119,7 @@ To run workflow
 invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
 # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or any tibanna step function name that was created by the create_workflow command.
 ```
+For more detail, see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
 To rerun a failed job with the same input json
 ```
