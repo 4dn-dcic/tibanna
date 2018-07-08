@@ -16,8 +16,8 @@ In addition, Tibanna offers multi-layer real-time monitoring to ensure the workf
 Tibanna has been evolving: originally developed for Desktop workflow submitter that launches an autonomous VM, then upgraded to a Chalice/Lambda/API-Gateway-based system that works with the Seven Bridges Genomics (SBG) platform, and it currently consists of the original modules integrated with AWS Step functions for upstream scheduling and monitoring, without SBG.
 
 ## Installation
-```
 ### Dependency
+```
 * Python 2.7
 * Pip 9.0.3
 * The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
