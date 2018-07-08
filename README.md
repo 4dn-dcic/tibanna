@@ -43,24 +43,44 @@ To set up and deploy Tibanna, you need the following environmental variables set
 TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
 ```
+
+Then, set up user group and permission on AWS by using `invoke setup_tibanna_env`.
 ```
-# set up user group and permission on AWS
 invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the buckets your input/output files and log files will go to. The buckets must already exist.
-e.g.) invoke setup_tibanna_env --buckets=my-tibanna-test-bucket (the public has permission to this bucket - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
-e.g.) invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json  # this is for 4dn-dcic. (the public does not have permission to these buckets)
-# This command will create a usergroup that shares the permission to use a single tibanna environment. Multiple users can be added to this usergroup and multiple tibanna instances (step functions / lambdas) can be deployed. The usergroup created will be printed out on the screen after the command. (e.g. as below).
+```
+As an example,
+```
+invoke setup_tibanna_env --buckets=my-tibanna-test-bucket (the public has permission to this bucket - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
+```
+If you're 4DN-DCIC, you could do the following.
+```
+invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json  # this is for 4dn-dcic. (the public does not have permission to these buckets)
+```
+The `setup_tibanna_env` command will create a usergroup that shares the permission to use a single tibanna environment. Multiple users can be added to this usergroup and multiple tibanna instances (step functions / lambdas) can be deployed. The usergroup created will be printed out on the screen after the command. (e.g. as below).
+```
 Tibanna usergroup default_6206 has been created on AWS.
+```
 
-# deploy tibanna (unicorn) to your aws account for a specific user group (for more details about tibanna deployment, see below)
-# Note: you can only use unicorn (the core with no communication with 4DN portal). Pony is reserved for 4DN-DCIC.
+Then, deploy tibanna (unicorn) to your aws account for a specific user group (for more details about tibanna deployment, see below)
+* Note: you can only use unicorn (the core with no communication with 4DN portal). Pony is reserved for 4DN-DCIC.
+```
 invoke deploy_tibanna --usergroup=<usergroup> --no-tests --sfn-type=unicorn
-e.g.) invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
+```
+As an exmple,
+```
+invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
+```
 
-# To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
+To run a workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below),
+```
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
-e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
+```
+As an example you can try to run a test workflow as below.
+```
+invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
 ```
 Then, add users to the usergroup.
+
 
 ### User
 As a user, you need to set up your awscli. You can only use `run_workflow` and you don't have permission to setup or deploy tibanna.
@@ -79,7 +99,7 @@ https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set
 ```
 # To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
 invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
-e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
+e.g.) invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
 ```
 
 ## Commands
