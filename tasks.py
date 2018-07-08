@@ -569,7 +569,7 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names, usergroup_tag)
     tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
-    print("Tibanna usergroup %s has been created on AWS.") % tibanna_usergroup
+    print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
 
 
 @task

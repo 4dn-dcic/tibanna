@@ -124,7 +124,7 @@ def create_empty_role_for_lambda(iam, verbose=False):
     empty_role_name = 'tibanna_lambda_init_role'
     try:
         client.get_role(RoleName=empty_role_name)
-    except:
+    except Exception:
         print("creating %s", empty_role_name)
         response = client.create_role(
            RoleName=empty_role_name,
