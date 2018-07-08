@@ -16,6 +16,35 @@ In addition, Tibanna offers multi-layer real-time monitoring to ensure the workf
 Tibanna has been evolving: originally developed for Desktop workflow submitter that launches an autonomous VM, then upgraded to a Chalice/Lambda/API-Gateway-based system that works with the Seven Bridges Genomics (SBG) platform, and it currently consists of the original modules integrated with AWS Step functions for upstream scheduling and monitoring, without SBG.
 
 ## Installation
+```
+# Dependency
+* Python 2.7
+* Pip 9.0.3
+* The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
+
+# install tibanna package
+virtualenv -p python2.7 ~/venv/tibanna
+source ~/venv/tibanna/bin/activate
+python -m pip install pip==9.0.3
+git clone https://github.com/4dn-dcic/tibanna
+cd tibanna
+pip install -r requirements.txt -e .
+
+# for developing/testing/deploying tibanna, you need to install additional packages. (You'd need this to set up tibanna)
+pip install -r requirements-develop.txt 
+
+# set up user group and permission on AWS
+invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
+
+Tibanna usergroup default_6206 has been created on AWS.
+
+# deploy tibanna (unicorn) to your aws account for a specific user group
+invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
+
+# To run workflow on the tibanna (unicorn) deployed for the usergroup
+invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=core/run_task_awsem/event.json
+```
+
 Please contact us. :)
 
 ## Commands
@@ -25,6 +54,7 @@ Please contact us. :)
 SECRET  # aws secret key
 AWS_DEFAULT_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
+AWS_S3_ROLE_NAME   # name of the role defining bucket permission that will be attached to your EC2 instances.
 ```
 
 To create a copy of tibanna (step function + lambdas)

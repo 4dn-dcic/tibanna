@@ -25,7 +25,7 @@ import traceback
 
 # production step function
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
-AWS_REGION = os.environ.get('AWS_DEFAULT_REGION')
+AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
@@ -346,11 +346,14 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
     return input_json
 
 
-def create_stepfunction(dev_suffix='dev',
+def create_stepfunction(dev_suffix=None,
                         sfn_type='pony',  # vs 'unicorn'
                         region_name=AWS_REGION,
                         aws_acc=AWS_ACCOUNT_NUMBER):
-    lambda_suffix = '_' + dev_suffix
+    if dev_suffix:
+        lambda_suffix = '_' + dev_suffix
+    else:
+        lambda_suffix = ''
     sfn_name = 'tibanna_' + sfn_type + lambda_suffix
     lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
     sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
