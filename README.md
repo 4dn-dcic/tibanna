@@ -294,10 +294,10 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
 ## core
 This is core functionality (a set of lambda functions) that relies on AWS STEP Function to manage the process of running pipelines.  Does stuff like stage files to correct place, run workflow, poll for results, put output files in s3 and update associated metadata on the fourfront system.
 
-## awsf
+## awsf, awsf_cwl_draft3, awsf_cwl_v1
 A set of tools for running docker- and cwl-based pipelines on AWS (AWSEM, Autonomous Workflow Step Executor Machine)
 * [README](awsf/README.md) for more details - (this readme is currently outdated)
 
-## lambda_sbg (deprecated)
+## old/lambda_sbg (deprecated)
 A lambda function integrated with APIGateway, for managing pipelines on AWS and SBG
 * [README](old/lambda_sbg/README.md) for more details
