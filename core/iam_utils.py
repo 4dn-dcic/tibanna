@@ -133,6 +133,7 @@ def create_empty_role_for_lambda(iam, verbose=False):
     if verbose:
         print(response)
 
+
 def create_role_for_bucket(iam, tibanna_policy_prefix, account_id,
                            bucket_policy_name, verbose=False):
     client = iam.meta.client
