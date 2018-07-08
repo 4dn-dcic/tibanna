@@ -7,6 +7,26 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
 | [![Build Status](https://travis-ci.org/4dn-dcic/tibanna.svg?branch=master)](https://travis-ci.org/4dn-dcic/tibanna) | [![Code Quality](https://api.codacy.com/project/badge/Grade/d2946b5bc0704e5c9a4893426a7e0314)](https://www.codacy.com/app/4dn/tibanna?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4dn-dcic/tibanna&amp;utm_campaign=Badge_Grade) | [![Test Coverage](https://api.codacy.com/project/badge/Coverage/d2946b5bc0704e5c9a4893426a7e0314)](https://www.codacy.com/app/4dn/tibanna?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=4dn-dcic/tibanna&amp;utm_campaign=Badge_Coverage) |
 
 ***
+
+## Table of contents
+* [Overview](#overview)
+* [Installation](#installation)
+  * [Dependency](#dependency)
+  * [Admin](#admin)
+  * [User](#user)
+* [Commands](#commands)
+  * [Deploying Tibanna](#deploying-tibanna)
+  * [Execution of workflows using Tibanna](#execution-of-workflows-using-tibanna)
+* [CWL versions](#cwl-versions)
+* [4DN-DCIC-ONLY](#4dn-dcic-only)
+  * [Webdev testing for Pony](#Webdev-testing-for-pony)
+  * [Example Input Json for Pony](#example-input-json-for-pony)
+* [Directory Structure](#directory-structure)
+* [How to use Tibanna without 4DN metadata](#how-to-use-tibanna-without-4dn-metadata)
+
+
+***
+## Overview
 <img src="images/tibanna_diagram_20180207.png" width=500>
 
 Tibanna is auto-triggered upon data submission to execute a relevant workflow on the data. It utilizes two-layer scheduling; an upstream regulator based on a state machine called AWS Step Function and a downstream workflow engine that runs Docker/CWL-based pipelines. Tibanna’s AWS Step Function launches several AWS Serverless Lambda functions that control workflow-related metadata generation/tracking and deployment of a workflow on a pre-custom-configured autonomous virtual machine (EC2 instance) (AWSEM; Autonomous Workflow Step Executor Machine).
@@ -181,12 +201,42 @@ invoke rerun_many [--workflow=<stepfunctionname>] \
 # example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
 # This example will rerun all failed jobs of tibanna_pony step function that failed after 3pm EST on Feb 14 2018.
 ```
+
 To kill all currently running jobs (killing only step functions not the EC2 instances)
 ```
 invoke kill_all [--workflow=<stepfunctionname>]
 ```
 
-## Example Input Json for Pony
+
+## CWL versions
+* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested as below:
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.json`
+```
+* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested as below.
+```
+invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
+```
+* The AMI ID and script directory are specified inside the input json (`config`).
+
+
+## 4DN-DCIC-ONLY
+### Webdev testing for Pony
+```
+test_json/awsem_md5.json  
+test_json/awsem_fastqc.json
+test_json/awsem_bwa_new.json
+test_json/awsem_pairsqc.json
+test_json/awsem_hicpairs_easy.json
+test_json/awsem_hic_processing_bam-2.pony.json
+test_json/awsem_repliseq_parta-pony.json
+```
+* note: these files are listed in `webdevtestlist`. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace `tibanna_pony_uno` with your step function mame).
+```
+cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
+```
+
+### Example Input Json for Pony
 ```
 {
     "app_name": "bwa-mem",
@@ -219,7 +269,6 @@ invoke kill_all [--workflow=<stepfunctionname>]
     "json_bucket": "4dn-aws-pipeline-run-json",
     "ebs_iops": 500,
     "shutdown_min": 30,
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "dragonfly",
@@ -240,33 +289,6 @@ invoke kill_all [--workflow=<stepfunctionname>]
 * The 'input_files' field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
 * The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 * The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
-
-
-## CWL versions
-* draft3 uses AMI ami-cfb14bb5, script directory `awsf_cwl_draft3` or `awsf`, can be tested as below:
-```
-invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.json`
-```
-* v1.0 uses AMI ami-31caa14e, script directory `awsf_cwl_v1`, can be tested as below.
-```
-invoke run_workflow --workflow=tibanna_unicorn --input-json=test_json/awsem_bwa.runonly.v1.json`
-```
-* The AMI ID and script directory are specified inside the input json (`config`).
-
-## Webdev testing for Pony
-```
-test_json/awsem_md5.json  
-test_json/awsem_fastqc.json
-test_json/awsem_bwa_new.json
-test_json/awsem_pairsqc.json
-test_json/awsem_hicpairs_easy.json
-test_json/awsem_hic_processing_bam-2.pony.json
-test_json/awsem_repliseq_parta-pony.json
-```
-* note: these files are listed in `webdevtestlist`. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace `tibanna_pony_uno` with your step function mame).
-```
-cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
-```
 
 
 ## Directory Structure
