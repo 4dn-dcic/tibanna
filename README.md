@@ -37,11 +37,9 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 
 ## Installation
 ### Dependency
-```
 * Python 2.7
 * Pip 9.0.3
 * The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
-```
 
 ### Admin
 As admin, you need to first set up Tibanna environment on your AWS account and create a usergroup with a shared permission to the environment.
