@@ -99,5 +99,3 @@ def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
     for exc in sflist['executions']:
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
-
-
