@@ -1,11 +1,21 @@
-boto3==1.7.5
-botocore==1.10.52
--e git+https://github.com/j1z0/python-lambda.git#egg=python_lambda
-submit4dn==1.0.2
+awscli==1.15.42
+boto3==1.7.42
+botocore==1.10.42
+-e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
 -e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
 # Build tasks
 invoke==0.18.1
 # Syntax checking
 flake8==2.4.1
-dcicutils>=0.2.6
+aws_requests_auth==0.4.1
+elasticsearch-curator==5.5.4
+elasticsearch==5.5.2
+pytest-runner
+dcicutils==0.3.1
 urllib3
+
+# for testing
+pytest==3.0.5
+pytest-cov==2.3.1
+mock
+

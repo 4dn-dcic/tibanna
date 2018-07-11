@@ -38,7 +38,7 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 ### Dependency
 * Python 2.7
 * Pip 9.0.3
-* The other dependencies are listed in `requirements.txt` and `requirements-develop.txt` and are auto-installed in the following steps.
+* The other dependencies are listed in `requirements.txt` and are auto-installed in the following steps.
 
 ### Admin
 As admin, you need to first set up Tibanna environment on your AWS account and create a usergroup with a shared permission to the environment.
@@ -50,9 +50,6 @@ python -m pip install pip==9.0.3
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
 pip install -r requirements.txt
-
-# for developing/testing/deploying tibanna, you need to install additional packages. (You'd need this to set up tibanna)
-pip install -r requirements-develop.txt 
 ```
 
 Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli

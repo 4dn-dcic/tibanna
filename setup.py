@@ -9,13 +9,15 @@ except:
     pass  # don't know why this fails with tox
 
 requires = [
-    'boto3==1.7.52',
-    'botocore===1.10.52',
+    'awscli==1.15.42',
+    'boto3==1.7.42',
+    'botocore==1.10.42',
     'invoke==0.18.1',
-    'dcicutils>=0.2.6',
     'flake8==2.4.1',
-    'submit4dn==1.0.2',
+    'dcicutils==0.3.1',
     'urllib3',
+    'packaging@https://github.com/j1z0/python-lambda.git#egg=python_lambda',
+    'packaging@https://github.com/SooLee/Benchmark.git#egg=Benchmark'
 ]
 
 tests_require = [
