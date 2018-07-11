@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
-To set up and deploy Tibanna, you need the following environmental variables set on your local machine from which you're setting up/deploying Tibanna.
+To set up and deploy Tibanna, you need the following environmental variables set and exported on your local machine from which you're setting up/deploying Tibanna.
 ```
 TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
