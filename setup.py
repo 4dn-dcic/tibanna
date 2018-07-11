@@ -12,7 +12,6 @@ requires = [
     'awscli==1.15.42',
     'boto3==1.7.42',
     'botocore==1.10.42',
-    'submit4dn==1.0.2',
     'invoke==0.18.1',
     'flake8==2.4.1',
     'dcicutils==0.3.1',

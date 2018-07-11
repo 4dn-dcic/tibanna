@@ -2,7 +2,6 @@ awscli==1.15.42
 boto3==1.7.42
 botocore==1.10.42
 -e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
-submit4dn==1.0.2
 -e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
 # Build tasks
 invoke==0.18.1
