@@ -78,7 +78,7 @@ exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chown -R ec2-user .
 exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
-exl source $ENV_FILE
+#exl source $ENV_FILE
 
 
 ###  mount the EBS volume to the EBS_DIR

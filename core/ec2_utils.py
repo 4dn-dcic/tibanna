@@ -107,6 +107,7 @@ def create_json(input_dict, jobid):
     json_dir = input_dict.get('config').get('json_dir')
     json_bucket = input_dict.get('config').get('json_bucket')
     log_bucket = input_dict.get('config').get('log_bucket')
+    
 
     # pre is a dictionary to be printed as a pre-run json file.
     pre = {'config': input_dict.get('config')}  # copy only config since arg is redundant with 'Job'

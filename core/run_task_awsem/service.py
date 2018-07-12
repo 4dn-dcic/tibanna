@@ -24,6 +24,7 @@ def handler(event, context):
     copy_to_s3: Upload or copy the json file to S3 bucket json_bucket
     launch_instance: Launch instance based on the json file
     log_bucket: bucket for collecting logs (started, postrun, success, error, log)
+    public_postrun_json (optional): whether postrun json should be made public (default false)
 
     args:
     cwl_main_filename: main cwl file name
@@ -64,6 +65,10 @@ def handler(event, context):
 
     # local directory in which the json file will be first created.
     cfg['json_dir'] = '/tmp/json'
+
+    # postrun json should be made public? 
+    if 'public_postrun_json' not in cfg:
+        cfg['public_postrun_json'] = false  # 4dn will use 'true' --> this will automatically be added by start_run_awsem
 
     # AMI and script directory according to cwl version
     if args['cwl_version'] == 'v1':
