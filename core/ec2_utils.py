@@ -23,7 +23,6 @@ logger.setLevel(logging.INFO)
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
-print("S3_ACCESS_ARN = %s" % S3_ACCESS_ARN)
 
 
 # random string generator

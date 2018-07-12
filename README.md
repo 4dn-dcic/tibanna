@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
-To set up and deploy Tibanna, you need the following environmental variables set and exported on your local machine from which you're setting up/deploying Tibanna.
+To set up and deploy Tibanna, you need the following environmental variables set and *exported* on your local machine from which you're setting up/deploying Tibanna.
 ```
 TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
@@ -66,7 +66,7 @@ invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the bucke
 ```
 As an example,
 ```
-invoke setup_tibanna_env --buckets=my-tibanna-test-bucket (the public has permission to this bucket - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
+invoke setup_tibanna_env --buckets=my-tibanna-test-bucket,my-tibanna-test-input-bucket (the public has permission to these buckets - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Use it only for testing Tibanna.)
 ```
 If you're 4DN-DCIC, you could do the following.
 ```
@@ -106,7 +106,7 @@ source ~/venv/tibanna/bin/activate
 python -m pip install pip==9.0.3
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
-pip install -r requirements.txt -e .
+pip install -r requirements.txt
 ```
 
 Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli

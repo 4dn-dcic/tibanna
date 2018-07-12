@@ -19,7 +19,7 @@
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
     "input_files": {
       "input_file": {
-        "bucket_name": "my-tibanna-test-bucket",
+        "bucket_name": "my-tibanna-test-input-bucket",
         "object_key": "somefastqfile.fastq.gz"
       }
     }
