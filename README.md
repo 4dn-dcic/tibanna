@@ -47,8 +47,8 @@ As admin, you need to first set up Tibanna environment on your AWS account and c
 virtualenv -p python2.7 ~/venv/tibanna
 source ~/venv/tibanna/bin/activate
 
-# install pip 9.0.3 or 10.0.1
-python -m pip install pip==9.0.3  # or python -m pip install pip==10.0.1 # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3' # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==10.0.1'
+# install pip 9.0.3
+python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
 
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
