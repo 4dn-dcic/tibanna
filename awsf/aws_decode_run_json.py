@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import json
 import sys
-import os
 
 downloadlist_filename = "download_command_list.txt"
 input_yml_filename = "inputs.yml"
@@ -66,7 +65,9 @@ with open(input_yml_filename, 'w') as f_yml:
 # env variables set before this script started running.
 with open(env_filename, 'w') as f_env:
     f_env.write("CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
-    f_env.write("MAIN_CWL={}\n".format(Dict["Job"]["App"]["main_cwl"])) ## main cwl to be run (the other cwl files will be called by this one)
-    f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(',')))) ## list of cwl files in an array delimited by a space
+    # main cwl to be run (the other cwl files will be called by this one)
+    f_env.write("MAIN_CWL={}\n".format(Dict["Job"]["App"]["main_cwl"]))
+    # list of cwl files in an array delimited by a space
+    f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
     f_env.write("OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
     f_env.write("PUBLIC_POSTRUN_JSON={}\n".format('1' if Dict["config"].get('public_postrun_json', False) else '0'))
