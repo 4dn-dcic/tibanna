@@ -70,3 +70,4 @@ with open(env_filename, 'w') as f_env:
     # list of cwl files in an array delimited by a space
     f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
     f_env.write("OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
+    f_env.write("PUBLIC_POSTRUN_JSON={}\n".format('1' if Dict["config"].get('public_postrun_json', False) else '0'))

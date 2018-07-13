@@ -1,0 +1,41 @@
+{
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "md5"
+  },
+  "args": {
+    "app_name": "md5",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "cwl_version": "draft-3",
+    "output_target": {
+      "report": "my_outdir/report"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "md5.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "my-tibanna-test-bucket",
+    "app_version": "0.0.4",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
+    "input_files": {
+      "input_file": {
+        "bucket_name": "my-tibanna-test-input-bucket",
+        "object_key": "somefastqfile.fastq.gz"
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 0,
+    "ebs_type": "io1",
+    "json_bucket": "my-tibanna-test-bucket",
+    "EBS_optimized": "",
+    "ebs_iops": 500,
+    "shutdown_min": 120,
+    "instance_type": "",
+    "copy_to_s3": true,
+    "launch_instance": true,
+    "password": "dragonfly",
+    "log_bucket": "my-tibanna-test-bucket",
+    "key_name": ""
+  }
+}

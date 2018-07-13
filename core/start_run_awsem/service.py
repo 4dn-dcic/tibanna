@@ -156,6 +156,8 @@ def real_handler(event, context):
         config['EBS_optimized'] = ''
     if 'ebs_size' not in config:
         config['ebs_size'] = 0
+    if 'public_postrun_json' not in config:
+        config['public_postrun_json'] = True
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
