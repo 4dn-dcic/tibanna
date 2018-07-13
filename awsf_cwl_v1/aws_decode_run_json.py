@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import json
 import sys
+import os
 
 downloadlist_filename = "download_command_list.txt"
 input_yml_filename = "inputs.yml"

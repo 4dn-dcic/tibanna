@@ -10,7 +10,6 @@ from dcicutils.ff_utils import (
     patch_metadata,
     generate_rand_accession
 )
-from dcicutils.submit_utils import FdnConnectionException
 from dcicutils.s3_utils import s3Utils
 import logging
 import traceback
@@ -18,6 +17,7 @@ import traceback
 ###########################################
 # These utils exclusively live in Tibanna #
 ###########################################
+
 
 ###########################
 # Config
@@ -50,6 +50,10 @@ class AWSEMJobErrorException(Exception):
 
 
 class TibannaStartException(Exception):
+    pass
+
+
+class FdnConnectionException(Exception):
     pass
 
 
