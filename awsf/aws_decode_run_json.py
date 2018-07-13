@@ -69,6 +69,6 @@ with open(env_filename, 'w') as f_env:
     # main cwl to be run (the other cwl files will be called by this one)
     os.environ['MAIN_CWL'] = Dict["Job"]["App"]["main_cwl"]
     # list of cwl files in an array delimited by a space
-    os.environ['CWL_FILES'] = Dict["Job"]["App"]["other_cwl_files"].split(',')
+    os.environ['CWL_FILES'] = ' '.join(dict["Job"]["App"]["other_cwl_files"].split(','))
     os.environ['OUTBUCKET'] = Dict["Job"]["Output"]["output_bucket_directory"]
     os.environ['PUBLIC_POSTRUN_JSON'] = '1' if Dict["config"].get('public_postrun_json', False) else '0'
