@@ -168,7 +168,13 @@ export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
 exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
-exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
+if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
+then
+  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
+else
+  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
+fi
+
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
 
