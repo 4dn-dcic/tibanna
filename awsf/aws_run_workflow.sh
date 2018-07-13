@@ -79,6 +79,7 @@ exl chown -R ec2-user .
 exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 #exl source $ENV_FILE
+echo "main cwl=$MAIN_CWL"
 
 ###  mount the EBS volume to the EBS_DIR
 exl lsblk $TMPLOGFILE
