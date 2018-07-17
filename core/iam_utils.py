@@ -253,8 +253,8 @@ def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
         print(response)
     role_stepfunction = iam.Role(stepfunction_role_name)
     response = role_stepfunction.attach_policy(
-        # PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + lambdainvoke_policy_name
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
+        # PolicyArn='arn:aws:iam::' + account_id + ':policy/' + lambdainvoke_policy_name
     )
     if verbose:
         print(response)
