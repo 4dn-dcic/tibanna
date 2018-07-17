@@ -10,12 +10,12 @@
     "secondary_output_target": {},
     "cwl_main_filename": "md5.cwl",
     "secondary_files": {},
-    "output_S3_bucket": "soo2-tibanna-data",
+    "output_S3_bucket": "4dntest-tibanna-data",
     "app_version": "0.0.4",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
     "input_files": {
       "input_file": {
-        "bucket_name": "soo2-tibanna-data",
+        "bucket_name": "4dntest-tibanna-data",
         "object_key": "somefastqfile.fastq.gz"
       }
     }
@@ -23,7 +23,7 @@
   "config": {
     "ebs_size": 0,
     "ebs_type": "io1",
-    "json_bucket": "soo2-tibanna-log",
+    "json_bucket": "4dntest-tibanna-log",
     "EBS_optimized": "",
     "ebs_iops": 500,
     "shutdown_min": 120,
@@ -31,7 +31,7 @@
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "dragonfly",
-    "log_bucket": "soo2-tibanna-log",
+    "log_bucket": "4dntest-tibanna-log",
     "key_name": ""
   }
 }

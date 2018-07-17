@@ -11,6 +11,7 @@ from dcicutils.ff_utils import (
     generate_rand_accession
 )
 from dcicutils.s3_utils import s3Utils
+from core.iam_utils import get_stepfunction_role_name
 import logging
 import traceback
 
@@ -353,14 +354,25 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
 def create_stepfunction(dev_suffix=None,
                         sfn_type='pony',  # vs 'unicorn'
                         region_name=AWS_REGION,
-                        aws_acc=AWS_ACCOUNT_NUMBER):
-    if dev_suffix:
-        lambda_suffix = '_' + dev_suffix
+                        aws_acc=AWS_ACCOUNT_NUMBER,
+                        usergroup=None):
+    if usergroup:
+        if dev_suffix:
+            lambda_suffix = '_' + usergroup + '_' + dev_suffix
+        else:
+            lambda_suffix = '_' + usergroup
     else:
-        lambda_suffix = ''
+        if dev_suffix:
+            lambda_suffix = '_' + dev_suffix
+        else:
+            lambda_suffix = ''
     sfn_name = 'tibanna_' + sfn_type + lambda_suffix
     lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
-    sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
+    if sfn_type == 'pony':  # 4dn
+        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
+    else:
+        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
+            get_stepfunction_role_name('tibanna_' + usergroup)
     sfn_check_task_retry_conditions = [
         {
             "ErrorEquals": ["EC2StartingException"],

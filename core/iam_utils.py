@@ -93,8 +93,27 @@ def generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix):
     return policy_iam_passrole_s3
 
 
+def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix):
+    function_arn_prefix = 'arn:aws:lambda:' + region + ':' + account_id + ':function/'
+    resource = [function_arn_prefix + 'run_task_awsem' + '_' + tibanna_policy_prefix,
+                function_arn_prefix + 'check_task_awsem' + '_' + tibanna_policy_prefix]
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "lambda:InvokeFunction"
+                ],
+                "Resource": resource
+            }
+        ]
+    }
+    return policy
+
+
 def generate_assume_role_policy_document(service):
-    '''service: 'ec2' or 'lambda' '''
+    '''service: 'ec2', 'lambda' or 'states' '''
     AssumeRolePolicyDocument = {
         "Version": "2012-10-17",
         "Statement": [
@@ -116,6 +135,10 @@ def get_bucket_role_name(tibanna_policy_prefix):
 
 def get_lambda_role_name(tibanna_policy_prefix, lambda_name):
     return tibanna_policy_prefix + '_' + lambda_name
+
+
+def get_stepfunction_role_name(tibanna_policy_prefix):
+    return tibanna_policy_prefix + '_states'
 
 
 def create_empty_role_for_lambda(iam, verbose=False):
@@ -217,6 +240,26 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
         print(response)
 
 
+def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
+                                 lambdainvoke_policy_name, verbose=False):
+    client = iam.meta.client
+    stepfunction_role_name = get_stepfunction_role_name(tibanna_policy_prefix)
+    role_policy_doc = generate_assume_role_policy_document('states')
+    response = client.create_role(
+        RoleName=stepfunction_role_name,
+        AssumeRolePolicyDocument=json.dumps(role_policy_doc)
+    )
+    if verbose:
+        print(response)
+    role_stepfunction = iam.Role(stepfunction_role_name)
+    response = role_stepfunction.attach_policy(
+        PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
+        # PolicyArn='arn:aws:iam::' + account_id + ':policy/' + lambdainvoke_policy_name
+    )
+    if verbose:
+        print(response)
+
+
 def create_user_group(iam, group_name, bucket_policy_name, account_id, verbose=False):
     client = iam.meta.client
     response = client.create_group(
@@ -247,7 +290,7 @@ def create_user_group(iam, group_name, bucket_policy_name, account_id, verbose=F
         print(response)
 
 
-def create_tibanna_iam(account_id, bucket_names, user_group_name, verbose=False):
+def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False):
     """creates IAM policies and roles and a user group for tibanna
     returns prefix of all IAM policies, roles and group.
     Total 4 policies, 3 roles and 1 group is generated that is associated with a single user group
@@ -292,14 +335,27 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, verbose=False)
     )
     if verbose:
         print(response)
+    # lambdainvoke policy for step function
+    lambdainvoke_policy_name = tibanna_policy_prefix + '_lambdainvoke'
+    policy_lambdainvoke = generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix)
+    response = client.create_policy(
+        PolicyName=lambdainvoke_policy_name,
+        PolicyDocument=json.dumps(policy_lambdainvoke),
+    )
+    if verbose:
+        print(response)
     # roles
+    # role for bucket
     create_role_for_bucket(iam, tibanna_policy_prefix, account_id, bucket_policy_name)
+    # role for lambda
     create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    cloudwatch_policy_name, bucket_policy_name,
                                    list_policy_name, passrole_policy_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name)
     create_empty_role_for_lambda(iam)
+    # role for step function
+    create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)
     # instance profile
     instance_profile_name = get_bucket_role_name(tibanna_policy_prefix)
     client.create_instance_profile(
