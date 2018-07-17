@@ -11,6 +11,7 @@ from dcicutils.ff_utils import (
     generate_rand_accession
 )
 from dcicutils.s3_utils import s3Utils
+from core.iam_utils import get_stepfunction_role_name
 import logging
 import traceback
 
