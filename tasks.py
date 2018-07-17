@@ -571,7 +571,8 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
     bucket_names = buckets.split(',')
-    tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names, usergroup_tag)
+    tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
+                                               usergroup_tag, AWS_REGION)
     tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
     print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
 
@@ -581,14 +582,7 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
     print("creating a new workflow..")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
-    if usergroup:
-        if suffix:
-            sfn_suffix = usergroup + suffix
-        else:
-            sfn_suffix = usergroup
-    else:
-        sfn_suffix = suffix
-    res = _create_stepfunction(sfn_suffix, sfn_type)
+    res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     print(res)
     print("deploying lambdas..")
     if sfn_type == 'pony':
