@@ -94,7 +94,7 @@ def generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix):
 
 
 def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix):
-    function_arn_prefix = 'arn:aws:iam:' + region + ':' + account_id + ':function/'
+    function_arn_prefix = 'arn:aws:lambda:' + region + ':' + account_id + ':function/'
     resource = [function_arn_prefix + 'run_task_awsem' + '_' + tibanna_policy_prefix,
                 function_arn_prefix + 'check_task_awsem' + '_' + tibanna_policy_prefix]
     policy = {

@@ -370,7 +370,7 @@ def create_stepfunction(dev_suffix=None,
     if sfn_type == 'pony':  # 4dn
         sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
     else:
-        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/' +
+        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
             get_stepfunction_role_name('tibanna_' + usergroup)
     sfn_check_task_retry_conditions = [
         {
