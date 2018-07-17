@@ -1,17 +1,22 @@
 from uuid import uuid4
-from dcicutils.ff_utils import generate_rand_accession
+from dcicutils.ff_utils import (
+    generate_rand_accession,
+    get_authentication_with_server,
+    post_metadata,
+    get_metadata
+)
 from core.utils import run_workflow
 import gzip
 import boto3
-from wranglertools import fdnDCIC
 import time
 
 
-def post_random_file(bucket, keypairs_file):
+def post_random_file(bucket, ff_key):
     """Generates a fake pairs.gz file with random uuid and accession
     and posts it to fourfront. The content is unique since it contains
     its own uuid. The file metadata does not contain md5sum or
     content_md5sum.
+    Uses the given fourfront keys
     """
     uuid = str(uuid4())
     accession = generate_rand_accession()
@@ -22,29 +27,26 @@ def post_random_file(bucket, keypairs_file):
       "lab": "828cd4fe-ebb0-4b36-a94a-d2e3a36cc989",
       "uuid": uuid
     }
-
     upload_key = uuid + '/' + accession + '.pairs.gz'
     tmpfilename = 'alsjekvjf.gz'
     with gzip.open(tmpfilename, 'wb') as f:
         f.write(uuid)
 
-    key = fdnDCIC.FDN_Key(keypairs_file, "default")
-    connection = fdnDCIC.FDN_Connection(key)
-    response = fdnDCIC.new_FDN(connection, 'FileProcessed', newfile)
+    response = post_metadata(newfile, 'file_processed', key=ff_key)
     print(response)
     s3 = boto3.resource('s3')
     s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
-
     return newfile
 
 
-def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
+def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     """Creates a random file object with no md5sum/content_md5sum and run md5 workflow.
     It waits for 6 mintues till the workflow run finishes and checks the input file object
     has been updated.
     """
     bucket = "elasticbeanstalk-fourfront-" + env + "-wfoutput"
-    newfile = post_random_file(bucket, keypairs_file)
+    ff_key = get_authentication_with_server(ff_env='fourfront-' + env)
+    newfile = post_random_file(bucket, ff_key)
     uuid = newfile['uuid']
     accession = newfile['accession']
     input_json = {
@@ -82,10 +84,8 @@ def testrun_md5(keypairs_file, workflow_name='tibanna_pony', env='webdev'):
     print(resp)
 
     # check result
-    key = fdnDCIC.FDN_Key(keypairs_file, "default")
-    connection = fdnDCIC.FDN_Connection(key)
     time.sleep(6*60)  # wait for 6 minutes
-    filemeta = fdnDCIC.get_FDN(uuid, connection)
+    filemeta = get_metadata(uuid, key=ff_key)
     content_md5sum = filemeta.get('content_md5sum')
     md5sum = filemeta.get('md5sum')
     if content_md5sum and md5sum:
