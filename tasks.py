@@ -348,30 +348,6 @@ def _tbenv(env_data=None):
 
 
 @task
-def update_version(ctx, version=None):
-    from wranglertools._version import __version__
-    print("Current version is ", __version__)
-    if version is None:
-        version = input("What version would you like to set for new release (please use x.x.x / "
-                        " semantic versioning): ")
-
-    # read the versions file
-    lines = []
-    with open("wranglertools/_version.py") as readfile:
-        lines = readfile.readlines()
-
-    if lines:
-        with open("wranglertools/_version.py", 'w') as writefile:
-            lines[-1] = '__version__ = "%s"\n' % (version.strip())
-            writefile.writelines(lines)
-
-    run("git add wranglertools/_version.py")
-    run("git commit -m 'version bump'")
-    print("version updated to", version)
-    return version
-
-
-@task
 def git_tag(ctx, tag_name, msg):
     run('git tag -a %s -m "%s"' % (tag_name, msg))
     run('git push --tags')
