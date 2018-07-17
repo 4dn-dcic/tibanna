@@ -37,7 +37,7 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 ## Installation
 ### Dependency
 * Python 2.7
-* Pip 9.0.3/10.0.1
+* Pip 9.0.3 / 10.0.1
 * The other dependencies are listed in `requirements.txt` and are auto-installed in the following steps.
 
 ### Admin
@@ -47,7 +47,7 @@ As admin, you need to first set up Tibanna environment on your AWS account and c
 virtualenv -p python2.7 ~/venv/tibanna
 source ~/venv/tibanna/bin/activate
 
-# install pip 9.0.3
+# install pip 9.0.3 (or 10.0.1)
 python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
 
 git clone https://github.com/4dn-dcic/tibanna
@@ -106,7 +106,9 @@ As a user, you need to set up your awscli. You can only use `run_workflow` and y
 ```
 virtualenv -p python2.7 ~/venv/tibanna
 source ~/venv/tibanna/bin/activate
-python -m pip install pip==9.0.3
+
+# pip 9.0.3 or 10.0.1
+python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
 pip install -r requirements.txt
