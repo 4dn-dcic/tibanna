@@ -145,6 +145,12 @@ def create_json(input_dict, jobid):
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key')}
 
+    # remove the password and keyname info
+    if 'password' in pre['config']:
+        del(pre['config']['password'])
+    if 'key_name' in pre['config']:
+        del(pre['config']['key_name'])
+
     # writing to a json file
     json_filename = create_json_filename(jobid, json_dir)
     try:
