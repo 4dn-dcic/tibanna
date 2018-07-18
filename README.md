@@ -63,6 +63,12 @@ TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
 AWS_ACCOUNT_NUMBER  # aws account number
 ```
 
+If you're using a forked repo or want to use a specific branch set the following variables accordingly and export them. If you're using default (4dn-dcic/tibanna, master), no need to set these variables.
+```
+export TIBANNA_REPO_NAME=4dn-dcic/tibanna
+export TIBANNA_REPO_BRANCH=master
+```
+
 Then, set up user group and permission on AWS by using `invoke setup_tibanna_env`.
 ```
 invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...   # add all the buckets your input/output files and log files will go to. The buckets must already exist.
