@@ -368,7 +368,7 @@ def create_stepfunction(dev_suffix=None,
             lambda_suffix = ''
     sfn_name = 'tibanna_' + sfn_type + lambda_suffix
     lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
-    if sfn_type == 'pony':  # 4dn
+    if sfn_type == 'pony' or not usergroup:  # 4dn
         sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
     else:
         sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
