@@ -52,7 +52,7 @@ python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py
 
 git clone https://github.com/4dn-dcic/tibanna
 cd tibanna
-pip install -r requirements.txt
+pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
 ```
 
 Set up `awscli`: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
