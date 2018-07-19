@@ -1,4 +1,4 @@
-from core.pony_utils import (
+from core.utils import (
     powerup,
     StillRunningException,
     AWSEMJobErrorException,
