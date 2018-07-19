@@ -8,7 +8,6 @@ import os
 import subprocess
 import logging
 # from invoke import run
-from dcicutils import s3_utils
 import botocore.session
 import boto3
 from Benchmark import run as B
@@ -274,17 +273,16 @@ def update_config(config, app_name, input_files, parameters):
         input_size_in_bytes = dict()
         for argname, f in input_files.iteritems():
             bucket = f['bucket_name']
-            s3 = s3_utils.s3Utils(bucket, bucket, bucket)
             if isinstance(f['object_key'], list):
                 size = []
                 for key in f['object_key']:
                     try:
-                        size.append(s3.get_file_size(key, bucket))
+                        size.append(get_file_size(key, bucket))
                     except:
                         raise Exception("Can't get input file size")
             else:
                 try:
-                    size = s3.get_file_size(f['object_key'], bucket)
+                    size = get_file_size(f['object_key'], bucket)
                 except:
                     raise Exception("Can't get input file size")
             input_size_in_bytes.update({str(argname): size})
@@ -318,3 +316,28 @@ def update_config(config, app_name, input_files, parameters):
             raise Exception("ebs_size cannot be determined nor given")
         elif config['EBS_optimized'] == '':
             raise Exception("EBS_optimized cannot be determined nor given")
+
+
+def get_file_size(key, bucket, size_in_gb=False):
+        '''
+        default returns file size in bytes,
+        unless size_in_gb = True
+        '''
+        meta = does_key_exist(bucket, key)
+        if not meta:
+            raise Exception("key not found")
+        one_gb = 1073741824
+        size = meta['ContentLength']
+        if size_in_gb:
+            size = size / one_gb
+        return size
+
+
+def does_key_exist(bucket, object):
+    try:
+        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object)
+    except Exception as e:
+        print("object %s not found on bucket %s" % (str(key), str(bucket)))
+        print(str(e))
+        return False
+    return file_metadata

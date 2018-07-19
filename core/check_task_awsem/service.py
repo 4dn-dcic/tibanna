@@ -8,6 +8,7 @@ from core.lambda_utils import (
     powerup
 )
 import json
+import core.ec2_utils import does_key_exist
 
 
 def metadata_only(event):
@@ -19,16 +20,6 @@ def read_s3(bucket, object):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object)
     LOG.info(str(response))
     return response['Body'].read()
-
-
-def does_key_exist(bucket, object):
-    try:
-        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object)
-    except Exception as e:
-        print("object %s not found on bucket %s" % (str(key), str(bucket)))
-        print(str(e))
-        return False
-    return file_metadata
 
 
 @powerup('check_task_awsem', metadata_only)
