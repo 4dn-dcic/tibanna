@@ -1,7 +1,11 @@
 awscli==1.15.42
 boto3==1.7.42
 botocore==1.10.42
+aws_requests_auth==0.4.1
+elasticsearch-curator==5.5.4
+elasticsearch==5.5.2
 pytest-runner
+dcicutils==0.3.4
 urllib3
 pytest==3.0.5
 pytest-cov==2.3.1

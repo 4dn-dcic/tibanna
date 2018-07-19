@@ -9,9 +9,11 @@ from dcicutils.ff_utils import (
     post_metadata,
     patch_metadata,
     generate_rand_accession
+    search_metadata
 )
 from dcicutils.s3_utils import s3Utils
-from core.iam_utils import get_stepfunction_role_name
+from core.lambda_utils import run_workflow as _run_workflow
+from core.lambda_utils import _tibanna
 import logging
 
 ###########################################
@@ -22,15 +24,6 @@ import logging
 ###########################
 # Config
 ###########################
-
-# production step function
-AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
-AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
-BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
-WORKFLOW_NAME = 'tibanna_pony'
-STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
-# just store this in one place
-_tibanna = '_tibanna'
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -256,187 +249,6 @@ def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
     return list(pf_source_experiments)
 
 
-def run_workflow(input_json, accession='', workflow='tibanna_pony',
-                 env='fourfront-webdev'):
-    '''
-    accession is unique name that we be part of run id
-    '''
-    client = boto3.client('stepfunctions', region_name='us-east-1')
-    STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', str(workflow))
-    base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
-
-    # build from appropriate input json
-    # assume run_type and and run_id
-    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
-    run_name = input_json[_tibanna]['run_name']
-
-    # check to see if run already exists
-    # and if so change our name a bit
-    arn = "%s%s%s" % (BASE_ARN % ('execution', str(workflow)),
-                      ":",
-                      run_name)
-    try:
-        response = client.describe_execution(
-                executionArn=arn
-        )
-        if response:
-            run_name += str(uuid4())
-            input_json[_tibanna]['run_name'] = run_name
-    except Exception as e:
-        pass
-
-    # calculate what the url will be
-    url = "%s%s%s%s" % (base_url,
-                        BASE_ARN % ('execution', str(workflow)),
-                        ":",
-                        run_name)
-
-    input_json[_tibanna]['url'] = url
-
-    aws_input = json.dumps(input_json)
-    print("about to start run %s" % run_name)
-    # trigger the step function to run
-    try:
-        response = client.start_execution(
-            stateMachineArn=STEP_FUNCTION_ARN,
-            name=run_name,
-            input=aws_input,
-        )
-    except Exception as e:
-        if e.response.get('Error'):
-            if e.response['Error'].get('Code') == 'ExecutionAlreadyExists':
-                print("execution already exists...mangling name and retrying...")
-                run_name += str(uuid4())
-                input_json[_tibanna]['run_name'] = run_name
-
-                # calculate what the url will be
-                url = "%s%s%s%s" % (base_url, (BASE_ARN % 'execution'), ":", run_name)
-                input_json[_tibanna]['url'] = url
-                aws_input = json.dumps(input_json)
-
-                response = client.start_execution(
-                    stateMachineArn=STEP_FUNCTION_ARN,
-                    name=run_name,
-                    input=aws_input,
-                )
-            else:
-                raise(e)
-
-    print("response from aws was: \n %s" % response)
-    print("url to view status:")
-    print(input_json[_tibanna]['url'])
-    input_json[_tibanna]['response'] = response
-    return input_json
-
-
-def create_stepfunction(dev_suffix=None,
-                        sfn_type='pony',  # vs 'unicorn'
-                        region_name=AWS_REGION,
-                        aws_acc=AWS_ACCOUNT_NUMBER,
-                        usergroup=None):
-    if usergroup:
-        if dev_suffix:
-            lambda_suffix = '_' + usergroup + '_' + dev_suffix
-        else:
-            lambda_suffix = '_' + usergroup
-    else:
-        if dev_suffix:
-            lambda_suffix = '_' + dev_suffix
-        else:
-            lambda_suffix = ''
-    sfn_name = 'tibanna_' + sfn_type + lambda_suffix
-    lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
-    if sfn_type == 'pony' or not usergroup:  # 4dn
-        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
-    else:
-        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
-            get_stepfunction_role_name('tibanna_' + usergroup)
-    sfn_check_task_retry_conditions = [
-        {
-            "ErrorEquals": ["EC2StartingException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 4,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["StillRunningException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 10000,
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_start_run_retry_conditions = [
-        {
-            "ErrorEquals": ["TibannaStartException"],
-            "IntervalSeconds": 30,
-            "MaxAttempts": 5,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["FdnConnectionException"],
-            "IntervalSeconds": 30,
-            "MaxAttempts": 5,
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
-    sfn_state_defs = dict()
-    sfn_state_defs['pony'] = {
-        "StartRunAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
-            "Retry": sfn_start_run_retry_conditions,
-            "Next": "RunTaskAwsem"
-        },
-        "RunTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
-            "Next": "CheckTaskAwsem"
-        },
-        "CheckTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
-            "Retry": sfn_check_task_retry_conditions,
-            "Next": "UpdateFFMetaAwsem"
-        },
-        "UpdateFFMetaAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
-            "End": True
-        }
-    }
-    sfn_state_defs['unicorn'] = {
-        "RunTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
-            "Next": "CheckTaskAwsem"
-        },
-        "CheckTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
-            "Retry": sfn_check_task_retry_conditions,
-            "End": True
-        }
-    }
-    definition = {
-      "Comment": "Start a workflow run on awsem, (later) track it and update our metadata to reflect whats going on",
-      "StartAt": sfn_start_lambda[sfn_type],
-      "States": sfn_state_defs[sfn_type]
-    }
-    client = boto3.client('stepfunctions', region_name=region_name)
-    try:
-        response = client.create_state_machine(
-            name=sfn_name,
-            definition=json.dumps(definition, indent=4, sort_keys=True),
-            roleArn=sfn_role_arn
-        )
-    except Exception as e:
-        # sfn_arn=None
-        raise(e)
-    # sfn_arn = response['stateMachineArn']
-    return(response)
-
-
 class Tibanna(object):
 
     def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
@@ -508,3 +320,113 @@ def current_env():
 
 def is_prod():
     return current_env().lower() == 'prod'
+
+
+def run_md5(env, accession, uuid):
+    tibanna = Tibanna(env=env)
+    meta_data = get_metadata(accession, key=tibanna.ff_keys)
+    file_name = meta_data['upload_key'].split('/')[-1]
+
+    input_json = make_input(env=env, workflow='md5', object_key=file_name, uuid=uuid)
+    return _run_workflow(input_json, accession)
+
+
+def batch_fastqc(env, batch_size=20):
+    '''
+    try to run fastqc on everythign that needs it ran
+    '''
+    files_processed = 0
+    files_skipped = 0
+
+    # handle ctrl-c
+    import signal
+
+    def report(signum, frame):
+        print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
+        sys.exit(-1)
+
+    signal.signal(signal.SIGINT, report)
+
+    tibanna = Tibanna(env=env)
+    uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
+                                     key=tibanna.ff_key, ff_env=tibanna.env)
+
+    # TODO: need to change submit 4dn to not overwrite my limit
+    if len(uploaded_files['@graph']) > batch_size:
+        limited_files = uploaded_files['@graph'][:batch_size]
+    else:
+        limited_files = uploaded_files['@graph']
+
+    for ufile in limited_files:
+        fastqc_run = False
+        for wfrun in ufile.get('workflow_run_inputs', []):
+            if 'fastqc' in wfrun:
+                fastqc_run = True
+        if not fastqc_run:
+            print("running fastqc for %s" % ufile.get('accession'))
+            run_fastqc(env, ufile.get('accession'), ufile.get('uuid'))
+            files_processed += 1
+        else:
+            print("******** fastqc already run for %s skipping" % ufile.get('accession'))
+            files_skipped += 1
+        sleep(5)
+        if files_processed % 10 == 0:
+            sleep(60)
+
+    print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
+
+
+def run_fastqc(env, accession, uuid):
+    if not accession.endswith(".fastq.gz"):
+        accession += ".fastq.gz"
+    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', object_key=accession, uuid=uuid)
+    return _run_workflow(input_json, accession)
+
+
+_workflows = {'md5':
+              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
+               'arg_name': 'input_file'
+               },
+              'fastqc-0-11-4-1':
+              {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
+               'arg_name': 'input_fastq'
+               },
+              }
+
+
+def make_input(env, workflow, object_key, uuid):
+    bucket = "elasticbeanstalk-%s-files" % env
+    output_bucket = "elasticbeanstalk-%s-wfoutput" % env
+    workflow_uuid = _workflows[workflow]['uuid']
+    workflow_arg_name = _workflows[workflow]['arg_name']
+
+    data = {"parameters": {},
+            "app_name": workflow,
+            "workflow_uuid": workflow_uuid,
+            "input_files": [
+                {"workflow_argument_name": workflow_arg_name,
+                 "bucket_name": bucket,
+                 "uuid": uuid,
+                 "object_key": object_key,
+                 }
+             ],
+            "output_bucket": output_bucket,
+            "config": {
+                "ebs_type": "io1",
+                "json_bucket": "4dn-aws-pipeline-run-json",
+                "ebs_iops": 500,
+                "shutdown_min": 30,
+                "ami_id": "ami-cfb14bb5",
+                "copy_to_s3": True,
+                "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+                "launch_instance": True,
+                "password": "thisisnotmypassword",
+                "log_bucket": "tibanna-output",
+                "key_name": ""
+              },
+            }
+    data.update(_tibanna_settings({'run_id': str(object_key),
+                                   'run_type': workflow,
+                                   'env': env,
+                                   }))
+    return data
