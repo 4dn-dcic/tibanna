@@ -3,6 +3,9 @@ from core.iam_utils import get_stepfunction_role_name
 import logging
 import traceback
 import os
+import boto3
+import json
+from uuid import uuid4
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -17,6 +20,37 @@ STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 
 # just store this in one place
 _tibanna = '_tibanna'
+
+
+def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
+    tibanna = {"run_id": str(uuid4()),
+               "env": env,
+               "url": '',
+               'run_type': 'generic',
+               'run_name': '',
+               }
+    in_place = None
+    if force_inplace:
+        if not settings_patch.get(_tibanna):
+            settings_patch[_tibanna] = {}
+    if settings_patch:
+        in_place = settings_patch.get(_tibanna, None)
+        if in_place is not None:
+            tibanna.update(in_place)
+        else:
+            tibanna.update(settings_patch)
+
+    # generate run name
+    if not tibanna.get('run_name'):
+        # aws doesn't like / in names
+        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/', '-'), tibanna['run_id'])
+
+    if in_place is not None:
+        settings_patch[_tibanna] = tibanna
+        return settings_patch
+    else:
+        return {_tibanna: tibanna}
+
 
 # logger
 LOG = logging.getLogger(__name__)

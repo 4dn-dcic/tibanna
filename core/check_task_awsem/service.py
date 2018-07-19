@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import logging
 import boto3
 from core.utils import (
     StillRunningException,
@@ -8,7 +9,9 @@ from core.utils import (
     powerup
 )
 import json
-import core.ec2_utils import does_key_exist
+from core.ec2_utils import does_key_exist
+
+LOG = logging.getLogger(__name__)
 
 
 def metadata_only(event):

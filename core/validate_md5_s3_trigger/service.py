@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import boto3
-from core.utils import _tibanna_settings, Tibanna, STEP_FUNCTION_ARN
+from core.utils import _tibanna_settings, STEP_FUNCTION_ARN
+from core.pony_utils import Tibanna
 from dcicutils.ff_utils import get_metadata
 import json
 

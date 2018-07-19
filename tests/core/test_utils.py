@@ -4,7 +4,6 @@ from core.pony_utils import (
     AWSEMJobErrorException,
 )
 import pytest
-from conftest import valid_env
 import mock
 
 

@@ -1,11 +1,12 @@
-from invoke import task, run
-from core.utils import run_md5 as _run_md5
-from core.utils import batch_fastqc as _batch_fastqc
-from core.utils import run_fastqc as _run_fastqc
+from invoke import task
+from core.pony_utils import run_md5 as _run_md5
+from core.pony_utils import batch_fastqc as _batch_fastqc
+from core.pony_utils import run_fastqc as _run_fastqc
+
 
 @task
 def run_md5(ctx, env, accession, uuid):
-    _run_md5(env=env, accession=accession, uuid=uuod)
+    _run_md5(env=env, accession=accession, uuid=uuid)
 
 
 @task
@@ -19,5 +20,3 @@ def batch_fastqc(ctx, env, batch_size=20):
 @task
 def run_fastqc(ctx, env, accession, uuid):
     _run_fastqc(env=env, accession=accession, uuid=uuid)
-
-

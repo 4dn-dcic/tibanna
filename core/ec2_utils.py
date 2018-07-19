@@ -337,7 +337,7 @@ def does_key_exist(bucket, object):
     try:
         file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object)
     except Exception as e:
-        print("object %s not found on bucket %s" % (str(key), str(bucket)))
+        print("object %s not found on bucket %s" % (str(object), str(bucket)))
         print(str(e))
         return False
     return file_metadata

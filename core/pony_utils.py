@@ -1,7 +1,7 @@
 from __future__ import print_function
 import json
-import boto3
 import os
+import sys
 import datetime
 from uuid import uuid4
 from dcicutils.ff_utils import (
@@ -12,8 +12,9 @@ from dcicutils.ff_utils import (
     search_metadata
 )
 from dcicutils.s3_utils import s3Utils
-from core.lambda_utils import run_workflow as _run_workflow
-from core.lambda_utils import _tibanna
+from core.utils import run_workflow as _run_workflow
+from core.utils import _tibanna_settings
+from time import sleep
 import logging
 
 ###########################################
@@ -284,36 +285,6 @@ class Tibanna(object):
                 'settings': self.settings}
 
 
-def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
-    tibanna = {"run_id": str(uuid4()),
-               "env": env,
-               "url": '',
-               'run_type': 'generic',
-               'run_name': '',
-               }
-    in_place = None
-    if force_inplace:
-        if not settings_patch.get(_tibanna):
-            settings_patch[_tibanna] = {}
-    if settings_patch:
-        in_place = settings_patch.get(_tibanna, None)
-        if in_place is not None:
-            tibanna.update(in_place)
-        else:
-            tibanna.update(settings_patch)
-
-    # generate run name
-    if not tibanna.get('run_name'):
-        # aws doesn't like / in names
-        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/', '-'), tibanna['run_id'])
-
-    if in_place is not None:
-        settings_patch[_tibanna] = tibanna
-        return settings_patch
-    else:
-        return {_tibanna: tibanna}
-
-
 def current_env():
     return os.environ.get('ENV_NAME', 'test')
 
@@ -328,7 +299,7 @@ class WorkflowFile(object):
                  filesize=None, md5=None):
         self.bucket = bucket
         self.key = key
-        self.s3 = s3_utils.s3Utils(self.bucket, self.bucket, self.bucket)
+        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
         self.accession = accession
         self.output_type = output_type

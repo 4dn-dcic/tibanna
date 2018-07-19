@@ -21,7 +21,6 @@ from core.iam_utils import create_tibanna_iam
 from core.iam_utils import get_bucket_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
-from time import sleep
 import requests
 import random
 
