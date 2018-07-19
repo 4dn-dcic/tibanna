@@ -3,10 +3,10 @@ import logging
 # import json
 import boto3
 from dcicutils import ff_utils
+from core.lambda_utils import powerup
+from core.lambda_utils import TibannaStartException
 from core.utils import (
     Tibanna,
-    powerup,
-    TibannaStartException,
     merge_source_experiments,
     ensure_list,
     create_ffmeta_awsem,

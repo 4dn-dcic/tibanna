@@ -1,19 +1,16 @@
 awscli==1.15.42
 boto3==1.7.42
 botocore==1.10.42
--e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
--e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
-# Build tasks
-invoke==0.18.1
-# Syntax checking
-flake8==2.4.1
 aws_requests_auth==0.4.1
 elasticsearch-curator==5.5.4
 elasticsearch==5.5.2
 pytest-runner
 dcicutils==0.3.4
 urllib3
-# for testing
 pytest==3.0.5
 pytest-cov==2.3.1
+-e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
+-e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
+invoke==0.18.1
+flake8==2.4.1
 mock

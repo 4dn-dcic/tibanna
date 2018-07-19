@@ -2,6 +2,7 @@
 import logging
 from dcicutils import ff_utils
 from core import utils, ec2_utils
+from core.lambda_utils import powerup
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
@@ -254,7 +255,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@utils.powerup('update_ffmeta_awsem', metadata_only)
+@powerup('update_ffmeta_awsem', metadata_only)
 def handler(event, context):
     return real_handler(event, context)
 
