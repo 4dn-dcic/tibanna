@@ -10,6 +10,7 @@ from core.pony_utils import (
 )
 import pytest
 from conftest import valid_env
+from test_utils import awsem_error_fun
 import logging
 import mock
 
@@ -297,3 +298,8 @@ def test_get_extra_file_key():
     extra_file_format = 'bw'
     extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
     assert extra_file_key == 'hahaha/lalala.bw'
+
+
+def test_powerup_add_awsem_error_to_output(ff_metadata):
+    res = awsem_error_fun(ff_metadata, None)
+    assert ('error' in res)

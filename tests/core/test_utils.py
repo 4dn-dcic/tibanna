@@ -77,8 +77,3 @@ def test_powerup_calls_metadata_only_func():
 
     assert exec_nfo
     assert 'metadata' in str(exec_nfo.value)
-
-
-def test_powerup_add_awsem_error_to_output(ff_metadata):
-    res = awsem_error_fun(ff_metadata, None)
-    assert ('error' in res)
