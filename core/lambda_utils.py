@@ -2,6 +2,7 @@ from __future__ import print_function
 from core.iam_utils import get_stepfunction_role_name
 import logging
 import traceback
+import os
 
 ###########################################
 # These utils exclusively live in Tibanna #
