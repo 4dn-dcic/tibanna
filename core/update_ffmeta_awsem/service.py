@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from dcicutils import ff_utils
-from core import utils, ec2_utils
+from core import utils
 from core.lambda_utils import powerup
 import boto3
 from collections import defaultdict
@@ -278,7 +278,7 @@ def real_handler(event, context):
 
     # ensure this bad boy is always initialized
     patch_meta = False
-    awsem = ec2_utils.Awsem(event)
+    awsem = utils.Awsem(event)
 
     # go through this and replace export_report with awsf format
     # actually interface should be look through ff_meta files and call
