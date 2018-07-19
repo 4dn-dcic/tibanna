@@ -8,7 +8,7 @@ from dcicutils.ff_utils import (
     get_metadata,
     post_metadata,
     patch_metadata,
-    generate_rand_accession
+    generate_rand_accession,
     search_metadata
 )
 from dcicutils.s3_utils import s3Utils
