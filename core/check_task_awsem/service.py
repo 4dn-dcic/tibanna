@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from core.lambda_utils import (
+from core.utils import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,

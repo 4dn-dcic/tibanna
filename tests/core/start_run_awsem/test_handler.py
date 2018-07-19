@@ -7,7 +7,7 @@ from core.start_run_awsem.service import (
     add_secondary_files_to_args,
 )
 from ..conftest import valid_env
-from core.utils import Tibanna, ProcessedFileMetadata
+from core.pony_utils import Tibanna, ProcessedFileMetadata
 from dcicutils import ff_utils
 import mock
 

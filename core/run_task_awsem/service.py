@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from core import ec2_utils as utils
-from core.lambda_utils import powerup
+from core.utils import powerup
 import os
 
 

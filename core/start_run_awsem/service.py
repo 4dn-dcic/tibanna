@@ -3,9 +3,9 @@ import logging
 # import json
 import boto3
 from dcicutils import ff_utils
-from core.lambda_utils import powerup
-from core.lambda_utils import TibannaStartException
-from core.utils import (
+from core.utils import powerup
+from core.utils import TibannaStartException
+from core.pony_utils import (
     Tibanna,
     merge_source_experiments,
     ensure_list,

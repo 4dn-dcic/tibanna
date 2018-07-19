@@ -5,8 +5,8 @@ from core.update_ffmeta_awsem.service import (
     md5_updater,
     _md5_updater
 )
-from core.ec2_utils import Awsem
-from core import utils
+from core.pony_utils import Awsem
+from core import pony_utils
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
@@ -126,7 +126,7 @@ def test__md5_updater_8():
 def test_md5_updater_oldmd5(update_ffmeta_event_data):
     event = update_ffmeta_event_data
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = utils.Tibanna(**tibanna_settings)
+    tibanna = pony_utils.Tibanna(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data)
     ouf = awsem.output_files()['report']
     md5_updater('uploaded', ouf, None, tibanna)
@@ -137,7 +137,7 @@ def test_md5_updater_oldmd5(update_ffmeta_event_data):
 def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
     event = update_ffmeta_event_data_newmd5
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = utils.Tibanna(**tibanna_settings)
+    tibanna = pony_utils.Tibanna(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data_newmd5)
     ouf = awsem.output_files()['report']
     md5_updater('uploaded', ouf, None, tibanna)
@@ -164,7 +164,7 @@ def test_update_ffmeta_awsem_e2e(update_ffmeta_event_data, tibanna_env):
 @valid_env
 def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
     update_ffmeta_mcool.update(tibanna_env)
-    with mock.patch('core.utils.patch_metadata'):
+    with mock.patch('core.pony_utils.patch_metadata'):
         with mock.patch('requests.post') as mock_request:
             ret = handler(update_ffmeta_mcool, None)
             mock_request.assert_called_once()
@@ -175,7 +175,7 @@ def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
 @pytest.mark.webtest
 def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
     update_ffmeta_metaonly_data2.update(tibanna_env)
-    with mock.patch('core.utils.patch_metadata') as mock_request:
+    with mock.patch('core.pony_utils.patch_metadata') as mock_request:
         ret = handler(update_ffmeta_metaonly_data2, None)
         # once for patch pf once for workflow run
         mock_request.call_count == 2
@@ -186,7 +186,7 @@ def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
 def test_register_to_higlass(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     mcool_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.mcool'
-    tibanna = utils.Tibanna(used_env)
+    tibanna = pony_utils.Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, mcool_key, 'cooler', 'matrix')
         mock_request.assert_called_once()
@@ -198,7 +198,7 @@ def test_register_to_higlass(used_env):
 def test_register_to_higlass2(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigwig_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.bw'
-    tibanna = utils.Tibanna(used_env)
+    tibanna = pony_utils.Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, bigwig_key, 'bigwig', 'vector')
         mock_request.assert_called_once()

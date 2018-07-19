@@ -10,10 +10,10 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.ec2_utils import AWS_S3_ROLE_NAME
-from core.lambda_utils import AWS_REGION, AWS_ACCOUNT_NUMBER
-from core.lambda_utils import run_workflow as _run_workflow
-from core.lambda_utils import create_stepfunction as _create_stepfunction
-from core.lambda_utils import _tibanna
+from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
+from core.utils import run_workflow as _run_workflow
+from core.utils import create_stepfunction as _create_stepfunction
+from core.utils import _tibanna
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
