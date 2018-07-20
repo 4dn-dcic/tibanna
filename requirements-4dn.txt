@@ -1,4 +1,4 @@
-dcicutils==0.0.361
+dcicutils==0.4.0
 -e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
 -e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
 # for tasks.py

@@ -39,6 +39,7 @@ Tibanna has been evolving: originally developed for Desktop workflow submitter t
 * Python 2.7
 * Pip 9.0.3 / 10.0.1
 * The other dependencies are listed in `requirements.txt` and are auto-installed in the following steps.
+* If you are 4DN-DCIC user, use the dependencies specified in `requirements-4dn.txt`. These include all the base requirements in `requirements.txt`, as well as other 4DN-specific pakages.
 
 ### Admin
 As admin, you need to first set up Tibanna environment on your AWS account and create a usergroup with a shared permission to the environment.
@@ -89,11 +90,11 @@ Tibanna usergroup default_6206 has been created on AWS.
 Then, deploy tibanna (unicorn) to your aws account for a specific user group (for more details about tibanna deployment, see below)
 * Note: you can only use unicorn (the core with no communication with 4DN portal). Pony is reserved for 4DN-DCIC.
 ```
-invoke deploy_tibanna --usergroup=<usergroup> --no-tests --sfn-type=unicorn
+invoke deploy_tibanna --usergroup=<usergroup> --sfn-type=unicorn
 ```
 As an exmple,
 ```
-invoke deploy_tibanna --usergroup=default_6206 --no-tests --sfn-type=unicorn
+invoke deploy_tibanna --usergroup=default_6206 --sfn-type=unicorn
 ```
 
 To run a workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below),
@@ -147,7 +148,7 @@ SECRET  # aws secret key
 
 To create a copy of tibanna (step function + lambdas)
 ```
-invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--no-tests]
+invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--tests]
 # (use suffix for development version)
 # example <suffixname> : dev
 # <sfn_type> (step function type) is either 'pony' or 'unicorn' (default pony)
@@ -162,7 +163,7 @@ The above command will create a step function named `tibanna_pony_dev2` that use
 ```
 invoke deploy_tibanna --suffix=dev --sfn_type=unicorn
 ```
-This example creates a step function named `tibanna_unicorn_dev` that uses a set of lambdas with suffix `_dev`, and deploys these lambdas.
+This example creates a step function named `tibanna_unicorn_dev` that uses a set of lambdas with suffix `_dev`, and deploys these lambdas. Using the `--tests` argument will ensure tests pass befor deploying; currently this is **NOT** available for users outside of 4DN-DCIC.
 
 To deploy lambda functions (use suffix for development version lambdas)
 ```
@@ -258,16 +259,16 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
            "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
        },
-       { 
-           "workflow_argument_name": "fastq1", 
+       {
+           "workflow_argument_name": "fastq1",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-           "uuid": "1150b428-272b-4a0c-b3e6-4b405c148f7c", 
+           "uuid": "1150b428-272b-4a0c-b3e6-4b405c148f7c",
            "object_key": "4DNFIVOZN511.fastq.gz"
        },
-       { 
-           "workflow_argument_name": "fastq2", 
+       {
+           "workflow_argument_name": "fastq2",
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-           "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+           "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa",
            "object_key": "4DNFIRSRJH45.fastq.gz"
        }
   ],
