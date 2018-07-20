@@ -33,6 +33,7 @@ AMI_ID_CWL_V1 = 'ami-31caa14e'
 AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
+UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 
 
 def get_random_line_in_gist(url):
@@ -69,13 +70,13 @@ def setenv(**kwargs):
 
 def get_all_core_lambdas():
     return [
-            'validate_md5_s3_trigger',
-            'start_run_awsem',
-            'run_task_awsem',
-            'check_task_awsem',
-            'update_ffmeta_awsem',
-            'run_workflow',
-            ]
+        'validate_md5_s3_trigger',
+        'start_run_awsem',
+        'run_task_awsem',
+        'check_task_awsem',
+        'update_ffmeta_awsem',
+        'run_workflow',
+    ]
 
 
 def env_list(name):
@@ -84,6 +85,9 @@ def env_list(name):
     if secret is None:
         raise RuntimeError("SECRET should be defined in env")
     envlist = {
+        'run_workflow': {'SECRET': secret,
+                         'TIBANNA_AWS_REGION': AWS_REGION,
+                         'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'start_run_awsem': {'SECRET': secret,
                             'TIBANNA_AWS_REGION': AWS_REGION,
                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
@@ -240,20 +244,24 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, no_tests=False, suffix=None, usergroup=None):
+def deploy_core(ctx, name, version=None, tests=False, suffix=None, usergroup=None):
     print("preparing for deploy...")
-    print("make sure tests pass")
-    if no_tests is False:
+    if tests:
+        print("running tests...")
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
             return
+    else:
+        print("skipping tests. execute with --tests flag to run them")
     if name == 'all':
         names = get_all_core_lambdas()
         print(names)
+    elif name == 'unicorn':
+        names = UNICORN_LAMBDAS
     else:
         names = [name, ]
 
-    # dist directores are the enemy, clean the all
+    # dist directores are the enemy, clean them all
     for name in get_all_core_lambdas():
         print("cleaning house before deploying")
         with chdir("./core/%s" % (name)):
@@ -298,8 +306,13 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     else:
         new_name = name
         new_src = '../' + new_name
+    # use the lightweight requirements for the lambdas to simplify deployment
+    if name in UNICORN_LAMBDAS:
+        requirements_file = '../../requirements-lambda-unicorn.txt'
+    else:
+        requirements_file = '../../requirements-lambda-pony.txt'
     with chdir(new_src):
-        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements=requirements_file)
     # add environment variables
     lambda_update_config = {'FunctionName': new_name}
     envs = env_list(name)
@@ -426,18 +439,18 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 
 @task
-def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, no_tests=False):
-    print("creating a new workflow..")
+def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False):
+    print
+    print("creating a new workflow...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     print(res)
-    print("deploying lambdas..")
+    print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'all', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_core(ctx, 'run_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
-        deploy_core(ctx, 'check_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'unicorn', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
 
 
 @task

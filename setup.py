@@ -8,23 +8,21 @@ try:
 except:
     pass  # don't know why this fails with tox
 
-requires = [
-    'awscli==1.15.42',
-    'boto3==1.7.42',
-    'botocore==1.10.42',
-    'invoke==0.18.1',
-    'flake8==2.4.1',
-    'dcicutils==0.3.1',
-    'urllib3',
-    'packaging@https://github.com/j1z0/python-lambda.git#egg=python_lambda',
-    'packaging@https://github.com/SooLee/Benchmark.git#egg=Benchmark'
-]
+# minimum requirements to create the core package. Covers pony and unicorn
+with open('requirements-lambda-pony.txt') as f:
+    inst_parsed = f.read().splitlines()
+install_requires = [req.strip() for req in inst_parsed if '-e git' not in req]
 
-tests_require = [
-    'pytest>=3.0.1',
-    'pytest-mock',
-    'pytest-cov',
-]
+# full requirements for unicorn (does not require dcicutils)
+with open('requirements.txt') as f:
+    set_parsed = f.read().splitlines()
+setup_requires = [req.strip() for req in set_parsed if '-e git' not in req]
+
+# full requirements for pony and running tests (includes dcicutils)
+with open('requirements-4dn.txt') as f:
+    tests_parsed = f.read().splitlines()
+tests_require = [req.strip() for req in tests_parsed if '-e git' not in req]
+
 
 setup(
     name='core',
@@ -42,15 +40,15 @@ setup(
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7',
             ],
-    install_requires=requires,
+    install_requires=install_requires,
     include_package_data=True,
     tests_require=tests_require,
     extras_require={
         'test': tests_require,
     },
-    setup_requires=['pytest-runner', ],
+    setup_requires=setup_requires,
     dependency_links=[
-        'git+https://github.com/j1z0/python-lambda.git#egg=python_lambda',
+        'git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda',
         'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
     ]
 )

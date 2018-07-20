@@ -1,12 +1,16 @@
 awscli==1.15.42
 boto3==1.7.42
 botocore==1.10.42
-pytest-runner
-urllib3
-pytest==3.0.5
-pytest-cov==2.3.1
+urllib3==1.22
+requests==2.19.1
 -e git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda
 -e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
+# for tasks.py
 invoke==0.18.1
+# syntax checker
 flake8==2.4.1
+# for testing
+pytest==3.0.5
+pytest-cov==2.3.1
+pytest-runner
 mock
