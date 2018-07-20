@@ -440,7 +440,6 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 @task
 def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False):
-    print
     print("creating a new workflow...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
