@@ -255,11 +255,12 @@ def deploy_core(ctx, name, version=None, tests=False, suffix=None, usergroup=Non
         print("skipping tests. execute with --tests flag to run them")
     if name == 'all':
         names = get_all_core_lambdas()
-        print(names)
+
     elif name == 'unicorn':
         names = UNICORN_LAMBDAS
     else:
         names = [name, ]
+    print('deploying the following lambdas: %s' % names)
 
     # dist directores are the enemy, clean them all
     for name in get_all_core_lambdas():
