@@ -29,6 +29,8 @@ def metadata_only(event):
 
 @powerup('start_run_awsem', metadata_only)
 def handler(event, context):
+    if not event.get('push_error_to_end', False):
+        event['push_error_to_end'] = False  # push error to end by default for pony
     return real_handler(event, context)
 
 

@@ -97,6 +97,8 @@ def powerup(lambda_name, metadata_only_func):
         def wrapper(event, context):
             logger.info(context)
             logger.info(event)
+            if not event.get('push_error_to_end', False):
+                return function(event, context)
             if lambda_name in event.get('skip', []):
                 logger.info('skipping %s since skip was set in input_json' % lambda_name)
                 return event
