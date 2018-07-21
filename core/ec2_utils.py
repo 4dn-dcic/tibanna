@@ -333,11 +333,11 @@ def get_file_size(key, bucket, size_in_gb=False):
         return size
 
 
-def does_key_exist(bucket, object):
+def does_key_exist(bucket, object_name):
     try:
-        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object)
+        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object_name)
     except Exception as e:
-        print("object %s not found on bucket %s" % (str(object), str(bucket)))
+        print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
         print(str(e))
         return False
     return file_metadata

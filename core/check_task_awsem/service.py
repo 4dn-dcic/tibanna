@@ -19,8 +19,8 @@ def metadata_only(event):
     return event
 
 
-def read_s3(bucket, object):
-    response = boto3.client('s3').get_object(Bucket=bucket, Key=object)
+def read_s3(bucket, object_name):
+    response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
     LOG.info(str(response))
     return response['Body'].read()
 
