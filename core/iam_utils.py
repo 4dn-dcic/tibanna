@@ -113,6 +113,9 @@ def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix):
 
 
 def generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix):
+    execution_arn_prefix = 'arn:aws:states:' + region + ':' + account_id + ':execution:'
+    usergroup = tibanna_policy_prefix.replace('tibanna_', '')
+    resource = execution_arn_prefix + '*' + usergroup + ':*'
     policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -121,7 +124,7 @@ def generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix)
                 "Action": [
                     "states:DescribeExecution"
                 ],
-                "Resource": "*"
+                "Resource": resource
             }
         ]
     }

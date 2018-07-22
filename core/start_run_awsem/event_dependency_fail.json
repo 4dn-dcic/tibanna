@@ -1,0 +1,33 @@
+{
+    "config": {
+    "cwl_version": "draft3",
+      "ebs_type" : "io1",
+      "ebs_iops" : 500,
+
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "password": "",
+      "shutdown_min" : 30,
+      "copy_to_s3" : true,
+      "launch_instance" : true,
+      "log_bucket": "tibanna-output",
+
+      "key_name": "4dn-encode"
+    },
+    "parameters" :  {},
+    "_tibanna": {
+      "env": "fourfront-webdev",
+      "run_type": "md5"
+    },
+    "app_name": "md5", 
+    "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
+    "input_files": [
+                    {"workflow_argument_name": "input_file", 
+                     "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+                     "uuid": "f4864029-a8ad-4bb8-93e7-5108f462ccaa", 
+                     "object_key": "4DNFIRSRJH45.fastq.gz"
+                    }
+    ],
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "dependency": { "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev999:md5_fail"]}
+}
+

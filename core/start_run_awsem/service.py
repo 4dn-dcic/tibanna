@@ -150,6 +150,10 @@ def real_handler(event, context):
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
 
+    # dependencies
+    if 'dependency' in event:
+        args['dependency'] = event['dependency']
+
     # initialize config parameters as null for benchmarking
     config = event['config']
     if 'instance_type' not in config:
