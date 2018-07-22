@@ -55,7 +55,8 @@ def ff_metadata():
             "value": "b4f6807c-6f93-4b7d-91ff-ff95e801165c"
           }
         ]
-      }
+      },
+      "push_error_to_end": True
     }
 
 
