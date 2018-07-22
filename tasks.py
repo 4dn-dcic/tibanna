@@ -9,17 +9,11 @@ import boto3
 import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
+from core.ec2_utils import AWS_S3_ROLE_NAME
+from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
-from core.utils import _tibanna_settings, Tibanna
 from core.utils import _tibanna
-from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
-from core.ec2_utils import AWS_S3_ROLE_NAME
-from dcicutils.s3_utils import s3Utils
-from dcicutils.ff_utils import (
-    get_metadata,
-    search_metadata
-)
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.launch_utils import kill_all as _kill_all
@@ -27,7 +21,6 @@ from core.iam_utils import create_tibanna_iam
 from core.iam_utils import get_bucket_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
-from time import sleep
 import requests
 import random
 
@@ -40,6 +33,7 @@ AMI_ID_CWL_V1 = 'ami-31caa14e'
 AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
+UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 
 
 def get_random_line_in_gist(url):
@@ -76,13 +70,13 @@ def setenv(**kwargs):
 
 def get_all_core_lambdas():
     return [
-            'validate_md5_s3_trigger',
-            'start_run_awsem',
-            'run_task_awsem',
-            'check_task_awsem',
-            'update_ffmeta_awsem',
-            'run_workflow',
-            ]
+        'validate_md5_s3_trigger',
+        'start_run_awsem',
+        'run_task_awsem',
+        'check_task_awsem',
+        'update_ffmeta_awsem',
+        'run_workflow',
+    ]
 
 
 def env_list(name):
@@ -91,6 +85,9 @@ def env_list(name):
     if secret is None:
         raise RuntimeError("SECRET should be defined in env")
     envlist = {
+        'run_workflow': {'SECRET': secret,
+                         'TIBANNA_AWS_REGION': AWS_REGION,
+                         'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'start_run_awsem': {'SECRET': secret,
                             'TIBANNA_AWS_REGION': AWS_REGION,
                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
@@ -247,20 +244,25 @@ def deploy_chalice(ctx, name='lambda_sbg', version=None):
 
 
 @task
-def deploy_core(ctx, name, version=None, no_tests=False, suffix=None, usergroup=None):
+def deploy_core(ctx, name, version=None, tests=False, suffix=None, usergroup=None):
     print("preparing for deploy...")
-    print("make sure tests pass")
-    if no_tests is False:
+    if tests:
+        print("running tests...")
         if test(ctx) != 0:
             print("tests need to pass first before deploy")
             return
+    else:
+        print("skipping tests. execute with --tests flag to run them")
     if name == 'all':
         names = get_all_core_lambdas()
-        print(names)
+
+    elif name == 'unicorn':
+        names = UNICORN_LAMBDAS
     else:
         names = [name, ]
+    print('deploying the following lambdas: %s' % names)
 
-    # dist directores are the enemy, clean the all
+    # dist directores are the enemy, clean them all
     for name in get_all_core_lambdas():
         print("cleaning house before deploying")
         with chdir("./core/%s" % (name)):
@@ -305,8 +307,13 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     else:
         new_name = name
         new_src = '../' + new_name
+    # use the lightweight requirements for the lambdas to simplify deployment
+    if name in UNICORN_LAMBDAS:
+        requirements_file = '../../requirements-lambda-unicorn.txt'
+    else:
+        requirements_file = '../../requirements-lambda-pony.txt'
     with chdir(new_src):
-        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements='../../requirements.txt')
+        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements=requirements_file)
     # add environment variables
     lambda_update_config = {'FunctionName': new_name}
     envs = env_list(name)
@@ -411,127 +418,6 @@ def publish(ctx, test=False):
 
 
 @task
-def run_md5(ctx, env, accession, uuid):
-    tibanna = Tibanna(env=env)
-    meta_data = get_metadata(accession, key=tibanna.ff_keys)
-    file_name = meta_data['upload_key'].split('/')[-1]
-
-    input_json = make_input(env=env, workflow='md5', object_key=file_name, uuid=uuid)
-    return _run_workflow(input_json, accession)
-
-
-@task
-def batch_fastqc(ctx, env, batch_size=20):
-    '''
-    try to run fastqc on everythign that needs it ran
-    '''
-    files_processed = 0
-    files_skipped = 0
-
-    # handle ctrl-c
-    import signal
-
-    def report(signum, frame):
-        print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
-        sys.exit(-1)
-
-    signal.signal(signal.SIGINT, report)
-
-    tibanna = Tibanna(env=env)
-    uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
-                                     key=tibanna.ff_key, ff_env=tibanna.env)
-
-    # TODO: need to change submit 4dn to not overwrite my limit
-    if len(uploaded_files['@graph']) > batch_size:
-        limited_files = uploaded_files['@graph'][:batch_size]
-    else:
-        limited_files = uploaded_files['@graph']
-
-    for ufile in limited_files:
-        fastqc_run = False
-        for wfrun in ufile.get('workflow_run_inputs', []):
-            if 'fastqc' in wfrun:
-                fastqc_run = True
-        if not fastqc_run:
-            print("running fastqc for %s" % ufile.get('accession'))
-            run_fastqc(ctx, env, ufile.get('accession'), ufile.get('uuid'))
-            files_processed += 1
-        else:
-            print("******** fastqc already run for %s skipping" % ufile.get('accession'))
-            files_skipped += 1
-        sleep(5)
-        if files_processed % 10 == 0:
-            sleep(60)
-
-    print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
-
-
-@task
-def run_fastqc(ctx, env, accession, uuid):
-    if not accession.endswith(".fastq.gz"):
-        accession += ".fastq.gz"
-    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', object_key=accession, uuid=uuid)
-    return _run_workflow(input_json, accession)
-
-
-_workflows = {'md5':
-              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
-               'arg_name': 'input_file'
-               },
-              'fastqc-0-11-4-1':
-              {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
-               'arg_name': 'input_fastq'
-               },
-              }
-
-
-def calc_ebs_size(bucket, key):
-    s3 = s3Utils(bucket, bucket, bucket)
-    size = s3.get_file_size(key, bucket, add_gb=3, size_in_gb=True)
-    if size < 10:
-        size = 10
-    return size
-
-
-def make_input(env, workflow, object_key, uuid):
-    bucket = "elasticbeanstalk-%s-files" % env
-    output_bucket = "elasticbeanstalk-%s-wfoutput" % env
-    workflow_uuid = _workflows[workflow]['uuid']
-    workflow_arg_name = _workflows[workflow]['arg_name']
-
-    data = {"parameters": {},
-            "app_name": workflow,
-            "workflow_uuid": workflow_uuid,
-            "input_files": [
-                {"workflow_argument_name": workflow_arg_name,
-                 "bucket_name": bucket,
-                 "uuid": uuid,
-                 "object_key": object_key,
-                 }
-             ],
-            "output_bucket": output_bucket,
-            "config": {
-                "ebs_type": "io1",
-                "json_bucket": "4dn-aws-pipeline-run-json",
-                "ebs_iops": 500,
-                "shutdown_min": 30,
-                "ami_id": "ami-cfb14bb5",
-                "copy_to_s3": True,
-                "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
-                "launch_instance": True,
-                "password": "thisisnotmypassword",
-                "log_bucket": "tibanna-output",
-                "key_name": ""
-              },
-            }
-    data.update(_tibanna_settings({'run_id': str(object_key),
-                                   'run_type': workflow,
-                                   'env': env,
-                                   }))
-    return data
-
-
-@task
 def run_workflow(ctx, input_json='', workflow=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
@@ -554,18 +440,17 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 
 @task
-def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, no_tests=False):
-    print("creating a new workflow..")
+def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False):
+    print("creating a new workflow...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     print(res)
-    print("deploying lambdas..")
+    print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_core(ctx, 'all', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'all', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_core(ctx, 'run_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
-        deploy_core(ctx, 'check_task_awsem', version=version, no_tests=no_tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'unicorn', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
 
 
 @task

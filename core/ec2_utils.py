@@ -8,7 +8,6 @@ import os
 import subprocess
 import logging
 # from invoke import run
-from dcicutils import s3_utils
 import botocore.session
 import boto3
 from Benchmark import run as B
@@ -274,17 +273,16 @@ def update_config(config, app_name, input_files, parameters):
         input_size_in_bytes = dict()
         for argname, f in input_files.iteritems():
             bucket = f['bucket_name']
-            s3 = s3_utils.s3Utils(bucket, bucket, bucket)
             if isinstance(f['object_key'], list):
                 size = []
                 for key in f['object_key']:
                     try:
-                        size.append(s3.get_file_size(key, bucket))
+                        size.append(get_file_size(key, bucket))
                     except:
                         raise Exception("Can't get input file size")
             else:
                 try:
-                    size = s3.get_file_size(f['object_key'], bucket)
+                    size = get_file_size(f['object_key'], bucket)
                 except:
                     raise Exception("Can't get input file size")
             input_size_in_bytes.update({str(argname): size})
@@ -320,100 +318,26 @@ def update_config(config, app_name, input_files, parameters):
             raise Exception("EBS_optimized cannot be determined nor given")
 
 
-class WorkflowFile(object):
-
-    def __init__(self, bucket, key, runner, accession=None, output_type=None,
-                 filesize=None, md5=None):
-        self.bucket = bucket
-        self.key = key
-        self.s3 = s3_utils.s3Utils(self.bucket, self.bucket, self.bucket)
-        self.runner = runner
-        self.accession = accession
-        self.output_type = output_type
-        self.filesize = filesize
-        self.md5 = md5
-
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-    def read(self):
-        return self.s3.read_s3(self.key).strip()
+def get_file_size(key, bucket, size_in_gb=False):
+        '''
+        default returns file size in bytes,
+        unless size_in_gb = True
+        '''
+        meta = does_key_exist(bucket, key)
+        if not meta:
+            raise Exception("key not found")
+        one_gb = 1073741824
+        size = meta['ContentLength']
+        if size_in_gb:
+            size = size / one_gb
+        return size
 
 
-# TODO: refactor this to inherit from an abstrat class called Runner
-# then implement for SBG as well
-class Awsem(object):
-
-    def __init__(self, json):
-        self.args = json['args']
-        self.config = json['config']
-        self.output_s3 = self.args['output_S3_bucket']
-        self.app_name = self.args['app_name']
-        self.output_files_meta = json['ff_meta']['output_files']
-        self.output_info = None
-        if isinstance(json.get('postrunjson'), dict):
-            self.output_info = json['postrunjson']['Job']['Output']['Output files']
-
-    def output_files(self):
-        files = dict()
-        output_types = dict()
-        for x in self.output_files_meta:
-            output_types[x['workflow_argument_name']] = x['type']
-        for k, v in self.args.get('output_target').iteritems():
-            if k in output_types:
-                out_type = output_types[k]
-            else:
-                out_type = None
-            if out_type == 'Output processed file':
-                file_name = v.split('/')[-1]
-                accession = file_name.split('.')[0].strip('/')
-            else:
-                accession = None
-            if self.output_info:
-                md5 = self.output_info[k].get('md5sum', '')
-                filesize = self.output_info[k].get('size', 0)
-                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
-                                       output_type=out_type, filesize=filesize, md5=md5)}
-            else:
-                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
-                                       output_type=out_type)}
-            files.update(wff)
-        return files
-
-    def secondary_output_files(self):
-        files = dict()
-        for k, v in self.args.get('secondary_output_target').iteritems():
-            wff = {k: WorkflowFile(self.output_s3, v, self)}
-            files.update(wff)
-        return files
-
-    def input_files(self):
-        files = dict()
-        for arg_name, item in self.args.get('input_files').iteritems():
-            file_name = item.get('object_key').split('/')[-1]
-            accession = file_name.split('.')[0].strip('/')
-            wff = {arg_name: WorkflowFile(item.get('bucket_name'),
-                                          item.get('object_key'),
-                                          self,
-                                          accession)}
-            files.update(wff)
-        return files
-
-    def all_files(self):
-        files = dict()
-        files.update(self.input_files())
-        files.update(self.output_files())
-        return files
-
-    @property
-    def inputfile_accessions(self):
-        return {k: v.accession for k, v in self.input_files().iteritems()}
-
-    @property
-    def all_file_accessions(self):
-        return {k: v.accession for k, v in self.all_files().iteritems()}
+def does_key_exist(bucket, object_name):
+    try:
+        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object_name)
+    except Exception as e:
+        print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
+        print(str(e))
+        return False
+    return file_metadata

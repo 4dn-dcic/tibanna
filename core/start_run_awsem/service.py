@@ -3,10 +3,10 @@ import logging
 # import json
 import boto3
 from dcicutils import ff_utils
-from core.utils import (
+from core.utils import powerup
+from core.utils import TibannaStartException
+from core.pony_utils import (
     Tibanna,
-    powerup,
-    TibannaStartException,
     merge_source_experiments,
     ensure_list,
     create_ffmeta_awsem,
@@ -29,6 +29,8 @@ def metadata_only(event):
 
 @powerup('start_run_awsem', metadata_only)
 def handler(event, context):
+    if event.get('push_error_to_end', True):
+        event['push_error_to_end'] = True  # push error to end by default for pony
     return real_handler(event, context)
 
 

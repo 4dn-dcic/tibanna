@@ -7,6 +7,7 @@ python:
 install:
 - pip install six
 - pip install -U -r requirements.txt
+- pip install -U -r requirements-4dn.txt
 - pip install codacy-coverage
 script:
 - invoke test
