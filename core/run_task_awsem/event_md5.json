@@ -68,9 +68,7 @@
     "ebs_iops": 500,
     "shutdown_min": 30,
     "instance_type": "",
-
     "copy_to_s3": true,
-
     "json_bucket": "4dn-aws-pipeline-run-json",
     "launch_instance": true,
     "password": "thisisnotmypassword",
@@ -84,5 +82,6 @@
       "workflow_argument_name": "input_file",
       "object_key": "4DNFIZQZ39L9.fastq.gz"
     }
-  ]
+  ],
+  "push_error_to_end": true
 }

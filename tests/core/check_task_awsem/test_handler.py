@@ -12,7 +12,8 @@ LOG = logging.getLogger(__name__)
 @pytest.fixture()
 def check_task_input():
     return {"config": {"log_bucket": "tibanna-output"},
-            "jobid": "test_job"
+            "jobid": "test_job",
+            "push_error_to_end": True
             }
 
 

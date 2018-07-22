@@ -29,7 +29,7 @@ def awsem_error_fun(event, context):
 
 
 def test_powerup_errors_are_dumped_into_return_dict():
-    res = error_fun({'some': 'data'}, None)
+    res = error_fun({'some': 'data', 'push_error_to_end': True}, None)
     assert res['some'] == 'data'
     assert res['error']
     assert 'Error on step: error_fun' in res['error']
@@ -38,7 +38,8 @@ def test_powerup_errors_are_dumped_into_return_dict():
 def test_powerup_throws_if_error_set_in_input_json():
     # only throw the error because lambda name is update_ffmeta_awsem
     with pytest.raises(Exception):
-        update_ffmeta_error_fun({'error': 'same like skip'}, None)
+        event = {'error': 'same like skip', 'push_error_to_end': True}
+        update_ffmeta_error_fun(event, None)
 
 
 def test_powerup_error_thrown_if_ignored_exceptions():
@@ -52,7 +53,7 @@ def test_powerup_error_propogates():
     # skip throwing an error because 'error' is in event json and the
     # lambda name != update_ffmeta_awsem. error is propagated to the res
     # and will be returned exactly as input
-    res = wrapped_fun({'error': 'should not raise'}, None)
+    res = wrapped_fun({'error': 'should not raise', 'push_error_to_end': True}, None)
     assert res['error'] == 'should not raise'
 
 

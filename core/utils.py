@@ -95,14 +95,14 @@ def powerup(lambda_name, metadata_only_func):
                               TibannaStartException, FdnConnectionException]
 
         def wrapper(event, context):
-            logger.info(context)
+            if context:
+                logger.info(context)
             logger.info(event)
-            if not event.get('push_error_to_end', False):
-                return function(event, context)
             if lambda_name in event.get('skip', []):
                 logger.info('skipping %s since skip was set in input_json' % lambda_name)
                 return event
-            elif event.get('error', False) and lambda_name != 'update_ffmeta_awsem':
+            elif event.get('push_error_to_end', False) and event.get('error', False) \
+                    and lambda_name != 'update_ffmeta_awsem':
                 logger.info('skipping %s since a value for "error" is in input json '
                             'and lambda is not update_ffmeta_awsem' % lambda_name)
                 return event
@@ -115,7 +115,7 @@ def powerup(lambda_name, metadata_only_func):
                     if type(e) in ignored_exceptions:
                         raise e
                         # update ff_meta to error status
-                    elif lambda_name == 'update_ffmeta_awsem':
+                    elif lambda_name == 'update_ffmeta_awsem' or not event.get('push_error_to_end', False):
                         # for last step just pit out error
                         raise e
                     else:
