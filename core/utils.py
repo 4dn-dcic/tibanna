@@ -77,6 +77,14 @@ class FdnConnectionException(Exception):
     pass
 
 
+class DependencyStillRunningException(Exception):
+    pass
+
+
+class DependencyFailedException(Exception):
+    pass
+
+
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
@@ -92,7 +100,8 @@ def powerup(lambda_name, metadata_only_func):
         logging.basicConfig()
         logger = logging.getLogger('logger')
         ignored_exceptions = [EC2StartingException, StillRunningException,
-                              TibannaStartException, FdnConnectionException]
+                              TibannaStartException, FdnConnectionException,
+                              DependencyStillRunningException]
 
         def wrapper(event, context):
             if context:
@@ -250,6 +259,14 @@ def create_stepfunction(dev_suffix=None,
             "BackoffRate": 1.0
         }
     ]
+    sfn_run_task_retry_conditions = [
+        {
+            "ErrorEquals": ["DependencyStillRunningException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 10000,
+            "BackoffRate": 1.0
+        }
+    ]
     sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
     sfn_state_defs = dict()
     sfn_state_defs['pony'] = {
@@ -262,6 +279,7 @@ def create_stepfunction(dev_suffix=None,
         "RunTaskAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Retry": sfn_run_task_retry_conditions,
             "Next": "CheckTaskAwsem"
         },
         "CheckTaskAwsem": {
@@ -280,6 +298,7 @@ def create_stepfunction(dev_suffix=None,
         "RunTaskAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Retry": sfn_run_task_retry_conditions,
             "Next": "CheckTaskAwsem"
         },
         "CheckTaskAwsem": {
@@ -306,3 +325,14 @@ def create_stepfunction(dev_suffix=None,
         raise(e)
     # sfn_arn = response['stateMachineArn']
     return(response)
+
+
+def check_dependency(exec_arn=None):
+    if exec_arn:
+        client = boto3.client('stepfunctions', region_name=AWS_REGION)
+        for arn in exec_arn:
+            res = client.describe_execution(executionArn=arn)
+            if res['status'] == 'RUNNING':
+                raise DependencyStillRunningException("Dependency is still running: %s" % arn)
+            elif res['status'] == 'FAILED':
+                raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)

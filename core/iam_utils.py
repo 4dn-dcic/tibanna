@@ -112,6 +112,22 @@ def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix):
     return policy
 
 
+def generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix):
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "states:DescribeExecution"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+    return policy
+
+
 def generate_assume_role_policy_document(service):
     '''service: 'ec2', 'lambda' or 'states' '''
     AssumeRolePolicyDocument = {
@@ -179,6 +195,7 @@ def create_role_for_bucket(iam, tibanna_policy_prefix, account_id,
 def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    cloudwatch_policy_name, bucket_policy_name,
                                    list_policy_name, passrole_policy_name,
+                                   desc_stepfunction_policy_name,
                                    verbose=False):
     client = iam.meta.client
     lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, 'run_task_awsem')
@@ -210,6 +227,11 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
         print(response)
     response = role_lambda_run.attach_policy(
         PolicyArn='arn:aws:iam::aws:policy/AmazonEC2FullAccess'
+    )
+    if verbose:
+        print(response)
+    response = role_lambda_run.attach_policy(
+        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + desc_stepfunction_policy_name
     )
     if verbose:
         print(response)
@@ -344,13 +366,22 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     )
     if verbose:
         print(response)
+    desc_stepfunction_policy_name = tibanna_policy_prefix + '_desc_sts'
+    policy_desc_stepfunction = generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix)
+    response = client.create_policy(
+        PolicyName=desc_stepfunction_policy_name,
+        PolicyDocument=json.dumps(policy_desc_stepfunction),
+    )
+    if verbose:
+        print(response)
     # roles
     # role for bucket
     create_role_for_bucket(iam, tibanna_policy_prefix, account_id, bucket_policy_name)
     # role for lambda
     create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    cloudwatch_policy_name, bucket_policy_name,
-                                   list_policy_name, passrole_policy_name)
+                                   list_policy_name, passrole_policy_name,
+                                   desc_stepfunction_policy_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name)
     create_empty_role_for_lambda(iam)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from core import ec2_utils as utils
-from core.utils import powerup
+from core.utils import powerup, check_dependency
 import os
 
 
@@ -38,6 +38,7 @@ def handler(event, context):
     input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
     secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})
     input_parameters: input parameters in json format (parametername:value)
+    dependency (optional): {'exec_arn': [exec_arns]}
     '''
 
     # read default variables in config
@@ -57,6 +58,9 @@ def handler(event, context):
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
         assert k in args, "%s not in args field" % k
+
+    if 'dependency' in args:
+        check_dependency(**args['dependency'])
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
