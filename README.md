@@ -288,7 +288,8 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
     "out_bam": {
         "genome_assembly": "GRCh38"
     }
-  }
+  },
+  "push_error_to_end": true
 }
 ```
 * The 'app_name' field contains the name of the workflow.
@@ -298,6 +299,7 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
 * The 'input_files' field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
 * The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 * The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
+* The 'push_error_to_end' field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
 
 
 ## Directory Structure
