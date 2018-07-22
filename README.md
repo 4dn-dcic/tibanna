@@ -290,6 +290,12 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
     }
   },
   "push_error_to_end": true
+  "dependency": {
+    "exec_arn": [
+        "arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test",
+        "arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test2""
+    ]
+  }
 }
 ```
 * The 'app_name' field contains the name of the workflow.
@@ -300,6 +306,7 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
 * The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 * The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
 * The 'push_error_to_end' field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
+* The 'dependency' field (optional) sets dependent jobs. The job will not start until the dependencies successfully finish. If dependency fails, the current job will also fail. The 'exec_arn' is the list of step function execution arns. The job will wait at the `run_task_awsem` step, not at the `start_task_awsem` step (for consistenty with unicorn). This field will be passed to `run_task_awsem` as 'dependency' inside the 'args' field.
 
 
 ## Directory Structure
