@@ -23,7 +23,8 @@
         "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
       }
     },
-    "dependency": { "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test"]}
+    "dependency": { "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test",
+                                 "arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test2"]}
   },
   "config": {
     "ebs_size": 0,
