@@ -8,6 +8,7 @@
       "report": "3c5eb494-38de-472c-a596-c50dde2fd51e/report"
     },
     "cwl_main_filename": "md5.cwl",
+    "cwl_version": "draft3",
     "secondary_files": {},
     "output_S3_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
     "app_version": "0.0.4",
@@ -60,7 +61,6 @@
   "pf_meta": [],
   "parameters": {},
   "config": {
-    "cwl_version": "draft3",
     "ebs_size": 0,
     "ebs_type": "io1",
     "key_name": "",
