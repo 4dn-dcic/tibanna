@@ -95,7 +95,7 @@ def handler(event, context):
 
     # profile
     if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
-            os.environ.get('TIBANNA_PROFILE_SECRET_KEY', None)
+            os.environ.get('TIBANNA_PROFILE_SECRET_KEY', None):
         profile = {'access_key': os.environ.get('TIBANNA_PROFILE_ACCESS_KEY'),
                    'secret_key': os.environ.get('TIBANNA_PROFILE_SECRET_KEY')}
     else:

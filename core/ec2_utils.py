@@ -205,7 +205,7 @@ def create_run_workflow(jobid, shutdown_min,
     str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
     str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL"
     if password:
-        str += " -p {}".format(pasword)
+        str += " -p {}".format(password)
     if profile:
         str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
     str += "\n"
