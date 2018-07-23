@@ -85,7 +85,7 @@ cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
 
-send_log()
+send_log
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
