@@ -11,6 +11,7 @@ import logging
 import botocore.session
 import boto3
 from Benchmark import run as B
+from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -19,7 +20,6 @@ logger.setLevel(logging.INFO)
 # These utils exclusively live in Tibanna #
 ###########################################
 
-AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
 
@@ -207,7 +207,7 @@ def create_run_workflow(jobid, shutdown_min,
     if password:
         str += " -p {}".format(pasword)
     if profile:
-        str += " -a {access_key} -s {secret_key}".format(**profile)
+        str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
     str += "\n"
     print(str)
     return(str)

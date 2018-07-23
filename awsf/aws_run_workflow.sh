@@ -5,6 +5,7 @@ export SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/aws
 export PASSWORD=
 export ACCESS_KEY=
 export SECRET_KEY=
+export REGION=
 
 printHelpAndExit() {
     echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET -u SCRIPTS_URL [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY]"
@@ -16,6 +17,7 @@ printHelpAndExit() {
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
+    echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     exit "$1"
 }
 while getopts "i:m:j:l:u:p:a:s:" opt; do
@@ -28,6 +30,7 @@ while getopts "i:m:j:l:u:p:a:s:" opt; do
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
+        r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -52,6 +55,10 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+
+
+# set profile
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
 # first create an output bucket/directory
 touch $JOBID.job_started
