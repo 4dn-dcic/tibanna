@@ -8,7 +8,7 @@ export SECRET_KEY=
 export REGION=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET -u SCRIPTS_URL [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY]"
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET -u SCRIPTS_URL [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION]"
     echo "-i JOBID : awsem job id (required)"
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
@@ -20,7 +20,7 @@ printHelpAndExit() {
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     exit "$1"
 }
-while getopts "i:m:j:l:u:p:a:s:" opt; do
+while getopts "i:m:j:l:u:p:a:s:r:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
