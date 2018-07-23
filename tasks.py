@@ -99,15 +99,18 @@ def env_list(name):
                            'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
                            'TIBANNA_AWS_REGION': AWS_REGION,
                            'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER,
-                           'AWS_S3_ROLE_NAME': AWS_S3_ROLE_NAME,
-                           'TIBANNA_PROFILE_ACCESS_KEY': TIBANNA_PROFILE_ACCESS_KEY,
-                           'TIBANNA_PROFILE_SECRET_KEY': TIBANNA_PROFILE_SECRET_KEY},
+                           'AWS_S3_ROLE_NAME': AWS_S3_ROLE_NAME},
         'check_task_awsem': {'TIBANNA_AWS_REGION': AWS_REGION,
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'update_ffmeta_awsem': {'SECRET': secret,
                                 'TIBANNA_AWS_REGION': AWS_REGION,
                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
+    if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
+        envlist['run_task_awsem'].update({
+            'TIBANNA_PROFILE_ACCESS_KEY': TIBANNA_PROFILE_ACCESS_KEY,
+            'TIBANNA_PROFILE_SECRET_KEY': TIBANNA_PROFILE_SECRET_KEY}
+        )
     return envlist.get(name, '')
 
 
