@@ -85,15 +85,16 @@ cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
 
-send_log
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
   echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ec2-user
+  send_log
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
   mv tmpp /etc/ssh/sshd_config
   exl service sshd restart
 fi
+
 
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
