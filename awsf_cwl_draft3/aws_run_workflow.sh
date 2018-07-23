@@ -56,9 +56,6 @@ export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
-# set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
-
 # first create an output bucket/directory
 touch $JOBID.job_started
 aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
@@ -100,6 +97,9 @@ if [ ! -z $PASSWORD ]; then
   mv tmpp /etc/ssh/sshd_config
   exl service sshd restart
 fi
+
+# set profile
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
