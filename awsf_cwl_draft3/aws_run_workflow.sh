@@ -8,7 +8,7 @@ export SECRET_KEY=
 export REGION=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET -u SCRIPTS_URL [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION]"
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION]"
     echo "-i JOBID : awsem job id (required)"
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
@@ -98,6 +98,7 @@ if [ ! -z $PASSWORD ]; then
   exl service sshd restart
 fi
 
+send_log()  ## temporary
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
