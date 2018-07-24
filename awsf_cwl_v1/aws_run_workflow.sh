@@ -57,7 +57,7 @@ export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means 
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
 # set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 # first create an output bucket/directory
 touch $JOBID.job_started

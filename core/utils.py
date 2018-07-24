@@ -166,6 +166,12 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
     except Exception as e:
         pass
 
+    # updated arn
+    arn = "%s%s%s" % (BASE_ARN % ('execution', str(workflow)),
+                      ":",
+                      run_name)
+    input_json[_tibanna]['exec_arn'] = arn
+
     # calculate what the url will be
     url = "%s%s%s%s" % (base_url,
                         BASE_ARN % ('execution', str(workflow)),
