@@ -29,7 +29,8 @@
     ],
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
     "wfr_meta": {
-      "notes": "hahaha"
+      "notes": "hahaha",
+      "award": "/awards/1U01DA040582-01/"
     }
 }
 
