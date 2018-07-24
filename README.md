@@ -289,6 +289,9 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
         "genome_assembly": "GRCh38"
     }
   },
+  "wfr_meta": {
+    "notes": "a nice workflow run"
+  },
   "push_error_to_end": true
   "dependency": {
     "exec_arn": [
@@ -304,7 +307,8 @@ cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_po
 * The 'parameters' field contains a set of workflow-specific parameters in a dictionary.
 * The 'input_files' field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
 * The 'config' field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
-* The 'custom_pf_fields' field contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
+* The 'custom_pf_fields' field (optional) contains a dictionary that can be directly passed to the processed file metadata. The key may be either 'ALL' (applies to all processed files) or the argument name for a specific processed file (or both).
+* The 'wfr_meta' field (optional) contains a dictionary that can be directly passed to the workflow run metadata.
 * The 'push_error_to_end' field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
 * The 'dependency' field (optional) sets dependent jobs. The job will not start until the dependencies successfully finish. If dependency fails, the current job will also fail. The 'exec_arn' is the list of step function execution arns. The job will wait at the `run_task_awsem` step, not at the `start_task_awsem` step (for consistenty with unicorn). This field will be passed to `run_task_awsem` as 'dependency' inside the 'args' field.
 
