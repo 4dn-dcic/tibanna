@@ -16,4 +16,3 @@ def handler(event, context):
     if run_details.get('stopDate'):
         run_details['stopDate'] = str(run_details['stopDate'])
     return run_details
-
