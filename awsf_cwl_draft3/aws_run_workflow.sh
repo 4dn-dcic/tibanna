@@ -97,7 +97,7 @@ fi
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
-echo $PASSWORD >> $LOGFILE
+echo "password=$PASSWORD" >> $LOGFILE
 cat .aws/config >> $LOGFILE
 send_log
 
