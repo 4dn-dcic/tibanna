@@ -27,7 +27,7 @@ def test_start_awsem_handler(run_awsem_event_data):
     assert 'ff_meta' in res
     assert 'notes' in 'ff_meta' in res
     assert 'award' in 'ff_meta' in res
-    assert res['ff_meta']['award'] = '/awards/1U01DA040582-01/'
+    assert res['ff_meta']['award'] == '/awards/1U01DA040582-01/'
 
 
 @valid_env
