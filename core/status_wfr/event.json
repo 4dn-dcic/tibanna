@@ -1,0 +1,39 @@
+{
+  "args": {
+    "app_version": "8",
+    "app_name": "fastqc-0-11-4-1",
+    "input_parameters": {},
+    "input_files": {
+      "input_fastq": {
+          "object_key": "test.h2500.fastq",
+          "bucket_name": "tibanna-output"
+      }
+    },
+    "output_target": {},
+    "secondary_output_target": {},
+    "secondary_files": {},
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem/",
+    "output_S3_bucket": "tibanna-output",
+    "cwl_child_filenames": ["fastqc-0-11-4.6.cwl"],
+    "cwl_main_filename": "fastqc-0-11-4-1.8.cwl"
+  },
+  "config": {
+    "cwl_version": "draft3",
+    "ebs_size": 20,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "json_dir": "/tmp/json",
+    "EBS_optimized": false,
+    "ebs_iops": 500,
+    "log_bucket": "tibanna-output",
+    "shutdown_min": "30",
+    "instance_type": "t2.nano",
+
+    "copy_to_s3": true,
+    "job_tag": "fastqc-0-11-4-1",
+    "userdata_dir": "/tmp/userdata",
+    "launch_instance": true,
+    "password": "hahaha"
+  },
+  "jobid": "YoW5iAVOjoMV"
+}
