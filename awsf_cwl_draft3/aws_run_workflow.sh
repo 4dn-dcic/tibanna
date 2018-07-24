@@ -95,7 +95,7 @@ if [ ! -z $PASSWORD ]; then
 fi
 
 # set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 send_log
 echo "password=$PASSWORD" >> $LOGFILE

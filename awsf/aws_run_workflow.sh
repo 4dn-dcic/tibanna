@@ -100,7 +100,7 @@ if [ ! -z $PASSWORD ]; then
 fi
 
 # set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
