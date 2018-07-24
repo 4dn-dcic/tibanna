@@ -17,13 +17,6 @@ import mock
 def test_start_awsem_handler(run_awsem_event_data):
     res = handler(run_awsem_event_data, '')
     assert(res)
-
-
-@valid_env
-@pytest.mark.webtest
-def test_start_awsem_handler(run_awsem_event_data):
-    res = handler(run_awsem_event_data, '')
-    assert(res)
     assert 'ff_meta' in res
     assert 'notes' in 'ff_meta' in res
     assert 'award' in 'ff_meta' in res
