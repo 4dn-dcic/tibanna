@@ -33,6 +33,8 @@ AMI_ID_CWL_V1 = 'ami-31caa14e'
 AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
+TIBANNA_PROFILE_ACCESS_KEY = os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', '')
+TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 
 
@@ -104,6 +106,11 @@ def env_list(name):
                                 'TIBANNA_AWS_REGION': AWS_REGION,
                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
+    if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
+        envlist['run_task_awsem'].update({
+            'TIBANNA_PROFILE_ACCESS_KEY': TIBANNA_PROFILE_ACCESS_KEY,
+            'TIBANNA_PROFILE_SECRET_KEY': TIBANNA_PROFILE_SECRET_KEY}
+        )
     return envlist.get(name, '')
 
 

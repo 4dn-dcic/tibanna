@@ -93,9 +93,17 @@ def handler(event, context):
     # create json and copy to s3
     jobid = utils.create_json(event, '')
 
+    # profile
+    if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
+            os.environ.get('TIBANNA_PROFILE_SECRET_KEY', None):
+        profile = {'access_key': os.environ.get('TIBANNA_PROFILE_ACCESS_KEY'),
+                   'secret_key': os.environ.get('TIBANNA_PROFILE_SECRET_KEY')}
+    else:
+        profile = None
+
     # launch instance and execute workflow
     if cfg.get('launch_instance'):
-        launch_instance_log = utils.launch_instance(cfg, jobid)
+        launch_instance_log = utils.launch_instance(cfg, jobid, profile=profile)
 
     event.update({'jobid': jobid})
     event.update(launch_instance_log)

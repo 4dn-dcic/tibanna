@@ -18,6 +18,7 @@ BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
 STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 
+
 # just store this in one place
 _tibanna = '_tibanna'
 

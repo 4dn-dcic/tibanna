@@ -11,6 +11,7 @@ import logging
 import botocore.session
 import boto3
 from Benchmark import run as B
+from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -19,7 +20,6 @@ logger.setLevel(logging.INFO)
 # These utils exclusively live in Tibanna #
 ###########################################
 
-AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
 
@@ -190,29 +190,36 @@ def create_run_workflow(jobid, shutdown_min,
                         script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
                         password='lalala',
                         json_bucket='4dn-aws-pipeline-run-json',
-                        log_bucket='tibanna-output'):
+                        log_bucket='tibanna-output',
+                        profile=None):
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
     str += "RUN_SCRIPT=aws_run_workflow.sh\n"
     str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
-    str += "PASSWORD={}\n".format(password)
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
     str += "LOGBUCKET={}\n".format(log_bucket)
     str += "SCRIPT_URL={}\n".format(script_url)
     str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
     str += "chmod +x $RUN_SCRIPT\n"
-    str += "source $RUN_SCRIPT $JOBID $SHUTDOWN_MIN $JSON_BUCKET_NAME $LOGBUCKET $SCRIPT_URL $PASSWORD\n"
+    str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
+    str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL"
+    if password:
+        str += " -p {}".format(password)
+    if profile:
+        str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
+    str += "\n"
     print(str)
     return(str)
 
 
-def launch_instance(par, jobid):
-
+def launch_instance(par, jobid, profile=None):
+    '''profile is a dictionary { access_key: , secret_key: }'''
     # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
     try:
         userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
-                                           par['password'], par['json_bucket'], par['log_bucket'])
+                                           par['password'], par['json_bucket'], par['log_bucket'],
+                                           profile)
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 

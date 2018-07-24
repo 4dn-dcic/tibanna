@@ -1,10 +1,41 @@
 #!/bin/bash
-export JOBID=$1
-export SHUTDOWN_MIN=$2   # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
-export JSON_BUCKET_NAME=$3  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
-export LOGBUCKET=$4  # bucket for sending log file
-export SCRIPTS_URL=$5  # Tibanna repo url (e.g. https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)
-export PASSWORD=$6  # Password for ssh connection for user ubuntu
+shopt -s extglob
+export SHUTDOWN_MIN=now
+export SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/
+export PASSWORD=
+export ACCESS_KEY=
+export SECRET_KEY=
+export REGION=
+
+printHelpAndExit() {
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION]"
+    echo "-i JOBID : awsem job id (required)"
+    echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
+    echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
+    echo "-l LOGBUCKET : bucket for sending log file (required)"
+    echo "-u SCRIPTS_URL : Tibanna repo url (default: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)"
+    echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
+    echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
+    echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
+    echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
+    exit "$1"
+}
+while getopts "i:m:j:l:u:p:a:s:r:" opt; do
+    case $opt in
+        i) export JOBID=$OPTARG;;
+        m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
+        j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
+        l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        u) export SCRIPTS_URL=$OPTARG;;  # Tibanna repo url (e.g. https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)
+        p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
+        a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
+        s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
+        r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
+        h) printHelpAndExit 0;;
+        [?]) printHelpAndExit 1;;
+        esac
+done
+
 export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
@@ -24,6 +55,9 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+
+# set profile
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
 # first create an output bucket/directory
 touch $JOBID.job_started
