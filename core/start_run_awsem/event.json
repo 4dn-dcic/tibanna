@@ -1,6 +1,6 @@
 {
     "config": {
-    "cwl_version": "draft3",
+      "cwl_version": "draft3",
       "ebs_type" : "io1",
       "ebs_iops" : 500,
 
@@ -27,6 +27,9 @@
                      "object_key": "4DNFIRSRJH45.fastq.gz"
                     }
     ],
-    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "wfr_meta": {
+      "notes": "hahaha"
+    }
 }
 
