@@ -98,8 +98,8 @@ fi
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure
 
 echo "password=$PASSWORD" >> $LOGFILE
-cat .aws/config >> $LOGFILE
 send_log
+cat .aws/config >> $LOGFILE
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
