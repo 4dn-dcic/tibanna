@@ -16,7 +16,8 @@
     "input_files": {
       "input_file": {
         "bucket_name": "sscwgs",
-        "object_key": "11002/BAM/Sample_SSC03070/analysis/SSC03070.final.bai"
+        "object_key": "11002/BAM/Sample_SSC03070/analysis/SSC03070.final.bai",
+        "profile": "user1"
       }
     }
   },

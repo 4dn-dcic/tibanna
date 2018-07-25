@@ -120,7 +120,6 @@ def create_json(input_dict, jobid):
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
                                  'Secondary_files_data': {},   # fill in later (below)
-                                 'Input_files_reference': {},     # fill in later (below)
                                  'Input_parameters': a['input_parameters']
                         },
                         'Output': {
@@ -134,15 +133,17 @@ def create_json(input_dict, jobid):
                         "start_time": start_time
                         }})
 
-    # fill in input_files and input_reference_files (restructured)
+    # fill in input_files (restructured)
     for item, value in a['input_files'].iteritems():
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                          'dir': value.get('bucket_name'),
-                                                         'path': value.get('object_key')}
+                                                         'path': value.get('object_key'),
+                                                         'profile': value.get('profile', '')}
     for item, value in a['secondary_files'].iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
-                                                             'path': value.get('object_key')}
+                                                             'path': value.get('object_key'),
+                                                             'profile': value.get('profile', '')}
 
     # remove the password and keyname info
     if 'password' in pre['config']:
