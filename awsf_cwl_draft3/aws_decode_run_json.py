@@ -23,10 +23,18 @@ with open(downloadlist_filename, 'w') as f_download:
             if isinstance(Dict_input[category][keys[i]]["path"], list):
                 for file in Dict_input[category][keys[i]]["path"]:
                     DATA_FILE = file
-                    f_download.write("aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET, DATA_FILE, INPUT_DIR, PROFILE_FLAG))
+                    download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
+                                                                                 DATA_FILE,
+                                                                                 INPUT_DIR,
+                                                                                 PROFILE_FLAG)
+                    f_download.write(download_cmd)
             else:
                 DATA_FILE = Dict_input[category][keys[i]]["path"]
-                f_download.write("aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET, DATA_FILE, INPUT_DIR, PROFILE_FLAG))
+                download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
+                                                                             DATA_FILE,
+                                                                             INPUT_DIR,
+                                                                             PROFILE_FLAG)
+                f_download.write(download_cmd)
 
 # create an input yml file for cwl-runner
 with open(input_yml_filename, 'w') as f_yml:
