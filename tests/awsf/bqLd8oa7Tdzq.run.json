@@ -22,10 +22,10 @@
                 "fastq": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
-                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz"
+                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz",
+                    "profile": "user1"
                 }
             }, 
-            "Input_files_reference": {}, 
             "Input_parameters": {
                 "memperthread": "2G", 
                 "nthreads": 4

@@ -1,0 +1,5 @@
+CWL_URL=https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq
+MAIN_CWL=repliseq-parta.cwl
+CWL_FILES="clip.cwl align.cwl filtersort.cwl dedup.cwl count.cwl"
+OUTBUCKET=elasticbeanstalk-fourfront-webdev-wfoutput
+PUBLIC_POSTRUN_JSON=0
