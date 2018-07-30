@@ -105,6 +105,7 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     else:
         raise Exception('md5 step function run failed')
 
+
 def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony', env='webdev'):
     """Creates a random file object with no md5sum/content_md5sum and run md5 workflow.
     It waits for 6 mintues till the workflow run finishes and checks the input file object
