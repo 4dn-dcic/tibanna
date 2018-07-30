@@ -84,8 +84,9 @@ def get_extra_file_format(event):
                 extra_extension = fe_map.get(extra_format)
                 if extension == extra_extension:
                     return extra_format
-        else:
-            raise Exception("file extension not matching")
+        raise Exception("file extension not matching")
+    else:
+        raise Exception("Cannot get input metadata")
 
 
 def is_status_uploading(event):
