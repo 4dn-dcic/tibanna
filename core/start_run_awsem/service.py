@@ -15,6 +15,7 @@ from core.pony_utils import (
     get_format_extension_map,
     get_extra_file_key
 )
+import random
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -141,7 +142,12 @@ def real_handler(event, context):
         if of.get('type') == 'Output processed file':
             args['output_target'][arg_name] = of.get('upload_key')
         else:
-            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
+            random_tag = str(int(random.random() * 1000000000000))
+            # add a random tag at the end for non-processed file e.g. md5 report,
+            # so that if two or more wfr are trigerred (e.g. one with parent file, one with extra file)
+            # it will create a different output. Not implemented for processed files -
+            # it's tricky because processed files must have a specific name.
+            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \

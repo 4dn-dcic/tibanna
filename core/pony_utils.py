@@ -296,7 +296,7 @@ def is_prod():
 class WorkflowFile(object):
 
     def __init__(self, bucket, key, runner, accession=None, output_type=None,
-                 filesize=None, md5=None):
+                 filesize=None, md5=None, format_if_extra=None):
         self.bucket = bucket
         self.key = key
         self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
@@ -305,6 +305,7 @@ class WorkflowFile(object):
         self.output_type = output_type
         self.filesize = filesize
         self.md5 = md5
+        self.format_if_extra = format_if_extra
 
     @property
     def status(self):
@@ -373,7 +374,8 @@ class Awsem(object):
             wff = {arg_name: WorkflowFile(item.get('bucket_name'),
                                           item.get('object_key'),
                                           self,
-                                          accession)}
+                                          accession,
+                                          format_if_extra=item.get('format_if_extra', '')}
             files.update(wff)
         return files
 
@@ -386,6 +388,10 @@ class Awsem(object):
     @property
     def inputfile_accessions(self):
         return {k: v.accession for k, v in self.input_files().iteritems()}
+
+    @property
+    def inputfile_format_if_extra(self):
+        return {k: v.format_if_extra for k, v in self.input_files().iteritems()}
 
     @property
     def all_file_accessions(self):
