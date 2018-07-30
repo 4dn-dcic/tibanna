@@ -74,7 +74,7 @@ def get_extra_file_format(event):
                         check_queue=True)
     if meta:
         file_format = meta.get('file_format')
-        fe_map = get_format_extension_map()
+        fe_map = get_format_extension_map(tibanna.ff_keys)
         file_extension = fe_map.get(file_format)
         if extension == file_extension:
             return None
