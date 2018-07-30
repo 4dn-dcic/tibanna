@@ -33,7 +33,6 @@ def handler(event, context):
     app_version: version of the app
     cwl_directory_url: the url and subdirectories for the main cwl file
     cwl_version: the version of cwl (either 'draft3' or 'v1')
-    input_reference_files_directory: bucket name and subdirectory for input reference files
     output_S3_bucket: bucket name and subdirectory for output files and logs
     input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
     secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})

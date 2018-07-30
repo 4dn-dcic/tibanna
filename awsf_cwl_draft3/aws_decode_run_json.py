@@ -5,8 +5,7 @@ import sys
 downloadlist_filename = "download_command_list.txt"
 input_yml_filename = "inputs.yml"
 env_filename = "env_command_list.txt"
-input_dir = "/data1/input"
-reference_dir = "/data1/reference"
+INPUT_DIR = "/data1/input"
 
 # read json file
 with open(sys.argv[1], 'r') as json_file:
@@ -15,21 +14,27 @@ with open(sys.argv[1], 'r') as json_file:
 # create a download command list file from the information in json
 Dict_input = Dict["Job"]["Input"]
 with open(downloadlist_filename, 'w') as f_download:
-    for category in ["Input_files_data", "Input_files_reference", "Secondary_files_data"]:
+    for category in ["Input_files_data", "Secondary_files_data"]:
         keys = Dict_input[category].keys()
-        if category in ["Input_files_data", "Secondary_files_data"]:
-            LOCAL_DIR = input_dir
-        else:
-            LOCAL_DIR = reference_dir
         for i in range(0, len(Dict_input[category])):
             DATA_BUCKET = Dict_input[category][keys[i]]["dir"]
+            PROFILE = Dict_input[category][keys[i]].get("profile", '')
+            PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
             if isinstance(Dict_input[category][keys[i]]["path"], list):
                 for file in Dict_input[category][keys[i]]["path"]:
                     DATA_FILE = file
-                    f_download.write("aws s3 cp s3://{0}/{1} {2}/{1}\n".format(DATA_BUCKET, DATA_FILE, LOCAL_DIR))
+                    download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
+                                                                                 DATA_FILE,
+                                                                                 INPUT_DIR,
+                                                                                 PROFILE_FLAG)
+                    f_download.write(download_cmd)
             else:
                 DATA_FILE = Dict_input[category][keys[i]]["path"]
-                f_download.write("aws s3 cp s3://{0}/{1} {2}/{1}\n".format(DATA_BUCKET, DATA_FILE, LOCAL_DIR))
+                download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
+                                                                             DATA_FILE,
+                                                                             INPUT_DIR,
+                                                                             PROFILE_FLAG)
+                f_download.write(download_cmd)
 
 # create an input yml file for cwl-runner
 with open(input_yml_filename, 'w') as f_yml:
@@ -38,23 +43,21 @@ with open(input_yml_filename, 'w') as f_yml:
     for category in ["Input_parameters"]:
         for item, value in inputs[category].iteritems():
             yml[item] = value
-    for category in ["Input_files_data", "Input_files_reference"]:
-        if category == "Input_files_data":
-            LOCAL_DIR = input_dir
-        else:
-            LOCAL_DIR = reference_dir
+    for category in ["Input_files_data"]:
         for item in inputs[category].keys():
             v = inputs[category][item]
             if 'dir' in v:
                 del v['dir']
+            if 'profile' in v:
+                del v['profile']
             if isinstance(v['path'], list):
                 v2 = []
                 for i in range(0, len(v['path'])):
-                    v2.append({"class": v['class'], "path": LOCAL_DIR + '/' + v['path'][i]})
+                    v2.append({"class": v['class'], "path": INPUT_DIR + '/' + v['path'][i]})
                 v = v2
                 yml[item] = v
             else:
-                v['path'] = LOCAL_DIR + '/' + v['path']
+                v['path'] = INPUT_DIR + '/' + v['path']
                 yml[item] = v.copy()
     json.dump(yml, f_yml, indent=4, sort_keys=True)
 
