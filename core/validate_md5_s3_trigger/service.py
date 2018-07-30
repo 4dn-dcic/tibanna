@@ -25,7 +25,7 @@ def handler(event, context):
     extra_file_format = get_extra_file_format(event)
     if extra_file_format:
         # for extra file-triggered md5 run, status check is skipped.
-        input_json = json.dumps(make_input(event)
+        input_json = make_input(event)
         input_json['input_files'][0]['format_if_extra'] = extra_file_format
         response = client.start_execution(
             stateMachineArn=STEP_FUNCTION_ARN,
