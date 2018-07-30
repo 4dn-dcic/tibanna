@@ -42,7 +42,7 @@
     "EBS_optimized": true,
     "ebs_iops": 500,
     "shutdown_min": 30,
-    "instance_type": "c4.2xlarge",
+    "instance_type": "r4.2xlarge",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "",
