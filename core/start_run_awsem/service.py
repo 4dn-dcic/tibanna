@@ -15,6 +15,7 @@ from core.pony_utils import (
     get_format_extension_map,
     get_extra_file_key
 )
+import random
 
 LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
@@ -141,7 +142,12 @@ def real_handler(event, context):
         if of.get('type') == 'Output processed file':
             args['output_target'][arg_name] = of.get('upload_key')
         else:
-            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name
+            random_tag = str(int(random.random() * 1000000000000))
+            # add a random tag at the end for non-processed file e.g. md5 report,
+            # so that if two or more wfr are trigerred (e.g. one with parent file, one with extra file)
+            # it will create a different output. Not implemented for processed files -
+            # it's tricky because processed files must have a specific name.
+            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
@@ -196,7 +202,8 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'object_key': object_key}})
-    add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
+    if not input_file.get('format_if_extra', ''):  # do not add this if the input itself is an extra file
+        add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 
 def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):

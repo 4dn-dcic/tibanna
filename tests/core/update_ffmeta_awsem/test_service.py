@@ -121,6 +121,28 @@ def test__md5_updater_8():
     assert 'status' not in new_file
 
 
+def test__md5_updater_extra_file():
+    inputjson = {'status': 'uploaded',
+                 'md5sum': '1234',
+                 'extra_files': [
+                   {
+                     'file_format': 'pairs_px2'
+                   }
+                 ]
+                 }
+    md5 = '1234'
+    content_md5 = '5678'
+    new_file = _md5_updater(inputjson, md5, content_md5, format_if_extra='pairs_px2')
+    assert new_file
+    assert 'extra_files' in new_file
+    assert new_file['extra_files'][0]['file_format'] == 'pairs_px2'
+    assert new_file['extra_files'][0]['md5sum'] == '1234'
+    assert new_file['extra_files'][0]['content_md5sum'] == '5678'
+    assert 'md5sum' not in new_file
+    assert 'content_md5sum' not in new_file
+    assert 'status' not in new_file
+
+
 @valid_env
 @pytest.mark.webtest
 def test_md5_updater_oldmd5(update_ffmeta_event_data):

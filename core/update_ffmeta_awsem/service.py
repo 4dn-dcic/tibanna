@@ -166,9 +166,19 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     return retval
 
 
-def _md5_updater(original_file, md5, content_md5):
-    original_md5 = original_file.get('md5sum', False)
-    original_content_md5 = original_file.get('content_md5sum', False)
+def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
+    if format_if_extra:
+        if 'extra_files' not in original_file:
+            raise Exception("input file has no extra_files," +
+                            "yet the tag 'format_if_extra' is found in the input json")
+        for extra in original_file.get('extra_files'):
+            if extra.get('file_format') == format_if_extra:
+                original_md5 = extra.get('md5sum', False)
+                original_content_md5 = extra.get('content_md5sum', False)
+                new_extra = extra
+    else:
+        original_md5 = original_file.get('md5sum', False)
+        original_content_md5 = original_file.get('content_md5sum', False)
     current_status = original_file.get('status', "uploading")
     new_file = {}
 
@@ -187,9 +197,14 @@ def _md5_updater(original_file, md5, content_md5):
         new_file['content_md5sum'] = content_md5
 
     if new_file:
-        # change status to uploaded only if it is uploading or upload failed
-        if current_status in ["uploading", "upload failed"]:
-            new_file['status'] = 'uploaded'
+        if not format_if_extra:  # update status only if it's not an extra file
+            # change status to uploaded only if it is uploading or upload failed
+            if current_status in ["uploading", "upload failed"]:
+                new_file['status'] = 'uploaded'
+        if format_if_extra:
+            new_extra = new_extra.update(new_file.copy())
+            new_file = {}
+            new_file['extra_files'] = original_file.get('extra_files')
     return new_file
 
 
@@ -198,6 +213,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # get metadata about original input file
     accession = wf_file.runner.inputfile_accessions['input_file']
+    format_if_extra = wf_file.runner.inputfile_format_if_extra['input_file']
     original_file = ff_utils.get_metadata(accession,
                                           key=ff_key,
                                           ff_env=tibanna.env,
@@ -215,7 +231,7 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
         elif len(md5_array) > 1:
             md5 = md5_array[0]
             content_md5 = md5_array[1]
-        new_file = _md5_updater(original_file, md5, content_md5)
+        new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
         if new_file and new_file != "Failed":
             try:
                 ff_utils.patch_metadata(new_file, accession, key=ff_key)
