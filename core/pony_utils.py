@@ -375,7 +375,7 @@ class Awsem(object):
                                           item.get('object_key'),
                                           self,
                                           accession,
-                                          format_if_extra=item.get('format_if_extra', '')}
+                                          format_if_extra=item.get('format_if_extra', ''))}
             files.update(wff)
         return files
 
