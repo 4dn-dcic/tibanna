@@ -1,0 +1,50 @@
+{
+  "args": {
+    "app_name": "xtea",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "cwl_version": "v1",
+    "output_target": {
+      "output": "HuRef-mem-bwa0.7.8.sorted.tar.gz"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "xtea.cwl",
+    "secondary_files": { 
+      "bam": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "HuRef-mem-bwa0.7.8.sorted.bai"
+      }
+    },
+    "output_S3_bucket": "leelab-datafiles",
+    "app_version": "0.0.1",
+    "cwl_directory_url": "https://s3.amazonaws.com/leelab-datafiles",
+    "input_files": {
+      "bam": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "HuRef-mem-bwa0.7.8.sorted.bam"
+      },
+      "genome_tar": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "hg19_decoy.tar.gz"
+      },
+      "rep_library_tar": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "rep_lib_annotation.tar.gz"
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 500,
+    "ebs_type": "gp2",
+    "json_bucket": "leelab-tibanna-log",
+    "EBS_optimized": true,
+    "ebs_iops": "",
+    "shutdown_min": 30,
+    "instance_type": "c4.2xlarge",
+    "copy_to_s3": true,
+    "launch_instance": true,
+    "password": "",
+    "log_bucket": "leelab-tibanna-log",
+    "key_name": "leelab-aws-simon"
+  }
+}
