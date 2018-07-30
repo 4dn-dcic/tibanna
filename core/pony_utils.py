@@ -209,6 +209,12 @@ def get_format_extension_map(ff_keys):
     try:
         fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
         fe_map = fp_schema.get('file_format_file_extension')
+        fp_schema2 = get_metadata("profiles/file_fastq.json", key=ff_keys)
+        fe_map2 = fp_schema2.get('file_format_file_extension')
+        fp_schema3 = get_metadata("profiles/file_reference.json", key=ff_keys)
+        fe_map3 = fp_schema3.get('file_format_file_extension')
+        fe_map.update(fe_map2)
+        fe_map.update(fe_map3)
     except Exception as e:
         raise Exception("Can't get format-extension map from file_processed schema. %s\n" % e)
     return fe_map
