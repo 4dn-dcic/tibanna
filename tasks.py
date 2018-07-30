@@ -104,7 +104,10 @@ def env_list(name):
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'update_ffmeta_awsem': {'SECRET': secret,
                                 'TIBANNA_AWS_REGION': AWS_REGION,
-                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
+        'validate_md5_s3_trigger': {'SECRET': secret,
+                                    'TIBANNA_AWS_REGION': AWS_REGION,
+                                    'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
     if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
         envlist['run_task_awsem'].update({
