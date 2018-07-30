@@ -39,6 +39,11 @@ def s3_trigger_event_data():
 
 
 @pytest.fixture(scope='session')
+def s3_trigger_event_data_pf():
+    return get_event_file_for('validate_md5_s3_trigger', event_file='event_pf.json')
+
+
+@pytest.fixture(scope='session')
 def md5_event_data():
     # I want this to go through the tibanna env lookup, to ensure it gets
     # appropriate keys
