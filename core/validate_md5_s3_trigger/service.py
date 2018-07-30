@@ -132,7 +132,7 @@ def make_input(event):
 
 
 _workflows = {'md5':
-              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
+              {'uuid': 'c77a117b-9a58-477e-aaa5-291a109a99f6',
                'arg_name': 'input_file'
                },
               'fastqc-0-11-4-1':
