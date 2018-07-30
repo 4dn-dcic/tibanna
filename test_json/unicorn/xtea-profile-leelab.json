@@ -3,7 +3,7 @@
     "app_name": "xtea",
     "input_parameters": {},
     "cwl_child_filenames": [],
-    "cwl_version": "draft-3",
+    "cwl_version": "v1",
     "output_target": {
       "output": "11002-SSC03070.tar.gz"
     },
@@ -37,12 +37,12 @@
   },
   "config": {
     "ebs_size": 500,
-    "ebs_type": "io1",
+    "ebs_type": "gp2",
     "json_bucket": "leelab-tibanna-log",
     "EBS_optimized": true,
-    "ebs_iops": 500,
+    "ebs_iops": "",
     "shutdown_min": 30,
-    "instance_type": "c4.2xlarge",
+    "instance_type": "m4.2xlarge",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "",
