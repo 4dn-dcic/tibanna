@@ -142,7 +142,8 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
                         {"workflow_argument_name": "input_file",
                          "bucket_name": bucket,
                          "uuid": uuid,
-                         "object_key": accession + '.pairs.gz.px2'
+                         "object_key": accession + '.pairs.gz.px2',
+                         "format_if_extra": "pairs_px2"
                          }
         ],
         "output_bucket": bucket
@@ -153,8 +154,8 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     # check result
     time.sleep(6*60)  # wait for 6 minutes
     filemeta = get_metadata(uuid, key=ff_key)
-    content_md5sum = filemeta.get('content_md5sum')
-    md5sum = filemeta.get('md5sum')
+    content_md5sum = filemeta.get('extra_files')[0].get('content_md5sum')
+    md5sum = filemeta.get('extra_files')[0].get('md5sum')
     if content_md5sum and md5sum:
         print(content_md5sum)
         print(md5sum)
