@@ -3,7 +3,8 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     get_authentication_with_server,
     post_metadata,
-    get_metadata
+    get_metadata,
+    patch_metadata
 )
 from core.utils import run_workflow
 import gzip
@@ -102,6 +103,7 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     if content_md5sum and md5sum:
         print(content_md5sum)
         print(md5sum)
+        patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
     else:
         raise Exception('md5 step function run failed')
 
@@ -159,5 +161,6 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     if content_md5sum and md5sum:
         print(content_md5sum)
         print(md5sum)
+        patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
     else:
         raise Exception('md5 step function run failed')
