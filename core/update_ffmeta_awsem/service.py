@@ -33,15 +33,12 @@ def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
 
 
 def update_processed_file_metadata(status, pf, tibanna, export):
-
     ff_key = tibanna.ff_keys
-
     # register mcool/bigwig with fourfront-higlass
     if pf.file_format == "mcool" and export.bucket in ff_utils.HIGLASS_BUCKETS:
         pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'cooler', 'matrix')
     if pf.file_format == "bw" and export.bucket in ff_utils.HIGLASS_BUCKETS:
         pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'bigwig', 'vector')
-
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
     if pf.file_format == 'bg' and export.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
@@ -51,7 +48,6 @@ def update_processed_file_metadata(status, pf, tibanna, export):
                 pf.__dict__['higlass_uid'] = register_to_higlass(
                     tibanna, export.bucket, extra_file_key, 'bigwig', 'vector'
                 )
-
     try:
         pf.status = 'uploaded'
         if export.md5:
@@ -64,7 +60,6 @@ def update_processed_file_metadata(status, pf, tibanna, export):
         pf.patch(key=ff_key)
     except Exception as e:
         raise Exception("Unable to post processed file metadata : %s" % e)
-
     return pf
 
 
@@ -108,19 +103,16 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     if report_html:
         files_to_parse.append(report_html)
     LOG.info("accession is %s" % accession)
-
     try:
         files = wf_file.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
                                           acl='public-read')
     except Exception as e:
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
-
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
                                       ff_env=tibanna.env)
-
     # parse fastqc metadata
     LOG.info("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
@@ -132,12 +124,10 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
                           qc_schema=qc_schema.get('properties'),
                           url=qc_url)
     LOG.info("qc meta is %s" % meta)
-
     # post fastq metadata
     qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
-
     LOG.info("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
@@ -155,13 +145,11 @@ def _qc_updater(status, wf_file, ff_meta, tibanna, quality_metric='quality_metri
     except Exception as e:
         raise Exception("patch_metadata failed in fastqc_updater." + str(e) +
                         "original_file ={}\n".format(str(original_file)))
-
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
     retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
-
     LOG.info("retval is %s" % retval)
     return retval
 
@@ -180,31 +168,29 @@ def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
         original_md5 = original_file.get('md5sum', False)
         original_content_md5 = original_file.get('content_md5sum', False)
     current_status = original_file.get('status', "uploading")
-    new_file = {}
-
+    new_content = {}
     if md5 and original_md5 and original_md5 != md5:
         # file status to be upload failed / md5 mismatch
         print("no matcho")
         return "Failed"
     elif md5 and not original_md5:
-        new_file['md5sum'] = md5
-
+        new_content['md5sum'] = md5
     if content_md5 and original_content_md5 and original_content_md5 != content_md5:
         # file status to be upload failed / md5 mismatch
         print("no matcho")
         return "Failed"
     elif content_md5 and not original_content_md5:
-        new_file['content_md5sum'] = content_md5
-
-    if new_file:
-        if not format_if_extra:  # update status only if it's not an extra file
+        new_content['content_md5sum'] = content_md5
+    new_file = {}
+    if new_content:
+        if format_if_extra:
+            new_extra = new_extra.update(new_content.copy())
+            new_file['extra_files'] = original_file.get('extra_files')
+        else:  # update status only if it's not an extra file
+            new_file = new_content
             # change status to uploaded only if it is uploading or upload failed
             if current_status in ["uploading", "upload failed"]:
                 new_file['status'] = 'uploaded'
-        if format_if_extra:
-            new_extra = new_extra.update(new_file.copy())
-            new_file = {}
-            new_file['extra_files'] = original_file.get('extra_files')
     return new_file
 
 
