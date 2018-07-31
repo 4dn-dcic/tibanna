@@ -71,7 +71,8 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
 
 @pytest.mark.webtest
 def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
-    res = handler(run_task_awsem_pseudo_workflow_event_data, '')
+    with mock.post('core.pony_utils.post_metadata') as mock_request:
+        res = handler(run_task_awsem_pseudo_workflow_event_data, '')
     assert(res)
     # check pf_meta
     user_supplied_of = [of['uuid'] for of in
@@ -91,7 +92,8 @@ def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
                 }
 
     run_task_awsem_pseudo_workflow_event_data['wfr_meta'] = wfr_meta
-    res = handler(run_task_awsem_pseudo_workflow_event_data, '')
+    with mock.post('core.pony_utils.post_metadata') as mock_request:
+        res = handler(run_task_awsem_pseudo_workflow_event_data, '')
     assert(res)
 
     # did we set additional fields correctly
