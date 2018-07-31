@@ -227,6 +227,12 @@ def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
     assert awsem.inputfile_accessions['input_file'] == '4DNFIRSRJH45'
 
 
+def test_get_inputfile_format_if_extra(update_ffmeta_event_data_extra_md5, tibanna_env):
+    update_ffmeta_event_data_extra_md5.update(tibanna_env)
+    for _, wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files().iteritems():
+        assert wf_file.runner.inputfile_format_if_extra['input_file'] == 'pairs_px2'
+
+
 @pytest.fixture()
 def proc_file_in_webdev():
     return {'status': 'released',

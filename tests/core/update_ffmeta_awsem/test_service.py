@@ -47,8 +47,9 @@ def test__md5_updater_3():
                  }
     md5 = '0000'
     content_md5 = '5678'
-    new_file = _md5_updater(inputjson, md5, content_md5)
-    assert new_file == "Failed"
+    with pytest.raises(Exception) as excinfo:
+        _md5_updater(inputjson, md5, content_md5)
+    assert str(excinfo.value) == "md5 not matching the original one"
 
 
 def test__md5_updater_4():
@@ -58,8 +59,9 @@ def test__md5_updater_4():
                  }
     md5 = '1234'
     content_md5 = '0000'
-    new_file = _md5_updater(inputjson, md5, content_md5)
-    assert new_file == 'Failed'
+    with pytest.raises(Exception) as excinfo:
+        _md5_updater(inputjson, md5, content_md5)
+    assert str(excinfo.value) == "content md5 not matching the original one"
 
 
 def test__md5_updater_5():
