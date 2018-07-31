@@ -186,6 +186,27 @@ class ProcessedFileMetadata(object):
             return pf
 
 
+def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
+    input_files_for_ffmeta = []
+    for input_file in input_file_list:
+        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
+            infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], uuid, idx + 1)
+            input_files_for_ffmeta.append(infileobj.as_dict())
+    print("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
+    LOG.info("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
+    return input_files_for_ffmeta
+
+
+class InputFileForWFRMeta(object):
+    def __init__(self, workflow_argument_name=None, value=None, ordinal=None):
+        self.workflow_argument_name = workflow_argument_name
+        self.value = value
+        self.ordinal = ordinal
+
+    def as_dict(self):
+        return self.__dict__
+
+
 def aslist(x):
     if isinstance(x, list):
         return x

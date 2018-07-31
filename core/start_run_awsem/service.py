@@ -8,12 +8,12 @@ from core.utils import TibannaStartException
 from core.pony_utils import (
     Tibanna,
     merge_source_experiments,
-    ensure_list,
     create_ffmeta_awsem,
     aslist,
     ProcessedFileMetadata,
     get_format_extension_map,
-    get_extra_file_key
+    get_extra_file_key,
+    create_ffmeta_input_files_from_pony_input_file_list
 )
 import random
 
@@ -92,13 +92,7 @@ def real_handler(event, context):
         args['cwl_version'] = 'draft3'
 
     # create the ff_meta output info
-    input_files = []
-    for input_file in input_file_list:
-        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
-            input_files.append({'workflow_argument_name': input_file['workflow_argument_name'],
-                                'value': uuid, 'ordinal': idx + 1})
-    print("input_files is %s" % input_files)
-    LOG.info("input_files is %s" % input_files)
+    input_files_for_ffmeta = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
 
     # input file args for awsem
     for input_file in input_file_list:
@@ -119,7 +113,7 @@ def real_handler(event, context):
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = create_ffmeta_awsem(
-        workflow_uuid, app_name, input_files, tag=tag,
+        workflow_uuid, app_name, input_files_for_ffmeta, tag=tag,
         run_url=tibanna.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=event.get('wfr_meta'),
