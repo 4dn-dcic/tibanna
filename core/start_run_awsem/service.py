@@ -202,7 +202,9 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'object_key': object_key}})
-    if not input_file.get('format_if_extra', ''):  # do not add this if the input itself is an extra file
+    if input_file.get('format_if_extra', ''):
+        args['input_files'].update({'format_if_extra': input_file.get('format_if_extra')})
+    else:  # do not add this if the input itself is an extra file
         add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 

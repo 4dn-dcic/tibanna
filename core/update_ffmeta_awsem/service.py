@@ -191,6 +191,7 @@ def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
             # change status to uploaded only if it is uploading or upload failed
             if current_status in ["uploading", "upload failed"]:
                 new_file['status'] = 'uploaded'
+    print("new_file = %s" % str(new_file))
     return new_file
 
 
@@ -205,7 +206,6 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
                                           ff_env=tibanna.env,
                                           add_on='frame=object',
                                           check_queue=True)
-
     if status.lower() == 'uploaded':
         md5_array = wf_file.read().split('\n')
         if not md5_array:
@@ -218,9 +218,11 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             md5 = md5_array[0]
             content_md5 = md5_array[1]
         new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
+        print("new_file = %s" % str(new_file))
         if new_file and new_file != "Failed":
             try:
-                ff_utils.patch_metadata(new_file, accession, key=ff_key)
+                resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
+                print(resp)
             except Exception as e:
                 # TODO specific excpetion
                 # if patch fails try to patch worfklow status as failed
