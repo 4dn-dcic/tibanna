@@ -171,14 +171,12 @@ def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
     new_content = {}
     if md5 and original_md5 and original_md5 != md5:
         # file status to be upload failed / md5 mismatch
-        print("no matcho")
-        return "Failed"
+        raise Exception("md5 not matching the original one")
     elif md5 and not original_md5:
         new_content['md5sum'] = md5
     if content_md5 and original_content_md5 and original_content_md5 != content_md5:
         # file status to be upload failed / md5 mismatch
-        print("no matcho")
-        return "Failed"
+        raise Exception("content md5 not matching the original one")
     elif content_md5 and not original_content_md5:
         new_content['content_md5sum'] = content_md5
     new_file = {}
@@ -206,11 +204,10 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
                                           ff_env=tibanna.env,
                                           add_on='frame=object',
                                           check_queue=True)
-    if status.lower() == 'uploaded':
+    if status.lower() == 'uploaded':  # md5 report file is uploaded
         md5_array = wf_file.read().split('\n')
         if not md5_array:
-            print("report has no content")
-            return md5_updater("upload failed", wf_file, ff_meta, tibanna)
+            raise Exception("md5 report has no content")
         if len(md5_array) == 1:
             md5 = None
             content_md5 = md5_array[0]
@@ -219,26 +216,16 @@ def md5_updater(status, wf_file, ff_meta, tibanna):
             content_md5 = md5_array[1]
         new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
         print("new_file = %s" % str(new_file))
-        if new_file and new_file != "Failed":
+        if new_file:
             try:
                 resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
                 print(resp)
             except Exception as e:
                 # TODO specific excpetion
                 # if patch fails try to patch worfklow status as failed
-                new_file = {}
-                new_file['status'] = 'upload failed'
-                new_file['description'] = str(e)
-                ff_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
-        elif new_file == "Failed":
-            # we may not have to update the file, cause it already correct info
-            # so we return Failed when we know upload failed
-            md5_updater("upload failed", wf_file, ff_meta, tibanna)
-    elif status == 'upload failed':
-            new_file = {}
-            new_file['status'] = 'upload failed'
-            ff_utils.patch_metadata(new_file, original_file['uuid'], key=ff_key)
-
+                raise e
+    else:
+        pass
     # nothing to patch to ff_meta
     return None
 
