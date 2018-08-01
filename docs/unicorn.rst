@@ -16,51 +16,53 @@ The command should automatically open a step function run on a Web browser. If n
 Input Json file
 ---------------
 
-{
-  "config": {
-    "ebs_size": 0,
-    "ami_id": "ami-cfb14bb5",
-    "json_bucket": "suwang",
-    "EBS_optimized": "",
-    "ebs_iops": 500,
-    "shutdown_min": 30,
-    "instance_type": "",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
-    "ebs_type": "io1",
-    "copy_to_s3": true,
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
-    "launch_instance": true,
-    "password": "whateverpasswordworks",
-    "log_bucket": "suwang",
-    "key_name": ""
-  },
-  "args": {
-    "secondary_output_target": {},
-    "app_name": "pairsam-parse-sort",
-    "input_parameters": {
-      "nThreads": 16
-    },
-    "cwl_child_filenames": [],
-    "output_target": {
-      "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
-    },
-    "cwl_main_filename": "pairsam-parse-sort.cwl",
-    "secondary_files": {},
-    "output_S3_bucket": "suwang",
-    "app_version": "0.2.0",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
-    "input_files": {
-      "bam": {
-        "bucket_name": "suwang",
-        "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam"
+::
+
+    {
+      "config": {
+        "ebs_size": 0,
+        "ami_id": "ami-cfb14bb5",
+        "json_bucket": "suwang",
+        "EBS_optimized": "",
+        "ebs_iops": 500,
+        "shutdown_min": 30,
+        "instance_type": "",
+        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
+        "ebs_type": "io1",
+        "copy_to_s3": true,
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+        "launch_instance": true,
+        "password": "whateverpasswordworks",
+        "log_bucket": "suwang",
+        "key_name": ""
       },
-      "chromsize": {
-        "bucket_name": "suwang",
-        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      "args": {
+        "secondary_output_target": {},
+        "app_name": "pairsam-parse-sort",
+        "input_parameters": {
+          "nThreads": 16
+        },
+        "cwl_child_filenames": [],
+        "output_target": {
+          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
+        },
+        "cwl_main_filename": "pairsam-parse-sort.cwl",
+        "secondary_files": {},
+        "output_S3_bucket": "suwang",
+        "app_version": "0.2.0",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+        "input_files": {
+          "bam": {
+            "bucket_name": "suwang",
+            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam"
+          },
+          "chromsize": {
+            "bucket_name": "suwang",
+            "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+          }
+        }
       }
     }
-  }
-}
 
 
 Create an input json file similar to the above content, replace output ('output_target') and input file names and 'ebs_size'. The 'ebs_size' should be in GB and if it is set to 0, it will be auto-determined by the benchmark function. Likewise, 'instance_type' and 'EBS_optimized' can be set to be "", which allows the Benchmark function to auto-determine these parameters. One could override it by specifically assigning values to these fields (e.g. "EBS_optimized": true, "instance_type": "c2.xlarge", "ebs_size": 500). For a high IO performance, it is recommended to use "ebs_iops" to be higher (e.g. 20000), but 500 should be fine for regular jobs. More examples are in test_json/suwang*json.
