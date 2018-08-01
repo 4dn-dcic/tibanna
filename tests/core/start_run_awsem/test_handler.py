@@ -116,7 +116,9 @@ def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_files2):
-    res = handler(run_awsem_event_data_processed_files2, '')
+    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+        res = handler(run_awsem_event_data_processed_files2, '')
+        assert mock_request.call_count == 3  # one for wfr, two pfs.
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
