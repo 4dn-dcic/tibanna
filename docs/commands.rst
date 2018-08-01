@@ -1,6 +1,6 @@
-========
-Commands
-========
+==================
+Command-line tools
+==================
 
 
 setup_tibanna_env
