@@ -27,6 +27,7 @@ Contents:
    :maxdepth: 3
 
    startaws
+   dependency
    installation
    commands
    ami
