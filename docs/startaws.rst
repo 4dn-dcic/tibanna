@@ -31,6 +31,7 @@ have your AWS keys in file ``~/.aws/credentials`` with the following content.
 Also create file ``~/.aws/config`` with the following content.
 
 ::
+
     [default]
     region=us-east-2
     output=json
