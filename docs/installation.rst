@@ -20,7 +20,6 @@ As admin, you need to first set up Tibanna environment on your AWS account and c
     cd tibanna
     pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
 
-Set up awscli: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
 To set up and deploy Tibanna, you need the following environmental variables set and exported on your local machine from which you're setting up/deploying Tibanna.
 
@@ -108,7 +107,6 @@ As a user, you need to set up your awscli. You can only use run_workflow and you
     cd tibanna
     pip install -r requirements.txt
 
-Set up awscli: for more details see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
 To run workflow on the tibanna (unicorn) deployed for the usergroup (for more details about running workflows, see below)
 
