@@ -1,6 +1,6 @@
-=====
+========
 Overview
-=====
+========
 
 Tibanna is auto-triggered upon data submission to execute a relevant workflow on the data. It utilizes two-layer scheduling; an upstream regulator based on a state machine called AWS Step Function and a downstream workflow engine that runs Docker/CWL-based pipelines. Tibanna’s AWS Step Function launches several AWS Serverless Lambda functions that control workflow-related metadata generation/tracking and deployment of a workflow on a pre-custom-configured autonomous virtual machine (EC2 instance) (AWSEM; Autonomous Workflow Step Executor Machine).
 
@@ -9,7 +9,17 @@ In addition, Tibanna offers multi-layer real-time monitoring to ensure the workf
 Tibanna has been evolving: originally developed for Desktop workflow submitter that launches an autonomous VM, then upgraded to a Chalice/Lambda/API-Gateway-based system that works with the Seven Bridges Genomics (SBG) platform, and it currently consists of the original modules integrated with AWS Step functions for upstream scheduling and monitoring, without SBG.
 
 
+Contents:
+
+.. toctree::
+   :hidden:
+
+   self
+
+
 .. toctree::
    :maxdepth: 3
 
    pony
+
+
