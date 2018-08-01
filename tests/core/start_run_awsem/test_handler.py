@@ -176,9 +176,6 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
 @valid_env
 @pytest.mark.webtest
 def test_handle_processed_files2(run_awsem_event_data_processed_files2):
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
-        res = handler(run_awsem_event_data_processed_files2, '')
-        mock_request.assert_called_once()
     data = run_awsem_event_data_processed_files2
     tibanna_settings = data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
