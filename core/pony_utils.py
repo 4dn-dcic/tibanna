@@ -389,7 +389,12 @@ class Awsem(object):
     def secondary_output_files(self):
         files = dict()
         for k, v in self.args.get('secondary_output_target').iteritems():
-            wff = {k: WorkflowFile(self.output_s3, v, self)}
+            if self.output_info and 'secondaryFiles' in self.output_info[k]:
+                md5 = self.output_info[k]['secondaryFiles'].get('md5sum', '')
+                filesize = self.output_info[k]['secondaryFiles'].get('size', '')
+                wff = {k: WorkflowFile(self.output_s3, v, self, filesize=filesize, md5=md5)}
+            else:
+                wff = {k: WorkflowFile(self.output_s3, v, self)}
             files.update(wff)
         return files
 
