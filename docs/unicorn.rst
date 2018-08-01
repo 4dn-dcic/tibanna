@@ -7,7 +7,7 @@ Run a workflow
 
 ::
 
-    invoke run_workflow --workflow=run_awsem_workflow_with_unicorns --input-json=<json_file_name>
+    invoke run_workflow --workflow=tibanna_unicorn_default_3827 --input-json=<json_file_name>
 
 The command should automatically open a step function run on a Web browser. If not, the url to the step function run is printed out to STDOUT and you can copy and paste it onto your browser to check the status of your run.
 
@@ -21,46 +21,45 @@ Input Json file
     {
       "config": {
         "ebs_size": 0,
-        "ami_id": "ami-cfb14bb5",
         "json_bucket": "suwang",
         "EBS_optimized": "",
         "ebs_iops": 500,
         "shutdown_min": 30,
         "instance_type": "",
-        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/s3_access_suwang",
         "ebs_type": "io1",
         "copy_to_s3": true,
-        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
         "launch_instance": true,
         "password": "whateverpasswordworks",
         "log_bucket": "suwang",
         "key_name": ""
       },
       "args": {
-        "secondary_output_target": {},
         "app_name": "pairsam-parse-sort",
-        "input_parameters": {
-          "nThreads": 16
-        },
-        "cwl_child_filenames": [],
-        "output_target": {
-          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
-        },
-        "cwl_main_filename": "pairsam-parse-sort.cwl",
-        "secondary_files": {},
-        "output_S3_bucket": "suwang",
-        "app_version": "0.2.0",
+        "app_version": "0.2.0"
         "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+        "cwl_main_filename": "pairsam-parse-sort.cwl",
+        "cwl_child_filenames": [],
+        "cwl_version": "draft-3",
         "input_files": {
           "bam": {
-            "bucket_name": "suwang",
-            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam"
+            "bucket_name": "some_public_bucket",
+            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam",
+            "profile": "user1"
           },
           "chromsize": {
             "bucket_name": "suwang",
             "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
           }
-        }
+        },
+        "secondary_files": {},
+        "input_parameters": {
+          "nThreads": 16
+        },
+        "output_S3_bucket": "suwang",
+        "output_target": {
+          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
+        },
+        "secondary_output_target": {}
       }
     }
 
