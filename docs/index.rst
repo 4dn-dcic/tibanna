@@ -21,6 +21,7 @@ Contents:
    :maxdepth: 3
 
    installation
+   commands
    pony
 
 
