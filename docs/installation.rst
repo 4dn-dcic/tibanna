@@ -120,6 +120,4 @@ As an example,
 
     invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
 
-For more details, see Tutorials/tibanna_unicorn.md
-
 
