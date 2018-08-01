@@ -323,7 +323,7 @@ def is_prod():
 class WorkflowFile(object):
 
     def __init__(self, bucket, key, runner, accession=None, output_type=None,
-                 filesize=None, md5=None, format_if_extra=None):
+                 filesize=None, md5=None, format_if_extra=None, is_extra=False):
         self.bucket = bucket
         self.key = key
         self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
@@ -333,6 +333,11 @@ class WorkflowFile(object):
         self.filesize = filesize
         self.md5 = md5
         self.format_if_extra = format_if_extra
+
+        if self.format_if_extra or is_extra:
+            self.is_extra = True
+        else:
+            self.is_extra = False
 
     @property
     def status(self):
@@ -384,13 +389,17 @@ class Awsem(object):
                 wff = {k: WorkflowFile(self.output_s3, v, self, accession,
                                        output_type=out_type)}
             files.update(wff)
-        return files
-
-    def secondary_output_files(self):
-        files = dict()
+        # secondary output files - included in 'output_files'
         for k, v in self.args.get('secondary_output_target').iteritems():
-            wff = {k: WorkflowFile(self.output_s3, v, self)}
-            files.update(wff)
+            if self.output_info and 'secondaryFiles' in self.output_info[k]:
+                for sf in self.output_info[k]['secondaryFiles']:
+                    md5 = sf.get('md5sum', '')
+                    filesize = sf.get('size', '')
+                    wff = {k: WorkflowFile(self.output_s3, v, self, filesize=filesize, md5=md5, is_extra=True)}
+                    files.update(wff)
+            else:
+                wff = {k: WorkflowFile(self.output_s3, v, self, is_extra=True)}
+                files.update(wff)
         return files
 
     def input_files(self):

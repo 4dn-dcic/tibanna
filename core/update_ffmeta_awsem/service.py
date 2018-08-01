@@ -296,6 +296,8 @@ def real_handler(event, context):
                         (awsem_output, ff_output))
 
     for _, export in awsem_output.iteritems():
+        if export.is_extra:
+            continue
         upload_key = export.key
         status = export.status
         print("export res is %s", status)

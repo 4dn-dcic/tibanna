@@ -57,7 +57,10 @@ with open(md5file, 'r') as md5_f:
 for of, ofv in old_dict['Job']['Output']['Output files'].iteritems():
     if ofv['path'] in md5dict:
         ofv['md5sum'] = md5dict[ofv['path']]
-
+    if 'secondaryFiles' in ofv:
+        for sf in ofv['secondaryFiles']:
+            if sf['path'] in md5dict:
+                sf['md5sum'] = md5dict[sf['path']]
 
 # sanity check for output target, this skips secondary files
 # - we assume secondary files are not explicitly specified in output_target.
