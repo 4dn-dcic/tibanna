@@ -28,6 +28,7 @@ Contents:
 
    startaws
    dependency
+   cwl
    installation
    commands
    ami
