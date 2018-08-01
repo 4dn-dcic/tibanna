@@ -97,7 +97,7 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
 
     # check result
     time.sleep(6*60)  # wait for 6 minutes
-    filemeta = get_metadata(uuid, key=ff_key)
+    filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
     content_md5sum = filemeta.get('content_md5sum')
     md5sum = filemeta.get('md5sum')
     if content_md5sum and md5sum:
@@ -155,7 +155,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
 
     # check result
     time.sleep(6*60)  # wait for 6 minutes
-    filemeta = get_metadata(uuid, key=ff_key)
+    filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
     content_md5sum = filemeta.get('extra_files')[0].get('content_md5sum')
     md5sum = filemeta.get('extra_files')[0].get('md5sum')
     if content_md5sum and md5sum:
