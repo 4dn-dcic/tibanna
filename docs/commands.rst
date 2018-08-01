@@ -3,8 +3,14 @@ Commands
 ========
 
 
-Deploying Tibanna
+setup_tibanna_env
 -----------------
+To set up environment on AWS as admin, use `invoke setup_tibanna_env`.
+
+
+
+deploy_tibanna
+---------------
 
 To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
 
@@ -20,14 +26,15 @@ If you're 4DN-DCIC and using Tibanna Pony, you need the additional environmental
 
     export SECRET=<fourfront_aws_secret_key>
 
-To create a copy of tibanna (step function + lambdas)
+To create an instance of tibanna (step function + lambdas)
 
 ::
 
-    invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--tests]
+    invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--usergroup=<usergroup>] [--tests]
     # (use suffix for development version)
     # example <suffixname> : dev
     # <sfn_type> (step function type) is either 'pony' or 'unicorn' (default pony)
+    # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the `invoke setup_tibanna_env` command..
 
 
 example
@@ -48,6 +55,9 @@ example 2
 This example creates a step function named tibanna_unicorn_dev that uses a set of lambdas with suffix _dev, and deploys these lambdas. Using the --tests argument will ensure tests pass befor deploying; currently this is NOT available for users outside of 4DN-DCIC.
 
 
+deploy_core
+-----------
+
 To deploy lambda functions (use suffix for development version lambdas)
 
 ::
@@ -62,8 +72,9 @@ To deploy lambda functions (use suffix for development version lambdas)
     # example <suffixname> : dev
 
 
-Execution of workflows using Tibanna
-------------------------------------
+
+run_workflow
+------------
 
 To run workflow
 
@@ -76,6 +87,11 @@ To run workflow
 For more detail, see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
 
 
+
+rerun
+-----
+
+
 To rerun a failed job with the same input json
 
 ::
@@ -83,6 +99,9 @@ To rerun a failed job with the same input json
     invoke rerun --exec-arn=<stepfunctionrun_arn> [--workflow=<stepfunctionname>]
     # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
 
+
+rerun_many
+----------
 
 To rerun many jobs that failed after a certain time point
 
@@ -107,10 +126,13 @@ To rerun many jobs that failed after a certain time point
     # This example will rerun all failed jobs of tibanna_pony step function that failed after 3pm EST on Feb 14 2018.
 
 
-To kill all currently running jobs (killing only step functions not the EC2 instances)
+kill_all
+--------
 
+To kill all currently running jobs (killing only step functions not the EC2 instances)
 
 ::
 
     invoke kill_all [--workflow=<stepfunctionname>]
+
 
