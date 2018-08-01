@@ -388,6 +388,7 @@ class Awsem(object):
             else:
                 wff = {k: WorkflowFile(self.output_s3, v, self, accession,
                                        output_type=out_type)}
+            files.update(wff)
         # secondary output files - included in 'output_files'
         for k, v in self.args.get('secondary_output_target').iteritems():
             if self.output_info and 'secondaryFiles' in self.output_info[k]:
