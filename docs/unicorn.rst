@@ -96,5 +96,5 @@ When the run finishes successfully, you'll see in your bucket a file <jobid>.suc
 |unicorn_stepfun_success|  |unicorn_stepfun_fail|
 =========================  ======================
 
-.. |unicorn_stepfun_success| image:: images/stepfunction_unicorn_screenshot_fail.png
-.. |unicorn_stepfun_fail| image:: images/stepfunction_unicorn_screenshot.png
+.. |unicorn_stepfun_success| image:: images/stepfunction_unicorn_screenshot.png
+.. |unicorn_stepfun_fail| image:: images/stepfunction_unicorn_screenshot_fail.png
