@@ -12,13 +12,17 @@ First, install ``awscli`` on your computer (or your server) (https://aws.amazon.
 
 Then, create your credential and config files in one of the two ways below:
 
-Option 1: ``aws configure`` and enter your access key, secret key, region('us-east-1'), output type('json'). This will automatically create the files described in Option 2.
+**Option 1:**
 
-Option 2:
+``aws configure`` and enter your access key, secret key, region('us-east-1'), output type('json'). This will automatically create the files described in Option 2.
+
+
+**Option 2:**
 
 have your AWS keys in file ``~/.aws/credentials`` with the following content.
 
 ::
+
     [default]
     aws_access_key_id=<your_access_key>
     aws_secret_access_key=<your_secret_key>
