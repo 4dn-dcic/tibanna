@@ -66,10 +66,7 @@ def _read(*parts, **kwargs):
 
 def get_version():
     import re
-    version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-        _read('..','tibanna', '__init__.py'),
-        re.MULTILINE).group(1)
+    version = open("../core/_version.py").readlines()[-1].split()[-1].strip("\"'")
     return version
 
 version = get_version()
