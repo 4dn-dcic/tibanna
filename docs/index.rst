@@ -22,6 +22,7 @@ Contents:
 
    installation
    commands
+   ami
    pony
 
 
