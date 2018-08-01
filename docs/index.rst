@@ -26,6 +26,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
+   startaws
    installation
    commands
    ami
