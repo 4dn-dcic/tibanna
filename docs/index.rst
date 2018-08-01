@@ -2,6 +2,8 @@
 Overview
 ========
 
+Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker-based pipelines to the AWS cloud. Tibanna is a main workflow management system used by the 4DN DCIC (4D Nucleome Data Coordination and Integration Center).
+
 
 .. image:: images/tibanna_diagram_20180207.png 
 
