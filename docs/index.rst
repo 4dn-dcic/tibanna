@@ -18,6 +18,9 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
     >>> from core.utils import run_workflow
     >>> run_workflow(workflow='tibanna_unicorn_default_6284', input_json=run1)
 
+Tibanna is open-source and can be found at https://github.com/4dn-dcic/tibanna
+
+
 
 ============
 How it works
@@ -48,7 +51,6 @@ Contents:
    :maxdepth: 3
 
    startaws
-   dependency
    installation
    commands
    execution_json
