@@ -26,7 +26,9 @@ def test_start_awsem_handler(run_awsem_event_data):
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_files):
-    res = handler(run_awsem_event_data_processed_files, '')
+    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+        res = handler(run_awsem_event_data_processed_files, '')
+        assert mock_request.call_count == 2  # one for wfr, two pfs.
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
