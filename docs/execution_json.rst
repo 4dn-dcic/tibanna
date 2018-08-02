@@ -7,6 +7,106 @@ The input json defines an individual execution. It has two parts, `args` and `co
 
 args
 ----
+:app_name:
+    <name of the app> (e.g. 'pairsam-parse-sort')
+    A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
+
+:app_version:
+    <version of the app> (e.g. 0.2.0)
+    Version of the pipeline/app, for the user to keep in track.
+
+:cwl_directory_url:
+    <url_that_contains_cwl_file(s)> (e.g. https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem)
+    The url must be public.
+
+:cwl_main_filename:
+    <main_cwl_file> (e.g. 'pairsam-parse-sort.cwl')
+    This file must be in the cwl url given by ``cwl_directory_url``.
+    The actual cwl link would be ``cwl_directory_url`` + '\' + ``cwl_main_file_name``
+
+:cwl_child_filenames: <list_of_cwl_files> or ``[]`` (e.g. ['step1.cwl', 'step2.cwl'])
+    An array of all the other cwl files that are called by the main cwl file. If the main CWL file is of 'workflow' type, the other CWL files corresponding to steps or subworkflows should be listed here.
+
+:cwl_version: either ``v1`` or ``draft-3``
+
+:input_files:
+    A dictionary that contains input files. The keys must match the input argument names of the CWL.
+    It contains `bucket_name`, `object_key` and optionally `profile` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
+    (e.g.
+
+    ::
+
+        {
+            'bam': {
+                'bucket_name': 'some_public_bucket',
+                'object_key': 'some_directory/some_file_name.bam',
+                'profile': 'user1'
+            },
+            'chromsize': {
+                'bucket_name': 'suwangs_bucket',
+                'object_key': 'some_other_directory/hg38.chrom.sizes'
+            }
+        }
+
+    )
+
+:secondary_files:
+    A dictionary of the same format as `input_file` but contains secondary files. The keys must match the input argument name of the CWL where the secondary file belongs.
+    (e.g.
+
+    ::
+
+        {
+            'bam': {
+                'bucket_name': 'some_public_bucket',
+                'object_key': 'some_directory/some_file_name.bai',
+                'profile': 'user1'
+            }
+        }
+
+    )
+
+
+:input_parameters:
+    A dictionary that contains input parameter values. Default parameters don't need to be included. The keys must match the input argument name of the CWL.
+    (e.g.
+
+
+    ::
+        {
+            'nThreads': 16
+        }
+
+    )
+
+:output_S3_bucket:
+    <output_bucket_name>
+    The name of the bucket where output files will be sent to.
+
+:output_target:
+    A dictionary that contains a desired object keys to be put inside output bucket. This can be useful if, for example, the pipeline always generates an output file of the same name (e.g. report, output.txt, etc) but the user wants to distinguish them by sample names in the output bucket. If not set, the original output file names will be used as object key.
+    (e.g.
+
+    ::
+
+        {
+          'out_pairsam': '7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz'
+        }
+
+    )
+
+:secondary_output_target:
+    Similar to `output_target` but for secondary files.
+    (e.g.
+
+    ::
+
+        {
+          'out_pairsam': '7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz.px2'
+        }
+
+    )
+
 
 
 config
