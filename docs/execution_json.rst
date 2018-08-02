@@ -8,9 +8,8 @@ The input json defines an individual execution. It has two parts, `args` and `co
 args
 ----
 :app_name:
-    <name of the app> (e.g. 'pairsam-parse-sort')
-
-    A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
+    - <name of the app> (e.g. 'pairsam-parse-sort')
+    - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
 
 :app_version:
     <version of the app> (e.g. 0.2.0)
@@ -224,5 +223,4 @@ Example input json
     }
 
 
-Create an input json file similar to the above content, replace output ('output_target') and input file names and 'ebs_size'. The 'ebs_size' should be in GB and if it is set to 0, it will be auto-determined by the benchmark function. Likewise, 'instance_type' and 'EBS_optimized' can be set to be "", which allows the Benchmark function to auto-determine these parameters. One could override it by specifically assigning values to these fields (e.g. "EBS_optimized": true, "instance_type": "c2.xlarge", "ebs_size": 500). For a high IO performance, it is recommended to use "ebs_iops" to be higher (e.g. 20000), but 500 should be fine for regular jobs. More examples are in test_json/suwang*json.
 
