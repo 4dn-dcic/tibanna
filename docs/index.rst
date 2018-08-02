@@ -19,6 +19,10 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
     >>> run_workflow(workflow='tibanna_unicorn_default_6284', input_json=run1)
 
 
+============
+How it works
+============
+
 
 .. image:: images/tibanna_diagram_20180207.png 
 
