@@ -9,19 +9,24 @@ args
 ----
 :app_name:
     <name of the app> (e.g. 'pairsam-parse-sort')
+
     A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
 
 :app_version:
     <version of the app> (e.g. 0.2.0)
+
     Version of the pipeline/app, for the user to keep in track.
 
 :cwl_directory_url:
     <url_that_contains_cwl_file(s)> (e.g. https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem)
+
     The url must be public.
 
 :cwl_main_filename:
     <main_cwl_file> (e.g. 'pairsam-parse-sort.cwl')
+
     This file must be in the cwl url given by ``cwl_directory_url``.
+
     The actual cwl link would be ``cwl_directory_url`` + '\' + ``cwl_main_file_name``
 
 :cwl_child_filenames: <list_of_cwl_files> or ``[]`` (e.g. ['step1.cwl', 'step2.cwl'])
@@ -31,7 +36,9 @@ args
 
 :input_files:
     A dictionary that contains input files. The keys must match the input argument names of the CWL.
+
     It contains `bucket_name`, `object_key` and optionally `profile` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
+
     (e.g.
 
     ::
@@ -52,6 +59,7 @@ args
 
 :secondary_files:
     A dictionary of the same format as `input_file` but contains secondary files. The keys must match the input argument name of the CWL where the secondary file belongs.
+
     (e.g.
 
     ::
@@ -69,10 +77,11 @@ args
 
 :input_parameters:
     A dictionary that contains input parameter values. Default parameters don't need to be included. The keys must match the input argument name of the CWL.
+
     (e.g.
 
-
     ::
+
         {
             'nThreads': 16
         }
@@ -81,10 +90,12 @@ args
 
 :output_S3_bucket:
     <output_bucket_name>
+
     The name of the bucket where output files will be sent to.
 
 :output_target:
     A dictionary that contains a desired object keys to be put inside output bucket. This can be useful if, for example, the pipeline always generates an output file of the same name (e.g. report, output.txt, etc) but the user wants to distinguish them by sample names in the output bucket. If not set, the original output file names will be used as object key.
+
     (e.g.
 
     ::
@@ -97,6 +108,7 @@ args
 
 :secondary_output_target:
     Similar to `output_target` but for secondary files.
+
     (e.g.
 
     ::
@@ -114,22 +126,27 @@ config
 
 :ebs_size:
     <ebs_size_in_gb>
+
     it can be specified by the user or left to be 0 (auto-determine) if Benchmark function is available for a given workflow/pipeline.
 
 :log_bucket:
     <log_bucket_name>
+
     This is where the logs of the Tibanna runs are sent to.
 
 :json_bucket:
     <log_bucket_name>
+
     This is where Tibanna sends an instruction to for an AWSEM EC2 instance.
 
 :instance_type:
     <instance_type>
+
     Instance type (e.g. t2.micro) can be specified by the user or left to be '' (auto-determine) if Benchmark function is available for a given workflow.
 
 :EBS_optimized:
     <ebs_optimized> ``true``, ``false`` or '' (blank)
+
     Whether the specific instance type should be EBS_optimized. It can be True only for an instance type that can be EBS optimized. If instance type is unspecified, leave this as blank.
 
 :shutdown_min: either number of minutes or string 'now'
@@ -137,12 +154,16 @@ config
 
 :password:
     <password_for_ssh> or '' (blank)
+
     One can use either password or key_name (below) as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
+
     The password can be any string and anyone with the password and the ip address of the EC2 instance can ssh into the machine.
 
 :key_name:
     <key_pair_name> or '' (blank)
+
     One can use either password (above) or key_name as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
+
     The key pair should be an existing key pair and anyone with the key pair ``.pem`` file and the ip address of the EC2 instance can ssh into the machine.
 
 :ebs_iops: 500
