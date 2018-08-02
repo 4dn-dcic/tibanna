@@ -3,6 +3,11 @@ Before using Tibanna
 ====================
 
 
+Before using Tibanna, one must have an **AWS account** and some **S3 buckets** for storing input/output data and Tibanna logs.
+An **admin** user with access key and secret key **sets up and deploys Tibanna** for a specific user group and specific buckets.
+A **regular user**, with their own access key and secret key, associated with the user group can upload data to the bucket and **run jobs using Tibanna**.
+
+
 Setting up awscli
 -----------------
 
@@ -40,14 +45,14 @@ Also create file ``~/.aws/config`` with the following content.
 Uploading files to bucket
 -------------------------
 
-If you are an admin or have a permission to create a bucket, use the following command. We recommend creating both the data (input/output) bucket and the tibanna logg bucket. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
+If you are an admin or have a permission to create a bucket, you can either use the Console or use the following command using `awscli`. For example, a data (input/output) bucket and a tibanna log bucket may be created. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
 
 ::
 
     aws s3api create-bucket --bucket <bucketname>
 
 
-example
+**Example**
 
 ::
 
@@ -64,7 +69,7 @@ Upload your files to the data bucket by using the following
     aws s3 cp -R <dirname> s3://<bucketname>/<dirname>
 
 
-example
+**Example**
 
 ::
 
