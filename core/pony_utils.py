@@ -132,6 +132,54 @@ class WorkflowRunMetadata(object):
         return patch_metadata(self.as_dict(), key=key)
 
 
+class ExtraFileMetadata(object):
+    def __init__(self, uuid=None, accession=None, file_format='',
+                 md5sum=None, file_size=None, other_fields=None, **kwargs):
+        if uuid:
+            self.uuid = uuid
+        if accession:
+            self.accession = accession
+        self.file_format = file_format
+        if md5sum:
+            self.md5sum = md5sum
+        if file_size:
+            self.file_size = file_size
+        if other_fields:
+            for field in other_fields:
+                setattr(self, field, other_fields[field])
+
+    def as_dict(self):
+        return self.__dict__
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+    @classmethod
+    def get(cls, uuid, key, ff_env=None, check_queue=False, file_format=None):
+        data = get_metadata(uuid,
+                            key=key,
+                            ff_env=ff_env,
+                            add_on='frame=object',
+                            check_queue=check_queue)
+        if type(data) is not dict:
+            raise Exception("unable to find object with unique key of %s" % uuid)
+        if 'FileProcessed' not in data.get('@type', {}):
+            raise Exception("you can only load ProcessedFiles into this object")
+        if 'extra_files' not in data:
+            return None
+        if len(data['extra_files']) == 1:
+            if not file_format or file_format == data['extra_files'][0]['file_format']:
+                return ExtraFileMetadata(**data['extra_files'][0])
+            else:
+                raise Exception("extra file format not matching")
+        elif not file_format:
+            raise Exception("Two or more extra files - specify file format")
+        for ef in data['extra_files']:
+            if ef['file_format'] == file_format:
+                return ExtraFileMetadata(ef)
+        raise Exception("no matching format for extra file")
+
+
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  extra_files=None, source_experiments=None,
@@ -320,20 +368,28 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
-class AnyWorkflowFile(object):
-
-    def __init__(self, bucket, key, accession=None, is_input=False, output_type=None,
-                 filesize=None, md5=None, file_format=None, is_extra=False):
+class WorkflowQCFile(object):
+    def __init__(self, bucket, key, input_accession=None):
         self.bucket = bucket
         self.key = key
+        self.input_accession = input_accession
         self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
-        self.accession = accession
-        self.output_type = output_type
-        self.is_input = is_input
-        self.filesize = filesize
-        self.md5 = md5
-        self.file_format = file_format
-        self.is_extra = is_extra
+
+    @property
+    def status(self):
+        exists = self.s3.does_key_exist(self.key, self.bucket)
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+
+class WorkflowReportFile(object):
+    def __init__(self, bucket, key, input_accession=None):
+        self.bucket = bucket
+        self.key = key
+        self.input_accession = input_accession
+        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
 
     @property
     def status(self):
@@ -347,10 +403,46 @@ class AnyWorkflowFile(object):
         return self.s3.read_s3(self.key).strip()
 
 
-class AnyWorkflowFileList(object):
+class WorkflowProcessedFile(object):
 
-    def __init__(
+    def __init__(self, bucket, key, accession=None,
+                 filesize=None, md5=None, file_format=None):
+        self.bucket = bucket
+        self.key = key
+        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
+        self.accession = accession
+        self.filesize = filesize
+        self.md5 = md5
+        self.file_format = file_format
 
+    @property
+    def status(self):
+        exists = self.s3.does_key_exist(self.key, self.bucket)
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+
+class WorkflowExtraFile(object):
+
+    def __init__(self, bucket, key, accession=None,
+                 filesize=None, md5=None, file_format=None):
+        self.bucket = bucket
+        self.key = key
+        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
+        self.accession = accession
+        self.filesize = filesize
+        self.md5 = md5
+        self.file_format = file_format
+
+    @property
+    def status(self):
+        exists = self.s3.does_key_exist(self.key, self.bucket)
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
 
 
 class WorkflowFile(object):
@@ -422,6 +514,10 @@ class Awsem(object):
                 wff = {k: WorkflowFile(self.output_s3, v, self, accession,
                                        output_type=out_type)}
             files.update(wff)
+        return files
+
+    def secondary_output_files(self):
+        files = dict()
         # secondary output files - included in 'output_files'
         for k, v in self.args.get('secondary_output_target').iteritems():
             if self.output_info and 'secondaryFiles' in self.output_info[k]:
