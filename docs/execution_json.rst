@@ -42,8 +42,7 @@ config
 
 :key_name:
     <key_pair_name> or '' (blank)
-    One can use either password (above) or key_name as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging
-purpose. Tibanna itself does not use ssh.
+    One can use either password (above) or key_name as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
     The key pair should be an existing key pair and anyone with the key pair ``.pem`` file and the ip address of the EC2 instance can ssh into the machine.
 
 :ebs_iops: 500
