@@ -320,6 +320,39 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
+class AnyWorkflowFile(object):
+
+    def __init__(self, bucket, key, accession=None, is_input=False, output_type=None,
+                 filesize=None, md5=None, file_format=None, is_extra=False):
+        self.bucket = bucket
+        self.key = key
+        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
+        self.accession = accession
+        self.output_type = output_type
+        self.is_input = is_input
+        self.filesize = filesize
+        self.md5 = md5
+        self.file_format = file_format
+        self.is_extra = is_extra
+
+    @property
+    def status(self):
+        exists = self.s3.does_key_exist(self.key, self.bucket)
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+    def read(self):
+        return self.s3.read_s3(self.key).strip()
+
+
+class AnyWorkflowFileList(object):
+
+    def __init__(
+
+
+
 class WorkflowFile(object):
 
     def __init__(self, bucket, key, runner, accession=None, output_type=None,
