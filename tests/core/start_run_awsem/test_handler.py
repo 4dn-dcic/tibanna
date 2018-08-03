@@ -31,7 +31,6 @@ def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_file
         assert mock_request.call_count == 2  # one for wfr, two pfs.
     assert(res)
     assert('pf_meta' in res)
-    assert('source_experiments' in res['pf_meta'][0])
     assert('genome_assembly' in res['pf_meta'][0])
     assert(res['pf_meta'][0]['genome_assembly'] == 'GRCh38')
 
