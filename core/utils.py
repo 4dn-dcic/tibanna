@@ -343,3 +343,20 @@ def check_dependency(exec_arn=None):
                 raise DependencyStillRunningException("Dependency is still running: %s" % arn)
             elif res['status'] == 'FAILED':
                 raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
+
+
+def check_status(exec_arn):
+    '''checking status of an execution'''
+    sts = boto3.client('stepfunctions', region_name=AWS_REGION)
+    return sts.describe_execution(executionArn=exec_arn)['status']
+
+
+def check_output(exec_arn):
+    '''checking status of an execution first and if it's success, get output'''
+    sts = boto3.client('stepfunctions', region_name=AWS_REGION)
+    if check_status(exec_arn) == 'SUCCEEDED':
+        desc = sts.describe_execution(executionArn=exec_arn)
+        if 'output' in desc:
+            return json.loads(desc['output'])
+        else:
+            return None

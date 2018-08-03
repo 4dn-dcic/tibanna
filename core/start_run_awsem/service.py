@@ -91,12 +91,12 @@ def real_handler(event, context):
     else:
         args['cwl_version'] = 'draft3'
 
-    # create the ff_meta output info
-    input_files_for_ffmeta = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
-
     # input file args for awsem
     for input_file in input_file_list:
         process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
+
+    # create the ff_meta output info
+    input_files_for_ffmeta = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
 
     # source experiments
     input_file_uuids = [_['uuid'] for _ in input_file_list]
