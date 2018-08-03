@@ -174,5 +174,4 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     print(md5sum)
     patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
     wfr_uuid = get_wfr_uuid(resp['_tibanna']['exec_arn'])
-    wfr_meta = get_metadata(wfr_uuid, key=ff_key, add_on='?datastore=database')
     patch_metadata({'status': 'deleted'}, wfr_uuid, key=ff_key)
