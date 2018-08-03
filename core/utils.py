@@ -353,7 +353,7 @@ def check_status(exec_arn):
 
 def check_output(exec_arn):
     '''checking status of an execution first and if it's success, get output'''
-    sts = boto3.client('stepfunctions')
+    sts = boto3.client('stepfunctions', region_name=AWS_REGION)
     if check_status(exec_arn) == 'SUCCEEDED':
         desc = sts.describe_execution(executionArn=exec_arn)
         if 'output' in desc:
