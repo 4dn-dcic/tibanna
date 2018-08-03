@@ -679,7 +679,7 @@ def make_input(env, workflow, object_key, uuid):
 
 def get_wfr_uuid(exec_arn):
     '''checking status of an execution first and if it's success, get wfr uuid'''
-    output = check_output(exec_arn):
+    output = check_output(exec_arn)
     if output:
         return output['ff_meta']['uuid']
     else:
