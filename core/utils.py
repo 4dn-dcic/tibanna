@@ -347,7 +347,7 @@ def check_dependency(exec_arn=None):
 
 def check_status(exec_arn):
     '''checking status of an execution'''
-    sts = boto3.client('stepfunctions')
+    sts = boto3.client('stepfunctions', region_name=AWS_REGION)
     return sts.describe_execution(executionArn=exec_arn)['status']
 
 
