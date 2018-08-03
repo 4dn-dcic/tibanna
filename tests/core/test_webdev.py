@@ -91,7 +91,8 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
                          "object_key": accession + '.pairs.gz'
                          }
         ],
-        "output_bucket": bucket
+        "output_bucket": bucket,
+        "wfr_meta": {"notes": "processed file md5 trigger test from test_webdev.py"}
     }
     resp = run_workflow(input_json, workflow=workflow_name)
     print(resp)
@@ -151,7 +152,8 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
                          "format_if_extra": "pairs_px2"
                          }
         ],
-        "output_bucket": bucket
+        "output_bucket": bucket,
+        "wfr_meta": {"notes": "extra file md5 trigger test from test_webdev.py"}
     }
     resp = run_workflow(input_json, workflow=workflow_name)
     print(resp)
