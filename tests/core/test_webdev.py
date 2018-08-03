@@ -107,13 +107,13 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     wfr_uuid = get_wfr_uuid(resp['_tibanna']['exec_arn'])
     wfr_meta = get_metadata(wfr_uuid, key=ff_key, add_on='?datastore=database')
     assert 'input_files' in wfr_meta
-    assert 'input_file' in wfr_meta['input_files']
-    assert 'format_if_extra' in wfr_meta['input_files']['input_file']
+    assert 'format_if_extra' in wfr_meta['input_files'][0]
     assert md5sum
     assert content_md5sum
     print(content_md5sum)
     print(md5sum)
     patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
+    patch_metadata({'status': 'deleted'}, wfr_uuid, key=ff_key)
 
 
 def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
@@ -173,3 +173,6 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     print(content_md5sum)
     print(md5sum)
     patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
+    wfr_uuid = get_wfr_uuid(resp['_tibanna']['exec_arn'])
+    wfr_meta = get_metadata(wfr_uuid, key=ff_key, add_on='?datastore=database')
+    patch_metadata({'status': 'deleted'}, wfr_uuid, key=ff_key)
