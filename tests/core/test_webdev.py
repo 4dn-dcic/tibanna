@@ -7,6 +7,7 @@ from dcicutils.ff_utils import (
     patch_metadata
 )
 from core.utils import run_workflow
+from core.pony_utils import get_wfr_uuid
 import gzip
 import boto3
 import time
@@ -160,7 +161,8 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
     content_md5sum = filemeta.get('extra_files')[0].get('content_md5sum')
     md5sum = filemeta.get('extra_files')[0].get('md5sum')
-    wfr_meta = get_metadata(wf_uuid, key=ff_key, add_on='?datastore=database')
+    wfr_uuid = get_wfr_uuid(resp['_tibanna']['exec_arn'])
+    wfr_meta = get_metadata(wfr_uuid, key=ff_key, add_on='?datastore=database')
     assert 'input_files' in wfr_meta
     assert 'input_file' in wfr_meta['input_files']
     assert 'format_if_extra' in wfr_meta['input_files']['input_file']

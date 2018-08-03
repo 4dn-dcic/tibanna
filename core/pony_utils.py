@@ -13,6 +13,7 @@ from dcicutils.ff_utils import (
 )
 from dcicutils.s3_utils import s3Utils
 from core.utils import run_workflow as _run_workflow
+from core.utils import check_output
 from core.utils import _tibanna_settings
 from time import sleep
 import logging
@@ -674,3 +675,12 @@ def make_input(env, workflow, object_key, uuid):
                                    'env': env,
                                    }))
     return data
+
+
+def get_wfr_uuid(exec_arn):
+    '''checking status of an execution first and if it's success, get wfr uuid'''
+    output = check_output(exec_arn):
+    if output:
+        return output['ff_meta']['uuid']
+    else:
+        return None
