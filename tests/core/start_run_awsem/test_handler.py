@@ -15,7 +15,9 @@ import mock
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler(run_awsem_event_data):
-    res = handler(run_awsem_event_data, '')
+    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+        res = handler(run_awsem_event_data, '')
+        assert mock_request.call_count == 1  # one for wfr, no pf
     assert(res)
     assert 'ff_meta' in res
     assert 'notes' in res['ff_meta']
