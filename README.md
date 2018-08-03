@@ -8,4 +8,4 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
 
 ***
 
-For more details, see [Documentation](http://tibanna.readthedocs.io/en/latest)
+### For more details, see [**Documentation**](http://tibanna.readthedocs.io/en/latest)
