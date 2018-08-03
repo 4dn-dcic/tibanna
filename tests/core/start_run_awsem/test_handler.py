@@ -132,16 +132,6 @@ def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_file
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler_secondary_files(run_awsem_event_data_secondary_files):
-    try:
-        handler(run_awsem_event_data_secondary_files, '')
-    except Exception as e:
-        print(e)
-        pytest.skip("seems data is not in place")
-
-
-@valid_env
-@pytest.mark.webtest
 def test_handle_processed_files(run_awsem_event_data_secondary_files):
     data = run_awsem_event_data_secondary_files
     tibanna_settings = data.get('_tibanna', {})
