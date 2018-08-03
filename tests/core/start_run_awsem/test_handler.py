@@ -144,7 +144,9 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     workflow_uuid = data['workflow_uuid']
     workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
 
-    output_files, pf_meta = handle_processed_files(workflow_info, tibanna)
+    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+        output_files, pf_meta = handle_processed_files(workflow_info, tibanna)
+        assert mock_request.call_count == 3
     assert(output_files)
     assert len(output_files) == 3
     for of in output_files:
