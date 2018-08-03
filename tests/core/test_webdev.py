@@ -98,14 +98,15 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
     # check result
     time.sleep(6*60)  # wait for 6 minutes
     filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
+    assert 'md5sum' in filemeta
+    assert 'content_md5sum' in filemeta
     content_md5sum = filemeta.get('content_md5sum')
     md5sum = filemeta.get('md5sum')
-    if content_md5sum and md5sum:
-        print(content_md5sum)
-        print(md5sum)
-        patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
-    else:
-        raise Exception('md5 step function run failed')
+    assert md5sum
+    assert content_md5sum
+    print(content_md5sum)
+    print(md5sum)
+    patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
 
 
 def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony', env='webdev'):
@@ -118,6 +119,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     newfile = post_random_file(bucket, ff_key)
     uuid = newfile['uuid']
     accession = newfile['accession']
+    wf_uuid = "c77a117b-9a58-477e-aaa5-291a109a99f6"
     input_json = {
         "config": {
           "ebs_type": "io1",
@@ -139,7 +141,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
         },
         "parameters": {},
         "app_name": "md5",
-        "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
+        "workflow_uuid": wf_uuid,
         "input_files": [
                         {"workflow_argument_name": "input_file",
                          "bucket_name": bucket,
@@ -158,9 +160,12 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
     content_md5sum = filemeta.get('extra_files')[0].get('content_md5sum')
     md5sum = filemeta.get('extra_files')[0].get('md5sum')
-    if content_md5sum and md5sum:
-        print(content_md5sum)
-        print(md5sum)
-        patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
-    else:
-        raise Exception('md5 step function run failed')
+    wfr_meta = get_metadata(wf_uuid, key=ff_key, add_on='?datastore=database')
+    assert 'input_files' in wfr_meta
+    assert 'input_file' in wfr_meta['input_files']
+    assert 'format_if_extra' in wfr_meta['input_files']['input_file']
+    assert md5sum
+    assert content_md5sum
+    print(content_md5sum)
+    print(md5sum)
+    patch_metadata({'status': 'deleted'}, uuid, key=ff_key)

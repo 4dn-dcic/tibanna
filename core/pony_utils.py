@@ -246,10 +246,13 @@ def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
 
 
 class InputFileForWFRMeta(object):
-    def __init__(self, workflow_argument_name=None, value=None, ordinal=None):
+    def __init__(self, workflow_argument_name=None, value=None, ordinal=None, format_if_extra=None):
         self.workflow_argument_name = workflow_argument_name
         self.value = value
         self.ordinal = ordinal
+
+        if format_if_extra:
+            self.format_if_extra = format_if_extra
 
     def as_dict(self):
         return self.__dict__
