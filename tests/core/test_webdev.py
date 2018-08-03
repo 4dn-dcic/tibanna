@@ -80,7 +80,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
         },
         "_tibanna": {
           "env": "fourfront-webdev",
-          "run_type": "md5"
+          "run_type": "md5_test_extra"
         },
         "parameters": {},
         "app_name": "md5",
@@ -143,7 +143,7 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
         },
         "_tibanna": {
           "env": "fourfront-webdev",
-          "run_type": "md5"
+          "run_type": "md5_test"
         },
         "parameters": {},
         "app_name": "md5",
