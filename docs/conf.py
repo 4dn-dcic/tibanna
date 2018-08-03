@@ -47,8 +47,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'tibanna'
-copyright = '2017-2018, Mirny Lab'
-author = 'Mirny Lab'
+copyright = '2017-2018, 4DN DCIC'
+author = '4DN DCIC'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -244,7 +244,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'tibanna.tex', 'tibanna Documentation',
-     'Mirny Lab', 'manual'),
+     '4DN DCIC', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
