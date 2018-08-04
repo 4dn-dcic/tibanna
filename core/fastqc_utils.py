@@ -6,14 +6,17 @@ import uuid
 
 
 def number(astring):
+    """Convert a string into a float or integer
+
+    Returns original string if it can't convert it.
+    """
     try:
         num = float(astring)
         if num % 1 == 0:
             num = int(num)
         return num
-    except:
+    except ValueError:
         return astring
-
 
 def parse_qc_table(data_list, qc_schema, url=None):
     """ Return a quality_metric metadata dictionary
@@ -22,18 +25,20 @@ def parse_qc_table(data_list, qc_schema, url=None):
     quality_metric property as a dictionary
     """
     qc_json = {}
+    def parse_item(name, value):
+        """Add item to qc_json if it's in the schema"""
+        qc_type = qc_schema.get(name, {}).get('type', None)
+        if qc_type == 'string':
+            qc_json.update({name: str(value)})
+        elif qc_type == 'number':
+            qc_json.update({name: number(value.replace(',', ''))})
+
     for data in data_list:
         for line in data.split('\n'):
-            a = line.strip().split('\t')
+            items = line.strip().split('\t')
             try:
-                if a[0] in qc_schema and qc_schema.get(a[0]).get('type') == 'string':
-                    qc_json.update({a[0]: str(a[1])})
-                elif a[0] in qc_schema and qc_schema.get(a[0]).get('type') == 'number':
-                    qc_json.update({a[0]: number(a[1].replace(',', ''))})
-                if a[1] in qc_schema and qc_schema.get(a[1]).get('type') == 'string':
-                    qc_json.update({a[1]: str(a[0])})
-                elif a[1] in qc_schema and qc_schema.get(a[1]).get('type') == 'number':
-                    qc_json.update({a[1]: number(a[0].replace(',', ''))})
+                parse_item(items[0], items[1])
+                parse_item(items[1], items[0])
             except IndexError:  # pragma: no cover
                 # maybe a blank line or something
                 pass
@@ -50,10 +55,9 @@ def parse_qc_table(data_list, qc_schema, url=None):
     if url:
         qc_json.update({"url": url})
 
-    return(qc_json)
-
+    return qc_json
 
 def determine_overall_status(qc_json):
     """Currently PASS no matter what """
     qc_json.update({'overall_quality_status': 'PASS'})
-    return(qc_json)
+    return qc_json
