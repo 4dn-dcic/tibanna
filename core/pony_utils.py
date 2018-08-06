@@ -326,6 +326,10 @@ def is_prod():
 
 
 class AwsemFile(object):
+    '''Class for input, output, extra files that are embedded in the Awsem class.
+    Its use for input files is mostly on getting input file accession
+    to attach qc/report type output
+    '''
 
     def __init__(self, bucket, key, runner, argument_type=None,
                  filesize=None, md5=None, format_if_extra=None, is_extra=False):
@@ -368,7 +372,7 @@ class AwsemFile(object):
 # TODO: refactor this to inherit from an abstrat class called Runner
 # then implement for SBG as well
 class Awsem(object):
-
+    '''class that collects Awsem output and metadata information'''
     def __init__(self, json):
         self.args = json['args']
         self.config = json['config']
