@@ -1,42 +1,39 @@
 {
-  "_tibanna": {
-    "env": "fourfront-webdev",
-    "run_type": "md5",
-    "run_name": "md5_fail"
-  },
   "args": {
+    "secondary_output_target": {},
     "app_name": "md5",
     "input_parameters": {},
     "cwl_child_filenames": [],
-    "cwl_version": "draft-3",
     "output_target": {
-      "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
+      "report": "some_random_output_file_name"
     },
-    "secondary_output_target": {},
     "cwl_main_filename": "md5.cwl",
+    "cwl_version": "draft3",
     "secondary_files": {},
-    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutputt",
+    "output_S3_bucket": "random_nonexisting_outputbucket",
     "app_version": "0.0.4",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
     "input_files": {
       "input_file": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
+        "bucket_name": "random_nonexisting_bucket",
+        "object_key": "random_nonexisting_file"
       }
     }
   },
+  "app_name": "md5",
   "config": {
     "ebs_size": 0,
     "ebs_type": "io1",
-    "json_bucket": "4dn-aws-pipeline-run-json",
+    "key_name": "",
     "EBS_optimized": "",
     "ebs_iops": 500,
-    "shutdown_min": 120,
+    "shutdown_min": 30,
     "instance_type": "",
     "copy_to_s3": true,
+    "json_bucket": "some_random_json_bucket",
     "launch_instance": true,
-    "password": "",
-    "log_bucket": "tibanna-output",
-    "key_name": "4dn-encode"
-  }
+    "password": "thisisnotmypassword",
+    "log_bucket": "tibanna-output"
+  },
+  "push_error_to_end": true
 }
