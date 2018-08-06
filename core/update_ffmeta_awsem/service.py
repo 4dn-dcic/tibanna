@@ -125,7 +125,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     LOG.info("accession is %s" % accession)
     try:
         files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
-                                          acl='public-read')
+                                            acl='public-read')
     except Exception as e:
         LOG.info(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
