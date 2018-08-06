@@ -136,3 +136,27 @@ To kill all currently running jobs (killing only step functions not the EC2 inst
     invoke kill_all [--workflow=<stepfunctionname>]
 
 
+test
+----
+
+Running tests on the current repo
+
+::
+
+    invoke test [--no-flake] [--ignore-pony] [--ignore-webdev]
+    
+    # --no-flake : skip flake8 test
+
+For Unicorn-only tests,
+
+::
+
+    invoke test --ignore-pony
+
+For full test including Pony and Webdev tests (4DN-dcic-only)
+
+::
+
+    invoke test [--no-flake]
+
+
