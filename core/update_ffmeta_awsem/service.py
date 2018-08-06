@@ -17,8 +17,8 @@ def donothing(status, sbg, ff_meta, ff_key=None):
     return None
 
 
-def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
-    payload = {"filepath": export_bucket + "/" + export_key,
+def register_to_higlass(tibanna, wff_bucket, wff_key, filetype, datatype):
+    payload = {"filepath": wff_bucket + "/" + wff_key,
                "filetype": filetype, "datatype": datatype}
     higlass_keys = tibanna.s3.get_higlass_key()
     if not isinstance(higlass_keys, dict):
@@ -32,28 +32,48 @@ def register_to_higlass(tibanna, export_bucket, export_key, filetype, datatype):
     return res.json()['uuid']
 
 
-def update_processed_file_metadata(status, pf, tibanna, export):
-    ff_key = tibanna.ff_keys
+def add_higlass_to_pf(status, pf, tibanna, wff, ff_key):
     # register mcool/bigwig with fourfront-higlass
-    if pf.file_format == "mcool" and export.bucket in ff_utils.HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'cooler', 'matrix')
-    if pf.file_format == "bw" and export.bucket in ff_utils.HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, export.bucket, export.key, 'bigwig', 'vector')
+    if pf.file_format == "mcool" and wff.bucket in ff_utils.HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, wff.bucket, wff.key, 'cooler', 'matrix')
+    if pf.file_format == "bw" and wff.bucket in ff_utils.HIGLASS_BUCKETS:
+        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, wff.bucket, wff.key, 'bigwig', 'vector')
     # bedgraph: register extra bigwig file to higlass (if such extra file exists)
-    if pf.file_format == 'bg' and export.bucket in ff_utils.HIGLASS_BUCKETS:
+    if pf.file_format == 'bg' and wff.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == 'bw':
                 fe_map = pony_utils.get_format_extension_map(ff_key)
-                extra_file_key = pony_utils.get_extra_file_key('bg', export.key, 'bw', fe_map)
+                extra_file_key = pony_utils.get_extra_file_key('bg', wff.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(
-                    tibanna, export.bucket, extra_file_key, 'bigwig', 'vector'
+                    tibanna, wff.bucket, extra_file_key, 'bigwig', 'vector'
                 )
-    try:
+
+
+def add_md5_filesize_to_pf(pf, wff):
+    if not wff.is_extra:
         pf.status = 'uploaded'
-        if export.md5:
-            pf.md5sum = export.md5
-        if export.filesize:
-            pf.file_size = export.filesize
+        if wff.md5:
+            pf.md5sum = wff.md5
+        if wff.filesize:
+            pf.file_size = wff.filesize
+
+
+def add_md5_filesize_to_pf_extra(pf, wff):
+    if wff.is_extra:
+        for pfextra in pf.extra_files:
+            if pfextra.get('file_format') == wff.format_if_extra:
+                if wff.md5:
+                    pfextra.md5sum = wff.md5
+                if wff.filesize:
+                    pfextra.file_size = wff.filesize
+
+
+def update_processed_file_metadata(status, pf, tibanna, wff):
+    ff_key = tibanna.ff_keys
+    add_higlass_to_pf(status, pf, tibanna, wff, ff_key)
+    try:
+        add_md5_filesize_to_pf(pf, wff)
+        add_md5_filesize_to_pf_extra(pf, wff)
     except Exception as e:
         raise Exception("Unable to update processed file metadata json : %s" % e)
     try:
@@ -271,7 +291,7 @@ def real_handler(event, context):
     patch_meta = False
     awsem = pony_utils.Awsem(event)
 
-    # go through this and replace export_report with awsf format
+    # go through this and replace wff_report with awsf format
     # actually interface should be look through ff_meta files and call
     # give me the status of this thing from the runner, and runner.output_files.length
     # so we just build a runner with interface to sbg and awsem
@@ -287,6 +307,7 @@ def real_handler(event, context):
         raise Exception(event.get('error'))
 
     awsem_output = awsem.output_files()
+    awsem_output_extra = awsem.secondary_output_files()
     ff_output = len(ff_meta.output_files)
     if len(awsem_output) != ff_output:
         ff_meta.run_status = 'error'
@@ -295,25 +316,39 @@ def real_handler(event, context):
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
-    for _, export in awsem_output.iteritems():
-        if export.is_extra:
-            continue
-        upload_key = export.key
-        status = export.status
-        print("export res is %s", status)
+    for _, wff in awsem_output.iteritems():
+        upload_key = wff.key
+        status = wff.status
+        print("wff res is %s", status)
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[export.output_type]('uploaded', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[wff.argument_type]('uploaded', wff, ff_meta, tibanna)
             if pf_meta:
                 for pf in pf_meta:
-                    if pf.accession == export.accession:
-                        pf = update_processed_file_metadata('uploaded', pf, tibanna, export)
+                    if pf.accession == wff.accession:
+                        pf = update_processed_file_metadata('uploaded', pf, tibanna, wff)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[export.output_type]('upload failed', export, ff_meta, tibanna)
+            patch_meta = OUTFILE_UPDATERS[wff.argument_type]('upload failed', wff, ff_meta, tibanna)
             ff_meta.run_status = 'error'
             ff_meta.patch(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
 
-    # if we got all the exports let's go ahead and update our ff_metadata object
+    for _, wff in awsem_output_extra.iteritems():
+        upload_key = wff.key
+        status = wff.status
+        print("wff res is %s", status)
+        if status == 'COMPLETED':
+            patch_meta = OUTFILE_UPDATERS[wff.argument_type]('uploaded', wff, ff_meta, tibanna)
+            if pf_meta:
+                for pf in pf_meta:
+                    if pf.accession == wff.accession:
+                        pf = update_processed_file_metadata('uploaded', pf, tibanna, wff)
+        elif status in ['FAILED']:
+            patch_meta = OUTFILE_UPDATERS[wff.argument_type]('upload failed', wff, ff_meta, tibanna)
+            ff_meta.run_status = 'error'
+            ff_meta.patch(key=tibanna.ff_keys)
+            raise Exception("Failed to export file %s" % (upload_key))
+
+    # if we got all the wffs let's go ahead and update our ff_metadata object
     ff_meta.run_status = "complete"
 
     # allow for a simple way for updater to add appropriate meta_data
@@ -323,7 +358,7 @@ def real_handler(event, context):
     # add postrunjson log file to ff_meta as a url
     ff_meta.awsem_postrun_json = get_postrunjson_url(event)
 
-    # make all the file export meta-data stuff here
+    # make all the file wff meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
     try:
         ff_meta.patch(key=tibanna.ff_keys)
