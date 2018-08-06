@@ -18,6 +18,7 @@ def number(astring):
     except ValueError:
         return astring
 
+
 def parse_qc_table(data_list, qc_schema, url=None):
     """ Return a quality_metric metadata dictionary
     given a list of qc table file dumps (data_list),
@@ -25,6 +26,7 @@ def parse_qc_table(data_list, qc_schema, url=None):
     quality_metric property as a dictionary
     """
     qc_json = {}
+
     def parse_item(name, value):
         """Add item to qc_json if it's in the schema"""
         qc_type = qc_schema.get(name, {}).get('type', None)
@@ -56,6 +58,7 @@ def parse_qc_table(data_list, qc_schema, url=None):
         qc_json.update({"url": url})
 
     return qc_json
+
 
 def determine_overall_status(qc_json):
     """Currently PASS no matter what """
