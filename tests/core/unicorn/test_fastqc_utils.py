@@ -3,8 +3,8 @@ import pytest
 import os
 
 DIR = os.path.dirname(__file__)
-FASTQC_DIR = os.path.join(DIR, '..', 'files', 'fastqc_report')
-PAIRSQC_DIR = os.path.join(DIR, '..', 'files', 'pairsqc_report')
+FASTQC_DIR = os.path.join(DIR, '..', '..', 'files', 'fastqc_report')
+PAIRSQC_DIR = os.path.join(DIR, '..', '..', 'files', 'pairsqc_report')
 
 
 @pytest.fixture

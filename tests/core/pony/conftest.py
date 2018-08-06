@@ -66,21 +66,6 @@ def run_awsem_event_data(ff_keys):
 
 
 @pytest.fixture(scope='session')
-def run_task_awsem_event_data(ff_keys):
-    return get_event_file_for('run_task_awsem', ff_keys=ff_keys)
-
-
-@pytest.fixture(scope='session')
-def run_task_awsem_event_md5(ff_keys):
-    return get_event_file_for('run_task_awsem', ff_keys=ff_keys, event_file='event_fail.json')
-
-
-@pytest.fixture(scope='session')
-def run_task_awsem_event_data2(ff_keys):
-    return get_event_file_for('run_task_awsem', ff_keys=ff_keys, event_file='event_repliseq.json')
-
-
-@pytest.fixture(scope='session')
 def run_task_awsem_pseudo_workflow_event_data(ff_keys):
     return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
@@ -144,13 +129,13 @@ def update_ffmeta_metaonly_data2(ff_keys):
 
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    event_file_name = os.path.join(dir_path, '..', '..', 'test_json', file_name)
+    event_file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', file_name)
     return read_event_file(event_file_name, None, ff_keys)
 
 
 def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None, event_file='event.json'):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    event_file_name = os.path.join(dir_path, '..', '..', 'core', lambda_name, event_file)
+    event_file_name = os.path.join(dir_path, '..', '..', '..', 'core', lambda_name, event_file)
     return read_event_file(event_file_name, sbg_keys, ff_keys)
 
 

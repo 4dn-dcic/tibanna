@@ -200,7 +200,8 @@ def get_url(ctx, prj_name='lambda_sbg'):
 
 
 @task
-def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
+def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
+         ignore='', ignore_pony=False, ignore_webdev=False):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
@@ -220,6 +221,15 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra=''):
         args.append('html')
     if last_failing:
         args.append('--lf')
+    if ignore:
+        args.append('--ignore')
+        args.append(ignore)
+    if ignore_pony:
+        args.append('--ignore')
+        args.append('tests/core/pony')
+    if ignore_webdev:
+        args.append('--ignore')
+        args.append('tests/core/pony/test_webdev.py')
     retcode = pytest.main(args)
     try:
         good = True if retcode == 0 else False

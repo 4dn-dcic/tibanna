@@ -10,7 +10,7 @@ from core.pony_utils import (
 )
 import pytest
 from conftest import valid_env
-from test_utils import awsem_error_fun
+from ..unicorn.test_utils import awsem_error_fun
 import logging
 import mock
 
