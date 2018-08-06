@@ -133,54 +133,6 @@ class WorkflowRunMetadata(object):
         return patch_metadata(self.as_dict(), key=key)
 
 
-class ExtraFileMetadata(object):
-    def __init__(self, uuid=None, accession=None, file_format='',
-                 md5sum=None, file_size=None, other_fields=None, **kwargs):
-        if uuid:
-            self.uuid = uuid
-        if accession:
-            self.accession = accession
-        self.file_format = file_format
-        if md5sum:
-            self.md5sum = md5sum
-        if file_size:
-            self.file_size = file_size
-        if other_fields:
-            for field in other_fields:
-                setattr(self, field, other_fields[field])
-
-    def as_dict(self):
-        return self.__dict__
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-    @classmethod
-    def get(cls, uuid, key, ff_env=None, check_queue=False, file_format=None):
-        data = get_metadata(uuid,
-                            key=key,
-                            ff_env=ff_env,
-                            add_on='frame=object',
-                            check_queue=check_queue)
-        if type(data) is not dict:
-            raise Exception("unable to find object with unique key of %s" % uuid)
-        if 'FileProcessed' not in data.get('@type', {}):
-            raise Exception("you can only load ProcessedFiles into this object")
-        if 'extra_files' not in data:
-            return None
-        if len(data['extra_files']) == 1:
-            if not file_format or file_format == data['extra_files'][0]['file_format']:
-                return ExtraFileMetadata(**data['extra_files'][0])
-            else:
-                raise Exception("extra file format not matching")
-        elif not file_format:
-            raise Exception("Two or more extra files - specify file format")
-        for ef in data['extra_files']:
-            if ef['file_format'] == file_format:
-                return ExtraFileMetadata(ef)
-        raise Exception("no matching format for extra file")
-
-
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  extra_files=None, source_experiments=None,
