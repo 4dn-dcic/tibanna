@@ -3,9 +3,10 @@ from core.update_ffmeta_awsem.service import (
     get_postrunjson_url,
     register_to_higlass,
     md5_updater,
-    _md5_updater
+    _md5_updater,
+    add_md5_filesize_to_pf_extra
 )
-from core.pony_utils import Awsem
+from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
 from core import pony_utils
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
@@ -143,6 +144,18 @@ def test__md5_updater_extra_file():
     assert 'md5sum' not in new_file
     assert 'content_md5sum' not in new_file
     assert 'status' not in new_file
+
+
+def test_add_md5_filesize_to_pf_extra():
+    wff = AwsemFile(bucket='somebucket', key='somekey.pairs.gz.px2', runner=None,
+                    md5='somemd5', filesize=1234,
+                    argument_type='Output processed file', format_if_extra='pairs_px2')
+    pf = ProcessedFileMetadata(extra_files=[{'file_format': 'lalala'}, {'file_format': 'pairs_px2'}])
+    add_md5_filesize_to_pf_extra(pf, wff)
+    assert 'md5sum' in pf.extra_files[1]
+    assert 'file_size' in pf.extra_files[1]
+    assert pf.extra_files[1]['md5sum'] == 'somemd5'
+    assert pf.extra_files[1]['file_size'] == 1234
 
 
 @valid_env

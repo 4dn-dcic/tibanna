@@ -450,7 +450,7 @@ class WorkflowExtraFile(object):
             return "FAILED"
 
 
-class WorkflowFile(object):
+class AwsemFile(object):
 
     def __init__(self, bucket, key, runner, argument_type=None,
                  filesize=None, md5=None, format_if_extra=None, is_extra=False):
@@ -516,12 +516,12 @@ class Awsem(object):
             if self.output_info:
                 md5 = self.output_info[argname].get('md5sum', '')
                 filesize = self.output_info[argname].get('size', 0)
-                wff = {argname: WorkflowFile(self.output_s3, key, self,
-                                             argument_type=self.output_type(argname),
-                                             filesize=filesize, md5=md5)}
+                wff = {argname: AwsemFile(self.output_s3, key, self,
+                                          argument_type=self.output_type(argname),
+                                          filesize=filesize, md5=md5)}
             else:
-                wff = {argname: WorkflowFile(self.output_s3, key, self,
-                                             argument_type=self.output_type(argname))}
+                wff = {argname: AwsemFile(self.output_s3, key, self,
+                                          argument_type=self.output_type(argname))}
             files.update(wff)
         return files
 
@@ -535,25 +535,25 @@ class Awsem(object):
                     for sf in self.output_info[argname]['secondaryFiles']:
                         md5 = sf.get('md5sum', '')
                         filesize = sf.get('size', '')
-                        wff = {argname: WorkflowFile(self.output_s3, key, self,
-                                                     argument_type=self.output_type(argname),
-                                                     filesize=filesize, md5=md5,
-                                                     format_if_extra=sf.get('file_format', ''))
+                        wff = {argname: AwsemFile(self.output_s3, key, self,
+                                                  argument_type=self.output_type(argname),
+                                                  filesize=filesize, md5=md5,
+                                                  format_if_extra=sf.get('file_format', ''))
                                }
                         files.update(wff)
                 else:
-                    wff = {argname: WorkflowFile(self.output_s3, key, self, is_extra=True)}
+                    wff = {argname: AwsemFile(self.output_s3, key, self, is_extra=True)}
                     files.update(wff)
         return files
 
     def input_files(self):
         files = dict()
         for arg_name, item in self.args.get('input_files').iteritems():
-            wff = {arg_name: WorkflowFile(item.get('bucket_name'),
-                                          item.get('object_key'),
-                                          self,
-                                          argument_type="Input file",
-                                          format_if_extra=item.get('format_if_extra', ''))}
+            wff = {arg_name: AwsemFile(item.get('bucket_name'),
+                                       item.get('object_key'),
+                                       self,
+                                       argument_type="Input file",
+                                       format_if_extra=item.get('format_if_extra', ''))}
             files.update(wff)
         return files
 

@@ -63,9 +63,9 @@ def add_md5_filesize_to_pf_extra(pf, wff):
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == wff.format_if_extra:
                 if wff.md5:
-                    pfextra.md5sum = wff.md5
+                    pfextra['md5sum'] = wff.md5
                 if wff.filesize:
-                    pfextra.file_size = wff.filesize
+                    pfextra['file_size'] = wff.filesize
 
 
 def update_processed_file_metadata(status, pf, tibanna, wff):
