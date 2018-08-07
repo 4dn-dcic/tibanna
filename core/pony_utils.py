@@ -165,8 +165,12 @@ class ProcessedFileMetadata(object):
     def post(self, key):
         return post_metadata(self.as_dict(), "file_processed", key=key, add_on='force_md5')
 
-    def patch(self, key):
-        return patch_metadata(self.as_dict(), key=key, add_on='force_md5')
+    def patch(self, key, fields=None):
+        if fields:
+            patch_json = {k: v for k, v in self.as_dict().items() if k in fields}
+        else:
+            patch_json = self.as_dict()
+        return patch_metadata(patch_json, key=key, add_on='force_md5')
 
     @classmethod
     def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):

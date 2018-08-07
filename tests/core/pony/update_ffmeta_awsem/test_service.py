@@ -4,7 +4,7 @@ from core.update_ffmeta_awsem.service import (
     register_to_higlass,
     md5_updater,
     _md5_updater,
-    add_md5_filesize_to_pf_extra
+    add_md5_filesize_to_pf_extra,
 )
 from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
 from core import pony_utils
@@ -196,6 +196,18 @@ def test_update_ffmeta_awsem_e2e(update_ffmeta_event_data, tibanna_env):
     assert 'awsem_postrun_json' in ret['ff_meta']
     assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/8fRIlIfwRNDT.postrun.json'
     # test that file is uploaded?
+
+
+@valid_env
+@pytest.mark.webtest
+def test_update_ffmeta_awsem_extra_md5(update_ffmeta_hicbam, tibanna_env):
+    update_ffmeta_hicbam.update(tibanna_env)
+    ret = handler(update_ffmeta_hicbam, None)
+    assert json.dumps(ret)
+    assert 'awsem_postrun_json' in ret['ff_meta']
+    assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/8fRIlIfwRNDT.postrun.json'
+    assert 'md5sum' in ret['pf_meta'][1]['extra_files'][0]
+    assert 'file_size' in ret['pf_meta'][1]['extra_files'][0]
 
 
 @valid_env

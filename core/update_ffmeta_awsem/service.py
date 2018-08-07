@@ -32,7 +32,8 @@ def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, data
     return res.json()['uuid']
 
 
-def add_higlass_to_pf(status, pf, tibanna, awsemfile, ff_key):
+def add_higlass_to_pf(pf, tibanna, awsemfile):
+    ff_key = tibanna.ff_keys
     # register mcool/bigwig with fourfront-higlass
     if pf.file_format == "mcool" and awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
         pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, awsemfile.bucket, awsemfile.key, 'cooler', 'matrix')
@@ -66,21 +67,6 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
                     pfextra['md5sum'] = awsemfile.md5
                 if awsemfile.filesize:
                     pfextra['file_size'] = awsemfile.filesize
-
-
-def update_processed_file_metadata(status, pf, tibanna, awsemfile):
-    ff_key = tibanna.ff_keys
-    add_higlass_to_pf(status, pf, tibanna, awsemfile, ff_key)
-    try:
-        add_md5_filesize_to_pf(pf, awsemfile)
-        add_md5_filesize_to_pf_extra(pf, awsemfile)
-    except Exception as e:
-        raise Exception("Unable to update processed file metadata json : %s" % e)
-    try:
-        pf.patch(key=ff_key)
-    except Exception as e:
-        raise Exception("Unable to post processed file metadata : %s" % e)
-    return pf
 
 
 def qc_updater(status, awsemfile, ff_meta, tibanna):
@@ -325,7 +311,14 @@ def real_handler(event, context):
             if pf_meta:
                 for pf in pf_meta:
                     if pf.accession == awsemfile.accession:
-                        pf = update_processed_file_metadata('uploaded', pf, tibanna, awsemfile)
+                        try:
+                            add_higlass_to_pf(pf, tibanna, awsemfile)
+                        except Exception as e:
+                            raise Exception("failed to regiter to higlass %s" % e)
+                        try:
+                            add_md5_filesize_to_pf(pf, awsemfile)
+                        except Exception as e:
+                            raise Exception("failed to regiter to higlass %s" % e)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
             ff_meta.run_status = 'error'
@@ -337,13 +330,14 @@ def real_handler(event, context):
         status = awsemfile.status
         print("awsemfile res is %s", status)
         if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
             if pf_meta:
                 for pf in pf_meta:
                     if pf.accession == awsemfile.accession:
-                        pf = update_processed_file_metadata('uploaded', pf, tibanna, awsemfile)
+                        try:
+                            add_md5_filesize_to_pf_extra(pf, awsemfile)
+                        except Exception as e:
+                            raise Exception("failed to regiter to higlass %s" % e)
         elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
             ff_meta.run_status = 'error'
             ff_meta.patch(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
@@ -364,6 +358,14 @@ def real_handler(event, context):
         ff_meta.patch(key=tibanna.ff_keys)
     except Exception as e:
         raise Exception("Failed to update run_status %s" % str(e))
+    # patch processed files - update only status, extra_files, md5sum and file_size
+    if pf_meta:
+        patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
+        try:
+            for pf in pf_meta:
+                pf.patch(key=tibanna.ff_keys, fields=patch_fields)
+        except Exception as e:
+            raise Exception("Failed to update processed metadata %s" % str(e))
 
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = [_.as_dict() for _ in pf_meta]
