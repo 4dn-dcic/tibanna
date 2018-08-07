@@ -133,54 +133,6 @@ class WorkflowRunMetadata(object):
         return patch_metadata(self.as_dict(), key=key)
 
 
-class ExtraFileMetadata(object):
-    def __init__(self, uuid=None, accession=None, file_format='',
-                 md5sum=None, file_size=None, other_fields=None, **kwargs):
-        if uuid:
-            self.uuid = uuid
-        if accession:
-            self.accession = accession
-        self.file_format = file_format
-        if md5sum:
-            self.md5sum = md5sum
-        if file_size:
-            self.file_size = file_size
-        if other_fields:
-            for field in other_fields:
-                setattr(self, field, other_fields[field])
-
-    def as_dict(self):
-        return self.__dict__
-
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
-
-    @classmethod
-    def get(cls, uuid, key, ff_env=None, check_queue=False, file_format=None):
-        data = get_metadata(uuid,
-                            key=key,
-                            ff_env=ff_env,
-                            add_on='frame=object',
-                            check_queue=check_queue)
-        if type(data) is not dict:
-            raise Exception("unable to find object with unique key of %s" % uuid)
-        if 'FileProcessed' not in data.get('@type', {}):
-            raise Exception("you can only load ProcessedFiles into this object")
-        if 'extra_files' not in data:
-            return None
-        if len(data['extra_files']) == 1:
-            if not file_format or file_format == data['extra_files'][0]['file_format']:
-                return ExtraFileMetadata(**data['extra_files'][0])
-            else:
-                raise Exception("extra file format not matching")
-        elif not file_format:
-            raise Exception("Two or more extra files - specify file format")
-        for ef in data['extra_files']:
-            if ef['file_format'] == file_format:
-                return ExtraFileMetadata(ef)
-        raise Exception("no matching format for extra file")
-
-
 class ProcessedFileMetadata(object):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  extra_files=None, source_experiments=None,
@@ -213,8 +165,13 @@ class ProcessedFileMetadata(object):
     def post(self, key):
         return post_metadata(self.as_dict(), "file_processed", key=key, add_on='force_md5')
 
-    def patch(self, key):
-        return patch_metadata(self.as_dict(), key=key, add_on='force_md5')
+    def patch(self, key, fields=None):
+        if fields:
+            patch_json = {k: v for k, v in self.as_dict().items() if k in fields}
+        else:
+            patch_json = self.as_dict()
+        print(patch_json)
+        return patch_metadata(patch_json, key=key, add_on='force_md5')
 
     @classmethod
     def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
@@ -373,93 +330,19 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
-class WorkflowQCFile(object):
-    def __init__(self, bucket, key, input_accession=None):
-        self.bucket = bucket
-        self.key = key
-        self.input_accession = input_accession
-        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
+class AwsemFile(object):
+    '''Class for input, output, extra files that are embedded in the Awsem class.
+    Its use for input files is mostly on getting input file accession
+    to attach qc/report type output
+    '''
 
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-
-class WorkflowReportFile(object):
-    def __init__(self, bucket, key, input_accession=None):
-        self.bucket = bucket
-        self.key = key
-        self.input_accession = input_accession
-        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
-
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-    def read(self):
-        return self.s3.read_s3(self.key).strip()
-
-
-class WorkflowProcessedFile(object):
-
-    def __init__(self, bucket, key, accession=None,
-                 filesize=None, md5=None, file_format=None):
-        self.bucket = bucket
-        self.key = key
-        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
-        self.accession = accession
-        self.filesize = filesize
-        self.md5 = md5
-        self.file_format = file_format
-
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-
-class WorkflowExtraFile(object):
-
-    def __init__(self, bucket, key, accession=None,
-                 filesize=None, md5=None, file_format=None):
-        self.bucket = bucket
-        self.key = key
-        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
-        self.accession = accession
-        self.filesize = filesize
-        self.md5 = md5
-        self.file_format = file_format
-
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-
-class WorkflowFile(object):
-
-    def __init__(self, bucket, key, runner, accession=None, output_type=None,
+    def __init__(self, bucket, key, runner, argument_type=None,
                  filesize=None, md5=None, format_if_extra=None, is_extra=False):
         self.bucket = bucket
         self.key = key
         self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
         self.runner = runner
-        self.accession = accession
-        self.output_type = output_type
+        self.argument_type = argument_type
         self.filesize = filesize
         self.md5 = md5
         self.format_if_extra = format_if_extra
@@ -468,6 +351,16 @@ class WorkflowFile(object):
             self.is_extra = True
         else:
             self.is_extra = False
+
+    @property
+    def accession(self):
+        '''if argument type is either 'Output processed file or 'Input file',
+        returns accession. If not, returns None.'''
+        if self.argument_type in ['Output processed file', 'Input file']:
+            file_name = self.key.split('/')[-1]
+            return file_name.split('.')[0].strip('/')
+        else:
+            return None
 
     @property
     def status(self):
@@ -484,7 +377,7 @@ class WorkflowFile(object):
 # TODO: refactor this to inherit from an abstrat class called Runner
 # then implement for SBG as well
 class Awsem(object):
-
+    '''class that collects Awsem output and metadata information'''
     def __init__(self, json):
         self.args = json['args']
         self.config = json['config']
@@ -495,57 +388,64 @@ class Awsem(object):
         if isinstance(json.get('postrunjson'), dict):
             self.output_info = json['postrunjson']['Job']['Output']['Output files']
 
+    def output_type(self, wf_arg_name):
+        for x in self.output_files_meta:
+            if x['workflow_argument_name'] == wf_arg_name:
+                return x['type']
+        return None
+
     def output_files(self):
         files = dict()
-        output_types = dict()
-        for x in self.output_files_meta:
-            output_types[x['workflow_argument_name']] = x['type']
-        for k, v in self.args.get('output_target').iteritems():
-            if k in output_types:
-                out_type = output_types[k]
-            else:
-                out_type = None
-            if out_type == 'Output processed file':
-                file_name = v.split('/')[-1]
-                accession = file_name.split('.')[0].strip('/')
-            else:
-                accession = None
+        for argname, key in self.args.get('output_target').iteritems():
             if self.output_info:
-                md5 = self.output_info[k].get('md5sum', '')
-                filesize = self.output_info[k].get('size', 0)
-                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
-                                       output_type=out_type, filesize=filesize, md5=md5)}
+                md5 = self.output_info[argname].get('md5sum', '')
+                filesize = self.output_info[argname].get('size', 0)
+                wff = {argname: AwsemFile(self.output_s3, key, self,
+                                          argument_type=self.output_type(argname),
+                                          filesize=filesize, md5=md5)}
             else:
-                wff = {k: WorkflowFile(self.output_s3, v, self, accession,
-                                       output_type=out_type)}
+                wff = {argname: AwsemFile(self.output_s3, key, self,
+                                          argument_type=self.output_type(argname))}
             files.update(wff)
         return files
 
     def secondary_output_files(self):
         files = dict()
-        # secondary output files - included in 'output_files'
-        for k, v in self.args.get('secondary_output_target').iteritems():
-            if self.output_info and 'secondaryFiles' in self.output_info[k]:
-                for sf in self.output_info[k]['secondaryFiles']:
-                    md5 = sf.get('md5sum', '')
-                    filesize = sf.get('size', '')
-                    wff = {k: WorkflowFile(self.output_s3, v, self, filesize=filesize, md5=md5, is_extra=True)}
+        for argname, keylist in self.args.get('secondary_output_target').iteritems():
+            if not isinstance(keylist, list):
+                keylist = [keylist]
+            for key in keylist:
+                if self.output_info and 'secondaryFiles' in self.output_info[argname]:
+                    for sf in self.output_info[argname]['secondaryFiles']:
+                        md5 = sf.get('md5sum', '')
+                        filesize = sf.get('size', '')
+                        file_format = ''
+                        for pf in self.output_files_meta:
+                            if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
+                                for pfextra in pf['extra_files']:
+                                    if pfextra['upload_key'] == key:
+                                        file_format = pfextra['file_format']
+                        wff = {argname: AwsemFile(self.output_s3, key, self,
+                                                  argument_type=self.output_type(argname),
+                                                  filesize=filesize, md5=md5,
+                                                  format_if_extra=file_format)
+                               }
+                        files.update(wff)
+                else:
+                    wff = {argname: AwsemFile(self.output_s3, key, self,
+                                              argument_type=self.output_type(argname),
+                                              is_extra=True)}
                     files.update(wff)
-            else:
-                wff = {k: WorkflowFile(self.output_s3, v, self, is_extra=True)}
-                files.update(wff)
         return files
 
     def input_files(self):
         files = dict()
         for arg_name, item in self.args.get('input_files').iteritems():
-            file_name = item.get('object_key').split('/')[-1]
-            accession = file_name.split('.')[0].strip('/')
-            wff = {arg_name: WorkflowFile(item.get('bucket_name'),
-                                          item.get('object_key'),
-                                          self,
-                                          accession,
-                                          format_if_extra=item.get('format_if_extra', ''))}
+            wff = {arg_name: AwsemFile(item.get('bucket_name'),
+                                       item.get('object_key'),
+                                       self,
+                                       argument_type="Input file",
+                                       format_if_extra=item.get('format_if_extra', ''))}
             files.update(wff)
         return files
 

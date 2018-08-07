@@ -206,7 +206,7 @@ def test_get_output_files(update_ffmeta_event_data, tibanna_env):
     assert of[first_key].runner == awsem
     assert of[first_key].bucket == awsem.output_s3
     assert of[first_key].key == 'lalala/md5_report'
-    assert of[first_key].output_type == 'Output report file'
+    assert of[first_key].argument_type == 'Output report file'
 
 
 def test_get_input_files(update_ffmeta_event_data, tibanna_env):

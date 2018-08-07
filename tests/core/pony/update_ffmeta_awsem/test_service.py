@@ -3,9 +3,10 @@ from core.update_ffmeta_awsem.service import (
     get_postrunjson_url,
     register_to_higlass,
     md5_updater,
-    _md5_updater
+    _md5_updater,
+    add_md5_filesize_to_pf_extra,
 )
-from core.pony_utils import Awsem
+from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
 from core import pony_utils
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
@@ -145,6 +146,18 @@ def test__md5_updater_extra_file():
     assert 'status' not in new_file
 
 
+def test_add_md5_filesize_to_pf_extra():
+    wff = AwsemFile(bucket='somebucket', key='somekey.pairs.gz.px2', runner=None,
+                    md5='somemd5', filesize=1234,
+                    argument_type='Output processed file', format_if_extra='pairs_px2')
+    pf = ProcessedFileMetadata(extra_files=[{'file_format': 'lalala'}, {'file_format': 'pairs_px2'}])
+    add_md5_filesize_to_pf_extra(pf, wff)
+    assert 'md5sum' in pf.extra_files[1]
+    assert 'file_size' in pf.extra_files[1]
+    assert pf.extra_files[1]['md5sum'] == 'somemd5'
+    assert pf.extra_files[1]['file_size'] == 1234
+
+
 @valid_env
 @pytest.mark.webtest
 def test_md5_updater_oldmd5(update_ffmeta_event_data):
@@ -183,6 +196,18 @@ def test_update_ffmeta_awsem_e2e(update_ffmeta_event_data, tibanna_env):
     assert 'awsem_postrun_json' in ret['ff_meta']
     assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/8fRIlIfwRNDT.postrun.json'
     # test that file is uploaded?
+
+
+@valid_env
+@pytest.mark.webtest
+def test_update_ffmeta_awsem_extra_md5(update_ffmeta_hicbam, tibanna_env):
+    update_ffmeta_hicbam.update(tibanna_env)
+    ret = handler(update_ffmeta_hicbam, None)
+    assert json.dumps(ret)
+    assert 'awsem_postrun_json' in ret['ff_meta']
+    assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/x2w1uKSsEvT0.postrun.json'
+    assert 'md5sum' in ret['pf_meta'][1]['extra_files'][0]
+    assert 'file_size' in ret['pf_meta'][1]['extra_files'][0]
 
 
 @valid_env
