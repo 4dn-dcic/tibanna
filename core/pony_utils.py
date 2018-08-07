@@ -170,6 +170,7 @@ class ProcessedFileMetadata(object):
             patch_json = {k: v for k, v in self.as_dict().items() if k in fields}
         else:
             patch_json = self.as_dict()
+        print(patch_json)
         return patch_metadata(patch_json, key=key, add_on='force_md5')
 
     @classmethod
@@ -418,14 +419,22 @@ class Awsem(object):
                     for sf in self.output_info[argname]['secondaryFiles']:
                         md5 = sf.get('md5sum', '')
                         filesize = sf.get('size', '')
+                        file_format = ''
+                        for pf in self.output_files_meta:
+                            if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
+                                for pfextra in pf['extra_files']:
+                                    if pfextra['upload_key'] == key:
+                                        file_format = pfextra['file_format']
                         wff = {argname: AwsemFile(self.output_s3, key, self,
                                                   argument_type=self.output_type(argname),
                                                   filesize=filesize, md5=md5,
-                                                  format_if_extra=sf.get('file_format', ''))
+                                                  format_if_extra=file_format)
                                }
                         files.update(wff)
                 else:
-                    wff = {argname: AwsemFile(self.output_s3, key, self, is_extra=True)}
+                    wff = {argname: AwsemFile(self.output_s3, key, self,
+                                              argument_type=self.output_type(argname),
+                                              is_extra=True)}
                     files.update(wff)
         return files
 

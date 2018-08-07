@@ -60,6 +60,8 @@ def add_md5_filesize_to_pf(pf, awsemfile):
 
 
 def add_md5_filesize_to_pf_extra(pf, awsemfile):
+    print("awsemfile.is_extra=")
+    print(awsemfile.is_extra)
     if awsemfile.is_extra:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == awsemfile.format_if_extra:
@@ -67,6 +69,8 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
                     pfextra['md5sum'] = awsemfile.md5
                 if awsemfile.filesize:
                     pfextra['file_size'] = awsemfile.filesize
+        print("add_md5_filesize_to_pf_extra:")
+        print(pf.extra_files)
 
 
 def qc_updater(status, awsemfile, ff_meta, tibanna):
@@ -318,7 +322,7 @@ def real_handler(event, context):
                         try:
                             add_md5_filesize_to_pf(pf, awsemfile)
                         except Exception as e:
-                            raise Exception("failed to regiter to higlass %s" % e)
+                            raise Exception("failed to update processed file metadata %s" % e)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
             ff_meta.run_status = 'error'
@@ -336,7 +340,7 @@ def real_handler(event, context):
                         try:
                             add_md5_filesize_to_pf_extra(pf, awsemfile)
                         except Exception as e:
-                            raise Exception("failed to regiter to higlass %s" % e)
+                            raise Exception("failed to update processed file metadata %s" % e)
         elif status in ['FAILED']:
             ff_meta.run_status = 'error'
             ff_meta.patch(key=tibanna.ff_keys)
@@ -363,6 +367,7 @@ def real_handler(event, context):
         patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
         try:
             for pf in pf_meta:
+                print(pf.as_dict())
                 pf.patch(key=tibanna.ff_keys, fields=patch_fields)
         except Exception as e:
             raise Exception("Failed to update processed metadata %s" % str(e))

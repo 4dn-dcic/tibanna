@@ -205,7 +205,7 @@ def test_update_ffmeta_awsem_extra_md5(update_ffmeta_hicbam, tibanna_env):
     ret = handler(update_ffmeta_hicbam, None)
     assert json.dumps(ret)
     assert 'awsem_postrun_json' in ret['ff_meta']
-    assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/8fRIlIfwRNDT.postrun.json'
+    assert ret['ff_meta']['awsem_postrun_json'] == 'https://s3.amazonaws.com/tibanna-output/x2w1uKSsEvT0.postrun.json'
     assert 'md5sum' in ret['pf_meta'][1]['extra_files'][0]
     assert 'file_size' in ret['pf_meta'][1]['extra_files'][0]
 
