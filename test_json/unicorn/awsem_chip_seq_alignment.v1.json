@@ -4,7 +4,7 @@
     "input_parameters": {},
     "cwl_child_filenames": ["merge_fastq.cwl", "trim_fastq.cwl", "bwa.cwl"],
     "output_target": {
-      "out_bam": "lalala/out.bam"
+      "bam": "lalala/out.bam"
     },
     "secondary_output_target": {},
     "cwl_main_filename": "chip-seq-alignment.cwl",
