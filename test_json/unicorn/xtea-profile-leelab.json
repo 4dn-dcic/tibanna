@@ -1,7 +1,7 @@
 {
   "args": {
     "app_name": "xtea",
-    "input_parameters": {},
+    "input_parameters": { "nThreads": 64 },
     "cwl_child_filenames": [],
     "cwl_version": "v1",
     "output_target": {
@@ -42,7 +42,7 @@
     "EBS_optimized": true,
     "ebs_iops": "",
     "shutdown_min": 30,
-    "instance_type": "m4.2xlarge",
+    "instance_type": "m4.16xlarge",
     "copy_to_s3": true,
     "launch_instance": true,
     "password": "",

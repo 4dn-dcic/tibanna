@@ -1,0 +1,50 @@
+{
+  "args": {
+    "app_name": "chip-seq-alignment",
+    "input_parameters": {},
+    "cwl_child_filenames": ["merge_fastq.cwl", "trim_fastq.cwl", "bwa.cwl"],
+    "output_target": {
+      "out_bam": "lalala/out.bam"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "chip-seq-alignment.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-output",
+    "app_version": "5",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/chipseq",
+    "cwl_version": "v1",
+    "input_files": {
+      "fastqs1": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": ["2df3fe2f-e3f2-4583-817c-6fd0a2ec35ad/4DNFIN2W7XHZ.fastq.gz"]
+      },
+      "fastqs2": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": ["9b032c0e-bd95-4027-83d8-7619f2253a12/4DNFIOI5NOIL.fastq.gz"]
+      },
+      "bwaIndex": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
+      }
+    },
+    "input_parameters": {
+        "paired_end": true,
+        "nthreads_merge_fastq": 16,
+        "nthreads_bwa": 16
+    }
+  },
+  "config": {
+    "ebs_size": 30,
+    "ebs_type": "io1",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": false,
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "instance_type": "c4.4xlarge",
+    "copy_to_s3": true,
+    "launch_instance": true,
+    "password": "hahaha",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode"
+  }
+}
