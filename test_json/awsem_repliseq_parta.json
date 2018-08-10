@@ -5,11 +5,10 @@
   },
   "args": {
     "app_name": "repliseq-parta",
-    "input_parameters": {},
+    "input_parameters": { "nthreads": 8 },
     "cwl_child_filenames": ["clip.cwl","align.cwl","filtersort.cwl","dedup.cwl","count.cwl"],
+    "cwl_version": "v1",
     "output_target": {
-       "bam": "gm12878_rep1_early.bam",
-       "filtered_sorted_bam": "gm12878_rep1_early.filtered_sorted.bam",
        "filtered_sorted_deduped_bam": "gm12878_rep1_early.filtered_sorted.deduped.bam",
        "dedup_qc_report": "gm12878_rep1_early.filtered_sorted.rmdup.log.qc_report.zip",
        "count_bg": "gm12878_rep1_early.count.bg"
@@ -19,7 +18,7 @@
     "secondary_files": {},
     "output_S3_bucket": "tibanna-testinput",
     "app_version": "dev",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq/",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/repliseq/",
     "input_files": {
       "fastq": {
         "bucket_name": "tibanna-testinput",
