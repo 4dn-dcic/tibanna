@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import boto3
 from core.utils import _tibanna_settings, STEP_FUNCTION_ARN
+from core.utils import randomize_run_name
 from core.pony_utils import Tibanna, get_format_extension_map
 from dcicutils.ff_utils import get_metadata
 import json
@@ -22,13 +23,14 @@ def handler(event, context):
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
 
+    run_name = randomize_run_name(run_name, 'tibanna_pony')
     extra_file_format = get_extra_file_format(event)
     if extra_file_format:
         # for extra file-triggered md5 run, status check is skipped.
         input_json = make_input(event)
         input_json['input_files'][0]['format_if_extra'] = extra_file_format
         response = client.start_execution(
-            stateMachineArn=STEP_FUNCTION_ARN,
+            stateMachineArn=STEP_FUNCTION_ARN(),
             name=run_name,
             input=json.dumps(input_json),
         )
@@ -40,7 +42,7 @@ def handler(event, context):
         if is_uploading:
             # trigger the step function to run
             response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN,
+                stateMachineArn=STEP_FUNCTION_ARN(),
                 name=run_name,
                 input=json.dumps(make_input(event)),
             )

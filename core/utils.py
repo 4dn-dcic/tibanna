@@ -16,11 +16,14 @@ AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 WORKFLOW_NAME = 'tibanna_pony'
-STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', WORKFLOW_NAME)
 
 
 # just store this in one place
 _tibanna = '_tibanna'
+
+
+def STEP_FUNCTION_ARN(workflow=WORKFLOW_NAME):
+    return BASE_ARN % ('stateMachine', workflow)
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
@@ -137,47 +140,47 @@ def powerup(lambda_name, metadata_only_func):
     return decorator
 
 
-def run_workflow(input_json, accession='', workflow='tibanna_pony',
-                 env='fourfront-webdev'):
-    '''
-    accession is unique name that we be part of run id
-    '''
+def randomize_run_name(run_name, workflow):
+    arn = get_exec_arn(workflow, run_name)
     client = boto3.client('stepfunctions', region_name='us-east-1')
-    STEP_FUNCTION_ARN = BASE_ARN % ('stateMachine', str(workflow))
-    base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
-
-    # build from appropriate input json
-    # assume run_type and and run_id
-    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
-    run_name = input_json[_tibanna]['run_name']
-
-    # check to see if run already exists
-    # and if so change our name a bit
-    arn = "%s%s%s" % (BASE_ARN % ('execution', str(workflow)),
-                      ":",
-                      run_name)
     try:
         response = client.describe_execution(
                 executionArn=arn
         )
         if response:
             run_name += str(uuid4())
-            input_json[_tibanna]['run_name'] = run_name
-    except Exception as e:
+    except Exception:
         pass
+    return run_name
 
-    # updated arn
+
+def get_exec_arn(workflow, run_name):
     arn = "%s%s%s" % (BASE_ARN % ('execution', str(workflow)),
                       ":",
                       run_name)
+    return arn
+
+
+def run_workflow(input_json, accession='', workflow='tibanna_pony',
+                 env='fourfront-webdev'):
+    '''
+    accession is unique name that we be part of run id
+    '''
+    client = boto3.client('stepfunctions', region_name='us-east-1')
+    base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
+
+    # build from appropriate input json
+    # assume run_type and and run_id
+    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
+    run_name = randomize_run_name(input_json[_tibanna]['run_name'], workflow)
+    input_json[_tibanna]['run_name'] = run_name
+
+    # updated arn
+    arn = get_exec_arn(workflow, run_name)
     input_json[_tibanna]['exec_arn'] = arn
 
     # calculate what the url will be
-    url = "%s%s%s%s" % (base_url,
-                        BASE_ARN % ('execution', str(workflow)),
-                        ":",
-                        run_name)
-
+    url = "%s%s" % (base_url, arn)
     input_json[_tibanna]['url'] = url
 
     aws_input = json.dumps(input_json)
@@ -185,29 +188,12 @@ def run_workflow(input_json, accession='', workflow='tibanna_pony',
     # trigger the step function to run
     try:
         response = client.start_execution(
-            stateMachineArn=STEP_FUNCTION_ARN,
+            stateMachineArn=STEP_FUNCTION_ARN(workflow),
             name=run_name,
             input=aws_input,
         )
     except Exception as e:
-        if e.response.get('Error'):
-            if e.response['Error'].get('Code') == 'ExecutionAlreadyExists':
-                print("execution already exists...mangling name and retrying...")
-                run_name += str(uuid4())
-                input_json[_tibanna]['run_name'] = run_name
-
-                # calculate what the url will be
-                url = "%s%s%s%s" % (base_url, (BASE_ARN % 'execution'), ":", run_name)
-                input_json[_tibanna]['url'] = url
-                aws_input = json.dumps(input_json)
-
-                response = client.start_execution(
-                    stateMachineArn=STEP_FUNCTION_ARN,
-                    name=run_name,
-                    input=aws_input,
-                )
-            else:
-                raise(e)
+        raise(e)
 
     print("response from aws was: \n %s" % response)
     print("url to view status:")
