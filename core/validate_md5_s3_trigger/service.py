@@ -15,16 +15,15 @@ def handler(event, context):
 
     input_json = make_input(event)
     extra_file_format = get_extra_file_format(event)
+    status = get_status(event)
     if extra_file_format:
-        # for extra file-triggered md5 run, status check is skipped.
-        input_json['input_files'][0]['format_if_extra'] = extra_file_format
-        response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
+        if status != 'to be uploaded by workflow':
+            # for extra file-triggered md5 run, status check is skipped.
+            input_json['input_files'][0]['format_if_extra'] = extra_file_format
+            response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
     else:
         # only run if status is uploading...
-        is_uploading = is_status_uploading(event)
-        if event.get('force_run'):
-            is_uploading = True
-        if is_uploading:
+        if status == 'uploading' or event.get('force_run'):
             # trigger the step function to run
             response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
         else:
@@ -73,7 +72,7 @@ def get_extra_file_format(event):
         raise Exception("Cannot get input metadata")
 
 
-def is_status_uploading(event):
+def get_status(event):
     print("is status uploading: %s" % event)
     upload_key = event['Records'][0]['s3']['object']['key']
     if upload_key.endswith('html'):
@@ -93,9 +92,9 @@ def is_status_uploading(event):
                         add_on='frame=object',
                         check_queue=True)
     if meta:
-        return meta.get('status', '') == 'uploading'
+        return meta.get('status', '')
     else:
-        return False
+        return ''
 
 
 def get_outbucket_name(bucket):
