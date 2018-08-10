@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
-import boto3
-from core.utils import _tibanna_settings, STEP_FUNCTION_ARN
-from core.utils import randomize_run_name
+from core.utils import _tibanna_settings, WORKFLOW_NAME
+from core.utils import run_workflow
 from core.pony_utils import Tibanna, get_format_extension_map
 from dcicutils.ff_utils import get_metadata
-import json
-
-client = boto3.client('stepfunctions', region_name='us-east-1')
 
 
 def handler(event, context):
@@ -17,23 +13,12 @@ def handler(event, context):
     # get file name
     # print(event)
 
-    upload_key = event['Records'][0]['s3']['object']['key']
-    run_name = "validate_%s" % (upload_key.split('/')[1].split('.')[0])
-
-    if event.get('run_name'):
-        run_name = event.get('run_name')  # used for testing
-
-    run_name = randomize_run_name(run_name, 'tibanna_pony')
+    input_json = make_input(event)
     extra_file_format = get_extra_file_format(event)
     if extra_file_format:
         # for extra file-triggered md5 run, status check is skipped.
-        input_json = make_input(event)
         input_json['input_files'][0]['format_if_extra'] = extra_file_format
-        response = client.start_execution(
-            stateMachineArn=STEP_FUNCTION_ARN(),
-            name=run_name,
-            input=json.dumps(input_json),
-        )
+        response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
     else:
         # only run if status is uploading...
         is_uploading = is_status_uploading(event)
@@ -41,11 +26,7 @@ def handler(event, context):
             is_uploading = True
         if is_uploading:
             # trigger the step function to run
-            response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(),
-                name=run_name,
-                input=json.dumps(make_input(event)),
-            )
+            response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
         else:
             return {'info': 'status is not uploading'}
 
@@ -131,7 +112,11 @@ def make_input(event):
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
 
-    return _make_input(env, bucket, 'md5', object_key, uuid)
+    run_name = "validate_%s" % (upload_key.split('/')[1].split('.')[0])
+    if event.get('run_name'):
+        run_name = event.get('run_name')  # used for testing
+
+    return _make_input(env, bucket, 'md5', object_key, uuid, run_name)
 
 
 _workflows = {'md5':
@@ -145,7 +130,7 @@ _workflows = {'md5':
               }
 
 
-def _make_input(env, bucket, workflow, object_key, uuid):
+def _make_input(env, bucket, workflow, object_key, uuid, run_name):
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
@@ -174,6 +159,7 @@ def _make_input(env, bucket, workflow, object_key, uuid):
               },
             }
     data.update(_tibanna_settings({'run_id': str(object_key),
+                                   'run_name': run_name,
                                    'run_type': workflow,
                                    'env': env,
                                    }))
