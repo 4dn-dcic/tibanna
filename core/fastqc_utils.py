@@ -38,9 +38,13 @@ def parse_qc_table(data_list, qc_schema, url=None):
     for data in data_list:
         for line in data.split('\n'):
             items = line.strip().split('\t')
+            # flagstat qc handling - e.g. each line could look like "0 + 0 blah blah blah"
+            space_del = line.strip().split(' ')
+            flagstat_items = [' '.join(space_del[0:3]), ' '.join(space_del[3:])]
             try:
                 parse_item(items[0], items[1])
                 parse_item(items[1], items[0])
+                parse_item(flagstat_items[1], flagstat_items[0])
             except IndexError:  # pragma: no cover
                 # maybe a blank line or something
                 pass

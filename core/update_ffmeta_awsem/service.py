@@ -92,6 +92,12 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            quality_metric='quality_metric_dedupqc_repliseq',
                            file_argument='filtered_sorted_deduped_bam',
                            datafiles=['summary.txt'])
+    elif ff_meta.awsem_app_name == 'chip-seq-alignment':
+        input_accession = str(awsemfile.runner.inputfile_accessions['fastqs'][0])
+        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+                           quality_metric='quality_metric_flagstat_qc',
+                           file_argument='bam',
+                           datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'])
 
 
 def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
