@@ -23,8 +23,8 @@ def test_s3_trigger_e2e(s3_trigger_event_data):
     s3_trigger_event_data['run_name'] = "testrun_%s" % datetime.now().strftime("%Y%m%d%H%M%S%f")
 
     # force this thing to not run, so I don't get the new workflow run
-    with mock.patch('core.validate_md5_s3_trigger.service.is_status_uploading') as uploading:
-        uploading.return_value = False
+    with mock.patch('core.validate_md5_s3_trigger.service.get_status') as uploading:
+        uploading.return_value = 'released'
         ret = validate_md5_s3_trigger(s3_trigger_event_data, None)
         assert ret
         assert ret['info'] == 'status is not uploading'
