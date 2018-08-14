@@ -396,21 +396,39 @@ class Awsem(object):
                 return x['type']
         return None
 
+    def get_md5_filesize_from_output_info(self, argname):
+        if self.output_info:
+            md5 = self.output_info[argname].get('md5sum', None)
+            filesize = self.output_info[argname].get('size', None)
+            return (md5, filesize)
+        return (None, None)
+
     def output_files(self):
         files = []
         for argname, key in self.args.get('output_target').iteritems():
-            if self.output_info:
-                md5 = self.output_info[argname].get('md5sum', '')
-                filesize = self.output_info[argname].get('size', 0)
-                wff = AwsemFile(self.output_s3, key, self,
-                                argument_type=self.output_type(argname),
-                                filesize=filesize, md5=md5, argument_name=argname)
-            else:
-                wff = AwsemFile(self.output_s3, key, self,
-                                argument_type=self.output_type(argname),
-                                argument_name=argname)
+            md5, filesize = self.get_md5_filesize_from_output_info(argname)
+            wff = AwsemFile(self.output_s3, key, self,
+                            argument_type=self.output_type(argname),
+                            filesize=filesize, md5=md5, argument_name=argname)
             files.append(wff)
         return files
+
+    def get_md5_filesize_from_secondary_file_output_info(self, argname, key):
+        if self.output_info and 'secondaryFiles' in self.output_info[argname]:
+            for sf in self.output_info[argname]['secondaryFiles']:
+                if sf.get('target', '') == key:
+                    md5 = sf.get('md5sum', None)
+                    filesize = sf.get('size', None)
+                    return (md5, filesize)
+        return (None, None)
+
+    def get_secondary_file_format_from_ff_meta(self, argname, key):
+        for pf in self.output_files_meta:
+            if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
+                for pfextra in pf['extra_files']:
+                    if pfextra['upload_key'] == key:
+                        return pfextra['file_format']
+        return None
 
     def secondary_output_files(self):
         files = []
@@ -418,27 +436,14 @@ class Awsem(object):
             if not isinstance(keylist, list):
                 keylist = [keylist]
             for key in keylist:
-                if self.output_info and 'secondaryFiles' in self.output_info[argname]:
-                    for sf in self.output_info[argname]['secondaryFiles']:
-                        md5 = sf.get('md5sum', '')
-                        filesize = sf.get('size', '')
-                        file_format = ''
-                        for pf in self.output_files_meta:
-                            if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
-                                for pfextra in pf['extra_files']:
-                                    if pfextra['upload_key'] == key:
-                                        file_format = pfextra['file_format']
-                        wff = AwsemFile(self.output_s3, key, self,
-                                        argument_type=self.output_type(argname),
-                                        filesize=filesize, md5=md5,
-                                        format_if_extra=file_format,
-                                        argument_name=argname)
-                        files.append(wff)
-                else:
-                    wff = AwsemFile(self.output_s3, key, self,
-                                    argument_type=self.output_type(argname),
-                                    is_extra=True, argument_name=argname)
-                    files.append(wff)
+                md5, filesize = self.get_md5_filesize_from_secondary_file_output_info(argname, key)
+                file_format = self.get_secondary_file_format_from_ff_meta(argname, key)
+                wff = AwsemFile(self.output_s3, key, self,
+                                argument_type=self.output_type(argname),
+                                filesize=filesize, md5=md5,
+                                format_if_extra=file_format,
+                                argument_name=argname)
+                files.append(wff)
         return files
 
     def input_files(self):

@@ -82,7 +82,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            datafiles=['summary.txt', 'fastqc_data.txt'])
     elif ff_meta.awsem_app_name == 'pairsqc-single':
         file_argument = 'input_pairs'
-        input_accession = str(awsemfile.runner.get_file_accessions[file_argument])
+        input_accession = str(awsemfile.runner.get_file_accessions(file_argument))
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric="quality_metric_pairsqc",
                            file_argument=file_argument, report_html='pairsqc_report.html',
@@ -93,7 +93,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            file_argument='filtered_sorted_deduped_bam',
                            datafiles=['summary.txt'])
     elif ff_meta.awsem_app_name == 'chip-seq-alignment':
-        input_accession = str(awsemfile.runner.get_file_accessions['fastqs'][0])
+        input_accession = str(awsemfile.runner.get_file_accessions('fastqs')[0])
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_flagstat_qc',
                            file_argument='bam',
@@ -113,7 +113,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
-    accession = awsemfile.runner.get_file_accessions[file_argument]
+    accession = awsemfile.runner.get_file_accessions(file_argument)[0]
     zipped_report = awsemfile.key
     files_to_parse = datafiles
     if report_html:
