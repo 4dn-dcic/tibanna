@@ -158,6 +158,26 @@ def test_add_md5_filesize_to_pf_extra():
     assert pf.extra_files[1]['file_size'] == 1234
 
 
+def test_add_md5_filesize_to_pf_extra2():
+    wff = AwsemFile(bucket='somebucket', key='somekey.pairs.gz.px2', runner=None,
+                    md5='somemd5', filesize=1234,
+                    argument_type='Output processed file', format_if_extra='pairs_px2')
+    wff2 = AwsemFile(bucket='somebucket', key='somekey.lalala', runner=None,
+                     md5='someothermd5', filesize=5678,
+                     argument_type='Output processed file', format_if_extra='lalala')
+    pf = ProcessedFileMetadata(extra_files=[{'file_format': 'lalala'}, {'file_format': 'pairs_px2'}])
+    add_md5_filesize_to_pf_extra(pf, wff)
+    add_md5_filesize_to_pf_extra(pf, wff2)
+    assert 'md5sum' in pf.extra_files[1]
+    assert 'file_size' in pf.extra_files[1]
+    assert pf.extra_files[1]['md5sum'] == 'somemd5'
+    assert pf.extra_files[1]['file_size'] == 1234
+    assert 'md5sum' in pf.extra_files[0]
+    assert 'file_size' in pf.extra_files[0]
+    assert pf.extra_files[0]['md5sum'] == 'someothermd5'
+    assert pf.extra_files[0]['file_size'] == 5678
+
+
 @valid_env
 @pytest.mark.webtest
 def test_md5_updater_oldmd5(update_ffmeta_event_data):
