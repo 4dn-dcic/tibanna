@@ -347,7 +347,7 @@ class AwsemFile(object):
         self.filesize = filesize
         self.md5 = md5
         self.format_if_extra = format_if_extra
-        self.argumet_name = argument_name
+        self.argument_name = argument_name
 
         if self.format_if_extra or is_extra:
             self.is_extra = True
@@ -409,7 +409,7 @@ class Awsem(object):
                 wff = AwsemFile(self.output_s3, key, self,
                                 argument_type=self.output_type(argname),
                                 argument_name=argname)
-            files.extend(wff)
+            files.append(wff)
         return files
 
     def secondary_output_files(self):
@@ -433,12 +433,12 @@ class Awsem(object):
                                         filesize=filesize, md5=md5,
                                         format_if_extra=file_format,
                                         argument_name=argname)
-                        files.extend(wff)
+                        files.append(wff)
                 else:
                     wff = AwsemFile(self.output_s3, key, self,
                                     argument_type=self.output_type(argname),
                                     is_extra=True, argument_name=argname)
-                    files.extend(wff)
+                    files.append(wff)
         return files
 
     def input_files(self):
@@ -450,7 +450,7 @@ class Awsem(object):
                             argument_type="Input file",
                             format_if_extra=item.get('format_if_extra', ''),
                             argument_name=arg_name)
-            files.extend(wff)
+            files.append(wff)
         return files
 
     def all_files(self):
@@ -463,14 +463,14 @@ class Awsem(object):
         format_if_extras = []
         for v in self.input_files():
             if argname == v.argument_name:
-                format_if_extras.extend(v.format_if_extra)
+                format_if_extras.append(v.format_if_extra)
         return format_if_extras
 
     def get_file_accessions(self, argname):
         accessions = []
         for v in self.all_files():
             if argname == v.argument_name:
-                accessions.extend(v.accession)
+                accessions.append(v.accession)
         return accessions
 
 

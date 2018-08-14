@@ -166,13 +166,13 @@ def test_get_input_files(update_ffmeta_event_data, tibanna_env):
 def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
     update_ffmeta_event_data.update(tibanna_env)
     awsem = Awsem(update_ffmeta_event_data)
-    assert awsem.inputfile_accessions['input_file'] == '4DNFIRSRJH45'
+    assert awsem.get_file_accessions('input_file')[0] == '4DNFIRSRJH45'
 
 
 def test_get_inputfile_format_if_extra(update_ffmeta_event_data_extra_md5, tibanna_env):
     update_ffmeta_event_data_extra_md5.update(tibanna_env)
     for wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files():
-        assert wf_file.runner.inputfile_format_if_extra['input_file'] == 'pairs_px2'
+        assert wf_file.runner.get_format_if_extras('input_file')[0] == 'pairs_px2'
 
 
 @pytest.fixture()

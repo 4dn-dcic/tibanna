@@ -214,7 +214,7 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
     ff_key = tibanna.ff_keys
     # get metadata about original input file
     accession = awsemfile.runner.get_file_accessions('input_file')[0]
-    format_if_extra = awsemfile.runner.get_format_if_extra('input_file')[0]
+    format_if_extras = awsemfile.runner.get_format_if_extras('input_file')
     original_file = ff_utils.get_metadata(accession,
                                           key=ff_key,
                                           ff_env=tibanna.env,
@@ -230,7 +230,10 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
         elif len(md5_array) > 1:
             md5 = md5_array[0]
             content_md5 = md5_array[1]
-        new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
+        for format_if_extra in format_if_extras:
+            new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
+            if new_file:
+                break
         print("new_file = %s" % str(new_file))
         if new_file:
             try:
