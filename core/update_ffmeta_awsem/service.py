@@ -82,7 +82,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            datafiles=['summary.txt', 'fastqc_data.txt'])
     elif ff_meta.awsem_app_name == 'pairsqc-single':
         file_argument = 'input_pairs'
-        input_accession = str(awsemfile.runner.inputfile_accessions[file_argument])
+        input_accession = str(awsemfile.runner.get_file_accessions[file_argument])
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric="quality_metric_pairsqc",
                            file_argument=file_argument, report_html='pairsqc_report.html',
@@ -93,7 +93,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            file_argument='filtered_sorted_deduped_bam',
                            datafiles=['summary.txt'])
     elif ff_meta.awsem_app_name == 'chip-seq-alignment':
-        input_accession = str(awsemfile.runner.inputfile_accessions['fastqs'][0])
+        input_accession = str(awsemfile.runner.get_file_accessions['fastqs'][0])
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_flagstat_qc',
                            file_argument='bam',
@@ -113,7 +113,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     ff_key = tibanna.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
-    accession = awsemfile.runner.all_file_accessions[file_argument]
+    accession = awsemfile.runner.get_file_accessions[file_argument]
     zipped_report = awsemfile.key
     files_to_parse = datafiles
     if report_html:
@@ -213,8 +213,8 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
-    accession = awsemfile.runner.inputfile_accessions['input_file']
-    format_if_extra = awsemfile.runner.inputfile_format_if_extra['input_file']
+    accession = awsemfile.runner.get_file_accessions('input_file')[0]
+    format_if_extra = awsemfile.runner.get_format_if_extra('input_file')[0]
     original_file = ff_utils.get_metadata(accession,
                                           key=ff_key,
                                           ff_env=tibanna.env,
@@ -312,7 +312,7 @@ def real_handler(event, context):
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
-    for _, awsemfile in awsem_output.iteritems():
+    for awsemfile in awsem_output:
         upload_key = awsemfile.key
         status = awsemfile.status
         print("awsemfile res is %s", status)
@@ -335,7 +335,7 @@ def real_handler(event, context):
             ff_meta.patch(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
 
-    for _, awsemfile in awsem_output_extra.iteritems():
+    for awsemfile in awsem_output_extra:
         upload_key = awsemfile.key
         status = awsemfile.status
         print("awsemfile res is %s", status)

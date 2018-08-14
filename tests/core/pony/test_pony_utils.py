@@ -109,62 +109,6 @@ def workflow_event_data():
                          "export_id_list": [], "output_volume_id": "4dn-labor/4dn_s32588y8f7"}}
 
 
-@valid_env
-@pytest.mark.webtest
-def test_read_s3(s3_utils):
-    filename = '__test_data/test_file.txt'
-    read = s3_utils.read_s3(filename)
-    assert read.strip() == 'thisisatest'
-
-
-@valid_env
-@pytest.mark.webtest
-def test_get_file_size(s3_utils):
-    filename = '__test_data/test_file.txt'
-    size = s3_utils.get_file_size(filename)
-    assert size == 12
-
-
-@valid_env
-@pytest.mark.webtest
-def test_get_file_size_in_bg(s3_utils):
-    filename = '__test_data/test_file.txt'
-    size = s3_utils.get_file_size(filename, add_gb=2, size_in_gb=True)
-    assert size == 2
-
-
-@valid_env
-@pytest.mark.webtest
-def test_read_s3_zip(s3_utils):
-    filename = '__test_data/fastqc_report.zip'
-    files = s3_utils.read_s3_zipfile(filename, ['summary.txt', 'fastqc_data.txt'])
-    assert files['summary.txt']
-    assert files['fastqc_data.txt']
-    assert files['summary.txt'].startswith('PASS')
-
-
-@valid_env
-@pytest.mark.webtest
-def test_unzip_s3_to_s3(s3_utils):
-    prefix = '__test_data/extracted'
-    filename = '__test_data/fastqc_report.zip'
-    s3_utils.s3_delete_dir(prefix)
-
-    # ensure this thing was deleted
-    # if no files there will be no Contents in response
-    objs = s3_utils.s3_read_dir(prefix)
-    assert [] == objs.get('Contents', [])
-
-    # now copy to that dir we just deleted
-    retfile_list = ['summary.txt', 'fastqc_data.txt', 'fastqc_report.html']
-    ret_files = s3_utils.unzip_s3_to_s3(filename, prefix, retfile_list)
-    assert 3 == len(ret_files.keys())
-    assert ret_files['fastqc_report.html']['s3key'].startswith("https://s3.amazonaws.com")
-
-    objs = s3_utils.s3_read_dir(prefix)
-    assert objs.get('Contents', None)
-
-
 def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5):
     meta = update_ffmeta_event_data_newmd5['ff_meta'].copy()
     meta['app_name'] = 'md5'
@@ -201,24 +145,22 @@ def test_get_output_files(update_ffmeta_event_data, tibanna_env):
     update_ffmeta_event_data.update(tibanna_env)
     awsem = Awsem(update_ffmeta_event_data)
     of = awsem.output_files()
-    first_key = of.keys()[0]
     assert 1 == len(of)
-    assert of[first_key].runner == awsem
-    assert of[first_key].bucket == awsem.output_s3
-    assert of[first_key].key == 'lalala/md5_report'
-    assert of[first_key].argument_type == 'Output report file'
+    assert of[0].runner == awsem
+    assert of[0].bucket == awsem.output_s3
+    assert of[0].key == 'lalala/md5_report'
+    assert of[0].argument_type == 'Output report file'
 
 
 def test_get_input_files(update_ffmeta_event_data, tibanna_env):
     update_ffmeta_event_data.update(tibanna_env)
     awsem = Awsem(update_ffmeta_event_data)
     infiles = awsem.input_files()
-    first_key = infiles.keys()[0]
     assert 1 == len(infiles)
-    assert infiles[first_key].runner == awsem
-    assert infiles[first_key].bucket == 'elasticbeanstalk-fourfront-webdev-files'
-    assert infiles[first_key].key == 'f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz'
-    assert infiles[first_key].accession == '4DNFIRSRJH45'
+    assert infiles[0].runner == awsem
+    assert infiles[0].bucket == 'elasticbeanstalk-fourfront-webdev-files'
+    assert infiles[0].key == 'f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz'
+    assert infiles[0].accession == '4DNFIRSRJH45'
 
 
 def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
@@ -229,7 +171,7 @@ def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
 
 def test_get_inputfile_format_if_extra(update_ffmeta_event_data_extra_md5, tibanna_env):
     update_ffmeta_event_data_extra_md5.update(tibanna_env)
-    for _, wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files().iteritems():
+    for wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files():
         assert wf_file.runner.inputfile_format_if_extra['input_file'] == 'pairs_px2'
 
 

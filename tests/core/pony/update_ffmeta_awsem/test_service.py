@@ -176,7 +176,7 @@ def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
     tibanna_settings = event.get('_tibanna', {})
     tibanna = pony_utils.Tibanna(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data_newmd5)
-    ouf = awsem.output_files()['report']
+    ouf = awsem.output_files()[0]
     md5_updater('uploaded', ouf, None, tibanna)
 
 

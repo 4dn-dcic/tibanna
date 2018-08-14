@@ -337,7 +337,8 @@ class AwsemFile(object):
     '''
 
     def __init__(self, bucket, key, runner, argument_type=None,
-                 filesize=None, md5=None, format_if_extra=None, is_extra=False):
+                 filesize=None, md5=None, format_if_extra=None, is_extra=False,
+                 argument_name=None):
         self.bucket = bucket
         self.key = key
         self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
@@ -346,6 +347,7 @@ class AwsemFile(object):
         self.filesize = filesize
         self.md5 = md5
         self.format_if_extra = format_if_extra
+        self.argumet_name = argument_name
 
         if self.format_if_extra or is_extra:
             self.is_extra = True
@@ -395,22 +397,23 @@ class Awsem(object):
         return None
 
     def output_files(self):
-        files = dict()
+        files = []
         for argname, key in self.args.get('output_target').iteritems():
             if self.output_info:
                 md5 = self.output_info[argname].get('md5sum', '')
                 filesize = self.output_info[argname].get('size', 0)
-                wff = {argname: AwsemFile(self.output_s3, key, self,
-                                          argument_type=self.output_type(argname),
-                                          filesize=filesize, md5=md5)}
+                wff = AwsemFile(self.output_s3, key, self,
+                                argument_type=self.output_type(argname),
+                                filesize=filesize, md5=md5, argument_name=argname)
             else:
-                wff = {argname: AwsemFile(self.output_s3, key, self,
-                                          argument_type=self.output_type(argname))}
-            files.update(wff)
+                wff = AwsemFile(self.output_s3, key, self,
+                                argument_type=self.output_type(argname),
+                                argument_name=argname)
+            files.extend(wff)
         return files
 
     def secondary_output_files(self):
-        files = dict()
+        files = []
         for argname, keylist in self.args.get('secondary_output_target').iteritems():
             if not isinstance(keylist, list):
                 keylist = [keylist]
@@ -425,47 +428,50 @@ class Awsem(object):
                                 for pfextra in pf['extra_files']:
                                     if pfextra['upload_key'] == key:
                                         file_format = pfextra['file_format']
-                        wff = {argname: AwsemFile(self.output_s3, key, self,
-                                                  argument_type=self.output_type(argname),
-                                                  filesize=filesize, md5=md5,
-                                                  format_if_extra=file_format)
-                               }
-                        files.update(wff)
+                        wff = AwsemFile(self.output_s3, key, self,
+                                        argument_type=self.output_type(argname),
+                                        filesize=filesize, md5=md5,
+                                        format_if_extra=file_format,
+                                        argument_name=argname)
+                        files.extend(wff)
                 else:
-                    wff = {argname: AwsemFile(self.output_s3, key, self,
-                                              argument_type=self.output_type(argname),
-                                              is_extra=True)}
-                    files.update(wff)
+                    wff = AwsemFile(self.output_s3, key, self,
+                                    argument_type=self.output_type(argname),
+                                    is_extra=True, argument_name=argname)
+                    files.extend(wff)
         return files
 
     def input_files(self):
-        files = dict()
+        files = []
         for arg_name, item in self.args.get('input_files').iteritems():
-            wff = {arg_name: AwsemFile(item.get('bucket_name'),
-                                       item.get('object_key'),
-                                       self,
-                                       argument_type="Input file",
-                                       format_if_extra=item.get('format_if_extra', ''))}
-            files.update(wff)
+            wff = AwsemFile(item.get('bucket_name'),
+                            item.get('object_key'),
+                            self,
+                            argument_type="Input file",
+                            format_if_extra=item.get('format_if_extra', ''),
+                            argument_name=arg_name)
+            files.extend(wff)
         return files
 
     def all_files(self):
-        files = dict()
-        files.update(self.input_files())
-        files.update(self.output_files())
+        files = []
+        files.extend(self.input_files())
+        files.extend(self.output_files())
         return files
 
-    @property
-    def inputfile_accessions(self):
-        return {k: v.accession for k, v in self.input_files().iteritems()}
+    def get_format_if_extras(self, argname):
+        format_if_extras = []
+        for v in self.input_files():
+            if argname == v.argument_name:
+                format_if_extras.extend(v.format_if_extra)
+        return format_if_extras
 
-    @property
-    def inputfile_format_if_extra(self):
-        return {k: v.format_if_extra for k, v in self.input_files().iteritems()}
-
-    @property
-    def all_file_accessions(self):
-        return {k: v.accession for k, v in self.all_files().iteritems()}
+    def get_file_accessions(self, argname):
+        accessions = []
+        for v in self.all_files():
+            if argname == v.argument_name:
+                accessions.extend(v.accession)
+        return accessions
 
 
 def run_md5(env, accession, uuid):
