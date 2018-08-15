@@ -7,6 +7,7 @@ Installing Tibanna package
 --------------------------
 
 Tibanna works with the following Python and pip versions.
+
 - Python 2.7
 - Pip 9.0.3 / 10.0.1
 
