@@ -3,7 +3,26 @@ Monitoring a workflow run
 =========================
 
 
-Once the step function passes the first step ('RunTaskAsem'), you can check the 'input' of the 'CheckTaskAwsem' which contains a field called 'jobid'. This is your job ID and you can check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress.
+
+General stats of all workflow runs can be seen either from the Step Function Console through a Web Browser, or through command-line.
+
+::
+
+    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED]
+
+The output is a table (an example below)
+
+::
+
+    jobid       status  name    start_time      stop_time
+    2xPih7reR6FM        RUNNING md5_f6cf887b-fbd4-4d28-bc65-a31fbd114259        2018-08-15 17:45        2018-08-15 17:50
+    3hbkJB3hv92S        SUCCEEDED       hicprocessingbam_553a5376-0f24-4067-8eba-19d2c75751a6   2018-08-15 16:04        2018-08-15 16:09
+    UlkvH3gbBBA2        FAILED  repliseq-parta_2336e60a-4fce-420a-9d03-2f31a2a80cc2     2018-08-09 18:26        2018-08-09 19:01
+    j7hvisheBV27        SUCCEEDED       bwa-mem_7b0f737e-172d-447b-ba36-0a52bee8fb52    2018-08-09 18:44        2018-08-09 18:59
+
+
+
+Using your job ID, you can also check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress.
 
 ::
 
