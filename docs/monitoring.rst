@@ -35,7 +35,7 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
 
 ::
 
-    aws s3 cp s3://suwang/<jobid>.log .
+    aws s3 cp s3://<tibanna_lob_bucket_name>/<jobid>.log .
 
 
 Advanced monitoring through ssh
@@ -44,11 +44,17 @@ Advanced monitoring through ssh
 
 You can also ssh into your running instance. The 'instance_ip' field in the 'input' of 'CheckTaskAwsem' contains the IP.
 
+If your CWL version is draft-3 (AMI is based on Amazon Linux)
+
 ::
 
-    ssh ec2-user@<ip>  # if your CWL version is draft-3 (AMI is based on Amazon Linux)
+    ssh ec2-user@<ip>
 
-    ssh ubuntu@<ip>  # if your CWL version is v1 (AMI is based on ubuntu)
+If your CWL version is v1 (AMI is based on ubuntu)
+
+::
+
+    ssh ubuntu@<ip>
 
 
 The password is the password you entered as part of the input json (inside 'config' field, in this case, 'whateverpasswordworks') The purpose of the ssh is to monitor things, so refrain from doing various things there, which could interfere with the run. It is recommended, unless you're a developer, to use the log file than ssh.
@@ -64,9 +70,7 @@ EC2 instances
 You can also check from the Console the instance that is running which has a name awsem-<jobid>. It will terminate itself when the run finishes. You won't have access to terminate this or any other instance, but if something is hanging for too long, please contact the admin to resolve the issue.
 
 
-|awsem_ec2_console|
-
-.. |awsem_ec2_console| image:: images/awsem_ec2_console.png
+.. image:: images/awsem_ec2_console.png
 
 
 Step functions
