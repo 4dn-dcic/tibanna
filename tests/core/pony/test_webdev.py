@@ -67,14 +67,9 @@ def testrun_md5_input_json_w_extra_file_object_name(env='webdev'):
         "config": {
           "ebs_type": "io1",
           "ebs_iops": 500,
-          "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-          "ami_id": "ami-cfb14bb5",
           "json_bucket": "4dn-aws-pipeline-run-json",
           "shutdown_min": 30,
-          "copy_to_s3": True,
-          "launch_instance": True,
           "log_bucket": "tibanna-output",
-          "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
           "key_name": "4dn-encode",
           "password": ""
         },
@@ -130,14 +125,9 @@ def testrun_md5(env='webdev'):
         "config": {
           "ebs_type": "io1",
           "ebs_iops": 500,
-          "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-          "ami_id": "ami-cfb14bb5",
           "json_bucket": "4dn-aws-pipeline-run-json",
           "shutdown_min": 30,
-          "copy_to_s3": True,
-          "launch_instance": True,
           "log_bucket": "tibanna-output",
-          "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
           "key_name": "4dn-encode",
           "password": ""
         },
