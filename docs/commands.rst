@@ -36,7 +36,8 @@ To run workflow
 ::
 
     invoke run_workflow --input-json=<input_json_file> [--sfn=<stepfunctionname>]
-    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+
+``<stepfunctionname>`` may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
 
 
 
@@ -48,6 +49,10 @@ To check status of workflows,
 ::
 
     invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED]
+
+
+``<stepfunctionname>`` may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+
 
 The output is a table (an example below)
 
