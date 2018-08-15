@@ -54,22 +54,16 @@ Then, set up buckets and user group permission for Tibanna as below.
 
 ::
 
-    invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...
+    invoke deploy_unicorn --buckets=<bucket1>,<bucket2>,...
     # add all the buckets your input/output files and log files will go to. The buckets must already exist.
 
 
-The above command will create a usergroup that shares the permission to use a single tibanna environment. Multiple users can be added to this usergroup and multiple tibanna instances (step functions / lambdas) can be deployed. The usergroup created will be printed out on the screen after the command. (e.g. as below).
+The above command will first create a usergroup that shares the permission to use a single tibanna environment. Then, it will deploy a tibanna instance (step function / lambda). The user group created will be printed out on the screen after the command. (e.g. as below).
 
 ::
 
     Tibanna usergroup default_6206 has been created on AWS.
 
-
-Then, deploy tibanna unicorn to your aws account for this specific user group. ('default_6206' In the above example)
-
-::
-
-    invoke deploy_tibanna --sfn-type=unicorn --usergroup=<usergroup>
 
 
 You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group.
@@ -86,7 +80,7 @@ Let's try setting up Tibanna that uses public buckets ``my-tibanna-test-bucket``
 
 ::
 
-    invoke setup_tibanna_env --buckets=my-tibanna-test-bucket,my-tibanna-test-input-bucket
+    invoke deploy_unicorn --buckets=my-tibanna-test-bucket,my-tibanna-test-input-bucket
 
 Let's say you got the following message.
 
@@ -95,14 +89,9 @@ Let's say you got the following message.
     Tibanna usergroup default_6206 has been created on AWS.
 
 
-::
-
-    invoke deploy_tibanna --sfn-type=unicorn --usergroup=default_6206
-
 As an example you can try to run a test workflow as below.
 
 ::
 
     invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
-
 
