@@ -6,13 +6,6 @@ Command-line tools
 deploy_unicorn
 --------------
 
-To deploy Tibanna unicorn, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
-
-::
-
-    TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
-    AWS_ACCOUNT_NUMBER  # aws account number
-
 
 To create an instance of tibanna unicorn (step function + lambdas)
 
@@ -23,11 +16,13 @@ To create an instance of tibanna unicorn (step function + lambdas)
     # example <suffixname> : dev
 
 
-example
+To deploy Tibanna unicorn, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
 
 ::
 
-    invoke deploy_unicorn --suffix=dev2
+    TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
+    AWS_ACCOUNT_NUMBER  # aws account number
+
 
 
 run_workflow
