@@ -3,16 +3,131 @@ Command-line tools
 ==================
 
 
+deploy_unicorn
+--------------
+
+To deploy Tibanna unicorn, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
+
+::
+
+    TIBANNA_AWS_REGION  # aws region (e.g. us-east-1)
+    AWS_ACCOUNT_NUMBER  # aws account number
+
+
+To create an instance of tibanna unicorn (step function + lambdas)
+
+::
+
+    invoke deploy_unicorn [--suffix=<suffixname>]
+    # (use suffix for development version)
+    # example <suffixname> : dev
+
+
+example
+
+::
+
+    invoke deploy_unicorn --suffix=dev2
+
+
+run_workflow
+------------
+
+To run workflow
+
+::
+
+    invoke run_workflow --input-json=<input_json_file> [--sfn=<stepfunctionname>]
+    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+
+
+
+stat
+----
+
+To check status of workflows,
+
+::
+
+    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED]
+
+The output is a table (an example below)
+
+::
+
+    jobid	status	name	start_time	stop_time
+    2xPih7reR6FM	RUNNING md5_f6cf887b-fbd4-4d28-bc65-a31fbd114259	2018-08-15 17:45	2018-08-15 17:50
+    3hbkJB3hv92S	SUCCEEDED	hicprocessingbam_553a5376-0f24-4067-8eba-19d2c75751a6	2018-08-15 16:04	2018-08-15 16:09
+    UlkvH3gbBBA2	FAILED	repliseq-parta_2336e60a-4fce-420a-9d03-2f31a2a80cc2	2018-08-09 18:26	2018-08-09 19:01
+    j7hvisheBV27	SUCCEEDED	bwa-mem_7b0f737e-172d-447b-ba36-0a52bee8fb52	2018-08-09 18:44	2018-08-09 18:59
+
+
+rerun
+-----
+
+
+To rerun a failed job with the same input json
+
+::
+
+    invoke rerun --exec-arn=<stepfunctionrun_arn> [--sfn=<stepfunctionname>]
+    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+
+
+rerun_many
+----------
+
+To rerun many jobs that failed after a certain time point
+
+::
+    
+    invoke rerun_many [--sfn=<stepfunctionname>] \
+                      [--stopdate=<stopdate>] \
+                      [--stophour=<stophour>] \
+                      [--stopminute=<stopminute>] \
+                      [--sleeptime=<sleeptime>] \
+                      [--offset=<offset>] \
+                      [--status=<status>]
+    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+    # <stopdate> e.g. '14Feb2018'
+    # <stophour> e.g. 14 (24-hour format, EST by default, the time zone can be changed using --offset)
+    # <stopminute> e.g. 30 (default 0)
+    # <sleeptime> seconds between reruns (eefault 5)
+    # <offset> offset for hour (for a different time zone) (default 5, consistent with EST)
+    # <status> default 'FAILED', to collect and rerun only failed jobs
+    
+    # example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
+    # This example will rerun all failed jobs of tibanna_pony step function that failed after 3pm EST on Feb 14 2018.
+
+
+kill_all
+--------
+
+To kill all currently running jobs (killing only step functions not the EC2 instances)
+
+::
+
+    invoke kill_all [--sfn=<stepfunctionname>]
+    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev, etc. If not specified, default value is taken from environmental variable TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental variable is not set, it uses name 'tibanna_pony'.
+
+
+
 setup_tibanna_env
 -----------------
-To set up environment on AWS as admin, use `invoke setup_tibanna_env`.
+
+- Advanced user only
+
+To set up environment on AWS without deploying tibanna, use `invoke setup_tibanna_env`.
 
 
 
 deploy_tibanna
 ---------------
 
-To deploy Tibanna, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
+- Advanced user only
+
+This function deploys either Tibanna unicorn or tibanna pony (default pony).
+You need the following environmental variables set on your local machine from which you're deploying Tibanna.
 
 ::
 
@@ -58,7 +173,9 @@ This example creates a step function named tibanna_unicorn_dev that uses a set o
 deploy_core
 -----------
 
-To deploy lambda functions (use suffix for development version lambdas)
+- Advanced user only
+
+To deploy only lambda functions without deploying the step function (use suffix for development version lambdas)
 
 ::
     
@@ -73,71 +190,11 @@ To deploy lambda functions (use suffix for development version lambdas)
 
 
 
-run_workflow
-------------
-
-To run workflow
-
-::
-
-    invoke run_workflow --input-json=<input_json_file> [--workflow=<stepfunctionname>]
-    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or any tibanna step function name that was created by the create_workflow command.
-
-
-For more detail, see https://github.com/4dn-dcic/tibanna/blob/master/tutorials/tibanna_unicorn.md#set-up-aws-cli
-
-
-
-rerun
------
-
-
-To rerun a failed job with the same input json
-
-::
-
-    invoke rerun --exec-arn=<stepfunctionrun_arn> [--workflow=<stepfunctionname>]
-    # <stepfunctionname> may be one of tibanna_pony, tibanna_unicorn or tibanna_pony-dev
-
-
-rerun_many
-----------
-
-To rerun many jobs that failed after a certain time point
-
-::
-    
-    invoke rerun_many [--workflow=<stepfunctionname>] \
-                      [--stopdate=<stopdate>] \
-                      [--stophour=<stophour>] \
-                      [--stopminute=<stopminute>] \
-                      [--sleeptime=<sleeptime>] \
-                      [--offset=<offset>] \
-                      [--status=<status>]
-    # <stepfunctionname> may be one of tibanna_pony (default), tibanna_unicorn or tibanna_pony-dev
-    # <stopdate> e.g. '14Feb2018'
-    # <stophour> e.g. 14 (24-hour format, EST by default, the time zone can be changed using --offset)
-    # <stopminute> e.g. 30 (default 0)
-    # <sleeptime> seconds between reruns (eefault 5)
-    # <offset> offset for hour (for a different time zone) (default 5, consistent with EST)
-    # <status> default 'FAILED', to collect and rerun only failed jobs
-    
-    # example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
-    # This example will rerun all failed jobs of tibanna_pony step function that failed after 3pm EST on Feb 14 2018.
-
-
-kill_all
---------
-
-To kill all currently running jobs (killing only step functions not the EC2 instances)
-
-::
-
-    invoke kill_all [--workflow=<stepfunctionname>]
-
 
 test
 ----
+
+- Advanced user only
 
 Running tests on the current repo
 
