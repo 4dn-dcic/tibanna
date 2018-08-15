@@ -7,8 +7,8 @@
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "",
       "shutdown_min" : 30,
-      "copy_to_s3" : true,
-      "launch_instance" : true,
+      
+      
       "log_bucket": "tibanna-output",
 
       "key_name": "4dn-encode"

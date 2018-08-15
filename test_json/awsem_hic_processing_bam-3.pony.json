@@ -39,8 +39,8 @@
     "ebs_iops": 500,
     "shutdown_min": "120",
     "instance_type": "c3.8xlarge",
-    "copy_to_s3": true,
-    "launch_instance": true,
+    
+    
     "password": "hahaha",
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode"

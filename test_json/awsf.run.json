@@ -36,7 +36,7 @@
     "config": {
     
         "EBS_optimized": false, 
-        "copy_to_s3": true, 
+         
         "ebs_iops": 500, 
         "ebs_size": 20, 
         "ebs_type": "io1", 
@@ -44,7 +44,7 @@
         "job_tag": "md5", 
         "json_bucket": "4dn-aws-pipeline-run-json", 
         "json_dir": "/tmp/json", 
-        "launch_instance": true, 
+         
         "outbucket": null, 
         "password": "hahaha", 
         "shutdown_min": 30, 

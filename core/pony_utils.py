@@ -573,10 +573,6 @@ def make_input(env, workflow, object_key, uuid):
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "ami_id": "ami-cfb14bb5",
-                "copy_to_s3": True,
-                "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
-                "launch_instance": True,
                 "password": "thisisnotmypassword",
                 "log_bucket": "tibanna-output",
                 "key_name": ""

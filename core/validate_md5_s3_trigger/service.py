@@ -151,8 +151,6 @@ def _make_input(env, bucket, workflow, object_key, uuid, run_name):
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
                 "shutdown_min": 30,
-                "copy_to_s3": True,
-                "launch_instance": True,
                 "password": "thisisnotmypassword",
                 "log_bucket": "tibanna-output",
                 "key_name": ""

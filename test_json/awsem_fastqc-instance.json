@@ -6,8 +6,8 @@
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha",
       "shutdown_min" : "300",
-      "copy_to_s3" : true,
-      "launch_instance" : true,
+      
+      
       "log_bucket": "tibanna-output"
     },
     "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",

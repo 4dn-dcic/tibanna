@@ -17,10 +17,10 @@
     "ebs_iops": 500,
     "shutdown_min": "30",
     "ebs_type": "io1",
-    "copy_to_s3": true,
+    
 
     "key_name": "4dn-encode",
-    "launch_instance": true,
+    
     "password": "hahaha",
     "log_bucket": "tibanna-output"
   },

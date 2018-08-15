@@ -9,8 +9,8 @@
       "json_bucket": "4dn-aws-pipeline-run-json",
       "EBS_optimized" : false,
       "shutdown_min" : "now",
-      "copy_to_s3" : true,
-      "launch_instance" : true,
+      
+      
       "log_bucket": "tibanna-output"
     },
     "args" : {

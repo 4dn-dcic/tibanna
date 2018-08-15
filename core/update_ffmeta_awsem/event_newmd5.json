@@ -73,10 +73,10 @@
     "shutdown_min": 30,
     "instance_type": "t2.nano",
 
-    "copy_to_s3": true,
+    
     "job_tag": "md5",
     "userdata_dir": "/tmp/userdata",
-    "launch_instance": true,
+    
     "password": "hahaha",
     "log_bucket": "tibanna-output"
   },

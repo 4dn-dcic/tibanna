@@ -89,11 +89,11 @@
       "instance_type": "t2.micro",
       "public_postrun_json": true,
       "ebs_type": "io1",
-      "copy_to_s3": true,
+      
       "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
       "job_tag": "md5",
       "userdata_dir": "/tmp/userdata",
-      "launch_instance": true,
+      
       "log_bucket": "tibanna-output"
     },
     "commands": [
@@ -169,10 +169,10 @@
     "instance_type": "t2.micro",
     "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
     "job_tag": "md5",
-    "copy_to_s3": true,
+    
     "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
     "json_bucket": "4dn-aws-pipeline-run-json",
-    "launch_instance": true,
+    
     "ami_id": "ami-31caa14e",
     "log_bucket": "tibanna-output",
     "public_postrun_json": true

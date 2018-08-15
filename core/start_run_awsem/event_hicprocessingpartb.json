@@ -8,8 +8,8 @@
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "hahaha",
       "shutdown_min" : "120",
-      "copy_to_s3" : true,
-      "launch_instance" : true,
+      
+      
       "log_bucket": "tibanna-output"
     },
     "_tibanna": {

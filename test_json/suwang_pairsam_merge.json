@@ -30,9 +30,9 @@
     "ebs_iops": 20000,
     "shutdown_min": 30,
     "ebs_type": "io1",
-    "copy_to_s3": true,
+    
     "key_name": "",
-    "launch_instance": true,
+    
     "password": "dragonglass",
     "log_bucket": "suwang"
   },
