@@ -487,7 +487,7 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
 @task
 def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets='', no_setenv=False):
     deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', version=version, tests=False,
-                   setup=not no_setup, buckets=buckets, setend=not no_setenv)
+                   setup=not no_setup, buckets=buckets, setenv=not no_setenv)
 
 
 @task
