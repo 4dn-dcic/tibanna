@@ -51,10 +51,10 @@ The output is a table (an example below)
 ::
 
     jobid	status	name	start_time	stop_time
-    2xPih7reR6FM	RUNNING md5_f6cf887b-fbd4-4d28-bc65-a31fbd114259	2018-08-15 17:45	2018-08-15 17:50
-    3hbkJB3hv92S	SUCCEEDED	hicprocessingbam_553a5376-0f24-4067-8eba-19d2c75751a6	2018-08-15 16:04	2018-08-15 16:09
-    UlkvH3gbBBA2	FAILED	repliseq-parta_2336e60a-4fce-420a-9d03-2f31a2a80cc2	2018-08-09 18:26	2018-08-09 19:01
-    j7hvisheBV27	SUCCEEDED	bwa-mem_7b0f737e-172d-447b-ba36-0a52bee8fb52	2018-08-09 18:44	2018-08-09 18:59
+    2xPih7reR6FM	RUNNING md5	2018-08-15 17:45	2018-08-15 17:50
+    3hbkJB3hv92S	SUCCEEDED	hicprocessingbam	2018-08-15 16:04	2018-08-15 16:09
+    UlkvH3gbBBA2	FAILED	repliseq-parta	2018-08-09 18:26	2018-08-09 19:01
+    j7hvisheBV27	SUCCEEDED	bwa-mem	2018-08-09 18:44	2018-08-09 18:59
 
 
 rerun
