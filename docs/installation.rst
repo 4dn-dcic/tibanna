@@ -15,13 +15,15 @@ Install Tibanan on your local machine or server from which you want to send comm
 
 ::
 
-    # install tibanna package
+    # create a virtual environment with pip 9.0.3 (or 10.0.1)
     virtualenv -p python2.7 ~/venv/tibanna
     source ~/venv/tibanna/bin/activate
-    
-    # install pip 9.0.3 (or 10.0.1)
     python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
-    
+  
+  
+::
+
+    # installing tibanna package
     git clone https://github.com/4dn-dcic/tibanna
     cd tibanna
     pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
