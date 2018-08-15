@@ -5,9 +5,9 @@ from core import utils
 
 def handler(event, context):
     env_name = event['env_name']
-    workflow = event.get('step_function_name')
-    if workflow:
-        res = utils.run_workflow(event, env=env_name, workflow=workflow)
+    sfn = event.get('step_function_name')
+    if sfn:
+        res = utils.run_workflow(event, env=env_name, sfn=sfn)
     else:
         res = utils.run_workflow(event, env=env_name)
 

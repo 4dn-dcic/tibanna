@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from core.utils import _tibanna_settings, WORKFLOW_NAME
+from core.utils import _tibanna_settings
+from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow
 from core.pony_utils import Tibanna, get_format_extension_map
 from dcicutils.ff_utils import get_metadata
@@ -20,12 +21,12 @@ def handler(event, context):
         if status != 'to be uploaded by workflow':
             # for extra file-triggered md5 run, status check is skipped.
             input_json['input_files'][0]['format_if_extra'] = extra_file_format
-            response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
+            response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
     else:
         # only run if status is uploading...
         if status == 'uploading' or event.get('force_run'):
             # trigger the step function to run
-            response = run_workflow(workflow=WORKFLOW_NAME, input_json=input_json)
+            response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
         else:
             return {'info': 'status is not uploading'}
 
