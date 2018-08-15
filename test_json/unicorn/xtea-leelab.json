@@ -41,8 +41,8 @@
     "ebs_iops": "",
     "shutdown_min": 30,
     "instance_type": "c4.2xlarge",
-    "copy_to_s3": true,
-    "launch_instance": true,
+    
+    
     "password": "",
     "log_bucket": "leelab-tibanna-log",
     "key_name": "leelab-aws-simon"

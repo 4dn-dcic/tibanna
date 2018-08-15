@@ -30,10 +30,8 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": "",
     "ebs_iops": 500,
-    "shutdown_min": 120,
+    "shutdown_min": 30,
     "instance_type": "",
-    
-    
     "password": "",
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode"
