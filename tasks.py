@@ -11,6 +11,7 @@ import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.ec2_utils import AWS_S3_ROLE_NAME
 from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
+from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna
@@ -438,13 +439,13 @@ def publish(ctx, test=False):
 
 
 @task
-def run_workflow(ctx, input_json='', workflow=''):
+def run_workflow(ctx, input_json='', sfn=''):
     with open(input_json) as input_file:
         data = json.load(input_file)
-        if workflow == '':
-            resp = _run_workflow(data)
+        if sfn == '':
+            resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
         else:
-            resp = _run_workflow(data, workflow=workflow)
+            resp = _run_workflow(data, sfn=sfn)
         run('open %s' % resp[_tibanna]['url'])
 
 
@@ -464,25 +465,29 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 @task
 def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False,
-                   setup=False, buckets=''):
+                   setup=False, buckets='', setenv=False):
     if setup:
         usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
     print("creating a new step function...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
+    if setenv:
+        step_function_name = res.get('stateMachineArn').split(':')[7]
+        os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
         deploy_core(ctx, 'all', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
     else:
         deploy_core(ctx, 'unicorn', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
+    return step_function_name
 
 
 @task
-def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets=''):
+def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets='', no_setenv=False):
     deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', version=version, tests=False,
-                   setup=not no_setup, buckets=buckets)
+                   setup=not no_setup, buckets=buckets, setend=not no_setenv)
 
 
 @task
@@ -522,19 +527,19 @@ def notebook(ctx):
 
 
 @task
-def rerun(ctx, exec_arn, workflow='tibanna_pony'):
+def rerun(ctx, exec_arn, sfn='tibanna_pony'):
     """ rerun a specific job"""
-    _rerun(exec_arn, workflow=workflow)
+    _rerun(exec_arn, sfn=sfn)
 
 
 @task
-def kill_all(ctx, workflow='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER):
+def kill_all(ctx, sfn='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER):
     """ killing all the running jobs"""
-    _kill_all(workflow=workflow, region=region, acc=acc)
+    _kill_all(sfn=sfn, region=region, acc=acc)
 
 
 @task
-def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
+def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=5, sleeptime=5, status='FAILED'):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour is in EST. This can be changed by setting a different offset (default 5)
@@ -544,5 +549,5 @@ def rerun_many(ctx, workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     rerun_many('tibanna_pony-dev')
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
-    _rerun_many(workflow=workflow, stopdate=stopdate, stophour=stophour,
+    _rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
                 stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)

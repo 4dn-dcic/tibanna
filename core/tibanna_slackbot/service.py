@@ -7,7 +7,7 @@ import random
 
 # from base64 import b64decode
 from urlparse import parse_qs
-from core.utils import run_workflow, _tibanna, WORKFLOW_NAME
+from core.utils import run_workflow, _tibanna, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 
 # ENCRYPTED_EXPECTED_TOKEN = os.environ['kmsEncryptedToken']
@@ -51,7 +51,7 @@ def run_wf(command):
     logger.info("in run_wf ars are %s" % args)
     # some defaults stuff here
     if args['workflow'].startswith("hic_parta"):
-        args['workflow'] = WORKFLOW_NAME
+        args['workflow'] = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
         args['input_json'] = test_hic_data()
     else:
         return not_sure()

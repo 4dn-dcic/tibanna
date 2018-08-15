@@ -52,7 +52,7 @@ def post_random_file(bucket, ff_key):
     return newfile
 
 
-def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony', env='webdev'):
+def testrun_md5_input_json_w_extra_file_object_name(env='webdev'):
     """Creates a random file object with no md5sum/content_md5sum and run md5 workflow.
     It waits for 6 mintues till the workflow run finishes and checks the input file object
     has been updated.
@@ -96,7 +96,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
         "output_bucket": bucket,
         "wfr_meta": {"notes": "extra file md5 trigger test from test_webdev.py"}
     }
-    resp = run_workflow(input_json, workflow=workflow_name)
+    resp = run_workflow(input_json)
     print(resp)
 
     # check result
@@ -116,7 +116,7 @@ def testrun_md5_input_json_w_extra_file_object_name(workflow_name='tibanna_pony'
     patch_metadata({'status': 'deleted'}, wfr_uuid, key=ff_key)
 
 
-def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
+def testrun_md5(env='webdev'):
     """Creates a random file object with no md5sum/content_md5sum and run md5 workflow.
     It waits for 6 mintues till the workflow run finishes and checks the input file object
     has been updated.
@@ -158,7 +158,7 @@ def testrun_md5(workflow_name='tibanna_pony', env='webdev'):
         "output_bucket": bucket,
         "wfr_meta": {"notes": "processed file md5 trigger test from test_webdev.py"}
     }
-    resp = run_workflow(input_json, workflow=workflow_name)
+    resp = run_workflow(input_json)
     print(resp)
 
     # check result
