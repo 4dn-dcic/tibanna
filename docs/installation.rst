@@ -58,19 +58,25 @@ Then, set up buckets and user group permission for Tibanna as below.
     # add all the buckets your input/output files and log files will go to. The buckets must already exist.
 
 
-The above command will first create a usergroup that shares the permission to use a single tibanna environment. Then, it will deploy a tibanna instance (step function / lambda). The user group created will be printed out on the screen after the command. (e.g. as below).
+The above command will first create a usergroup that shares the permission to use a single tibanna environment. Then, it will deploy a tibanna instance (step function / lambda). The name of the tibanna step function is added to your ``~/.bashrc`` file. Check that you can see the following line in the ``~/.bashrc`` file.
 
 ::
 
-    Tibanna usergroup default_6206 has been created on AWS.
+    export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=tibanna_unicorn_<usergroup_name>
 
+
+To set this environmental variable,
+
+::
+
+    source ~/.bashrc
 
 
 You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group.
 
 ::
 
-    invoke run_workflow --workflow=tibanna_unicorn_<usergroup> --input-json=<input_json_for_a_workflow_run>
+    invoke run_workflow --input-json=<input_json_for_a_workflow_run>
 
 
 Example
@@ -82,16 +88,17 @@ Let's try setting up Tibanna that uses public buckets ``my-tibanna-test-bucket``
 
     invoke deploy_unicorn --buckets=my-tibanna-test-bucket,my-tibanna-test-input-bucket
 
-Let's say you got the following message.
+
+Export the environmental variable for Tibanna step function name.
 
 ::
 
-    Tibanna usergroup default_6206 has been created on AWS.
+    source ~/.bashrc
 
 
 As an example you can try to run a test workflow as below.
 
 ::
 
-    invoke run_workflow --workflow=tibanna_unicorn_default_6206 --input-json=test_json/my_test_tibanna_bucket.json
+    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
 
