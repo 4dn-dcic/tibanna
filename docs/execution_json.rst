@@ -150,8 +150,6 @@ config
 
 :ebs_iops: 500
 :ebs_type: io1
-:copy_to_s3: ``true``
-:launch_instance: ``true``
 
 
 
@@ -161,20 +159,6 @@ Example input json
 ::
 
     {
-      "config": {
-        "ebs_size": 0,
-        "json_bucket": "suwang",
-        "EBS_optimized": "",
-        "ebs_iops": 500,
-        "shutdown_min": 30,
-        "instance_type": "",
-        "ebs_type": "io1",
-        "copy_to_s3": true,
-        "launch_instance": true,
-        "password": "whateverpasswordworks",
-        "log_bucket": "suwang",
-        "key_name": ""
-      },
       "args": {
         "app_name": "pairsam-parse-sort",
         "app_version": "0.2.0"
@@ -202,6 +186,18 @@ Example input json
           "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
         },
         "secondary_output_target": {}
+      },
+      "config": {
+        "ebs_size": 0,
+        "json_bucket": "suwang",
+        "EBS_optimized": "",
+        "ebs_iops": 500,
+        "shutdown_min": 30,
+        "instance_type": "",
+        "ebs_type": "io1",
+        "password": "whateverpasswordworks",
+        "log_bucket": "suwang",
+        "key_name": ""
       }
     }
 
