@@ -476,6 +476,8 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
         print(res.get('stateMachineArn').split(':'))
         step_function_name = res.get('stateMachineArn').split(':')[6]
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
+        with open(os.getenv('HOME') + "/.bashrc", "a") as outfile: # 'a' stands for "append"
+            outfile.write("export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
