@@ -38,11 +38,11 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
     aws s3 cp s3://<tibanna_lob_bucket_name>/<jobid>.log .
 
 
-Advanced monitoring through ssh
+Detailed monitoring through ssh
 +++++++++++++++++++++++++++++++
 
 
-You can also ssh into your running instance. The 'instance_ip' field in the 'input' of 'CheckTaskAwsem' contains the IP.
+You can also ssh into your running instance to check more details. The 'instance_ip' field in the 'input' of 'CheckTaskAwsem' contains the IP.
 
 If your CWL version is draft-3 (AMI is based on Amazon Linux)
 
@@ -58,6 +58,23 @@ If your CWL version is v1 (AMI is based on ubuntu)
 
 
 The password is the password you entered as part of the input json (inside 'config' field, in this case, 'whateverpasswordworks') The purpose of the ssh is to monitor things, so refrain from doing various things there, which could interfere with the run. It is recommended, unless you're a developer, to use the log file than ssh.
+
+On the instance, one can check the following, for example.
+
+:/data1/input/:
+  - input files
+
+:/data1/tmp*:
+  - temp/intermediate files (need sudo access)
+
+:/data1/output/:
+  - output files (need sudo access)
+
+:top: 
+  - to see what processes are running and how much cpu/memory is being used
+
+:ps -fe:
+  - to see what processes are running, in more detail
 
 
 Console
