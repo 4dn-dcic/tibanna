@@ -175,10 +175,10 @@
         "shutdown_min": "30",
         "instance_type": "",
 
-        "copy_to_s3": true,
+        
 
         "key_name": "4dn-encode",
-        "launch_instance": true,
+        
         "password": "hahaha",
         "log_bucket": "tibanna-output"
     },

@@ -193,10 +193,10 @@
     "shutdown_min": 120,
     "instance_type": "",
 
-    "copy_to_s3": true,
+    
 
     "key_name": "",
-    "launch_instance": true,
+    
     "password": "dragonfly",
     "log_bucket": "tibanna-output"
   },
