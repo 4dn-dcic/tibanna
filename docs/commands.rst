@@ -3,6 +3,9 @@ Command-line tools
 ==================
 
 
+Basic_commands
+++++++++++++++
+
 deploy_unicorn
 --------------
 
@@ -107,11 +110,12 @@ To kill all currently running jobs (killing only step functions not the EC2 inst
 
 
 
-Advanced_users
---------------
+Advanced_commands
++++++++++++++++++
+
 
 setup_tibanna_env
-+++++++++++++++++
+-----------------
 
 - Advanced user only
 
@@ -120,7 +124,7 @@ To set up environment on AWS without deploying tibanna, use `invoke setup_tibann
 
 
 deploy_tibanna
-++++++++++++++
+--------------
 
 - Advanced user only
 
@@ -169,7 +173,7 @@ This example creates a step function named tibanna_unicorn_dev that uses a set o
 
 
 deploy_core
-+++++++++++
+-----------
 
 - Advanced user only
 
@@ -190,7 +194,7 @@ To deploy only lambda functions without deploying the step function (use suffix 
 
 
 test
-++++
+----
 
 - Advanced user only
 
