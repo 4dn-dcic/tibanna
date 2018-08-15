@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from core import ec2_utils as utils
+from core import ec2_utils
 from core.utils import powerup, check_dependency
 import os
 
@@ -83,11 +83,11 @@ def handler(event, context):
             os.environ.get('TIBANNA_REPO_NAME') + '/' + \
             os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf_cwl_draft3/'
 
-    utils.update_config(cfg, args['app_name'],
-                        args['input_files'], args['input_parameters'])
+    ec2_utils.update_config(cfg, args['app_name'],
+                            args['input_files'], args['input_parameters'])
 
     # create json and copy to s3
-    jobid = utils.create_json(event, '')
+    jobid = ec2_utils.create_json(event)
 
     # profile
     if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
@@ -98,8 +98,9 @@ def handler(event, context):
         profile = None
 
     # launch instance and execute workflow
-    launch_instance_log = utils.launch_instance(cfg, jobid, profile=profile)
+    launch_instance_log = ec2_utils.launch_instance(cfg, jobid, profile=profile)
 
-    event.update({'jobid': jobid})
+    if 'jobid' not in event:
+        event.update({'jobid': jobid})
     event.update(launch_instance_log)
     return(event)

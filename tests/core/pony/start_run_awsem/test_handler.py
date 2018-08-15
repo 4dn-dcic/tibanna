@@ -23,6 +23,7 @@ def test_start_awsem_handler(run_awsem_event_data):
     assert 'notes' in res['ff_meta']
     assert 'award' in res['ff_meta']
     assert res['ff_meta']['award'] == '/awards/1U01DA040582-01/'
+    assert res['jobid'] == 'somejobid'
 
 
 @valid_env

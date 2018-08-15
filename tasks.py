@@ -10,8 +10,9 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.ec2_utils import AWS_S3_ROLE_NAME
+from core.ec2_utils import create_jobid
 from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
-from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
 from core.utils import run_workflow as _run_workflow
 from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna
@@ -439,13 +440,15 @@ def publish(ctx, test=False):
 
 
 @task
-def run_workflow(ctx, input_json='', sfn=''):
+def run_workflow(ctx, input_json='', sfn='', jobid=''):
+    if not jobid:
+        jobid = create_jobid()
     with open(input_json) as input_file:
         data = json.load(input_file)
         if sfn == '':
-            resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+            resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=jobid)
         else:
-            resp = _run_workflow(data, sfn=sfn)
+            resp = _run_workflow(data, sfn=sfn, jobid=jobid)
         run('open %s' % resp[_tibanna]['url'])
 
 
@@ -554,3 +557,35 @@ def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
     """
     _rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
                 stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
+
+
+@task
+def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
+    """status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"""
+    args = {
+        'stateMachineArn': STEP_FUNCTION_ARN(sfn),
+        'maxResults': 100
+    }
+    if status:
+        args['statusFilter'] = status
+    res = dict()
+    client = boto3.client('stepfunctions')
+    print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
+    while True:
+        if 'nextToken' in res:
+            res= client.list_executions(nextToken=res['nextToken'], **args)
+        else:
+            res= client.list_executions(**args)
+        if 'executions' not in res or not res['executions']:
+            break
+        for exc in res['executions']:
+            desc = client.describe_execution(executionArn=exc['executionArn'])
+            jobid = json.loads(desc['input']).get('jobid', 'no jobid')
+            status = exc['status']
+            name = exc['name']
+            start_time = exc['startDate'].strftime("%Y-%m-%d %H:%M")
+            if 'stopDate' in exc:
+                stop_time = exc['stopDate'].strftime("%Y-%m-%d %H:%M")
+            else:
+                stop_time = ''
+            print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))

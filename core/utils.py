@@ -161,7 +161,7 @@ def get_exec_arn(sfn, run_name):
 
 
 def run_workflow(input_json, accession='', sfn='tibanna_pony',
-                 env='fourfront-webdev'):
+                 env='fourfront-webdev', jobid=None):
     '''
     accession is unique name that we be part of run id
     '''
@@ -181,6 +181,10 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     # calculate what the url will be
     url = "%s%s" % (base_url, arn)
     input_json[_tibanna]['url'] = url
+
+    # add jobid
+    if jobid:
+        input_json['jobid'] = jobid
 
     aws_input = json.dumps(input_json)
     print("about to start run %s" % run_name)

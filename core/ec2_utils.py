@@ -91,11 +91,13 @@ def read_config(CONFIG_FILE, CONFIG_KEYS):
     return cfg
 
 
-def create_json(input_dict, jobid):
+def create_json(input_dict):
     # a is the final_args dictionary. json_dir is the output directory for the json file
 
     # create jobid here
-    if not jobid:
+    if 'jobid' in input_dict and input_dict.get('jobid'):
+        jobid = input_dict.get('jobid')
+    else:
         jobid = create_jobid()
 
     # start time
