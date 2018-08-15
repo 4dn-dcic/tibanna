@@ -1,5 +1,5 @@
 =====================
-Execution JSON Schema
+Input JSON Schema
 =====================
 
 The input json defines an individual execution. It has two parts, `args` and `config`. `args` contains information about pipeline, input files, output bucket, input parameters, etc. `config` has parameters about AWS such as instance type, EBS size, ssh password, etc.
