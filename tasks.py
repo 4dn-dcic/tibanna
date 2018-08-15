@@ -452,6 +452,8 @@ def run_workflow(ctx, input_json='', workflow=''):
 def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
+    if not buckets:
+        raise Exception("buckest must be specified to set up Tibanna environment.")
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION)
@@ -478,9 +480,9 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
 
 
 @task
-def deploy_unicorn(ctx, suffix=None, version=None, buckets=''):
+def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets=''):
     deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', version=version, tests=False,
-                   setup=True, buckets=buckets)
+                   setup=not no_setup, buckets=buckets)
 
 
 @task
