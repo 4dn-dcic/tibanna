@@ -21,8 +21,6 @@ def handler(event, context):
     password: password for ssh connection for user ec2-user
     EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
     shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
-    copy_to_s3: Upload or copy the json file to S3 bucket json_bucket
-    launch_instance: Launch instance based on the json file
     log_bucket: bucket for collecting logs (started, postrun, success, error, log)
     public_postrun_json (optional): whether postrun json should be made public (default false)
 
@@ -42,8 +40,7 @@ def handler(event, context):
 
     # read default variables in config
     CONFIG_FIELD = "config"
-    CONFIG_KEYS = ["EBS_optimized", "shutdown_min", "copy_to_s3",
-                   "instance_type", "ebs_size", "launch_instance", "key_name",
+    CONFIG_KEYS = ["EBS_optimized", "shutdown_min", "instance_type", "ebs_size", "key_name",
                    "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["cwl_main_filename", "cwl_child_filenames", "app_name", "app_version",
@@ -101,8 +98,7 @@ def handler(event, context):
         profile = None
 
     # launch instance and execute workflow
-    if cfg.get('launch_instance'):
-        launch_instance_log = utils.launch_instance(cfg, jobid, profile=profile)
+    launch_instance_log = utils.launch_instance(cfg, jobid, profile=profile)
 
     event.update({'jobid': jobid})
     event.update(launch_instance_log)

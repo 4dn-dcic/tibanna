@@ -79,10 +79,10 @@
     "shutdown_min": "300",
     "instance_type": "t2.micro",
     "job_tag": "fastqc-0-11-4-1",
-    "copy_to_s3": true,
+    
 
     "key_name": "4dn-encode",
-    "launch_instance": true,
+    
 
     "log_bucket": "tibanna-output"
   },

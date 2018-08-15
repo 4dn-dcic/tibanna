@@ -28,8 +28,8 @@
     "ebs_iops": 500,
     "shutdown_min": 120,
     "instance_type": "t2.micro",
-    "copy_to_s3": true,
-    "launch_instance": true,
+    
+    
     "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
     "key_name": ""

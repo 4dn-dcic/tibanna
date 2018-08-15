@@ -28,8 +28,8 @@
     "ebs_iops": 500,
     "shutdown_min": 120,
     "instance_type": "",
-    "copy_to_s3": true,
-    "launch_instance": true,
+    
+    
     "password": "dragonfly",
     "log_bucket": "soo2-tibanna-log",
     "key_name": ""

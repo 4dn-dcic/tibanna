@@ -102,7 +102,6 @@ def create_json(input_dict, jobid):
     start_time = get_start_time()
 
     a = input_dict.get('args')
-    copy_to_s3 = input_dict.get('config').get('copy_to_s3')
     json_dir = input_dict.get('config').get('json_dir')
     json_bucket = input_dict.get('config').get('json_bucket')
     log_bucket = input_dict.get('config').get('log_bucket')
@@ -167,20 +166,18 @@ def create_json(input_dict, jobid):
 
     # copy the json file to the s3 bucket
     logger.info(json_bucket)
-    logger.info(copy_to_s3)
 
     if json_bucket:
-        if copy_to_s3 is True:
-            runjson_file = "{jobid}.run.json".format(jobid=jobid)
-            try:
-                s3 = boto3.client('s3')
-            except Exception:
-                raise Exception("boto3 client error: Failed to upload run.json file {} to s3".format(runjson_file))
-            try:
-                s3.upload_file(json_dir + '/' + runjson_file, json_bucket, runjson_file)
-            except Exception as e:
-                raise Exception("file upload error: Failed to upload run.json file {} to s3 %s"
-                                .format(runjson_file) % e)
+        runjson_file = "{jobid}.run.json".format(jobid=jobid)
+        try:
+            s3 = boto3.client('s3')
+        except Exception:
+            raise Exception("boto3 client error: Failed to upload run.json file {} to s3".format(runjson_file))
+        try:
+            s3.upload_file(json_dir + '/' + runjson_file, json_bucket, runjson_file)
+        except Exception as e:
+            raise Exception("file upload error: Failed to upload run.json file {} to s3 %s"
+                            .format(runjson_file) % e)
 
     # print & retur JOBID
     print("jobid={}".format(jobid))

@@ -10,8 +10,8 @@
       "password": "hahaha",
       "EBS_optimized" : false,
       "shutdown_min" : "120",
-      "copy_to_s3" : true,
-      "launch_instance" : true,
+      
+      
       "log_bucket": "tibanna-output"
     },
     "_tibanna": {

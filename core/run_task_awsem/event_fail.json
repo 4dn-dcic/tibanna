@@ -29,9 +29,9 @@
     "ebs_iops": 500,
     "shutdown_min": 30,
     "instance_type": "",
-    "copy_to_s3": true,
+    
     "json_bucket": "some_random_json_bucket",
-    "launch_instance": true,
+    
     "password": "thisisnotmypassword",
     "log_bucket": "tibanna-output"
   },
