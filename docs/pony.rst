@@ -2,6 +2,19 @@
 Tibanna Pony for 4DN-DCIC
 =========================
 
+
+Example Tibanna setup for 4DN-DCIC
+----------------------------------
+
+If you're 4DN-DCIC, you could do the following. (already done)
+
+::
+
+    invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
+
+
+
+
 Webdev testing for Pony
 -----------------------
 
