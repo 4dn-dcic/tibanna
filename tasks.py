@@ -473,7 +473,8 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     if setenv:
-        step_function_name = res.get('stateMachineArn').split(':')[7]
+        print(res.get('stateMachineArn').split(':'))
+        step_function_name = res.get('stateMachineArn').split(':')[6]
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
     print(res)
     print("deploying lambdas...")
