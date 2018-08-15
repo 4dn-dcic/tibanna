@@ -452,16 +452,22 @@ def run_workflow(ctx, input_json='', workflow=''):
 def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
+    if not buckets:
+        raise Exception("buckest must be specified to set up Tibanna environment.")
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION)
     tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
     print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
+    return tibanna_usergroup
 
 
 @task
-def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False):
-    print("creating a new workflow...")
+def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False,
+                   setup=False, buckets=''):
+    if setup:
+        usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
+    print("creating a new step function...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
@@ -471,6 +477,12 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
         deploy_core(ctx, 'all', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
     else:
         deploy_core(ctx, 'unicorn', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
+
+
+@task
+def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets=''):
+    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', version=version, tests=False,
+                   setup=not no_setup, buckets=buckets)
 
 
 @task
