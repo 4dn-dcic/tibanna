@@ -61,20 +61,11 @@ The password is the password you entered as part of the input json (inside 'conf
 
 On the instance, one can check the following, for example.
 
-:/data1/input/:
-  - input files
-
-:/data1/tmp*:
-  - temp/intermediate files (need sudo access)
-
-:/data1/output/:
-  - output files (need sudo access)
-
-:top: 
-  - to see what processes are running and how much cpu/memory is being used
-
-:ps -fe:
-  - to see what processes are running, in more detail
+- ``/data1/input/`` : input files
+- ``/data1/tmp*`` : temp/intermediate files (need sudo access)
+- ``/data1/output/`` : output files (need sudo access)
+- ``top`` : to see what processes are running and how much cpu/memory is being used
+- ``ps -fe`` : to see what processes are running, in more detail
 
 
 Console
