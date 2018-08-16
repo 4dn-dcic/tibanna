@@ -1,0 +1,35 @@
+{
+  "config": {
+    "ebs_size": 500,
+    "json_bucket": "leelab-tibanna-log",
+    "EBS_optimized": true,
+    "ebs_iops": 500,
+    "shutdown_min": 10,
+    "instance_type": "c4.4xlarge",
+    "ebs_type": "io1",
+    "password": "",
+    "log_bucket": "leelab-tibanna-log",
+    "key_name": "leelab_aws_key"
+  },
+  "args": {
+    "app_name": "ru-estimator",
+    "app_version": "0.0.1",
+    "cwl_directory_url": "https://s3.amazonaws.com/leelab-datafiles/ru-estimator/cwl",
+    "cwl_main_filename": "main.cwl",
+    "cwl_child_filenames": ["download_ICGC.cwl","run_ru_estimator.cwl"],
+    "cwl_version": "v1",
+    "input_files": {
+    },
+    "secondary_files": {},
+    "input_parameters": {
+      "object_id": "a0b3ef89-975a-5357-9233-2f08606bbdcc"
+    },
+    "output_S3_bucket": "leelab-datafiles",
+    "output_target": {
+      "out_bam": "ICGC_bams/mini-4ab27de1aaaa7729fa18b39a6b09ae60.bam",
+      "out_bai": "ICGC_bams/mini-4ab27de1aaaa7729fa18b39a6b09ae60.bam.bai",
+      "out_res": "ICGC_bams/mini-4ab27de1aaaa7729fa18b39a6b09ae60_CSL_ASL.res"
+    },
+    "secondary_output_target": {}
+  }
+}
