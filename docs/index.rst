@@ -2,7 +2,45 @@
 Overview
 ========
 
-Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker-based pipelines to the AWS cloud. Tibanna is a main workflow management system used by the 4DN DCIC (4D Nucleome Data Coordination and Integration Center) and it is available for general users who want to run pipelines on the cloud.
+Tibanna is a software tool that helps you run genomic pipelines on the cloud.
+
+It is also used by 4DN-DCIC (4D Nucleome Data Coordination and Integration Center) to process data.
+
+
+What do I need to run pipelines using Tibanna?
+----------------------------------------------
+
+- Your pipeline
+- Your data
+- An Amazon Web Services (AWS) cloud account
+- Tibanna
+
+
+Pipeline
+++++++++
+
+- Your pipeline and dependencies must be pre-installed in a docker image
+- The commands to run your pipeline must be written in Common Workflow Language
+
+
+Data
+++++
+
+- Your data must be pre-uploaded to a permanent storage on the cloud (called S3 bucket).
+
+
+AWS cloud account
++++++++++++++++++
+
+- check https://aws.amazon.com/ 
+
+
+Tibanna
++++++++
+
+- Tibanna is open-source and can be found at https://github.com/4dn-dcic/tibanna
+- Once installed, tibanna can be run either as a set of commend-line tools or a set of python modules
+
 
 **Command-line tools**
 
@@ -18,7 +56,6 @@ Tibanna is a metadata-aware workflow engine that deploys and monitors CWL/Docker
     >>> from core.utils import run_workflow
     >>> run_workflow(input_json=run1)
 
-Tibanna is open-source and can be found at https://github.com/4dn-dcic/tibanna
 
 
 
