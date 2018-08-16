@@ -130,10 +130,6 @@ Input json
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-The following json file specifies input (argument name ``gzfile``, matching the name in CWL) ``somefastqfile.fastq.gz`` on bucket named ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
-
-We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory and costs $0.011600 hourly (free for a free-tier user for a limited number of hours).
-
 Let's name this json file ``md5_test_input.json``
 
 ::
@@ -173,6 +169,12 @@ Let's name this json file ``md5_test_input.json``
         "key_name": ""
       }
     }
+
+
+This json file specifies input (argument name ``gzfile``, matching the name in CWL) ``somefastqfile.fastq.gz`` on bucket named ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
+
+We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory and costs $0.011600 hourly (free for a free-tier user for a limited number of hours).
+
 
 
 Tibanna run
