@@ -92,7 +92,7 @@ To create your own, first you need to install docker on your (local) machine.
 CWL
 +++
 
-A CWL file could look as below. This CWL file can be found at https://github.com/4dn-dcic/tibanna/examples/md5/md5.cwl. 
+A CWL file could look as below. This CWL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.cwl. 
 To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
 To use your own CWL file, put this CWL file in a place where you can access through http, so that Tibanna can download this file to the cloud using ``wget`` command.
 
@@ -130,7 +130,7 @@ Input json
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-This json file can be found in https://github.com/4dn-dcic/tibanna/examples/md5/md5_test_input.json.
+This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_test_input.json.
 
 ::
 
@@ -138,7 +138,7 @@ This json file can be found in https://github.com/4dn-dcic/tibanna/examples/md5/
       "args": {
         "app_name": "md5",
         "app_version": "v2"
-        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/examples/md5",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
         "cwl_main_filename": "md5.cwl",
         "cwl_child_filenames": [],
         "cwl_version": "v1",
