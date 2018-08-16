@@ -475,9 +475,9 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
+    print(res.get('stateMachineArn').split(':'))
+    step_function_name = res.get('stateMachineArn').split(':')[6]
     if setenv:
-        print(res.get('stateMachineArn').split(':'))
-        step_function_name = res.get('stateMachineArn').split(':')[6]
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
             outfile.write("export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
