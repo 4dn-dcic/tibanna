@@ -2,13 +2,15 @@
 Simple Example
 ==============
 
-Very simple example
--------------------
+A very simple example
+---------------------
 
+Pipeline
+++++++++
 
 Let's try a very simple pipeline that calculates md5sum of an input file. We write a script named ``run.sh`` that calculates two md5sum values for a gzipped input file, one for compressed and one for uncompressed content of the file. The script creates an output file named ``report`` that contains two md5sum values. If the file is not gzipped, it simply repeats a regular md5sum value twice.
 
-The script could look as below.
+The pipeline/script could look as below.
 
 ::
 
@@ -37,8 +39,14 @@ Docker image
 We already have a public docker image for this (``duplexa/md5:v2``) that contains script ``run.sh``. You can find it on Docker Hub: https://hub.docker.com/r/duplexa/md5/. If you want to use this public image, you can skip the following.
 
 To create your own, first you need to install docker on your (local) machine.
+
+
 1. First, create a directory (e.g. named ``md5``)
-2. Then, inside this directory create a file named  ``Dockerfile`` with the following content.
+
+2. Put the above ``run.sh`` script in this directory.
+
+3. Then, inside this directory create a file named  ``Dockerfile`` with the following content.
+
 
 ::
 
@@ -57,21 +65,21 @@ To create your own, first you need to install docker on your (local) machine.
     # default command
     CMD ["run.sh"]
 
-3. Then, build docker image. You can use the same image name (``duplexa/md5:v2``) for this step, but it is recommended to replace ``duplexa`` with your preferred Docker Hub account name, to be able to push the image to Docker Hub later.
+4. Then, build docker image. You can use the same image name (``duplexa/md5:v2``) for this step, but it is recommended to replace ``duplexa`` with your preferred Docker Hub account name, to be able to push the image to Docker Hub later.
 
 ::
 
     docker build -t duplexa/md5:v2 .
 
 
-4. Check the image
+5. Check the image
 
 ::
 
     docker images
 
 
-5. Push the image to Docker Hub. You need an account to Docker Hub.
+6. Push the image to Docker Hub. You need an account to Docker Hub.
 
 ::
 
@@ -83,7 +91,9 @@ To create your own, first you need to install docker on your (local) machine.
 CWL
 +++
 
-A CWL file could look as below. This CWL file can be found at https://github.com/4dn-dcic/tibanna/examples/md5/md5.cwl. To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name. Put this CWL file in a place where you can access through http, so that Tibanna can download this file to the cloud using ``wget`` command.
+A CWL file could look as below. This CWL file can be found at https://github.com/4dn-dcic/tibanna/examples/md5/md5.cwl. 
+To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
+To use your own CWL file, put this CWL file in a place where you can access through http, so that Tibanna can download this file to the cloud using ``wget`` command.
 
 ::
 
