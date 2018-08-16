@@ -124,6 +124,14 @@ To use your own CWL file, put this CWL file in a place where you can access thro
 The pipeline is ready!
 
 
+Data
+++++
+
+For input data, let's use a file named ``somefastqfile.fastq.gz`` on a public bucket named ``my-tibanna-test-input-bucket``.
+
+(You could also upload your own file to your own bucket and set up Tibanna to access that bucket.)
+
+
 Input json
 ++++++++++
 
@@ -171,9 +179,9 @@ This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibann
     }
 
 
-This json file specifies input (argument name ``gzfile``, matching the name in CWL) ``somefastqfile.fastq.gz`` on bucket named ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
+This json file specifies input (argument name ``gzfile``, matching the name in CWL) as ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
 
-We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory and costs $0.011600 hourly (free for a free-tier user for a limited number of hours).
+We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
 
 
 
