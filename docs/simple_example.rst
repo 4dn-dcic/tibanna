@@ -130,7 +130,7 @@ Input json
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-Let's name this json file ``md5_test_input.json``
+This json file can be found in https://github.com/4dn-dcic/tibanna/examples/md5/md5_test_input.json.
 
 ::
 
@@ -204,7 +204,9 @@ To run Tibanna,
 
 ::
 
-    invoke run_workflow --input-json=md5_test_input.json
+    cd tibanna
+    invoke run_workflow --input-json=examples/md5/md5_test_input.json
+
 
 6. Check status
 
