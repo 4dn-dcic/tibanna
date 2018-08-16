@@ -1,7 +1,7 @@
 ---
 cwlVersion: v1.0
 inputs:
-- id: "#input_file"
+- id: "#gzfile"
   type:
   - File
   inputBinding:

@@ -1,12 +1,13 @@
-==============
-Simple Example
-==============
+=======================
+Simple Example Pipeline
+=======================
 
-A very simple example
----------------------
+md5
+---
 
-Pipeline
-++++++++
+
+Pipeline script
++++++++++++++++
 
 Let's try a very simple pipeline that calculates md5sum of an input file. We write a script named ``run.sh`` that calculates two md5sum values for a gzipped input file, one for compressed and one for uncompressed content of the file. The script creates an output file named ``report`` that contains two md5sum values. If the file is not gzipped, it simply repeats a regular md5sum value twice.
 
@@ -100,7 +101,7 @@ To use your own CWL file, put this CWL file in a place where you can access thro
     ---
     cwlVersion: v1.0
     inputs:
-    - id: "#input_file"
+    - id: "#gzfile"
       type:
       - File
       inputBinding:
@@ -118,4 +119,95 @@ To use your own CWL file, put this CWL file in a place where you can access thro
     - run.sh
     class: CommandLineTool
 
-    
+
+
+The pipeline is ready!
+
+
+Input json
+++++++++++
+
+
+To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
+
+The following json file specifies input (argument name ``gzfile``, matching the name in CWL) ``somefastqfile.fastq.gz`` on bucket named ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
+
+We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory and costs $0.011600 hourly (free for a free-tier user for a limited number of hours).
+
+Let's name this json file ``md5_test_input.json``
+
+::
+
+    {
+      "args": {
+        "app_name": "md5",
+        "app_version": "v2"
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/examples/md5",
+        "cwl_main_filename": "md5.cwl",
+        "cwl_child_filenames": [],
+        "cwl_version": "v1",
+        "input_files": {
+          "gzfile": {
+            "bucket_name": "my-tibanna-test-input-bucket",
+            "object_key": "somefastqfile.fastq.gz"
+          }
+        },
+        "secondary_files": {},
+        "input_parameters": {},
+        "output_S3_bucket": "my-tibanna-test-bucket",
+        "output_target": {
+          "report": "some_sub_dirname/my_first_md5_report"
+        },
+        "secondary_output_target": {}
+      },
+      "config": {
+        "ebs_size": 10,
+        "json_bucket": "my-tibanna-test-bucket",
+        "EBS_optimized": False,
+        "ebs_iops": 500,
+        "shutdown_min": 30,
+        "instance_type": "t2.micro",
+        "ebs_type": "io1",
+        "password": "whateverpasswordworks",
+        "log_bucket": "my-tibanna-test-bucket",
+        "key_name": ""
+      }
+    }
+
+
+Tibanna run
++++++++++++
+
+To run Tibanna,
+
+1. Sign up for AWS
+2. Install and configure ``awscli``
+
+  see Before_using_Tibanna_
+
+3. Install Tibanna on your local machine
+
+  see Installation_
+
+4. Deploy Tibanna (link it to the AWS account)
+
+  see Installation_
+
+
+.. _Before_using_Tibanna: https://tibanna.readthedocs.io/en/latest/startaws.html
+.. _Installation: https://tibanna.readthedocs.io/en/latest/installation.html
+
+
+5. Run workflow as below.
+
+::
+
+    invoke run_workflow --input-json=md5_test_input.json
+
+6. Check status
+
+::
+
+    invoke stat
+
+
