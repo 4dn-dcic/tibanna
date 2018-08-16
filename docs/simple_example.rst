@@ -137,7 +137,7 @@ This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibann
     {
       "args": {
         "app_name": "md5",
-        "app_version": "v2"
+        "app_version": "v2",
         "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
         "cwl_main_filename": "md5.cwl",
         "cwl_child_filenames": [],
@@ -159,7 +159,7 @@ This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibann
       "config": {
         "ebs_size": 10,
         "json_bucket": "my-tibanna-test-bucket",
-        "EBS_optimized": False,
+        "EBS_optimized": false,
         "ebs_iops": 500,
         "shutdown_min": 30,
         "instance_type": "t2.micro",
