@@ -22,8 +22,8 @@ What do I need to run pipelines using Tibanna?
 Pipeline
 ++++++++
 
-- Your pipeline and dependencies must be pre-installed in a docker image
-- The commands to run your pipeline must be written in Common Workflow Language
+- Your pipeline and dependencies must be pre-installed in a docker image (https://www.docker.com/)
+- The commands to run your pipeline must be written in Common Workflow Language (https://www.commonwl.org/)
 
 
 Data
