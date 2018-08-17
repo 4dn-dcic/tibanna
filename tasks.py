@@ -571,7 +571,7 @@ def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
     res = dict()
     client = boto3.client('stepfunctions')
     print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
-    res= client.list_executions(**args)
+    res = client.list_executions(**args)
     while True:
         if 'executions' not in res or not res['executions']:
             break
@@ -587,6 +587,6 @@ def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
                 stop_time = ''
             print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))
         if 'nextToken' in res:
-            res= client.list_executions(nextToken=res['nextToken'], **args)
+            res = client.list_executions(nextToken=res['nextToken'], **args)
         else:
             break
