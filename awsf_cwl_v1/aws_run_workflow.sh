@@ -56,6 +56,8 @@ export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
+# set profile
+echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 # first create an output bucket/directory
 touch $JOBID.job_started
@@ -80,27 +82,24 @@ send_log_regularly(){
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
 
-### start with a log under the home directory for ec2-user. Later this will be moved to the output directory, once the ebs is mounted.
+### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
 LOGFILE=$LOGFILE1
-cd /home/ec2-user/
+cd /home/ubuntu/
 touch $LOGFILE 
 exl date  ## start logging
 
 ### sshd configure for password recognition
--echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user
+-echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ubuntu
 -sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
--exl service sshd restart
+-exl service ssh restart
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
-  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ec2-user
+  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
   mv tmpp /etc/ssh/sshd_config
-  exl service sshd restart
+  exl service ssh restart
 fi
-
-# set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
@@ -110,7 +109,7 @@ exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chown -R ec2-user .
+exl chown -R ubuntu .
 exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
@@ -121,11 +120,9 @@ exl lsblk $TMPLOGFILE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
-exl chown -R ec2-user $EBS_DIR
+exl chown -R ubuntu $EBS_DIR
 exl chmod -R +x $EBS_DIR
 
-### restart docker so the mounting can take effect
-exl service docker restart
 
 ### create subdirectories under the mounted ebs directory and move log file into that output directory
 exl mkdir -p $LOCAL_OUTDIR
@@ -158,27 +155,13 @@ exl ls -lh /
 exl ls -lhR $EBS_DIR
 send_log
 
-### activate cwl-runner environment
-exl source /home/ec2-user/venv/cwl/bin/activate
-#exl source /home/ec2-user/venv/toil/bin/activate  # use toil instaed
-
 ### run command
 cwd0=$(pwd)
 cd $LOCAL_CWLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
-#pip install cwlref-runner --upgrade  ## temporary solution to enable --no-match-user option
-#yum install -y git gcc
-#git clone https://github.com/SooLee/cwltool
-#cd cwltool
-#pip install .
-#cd ..
 send_log_regularly &
-#exl cwltool --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 alias cwl-runner=cwltool
-#exlj cwl-runner --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
-exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $PRESERVED_ENV_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
-#exl cwl-runner $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
-deactivate
+exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
 cd $cwd0
 send_log 
 
@@ -210,7 +193,6 @@ then
 else
   exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
 fi
-
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
 
@@ -223,5 +205,3 @@ sudo shutdown -h $SHUTDOWN_MIN
 # (option 2)  ## This works only if the instance is given a proper permission (This is more standard but I never actually got it to work)
 #id=$(ec2-metadata -i|cut -d' ' -f2)
 #aws ec2 terminate-instances --instance-ids $id
- 
-
