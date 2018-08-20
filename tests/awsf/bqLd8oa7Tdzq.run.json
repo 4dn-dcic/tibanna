@@ -30,7 +30,10 @@
                 "memperthread": "2G", 
                 "nthreads": 4
             }, 
-            "Secondary_files_data": {}
+            "Secondary_files_data": {},
+            "Env": {
+                "TEST_ENV_TO_PASS": 1234
+            }
         }, 
         "JOBID": "bqLd8oa7Tdzq", 
         "Log": {

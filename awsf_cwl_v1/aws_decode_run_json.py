@@ -74,3 +74,9 @@ with open(env_filename, 'w') as f_env:
     f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
     f_env.write("OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
     f_env.write("PUBLIC_POSTRUN_JSON={}\n".format('1' if Dict["config"].get('public_postrun_json', False) else '0'))
+    env_preserv_str = ''
+    if "Env" in Dict["Job"]["Input"]:
+        for ev, val in Dict["Job"]["Input"]["Env"].iteritems():
+            f_env.write("{}={}\n".format(ev, val))
+            env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
+    f_env.write("PRESERVED_ENV_OPTION=\"{}\"\n".format(env_preserv_str))
