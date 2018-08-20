@@ -91,7 +91,7 @@ def read_config(CONFIG_FILE, CONFIG_KEYS):
     return cfg
 
 
-def create_json(input_dict):
+def create_json_dict(input_dict):
     # a is the final_args dictionary. json_dir is the output directory for the json file
 
     # create jobid here
@@ -104,8 +104,6 @@ def create_json(input_dict):
     start_time = get_start_time()
 
     a = input_dict.get('args')
-    json_dir = input_dict.get('config').get('json_dir')
-    json_bucket = input_dict.get('config').get('json_bucket')
     log_bucket = input_dict.get('config').get('log_bucket')
 
     # pre is a dictionary to be printed as a pre-run json file.
@@ -121,7 +119,8 @@ def create_json(input_dict):
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
                                  'Secondary_files_data': {},   # fill in later (below)
-                                 'Input_parameters': a['input_parameters']
+                                 'Input_parameters': a['input_parameters'],
+                                 'Env': a.get('input_env', {})
                         },
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
@@ -152,6 +151,14 @@ def create_json(input_dict):
     if 'key_name' in pre['config']:
         del(pre['config']['key_name'])
 
+    return pre
+
+
+def create_json(input_dict):
+    json_dir = input_dict.get('config').get('json_dir')
+    json_bucket = input_dict.get('config').get('json_bucket')
+    pre = create_json_dict(input_dict)
+    jobid = pre['Job']['JOBID']
     # writing to a json file
     json_filename = create_json_filename(jobid, json_dir)
     try:
