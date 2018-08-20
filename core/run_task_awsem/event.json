@@ -22,7 +22,8 @@
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
         "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
       }
-    }
+    },
+    "input_env": {"TESTENV": 1234}
   },
   "config": {
     "ebs_size": 0,

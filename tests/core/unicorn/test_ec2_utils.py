@@ -1,4 +1,11 @@
-from core.ec2_utils import update_config
+from core.ec2_utils import update_config, create_json_dict
+
+
+def test_create_json_dict(run_task_awsem_event_data):
+    data = run_task_awsem_event_data
+    json = create_json_dict(data)
+    assert json
+    assert json['Job']['Input']['Env']['TESTENV'] == 1234
 
 
 def test_update_config(run_task_awsem_event_data):
