@@ -161,7 +161,7 @@ cd $LOCAL_CWLDIR
 mkdir -p $LOCAL_CWL_TMPDIR
 send_log_regularly &
 alias cwl-runner=cwltool
-exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
+exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $PRESERVED_ENV_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
 cd $cwd0
 send_log 
 
@@ -205,4 +205,3 @@ sudo shutdown -h $SHUTDOWN_MIN
 # (option 2)  ## This works only if the instance is given a proper permission (This is more standard but I never actually got it to work)
 #id=$(ec2-metadata -i|cut -d' ' -f2)
 #aws ec2 terminate-instances --instance-ids $id
-

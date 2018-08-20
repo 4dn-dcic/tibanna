@@ -56,6 +56,7 @@ export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 
+
 # first create an output bucket/directory
 touch $JOBID.job_started
 aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
@@ -85,6 +86,10 @@ cd /home/ec2-user/
 touch $LOGFILE 
 exl date  ## start logging
 
+### sshd configure for password recognition
+-echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ec2-user
+-sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
+-exl service sshd restart
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
@@ -97,9 +102,6 @@ fi
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
-send_log
-echo "password=$PASSWORD" >> $LOGFILE
-cat .aws/config >> $LOGFILE
 
 ### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
@@ -174,7 +176,7 @@ send_log_regularly &
 #exl cwltool --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 alias cwl-runner=cwltool
 #exlj cwl-runner --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
-exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $MAIN_CWL $cwd0/$INPUT_YML_FILE
+exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $PRESERVED_ENV_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
 #exl cwl-runner $LOCAL_CWLDIR/$MAIN_CWL $cwd0/$INPUT_YML_FILE
 deactivate
 cd $cwd0
