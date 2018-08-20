@@ -1,6 +1,7 @@
 import boto3
 import json
 from core.utils import run_workflow as _run_workflow
+from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
 from datetime import datetime
 import time
 import os
@@ -38,7 +39,7 @@ def clear_awsem_template(awsem_template):
         awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
 
 
-def rerun(exec_arn, workflow='tibanna_pony', override_config=None, app_name_filter=None):
+def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None, app_name_filter=None):
     """rerun a specific job
     override_config : dictionary for overriding config (keys are the keys inside config)
         e.g. override_config = { 'instance_type': 't2.micro' }
@@ -63,10 +64,10 @@ def rerun(exec_arn, workflow='tibanna_pony', override_config=None, app_name_filt
         for k, v in override_config.iteritems():
             awsem_template['config'][k] = v
 
-    return(_run_workflow(awsem_template, workflow=workflow))
+    return(_run_workflow(awsem_template, sfn=sfn))
 
 
-def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
+def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=5, sleeptime=5, status='FAILED',
                region='us-east-1', acc='643366669028', override_config=None, app_name_filter=None):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
@@ -81,13 +82,12 @@ def rerun_many(workflow='tibanna_pony', stopdate='13Feb2018', stophour=13,
     stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
     stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M')
     client = boto3.client('stepfunctions')
-    stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
-    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter=status)
+    sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
     k = 0
     for exc in sflist['executions']:
         if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
-            rerun(exc['executionArn'], workflow=workflow,
+            rerun(exc['executionArn'], sfn=sfn,
                   override_config=override_config, app_name_filter=app_name_filter)
             time.sleep(sleeptime)
 
