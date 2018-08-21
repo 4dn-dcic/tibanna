@@ -11,10 +11,8 @@ from core.pony_utils import (
 import pytest
 from conftest import valid_env
 from ..unicorn.test_utils import awsem_error_fun
-import logging
+from core.utils import printlog
 import mock
-
-LOG = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -236,7 +234,7 @@ def test_merge_source_experiment(run_awsem_event_data):
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     res = merge_source_experiments(input_file['uuid'], tibanna.ff_keys, tibanna.env)
-    LOG.info(res)
+    printlog(res)
     assert 'fake_source_experiment' in res
 
 

@@ -12,6 +12,14 @@ from uuid import uuid4
 ###########################################
 
 
+LOG = logging.getLogger(__name__)
+
+
+def printlog(message):
+    print(message)
+    LOG.info(message)
+
+
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'

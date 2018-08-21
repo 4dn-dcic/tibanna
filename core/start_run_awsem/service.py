@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-import logging
 # import json
 import boto3
 from dcicutils import ff_utils
 from core.utils import powerup
 from core.utils import TibannaStartException
+from core.utils import printlog
 from core.pony_utils import (
     Tibanna,
     merge_source_experiments,
@@ -17,7 +17,6 @@ from core.pony_utils import (
 )
 import random
 
-LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
@@ -71,15 +70,13 @@ def real_handler(event, context):
                                     key=tibanna.ff_keys,
                                     ff_env=tibanna.env,
                                     add_on='frame=object')
-    print("workflow info  %s" % wf_meta)
-    LOG.info("workflow info  %s" % wf_meta)
+    printlog("workflow info  %s" % wf_meta)
     if 'error' in wf_meta.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from wf_meta
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
-        print(wf_meta.get(k))
-        LOG.info(wf_meta.get(k))
+        printlog(wf_meta.get(k))
         args[k] = wf_meta.get(k)
     if not args['cwl_child_filenames']:
         args['cwl_child_filenames'] = []
@@ -120,8 +117,7 @@ def real_handler(event, context):
         extra_meta=event.get('wfr_meta'),
     )
 
-    print("ff_meta is %s" % ff_meta.__dict__)
-    LOG.info("ff_meta is %s" % ff_meta.__dict__)
+    printlog("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
     ff_meta.post(key=tibanna.ff_keys)
@@ -249,10 +245,10 @@ def user_supplied_proc_file(user_supplied_output_files, arg_name, tibanna):
         return ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
                                          tibanna.env, return_data=True)
     else:
-        LOG.info("no output_files found in input_json matching arg_name")
-        LOG.info("user_supplied_output_files: %s" % str(user_supplied_output_files))
-        LOG.info("arg_name: %s" % str(arg_name))
-        LOG.info("tibanna is %s" % str(tibanna))
+        printlog("no output_files found in input_json matching arg_name")
+        printlog("user_supplied_output_files: %s" % str(user_supplied_output_files))
+        printlog("arg_name: %s" % str(arg_name))
+        printlog("tibanna is %s" % str(tibanna))
         raise Exception("user supplied processed files missing\n")
 
 
@@ -297,8 +293,8 @@ def create_and_post_processed_file(ff_keys, file_format, secondary_file_formats,
         resp = pf.post(key=ff_keys)
         resp = resp.get('@graph')[0]
     except Exception as e:
-        LOG.error("Failed to post Processed file metadata. %s\n" % e)
-        LOG.error("resp" + str(resp) + "\n")
+        printlog("Failed to post Processed file metadata. %s\n" % e)
+        printlog("resp" + str(resp) + "\n")
         raise e
     return pf, resp
 
@@ -315,8 +311,7 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
     pf_meta = []
     arg_type_list = ['Output processed file', 'Output report file', 'Output QC file']
     for arg in wf_meta.get('arguments', []):
-        print("processing arguments %s" % str(arg))
-        LOG.info("processing arguments %s" % str(arg))
+        printlog("processing arguments %s" % str(arg))
         if arg.get('argument_type') not in arg_type_list:
             raise Exception("invalid argument_type: %s\n" % arg.get('argument_type'))
         argname = arg.get('workflow_argument_name')
@@ -324,10 +319,7 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
             pf, resp = user_supplied_proc_file(user_supplied_output_files,
                                                arg.get('workflow_argument_name'),
                                                tibanna)
-            print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                  % (str(pf.__dict__), str(resp)))
-            LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                     % (str(pf.__dict__), str(resp)))
+            printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
         else:
             if arg.get('argument_type', '') == 'Output processed file':
                 pf, resp = create_and_post_processed_file(tibanna.ff_keys,

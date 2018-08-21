@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-import logging
 from dcicutils import ff_utils
 from core import pony_utils
 from core.utils import powerup
+from core.utils import printlog
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
 import requests
 import json
 
-LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
@@ -28,7 +27,7 @@ def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, data
                'Accept': 'application/json'}
     res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=auth, headers=headers)
-    LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
+    printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
@@ -60,8 +59,8 @@ def add_md5_filesize_to_pf(pf, awsemfile):
 
 
 def add_md5_filesize_to_pf_extra(pf, awsemfile):
-    print("awsemfile.is_extra=")
-    print(awsemfile.is_extra)
+    printlog("awsemfile.is_extra=")
+    printlog(awsemfile.is_extra)
     if awsemfile.is_extra:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == awsemfile.format_if_extra:
@@ -69,8 +68,8 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
                     pfextra['md5sum'] = awsemfile.md5
                 if awsemfile.filesize:
                     pfextra['file_size'] = awsemfile.filesize
-        print("add_md5_filesize_to_pf_extra:")
-        print(pf.extra_files)
+        printlog("add_md5_filesize_to_pf_extra:")
+        printlog(pf.extra_files)
 
 
 def qc_updater(status, awsemfile, ff_meta, tibanna):
@@ -118,19 +117,19 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     files_to_parse = datafiles
     if report_html:
         files_to_parse.append(report_html)
-    LOG.info("accession is %s" % accession)
+    printlog("accession is %s" % accession)
     try:
         files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
                                             acl='public-read')
     except Exception as e:
-        LOG.info(tibanna.s3.__dict__)
+        printlog(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
                                       ff_env=tibanna.env)
     # parse fastqc metadata
-    LOG.info("files : %s" % str(files))
+    printlog("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
     if report_html in files:
         qc_url = files[report_html]['s3key']
@@ -139,12 +138,12 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     meta = parse_qc_table(filedata,
                           qc_schema=qc_schema.get('properties'),
                           url=qc_url)
-    LOG.info("qc meta is %s" % meta)
+    printlog("qc meta is %s" % meta)
     # post fastq metadata
     qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
-    LOG.info("qc_meta is %s" % qc_meta)
+    printlog("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
         original_file = ff_utils.get_metadata(accession,
@@ -152,7 +151,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
                                               ff_env=tibanna.env,
                                               add_on='frame=object',
                                               check_queue=True)
-        LOG.info("original_file is %s" % original_file)
+        printlog("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
     patch_file = {'quality_metric': qc_meta['@id']}
@@ -166,7 +165,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     output_files[0]['value_qc'] = qc_meta['@id']
     retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
-    LOG.info("retval is %s" % retval)
+    printlog("retval is %s" % retval)
     return retval
 
 
@@ -234,11 +233,11 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
             new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
             if new_file:
                 break
-        print("new_file = %s" % str(new_file))
+        printlog("new_file = %s" % str(new_file))
         if new_file:
             try:
                 resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
-                print(resp)
+                printlog(resp)
             except Exception as e:
                 # TODO specific excpetion
                 # if patch fails try to patch worfklow status as failed
@@ -318,7 +317,7 @@ def real_handler(event, context):
     for awsemfile in awsem_output:
         upload_key = awsemfile.key
         status = awsemfile.status
-        print("awsemfile res is %s", status)
+        printlog("awsemfile res is %s", status)
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
             if pf_meta:
@@ -341,7 +340,7 @@ def real_handler(event, context):
     for awsemfile in awsem_output_extra:
         upload_key = awsemfile.key
         status = awsemfile.status
-        print("awsemfile res is %s", status)
+        printlog("awsemfile res is %s", status)
         if status == 'COMPLETED':
             if pf_meta:
                 for pf in pf_meta:
@@ -376,7 +375,7 @@ def real_handler(event, context):
         patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
         try:
             for pf in pf_meta:
-                print(pf.as_dict())
+                printlog(pf.as_dict())
                 pf.patch(key=tibanna.ff_keys, fields=patch_fields)
         except Exception as e:
             raise Exception("Failed to update processed metadata %s" % str(e))
