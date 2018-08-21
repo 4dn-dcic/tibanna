@@ -176,7 +176,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     return retval
 
 
-def get_existing_md5(file_meta, format_if_extra=None):
+def get_existing_md5(file_meta):
     md5 = file_meta.get('md5sum', False)
     content_md5 = file_meta.get('content_md5sum', False)
     return md5, content_md5
@@ -202,14 +202,14 @@ def check_mismatch(md5a, md5b):
 
 def create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5):
     new_content = {}
-    if check_mismatch(md5, original_md5):
-        raise Exception("md5 not matching the original one")
-    if check_mismatch(content_md5, original_content_md5):
-        raise Exception("content md5 not matching the original one")
-    if md5 and not original_md5:
-        new_content['md5sum'] = md5
-    if content_md5 and not original_content_md5:
-        new_content['content_md5sum'] = content_md5
+
+    def check_mismatch_and_update(x, original_x, fieldname):
+        if check_mismatch(x, original_x):
+            raise Exception(fieldname + " not matching the original one")
+        if x and not original_x:
+            new_content[fieldname] = x
+    check_mismatch_and_update(md5, original_md5, 'md5sum')
+    check_mismatch_and_update(content_md5, original_content_md5, 'content_md5sum')
     return new_content
 
 
@@ -227,17 +227,17 @@ def add_status_to_patch_content(content, current_status):
 
 
 def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
-    current_extra = which_extra(original_file, format_if_extra)
-    if current_extra:
-        original_md5, original_content_md5 = get_existing_md5(current_extra, format_if_extra)
-    else:
-        original_md5, original_content_md5 = get_existing_md5(original_file, format_if_extra)
-    new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
     new_file = {}
-    if new_content:
-        if format_if_extra:
+    current_extra = which_extra(original_file, format_if_extra)
+    if current_extra:  # extra file
+        original_md5, original_content_md5 = get_existing_md5(current_extra)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        if new_content:
             new_file = create_extrafile_patch_content_for_md5(new_content, current_extra, original_file)
-        else:  # update status only if it's not an extra file
+    else:
+        original_md5, original_content_md5 = get_existing_md5(original_file)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        if new_content:
             current_status = original_file.get('status', "uploading")
             new_file = add_status_to_patch_content(new_content, current_status)
     print("new_file = %s" % str(new_file))
