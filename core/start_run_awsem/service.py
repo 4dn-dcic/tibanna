@@ -105,10 +105,11 @@ def real_handler(event, context):
                                                      tibanna.env)
 
     # processed file metadata
-    output_files, pf_meta = handle_processed_files(wf_meta, tibanna,
-                                                   pf_source_experiments,
-                                                   custom_fields=event.get('custom_pf_fields'),
-                                                   user_supplied_output_files=event.get('output_files'))
+    output_files, pf_meta = \
+        create_wfr_output_files_and_processed_files(wf_meta, tibanna,
+                                                    pf_source_experiments,
+                                                    custom_fields=event.get('custom_pf_fields'),
+                                                    user_supplied_output_files=event.get('output_files'))
     print("output files= %s" % str(output_files))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
@@ -237,11 +238,10 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
                                         'object_key': extra_file_keys}})
 
 
-def proc_file_for_arg_name(output_files, arg_name, tibanna):
-    if not output_files:
-        LOG.info("proc_file_for_arg_name no ouput_files specified")
-        return None, None
-    of = [output for output in output_files if output.get('workflow_argument_name') == arg_name]
+def user_supplied_proc_file(user_supplied_output_files, arg_name, tibanna):
+    if not user_supplied_output_files:
+        raise Exception("user supplied processed files missing\n")
+    of = [output for output in user_supplied_output_files if output.get('workflow_argument_name') == arg_name]
     if of:
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
@@ -250,92 +250,97 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
                                          tibanna.env, return_data=True)
     else:
         LOG.info("no output_files found in input_json matching arg_name")
-        LOG.info("output_files: %s" % str(output_files))
+        LOG.info("user_supplied_output_files: %s" % str(user_supplied_output_files))
         LOG.info("arg_name: %s" % str(arg_name))
         LOG.info("tibanna is %s" % str(tibanna))
-        return None, None
+        raise Exception("user supplied processed files missing\n")
 
 
-def handle_processed_files(wf_meta, tibanna, pf_source_experiments=None,
-                           custom_fields=None, user_supplied_output_files=None):
+class WorkflowRunOutputFiles(object):
+    def __init__(self, workflow_argument_name, argument_type, file_format=None, secondary_file_formats=None,
+                 upload_key=None, uuid=None, extra_files=None):
+        self.workflow_argument_name = workflow_argument_name
+        self.type = argument_type
+        self.format = file_format
+        self.secondary_file_formats = secondary_file_formats
+        self.value = uuid
+        self.upload_key = upload_key
+        self.extra_files = extra_files
+
+    def as_dict(self):
+        return self.__dict__()
+
+
+def parse_custom_fields(custom_fields, argname):
+    pf_other_fields = dict()
+    if custom_fields:
+        if argname in custom_fields:
+            pf_other_fields.update(custom_fields[argname])
+        if 'ALL' in custom_fields:
+            pf_other_fields.update(custom_fields['ALL'])
+    return pf_other_fields
+
+
+def create_and_post_processed_file(ff_keys, file_format, secondary_file_formats,
+                                   source_experiments=None, other_fields=None):
+    if not file_format:
+        raise Exception("file format for processed file must be provided")
+    extra_files = [{"file_format": v} for v in secondary_file_formats]
+    pf = ProcessedFileMetadata(
+        file_format=file_format,
+        extra_files=extra_files,
+        source_experiments=source_experiments,
+        other_fields=other_fields
+    )
+    try:
+        # actually post processed file metadata here
+        resp = pf.post(key=ff_keys)
+        resp = resp.get('@graph')[0]
+    except Exception as e:
+        LOG.error("Failed to post Processed file metadata. %s\n" % e)
+        LOG.error("resp" + str(resp) + "\n")
+        raise e
+    return pf, resp
+
+
+def create_wfr_outputfiles(arg, resp):
+    return WorkflowRunOutputFiles(arg.get('workflow_argument_name'), arg.get('argument_type'),
+                                  arg.get('argument_format', None), arg.get('secondary_file_formats', None),
+                                  resp.get('upload_key', None), resp.get('uuid', None), resp.get('extra_files', None))
+
+
+def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_experiments=None,
+                                                custom_fields=None, user_supplied_output_files=None):
     output_files = []
     pf_meta = []
-    fe_map = None
-    try:
-        print("Inside handle_processed_files")
-        LOG.info("Inside handle_processed_files")
-        for arg in wf_meta.get('arguments', []):
-            print("processing arguments %s" % str(arg))
-            LOG.info("processing arguments %s" % str(arg))
-            if (arg.get('argument_type') in ['Output processed file',
-                                             'Output report file',
-                                             'Output QC file']):
-                of = dict()
-                argname = of['workflow_argument_name'] = arg.get('workflow_argument_name')
-                of['type'] = arg.get('argument_type')
-
-                # see if user supplied the output file already
-                # this is often the case for pseudo workflow runs (run externally)
-                # TODO move this down next to post of pf
-                pf, resp = proc_file_for_arg_name(user_supplied_output_files,
-                                                  arg.get('workflow_argument_name'),
-                                                  tibanna)
-                if pf:
-                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                          % (str(pf.__dict__), str(resp)))
-                    LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                             % (str(pf.__dict__), str(resp)))
-                    pf_meta.append(pf)
-                else:
-                    print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                          % (str(pf), str(resp)))
-                    LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
-                             % (str(pf), str(resp)))
-                if not resp:  # if it wasn't supplied as output we have to create a new one
-                    assert user_supplied_output_files is None
-                    if of['type'] == 'Output processed file':
-                        print("creating new processedfile")
-                        LOG.info("creating new processedfile")
-                        if 'argument_format' not in arg:
-                            raise Exception("argument format for processed file must be provided")
-                        if not fe_map:
-                            fe_map = FormatExtensionMap(tibanna.ff_keys)
-                        # These are not processed files but report or QC files.
-                        of['format'] = arg.get('argument_format')
-                        if 'secondary_file_formats' in arg:
-                            of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                            extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
-                        else:
-                            extra_files = None
-                        pf_other_fields = dict()
-                        if custom_fields:
-                            if argname in custom_fields:
-                                pf_other_fields.update(custom_fields[argname])
-                            if 'ALL' in custom_fields:
-                                pf_other_fields.update(custom_fields['ALL'])
-                        pf = ProcessedFileMetadata(
-                            file_format=arg.get('argument_format'),
-                            extra_files=extra_files,
-                            source_experiments=pf_source_experiments,
-                            other_fields=pf_other_fields
-                        )
-                        try:
-                            # actually post processed file metadata here
-                            resp = pf.post(key=tibanna.ff_keys)
-                            resp = resp.get('@graph')[0]
-                        except Exception as e:
-                            LOG.error("Failed to post Processed file metadata. %s\n" % e)
-                            LOG.error("resp" + str(resp) + "\n")
-                            raise e
-                        pf_meta.append(pf)
-                if resp:
-                    of['upload_key'] = resp.get('upload_key')
-                    of['value'] = resp.get('uuid')
-                    of['extra_files'] = resp.get('extra_files')
-                output_files.append(of)
-
-    except Exception as e:
-        LOG.error("output_files = " + str(output_files) + "\n")
-        LOG.error("Can't prepare output_files information. %s\n" % e)
-        raise e
+    arg_type_list = ['Output processed file', 'Output report file', 'Output QC file']
+    for arg in wf_meta.get('arguments', []):
+        print("processing arguments %s" % str(arg))
+        LOG.info("processing arguments %s" % str(arg))
+        if arg.get('argument_type') not in arg_type_list:
+            raise Exception("invalid argument_type: %s\n" % arg.get('argument_type'))
+        argname = arg.get('workflow_argument_name')
+        if user_supplied_output_files:
+            pf, resp = user_supplied_proc_file(user_supplied_output_files,
+                                               arg.get('workflow_argument_name'),
+                                               tibanna)
+            print("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                  % (str(pf.__dict__), str(resp)))
+            LOG.info("proc_file_for_arg_name returned %s \nfrom ff result of\n %s"
+                     % (str(pf.__dict__), str(resp)))
+        else:
+            if arg.get('argument_type', '') == 'Output processed file':
+                pf, resp = create_and_post_processed_file(tibanna.ff_keys,
+                                                          arg.get('argument_format', ''),
+                                                          arg.get('secondary_file_formats', []),
+                                                          pf_source_experiments,
+                                                          parse_custom_fields(custom_fields, argname))
+            else:
+                pf = None
+                resp = dict()
+        of = create_wfr_outputfiles(arg, resp)
+        if pf:
+            pf_meta.append(pf)
+        if of:
+            output_files.append(of.as_dict())
     return output_files, pf_meta
