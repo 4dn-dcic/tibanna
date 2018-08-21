@@ -231,8 +231,8 @@ def ensure_list(val):
 
 
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
-    infile_extension = fe_map.get(infile_format)['standard_extension']
-    extra_file_extension = fe_map.get(extra_file_format)['standard_extension']
+    infile_extension = fe_map.get_extension(infile_format)
+    extra_file_extension = fe_map.get_extension(extra_file_format)
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
