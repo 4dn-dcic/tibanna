@@ -283,6 +283,13 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
     return None
 
 
+def find_pf(pf_meta, accession):
+    for pf in pf_meta:
+        if pf.accession == accession:
+            return pf
+    return None
+
+
 def metadata_only(event):
     # just create a fake awsem config so the handler function does it's magic
     '''
@@ -356,34 +363,31 @@ def real_handler(event, context):
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
             if pf_meta:
-                for pf in pf_meta:
-                    if pf.accession == awsemfile.accession:
-                        try:
-                            add_higlass_to_pf(pf, tibanna, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to regiter to higlass %s" % e)
-                        try:
-                            add_md5_filesize_to_pf(pf, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to update processed file metadata %s" % e)
+                pf = find_pf(pf_meta, awsemfile.accession)
+                try:
+                    add_higlass_to_pf(pf, tibanna, awsemfile)
+                except Exception as e:
+                    raise Exception("failed to regiter to higlass %s" % e)
+                try:
+                    add_md5_filesize_to_pf(pf, awsemfile)
+                except Exception as e:
+                    raise Exception("failed to update processed file metadata %s" % e)
         elif status in ['FAILED']:
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
             ff_meta.run_status = 'error'
             ff_meta.patch(key=tibanna.ff_keys)
             raise Exception("Failed to export file %s" % (upload_key))
-
     for awsemfile in awsem_output_extra:
         upload_key = awsemfile.key
         status = awsemfile.status
         printlog("awsemfile res is %s" % status)
         if status == 'COMPLETED':
             if pf_meta:
-                for pf in pf_meta:
-                    if pf.accession == awsemfile.accession:
-                        try:
-                            add_md5_filesize_to_pf_extra(pf, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to update processed file metadata %s" % e)
+                pf = find_pf(pf_meta, awsemfile.accession)
+                try:
+                    add_md5_filesize_to_pf_extra(pf, awsemfile)
+                except Exception as e:
+                    raise Exception("failed to update processed file metadata %s" % e)
         elif status in ['FAILED']:
             ff_meta.run_status = 'error'
             ff_meta.patch(key=tibanna.ff_keys)
