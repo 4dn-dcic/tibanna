@@ -340,7 +340,7 @@ def real_handler(event, context):
     for awsemfile in awsem_output_extra:
         upload_key = awsemfile.key
         status = awsemfile.status
-        printlog("awsemfile res is %s", status)
+        printlog("awsemfile res is %s" % status)
         if status == 'COMPLETED':
             if pf_meta:
                 for pf in pf_meta:
