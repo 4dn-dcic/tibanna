@@ -43,6 +43,7 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
         return register_to_higlass(tibanna, awsemfile.bucket, key, file_format, file_type)
 
     if awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
+        higlass_uid = None
         # register mcool/bigwig with fourfront-higlass
         if pf.file_format == "mcool":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')

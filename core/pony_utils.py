@@ -249,7 +249,7 @@ class FormatExtensionMap(object):
         self.fe_dict = dict()
         for k in ffe_all['@graph']:
             self.fe_dict[k['file_format']] = \
-                {'standard_extension': k['standard_extension'],
+                {'standard_extension': k['standard_file_extension'],
                  'other_allowed_extensions': k.get('other_allowed_extensions', []),
                  'extrafile_formats': k.get('extrafile_formats', [])
                  }

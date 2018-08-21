@@ -47,7 +47,7 @@ def test__md5_updater_3():
     content_md5 = '5678'
     with pytest.raises(Exception) as excinfo:
         _md5_updater(inputjson, md5, content_md5)
-    assert str(excinfo.value) == "md5 not matching the original one"
+    assert str(excinfo.value) == "md5sum not matching the original one"
 
 
 def test__md5_updater_4():
@@ -59,7 +59,7 @@ def test__md5_updater_4():
     content_md5 = '0000'
     with pytest.raises(Exception) as excinfo:
         _md5_updater(inputjson, md5, content_md5)
-    assert str(excinfo.value) == "content md5 not matching the original one"
+    assert str(excinfo.value) == "content_md5sum not matching the original one"
 
 
 def test__md5_updater_5():

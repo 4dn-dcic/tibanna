@@ -312,27 +312,26 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
     arg_type_list = ['Output processed file', 'Output report file', 'Output QC file']
     for arg in wf_meta.get('arguments', []):
         printlog("processing arguments %s" % str(arg))
-        if arg.get('argument_type') not in arg_type_list:
-            raise Exception("invalid argument_type: %s\n" % arg.get('argument_type'))
-        argname = arg.get('workflow_argument_name')
-        if user_supplied_output_files:
-            pf, resp = user_supplied_proc_file(user_supplied_output_files,
-                                               arg.get('workflow_argument_name'),
-                                               tibanna)
-            printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
-        else:
-            if arg.get('argument_type', '') == 'Output processed file':
-                pf, resp = create_and_post_processed_file(tibanna.ff_keys,
-                                                          arg.get('argument_format', ''),
-                                                          arg.get('secondary_file_formats', []),
-                                                          pf_source_experiments,
-                                                          parse_custom_fields(custom_fields, argname))
+        if arg.get('argument_type') in arg_type_list:
+            if user_supplied_output_files:
+                pf, resp = user_supplied_proc_file(user_supplied_output_files,
+                                                   arg.get('workflow_argument_name'),
+                                                   tibanna)
+                printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
             else:
-                pf = None
-                resp = dict()
-        of = create_wfr_outputfiles(arg, resp)
-        if pf:
-            pf_meta.append(pf)
-        if of:
-            output_files.append(of.as_dict())
+                if arg.get('argument_type', '') == 'Output processed file':
+                    argname = arg.get('workflow_argument_name')
+                    pf, resp = create_and_post_processed_file(tibanna.ff_keys,
+                                                              arg.get('argument_format', ''),
+                                                              arg.get('secondary_file_formats', []),
+                                                              pf_source_experiments,
+                                                              parse_custom_fields(custom_fields, argname))
+                else:
+                    pf = None
+                    resp = dict()
+            of = create_wfr_outputfiles(arg, resp)
+            if pf:
+                pf_meta.append(pf)
+            if of:
+                output_files.append(of.as_dict())
     return output_files, pf_meta

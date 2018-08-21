@@ -5,7 +5,7 @@ from core.pony_utils import (
     Awsem,
     merge_source_experiments,
     ProcessedFileMetadata,
-    get_format_extension_map,
+    FormatExtensionMap,
     get_extra_file_key
 )
 import pytest
@@ -204,7 +204,7 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
 
 @valid_env
 @pytest.mark.webtest
-def test_get_format_extension_map(run_awsem_event_data):
+def test_format_extension_map(run_awsem_event_data):
     tibanna_settings = run_awsem_event_data.get('_tibanna', {})
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
@@ -212,9 +212,9 @@ def test_get_format_extension_map(run_awsem_event_data):
     tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
                       settings=tibanna_settings)
 
-    fe_map = get_format_extension_map(tibanna.ff_keys)
+    fe_map = FormatExtensionMap(tibanna.ff_keys)
     assert(fe_map)
-    assert 'pairs' in fe_map.keys()
+    assert 'pairs' in fe_map.fe_dict.keys()
 
 
 @valid_env
@@ -238,8 +238,16 @@ def test_merge_source_experiment(run_awsem_event_data):
     assert 'fake_source_experiment' in res
 
 
-def test_get_extra_file_key():
-    fe_map = {'bg': '.bedGraph.gz', 'bw': '.bw'}
+@valid_env
+@pytest.mark.webtest
+def test_get_extra_file_key(run_awsem_event_data):
+    tibanna_settings = run_awsem_event_data.get('_tibanna', {})
+    # if they don't pass in env guess it from output_bucket
+    env = tibanna_settings.get('env')
+    # tibanna provides access to keys based on env and stuff like that
+    tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
+                      settings=tibanna_settings)
+    fe_map = FormatExtensionMap(tibanna.ff_keys)
     infile_key = 'hahaha/lalala.bedGraph.gz'
     infile_format = 'bg'
     extra_file_format = 'bw'
