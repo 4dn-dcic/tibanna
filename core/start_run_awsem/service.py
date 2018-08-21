@@ -11,7 +11,7 @@ from core.pony_utils import (
     create_ffmeta_awsem,
     aslist,
     ProcessedFileMetadata,
-    get_format_extension_map,
+    FormatExtensionMap,
     get_extra_file_key,
     create_ffmeta_input_files_from_pony_input_file_list
 )
@@ -223,7 +223,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             infile_format = infile_meta.get('file_format')
             infile_key = inf_keys[i]
             if not fe_map:
-                fe_map = get_format_extension_map(ff_keys)
+                fe_map = FormatExtensionMap(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
                 extra_file_format = extra_file.get('file_format')
                 extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
@@ -299,13 +299,14 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                         if 'argument_format' not in arg:
                             raise Exception("argument format for processed file must be provided")
                         if not fe_map:
-                            fe_map = get_format_extension_map(tibanna.ff_keys)
+                            fe_map = FormatExtensionMap(tibanna.ff_keys)
                         # These are not processed files but report or QC files.
                         of['format'] = arg.get('argument_format')
-                        of['extension'] = fe_map.get(arg.get('argument_format'))
+                        of['extension'] = fe_map.get_extension(arg.get('argument_format'))
                         if 'secondary_file_formats' in arg:
                             of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                            of['secondary_file_extensions'] = [fe_map.get(v) for v in arg.get('secondary_file_formats')]
+                            of['secondary_file_extensions'] = \
+                                [fe_map.get_extension(v) for v in arg.get('secondary_file_formats')]
                             extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                         else:
                             extra_files = None

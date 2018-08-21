@@ -231,24 +231,36 @@ def ensure_list(val):
 
 
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
-    infile_extension = fe_map.get(infile_format)
-    extra_file_extension = fe_map.get(extra_file_format)
+    infile_extension = fe_map.get(infile_format)['standard_extension']
+    extra_file_extension = fe_map.get(extra_file_format)['standard_extension']
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
-def get_format_extension_map(ff_keys):
-    try:
-        fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
-        fe_map = fp_schema.get('file_format_file_extension')
-        fp_schema2 = get_metadata("profiles/file_fastq.json", key=ff_keys)
-        fe_map2 = fp_schema2.get('file_format_file_extension')
-        fp_schema3 = get_metadata("profiles/file_reference.json", key=ff_keys)
-        fe_map3 = fp_schema3.get('file_format_file_extension')
-        fe_map.update(fe_map2)
-        fe_map.update(fe_map3)
-    except Exception as e:
-        raise Exception("Can't get format-extension map from file_processed schema. %s\n" % e)
-    return fe_map
+class FormatExtensionMap(object):
+    def __init__(self, ff_keys):
+        try:
+            ffe_all = get_metadata("/search/?type=FileFormat", key=ff_keys)
+        except Exception as e:
+            raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
+        self.fe_dict = dict()
+        for k in ffe_all['@graph']:
+            self.fe_dict[k['file_format']] = \
+                {'standard_extension': k['standard_extension'],
+                 'other_allowed_extensions': k.get('other_allowed_extensions', []),
+                 'extrafile_formats': k.get('extrafile_formats', [])
+                 }
+
+    def get_extension(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['standard_extension']
+        else:
+            return None
+
+    def get_other_extensions(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['other_allowed_extensions']
+        else:
+            return []
 
 
 def get_source_experiment(input_file_uuid, ff_keys, ff_env):

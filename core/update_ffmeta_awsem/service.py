@@ -43,7 +43,7 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
     if pf.file_format == 'bg' and awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == 'bw':
-                fe_map = pony_utils.get_format_extension_map(ff_key)
+                fe_map = pony_utils.FormatExtensionMap(ff_key)
                 extra_file_key = pony_utils.get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
                 pf.__dict__['higlass_uid'] = register_to_higlass(
                     tibanna, awsemfile.bucket, extra_file_key, 'bigwig', 'vector'

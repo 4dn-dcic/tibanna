@@ -2,7 +2,7 @@
 from core.utils import _tibanna_settings
 from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow
-from core.pony_utils import Tibanna, get_format_extension_map
+from core.pony_utils import Tibanna, FormatExtensionMap
 from dcicutils.ff_utils import get_metadata
 
 
@@ -47,7 +47,7 @@ def get_extra_file_format(event):
     upload_key = event['Records'][0]['s3']['object']['key']
     uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
-    extension = object_key.replace(accession, '')
+    extension = object_key.replace(accession + '.', '')
 
     tibanna = Tibanna(env=env)
     meta = get_metadata(accession,
@@ -57,18 +57,19 @@ def get_extra_file_format(event):
                         check_queue=True)
     if meta:
         file_format = meta.get('file_format')
-        fe_map = get_format_extension_map(tibanna.ff_keys)
-        file_extension = fe_map.get(file_format)
-        if extension == file_extension:
+        fe_map = FormatExtensionMap(tibanna.ff_keys)
+        if extension == fe_map.get_extension(file_format):
+            return None
+        elif extension in fe_map.get_other_extensions(file_format):
             return None
         else:
             for extra in meta.get('extra_files', []):
                 extra_format = extra.get('file_format')
-                extra_extension = fe_map.get(extra_format)
-                if extension == extra_extension:
+                if extension == fe_map.get_extension(extra_format):
                     return extra_format
-        raise Exception("file extension not matching: %s vs %s (%s)"
-                        % extension, file_extension, file_format)
+                elif extension in fe_map.get_other_extensions(extra_format):
+                    return extra_format
+        raise Exception("file extension not matching: %s (%s)" % extension, file_format)
     else:
         raise Exception("Cannot get input metadata")
 
