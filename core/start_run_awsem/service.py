@@ -68,9 +68,9 @@ def real_handler(event, context):
 
     # get argument format & type info from workflow
     wf_meta = ff_utils.get_metadata(workflow_uuid,
-                                          key=tibanna.ff_keys,
-                                          ff_env=tibanna.env,
-                                          add_on='frame=object')
+                                    key=tibanna.ff_keys,
+                                    ff_env=tibanna.env,
+                                    add_on='frame=object')
     print("workflow info  %s" % wf_meta)
     LOG.info("workflow info  %s" % wf_meta)
     if 'error' in wf_meta.get('@type', []):
