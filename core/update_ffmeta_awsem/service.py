@@ -317,7 +317,7 @@ def real_handler(event, context):
     for awsemfile in awsem_output:
         upload_key = awsemfile.key
         status = awsemfile.status
-        printlog("awsemfile res is %s", status)
+        printlog("awsemfile res is %s" % status)
         if status == 'COMPLETED':
             patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
             if pf_meta:

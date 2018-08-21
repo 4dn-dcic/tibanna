@@ -264,7 +264,7 @@ class WorkflowRunOutputFiles(object):
         self.extra_files = extra_files
 
     def as_dict(self):
-        return self.__dict__()
+        return self.__dict__
 
 
 def parse_custom_fields(custom_fields, argname):
