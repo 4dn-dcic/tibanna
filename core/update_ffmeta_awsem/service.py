@@ -45,16 +45,17 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
     if awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
         # register mcool/bigwig with fourfront-higlass
         if pf.file_format == "mcool":
-            pf.__dict__['higlass_uid'] = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
         elif pf.file_format == "bw":
-            pf.__dict__['higlass_uid'] = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
         # bedgraph: register extra bigwig file to higlass (if such extra file exists)
         elif pf.file_format == 'bg':
             for pfextra in pf.extra_files:
                 if pfextra.get('file_format') == 'bw':
                     fe_map = FormatExtensionMap(tibanna.ff_keys)
                     extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
-                    pf.__dict__['higlass_uid'] = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
+                    higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
+        pf.add_higlass_uid(higlass_uid)
 
 
 def add_md5_filesize_to_pf(pf, awsemfile):

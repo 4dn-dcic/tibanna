@@ -191,6 +191,10 @@ class ProcessedFileMetadata(object):
         else:
             return pf
 
+    def add_higlass_uid(self, higlass_uid):
+        if higlass_uid:
+            self.higlass_uid = higlass_uid
+
 
 def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
     input_files_for_ffmeta = []
