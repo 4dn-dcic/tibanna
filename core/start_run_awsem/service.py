@@ -67,26 +67,26 @@ def real_handler(event, context):
     args = dict()
 
     # get argument format & type info from workflow
-    workflow_info = ff_utils.get_metadata(workflow_uuid,
+    wf_meta = ff_utils.get_metadata(workflow_uuid,
                                           key=tibanna.ff_keys,
                                           ff_env=tibanna.env,
                                           add_on='frame=object')
-    print("workflow info  %s" % workflow_info)
-    LOG.info("workflow info  %s" % workflow_info)
-    if 'error' in workflow_info.get('@type', []):
+    print("workflow info  %s" % wf_meta)
+    LOG.info("workflow info  %s" % wf_meta)
+    if 'error' in wf_meta.get('@type', []):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
-    # get cwl info from workflow_info
+    # get cwl info from wf_meta
     for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
-        print(workflow_info.get(k))
-        LOG.info(workflow_info.get(k))
-        args[k] = workflow_info.get(k)
+        print(wf_meta.get(k))
+        LOG.info(wf_meta.get(k))
+        args[k] = wf_meta.get(k)
     if not args['cwl_child_filenames']:
         args['cwl_child_filenames'] = []
 
     # switch to v1 if available
-    if 'cwl_directory_url_v1' in workflow_info:  # use CWL v1
-        args['cwl_directory_url'] = workflow_info['cwl_directory_url_v1']
+    if 'cwl_directory_url_v1' in wf_meta:  # use CWL v1
+        args['cwl_directory_url'] = wf_meta['cwl_directory_url_v1']
         args['cwl_version'] = 'v1'
     else:
         args['cwl_version'] = 'draft3'
@@ -105,7 +105,7 @@ def real_handler(event, context):
                                                      tibanna.env)
 
     # processed file metadata
-    output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
+    output_files, pf_meta = handle_processed_files(wf_meta, tibanna,
                                                    pf_source_experiments,
                                                    custom_fields=event.get('custom_pf_fields'),
                                                    user_supplied_output_files=event.get('output_files'))
@@ -256,7 +256,7 @@ def proc_file_for_arg_name(output_files, arg_name, tibanna):
         return None, None
 
 
-def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
+def handle_processed_files(wf_meta, tibanna, pf_source_experiments=None,
                            custom_fields=None, user_supplied_output_files=None):
     output_files = []
     pf_meta = []
@@ -264,7 +264,7 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
     try:
         print("Inside handle_processed_files")
         LOG.info("Inside handle_processed_files")
-        for arg in workflow_info.get('arguments', []):
+        for arg in wf_meta.get('arguments', []):
             print("processing arguments %s" % str(arg))
             LOG.info("processing arguments %s" % str(arg))
             if (arg.get('argument_type') in ['Output processed file',
@@ -302,11 +302,8 @@ def handle_processed_files(workflow_info, tibanna, pf_source_experiments=None,
                             fe_map = FormatExtensionMap(tibanna.ff_keys)
                         # These are not processed files but report or QC files.
                         of['format'] = arg.get('argument_format')
-                        of['extension'] = fe_map.get_extension(arg.get('argument_format'))
                         if 'secondary_file_formats' in arg:
                             of['secondary_file_formats'] = arg.get('secondary_file_formats')
-                            of['secondary_file_extensions'] = \
-                                [fe_map.get_extension(v) for v in arg.get('secondary_file_formats')]
                             extra_files = [{"file_format": v} for v in of['secondary_file_formats']]
                         else:
                             extra_files = None
