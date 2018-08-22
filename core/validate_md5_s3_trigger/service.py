@@ -69,7 +69,8 @@ def get_extra_file_format(event):
                     return extra_format
                 elif extension in fe_map.get_other_extensions(extra_format):
                     return extra_format
-        raise Exception("file extension not matching: %s (%s)" % extension, file_format)
+        raise Exception("file extension not matching: %s vs %s (%s)" %
+                        (extension, fe_map.get_extension(file_format), file_format))
     else:
         raise Exception("Cannot get input metadata")
 

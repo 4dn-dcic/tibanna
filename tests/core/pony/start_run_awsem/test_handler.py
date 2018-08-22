@@ -151,12 +151,10 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     assert(output_files)
     assert len(output_files) == 3
     for of in output_files:
-        if of['extension'] == '.pairs.gz':
-            assert of['secondary_file_extensions'] == ['.pairs.gz.px2']
+        if of['format'] == 'pairs':
             assert of['secondary_file_formats'] == ['pairs_px2']
             assert of['extra_files']
         else:
-            assert 'secondary_files_extension' not in of
             assert 'secondary_files_formats' not in of
 
     assert(pf_meta)
