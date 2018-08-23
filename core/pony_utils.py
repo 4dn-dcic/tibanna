@@ -363,7 +363,13 @@ class AwsemFile(object):
         self.argument_type = argument_type
         self.filesize = filesize
         self.md5 = md5
-        self.format_if_extra = format_if_extra
+        if format_if_extra:
+            if not format_if_extra.startswith('/file-formats/'):
+                self.format_if_extra = '/file-formats/%s/' % format_if_extra
+            else:
+                self.format_if_extra = format_if_extra
+        else:
+            self.format_if_extra = None
         self.argument_name = argument_name
 
         if self.format_if_extra or is_extra:
@@ -444,6 +450,8 @@ class Awsem(object):
             if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
                 for pfextra in pf['extra_files']:
                     if pfextra['upload_key'] == key:
+                        if not pfextra['file_format'].startswith('/file-formats/'):
+                            pfextra['file_format'] = '/file-formats/%s/' % pfextra['file_format']
                         return pfextra['file_format']
         return None
 

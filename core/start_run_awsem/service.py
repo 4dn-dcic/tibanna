@@ -142,7 +142,7 @@ def real_handler(event, context):
         if 'secondary_file_formats' in of:
             # takes only the first secondary file.
             args['secondary_output_target'][arg_name] \
-                = [_.get('upload_key') for _ in of.get('extra_files', [{}, ])]
+                = [_.get('upload_key') for _ in of.get('extra_files', [])]
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
@@ -288,14 +288,12 @@ def create_and_post_processed_file(ff_keys, file_format, secondary_file_formats,
         source_experiments=source_experiments,
         other_fields=other_fields
     )
-    try:
-        # actually post processed file metadata here
-        resp = pf.post(key=ff_keys)
+    # actually post processed file metadata here
+    resp = pf.post(key=ff_keys)
+    if resp and '@graph' in resp:
         resp = resp.get('@graph')[0]
-    except Exception as e:
-        printlog("Failed to post Processed file metadata. %s\n" % e)
-        printlog("resp" + str(resp) + "\n")
-        raise e
+    else:
+        raise Exception("Failed to post Processed file metadata.\n")
     return pf, resp
 
 
