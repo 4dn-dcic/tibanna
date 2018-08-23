@@ -248,7 +248,7 @@ class FormatExtensionMap(object):
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
         self.fe_dict = dict()
         for k in ffe_all['@graph']:
-            file_format = "/file-formats/%s/" % k['file_format']
+            file_format = k['file_format']
             self.fe_dict[file_format] = \
                 {'standard_extension': k['standard_file_extension'],
                  'other_allowed_extensions': k.get('other_allowed_extensions', []),
@@ -363,15 +363,8 @@ class AwsemFile(object):
         self.argument_type = argument_type
         self.filesize = filesize
         self.md5 = md5
-        if format_if_extra:
-            if not format_if_extra.startswith('/file-formats/'):
-                self.format_if_extra = '/file-formats/%s/' % format_if_extra
-            else:
-                self.format_if_extra = format_if_extra
-        else:
-            self.format_if_extra = None
+        self.format_if_extra = format_if_extra
         self.argument_name = argument_name
-
         if self.format_if_extra or is_extra:
             self.is_extra = True
         else:
@@ -450,8 +443,6 @@ class Awsem(object):
             if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
                 for pfextra in pf['extra_files']:
                     if pfextra['upload_key'] == key:
-                        if not pfextra['file_format'].startswith('/file-formats/'):
-                            pfextra['file_format'] = '/file-formats/%s/' % pfextra['file_format']
                         return pfextra['file_format']
         return None
 

@@ -170,7 +170,7 @@ def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
 def test_get_inputfile_format_if_extra(update_ffmeta_event_data_extra_md5, tibanna_env):
     update_ffmeta_event_data_extra_md5.update(tibanna_env)
     for wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files():
-        assert wf_file.runner.get_format_if_extras('input_file')[0] == '/file-formats/pairs_px2/'
+        assert wf_file.runner.get_format_if_extras('input_file')[0] == 'pairs_px2'
 
 
 @pytest.fixture()
@@ -214,7 +214,7 @@ def test_format_extension_map(run_awsem_event_data):
 
     fe_map = FormatExtensionMap(tibanna.ff_keys)
     assert(fe_map)
-    assert '/file-formats/pairs/' in fe_map.fe_dict.keys()
+    assert 'pairs' in fe_map.fe_dict.keys()
 
 
 @valid_env
@@ -249,8 +249,8 @@ def test_get_extra_file_key(run_awsem_event_data):
                       settings=tibanna_settings)
     fe_map = FormatExtensionMap(tibanna.ff_keys)
     infile_key = 'hahaha/lalala.bedGraph.gz'
-    infile_format = '/file-formats/bg/'
-    extra_file_format = '/file-formats/bw/'
+    infile_format = 'bg'
+    extra_file_format = 'bw'
     extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
     assert extra_file_key == 'hahaha/lalala.bw'
 

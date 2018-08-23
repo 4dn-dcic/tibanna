@@ -139,10 +139,9 @@ def real_handler(event, context):
             # it will create a different output. Not implemented for processed files -
             # it's tricky because processed files must have a specific name.
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
-        if 'secondary_file_formats' in of:
-            # takes only the first secondary file.
-            args['secondary_output_target'][arg_name] \
-                = [_.get('upload_key') for _ in of.get('extra_files', [])]
+        if 'secondary_file_formats' in of and 'extra_files' in of:
+            for ext in of.get('extra_files'):
+                args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')
