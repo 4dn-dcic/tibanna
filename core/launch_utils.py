@@ -6,8 +6,6 @@ from datetime import datetime
 import time
 import os
 
-# Launch utils still use Submit4DN. Change at some point?
-# Not high priority because these aren't used in the actual workflows
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -69,7 +67,7 @@ def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None
 
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=5, sleeptime=5, status='FAILED',
-               region='us-east-1', acc='643366669028', override_config=None, app_name_filter=None):
+               override_config=None, app_name_filter=None):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour is in EST. This can be changed by setting a different offset (default 5)
     Sleeptime is sleep time in seconds between rerun submissions.
@@ -92,10 +90,10 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
             time.sleep(sleeptime)
 
 
-def kill_all(workflow='tibanna_pony', region='us-east-1', acc='643366669028'):
+def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """killing all the running jobs"""
     client = boto3.client('stepfunctions')
-    stateMachineArn = 'arn:aws:states:' + region + ':' + acc + ':stateMachine:' + workflow
+    stateMachineArn = STEP_FUNCTION_ARN(sfn)
     sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
     for exc in sflist['executions']:
         client.stop_execution(executionArn=exc['executionArn'], error="Aborted")
