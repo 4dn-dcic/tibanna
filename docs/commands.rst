@@ -159,11 +159,12 @@ To rerun many jobs that failed after a certain time point
 
   --sleeptime=<sleeptime>          seconds between reruns (eefault 5)
 
-  --offset=<offset>                offset between AWS time zone and system time zone  (default 0)
+  --offset=<offset>                offset between AWS time zone and system time zone (default 0)
                                    e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
                                    time zone, offset must be 5.
 
-  -status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed jobs
+  -status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed
+                                   jobs
 
 
 **Example** 
