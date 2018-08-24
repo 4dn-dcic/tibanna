@@ -15,8 +15,6 @@ To create an instance of tibanna unicorn (step function + lambdas)
 ::
 
     invoke deploy_unicorn [--buckets=<bucket1,bucket2,...>] [--no-setup] [--no-setenv] [--suffix=<suffixname>]
-    # (use suffix for development version)
-    # example <suffixname> : dev
 
 
 **Options**
