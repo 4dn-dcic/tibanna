@@ -66,10 +66,11 @@ def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None
 
 
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=5, sleeptime=5, status='FAILED',
+               stopminute=0, offset=0, sleeptime=5, status='FAILED',
                override_config=None, app_name_filter=None):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
-    By default, stophour is in EST. This can be changed by setting a different offset (default 5)
+    By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
+    If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
     Sleeptime is sleep time in seconds between rerun submissions.
     By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
     examples)
@@ -83,6 +84,8 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
     sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
     k = 0
     for exc in sflist['executions']:
+        print(exc['stopDate'].replace(tzinfo=None))
+        print(stoptime_in_datetime)
         if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
             k = k + 1
             rerun(exc['executionArn'], sfn=sfn,

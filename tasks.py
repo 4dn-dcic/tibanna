@@ -546,9 +546,10 @@ def kill_all(ctx, sfn='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER)
 
 @task
 def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=5, sleeptime=5, status='FAILED'):
+               stopminute=0, offset=0, sleeptime=5, status='FAILED'):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
-    By default, stophour is in EST. This can be changed by setting a different offset (default 5)
+    By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
+    If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
     Sleeptime is sleep time in seconds between rerun submissions.
     By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
     examples)
