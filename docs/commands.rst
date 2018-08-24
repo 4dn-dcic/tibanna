@@ -163,7 +163,7 @@ To rerun many jobs that failed after a certain time point
                                    e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
                                    time zone, offset must be 5.
 
-  -status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed
+  --status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed
                                    jobs
 
 
