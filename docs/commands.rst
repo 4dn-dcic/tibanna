@@ -22,20 +22,20 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 ::
 
-  --buckets=<bucket1,bucket2,...>   List of buckets to use for tibanna runs.
-                                    The associated lambda functions, EC2 instances
-                                    and user group will be given permission to these buckets.
+  --buckets=<bucket1,bucket2,...>  List of buckets to use for tibanna runs.
+                                   The associated lambda functions, EC2 instances
+                                   and user group will be given permission to these buckets.
 
-  --no-setup                        Skip setup buckets/permissions and just redeploy tibanna
-                                    step function and lambdas.
-                                    This is useful when upgrading the existing tibanna that's
-                                    already set up.
+  --no-setup                       Skip setup buckets/permissions and just redeploy tibanna
+                                   step function and lambdas.
+                                   This is useful when upgrading the existing tibanna that's
+                                   already set up.
 
-  --no-setenv                       Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-                                    environmental variable in your bashrc.
+  --no-setenv                      Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+                                   environmental variable in your bashrc.
 
-  --suffix=<suffixname>             Using suffix helps deploying various dev-version tibanna.
-                                    The step function and lambda functions will have the suffix.
+  --suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
+                                   The step function and lambda functions will have the suffix.
 
 
 
@@ -61,12 +61,12 @@ To run workflow
 
 ::
 
-  --sfn=<stepfunctionname>          An example step function name may be
-                                    'tibanna_unicorn_defaut_3978'. If not specified, default
-                                    value is taken from environmental variable
-                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                    variable is not set, it uses name 'tibanna_pony' (4dn
-                                    default, works only for 4dn).
+  --sfn=<stepfunctionname>         An example step function name may be
+                                   'tibanna_unicorn_defaut_3978'. If not specified, default
+                                   value is taken from environmental variable
+                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                   variable is not set, it uses name 'tibanna_pony' (4dn
+                                   default, works only for 4dn).
 
 
 
@@ -84,15 +84,16 @@ To check status of workflows,
 
 ::
 
-  --status=<status>                 filter by run status (all runs if not specified).
-                                    Status must be one of the following values:
-                                    RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
-  --sfn=<stepfunctionname>          An example step function name may be
-                                    'tibanna_unicorn_defaut_3978'. If not specified, default
-                                    value is taken from environmental variable
-                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                    variable is not set, it uses name 'tibanna_pony' (4dn
-                                    default, works only for 4dn).
+  --status=<status>                filter by run status (all runs if not specified).
+                                   Status must be one of the following values:
+                                   RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
+
+  --sfn=<stepfunctionname>         An example step function name may be
+                                   'tibanna_unicorn_defaut_3978'. If not specified, default
+                                   value is taken from environmental variable
+                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                   variable is not set, it uses name 'tibanna_pony' (4dn
+                                   default, works only for 4dn).
 
 
 The output is a table (an example below)
@@ -121,12 +122,12 @@ To rerun a failed job with the same input json
 
 ::
 
-  --sfn=<stepfunctionname>          An example step function name may be
-                                    'tibanna_unicorn_defaut_3978'. If not specified, default
-                                    value is taken from environmental variable
-                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                    variable is not set, it uses name 'tibanna_pony' (4dn
-                                    default, works only for 4dn).
+  --sfn=<stepfunctionname>         An example step function name may be
+                                   'tibanna_unicorn_defaut_3978'. If not specified, default
+                                   value is taken from environmental variable
+                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                   variable is not set, it uses name 'tibanna_pony' (4dn
+                                   default, works only for 4dn).
 
 
 rerun_many
@@ -136,36 +137,44 @@ To rerun many jobs that failed after a certain time point
 
 ::
     
-    invoke rerun_many [--sfn=<stepfunctionname>] \
-                      [--stopdate=<stopdate>] \
-                      [--stophour=<stophour>] \
-                      [--stopminute=<stopminute>] \
-                      [--sleeptime=<sleeptime>] \
-                      [--offset=<offset>] \
-                      [--status=<status>]
+    invoke rerun_many [<options>]
     
-    # example: invoke rerun_many --stopdate=14Feb2018 --stophour=15
-    # This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
-
 
 **Options**
 
 ::
 
-  --sfn=<stepfunctionname>          An example step function name may be
-                                    'tibanna_unicorn_defaut_3978'. If not specified, default
-                                    value is taken from environmental variable
-                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                    variable is not set, it uses name 'tibanna_pony' (4dn
-                                    default, works only for 4dn).
-  --stopdate=<stopdate>             e.g. '14Feb2018'
-  --stophour=<stophour>             e.g. 14 (24-hour format, same as system time zone by default)
-  --stopminute=<stopminute>         e.g. 30 (default 0)
-  --sleeptime=<sleeptime>           seconds between reruns (eefault 5)
-  --offset=<offset>                 offset between AWS time zone and system time zone  (default 0)
-                                    e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
-                                    time zone, offset must be 5.
-  -status=<status>                  filter by status. default 'FAILED', i.e. rerun only failed jobs
+  --sfn=<stepfunctionname>         An example step function name may be
+                                   'tibanna_unicorn_defaut_3978'. If not specified, default
+                                   value is taken from environmental variable
+                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                   variable is not set, it uses name 'tibanna_pony' (4dn
+                                   default, works only for 4dn).
+
+  --stopdate=<stopdate>            e.g. '14Feb2018'
+
+  --stophour=<stophour>            e.g. 14 (24-hour format, same as system time zone by default)
+
+  --stopminute=<stopminute>        e.g. 30 (default 0)
+
+  --sleeptime=<sleeptime>          seconds between reruns (eefault 5)
+
+  --offset=<offset>                offset between AWS time zone and system time zone  (default 0)
+                                   e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
+                                   time zone, offset must be 5.
+
+  -status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed jobs
+
+
+**Example** 
+
+::
+
+  invoke rerun_many --stopdate=14Feb2018 --stophour=15
+
+
+This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
+
 
 
 kill_all
@@ -181,12 +190,12 @@ To kill all currently running jobs (killing only step functions not the EC2 inst
 
 ::
 
-  --sfn=<stepfunctionname>          An example step function name may be
-                                    'tibanna_unicorn_defaut_3978'. If not specified, default
-                                    value is taken from environmental variable
-                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                    variable is not set, it uses name 'tibanna_pony' (4dn
-                                    default, works only for 4dn).
+  --sfn=<stepfunctionname>         An example step function name may be
+                                   'tibanna_unicorn_defaut_3978'. If not specified, default
+                                   value is taken from environmental variable
+                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                   variable is not set, it uses name 'tibanna_pony' (4dn
+                                   default, works only for 4dn).
 
 
 Advanced_commands
