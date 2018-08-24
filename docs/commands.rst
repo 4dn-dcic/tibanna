@@ -83,6 +83,7 @@ To check status of workflows,
 **Options**
 
 ::
+
   --status=<status>                 filter by run status (all runs if not specified).
                                     Status must be one of the following values:
                                     RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
@@ -150,6 +151,7 @@ To rerun many jobs that failed after a certain time point
 **Options**
 
 ::
+
   --sfn=<stepfunctionname>          An example step function name may be
                                     'tibanna_unicorn_defaut_3978'. If not specified, default
                                     value is taken from environmental variable
