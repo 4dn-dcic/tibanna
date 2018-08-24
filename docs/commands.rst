@@ -14,26 +14,26 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 ::
 
-    invoke deploy_unicorn [--suffix=<suffixname>]
+    invoke deploy_unicorn [--buckets=<bucket1,bucket2,...>] [--no-setup] [--no-setenv] [--suffix=<suffixname>]
     # (use suffix for development version)
     # example <suffixname> : dev
 
 
 **Options**
 
----buckets=<bucket1,bucket2,...>    
+- -buckets=<bucket1,bucket2,...>    
                                      List of buckets to use for tibanna runs.
                                      The associated lambda functions, EC2 instances
                                      and user group will be given permission to these buckets.
----no_setup                         
+- -no-setup                         
                                      Skip setup buckets/permissions and just redeploy tibanna
                                      step function and lambdas.
                                      This is useful when upgrading the existing tibanna that's
                                      already set up.
----no_setenv                        
+- -no-setenv                        
                                      Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
                                      environmental variable in your bashrc.
----suffix=<suffixname>              
+- -suffix=<suffixname>              
                                      Using suffix helps deploying various dev-version tibanna.
                                      The step function and lambda functions will have the suffix.
 
