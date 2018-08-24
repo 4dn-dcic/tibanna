@@ -21,17 +21,17 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 **Options**
 
---buckets=<bucket1,bucket2,...>    List of buckets to use for tibanna runs.
-                                   The associated lambda functions, EC2 instances
-                                   and user group will be given permission to these buckets.
---no_setup                         Skip setup buckets/permissions and just redeploy tibanna
-                                   step function and lambdas.
-                                   This is useful when upgrading the existing tibanna that's
-                                   already set up.
---no_setenv                        Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-                                   environmental variable in your bashrc.
---suffix=<suffixname>              Using suffix helps deploying various dev-version tibanna.
-                                   The step function and lambda functions will have the suffix.
+:----buckets=<bucket1,bucket2,...>    List of buckets to use for tibanna runs.
+                                      The associated lambda functions, EC2 instances
+                                      and user group will be given permission to these buckets.
+:----no_setup                         Skip setup buckets/permissions and just redeploy tibanna
+                                      step function and lambdas.
+                                      This is useful when upgrading the existing tibanna that's
+                                      already set up.
+:----no_setenv                        Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+                                      environmental variable in your bashrc.
+:----suffix=<suffixname>              Using suffix helps deploying various dev-version tibanna.
+                                      The step function and lambda functions will have the suffix.
 
 
 
