@@ -41,18 +41,6 @@ def create_json_filename(jobid, json_dir):
     return json_dir + '/' + jobid + '.run.json'
 
 
-# run command and check the output
-# return value is [True/False, output_string(stdout)]
-# If the command failed, the first value will be False and the output string will be null.
-def run_command_out_check(command):
-    with open(os.devnull, 'w') as shutup:
-        try:
-            res = subprocess.check_output(command.split(" "), stderr=shutup)
-            return([True, res])
-        except subprocess.CalledProcessError:
-            return([False, ''])
-
-
 def launch_and_get_instance_id(launch_args, jobid):
     try:  # capturing stdout from the launch command
         os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
