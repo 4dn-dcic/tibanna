@@ -8,15 +8,12 @@ from core.update_ffmeta_awsem.service import (
 )
 from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
 from core import pony_utils
+from core.utils import printlog
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
 import mock
-import logging
-
-
-LOG = logging.getLogger(__name__)
 
 
 def test__md5_updater_1():
@@ -50,7 +47,7 @@ def test__md5_updater_3():
     content_md5 = '5678'
     with pytest.raises(Exception) as excinfo:
         _md5_updater(inputjson, md5, content_md5)
-    assert str(excinfo.value) == "md5 not matching the original one"
+    assert str(excinfo.value) == "md5sum not matching the original one"
 
 
 def test__md5_updater_4():
@@ -62,7 +59,7 @@ def test__md5_updater_4():
     content_md5 = '0000'
     with pytest.raises(Exception) as excinfo:
         _md5_updater(inputjson, md5, content_md5)
-    assert str(excinfo.value) == "content md5 not matching the original one"
+    assert str(excinfo.value) == "content_md5sum not matching the original one"
 
 
 def test__md5_updater_5():
@@ -259,7 +256,7 @@ def test_register_to_higlass(used_env):
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, mcool_key, 'cooler', 'matrix')
         mock_request.assert_called_once()
-        LOG.info(res)
+        printlog(res)
         assert res
 
 
@@ -271,5 +268,5 @@ def test_register_to_higlass2(used_env):
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, bigwig_key, 'bigwig', 'vector')
         mock_request.assert_called_once()
-        LOG.info(res)
+        printlog(res)
         assert res

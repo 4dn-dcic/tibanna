@@ -1,8 +1,8 @@
 import pytest
 from core.start_run_awsem.service import (
     handler,
-    handle_processed_files,
-    proc_file_for_arg_name,
+    create_wfr_output_files_and_processed_files,
+    user_supplied_proc_file,
     process_input_file_info,
     add_secondary_files_to_args,
 )
@@ -50,7 +50,7 @@ def proc_file_in_webdev():
 
 @valid_env
 @pytest.mark.webtest
-def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_in_webdev):
+def test_user_supplied_proc_file(run_awsem_event_data_processed_files, proc_file_in_webdev):
     of = [{"workflow_argument_name": "output_file1",
            "uuid": proc_file_in_webdev['uuid']
            },
@@ -68,7 +68,7 @@ def test_proc_file_for_arg_name(run_awsem_event_data_processed_files, proc_file_
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
     with mock.patch('core.pony_utils.get_metadata', return_value=file_with_type):
-        pf, resp = proc_file_for_arg_name(of, 'output_file1', tibanna)
+        pf, _ = user_supplied_proc_file(of, 'output_file1', tibanna)
         assert type(pf) == ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
 
@@ -143,20 +143,18 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
-    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
 
     with mock.patch('core.pony_utils.post_metadata') as mock_request:
-        output_files, pf_meta = handle_processed_files(workflow_info, tibanna)
+        output_files, pf_meta = create_wfr_output_files_and_processed_files(wf_meta, tibanna)
         assert mock_request.call_count == 3
     assert(output_files)
     assert len(output_files) == 3
     for of in output_files:
-        if of['extension'] == '.pairs.gz':
-            assert of['secondary_file_extensions'] == ['.pairs.gz.px2']
+        if of['format'] == 'pairs':
             assert of['secondary_file_formats'] == ['pairs_px2']
             assert of['extra_files']
         else:
-            assert 'secondary_files_extension' not in of
             assert 'secondary_files_formats' not in of
 
     assert(pf_meta)
@@ -180,10 +178,11 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
-    workflow_info = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
 
-    output_files, pf_meta = handle_processed_files(workflow_info, tibanna,
-                                                   custom_fields=data.get('custom_pf_fields'))
+    output_files, pf_meta = create_wfr_output_files_and_processed_files(
+        wf_meta, tibanna, custom_fields=data.get('custom_pf_fields')
+    )
     assert(pf_meta)
     assert(output_files)
     for pf in pf_meta:

@@ -4,9 +4,6 @@ import pytest
 import boto3
 import random
 import string
-import logging
-
-LOG = logging.getLogger(__name__)
 
 
 @pytest.fixture()
