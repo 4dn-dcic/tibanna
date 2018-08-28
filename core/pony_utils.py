@@ -201,7 +201,7 @@ class WorkflowRunOutputFiles(object):
                  upload_key=None, uuid=None, extra_files=None):
         self.workflow_argument_name = workflow_argument_name
         self.type = argument_type
-        self.format = parse_formatstr(file_format)
+        self.format = file_format
         self.secondary_file_formats = secondary_file_formats
         self.value = uuid
         self.upload_key = upload_key
