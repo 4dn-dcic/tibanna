@@ -139,7 +139,7 @@ def real_handler(event, context):
             # it will create a different output. Not implemented for processed files -
             # it's tricky because processed files must have a specific name.
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
-        if 'secondary_file_formats' in of and 'extra_files' in of:
+        if 'secondary_file_formats' in of and 'extra_files' in of and of['extra_files']:
             for ext in of.get('extra_files'):
                 args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
 
@@ -199,6 +199,10 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
         add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 
+def parse_formatstr(file_format_str):
+    return file_format_str.replace('/file-formats/', '').replace('/', '')
+
+
 def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         raise Exception("args must contain key 'input_files'")
@@ -216,12 +220,12 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
                                             ff_env=ff_env,
                                             add_on='frame=object')
         if infile_meta.get('extra_files'):
-            infile_format = infile_meta.get('file_format')
+            infile_format = parse_formatstr(infile_meta.get('file_format'))
             infile_key = inf_keys[i]
             if not fe_map:
                 fe_map = FormatExtensionMap(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
-                extra_file_format = extra_file.get('file_format')
+                extra_file_format = parse_formatstr(extra_file.get('file_format'))
                 extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
 
