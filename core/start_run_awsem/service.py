@@ -11,9 +11,11 @@ from core.pony_utils import (
     create_ffmeta_awsem,
     aslist,
     ProcessedFileMetadata,
+    WorkflowRunOutputFiles,
     FormatExtensionMap,
     get_extra_file_key,
-    create_ffmeta_input_files_from_pony_input_file_list
+    create_ffmeta_input_files_from_pony_input_file_list,
+    parse_formatstr
 )
 import random
 
@@ -199,10 +201,6 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
         add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 
-def parse_formatstr(file_format_str):
-    return file_format_str.replace('/file-formats/', '').replace('/', '')
-
-
 def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         raise Exception("args must contain key 'input_files'")
@@ -253,21 +251,6 @@ def user_supplied_proc_file(user_supplied_output_files, arg_name, tibanna):
         printlog("arg_name: %s" % str(arg_name))
         printlog("tibanna is %s" % str(tibanna))
         raise Exception("user supplied processed files missing\n")
-
-
-class WorkflowRunOutputFiles(object):
-    def __init__(self, workflow_argument_name, argument_type, file_format=None, secondary_file_formats=None,
-                 upload_key=None, uuid=None, extra_files=None):
-        self.workflow_argument_name = workflow_argument_name
-        self.type = argument_type
-        self.format = file_format
-        self.secondary_file_formats = secondary_file_formats
-        self.value = uuid
-        self.upload_key = upload_key
-        self.extra_files = extra_files
-
-    def as_dict(self):
-        return self.__dict__
 
 
 def parse_custom_fields(custom_fields, argname):

@@ -196,6 +196,27 @@ class ProcessedFileMetadata(object):
             self.higlass_uid = higlass_uid
 
 
+class WorkflowRunOutputFiles(object):
+    def __init__(self, workflow_argument_name, argument_type, file_format=None, secondary_file_formats=None,
+                 upload_key=None, uuid=None, extra_files=None):
+        self.workflow_argument_name = workflow_argument_name
+        self.type = argument_type
+        self.format = parse_formatstr(file_format)
+        self.secondary_file_formats = secondary_file_formats
+        self.value = uuid
+        self.upload_key = upload_key
+        self.extra_files = extra_files
+
+    def as_dict(self):
+        return self.__dict__
+
+
+def parse_formatstr(file_format_str):
+    if not file_format_str:
+        return None
+    return file_format_str.replace('/file-formats/', '').replace('/', '')
+
+
 def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
     input_files_for_ffmeta = []
     for input_file in input_file_list:
