@@ -264,7 +264,7 @@ def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
 class FormatExtensionMap(object):
     def __init__(self, ff_keys):
         try:
-            ffe_all = get_metadata("/search/?type=FileFormat", key=ff_keys)
+            ffe_all = search_metadata("/search/?type=FileFormat&frame=object", key=ff_keys)
         except Exception as e:
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
         self.fe_dict = dict()
