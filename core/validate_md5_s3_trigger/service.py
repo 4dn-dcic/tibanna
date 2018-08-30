@@ -15,6 +15,7 @@ def handler(event, context):
     # print(event)
 
     input_json = make_input(event)
+    print('EVENT: %s' % event)
     extra_file_format = get_extra_file_format(event)
     status = get_status(event)
     if extra_file_format:
@@ -31,7 +32,9 @@ def handler(event, context):
             return {'info': 'status is not uploading'}
 
     # pop no json serializable stuff...
-    response.pop('startDate')
+    print('RESPONSE: %s' % response)
+    if 'startDate' in response:
+        response.pop('startDate')
     return response
 
 
@@ -44,6 +47,7 @@ def get_extra_file_format(event):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
+    # env will always be fourfront-webprod, since it is using file bucket name
     upload_key = event['Records'][0]['s3']['object']['key']
     uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
@@ -58,6 +62,7 @@ def get_extra_file_format(event):
     if meta:
         file_format = meta.get('file_format')
         fe_map = FormatExtensionMap(tibanna.ff_keys)
+        print('FE_MAP: %s' % fe_map.fe_dict)
         if extension == fe_map.get_extension(file_format):
             return None
         elif extension in fe_map.get_other_extensions(file_format):
