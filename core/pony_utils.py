@@ -268,7 +268,7 @@ class FormatExtensionMap(object):
         except Exception as e:
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
         self.fe_dict = dict()
-        ### TEMPORARY: FileFormat obj is not used on all environments
+        # TEMPORARY: FileFormat obj is not used on all environments
         if not ffe_all:
             fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
             fe_map = fp_schema.get('file_format_file_extension')
@@ -280,7 +280,7 @@ class FormatExtensionMap(object):
             fe_map.update(fe_map3)
             for fformat in fe_map:
                 self.fe_dict[fformat] = {'standard_extension': fe_map[fformat],
-                                        'other_allowed_extensions': fe_map[fformat]}
+                                         'other_allowed_extensions': fe_map[fformat]}
         else:
             for k in ffe_all['@graph']:
                 file_format = k['file_format']

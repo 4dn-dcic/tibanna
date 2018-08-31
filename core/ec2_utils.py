@@ -5,7 +5,6 @@ import time
 import random
 import string
 import os
-import subprocess
 import logging
 # from invoke import run
 import botocore.session
