@@ -31,10 +31,10 @@ def handler(event, context):
         else:
             return {'info': 'status is not uploading'}
 
-    # pop no json serializable stuff...
+    # fix non json-serializable datetime startDate
     print('RESPONSE: %s' % response)
-    if 'startDate' in response:
-        response.pop('startDate')
+    if response.get('startDate'):
+        response['startDate'] = str(response['startDate'])
     return response
 
 
