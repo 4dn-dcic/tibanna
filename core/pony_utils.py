@@ -282,7 +282,7 @@ class FormatExtensionMap(object):
                 self.fe_dict[fformat] = {'standard_extension': fe_map[fformat],
                                          'other_allowed_extensions': fe_map[fformat]}
         else:
-            for k in ffe_all['@graph']:
+            for k in ffe_all:
                 file_format = k['file_format']
                 self.fe_dict[file_format] = \
                     {'standard_extension': k['standard_file_extension'],
