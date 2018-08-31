@@ -15,7 +15,6 @@ def handler(event, context):
     # print(event)
 
     input_json = make_input(event)
-    print('EVENT: %s' % event)
     extra_file_format = get_extra_file_format(event)
     status = get_status(event)
     if extra_file_format:
@@ -35,8 +34,6 @@ def handler(event, context):
     tibanna_resp = response.get('_tibanna', {}).get('response')
     if tibanna_resp and tibanna_resp.get('startDate'):
         tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
-    print('RESPONSE (md5): %s' % response)
-    print('TIBANNA RESP: %s' % tibanna_resp)
     return response
 
 
@@ -64,7 +61,6 @@ def get_extra_file_format(event):
     if meta:
         file_format = meta.get('file_format')
         fe_map = FormatExtensionMap(tibanna.ff_keys)
-        print('FE_MAP: %s' % fe_map.fe_dict)
         if extension == fe_map.get_extension(file_format):
             return None
         elif extension in fe_map.get_other_extensions(file_format):
