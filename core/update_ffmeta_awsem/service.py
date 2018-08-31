@@ -32,6 +32,7 @@ def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, data
     auth = (higlass_keys['key'], higlass_keys['secret'])
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
+    print('REGISTER_HIGLASS: %s' % payload)
     res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=auth, headers=headers)
     printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))

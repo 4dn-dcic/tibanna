@@ -32,9 +32,9 @@ def handler(event, context):
             return {'info': 'status is not uploading'}
 
     # fix non json-serializable datetime startDate
-    print('RESPONSE: %s' % response)
     if response.get('startDate'):
         response['startDate'] = str(response['startDate'])
+    print('RESPONSE (md5): %s' % response)
     return response
 
 

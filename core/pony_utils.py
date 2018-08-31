@@ -119,6 +119,7 @@ class WorkflowRunMetadata(object):
         return self.__dict__
 
     def toJSON(self):
+        print('WFR toJson: %s' % self.__dict__)
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def post(self, key, type_name=None):
@@ -160,6 +161,7 @@ class ProcessedFileMetadata(object):
         return self.__dict__
 
     def toJSON(self):
+        print('PROC_FILE toJson: %s' % self.__dict__)
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def post(self, key):

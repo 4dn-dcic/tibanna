@@ -194,6 +194,7 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     if jobid:
         input_json['jobid'] = jobid
 
+    print('UTILS.RUN_WORKFLOW: %s' % input_json)
     aws_input = json.dumps(input_json)
     print("about to start run %s" % run_name)
     # trigger the step function to run
