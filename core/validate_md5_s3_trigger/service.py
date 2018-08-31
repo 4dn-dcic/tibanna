@@ -32,9 +32,11 @@ def handler(event, context):
             return {'info': 'status is not uploading'}
 
     # fix non json-serializable datetime startDate
-    if response.get('startDate'):
-        response['startDate'] = str(response['startDate'])
+    tibanna_resp = response.get('_tibanna', {}).get('response')
+    if tibanna_resp and tibanna_resp.get('startDate'):
+        tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
     print('RESPONSE (md5): %s' % response)
+    print('TIBANNA RESP: %s' % tibanna_resp)
     return response
 
 
