@@ -318,21 +318,27 @@ def update_processed_file(awsemfile, pf_meta, tibanna):
                 raise Exception("failed to update processed file metadata %s" % e)
 
 
-def update_metadata_from_awsemfile(awsemfile, ff_meta, pf_meta, tibanna):
+def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna):
     patch_meta = False
     upload_key = awsemfile.key
     status = awsemfile.status
     printlog("awsemfile res is %s" % status)
     if status == 'COMPLETED':
         patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
-        if awsemfile.argument_type == 'Output processed file':
-            update_processed_file(awsemfile, pf_meta, tibanna)
     elif status in ['FAILED']:
         patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
         ff_meta.run_status = 'error'
         ff_meta.patch(key=tibanna.ff_keys)
         raise Exception("Failed to export file %s" % (upload_key))
     return patch_meta
+
+
+def update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna):
+    status = awsemfile.status
+    printlog("awsemfile res is %s" % status)
+    if status == 'COMPLETED':
+        if awsemfile.argument_type == 'Output processed file':
+            update_processed_file(awsemfile, pf_meta, tibanna)
 
 
 def metadata_only(event):
@@ -390,6 +396,8 @@ def real_handler(event, context):
         ff_meta.patch(key=tibanna.ff_keys)
         raise Exception(event.get('error'))
 
+    metadata_only = event.get('metadata_only', False)
+
     awsem_output = awsem.output_files()
     awsem_output_extra = awsem.secondary_output_files()
     ff_output = len(ff_meta.output_files)
@@ -403,7 +411,9 @@ def real_handler(event, context):
     def update_metadata_from_awsemfile_list(awsemfile_list):
         patch_meta = False
         for awsemfile in awsemfile_list:
-            patch_meta = update_metadata_from_awsemfile(awsemfile, ff_meta, pf_meta, tibanna)
+            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna)
+            if not metadata_only:
+                update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna)
         # allow for a simple way for updater to add appropriate meta_data
         if patch_meta:
             ff_meta.__dict__.update(patch_meta)
