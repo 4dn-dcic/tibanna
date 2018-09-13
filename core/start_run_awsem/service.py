@@ -143,7 +143,10 @@ def real_handler(event, context):
             args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
         if 'secondary_file_formats' in of and 'extra_files' in of and of['extra_files']:
             for ext in of.get('extra_files'):
-                args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
+                if arg_name not in args['secondary_output_target']:
+                    args['secondary_output_target'] = {arg_name: ext.get('upload_key')}
+                else:
+                    args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
 
     # output bucket
     args['output_S3_bucket'] = event.get('output_bucket')

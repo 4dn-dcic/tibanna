@@ -1,6 +1,7 @@
 import pytest
 from core.start_run_awsem.service import (
     handler,
+    real_handler,
     create_wfr_output_files_and_processed_files,
     user_supplied_proc_file,
     process_input_file_info,
@@ -28,10 +29,17 @@ def test_start_awsem_handler(run_awsem_event_data):
 
 @valid_env
 @pytest.mark.webtest
-def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_files):
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+def test_start_awsem_handler_processed_files_pf(run_awsem_event_data_processed_files):
+    with mock.patch('core.pony_utils.ProcessedFileMetadata.post') as mock_request:
         res = handler(run_awsem_event_data_processed_files, '')
-        assert mock_request.call_count == 2  # one for wfr, two pfs.
+        assert mock_request.call_count == 1  # one pf (bam).
+    assert(res)
+
+
+@valid_env
+@pytest.mark.webtest
+def test_start_awsem_handler_processed_files(run_awsem_event_data_processed_files):
+    res = real_handler(run_awsem_event_data_processed_files, '')
     assert(res)
     assert('pf_meta' in res)
     assert('genome_assembly' in res['pf_meta'][0])
@@ -120,9 +128,7 @@ def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handle_processed_files2(run_awsem_event_data_processed_files2):
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
-        res = handler(run_awsem_event_data_processed_files2, '')
-        assert mock_request.call_count == 3  # one for wfr, two pfs.
+    res = handler(run_awsem_event_data_processed_files2, '')
     assert(res)
     assert('pf_meta' in res)
     assert('source_experiments' in res['pf_meta'][0])
@@ -145,9 +151,7 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     workflow_uuid = data['workflow_uuid']
     wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
 
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
-        output_files, pf_meta = create_wfr_output_files_and_processed_files(wf_meta, tibanna)
-        assert mock_request.call_count == 3
+    output_files, pf_meta = create_wfr_output_files_and_processed_files(wf_meta, tibanna)
     assert(output_files)
     assert len(output_files) == 3
     for of in output_files:
