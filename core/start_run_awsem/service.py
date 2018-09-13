@@ -274,7 +274,7 @@ def create_and_post_processed_file(ff_keys, file_format, secondary_file_formats,
     if not file_format:
         raise Exception("file format for processed file must be provided")
     if secondary_file_formats:
-        extra_files = [{"file_format": v} for v in secondary_file_formats]
+        extra_files = [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
     else:
         extra_files = None
     pf = ProcessedFileMetadata(

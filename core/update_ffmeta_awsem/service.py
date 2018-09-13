@@ -300,6 +300,8 @@ def find_pf(pf_meta, accession):
 def update_processed_file(awsemfile, pf_meta, tibanna):
     if pf_meta:
         pf = find_pf(pf_meta, awsemfile.accession)
+        if not pf:
+            raise Exception("Can't find processed file with matching accession: %s" % awsemfile.accession)
         if awsemfile.is_extra:
             try:
                 add_md5_filesize_to_pf_extra(pf, awsemfile)

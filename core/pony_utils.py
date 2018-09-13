@@ -15,8 +15,9 @@ from dcicutils.s3_utils import s3Utils
 from core.utils import run_workflow as _run_workflow
 from core.utils import check_output
 from core.utils import _tibanna_settings
+from core.utils import printlog
 from time import sleep
-import logging
+
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -26,9 +27,6 @@ import logging
 ###########################
 # Config
 ###########################
-
-# logger
-LOG = logging.getLogger(__name__)
 
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None,
@@ -143,7 +141,7 @@ class ProcessedFileMetadata(object):
         self.status = status
         self.lab = lab
         self.award = award
-        self.file_format = file_format
+        self.file_format = parse_formatstr(file_format)
         if extra_files:
             self.extra_files = extra_files
         if source_experiments:
@@ -224,8 +222,7 @@ def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
             infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], uuid, idx + 1,
                                             input_file.get('format_if_extra', ''))
             input_files_for_ffmeta.append(infileobj.as_dict())
-    print("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
-    LOG.info("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
+    printlog("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
     return input_files_for_ffmeta
 
 
@@ -268,7 +265,7 @@ class FormatExtensionMap(object):
         except Exception as e:
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
         self.fe_dict = dict()
-        # TEMPORARY: FileFormat obj is not used on all environments
+        printlog("**ffe_all = " + str(ffe_all))
         for k in ffe_all:
             file_format = k['file_format']
             self.fe_dict[file_format] = \

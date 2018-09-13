@@ -182,7 +182,7 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
                       settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
-    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys)
+    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys, ff_env=tibanna.env, add_on='frame=object')
 
     output_files, pf_meta = create_wfr_output_files_and_processed_files(
         wf_meta, tibanna, custom_fields=data.get('custom_pf_fields')
