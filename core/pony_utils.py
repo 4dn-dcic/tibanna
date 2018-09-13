@@ -269,26 +269,13 @@ class FormatExtensionMap(object):
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
         self.fe_dict = dict()
         # TEMPORARY: FileFormat obj is not used on all environments
-        if not ffe_all:
-            fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
-            fe_map = fp_schema.get('file_format_file_extension')
-            fp_schema2 = get_metadata("profiles/file_fastq.json", key=ff_keys)
-            fe_map2 = fp_schema2.get('file_format_file_extension')
-            fp_schema3 = get_metadata("profiles/file_reference.json", key=ff_keys)
-            fe_map3 = fp_schema3.get('file_format_file_extension')
-            fe_map.update(fe_map2)
-            fe_map.update(fe_map3)
-            for fformat in fe_map:
-                self.fe_dict[fformat] = {'standard_extension': fe_map[fformat],
-                                         'other_allowed_extensions': fe_map[fformat]}
-        else:
-            for k in ffe_all:
-                file_format = k['file_format']
-                self.fe_dict[file_format] = \
-                    {'standard_extension': k['standard_file_extension'],
-                     'other_allowed_extensions': k.get('other_allowed_extensions', []),
-                     'extrafile_formats': k.get('extrafile_formats', [])
-                     }
+        for k in ffe_all:
+            file_format = k['file_format']
+            self.fe_dict[file_format] = \
+                {'standard_extension': k['standard_file_extension'],
+                 'other_allowed_extensions': k.get('other_allowed_extensions', []),
+                 'extrafile_formats': k.get('extrafile_formats', [])
+                 }
 
     def get_extension(self, file_format):
         if file_format in self.fe_dict:

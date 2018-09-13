@@ -263,14 +263,20 @@ def parse_custom_fields(custom_fields, argname):
             pf_other_fields.update(custom_fields[argname])
         if 'ALL' in custom_fields:
             pf_other_fields.update(custom_fields['ALL'])
+    if len(pf_other_fields) == 0:
+        pf_other_fields = None
     return pf_other_fields
 
 
 def create_and_post_processed_file(ff_keys, file_format, secondary_file_formats,
                                    source_experiments=None, other_fields=None):
+    printlog(file_format)
     if not file_format:
         raise Exception("file format for processed file must be provided")
-    extra_files = [{"file_format": v} for v in secondary_file_formats]
+    if secondary_file_formats:
+        extra_files = [{"file_format": v} for v in secondary_file_formats]
+    else:
+        extra_files = None
     pf = ProcessedFileMetadata(
         file_format=file_format,
         extra_files=extra_files,
