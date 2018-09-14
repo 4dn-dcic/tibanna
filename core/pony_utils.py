@@ -199,11 +199,16 @@ class WorkflowRunOutputFiles(object):
                  upload_key=None, uuid=None, extra_files=None):
         self.workflow_argument_name = workflow_argument_name
         self.type = argument_type
-        self.format = file_format
-        self.secondary_file_formats = secondary_file_formats
-        self.value = uuid
-        self.upload_key = upload_key
-        self.extra_files = extra_files
+        if file_format:
+            self.format = file_format
+        if extra_files:
+            self.extra_files = extra_files
+        if secondary_file_formats:
+            self.secondary_file_formats = secondary_file_formats
+        if uuid:
+            self.value = uuid
+        if upload_key:
+            self.upload_key = upload_key
 
     def as_dict(self):
         return self.__dict__
