@@ -43,9 +43,7 @@
     "ebs_iops": 500,
     "shutdown_min": 30,
     "instance_type": "t2.large",
-    
-    
-    "password": "hahaha",
+    "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode"
   }
