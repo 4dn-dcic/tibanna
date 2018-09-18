@@ -71,17 +71,18 @@ def handler(event, context):
         cfg['public_postrun_json'] = False
         # 4dn will use 'true' --> this will automatically be added by start_run_awsem
 
+    # script url
+    cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
+        os.environ.get('TIBANNA_REPO_NAME') + '/' + \
+        os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf/'
+
     # AMI and script directory according to cwl version
     if args['cwl_version'] == 'v1':
         cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
-        cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
-            os.environ.get('TIBANNA_REPO_NAME') + '/' + \
-            os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf_cwl_v1/'
+        cfg['language'] = 'cwl_v1'
     else:
         cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
-        cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
-            os.environ.get('TIBANNA_REPO_NAME') + '/' + \
-            os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf_cwl_draft3/'
+        cfg['language'] = 'cwl_draft3'
 
     ec2_utils.update_config(cfg, args['app_name'],
                             args['input_files'], args['input_parameters'])
