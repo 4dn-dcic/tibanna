@@ -11,14 +11,14 @@ install:
 - pip install codacy-coverage
 script:
 - invoke test --ignore-webdev  # temporarily ignore test_webdev which uses tibanna_pony
-- source tests/awsf/test.sh
+- ./tests/awsf/test.sh
+after_success:
 - echo "finished running tests on repo"
 - echo "now ensure setup.py works without version conflicts"
 - python setup.py install  # ensure that this works
 - echo " now deploy core lambda pacakges"
 - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";
   invoke deploy_core all; fi
-after_success:
 - python-codacy-coverage -r coverage.xml
 env:
   global:

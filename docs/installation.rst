@@ -12,7 +12,7 @@ Tibanna works with the following Python and pip versions.
 - Pip 9.0.3 / 10.0.1
 
 
-Install Tibanan on your local machine or server from which you want to send commands to run workflows.
+Install Tibanna on your local machine or server from which you want to send commands to run workflows.
 
 ::
 
@@ -29,6 +29,15 @@ Install Tibanan on your local machine or server from which you want to send comm
     cd tibanna
     pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
 
+
+Alternatively, use ``setup.py``
+
+::
+
+   # installing tibanna package
+    git clone https://github.com/4dn-dcic/tibanna
+    cd tibanna
+    python setup.py install
 
 
 Deploying Tibanna to AWS
