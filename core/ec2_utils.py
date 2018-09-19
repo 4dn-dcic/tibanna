@@ -5,7 +5,6 @@ import time
 import random
 import string
 import os
-import subprocess
 import logging
 # from invoke import run
 import botocore.session
@@ -39,18 +38,6 @@ def get_start_time():
 
 def create_json_filename(jobid, json_dir):
     return json_dir + '/' + jobid + '.run.json'
-
-
-# run command and check the output
-# return value is [True/False, output_string(stdout)]
-# If the command failed, the first value will be False and the output string will be null.
-def run_command_out_check(command):
-    with open(os.devnull, 'w') as shutup:
-        try:
-            res = subprocess.check_output(command.split(" "), stderr=shutup)
-            return([True, res])
-        except subprocess.CalledProcessError:
-            return([False, ''])
 
 
 def launch_and_get_instance_id(launch_args, jobid):
@@ -198,11 +185,12 @@ def create_run_workflow(jobid, shutdown_min,
                         password='lalala',
                         json_bucket='4dn-aws-pipeline-run-json',
                         log_bucket='tibanna-output',
+                        language='cwl_draft3',  # cwl_v1, cwl_draft3
                         profile=None):
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
-    str += "RUN_SCRIPT=aws_run_workflow.sh\n"
+    str += "RUN_SCRIPT=aws_run_workflow_" + language + ".sh\n"
     str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
     str += "LOGBUCKET={}\n".format(log_bucket)
@@ -226,6 +214,7 @@ def launch_instance(par, jobid, profile=None):
     try:
         userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
                                            par['password'], par['json_bucket'], par['log_bucket'],
+                                           par.get('language', 'cwl_draft3'),
                                            profile)
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)

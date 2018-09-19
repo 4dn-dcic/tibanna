@@ -6,10 +6,19 @@ import os
 import boto3
 import json
 from uuid import uuid4
+import time
 
 ###########################################
 # These utils exclusively live in Tibanna #
 ###########################################
+
+
+LOG = logging.getLogger(__name__)
+
+
+def printlog(message):
+    print(message)
+    LOG.info(message)
 
 
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
@@ -161,7 +170,7 @@ def get_exec_arn(sfn, run_name):
 
 
 def run_workflow(input_json, accession='', sfn='tibanna_pony',
-                 env='fourfront-webdev', jobid=None):
+                 env='fourfront-webdev', jobid=None, sleep=3):
     '''
     accession is unique name that we be part of run id
     '''
@@ -195,6 +204,7 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
             name=run_name,
             input=aws_input,
         )
+        time.sleep(sleep)
     except Exception as e:
         raise(e)
 

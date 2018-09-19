@@ -11,12 +11,12 @@
         "object": {
           "eTag": "0123456789abcdef0123456789abcdef",
           "sequencer": "0A1B2C3D4E5F678901",
-          "key":"74ccc209-564d-49d1-ab87-b5b10a3db92f/4DNFIXH5OV2H.fastq.gz",
+          "key":"38969bef-628a-41d6-bc74-c6b347c2e688/4DNFI43RP96B.fastq.gz",
           "size": 1024
         },
         "bucket": {
           "arn": "arn:aws:s3:::mybucket",
-          "name": "elasticbeanstalk-fourfront-webprod-files",
+          "name": "elasticbeanstalk-fourfront-webdev-files",
           "ownerIdentity": {
             "principalId": "EXAMPLE"
           }

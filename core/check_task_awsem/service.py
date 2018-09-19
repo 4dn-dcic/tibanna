@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
 
-import logging
 import boto3
 from core.utils import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
-    powerup
+    powerup,
+    printlog
 )
 import json
 from core.ec2_utils import does_key_exist
-
-LOG = logging.getLogger(__name__)
 
 
 def metadata_only(event):
@@ -21,7 +19,7 @@ def metadata_only(event):
 
 def read_s3(bucket, object_name):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
-    LOG.info(str(response))
+    printlog(str(response))
     return response['Body'].read()
 
 

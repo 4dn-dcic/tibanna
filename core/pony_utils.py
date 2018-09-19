@@ -15,8 +15,9 @@ from dcicutils.s3_utils import s3Utils
 from core.utils import run_workflow as _run_workflow
 from core.utils import check_output
 from core.utils import _tibanna_settings
+from core.utils import printlog
 from time import sleep
-import logging
+
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -26,9 +27,6 @@ import logging
 ###########################
 # Config
 ###########################
-
-# logger
-LOG = logging.getLogger(__name__)
 
 
 def create_ffmeta_awsem(workflow, app_name, input_files=None,
@@ -143,7 +141,7 @@ class ProcessedFileMetadata(object):
         self.status = status
         self.lab = lab
         self.award = award
-        self.file_format = file_format
+        self.file_format = parse_formatstr(file_format)
         if extra_files:
             self.extra_files = extra_files
         if source_experiments:
@@ -191,6 +189,36 @@ class ProcessedFileMetadata(object):
         else:
             return pf
 
+    def add_higlass_uid(self, higlass_uid):
+        if higlass_uid:
+            self.higlass_uid = higlass_uid
+
+
+class WorkflowRunOutputFiles(object):
+    def __init__(self, workflow_argument_name, argument_type, file_format=None, secondary_file_formats=None,
+                 upload_key=None, uuid=None, extra_files=None):
+        self.workflow_argument_name = workflow_argument_name
+        self.type = argument_type
+        if file_format:
+            self.format = file_format
+        if extra_files:
+            self.extra_files = extra_files
+        if secondary_file_formats:
+            self.secondary_file_formats = secondary_file_formats
+        if uuid:
+            self.value = uuid
+        if upload_key:
+            self.upload_key = upload_key
+
+    def as_dict(self):
+        return self.__dict__
+
+
+def parse_formatstr(file_format_str):
+    if not file_format_str:
+        return None
+    return file_format_str.replace('/file-formats/', '').replace('/', '')
+
 
 def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
     input_files_for_ffmeta = []
@@ -199,8 +227,7 @@ def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
             infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], uuid, idx + 1,
                                             input_file.get('format_if_extra', ''))
             input_files_for_ffmeta.append(infileobj.as_dict())
-    print("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
-    LOG.info("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
+    printlog("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
     return input_files_for_ffmeta
 
 
@@ -231,24 +258,38 @@ def ensure_list(val):
 
 
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
-    infile_extension = fe_map.get(infile_format)
-    extra_file_extension = fe_map.get(extra_file_format)
+    infile_extension = fe_map.get_extension(infile_format)
+    extra_file_extension = fe_map.get_extension(extra_file_format)
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
-def get_format_extension_map(ff_keys):
-    try:
-        fp_schema = get_metadata("profiles/file_processed.json", key=ff_keys)
-        fe_map = fp_schema.get('file_format_file_extension')
-        fp_schema2 = get_metadata("profiles/file_fastq.json", key=ff_keys)
-        fe_map2 = fp_schema2.get('file_format_file_extension')
-        fp_schema3 = get_metadata("profiles/file_reference.json", key=ff_keys)
-        fe_map3 = fp_schema3.get('file_format_file_extension')
-        fe_map.update(fe_map2)
-        fe_map.update(fe_map3)
-    except Exception as e:
-        raise Exception("Can't get format-extension map from file_processed schema. %s\n" % e)
-    return fe_map
+class FormatExtensionMap(object):
+    def __init__(self, ff_keys):
+        try:
+            ffe_all = search_metadata("/search/?type=FileFormat&frame=object", key=ff_keys)
+        except Exception as e:
+            raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
+        self.fe_dict = dict()
+        printlog("**ffe_all = " + str(ffe_all))
+        for k in ffe_all:
+            file_format = k['file_format']
+            self.fe_dict[file_format] = \
+                {'standard_extension': k['standard_file_extension'],
+                 'other_allowed_extensions': k.get('other_allowed_extensions', []),
+                 'extrafile_formats': k.get('extrafile_formats', [])
+                 }
+
+    def get_extension(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['standard_extension']
+        else:
+            return None
+
+    def get_other_extensions(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['other_allowed_extensions']
+        else:
+            return []
 
 
 def get_source_experiment(input_file_uuid, ff_keys, ff_env):
@@ -348,7 +389,6 @@ class AwsemFile(object):
         self.md5 = md5
         self.format_if_extra = format_if_extra
         self.argument_name = argument_name
-
         if self.format_if_extra or is_extra:
             self.is_extra = True
         else:

@@ -1,15 +1,21 @@
 # -*- coding: utf-8 -*-
-import logging
 from dcicutils import ff_utils
-from core import pony_utils
+from core.pony_utils import (
+  FormatExtensionMap,
+  get_extra_file_key,
+  ProcessedFileMetadata,
+  Awsem,
+  Tibanna,
+  create_ffmeta_awsem
+)
 from core.utils import powerup
+from core.utils import printlog
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
 import requests
 import json
 
-LOG = logging.getLogger(__name__)
 s3 = boto3.resource('s3')
 
 
@@ -28,26 +34,29 @@ def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, data
                'Accept': 'application/json'}
     res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
                         data=json.dumps(payload), auth=auth, headers=headers)
-    LOG.info("LOG resiter_to_higlass(POST request response): " + str(res.json()))
+    printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
 def add_higlass_to_pf(pf, tibanna, awsemfile):
-    ff_key = tibanna.ff_keys
-    # register mcool/bigwig with fourfront-higlass
-    if pf.file_format == "mcool" and awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, awsemfile.bucket, awsemfile.key, 'cooler', 'matrix')
-    if pf.file_format == "bw" and awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
-        pf.__dict__['higlass_uid'] = register_to_higlass(tibanna, awsemfile.bucket, awsemfile.key, 'bigwig', 'vector')
-    # bedgraph: register extra bigwig file to higlass (if such extra file exists)
-    if pf.file_format == 'bg' and awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
-        for pfextra in pf.extra_files:
-            if pfextra.get('file_format') == 'bw':
-                fe_map = pony_utils.get_format_extension_map(ff_key)
-                extra_file_key = pony_utils.get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
-                pf.__dict__['higlass_uid'] = register_to_higlass(
-                    tibanna, awsemfile.bucket, extra_file_key, 'bigwig', 'vector'
-                )
+    def register_to_higlass_bucket(key, file_format, file_type):
+        return register_to_higlass(tibanna, awsemfile.bucket, key, file_format, file_type)
+
+    if awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
+        higlass_uid = None
+        # register mcool/bigwig with fourfront-higlass
+        if pf.file_format == "mcool":
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
+        elif pf.file_format == "bw":
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
+        # bedgraph: register extra bigwig file to higlass (if such extra file exists)
+        elif pf.file_format == 'bg':
+            for pfextra in pf.extra_files:
+                if pfextra.get('file_format') == 'bw':
+                    fe_map = FormatExtensionMap(tibanna.ff_keys)
+                    extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
+                    higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
+        pf.add_higlass_uid(higlass_uid)
 
 
 def add_md5_filesize_to_pf(pf, awsemfile):
@@ -60,8 +69,7 @@ def add_md5_filesize_to_pf(pf, awsemfile):
 
 
 def add_md5_filesize_to_pf_extra(pf, awsemfile):
-    print("awsemfile.is_extra=")
-    print(awsemfile.is_extra)
+    printlog("awsemfile.is_extra=%s" % awsemfile.is_extra)
     if awsemfile.is_extra:
         for pfextra in pf.extra_files:
             if pfextra.get('file_format') == awsemfile.format_if_extra:
@@ -69,8 +77,7 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
                     pfextra['md5sum'] = awsemfile.md5
                 if awsemfile.filesize:
                     pfextra['file_size'] = awsemfile.filesize
-        print("add_md5_filesize_to_pf_extra:")
-        print(pf.extra_files)
+        printlog("add_md5_filesize_to_pf_extra: %s" % pf.extra_files)
 
 
 def qc_updater(status, awsemfile, ff_meta, tibanna):
@@ -118,19 +125,19 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     files_to_parse = datafiles
     if report_html:
         files_to_parse.append(report_html)
-    LOG.info("accession is %s" % accession)
+    printlog("accession is %s" % accession)
     try:
         files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
                                             acl='public-read')
     except Exception as e:
-        LOG.info(tibanna.s3.__dict__)
+        printlog(tibanna.s3.__dict__)
         raise Exception("%s (key={})\n".format(zipped_report) % e)
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
                                       ff_env=tibanna.env)
     # parse fastqc metadata
-    LOG.info("files : %s" % str(files))
+    printlog("files : %s" % str(files))
     filedata = [files[_]['data'] for _ in datafiles]
     if report_html in files:
         qc_url = files[report_html]['s3key']
@@ -139,12 +146,12 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     meta = parse_qc_table(filedata,
                           qc_schema=qc_schema.get('properties'),
                           url=qc_url)
-    LOG.info("qc meta is %s" % meta)
+    printlog("qc meta is %s" % meta)
     # post fastq metadata
     qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
     if qc_meta.get('@graph'):
         qc_meta = qc_meta['@graph'][0]
-    LOG.info("qc_meta is %s" % qc_meta)
+    printlog("qc_meta is %s" % qc_meta)
     # update original file as well
     try:
         original_file = ff_utils.get_metadata(accession,
@@ -152,7 +159,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
                                               ff_env=tibanna.env,
                                               add_on='frame=object',
                                               check_queue=True)
-        LOG.info("original_file is %s" % original_file)
+        printlog("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
     patch_file = {'quality_metric': qc_meta['@id']}
@@ -166,47 +173,89 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     output_files[0]['value_qc'] = qc_meta['@id']
     retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
               'output_files': output_files}
-    LOG.info("retval is %s" % retval)
+    printlog("retval is %s" % retval)
     return retval
 
 
-def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
+def get_existing_md5(file_meta):
+    md5 = file_meta.get('md5sum', False)
+    content_md5 = file_meta.get('content_md5sum', False)
+    return md5, content_md5
+
+
+def which_extra(original_file, format_if_extra=None):
     if format_if_extra:
         if 'extra_files' not in original_file:
             raise Exception("input file has no extra_files," +
                             "yet the tag 'format_if_extra' is found in the input json")
         for extra in original_file.get('extra_files'):
             if extra.get('file_format') == format_if_extra:
-                original_md5 = extra.get('md5sum', False)
-                original_content_md5 = extra.get('content_md5sum', False)
-                new_extra = extra
+                return extra
+    return None
+
+
+def check_mismatch(md5a, md5b):
+    if md5a and md5b and md5a != md5b:
+        return True
     else:
-        original_md5 = original_file.get('md5sum', False)
-        original_content_md5 = original_file.get('content_md5sum', False)
-    current_status = original_file.get('status', "uploading")
+        return False
+
+
+def create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5):
     new_content = {}
-    if md5 and original_md5 and original_md5 != md5:
-        # file status to be upload failed / md5 mismatch
-        raise Exception("md5 not matching the original one")
-    elif md5 and not original_md5:
-        new_content['md5sum'] = md5
-    if content_md5 and original_content_md5 and original_content_md5 != content_md5:
-        # file status to be upload failed / md5 mismatch
-        raise Exception("content md5 not matching the original one")
-    elif content_md5 and not original_content_md5:
-        new_content['content_md5sum'] = content_md5
+
+    def check_mismatch_and_update(x, original_x, fieldname):
+        if check_mismatch(x, original_x):
+            raise Exception(fieldname + " not matching the original one")
+        if x and not original_x:
+            new_content[fieldname] = x
+    check_mismatch_and_update(md5, original_md5, 'md5sum')
+    check_mismatch_and_update(content_md5, original_content_md5, 'content_md5sum')
+    return new_content
+
+
+def create_extrafile_patch_content_for_md5(new_content, current_extra, original_file):
+    current_extra = current_extra.update(new_content.copy())
+    return {'extra_files': original_file.get('extra_files')}
+
+
+def add_status_to_patch_content(content, current_status):
+    new_file = content.copy()
+    # change status to uploaded only if it is uploading or upload failed
+    if current_status in ["uploading", "upload failed"]:
+        new_file['status'] = 'uploaded'
+    return new_file
+
+
+def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
     new_file = {}
-    if new_content:
-        if format_if_extra:
-            new_extra = new_extra.update(new_content.copy())
-            new_file['extra_files'] = original_file.get('extra_files')
-        else:  # update status only if it's not an extra file
-            new_file = new_content
-            # change status to uploaded only if it is uploading or upload failed
-            if current_status in ["uploading", "upload failed"]:
-                new_file['status'] = 'uploaded'
+    current_extra = which_extra(original_file, format_if_extra)
+    if current_extra:  # extra file
+        original_md5, original_content_md5 = get_existing_md5(current_extra)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        if new_content:
+            new_file = create_extrafile_patch_content_for_md5(new_content, current_extra, original_file)
+    else:
+        original_md5, original_content_md5 = get_existing_md5(original_file)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        if new_content:
+            current_status = original_file.get('status', "uploading")
+            new_file = add_status_to_patch_content(new_content, current_status)
     print("new_file = %s" % str(new_file))
     return new_file
+
+
+def parse_md5_report(read):
+    md5_array = read.split('\n')
+    if not md5_array:
+        raise Exception("md5 report has no content")
+    if len(md5_array) == 1:
+        md5 = None
+        content_md5 = md5_array[0]
+    elif len(md5_array) > 1:
+        md5 = md5_array[0]
+        content_md5 = md5_array[1]
+    return md5, content_md5
 
 
 def md5_updater(status, awsemfile, ff_meta, tibanna):
@@ -221,24 +270,16 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
                                           add_on='frame=object',
                                           check_queue=True)
     if status.lower() == 'uploaded':  # md5 report file is uploaded
-        md5_array = awsemfile.read().split('\n')
-        if not md5_array:
-            raise Exception("md5 report has no content")
-        if len(md5_array) == 1:
-            md5 = None
-            content_md5 = md5_array[0]
-        elif len(md5_array) > 1:
-            md5 = md5_array[0]
-            content_md5 = md5_array[1]
+        md5, content_md5 = parse_md5_report(awsemfile.read())
         for format_if_extra in format_if_extras:
             new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
             if new_file:
                 break
-        print("new_file = %s" % str(new_file))
+        printlog("new_file = %s" % str(new_file))
         if new_file:
             try:
                 resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
-                print(resp)
+                printlog(resp)
             except Exception as e:
                 # TODO specific excpetion
                 # if patch fails try to patch worfklow status as failed
@@ -247,6 +288,57 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
         pass
     # nothing to patch to ff_meta
     return None
+
+
+def find_pf(pf_meta, accession):
+    for pf in pf_meta:
+        if pf.accession == accession:
+            return pf
+    return None
+
+
+def update_processed_file(awsemfile, pf_meta, tibanna):
+    if pf_meta:
+        pf = find_pf(pf_meta, awsemfile.accession)
+        if not pf:
+            raise Exception("Can't find processed file with matching accession: %s" % awsemfile.accession)
+        if awsemfile.is_extra:
+            try:
+                add_md5_filesize_to_pf_extra(pf, awsemfile)
+            except Exception as e:
+                raise Exception("failed to update processed file metadata %s" % e)
+        else:
+            try:
+                add_higlass_to_pf(pf, tibanna, awsemfile)
+            except Exception as e:
+                raise Exception("failed to regiter to higlass %s" % e)
+            try:
+                add_md5_filesize_to_pf(pf, awsemfile)
+            except Exception as e:
+                raise Exception("failed to update processed file metadata %s" % e)
+
+
+def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna):
+    patch_meta = False
+    upload_key = awsemfile.key
+    status = awsemfile.status
+    printlog("awsemfile res is %s" % status)
+    if status == 'COMPLETED':
+        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
+    elif status in ['FAILED']:
+        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
+        ff_meta.run_status = 'error'
+        ff_meta.patch(key=tibanna.ff_keys)
+        raise Exception("Failed to export file %s" % (upload_key))
+    return patch_meta
+
+
+def update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna):
+    status = awsemfile.status
+    printlog("awsemfile res is %s" % status)
+    if status == 'COMPLETED':
+        if awsemfile.argument_type == 'Output processed file':
+            update_processed_file(awsemfile, pf_meta, tibanna)
 
 
 def metadata_only(event):
@@ -279,16 +371,15 @@ def real_handler(event, context):
     # get data
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = pony_utils.Tibanna(tibanna_settings['env'], settings=tibanna_settings)
-    ff_meta = pony_utils.create_ffmeta_awsem(
+    tibanna = Tibanna(tibanna_settings['env'], settings=tibanna_settings)
+    ff_meta = create_ffmeta_awsem(
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
     )
-    pf_meta = [pony_utils.ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
+    pf_meta = [ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
 
     # ensure this bad boy is always initialized
-    patch_meta = False
-    awsem = pony_utils.Awsem(event)
+    awsem = Awsem(event)
 
     # go through this and replace awsemfile_report with awsf format
     # actually interface should be look through ff_meta files and call
@@ -305,6 +396,8 @@ def real_handler(event, context):
         ff_meta.patch(key=tibanna.ff_keys)
         raise Exception(event.get('error'))
 
+    metadata_only = event.get('metadata_only', False)
+
     awsem_output = awsem.output_files()
     awsem_output_extra = awsem.secondary_output_files()
     ff_output = len(ff_meta.output_files)
@@ -315,52 +408,21 @@ def real_handler(event, context):
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
-    for awsemfile in awsem_output:
-        upload_key = awsemfile.key
-        status = awsemfile.status
-        print("awsemfile res is %s", status)
-        if status == 'COMPLETED':
-            patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
-            if pf_meta:
-                for pf in pf_meta:
-                    if pf.accession == awsemfile.accession:
-                        try:
-                            add_higlass_to_pf(pf, tibanna, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to regiter to higlass %s" % e)
-                        try:
-                            add_md5_filesize_to_pf(pf, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to update processed file metadata %s" % e)
-        elif status in ['FAILED']:
-            patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
-            ff_meta.run_status = 'error'
-            ff_meta.patch(key=tibanna.ff_keys)
-            raise Exception("Failed to export file %s" % (upload_key))
+    def update_metadata_from_awsemfile_list(awsemfile_list):
+        patch_meta = False
+        for awsemfile in awsemfile_list:
+            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna)
+            if not metadata_only:
+                update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna)
+        # allow for a simple way for updater to add appropriate meta_data
+        if patch_meta:
+            ff_meta.__dict__.update(patch_meta)
 
-    for awsemfile in awsem_output_extra:
-        upload_key = awsemfile.key
-        status = awsemfile.status
-        print("awsemfile res is %s", status)
-        if status == 'COMPLETED':
-            if pf_meta:
-                for pf in pf_meta:
-                    if pf.accession == awsemfile.accession:
-                        try:
-                            add_md5_filesize_to_pf_extra(pf, awsemfile)
-                        except Exception as e:
-                            raise Exception("failed to update processed file metadata %s" % e)
-        elif status in ['FAILED']:
-            ff_meta.run_status = 'error'
-            ff_meta.patch(key=tibanna.ff_keys)
-            raise Exception("Failed to export file %s" % (upload_key))
+    update_metadata_from_awsemfile_list(awsem_output)
+    update_metadata_from_awsemfile_list(awsem_output_extra)
 
     # if we got all the awsemfiles let's go ahead and update our ff_metadata object
     ff_meta.run_status = "complete"
-
-    # allow for a simple way for updater to add appropriate meta_data
-    if patch_meta:
-        ff_meta.__dict__.update(patch_meta)
 
     # add postrunjson log file to ff_meta as a url
     ff_meta.awsem_postrun_json = get_postrunjson_url(event)
@@ -376,7 +438,7 @@ def real_handler(event, context):
         patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
         try:
             for pf in pf_meta:
-                print(pf.as_dict())
+                printlog(pf.as_dict())
                 pf.patch(key=tibanna.ff_keys, fields=patch_fields)
         except Exception as e:
             raise Exception("Failed to update processed metadata %s" % str(e))

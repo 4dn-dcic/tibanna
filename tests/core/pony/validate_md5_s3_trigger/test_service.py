@@ -11,9 +11,9 @@ def test_build_req_parameters(s3_trigger_event_data):
     params = make_input(s3_trigger_event_data)
     assert params['app_name'] == 'md5'
     input_file = params['input_files'][0]
-    assert input_file['bucket_name'] == 'elasticbeanstalk-fourfront-webprod-files'
-    assert input_file['object_key'] == '4DNFIXH5OV2H.fastq.gz'
-    assert input_file['uuid'] == '74ccc209-564d-49d1-ab87-b5b10a3db92f'
+    assert input_file['bucket_name'] == 'elasticbeanstalk-fourfront-webdev-files'
+    assert input_file['object_key'] == '4DNFI43RP96B.fastq.gz'
+    assert input_file['uuid'] == '38969bef-628a-41d6-bc74-c6b347c2e688'
 
 
 @valid_env

@@ -259,14 +259,14 @@ def clean(ctx):
 
 
 @task
-def deploy_chalice(ctx, name='lambda_sbg', version=None):
+def deploy_chalice(ctx, name='lambda_sbg'):
     print("deploying %s" % (name))
     print("a chalice based lambda api")
     run("cd %s; chalice deploy" % (name))
 
 
 @task
-def deploy_core(ctx, name, version=None, tests=False, suffix=None, usergroup=None):
+def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     print("preparing for deploy...")
     if tests:
         print("running tests...")
@@ -299,12 +299,6 @@ def deploy_core(ctx, name, version=None, tests=False, suffix=None, usergroup=Non
             deploy_lambda_package(ctx, name, suffix=suffix, usergroup=usergroup)
             # need to clean up all dist, otherwise, installing local package takes forever
             clean(ctx)
-        print("next get version information")
-        # version = update_version(ctx, version)
-        print("then tag the release in git")
-        # git_tag(ctx, version, "new production release %s" % (version))
-        # print("Build is now triggered for production deployment of %s "
-        #      "check travis for build status" % (version))
 
 
 @task
@@ -467,7 +461,7 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
 
 
 @task
-def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=None, tests=False,
+def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=False,
                    setup=False, buckets='', setenv=False):
     if setup:
         usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
@@ -484,15 +478,15 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, version=No
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_core(ctx, 'all', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_core(ctx, 'unicorn', version=version, tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
     return step_function_name
 
 
 @task
-def deploy_unicorn(ctx, suffix=None, version=None, no_setup=False, buckets='', no_setenv=False):
-    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', version=version, tests=False,
+def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='', no_setenv=False):
+    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', tests=False,
                    setup=not no_setup, buckets=buckets, setenv=not no_setenv)
 
 
@@ -546,9 +540,10 @@ def kill_all(ctx, sfn='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER)
 
 @task
 def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=5, sleeptime=5, status='FAILED'):
+               stopminute=0, offset=0, sleeptime=5, status='FAILED'):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
-    By default, stophour is in EST. This can be changed by setting a different offset (default 5)
+    By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
+    If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
     Sleeptime is sleep time in seconds between rerun submissions.
     By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
     examples)
