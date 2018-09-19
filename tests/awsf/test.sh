@@ -1,4 +1,5 @@
 #!/bin/bash
+set -o errexit
 
 python awsf/aws_decode_run_json.py tests/awsf/bqLd8oa7Tdzq.run.json
 
