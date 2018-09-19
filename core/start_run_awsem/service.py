@@ -144,7 +144,7 @@ def real_handler(event, context):
         if 'secondary_file_formats' in of and 'extra_files' in of and of['extra_files']:
             for ext in of.get('extra_files'):
                 if arg_name not in args['secondary_output_target']:
-                    args['secondary_output_target'] = {arg_name: ext.get('upload_key')}
+                    args['secondary_output_target'] = {arg_name: [ext.get('upload_key')]}
                 else:
                     args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
 
