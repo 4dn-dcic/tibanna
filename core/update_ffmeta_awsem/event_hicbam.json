@@ -144,21 +144,6 @@
       },
       "total_output_size": "325M",
       "start_time": "20180806-22:08:43-UTC"
-    },
-    "config": {
-      "ebs_size": 10,
-      "ami_id": "ami-31caa14e",
-      "json_bucket": "4dn-aws-pipeline-run-json",
-      "json_dir": "/tmp/json",
-      "EBS_optimized": true,
-      "ebs_iops": 500,
-      "userdata_dir": "/tmp/userdata",
-      "shutdown_min": "30",
-      "instance_type": "c4.4xlarge",
-      "public_postrun_json": true,
-      "ebs_type": "io1",
-      "job_tag": "hi-c-processing-bam",
-      "log_bucket": "tibanna-output"
     }
   },
   "start_time": "20180806-22:08:48-UTC",
@@ -287,5 +272,20 @@
       "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
       "object_key": "4DNFI823LSII.chrom.sizes"
     }
-  ]
+  ],
+  "config": {
+    "ebs_size": 10,
+    "ami_id": "ami-31caa14e",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "json_dir": "/tmp/json",
+    "EBS_optimized": true,
+    "ebs_iops": 500,
+    "userdata_dir": "/tmp/userdata",
+    "shutdown_min": "30",
+    "instance_type": "c4.4xlarge",
+    "public_postrun_json": true,
+    "ebs_type": "io1",
+    "job_tag": "hi-c-processing-bam",
+    "log_bucket": "tibanna-output"
+  }
 }

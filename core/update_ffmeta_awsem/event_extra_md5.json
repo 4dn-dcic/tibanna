@@ -77,21 +77,6 @@
       "total_output_size": "28K",
       "start_time": "20180731-14:16:54-UTC"
     },
-    "config": {
-      "ebs_size": 10,
-      "ami_id": "ami-31caa14e",
-      "json_bucket": "4dn-aws-pipeline-run-json",
-      "json_dir": "/tmp/json",
-      "EBS_optimized": false,
-      "ebs_iops": 500,
-      "shutdown_min": 30,
-      "instance_type": "t2.micro",
-      "public_postrun_json": true,
-      "ebs_type": "io1",
-      "job_tag": "md5",
-      "userdata_dir": "/tmp/userdata",
-      "log_bucket": "tibanna-output"
-    },
     "commands": [
       [
         "[job md5.cwl] /data1/tmpODutf5$ docker ",
@@ -161,5 +146,20 @@
       "uuid": "12005967-f060-40dd-a63c-c7204dcf46a7",
       "object_key": "4DNFIFLJJ99W.pairs.gz.px2"
     }
-  ]
+  ],
+  "config": {
+    "ebs_size": 10,
+    "ami_id": "ami-31caa14e",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "json_dir": "/tmp/json",
+    "EBS_optimized": false,
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "instance_type": "t2.micro",
+    "public_postrun_json": true,
+    "ebs_type": "io1",
+    "job_tag": "md5",
+    "userdata_dir": "/tmp/userdata",
+    "log_bucket": "tibanna-output"
+  }
 }
