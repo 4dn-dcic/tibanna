@@ -157,10 +157,7 @@
       "instance_type": "c4.4xlarge",
       "public_postrun_json": true,
       "ebs_type": "io1",
-      
-      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
       "job_tag": "hi-c-processing-bam",
-      
       "log_bucket": "tibanna-output"
     }
   },
@@ -269,26 +266,6 @@
   "parameters": {
     "nthreads_merge": 16,
     "nthreads_parse_sort": 16
-  },
-  "config": {
-    "ebs_size": 10,
-    "password": "hahaha",
-    "ebs_type": "io1",
-    "json_bucket": "4dn-aws-pipeline-run-json",
-    "json_dir": "/tmp/json",
-    "EBS_optimized": true,
-    "ebs_iops": 500,
-    "userdata_dir": "/tmp/userdata",
-    "shutdown_min": "30",
-    "instance_type": "c4.4xlarge",
-    "job_tag": "hi-c-processing-bam",
-    
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
-    "public_postrun_json": true,
-    
-    "ami_id": "ami-31caa14e",
-    "log_bucket": "tibanna-output",
-    "key_name": "4dn-encode"
   },
   "workflow_uuid": "023bfb3e-9a8b-42b9-a9d4-216079526f68",
   "input_files": [

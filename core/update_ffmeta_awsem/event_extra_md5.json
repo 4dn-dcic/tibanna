@@ -84,16 +84,12 @@
       "json_dir": "/tmp/json",
       "EBS_optimized": false,
       "ebs_iops": 500,
-      "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
       "shutdown_min": 30,
       "instance_type": "t2.micro",
       "public_postrun_json": true,
       "ebs_type": "io1",
-      
-      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
       "job_tag": "md5",
       "userdata_dir": "/tmp/userdata",
-      
       "log_bucket": "tibanna-output"
     },
     "commands": [
@@ -156,27 +152,6 @@
   "instance_id": "i-0e54a44e4f3dc512c",
   "pf_meta": [],
   "jobid": "3Z3h7jpAlUfc",
-  "config": {
-    "ebs_size": 10,
-    "password": "",
-    "ebs_type": "io1",
-    "key_name": "4dn-encode",
-    "json_dir": "/tmp/json",
-    "EBS_optimized": false,
-    "ebs_iops": 500,
-    "userdata_dir": "/tmp/userdata",
-    "shutdown_min": 30,
-    "instance_type": "t2.micro",
-    "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access",
-    "job_tag": "md5",
-    
-    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf_cwl_v1/",
-    "json_bucket": "4dn-aws-pipeline-run-json",
-    
-    "ami_id": "ami-31caa14e",
-    "log_bucket": "tibanna-output",
-    "public_postrun_json": true
-  },
   "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
   "input_files": [
     {

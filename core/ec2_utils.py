@@ -182,7 +182,7 @@ def create_json(input_dict):
 
 def create_run_workflow(jobid, shutdown_min,
                         script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/',
-                        password='lalala',
+                        password='',
                         json_bucket='4dn-aws-pipeline-run-json',
                         log_bucket='tibanna-output',
                         language='cwl_draft3',  # cwl_v1, cwl_draft3
