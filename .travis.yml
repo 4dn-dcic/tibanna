@@ -20,8 +20,7 @@ install:
 jobs:
   include:
   - stage: unit tests
-    python:
-    - '2.7'
+    python: '2.7'
     script:
     - invoke test --ignore-webdev  # temporarily ignore test_webdev which uses tibanna_pony
     - ./tests/awsf/test.sh
@@ -32,10 +31,9 @@ jobs:
       invoke deploy_core all; fi
     - python-codacy-coverage -r coverage.xml
   - stage: version tests
-    python:
-     - '2.7'
-     script:
-     - echo "now ensure setup.py installs without version conflicts"
-     - python setup.py install  # ensure that this works
-     after_success:
-     - echo "versions do not conflict!"
+    python: '2.7'
+    script:
+    - echo "now ensure setup.py installs without version conflicts"
+    - python setup.py install  # ensure that this works
+    after_success:
+    - echo "versions do not conflict!"
