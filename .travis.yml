@@ -1,41 +1,41 @@
 language: python
 sudo: false
 cache:
-    pip: true
+  pip: true
+env:
+  global:
+  - AWS_ACCOUNT_NUMBER=643366669028
+  - TIBANNA_AWS_REGION=us-east-1
+  - AWS_S3_ROLE_NAME=S3_access
+  - secure: oD66frJIPm08Rg3oM1wpIGFScT2OvWtJwnQ8QwNxu9SYTYG0A5S2XTBDGi539FV5+u1DLUm3A2+EEiGchsef0LBJg71PdSjf06smSXLqdSxElmVqDLr52FLTio8EExNiMepKKVX9N+6x+AlGfE6GlkCB/RWj7m5CHguTBBL6RTGFejpRSHaJuZGVQJ3LuPiyheDax9fD5jL2SEehCUyS2ooHDlEMatbhfVdcSaUXYunqZr3wNow0DQ0wTs6z0dRdUPnVvuwVtrvOlnhgn5gXC24RpyxCvNkIzsA50Xm8m5N3Em+zJWcpkAIJbec1xJwUQburqUyUuxgjl6EL3Y+ca/Zc2Fsyx6JsunO0a+3nv6M//OwS8kcmJKrlYp/ldfYMGHlV1V1+8eoKCXPxcNF7OMlX4ipn+wtqPGLzk5yepTkuewNFVZyoBw2L9eqwMIsqYQswxK+SHebIfTWuUPEmgqp7Q/MOL/g7NvyeLeTqUGjkawItjSZiYjiKMWuimUj8QiFPghKwM4HAALRufhEpk3qTCjH+rrzaE+11vrOiFz0bv6eP7kxC4MgAoXLi6qLNJkkrOwSgbPLfc8ZtS3FQ4upA0KgAtDDfp3TC7RmpmBJmuhzuZxKg3xTkm5Lf7ZKQk/ddtbiTkfTrdM7LmKCTLxIFZN0ezY3YIA3IocfC5JM=
+  - secure: A+aS/6+UmfpT0ei64Z1j6ahUQEDbHFQsN1OVTG914oQ21yY8cBiRGYMa3jGhnO1Ykkw/74DL+kYpVHhC3+YGRvOTrmRFlddj8N8BcHVVHAtfjRkpUVb3HQY8SIdGkSRKG3G3DWcDWNRa1blTEo74zQ/VcLC9O/N7HbpcLsuf1sJDNN8QKeiNFQuZlyIzEeptz49PQfLHISAHetpxr8S2CiaQkMOS89k2iTBVQbdyyL8WHSPL1XTv0QiD/F9O+EuUUPq7S1tk1vxX3ugT4YKvQFs043eRknVQiSbqHql7xWBJehCQ0254GJ3fcwg75VmWYOBgNjkvPUnIMRYhh0UmuZCJuIbhczfJ6r0donLmUHHCHw5DXEXnbYXrfGJK5oE61RURqOfuA3y+Mle0docU0CPDvSWNEGxD+jhyDnRAr9Z/JFlkfP5BZZJngONBJU6rS168Dk7fcgi5AElf3tG6lrWZFmUAqynVvsFiFy8l5NIEMWPW9dTtrTOeq/4Cp6cW2xUCrAnbf9reYJcBP0SnODJ4LdndwnYxPL2kUUg/cfTYPHLMTFvkti5Gg9rfv2jvXk9NsGDOReUf7he3Nhsj6aLTcm+egIzGfImjT0NRj5dGsdYTi3mRCQCvw3Lx4Px245YugqyNOnUJ30TE+n+je1NoOhst5WNBV8zBqflP6G0=
+  - secure: Wme+SijvETNKFgc11VY2pAk7B9dDOfAzVEeQT25TL4yNVamMkp3yhGSxvgsizC2jYQsbbnc4jJErKpuhO6YdOA5R7BYFZccAxc3/mNvib+RjHrMemsddwpc7UOOEcTSxdNmC/OZ2v2/ldIpr0RYWYQFFj/BvZxvpcHpejbIwdVIUC7yxoID4yXABzybaPRuLZgksrYn/cDSHTYdqmiSmz9A0JcVHZ4mX8DELjZ3bU4jyOi93Wp5juVRvGw1nM61xMq1VagYmyt5wqzf7xcPxkzWaoAxvCSfu/dcXAauukrTuRRqvpSOVwsbafLWysFQE5rM5tJ5r9GJYgiHJnPpJ4lXXhh9kLFKzGjRTEvfU5Q52VBw1Cb253qyPPCVYH6+6xP3ApB4PrA06KO2DZ2bkXtNs9a4lu3K0+NOANXtnzJ/H8kFK3XTdhoz631f0/rk5IZ2EjkpEXZoZ3yYvZPJMcrU/xwa8QLK2zqvTOFnb4gWXPNawUTjgiPz3FrLJfRJKFVczXt9Q9ECHONWQEwBaBwR4AokG9cFMaUVZemOYz4OW2bYHP0Ik3IxARgXEiW9l2hZg+7RykIGbSCQWnnjv2JGruPTfIFfoDxAIp3sqvYfGwsHIhd8jxYgVSmf4yjbzq4w+7XNG1l6Sxeu52mPXzIPXE4LC5ztQYeDOpzSXOIk=
+  - secure: t/YstnG/PnrIqbgO9iGZgLE2zwIsdeimu8MzyZqYHaTZ02vRTwaaM5tyICrqeOhIgKgCwN8n5udvPcDiKZjHYcMUb5bOsx+pPuoMTb6a4nP4IpmTyHSW8cLW0u4z0dcaPPOY/3KnhuvZ201mk5in4Kjm2Bw/uP/DJPjpA9mfsIvhtHAcgDPtbz2q0VIQ9hqWAonJXY3MpwJxGk4IopYIYD/pg8EqVKHaFMFFgqT05Db4n0CpZT03g3ETcD6urvkMq9jAET5UBvcUMpF+OlYIcW529pf6o8hY9bUacUz2mmRia0G2cVD22CnEGISzcDnGXTJqgVO+rduVtbiX1FLgxIylZwS1dWf+KJpLlmtvwlfDO0vWUo0fD0CDVfksnUjFjHf34vBN1Ibw0QySfvzPQ85TG2oSmHdquXfEDlaccb/Zm6Nx0z6Nky1oiKDaTVeeQQ1wFR/D2PRXu1Fd4tKo72lu01DuMKACUgHEG7k1O+Md+FGmbI0Boi7N/amhD0mjPFJGkCuXxF7I8fBlZQaslagR5y34P4bql9EZ6kxHnvFGMiQHNLqaCyNBuFU47W8rmbBPvr8CgEB7uDFSypcigJH9uXsxZhDES6UzuyrnzK1n26XGyskrWVjgwJVfxXCIZ/DNDka+OSplLDljZb0SOmjiiBV4gRqwZDe9ILbUBoo=
+  - secure: mS3qVg911xvXwC4hD6WisQLWYi5CijB/mGY7XuEH5575KZ8aupQMJzXg/aUVRgTN+zY72A3AHyEFv8Oga/5rbWNsAWxx3hHtL5mn/Qm5LKh1GWd8srOsvDhej1+005n+bAfUiCgF3wncDS6wwu5pNI9igfFyv7S9nAG8UQGnBPeOVWwZWqVssSAIbxtw08ckZU4SXnSVwZdhBSQ2S5KUVTSaaMD5BgypWxPbH/NOc5ym8eXIs4zuuYjYiSvVbVxjfjDDgf5m1AXWC+XIS6gUyQZxgxbkKqOxPoNO5fdprIwGQPFzeFETYpbPr73L1Ig2mFN05U6aU+cXO0ZyKCooW844nKNCFVSrIL6M/cHZqgKU/w1HBCXbUoyJ40k8C8ghtvNGvI3tMwOE4ZcPb61wvGQdqPpAZYBLOr5u5ufYSghi4a1LsNykUCMPTpPVGtUW/BoJNAVUV/tJjjfvzyG8M4DKzRDh/MzH7D7LTGyvFIsXW1kr5dA+O8WgHFJ6UnvbHm+es9Nbm3b7z7CldZ020CLFpz5C5m+X2oLVKGZ7Cip4uuVdNienot33fJos2xRnz7hWErzYNQZiTGFYsBpOt9oNJhH62y0lTHOnWKWzJOU4KtIyEJMp8ZRDY23LaYNqQmrqbjOksRW76aGOOkapxVYXnIhdn3B2Ox0bNMjMD04=
 install:
 - pip install six
 - pip install -U -r requirements.txt
 - pip install -U -r requirements-4dn.txt
 - pip install codacy-coverage
 jobs:
-    include:
-    - stage: unit tests
-        python:
-        - '2.7'
-        script:
-        - invoke test --ignore-webdev  # temporarily ignore test_webdev which uses tibanna_pony
-        - ./tests/awsf/test.sh
-        after_success:
-        - echo "finished running tests on repo"
-        - echo " now deploy core lambda pacakges"
-        - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";
-          invoke deploy_core all; fi
-        - python-codacy-coverage -r coverage.xml
-        env:
-          global:
-          - AWS_ACCOUNT_NUMBER=643366669028
-          - TIBANNA_AWS_REGION=us-east-1
-          - AWS_S3_ROLE_NAME=S3_access
-          - secure: oD66frJIPm08Rg3oM1wpIGFScT2OvWtJwnQ8QwNxu9SYTYG0A5S2XTBDGi539FV5+u1DLUm3A2+EEiGchsef0LBJg71PdSjf06smSXLqdSxElmVqDLr52FLTio8EExNiMepKKVX9N+6x+AlGfE6GlkCB/RWj7m5CHguTBBL6RTGFejpRSHaJuZGVQJ3LuPiyheDax9fD5jL2SEehCUyS2ooHDlEMatbhfVdcSaUXYunqZr3wNow0DQ0wTs6z0dRdUPnVvuwVtrvOlnhgn5gXC24RpyxCvNkIzsA50Xm8m5N3Em+zJWcpkAIJbec1xJwUQburqUyUuxgjl6EL3Y+ca/Zc2Fsyx6JsunO0a+3nv6M//OwS8kcmJKrlYp/ldfYMGHlV1V1+8eoKCXPxcNF7OMlX4ipn+wtqPGLzk5yepTkuewNFVZyoBw2L9eqwMIsqYQswxK+SHebIfTWuUPEmgqp7Q/MOL/g7NvyeLeTqUGjkawItjSZiYjiKMWuimUj8QiFPghKwM4HAALRufhEpk3qTCjH+rrzaE+11vrOiFz0bv6eP7kxC4MgAoXLi6qLNJkkrOwSgbPLfc8ZtS3FQ4upA0KgAtDDfp3TC7RmpmBJmuhzuZxKg3xTkm5Lf7ZKQk/ddtbiTkfTrdM7LmKCTLxIFZN0ezY3YIA3IocfC5JM=
-          - secure: A+aS/6+UmfpT0ei64Z1j6ahUQEDbHFQsN1OVTG914oQ21yY8cBiRGYMa3jGhnO1Ykkw/74DL+kYpVHhC3+YGRvOTrmRFlddj8N8BcHVVHAtfjRkpUVb3HQY8SIdGkSRKG3G3DWcDWNRa1blTEo74zQ/VcLC9O/N7HbpcLsuf1sJDNN8QKeiNFQuZlyIzEeptz49PQfLHISAHetpxr8S2CiaQkMOS89k2iTBVQbdyyL8WHSPL1XTv0QiD/F9O+EuUUPq7S1tk1vxX3ugT4YKvQFs043eRknVQiSbqHql7xWBJehCQ0254GJ3fcwg75VmWYOBgNjkvPUnIMRYhh0UmuZCJuIbhczfJ6r0donLmUHHCHw5DXEXnbYXrfGJK5oE61RURqOfuA3y+Mle0docU0CPDvSWNEGxD+jhyDnRAr9Z/JFlkfP5BZZJngONBJU6rS168Dk7fcgi5AElf3tG6lrWZFmUAqynVvsFiFy8l5NIEMWPW9dTtrTOeq/4Cp6cW2xUCrAnbf9reYJcBP0SnODJ4LdndwnYxPL2kUUg/cfTYPHLMTFvkti5Gg9rfv2jvXk9NsGDOReUf7he3Nhsj6aLTcm+egIzGfImjT0NRj5dGsdYTi3mRCQCvw3Lx4Px245YugqyNOnUJ30TE+n+je1NoOhst5WNBV8zBqflP6G0=
-          - secure: Wme+SijvETNKFgc11VY2pAk7B9dDOfAzVEeQT25TL4yNVamMkp3yhGSxvgsizC2jYQsbbnc4jJErKpuhO6YdOA5R7BYFZccAxc3/mNvib+RjHrMemsddwpc7UOOEcTSxdNmC/OZ2v2/ldIpr0RYWYQFFj/BvZxvpcHpejbIwdVIUC7yxoID4yXABzybaPRuLZgksrYn/cDSHTYdqmiSmz9A0JcVHZ4mX8DELjZ3bU4jyOi93Wp5juVRvGw1nM61xMq1VagYmyt5wqzf7xcPxkzWaoAxvCSfu/dcXAauukrTuRRqvpSOVwsbafLWysFQE5rM5tJ5r9GJYgiHJnPpJ4lXXhh9kLFKzGjRTEvfU5Q52VBw1Cb253qyPPCVYH6+6xP3ApB4PrA06KO2DZ2bkXtNs9a4lu3K0+NOANXtnzJ/H8kFK3XTdhoz631f0/rk5IZ2EjkpEXZoZ3yYvZPJMcrU/xwa8QLK2zqvTOFnb4gWXPNawUTjgiPz3FrLJfRJKFVczXt9Q9ECHONWQEwBaBwR4AokG9cFMaUVZemOYz4OW2bYHP0Ik3IxARgXEiW9l2hZg+7RykIGbSCQWnnjv2JGruPTfIFfoDxAIp3sqvYfGwsHIhd8jxYgVSmf4yjbzq4w+7XNG1l6Sxeu52mPXzIPXE4LC5ztQYeDOpzSXOIk=
-          - secure: t/YstnG/PnrIqbgO9iGZgLE2zwIsdeimu8MzyZqYHaTZ02vRTwaaM5tyICrqeOhIgKgCwN8n5udvPcDiKZjHYcMUb5bOsx+pPuoMTb6a4nP4IpmTyHSW8cLW0u4z0dcaPPOY/3KnhuvZ201mk5in4Kjm2Bw/uP/DJPjpA9mfsIvhtHAcgDPtbz2q0VIQ9hqWAonJXY3MpwJxGk4IopYIYD/pg8EqVKHaFMFFgqT05Db4n0CpZT03g3ETcD6urvkMq9jAET5UBvcUMpF+OlYIcW529pf6o8hY9bUacUz2mmRia0G2cVD22CnEGISzcDnGXTJqgVO+rduVtbiX1FLgxIylZwS1dWf+KJpLlmtvwlfDO0vWUo0fD0CDVfksnUjFjHf34vBN1Ibw0QySfvzPQ85TG2oSmHdquXfEDlaccb/Zm6Nx0z6Nky1oiKDaTVeeQQ1wFR/D2PRXu1Fd4tKo72lu01DuMKACUgHEG7k1O+Md+FGmbI0Boi7N/amhD0mjPFJGkCuXxF7I8fBlZQaslagR5y34P4bql9EZ6kxHnvFGMiQHNLqaCyNBuFU47W8rmbBPvr8CgEB7uDFSypcigJH9uXsxZhDES6UzuyrnzK1n26XGyskrWVjgwJVfxXCIZ/DNDka+OSplLDljZb0SOmjiiBV4gRqwZDe9ILbUBoo=
-          - secure: mS3qVg911xvXwC4hD6WisQLWYi5CijB/mGY7XuEH5575KZ8aupQMJzXg/aUVRgTN+zY72A3AHyEFv8Oga/5rbWNsAWxx3hHtL5mn/Qm5LKh1GWd8srOsvDhej1+005n+bAfUiCgF3wncDS6wwu5pNI9igfFyv7S9nAG8UQGnBPeOVWwZWqVssSAIbxtw08ckZU4SXnSVwZdhBSQ2S5KUVTSaaMD5BgypWxPbH/NOc5ym8eXIs4zuuYjYiSvVbVxjfjDDgf5m1AXWC+XIS6gUyQZxgxbkKqOxPoNO5fdprIwGQPFzeFETYpbPr73L1Ig2mFN05U6aU+cXO0ZyKCooW844nKNCFVSrIL6M/cHZqgKU/w1HBCXbUoyJ40k8C8ghtvNGvI3tMwOE4ZcPb61wvGQdqPpAZYBLOr5u5ufYSghi4a1LsNykUCMPTpPVGtUW/BoJNAVUV/tJjjfvzyG8M4DKzRDh/MzH7D7LTGyvFIsXW1kr5dA+O8WgHFJ6UnvbHm+es9Nbm3b7z7CldZ020CLFpz5C5m+X2oLVKGZ7Cip4uuVdNienot33fJos2xRnz7hWErzYNQZiTGFYsBpOt9oNJhH62y0lTHOnWKWzJOU4KtIyEJMp8ZRDY23LaYNqQmrqbjOksRW76aGOOkapxVYXnIhdn3B2Ox0bNMjMD04=
-        - stage: version tests
-            python:
-            - '2.7'
-            script:
-            - echo "now ensure setup.py installs without version conflicts"
-            - python setup.py install  # ensure that this works
-            after_success:
-            - echo "versions do not conflict!"
+  include:
+  - stage: unit tests
+    python:
+    - '2.7'
+    script:
+    - invoke test --ignore-webdev  # temporarily ignore test_webdev which uses tibanna_pony
+    - ./tests/awsf/test.sh
+    after_success:
+    - echo "finished running tests on repo"
+    - echo " now deploy core lambda pacakges"
+    - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";
+      invoke deploy_core all; fi
+    - python-codacy-coverage -r coverage.xml
+  - stage: version tests
+    python:
+     - '2.7'
+     script:
+     - echo "now ensure setup.py installs without version conflicts"
+     - python setup.py install  # ensure that this works
+     after_success:
+     - echo "versions do not conflict!"
