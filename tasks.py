@@ -468,6 +468,7 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
     print("creating a new step function...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
+    # this function will remove existing step function on a conflict
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     print(res.get('stateMachineArn').split(':'))
     step_function_name = res.get('stateMachineArn').split(':')[6]

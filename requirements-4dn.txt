@@ -1,6 +1,6 @@
+python-lambda-4dn==0.10.2
 dcicutils==0.4.0
--e git+https://github.com/4dn-dcic/python-lambda.git@tibanna_setup#egg=python_lambda
--e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark
+-e "git+https://github.com/SooLee/Benchmark.git#egg=Benchmark"
 # for tasks.py
 invoke==0.18.1
 # syntax checker

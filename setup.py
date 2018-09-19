@@ -17,7 +17,7 @@ with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
 setup_requires = [req.strip() for req in set_parsed if 'git+' not in req]
 # need to add packages specified in dependency_links
-setup_requires += ['python_lambda', 'Benchmark']
+setup_requires += ['Benchmark']
 
 # full requirements for pony and running tests (includes dcicutils)
 # with open('requirements-4dn.txt') as f:
@@ -45,7 +45,6 @@ setup(
     include_package_data=True,
     setup_requires=setup_requires,
     dependency_links=[
-        'git+https://github.com/4dn-dcic/python-lambda.git@tibanna_setup#egg=python_lambda',
         'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
     ]
 )
