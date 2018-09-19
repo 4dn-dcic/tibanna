@@ -2,11 +2,13 @@
 Tibanna Pony for 4DN-DCIC
 =========================
 
+Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC. Pony has two additional steps that communicate with the 4DN Data Portal and handle 4DN metadata. Pony is only for 4DN-DCIC and requires access keys to the Data Portal and the 4DN DCIC AWS account.
+
 
 Example Tibanna setup for 4DN-DCIC
 ----------------------------------
 
-If you're 4DN-DCIC, you could do the following. (already done)
+To deploy pony, you could do the following. (already done)
 
 ::
 
@@ -18,23 +20,25 @@ If you're 4DN-DCIC, you could do the following. (already done)
 Webdev testing for Pony
 -----------------------
 
-::
-
-    test_json/awsem_md5.json  
-    test_json/awsem_fastqc.json
-    test_json/awsem_bwa_new.json
-    test_json/awsem_pairsqc.json
-    test_json/awsem_hicpairs_easy.json
-    test_json/awsem_hic_processing_bam-2.pony.json
-    test_json/awsem_repliseq_parta-pony.json
-
-- note: these files are listed in webdevtestlist. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace tibanna_pony_uno with your step function mame).
-
-
+For full tibanna test (actually running jobs through step function) besides travis test, the following input json files are used.
 
 ::
 
-    cat webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_uno --input-json={}"
+    test_json/pony/awsem_md5.json  
+    test_json/pony/awsem_fastqc.json
+    test_json/pony/awsem_bwa_new.json
+    test_json/pony/awsem_pairsqc.json
+    test_json/pony/awsem_hicpairs_easy.json
+    test_json/pony/awsem_hic_processing_bam-2.pony.json
+    test_json/pony/awsem_repliseq_parta-pony.json
+
+- note: these files are listed in ``tests/webdevtestlist``. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace tibanna_pony_uno with your step function mame).
+
+
+
+::
+
+    cat tests/webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_dev --input-json={}"
 
 Example Input Json for Pony
 ---------------------------
