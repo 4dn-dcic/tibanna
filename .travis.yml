@@ -16,6 +16,7 @@ script:
 - echo " now deploy core lambda pacakges"
 - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";
   invoke deploy_core all; fi
+- python setup.py install  # ensure that this works
 after_success:
 - python-codacy-coverage -r coverage.xml
 env:
