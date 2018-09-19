@@ -5,6 +5,7 @@ cache:
 python:
 - '2.7'
 jobs:
+    include:
     - stage: unit tests
         install:
         - pip install six
