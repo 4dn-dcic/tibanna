@@ -8,21 +8,21 @@ try:
 except:
     pass  # don't know why this fails with tox
 
-# for the time being, we are not pip packaging, so do not use
-# setup_requires or install_requires
-with open('requirements-lambda-unicorn.txt') as f:
-    inst_parsed = f.read().splitlines()
-install_requires = [req.strip() for req in inst_parsed if 'git+' not in req]
+# for the time being, use the UNICORN (non-4DN) requirements when
+# installing via setup.py. The other requirements are commented out
+# below in case we want to adjust this
 
 # full requirements for unicorn (does not require dcicutils)
 with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
 setup_requires = [req.strip() for req in set_parsed if 'git+' not in req]
+# need to add packages specified in dependency_links
+setup_requires += ['Benchmark']
 
 # full requirements for pony and running tests (includes dcicutils)
-with open('requirements-4dn.txt') as f:
-    tests_parsed = f.read().splitlines()
-tests_require = [req.strip() for req in tests_parsed if 'git+' not in req]
+# with open('requirements-4dn.txt') as f:
+#     tests_parsed = f.read().splitlines()
+# tests_require = [req.strip() for req in tests_parsed if 'git+' not in req]
 
 
 setup(
@@ -41,15 +41,10 @@ setup(
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7',
             ],
-    install_requires=[],
+    install_requires=setup_requires,
     include_package_data=True,
-    tests_require=tests_require,
-    extras_require={
-        'test': tests_require,
-    },
-    setup_requires=[],
+    setup_requires=setup_requires,
     dependency_links=[
-        'git+https://github.com/4dn-dcic/python-lambda.git#egg=python_lambda',
         'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
     ]
 )

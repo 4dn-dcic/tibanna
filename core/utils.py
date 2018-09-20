@@ -319,16 +319,39 @@ def create_stepfunction(dev_suffix=None,
       "StartAt": sfn_start_lambda[sfn_type],
       "States": sfn_state_defs[sfn_type]
     }
+    # if this encouters an existing step function with the same name, delete
     client = boto3.client('stepfunctions', region_name=region_name)
-    try:
-        response = client.create_state_machine(
-            name=sfn_name,
-            definition=json.dumps(definition, indent=4, sort_keys=True),
-            roleArn=sfn_role_arn
-        )
-    except Exception as e:
-        # sfn_arn=None
-        raise(e)
+    retries = 12  # wait 5 seconds between retries for total of 60s
+    for i in range(retries):
+        try:
+            response = client.create_state_machine(
+                name=sfn_name,
+                definition=json.dumps(definition, indent=4, sort_keys=True),
+                roleArn=sfn_role_arn
+            )
+        except client.exceptions.StateMachineAlreadyExists as e:
+            # get ARN from the error and format as necessary
+            exc_str = str(e)
+            if 'State Machine Already Exists:' not in exc_str:
+                print('Cannot delete state machine. Exiting...' % exc_str)
+                raise(e)
+            sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
+            print('Step function with name %s already exists!\nDeleting and retrying in 5 seconds...' % sfn_name)
+            try:
+                client.delete_state_machine(
+                    stateMachineArn=sfn_arn
+                )
+            except Exception as e:
+                print('Error deleting state machine: %s\nWill retry %s more times...' % (str(e), (retries - (i + 1))))
+            time.sleep(5)
+        except client.exceptions.StateMachineDeleting:
+            print('State machine is still deleting. Will try again in 5 seconds...')
+            time.sleep(5)
+        except Exception as e:
+            # sfn_arn=None
+            raise(e)
+        else:
+            break
     # sfn_arn = response['stateMachineArn']
     return(response)
 
