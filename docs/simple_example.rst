@@ -9,9 +9,9 @@ md5
 Pipeline script
 +++++++++++++++
 
-Let's try a very simple pipeline that calculates md5sum of an input file. We write a script named ``run.sh`` that calculates two md5sum values for a gzipped input file, one for compressed and one for uncompressed content of the file. The script creates an output file named ``report`` that contains two md5sum values. If the file is not gzipped, it simply repeats a regular md5sum value twice.
+Let's try a very simple pipeline that calculates the md5sum of an input file. We'll write a script named ``run.sh`` that calculates two md5sum values for a gzipped input file, one for the compressed and one for the uncompressed content of the file. The script creates an output file named ``report`` that contains two md5sum values. If the file is not gzipped, it simply repeats a regular md5sum value twice.
 
-The pipeline/script could look as below.
+The pipeline/script could look like this:
 
 ::
 
@@ -37,7 +37,7 @@ The pipeline/script could look as below.
 Docker image
 ++++++++++++
 
-We already have a public docker image for this (``duplexa/md5:v2``) that contains script ``run.sh``. You can find it on Docker Hub: https://hub.docker.com/r/duplexa/md5/. If you want to use this public image, you can skip the following.
+We already have a public docker image for this (``duplexa/md5:v2``) that contains script ``run.sh``. You can find it on Docker Hub: https://hub.docker.com/r/duplexa/md5/. If you want to use this public image, you can skip the following steps.
 
 To create your own, first you need to install docker on your (local) machine.
 
@@ -66,11 +66,11 @@ To create your own, first you need to install docker on your (local) machine.
     # default command
     CMD ["run.sh"]
 
-4. Then, build docker image. You can use the same image name (``duplexa/md5:v2``) for this step, but it is recommended to replace ``duplexa`` with your preferred Docker Hub account name, to be able to push the image to Docker Hub later.
+4. Then, build the docker image. You can use the same image name (``duplexa/md5:v2``) for this step, but it is recommended to replace ``duplexa`` with your preferred Docker Hub account name, to be able to push the image to Docker Hub later.
 
 ::
 
-    docker build -t duplexa/md5:v2 .
+    docker build -t my_account/md5:v2 .
 
 
 5. Check the image
@@ -80,21 +80,21 @@ To create your own, first you need to install docker on your (local) machine.
     docker images
 
 
-6. Push the image to Docker Hub. You need an account to Docker Hub.
+6. Push the image to Docker Hub. You will need an account on Docker Hub.
 
 ::
 
     docker login
-    docker push duplexa/md5:v2
+    docker push my_account/md5:v2
 
 
 
 CWL
 +++
 
-A CWL file could look as below. This CWL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.cwl. 
+A sample CWL file is below. This CWL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.cwl. 
 To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
-To use your own CWL file, put this CWL file in a place where you can access through http, so that Tibanna can download this file to the cloud using ``wget`` command.
+To use your own CWL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the example above.
 
 ::
 
@@ -138,7 +138,7 @@ Input json
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_test_input.json.
+The example below can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_test_input.json.
 
 ::
 
@@ -179,7 +179,7 @@ This json file can be found in https://raw.githubusercontent.com/4dn-dcic/tibann
     }
 
 
-This json file specifies input (argument name ``gzfile``, matching the name in CWL) as ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file (the ``cwl_main_filename`` field) and its url (the ``cwl_directory_url`` field, note that the file name itself is excluded from the url).
+The json file specifies the input with ``gzfile``, matching the name in CWL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url).
 
 We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
 
