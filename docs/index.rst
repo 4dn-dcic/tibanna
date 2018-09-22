@@ -35,15 +35,17 @@ Data
 AWS cloud account
 +++++++++++++++++
 
-- Confirm that you can log in to [AWS](https://aws.amazon.com/). 
+- Confirm that you can log in to AWS_.
 
+.. _AWS: https://aws.amazon.com/
 
 Tibanna
 +++++++
 
-- Tibanna is open-source and can be found on [github](https://github.com/4dn-dcic/tibanna).
+- Tibanna is open-source and can be found on github_.
 - Once installed, Tibanna can be run either as a set of commend-line tools or a set of python modules.
 
+.. _github: https://github.com/4dn-dcic/tibanna
 
 **Command-line tools**
 
