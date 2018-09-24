@@ -22,28 +22,30 @@ What do I need to run pipelines using Tibanna?
 Pipeline
 ++++++++
 
-- Your pipeline and dependencies must be pre-installed in a docker image (https://www.docker.com/)
-- The commands to run your pipeline must be written in Common Workflow Language (https://www.commonwl.org/)
+- Your pipeline and dependencies must be pre-installed in a docker image. (https://www.docker.com/)
+- The commands to run your pipeline must be written in Common Workflow Language. (https://www.commonwl.org/)
 
 
 Data
 ++++
 
-- Your data must be pre-uploaded to a permanent storage on the cloud (called S3 bucket).
+- Your data must be in an AWS S3 bucket.
 
 
 AWS cloud account
 +++++++++++++++++
 
-- check https://aws.amazon.com/ 
+- Confirm that you can log in to AWS_.
 
+.. _AWS: https://aws.amazon.com/
 
 Tibanna
 +++++++
 
-- Tibanna is open-source and can be found at https://github.com/4dn-dcic/tibanna
-- Once installed, tibanna can be run either as a set of commend-line tools or a set of python modules
+- Tibanna is open-source and can be found on github_.
+- Once installed, Tibanna can be run either as a set of commend-line tools or a set of python modules.
 
+.. _github: https://github.com/4dn-dcic/tibanna
 
 **Command-line tools**
 
