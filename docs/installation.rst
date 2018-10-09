@@ -9,14 +9,14 @@ Installing Tibanna package
 Tibanna works with the following Python and pip versions.
 
 - Python 2.7
-- Pip 9.0.3 / 10.0.1
+- Pip 9, 10 or 18
 
 
 Install Tibanna on your local machine or server from which you want to send commands to run workflows.
 
 ::
 
-    # create a virtual environment with pip 9.0.3 (or 10.0.1)
+    # create a virtual environment with pip 9.0.3 (or 10 or 18)
     virtualenv -p python2.7 ~/venv/tibanna
     source ~/venv/tibanna/bin/activate
     python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
