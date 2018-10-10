@@ -83,7 +83,8 @@ def handler(event, context):
     else:
         cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
         cfg['language'] = 'cwl_draft3'
-    cfg['singularity'] = True
+    if args.get('singularity', False) == True:
+        cfg['singularity'] = True
 
     ec2_utils.update_config(cfg, args['app_name'],
                             args['input_files'], args['input_parameters'])
