@@ -24,7 +24,7 @@ Pipeline
 
 - Your pipeline and dependencies must be pre-installed as a container image (one of the following):
 
-  - a docker image (https://www.docker.com/)
+  - a Docker image (https://www.docker.com/)
   - a Singularity image (https://singularity.lbl.gov/)
 
     - (Singularity works only with CWL v1 but not draft3).
