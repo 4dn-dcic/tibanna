@@ -33,7 +33,7 @@ while getopts "i:m:j:l:u:p:a:s:r:g" opt; do
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
-        g) export SINGULARITY_OPTION=--singularity  # use singularity
+        g) export SINGULARITY_OPTION=--singularity;;  # use singularity
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
