@@ -32,6 +32,10 @@ args
 :cwl_version:
     - either ``v1`` or ``draft-3``
 
+:singularity:
+    - either ``true`` or ``false``
+    - This is an optional field. (default ``false``)
+
 :input_files:
     - A dictionary that contains input files. The keys must match the input argument names of the CWL.
     - It contains `bucket_name`, `object_key` and optionally `profile` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
@@ -165,7 +169,8 @@ Example input json
         "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
         "cwl_main_filename": "pairsam-parse-sort.cwl",
         "cwl_child_filenames": [],
-        "cwl_version": "draft-3",
+        "cwl_version": "v1",
+        "singularity": False,
         "input_files": {
           "bam": {
             "bucket_name": "some_public_bucket",
@@ -200,6 +205,4 @@ Example input json
         "key_name": ""
       }
     }
-
-
 
