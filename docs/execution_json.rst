@@ -33,6 +33,7 @@ args
     - either ``v1`` or ``draft-3``
 
 :singularity:
+    - This option uses Singularity to run Docker images internally (slower). This option does NOT support native Singularity images, since CWL does not support native Singularity images.
     - either ``true`` or ``false``
     - This is an optional field. (default ``false``)
 
