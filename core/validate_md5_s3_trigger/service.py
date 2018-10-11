@@ -35,16 +35,19 @@ def handler(event, context):
     # run fastqc as a dependent of md5
     if file_format == 'fastq':
         md5_arn = response['_tibanna']['exec_arn']
-        input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn])
+        input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn], run_name_prefix='fastqc')
         response_fastqc = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
+        serialize_startdate(response_fastqc)
         response['fastqc'] = response_fastqc
+    serialize_startdate(response)
+    return response
 
-    # fix non json-serializable datetime startDate
+
+# fix non json-serializable datetime startDate
+def serialize_startdate(response):
     tibanna_resp = response.get('_tibanna', {}).get('response')
     if tibanna_resp and tibanna_resp.get('startDate'):
         tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
-
-    return response
 
 
 def get_fileformats_for_accession(accession, key, env):
@@ -127,7 +130,7 @@ def get_outbucket_name(bucket):
     return bucket.replace("files", "wfoutput")
 
 
-def make_input(event, wf='md5', dependency=None):
+def make_input(event, wf='md5', dependency=None, run_name_prefix='validate'):
     upload_key = event['Records'][0]['s3']['object']['key']
 
     uuid, object_key = upload_key.split('/')
@@ -136,7 +139,7 @@ def make_input(event, wf='md5', dependency=None):
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
 
-    run_name = "validate_%s" % (upload_key.split('/')[1].split('.')[0])
+    run_name = run_name_prefix + "_%s" % (upload_key.split('/')[1].split('.')[0])
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
 
