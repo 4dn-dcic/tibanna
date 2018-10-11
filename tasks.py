@@ -443,7 +443,8 @@ def run_workflow(ctx, input_json='', sfn='', jobid=''):
             resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=jobid)
         else:
             resp = _run_workflow(data, sfn=sfn, jobid=jobid)
-        print("jobid %s submitted" % resp['jobid'])
+        print("JOBID %s submitted" % resp['jobid'])
+        print("EXECUTION ARN = %s" % resp[_tibanna]['exec_arn'])
         run('open %s' % resp[_tibanna]['url'])
 
 
