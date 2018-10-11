@@ -678,4 +678,3 @@ def post_random_file(bucket, ff_key,
     response = post_metadata(newfile, schema, key=ff_key)
     print(response)
     return newfile
-
