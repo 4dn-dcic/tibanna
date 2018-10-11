@@ -114,7 +114,15 @@ args
 
     )
 
+:dependency:
+    - List of other jobs that should finish before the job starts
+    - Currently, only execution arns are accepted. An execution arn of a given run can be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
 
+    ::
+
+        { 
+            "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7927:md5_test"]
+        }
 
 config
 ------
