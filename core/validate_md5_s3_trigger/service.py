@@ -19,7 +19,7 @@ def handler(event, context):
     input_json = make_input(event)
     extra_file_format = get_extra_file_format(event)
     status = get_status(event)
-    if extra_file_format:
+    if extra_file_format:  # the file is an extra file
         if status != 'to be uploaded by workflow':
             # for extra file-triggered md5 run, status check is skipped.
             input_json['input_files'][0]['format_if_extra'] = extra_file_format
@@ -32,10 +32,17 @@ def handler(event, context):
         else:
             return {'info': 'status is not uploading'}
 
+    # run fastqc as a dependent of md5
+    md5_arn = response['_tibanna']['exec_arn']
+    input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn])
+    response_fastqc = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
+    response['fastqc'] = response_fastqc
+
     # fix non json-serializable datetime startDate
     tibanna_resp = response.get('_tibanna', {}).get('response')
     if tibanna_resp and tibanna_resp.get('startDate'):
         tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
+
     return response
 
 
@@ -119,7 +126,7 @@ def get_outbucket_name(bucket):
     return bucket.replace("files", "wfoutput")
 
 
-def make_input(event):
+def make_input(event, wf='md5', dependency=None):
     upload_key = event['Records'][0]['s3']['object']['key']
 
     uuid, object_key = upload_key.split('/')
@@ -132,7 +139,7 @@ def make_input(event):
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
 
-    return _make_input(env, bucket, 'md5', object_key, uuid, run_name)
+    return _make_input(env, bucket, wf, object_key, uuid, run_name, dependency)
 
 
 _workflows = {'md5':
@@ -146,7 +153,7 @@ _workflows = {'md5':
               }
 
 
-def _make_input(env, bucket, workflow, object_key, uuid, run_name):
+def _make_input(env, bucket, workflow, object_key, uuid, run_name, dependency=None):
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
@@ -166,12 +173,14 @@ def _make_input(env, bucket, workflow, object_key, uuid, run_name):
                 "ebs_type": "io1",
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
-                "shutdown_min": 30,
+                "shutdown_min": 0,
                 "password": "thisisnotmypassword",
                 "log_bucket": "tibanna-output",
-                "key_name": ""
-              },
+                "key_name": "4dn-encode"
+              }
             }
+    if dependency:
+        data["dependency"] = {"exec_arn": dependency}
     data.update(_tibanna_settings({'run_id': str(object_key),
                                    'run_name': run_name,
                                    'run_type': workflow,
