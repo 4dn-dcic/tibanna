@@ -1,14 +1,10 @@
-from uuid import uuid4
 from dcicutils.ff_utils import (
-    generate_rand_accession,
     get_authentication_with_server,
-    post_metadata,
     get_metadata,
     patch_metadata
 )
 from core.utils import run_workflow
 from core.pony_utils import get_wfr_uuid, post_random_file
-import gzip
 import time
 
 
