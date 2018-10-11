@@ -394,3 +394,42 @@ def check_output(exec_arn):
             return json.loads(desc['output'])
         else:
             return None
+
+
+def kill(exec_arn):
+    sf = boto3.client('stepfunctions')
+    desc = sf.describe_execution(executionArn=exec_arn)
+    if desc['status'] == 'RUNNING':
+        jobid = str(json.loads(desc['input'])['jobid'])
+        ec2 = boto3.resource('ec2')
+        terminated = None
+        for i in ec2.instances.all():
+            for tag in i.tags:
+                if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
+                    continue
+                if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
+                    response = i.terminate()
+                    printlog(response)
+                    terminated = True
+                    break
+            if terminated:
+                break
+        resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
+        printlog(resp_sf)
+
+
+def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    """killing all the running jobs"""
+    client = boto3.client('stepfunctions')
+    stateMachineArn = STEP_FUNCTION_ARN(sfn)
+    res = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+    while True:
+        if 'executions' not in res or not res['executions']:
+            break
+        for exc in res['executions']:
+            kill(exc)
+        if 'nextToken' in res:
+            res = client.list_executions(nextToken=res['nextToken'],
+                                         stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+        else:
+            break
