@@ -537,9 +537,9 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony'):
 
 
 @task
-def kill_all(ctx, sfn='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER):
+def kill_all(ctx, sfn='tibanna_pony'):
     """ killing all the running jobs"""
-    _kill_all(sfn=sfn, region=region, acc=acc)
+    _kill_all(sfn)
 
 
 @task

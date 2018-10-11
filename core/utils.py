@@ -428,7 +428,7 @@ def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
         if 'executions' not in res or not res['executions']:
             break
         for exc in res['executions']:
-            kill(exc)
+            kill(exc['executionArn'])
         if 'nextToken' in res:
             res = client.list_executions(nextToken=res['nextToken'],
                                          stateMachineArn=stateMachineArn, statusFilter='RUNNING')
