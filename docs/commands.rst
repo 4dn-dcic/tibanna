@@ -204,7 +204,7 @@ The following message is printed out
     url to view status:
     https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
     JOBID jLeL6vMbhL63 submitted
-    EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_killtest:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
     Couldn't get a file descriptor referring to the console
 
 
@@ -213,7 +213,7 @@ To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (
 
 ::
 
-    $ invoke kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_killtest:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    $ invoke kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
 
 
 
