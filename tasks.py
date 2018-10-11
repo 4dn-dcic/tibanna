@@ -10,7 +10,7 @@ import contextlib
 import shutil
 # from botocore.errorfactory import ExecutionAlreadyExists
 from core.ec2_utils import AWS_S3_ROLE_NAME
-from core.ec2_utils import create_jobid
+from core.utils import create_jobid
 from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
 from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
 from core.utils import run_workflow as _run_workflow
@@ -443,6 +443,7 @@ def run_workflow(ctx, input_json='', sfn='', jobid=''):
             resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=jobid)
         else:
             resp = _run_workflow(data, sfn=sfn, jobid=jobid)
+        print("jobid %s submitted" % resp['jobid'])
         run('open %s' % resp[_tibanna]['url'])
 
 

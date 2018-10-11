@@ -22,9 +22,7 @@ What do I need to run pipelines using Tibanna?
 Pipeline
 ++++++++
 
-- Your pipeline and dependencies must be pre-installed in a container image (either one of the following).
-  - a docker image (https://www.docker.com/)
-  - a Singularity image (https://singularity.lbl.gov/) (works only with CWL v1 but not draft3).
+- Your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/).
 - The commands to run your pipeline must be written in Common Workflow Language. (https://www.commonwl.org/).
 
 

@@ -2,8 +2,6 @@
 import json
 import sys
 import time
-import random
-import string
 import os
 import logging
 # from invoke import run
@@ -11,6 +9,7 @@ import botocore.session
 import boto3
 from Benchmark import run as B
 from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
+from core.utils import create_jobid
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,15 +20,6 @@ logger.setLevel(logging.INFO)
 
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
-
-
-# random string generator
-def randomword(length):
-    return ''.join(random.choice(string.lowercase+string.uppercase+string.digits) for i in range(length))
-
-
-def create_jobid():
-    return randomword(12)    # date+random_string
 
 
 def get_start_time():

@@ -1,5 +1,7 @@
 from __future__ import print_function
 from core.iam_utils import get_stepfunction_role_name
+import random
+import string
 import logging
 import traceback
 import os
@@ -162,6 +164,15 @@ def randomize_run_name(run_name, sfn):
     return run_name
 
 
+# random string generator
+def randomword(length):
+    return ''.join(random.choice(string.lowercase+string.uppercase+string.digits) for i in range(length))
+
+
+def create_jobid():
+    return randomword(12)    # date+random_string
+
+
 def get_exec_arn(sfn, run_name):
     arn = "%s%s%s" % (BASE_ARN % ('execution', str(sfn)),
                       ":",
@@ -192,8 +203,9 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     input_json[_tibanna]['url'] = url
 
     # add jobid
-    if jobid:
-        input_json['jobid'] = jobid
+    if not jobid:
+        jobid = create_jobid()
+    input_json['jobid'] = jobid
 
     aws_input = json.dumps(input_json)
     print("about to start run %s" % run_name)
