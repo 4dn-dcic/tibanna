@@ -186,7 +186,8 @@ def create_run_workflow(jobid, shutdown_min,
                         json_bucket='4dn-aws-pipeline-run-json',
                         log_bucket='tibanna-output',
                         language='cwl_draft3',  # cwl_v1, cwl_draft3
-                        profile=None):
+                        profile=None,
+                        singularity=None):
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
@@ -203,6 +204,8 @@ def create_run_workflow(jobid, shutdown_min,
         str += " -p {}".format(password)
     if profile:
         str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
+    if singularity:
+        str += " -g"
     str += "\n"
     print(str)
     return(str)
@@ -215,7 +218,8 @@ def launch_instance(par, jobid, profile=None):
         userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
                                            par['password'], par['json_bucket'], par['log_bucket'],
                                            par.get('language', 'cwl_draft3'),
-                                           profile)
+                                           profile,
+                                           par.get('singularity', None))
     except Exception as e:
         raise Exception("Cannot create run_workflow script. %s" % e)
 
