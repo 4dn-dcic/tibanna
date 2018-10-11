@@ -115,8 +115,8 @@ args
     )
 
 :dependency:
-    - list of other jobs that should finish before the job starts
-    - currently only execution arn is used. An execution arn of a given run can be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
+    - List of other jobs that should finish before the job starts
+    - Currently, only execution arns are accepted. An execution arn of a given run can be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
 
     ::
 
