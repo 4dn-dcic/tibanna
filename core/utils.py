@@ -404,16 +404,17 @@ def kill(exec_arn):
         ec2 = boto3.resource('ec2')
         terminated = None
         for i in ec2.instances.all():
-            for tag in i.tags:
-                if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
-                    continue
-                if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
-                    response = i.terminate()
-                    printlog(response)
-                    terminated = True
+            if i.tags:
+                for tag in i.tags:
+                    if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
+                        continue
+                    if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
+                        response = i.terminate()
+                        printlog(response)
+                        terminated = True
+                        break
+                if terminated:
                     break
-            if terminated:
-                break
         resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
         printlog(resp_sf)
 
