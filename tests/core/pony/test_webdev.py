@@ -1,55 +1,11 @@
-from uuid import uuid4
 from dcicutils.ff_utils import (
-    generate_rand_accession,
     get_authentication_with_server,
-    post_metadata,
     get_metadata,
     patch_metadata
 )
 from core.utils import run_workflow
-from core.pony_utils import get_wfr_uuid
-import gzip
-import boto3
+from core.pony_utils import get_wfr_uuid, post_random_file
 import time
-
-
-def post_random_file(bucket, ff_key):
-    """Generates a fake pairs.gz file with random uuid and accession
-    and posts it to fourfront. The content is unique since it contains
-    its own uuid. The file metadata does not contain md5sum or
-    content_md5sum.
-    Uses the given fourfront keys
-    """
-    uuid = str(uuid4())
-    accession = generate_rand_accession()
-    newfile = {
-      "accession": accession,
-      "file_format": "pairs",
-      "award": "b0b9c607-f8b4-4f02-93f4-9895b461334b",
-      "lab": "828cd4fe-ebb0-4b36-a94a-d2e3a36cc989",
-      "uuid": uuid,
-      "extra_files": [
-         {
-           "file_format": "pairs_px2",
-           "accession": accession,
-           "uuid": uuid
-         }
-      ]
-    }
-    upload_key = uuid + '/' + accession + '.pairs.gz'
-    tmpfilename = 'alsjekvjf.gz'
-    with gzip.open(tmpfilename, 'wb') as f:
-        f.write(uuid)
-    extra_upload_key = uuid + '/' + accession + '.pairs.gz.px2'
-    extra_tmpfilename = 'alsjekvjf-extra.gz'
-    with gzip.open(extra_tmpfilename, 'wb') as f:
-        f.write(uuid + '.px2')
-    response = post_metadata(newfile, 'file_processed', key=ff_key)
-    print(response)
-    s3 = boto3.resource('s3')
-    s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
-    s3.meta.client.upload_file(extra_tmpfilename, bucket, extra_upload_key)
-    return newfile
 
 
 def testrun_md5_input_json_w_extra_file_object_name(env='webdev'):

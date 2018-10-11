@@ -17,12 +17,12 @@ def handler(event, context):
     # print(event)
 
     input_json = make_input(event)
-    extra_file_format = get_extra_file_format(event)
+    file_format, extra = get_file_format(event)
     status = get_status(event)
-    if extra_file_format:
+    if extra:  # the file is an extra file
         if status != 'to be uploaded by workflow':
             # for extra file-triggered md5 run, status check is skipped.
-            input_json['input_files'][0]['format_if_extra'] = extra_file_format
+            input_json['input_files'][0]['format_if_extra'] = file_format
             response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
     else:
         # only run if status is uploading...
@@ -32,11 +32,22 @@ def handler(event, context):
         else:
             return {'info': 'status is not uploading'}
 
-    # fix non json-serializable datetime startDate
+    # run fastqc as a dependent of md5
+    if file_format == 'fastq':
+        md5_arn = response['_tibanna']['exec_arn']
+        input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn], run_name_prefix='fastqc')
+        response_fastqc = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
+        serialize_startdate(response_fastqc)
+        response['fastqc'] = response_fastqc
+    serialize_startdate(response)
+    return response
+
+
+# fix non json-serializable datetime startDate
+def serialize_startdate(response):
     tibanna_resp = response.get('_tibanna', {}).get('response')
     if tibanna_resp and tibanna_resp.get('startDate'):
         tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
-    return response
 
 
 def get_fileformats_for_accession(accession, key, env):
@@ -53,11 +64,11 @@ def get_fileformats_for_accession(accession, key, env):
         raise Exception("Can't get file format for accession %s" % accession)
 
 
-def get_extra_file_format(event):
+def get_file_format(event):
     '''if the file extension matches the regular file format,
-    returns None
+    returns (format, None)
     if it matches one of the format of an extra file,
-    returns that format (e.g. 'pairs_px2'
+    returns (format (e.g. 'pairs_px2'), 'extra')
     '''
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -74,15 +85,15 @@ def get_extra_file_format(event):
         fe_map = FormatExtensionMap(tibanna.ff_keys)
         printlog(fe_map)
         if extension == fe_map.get_extension(file_format):
-            return None
+            return (file_format, None)
         elif extension in fe_map.get_other_extensions(file_format):
-            return None
+            return (file_format, None)
         else:
             for extra_format in extra_formats:
                 if extension == fe_map.get_extension(extra_format):
-                    return extra_format
+                    return (extra_format, 'extra')
                 elif extension in fe_map.get_other_extensions(extra_format):
-                    return extra_format
+                    return (extra_format, 'extra')
         raise Exception("file extension not matching: %s vs %s (%s)" %
                         (extension, fe_map.get_extension(file_format), file_format))
     else:
@@ -119,7 +130,7 @@ def get_outbucket_name(bucket):
     return bucket.replace("files", "wfoutput")
 
 
-def make_input(event):
+def make_input(event, wf='md5', dependency=None, run_name_prefix='validate'):
     upload_key = event['Records'][0]['s3']['object']['key']
 
     uuid, object_key = upload_key.split('/')
@@ -128,11 +139,11 @@ def make_input(event):
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
 
-    run_name = "validate_%s" % (upload_key.split('/')[1].split('.')[0])
+    run_name = run_name_prefix + "_%s" % (upload_key.split('/')[1].split('.')[0])
     if event.get('run_name'):
         run_name = event.get('run_name')  # used for testing
 
-    return _make_input(env, bucket, 'md5', object_key, uuid, run_name)
+    return _make_input(env, bucket, wf, object_key, uuid, run_name, dependency)
 
 
 _workflows = {'md5':
@@ -146,7 +157,7 @@ _workflows = {'md5':
               }
 
 
-def _make_input(env, bucket, workflow, object_key, uuid, run_name):
+def _make_input(env, bucket, workflow, object_key, uuid, run_name, dependency=None):
     output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
@@ -166,12 +177,14 @@ def _make_input(env, bucket, workflow, object_key, uuid, run_name):
                 "ebs_type": "io1",
                 "json_bucket": "4dn-aws-pipeline-run-json",
                 "ebs_iops": 500,
-                "shutdown_min": 30,
+                "shutdown_min": 0,
                 "password": "thisisnotmypassword",
                 "log_bucket": "tibanna-output",
-                "key_name": ""
-              },
+                "key_name": "4dn-encode"
+              }
             }
+    if dependency:
+        data["dependency"] = {"exec_arn": dependency}
     data.update(_tibanna_settings({'run_id': str(object_key),
                                    'run_name': run_name,
                                    'run_type': workflow,

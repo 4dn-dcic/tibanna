@@ -17,6 +17,7 @@ from core.utils import check_output
 from core.utils import _tibanna_settings
 from core.utils import printlog
 from time import sleep
+import boto3
 
 
 ###########################################
@@ -632,3 +633,48 @@ def get_wfr_uuid(exec_arn):
         return output['ff_meta']['uuid']
     else:
         return None
+
+
+def post_random_file(bucket, ff_key,
+                     file_format='pairs', extra_file_format='pairs_px2',
+                     file_extension='pairs.gz', extra_file_extension='pairs.gz.px2',
+                     schema='file_processed'):
+    """Generates a fake file with random uuid and accession
+    and posts it to fourfront. The content is unique since it contains
+    its own uuid. The file metadata does not contain md5sum or
+    content_md5sum.
+    Uses the given fourfront keys
+    """
+    uuid = str(uuid4())
+    accession = generate_rand_accession()
+    newfile = {
+      "accession": accession,
+      "file_format": file_format,
+      "award": "b0b9c607-f8b4-4f02-93f4-9895b461334b",
+      "lab": "828cd4fe-ebb0-4b36-a94a-d2e3a36cc989",
+      "uuid": uuid
+    }
+    upload_key = uuid + '/' + accession + '.' + file_extension
+    tmpfilename = 'alsjekvjf'
+    with open(tmpfilename, 'w') as f:
+        f.write(uuid)
+    s3 = boto3.resource('s3')
+    s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
+
+    # extra file
+    if extra_file_format:
+        newfile["extra_files"] = [
+            {
+               "file_format": extra_file_format,
+               "accession": accession,
+               "uuid": uuid
+            }
+        ]
+        extra_upload_key = uuid + '/' + accession + '.' + extra_file_extension
+        extra_tmpfilename = 'alsjekvjf-extra'
+        with open(extra_tmpfilename, 'w') as f:
+            f.write(uuid + extra_file_extension)
+        s3.meta.client.upload_file(extra_tmpfilename, bucket, extra_upload_key)
+    response = post_metadata(newfile, schema, key=ff_key)
+    print(response)
+    return newfile
