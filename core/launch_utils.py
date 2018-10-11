@@ -91,12 +91,3 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
             rerun(exc['executionArn'], sfn=sfn,
                   override_config=override_config, app_name_filter=app_name_filter)
             time.sleep(sleeptime)
-
-
-def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
-    """killing all the running jobs"""
-    client = boto3.client('stepfunctions')
-    stateMachineArn = STEP_FUNCTION_ARN(sfn)
-    sflist = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-    for exc in sflist['executions']:
-        client.stop_execution(executionArn=exc['executionArn'], error="Aborted")

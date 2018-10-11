@@ -177,15 +177,54 @@ To rerun many jobs that failed after a certain time point
 This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
 
 
+kill
+----
+
+To kill a specific job through its execution arn
+
+::
+
+    invoke kill --exec-arn=<execution_arn>
+
+**Example**
+
+For example, let's say we run the following job by mistake.
+
+::
+
+    $ invoke run_workflow --input-json=fastqc.json
+
+The following message is printed out
+
+::
+
+    about to start run fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    response from aws was: 
+    {u'startDate': datetime.datetime(2018, 10, 11, 20, 15, 0, 71000, tzinfo=tzlocal()), 'ResponseMetadata': {'RetryAttempts': 0, 'HTTPStatusCode': 200, 'RequestId': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'HTTPHeaders': {'x-amzn-requestid': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'content-length': '161', 'content-type': 'application/x-amz-json-1.0'}}, u'executionArn': u'arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293'}
+    url to view status:
+    https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    JOBID jLeL6vMbhL63 submitted
+    EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_killtest:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    Couldn't get a file descriptor referring to the console
+
+
+To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (it can also be found on the Step Function Console)
+
+
+::
+
+    $ invoke kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_killtest:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+
+
 
 kill_all
 --------
 
-To kill all currently running jobs (killing only step functions not the EC2 instances)
+To kill all currently running jobs for a given step function
 
 ::
 
-    invoke kill_all [<options>]
+    invoke kill_all --sfn=<stepfunctionname>
 
 **Options**
 

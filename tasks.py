@@ -18,7 +18,8 @@ from core.utils import create_stepfunction as _create_stepfunction
 from core.utils import _tibanna
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
-from core.launch_utils import kill_all as _kill_all
+from core.utils import kill as _kill
+from core.utils import kill_all as _kill_all
 from core.iam_utils import create_tibanna_iam
 from core.iam_utils import get_bucket_role_name, get_lambda_role_name
 from contextlib import contextmanager
@@ -536,9 +537,14 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony'):
 
 
 @task
-def kill_all(ctx, sfn='tibanna_pony', region=AWS_REGION, acc=AWS_ACCOUNT_NUMBER):
+def kill_all(ctx, sfn='tibanna_pony'):
     """ killing all the running jobs"""
-    _kill_all(sfn=sfn, region=region, acc=acc)
+    _kill_all(sfn)
+
+
+@task
+def kill(ctx, exec_arn):
+    _kill(exec_arn)
 
 
 @task
