@@ -74,6 +74,7 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
+   news
    simple_example
    startaws
    installation
