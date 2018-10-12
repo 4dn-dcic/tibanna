@@ -34,6 +34,7 @@ POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/po
 NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
 AMI_ID_CWL_V1 = 'ami-31caa14e'
 AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
+AMI_ID_WDL = 'ami-0f06a8358d41c4b9c'
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
 TIBANNA_PROFILE_ACCESS_KEY = os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', '')
@@ -98,6 +99,7 @@ def env_list(name):
                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
         'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                            'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
+                           'AMI_ID_WDL': AMI_ID_WDL,
                            'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                            'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
                            'TIBANNA_AWS_REGION': AWS_REGION,
