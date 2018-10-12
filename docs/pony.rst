@@ -12,7 +12,7 @@ Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC. 
 =================  ==============
 
 .. |tibanna_unicorn| image:: images/screenshot_tibanna_unicorn.png
-.. |tibanna_pony| image:: images/screenshot_tibanna_unicorn.png
+.. |tibanna_pony| image:: images/screenshot_tibanna_pony.png
 
 
 Example Tibanna setup for 4DN-DCIC
