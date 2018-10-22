@@ -30,7 +30,7 @@
         "Output": {
             "output_bucket_directory": "my-tibanna-test-bucket", 
             "output_target": {
-                "report": "some_sub_dirname/my_first_md5_report"
+                "md5.md5_step.report": "some_sub_dirname/my_first_md5_report"
             }, 
             "secondary_output_target": {}
         }, 

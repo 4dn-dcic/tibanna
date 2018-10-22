@@ -58,6 +58,7 @@ else:
         cwl_output = json.load(json_out_f)
         old_dict['Job']['Output'].update({'Output files': cwl_output})
 
+output_meta = old_dict['Job']['Output']['Output files']
 
 # fillig in md5
 with open(md5file, 'r') as md5_f:
@@ -68,7 +69,7 @@ with open(md5file, 'r') as md5_f:
         md5sum = a[0]
         md5dict[path] = md5sum
 
-for of, ofv in old_dict['Job']['Output']['Output files'].iteritems():
+for of, ofv in output_meta.iteritems():
     if ofv['path'] in md5dict:
         ofv['md5sum'] = md5dict[ofv['path']]
     if 'secondaryFiles' in ofv:
@@ -79,13 +80,13 @@ for of, ofv in old_dict['Job']['Output']['Output files'].iteritems():
 # sanity check for output target, this skips secondary files
 # - we assume secondary files are not explicitly specified in output_target.
 for k in output_target:
-    if k not in cwl_output:
+    if k not in output_meta:
         raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
 
 # upload output file
 s3 = boto3.client('s3')
-for k in cwl_output:
-    source = cwl_output[k].get('path')
+for k in output_meta:
+    source = output_meta[k].get('path')
     source_name = source.replace(source_directory, '')
     if k in output_target:
         target = output_target[k]  # change file name to what's specified in output_target
@@ -97,14 +98,14 @@ for k in cwl_output:
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
-        cwl_output[k]['target'] = target
+        output_meta[k]['target'] = target
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
 
-    if 'secondaryFiles' in cwl_output[k]:
+    if 'secondaryFiles' in output_meta[k]:
         n_assigned = 0
         n_target = sum([len(v) for u, v in secondary_output_target.items()])
-        for i, sf in enumerate(cwl_output[k]['secondaryFiles']):
+        for i, sf in enumerate(output_meta[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
             if k in secondary_output_target:
