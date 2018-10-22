@@ -16,9 +16,9 @@ def handler(event, context):
     # get file name
     # print(event)
 
+    status = get_status(event)
     input_json = make_input(event)
     file_format, extra = get_file_format(event)
-    status = get_status(event)
     if extra:  # the file is an extra file
         if status != 'to be uploaded by workflow':
             # for extra file-triggered md5 run, status check is skipped.
