@@ -42,7 +42,7 @@ def handler(event, context):
       cwl_directory_url: the url and subdirectories for the main cwl file
       cwl_version: the version of cwl (either 'draft3' or 'v1')
     # required for wdl
-      wdl_fiename: wdl file name
+      wdl_filename: wdl file name
       wdl_directory_url: the url of the wdl file
     # optional
       dependency: {'exec_arn': [exec_arns]}
@@ -56,7 +56,7 @@ def handler(event, context):
     ARGS_KEYS = ["app_name", "app_version", "input_files", "output_S3_bucket",
                  "input_parameters", "secondary_files", "output_target", "secondary_output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_child_filenames", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_fiename", "wdl_directory_url"]
+    ARGS_KEYS_WDL = ["wdl_filename", "wdl_directory_url"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:

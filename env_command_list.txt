@@ -1,0 +1,6 @@
+WDL_URL=https://raw.githubusercontent.com/4dn-dcic/somewdlrepo
+MAIN_WDL=repliseq-parta.wdl
+OUTBUCKET=elasticbeanstalk-fourfront-webdev-wfoutput
+PUBLIC_POSTRUN_JSON=0
+TEST_ENV_TO_PASS=1234
+PRESERVED_ENV_OPTION="--preserve-environment TEST_ENV_TO_PASS "

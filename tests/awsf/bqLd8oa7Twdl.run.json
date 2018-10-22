@@ -3,24 +3,24 @@
         "App": {
             "App_name": "repliseq-parta", 
             "App_version": null, 
-            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq", 
-            "main_cwl": "repliseq-parta.cwl", 
-            "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl",
-            "language": "cwl_v1"
+            "wdl_url": "https://raw.githubusercontent.com/4dn-dcic/somewdlrepo", 
+            "main_wdl": "repliseq-parta.wdl", 
+            "other_cwl_files": null,
+            "language": "wdl"
         }, 
         "Input": {
             "Input_files_data": {
-                "bwaIndex": {
+                "repliseq-parta.bwa.bwaIndex": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
                     "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
                 }, 
-                "chromsizes": {
+                "repliseq-parta.bwa.chromsizes": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
                     "path": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
                 }, 
-                "fastq": {
+                "repliseq-parta.bwa.fastq": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
                     "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz",
@@ -36,7 +36,7 @@
                 "TEST_ENV_TO_PASS": 1234
             }
         }, 
-        "JOBID": "bqLd8oa7Tdzq", 
+        "JOBID": "bqLd8oa7Twdl", 
         "Log": {
             "log_bucket_directory": "tibanna-output"
         }, 
