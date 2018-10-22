@@ -89,12 +89,12 @@ def create_json_dict(input_dict):
                         'App': {
                                  'App_name': a['app_name'],
                                  'App_version': a['app_version'],
-                                 'language': input_dict.get('config').get('langauge', ''),
-                                 'cwl_url': a['cwl_directory_url'],
-                                 'main_cwl': a['cwl_main_filename'],
-                                 'other_cwl_files': ','.join(a['cwl_child_filenames']),
-                                 'wdl_url': a['wdl_directory_url'],
-                                 'main_wdl': a['wdl_filename']
+                                 'language': a.get('langauge', ''),
+                                 'cwl_url': a.get('cwl_directory_url', ''),
+                                 'main_cwl': a.get('cwl_main_filename', ''),
+                                 'other_cwl_files': ','.join(a.get('cwl_child_filenames', [])),
+                                 'wdl_url': a.get('wdl_directory_url', ''),
+                                 'main_wdl': a.get('wdl_filename', '')
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)

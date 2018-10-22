@@ -23,8 +23,6 @@ def handler(event, context):
       EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
       shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)
       log_bucket: bucket for collecting logs (started, postrun, success, error, log)
-    # required for wdl
-      language: 'cwl_v1','cwl_draft3', or 'wdl'
     # optional
       public_postrun_json (optional): whether postrun json should be made public (default false)
 
@@ -41,7 +39,9 @@ def handler(event, context):
       cwl_child_filenames: names of the other cwl files used by main cwl file, delimiated by comma
       cwl_directory_url: the url and subdirectories for the main cwl file
       cwl_version: the version of cwl (either 'draft3' or 'v1')
+      language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
+      language: 'wdl'
       wdl_filename: wdl file name
       wdl_directory_url: the url of the wdl file
     # optional
@@ -56,7 +56,7 @@ def handler(event, context):
     ARGS_KEYS = ["app_name", "app_version", "input_files", "output_S3_bucket",
                  "input_parameters", "secondary_files", "output_target", "secondary_output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_child_filenames", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_filename", "wdl_directory_url"]
+    ARGS_KEYS_WDL = ["wdl_filename", "wdl_directory_url", "language"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
@@ -65,7 +65,7 @@ def handler(event, context):
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
         assert k in args, "%s not in args field" % k
-    if 'language' in cfg and cfg['language'] == 'wdl':
+    if 'language' in args and args['language'] == 'wdl':
         for k in ARGS_KEYS_WDL:
             assert k in args, "%s not in args field" % k
     else:
@@ -94,18 +94,19 @@ def handler(event, context):
         os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf/'
 
     # AMI and script directory according to cwl version
-    if 'language' in cfg and cfg['language'] == 'wdl':
+    if 'language' in args and args['language'] == 'wdl':
         cfg['ami_id'] = os.environ.get('AMI_ID_WDL')
     else:
         if args['cwl_version'] == 'v1':
             cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
-            cfg['language'] = 'cwl_v1'
+            args['language'] = 'cwl_v1'
         else:
             cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
-            cfg['language'] = 'cwl_draft3'
+            args['language'] = 'cwl_draft3'
         if args.get('singularity', False):
             cfg['singularity'] = True
 
+    cfg['language'] = args['language']
     ec2_utils.update_config(cfg, args['app_name'],
                             args['input_files'], args['input_parameters'])
 

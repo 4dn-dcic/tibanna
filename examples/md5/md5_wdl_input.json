@@ -2,7 +2,8 @@
   "args": {
     "app_name": "md5",
     "app_version": "v2",
-    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
+    "language": "wdl",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl/examples/md5",
     "wdl_filename": "md5.wdl",
     "input_files": {
       "md5.md5_step.gzfile": {
