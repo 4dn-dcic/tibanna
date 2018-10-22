@@ -1,0 +1,87 @@
+{
+  "workflowName": "md5",
+  "actualWorkflowLanguageVersion": "draft-2",
+  "submittedFiles": {
+    "workflow": "workflow md5 {\n    call md5_step\n}\n\ntask md5_step {\n    File gz_file\n    command {\n        run.sh ${gz_file}\n    }\n    output {\n        File report = \"report\"\n    }\n    runtime {\n        docker: \"duplexa/md5:v2\"\n    }\n}\n",
+    "root": "",
+    "options": "{\n\n}",
+    "inputs": "{\n    \"md5.md5_step.gz_file\": \"/data1/input/somefastqfile.fastq.gz\"\n}",
+    "workflowUrl": "md5.wdl",
+    "labels": "{}"
+  },
+  "calls": {
+    "md5.md5_step": [{
+      "executionStatus": "Done",
+      "stdout": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step/execution/stdout",
+      "backendStatus": "Done",
+      "commandLine": "run.sh /cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step/inputs/609996275/somefastqfile.fastq.gz",
+      "shardIndex": -1,
+      "outputs": {
+        "report": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step/execution/report"
+      },
+      "runtimeAttributes": {
+        "failOnStderr": "false",
+        "maxRetries": "0",
+        "docker": "duplexa/md5:v2",
+        "continueOnReturnCode": "0"
+      },
+      "callCaching": {
+        "effectiveCallCachingMode": "CallCachingOff",
+        "allowResultReuse": false
+      },
+      "inputs": {
+        "gz_file": "/data1/input/somefastqfile.fastq.gz"
+      },
+      "returnCode": 0,
+      "jobId": "1833",
+      "backend": "Local",
+      "end": "2018-10-22T21:40:42.343Z",
+      "dockerImageUsed": "duplexa/md5@sha256:6ffa28bce54d23f1ca84b2f9e48c10e5cd3f570a8e31018f588119414bd358f7",
+      "stderr": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step/execution/stderr",
+      "callRoot": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step",
+      "attempt": 1,
+      "executionEvents": [{
+        "endTime": "2018-10-22T21:40:19.310Z",
+        "description": "Pending",
+        "startTime": "2018-10-22T21:40:19.283Z"
+      }, {
+        "endTime": "2018-10-22T21:40:20.186Z",
+        "description": "WaitingForValueStore",
+        "startTime": "2018-10-22T21:40:20.164Z"
+      }, {
+        "startTime": "2018-10-22T21:40:19.310Z",
+        "description": "RequestingExecutionToken",
+        "endTime": "2018-10-22T21:40:20.164Z"
+      }, {
+        "startTime": "2018-10-22T21:40:20.673Z",
+        "endTime": "2018-10-22T21:40:42.339Z",
+        "description": "RunningJob"
+      }, {
+        "endTime": "2018-10-22T21:40:42.341Z",
+        "startTime": "2018-10-22T21:40:42.339Z",
+        "description": "UpdatingJobStore"
+      }, {
+        "startTime": "2018-10-22T21:40:20.186Z",
+        "description": "PreparingJob",
+        "endTime": "2018-10-22T21:40:20.673Z"
+      }],
+      "start": "2018-10-22T21:40:19.255Z"
+    }]
+  },
+  "outputs": {
+    "md5.md5_step.report": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327/call-md5_step/execution/report"
+  },
+  "workflowRoot": "/data1/cwl/cromwell-executions/md5/3ec257cc-f78f-42a2-9468-bb9bcd650327",
+  "actualWorkflowLanguage": "WDL",
+  "id": "3ec257cc-f78f-42a2-9468-bb9bcd650327",
+  "inputs": {
+    "md5.md5_step.gz_file": "/data1/input/somefastqfile.fastq.gz"
+  },
+  "labels": {
+    "cromwell-workflow-id": "cromwell-3ec257cc-f78f-42a2-9468-bb9bcd650327"
+  },
+  "submission": "2018-10-22T21:40:15.339Z",
+  "status": "Succeeded",
+  "end": "2018-10-22T21:40:43.890Z",
+  "start": "2018-10-22T21:40:15.582Z"
+}
