@@ -138,7 +138,7 @@ send_log
 
 
 ### download wdl from github or any other url.
-xl wget -O$LOCAL_CWLDIR/$MAIN_WDL $CWL_URL/$MAIN_WDL
+xl wget -O$LOCAL_CWLDIR/$MAIN_WDL $WDL_URL/$MAIN_WDL
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
