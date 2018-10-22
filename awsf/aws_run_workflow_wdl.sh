@@ -160,7 +160,7 @@ cwd0=$(pwd)
 cd $LOCAL_CWLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
 send_log_regularly &
-exlj java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE
+exlj java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
 cd $cwd0
 send_log 
 

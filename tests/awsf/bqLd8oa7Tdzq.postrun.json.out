@@ -4,10 +4,14 @@
             "App_name": "repliseq-parta", 
             "App_version": null, 
             "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq", 
+            "language": "cwl_v1", 
             "main_cwl": "repliseq-parta.cwl", 
             "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl"
         }, 
         "Input": {
+            "Env": {
+                "TEST_ENV_TO_PASS": 1234
+            }, 
             "Input_files_data": {
                 "bwaIndex": {
                     "class": "File", 
@@ -22,10 +26,10 @@
                 "fastq": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
-                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz"
+                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz", 
+                    "profile": "user1"
                 }
             }, 
-            "Input_files_reference": {}, 
             "Input_parameters": {
                 "memperthread": "2G", 
                 "nthreads": 4
@@ -51,6 +55,7 @@
                             "checksum": "sha1$213ddf927f049f96ee6a16913b614170d8eee344", 
                             "class": "File", 
                             "location": "file://tests/awsf/out.w5000.bw", 
+                            "md5sum": "f08575a366c14dbc949d35e415151cfd", 
                             "path": "tests/awsf/out.w5000.bw", 
                             "size": 3120059, 
                             "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
@@ -60,6 +65,7 @@
                             "checksum": "sha1$08ee022f6327d4d47f5bc737c24b64d88578747a", 
                             "class": "File", 
                             "location": "file://tests/awsf/out.w5000.bedGraph.gz.px2", 
+                            "md5sum": "aa8e2848e1f022b197fe31c804de08bf", 
                             "path": "tests/awsf/out.w5000.bedGraph.gz.px2", 
                             "size": 991610, 
                             "target": "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2"

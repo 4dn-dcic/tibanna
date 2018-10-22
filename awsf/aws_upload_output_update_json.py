@@ -3,10 +3,15 @@ import json
 import sys
 import boto3
 json_old = sys.argv[1]
-cwl_json_out = sys.argv[2]
+execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
 md5file = sys.argv[4]
 json_new = sys.argv[5]
+
+if len(sys.argv)>6:
+    language = sys.argv[6]
+else:
+    language = 'cwl-draft3'
 
 source_directory = '/data1/out/'
 
@@ -40,10 +45,19 @@ with open(json_old, 'r') as json_old_f:
     output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
     secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
 
-# read cwl output json file
-with open(cwl_json_out, 'r') as json_out_f:
-    cwl_output = json.load(json_out_f)
-    old_dict['Job']['Output'].update({'Output files': cwl_output})
+if language == 'wdl':
+    # read wdl output json file
+    with open(execution_metadata, 'r') as json_out_f:
+        wdl_output = json.load(json_out_f)
+        old_dict['Job']['Output'].update({'Output files': {}})
+        for argname, outfile in wdl_output['outputs'].iteritems():
+            old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+else:
+    # read cwl output json file
+    with open(execution_metadata, 'r') as json_out_f:
+        cwl_output = json.load(json_out_f)
+        old_dict['Job']['Output'].update({'Output files': cwl_output})
+
 
 # fillig in md5
 with open(md5file, 'r') as md5_f:
