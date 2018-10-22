@@ -89,7 +89,7 @@ def create_json_dict(input_dict):
                         'App': {
                                  'App_name': a['app_name'],
                                  'App_version': a['app_version'],
-                                 'language': a.get('langauge', ''),
+                                 'language': a.get('language', ''),
                                  'cwl_url': a.get('cwl_directory_url', ''),
                                  'main_cwl': a.get('cwl_main_filename', ''),
                                  'other_cwl_files': ','.join(a.get('cwl_child_filenames', [])),
