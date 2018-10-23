@@ -1,12 +1,16 @@
-=====================
-Input JSON Schema
-=====================
+===========================
+Job Description JSON Schema
+===========================
 
-The input json defines an individual execution. It has two parts, `args` and `config`. `args` contains information about pipeline, input files, output bucket, input parameters, etc. `config` has parameters about AWS such as instance type, EBS size, ssh password, etc.
+The Job Description json (input of Tibanna) defines an individual execution. It has two parts, `args` and `config`. `args` contains information about pipeline, input files, output bucket, input parameters, etc. `config` has parameters about AWS such as instance type, EBS size, ssh password, etc.
 
 
 args
 ----
+
+Pipeline specification
+######################
+
 :app_name:
     - <name of the app> (e.g. 'pairsam-parse-sort')
     - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
@@ -14,6 +18,13 @@ args
 :app_version:
     - <version of the app> (e.g. 0.2.0)
     - Version of the pipeline/app, for the user to keep in track.
+
+:language:
+    - 'cwl_v1', 'cwl_draft3' or 'wdl'
+    - For WDL, it is a required field. For CWL, the language field can be omitted.
+
+CWL-specific
+++++++++++++
 
 :cwl_directory_url:
     - <url_that_contains_cwl_file(s)>
@@ -36,6 +47,23 @@ args
     - This option uses Singularity to run Docker images internally (slower). This option does NOT support native Singularity images, since CWL does not support native Singularity images.
     - either ``true`` or ``false``
     - This is an optional field. (default ``false``)
+
+WDL-specific
+++++++++++++
+
+:wdl_directory_url:
+    - <url_that_contains_wdl_file(s)>
+    - (e.g. 'https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/wdl')
+    - The url must be public.
+
+:wdl_filename:
+    - <wdl_cwl_file> (e.g. 'pairsam-parse-sort.wdl')
+    - This file must be in the cwl url given by ``wdl_directory_url``.
+    - The actual cwl link would be ``wdl_directory_url`` + '\' + ``wdl_file_name``
+
+
+Input data specification
+########################
 
 :input_files:
     - A dictionary that contains input files. The keys must match the input argument names of the CWL.
@@ -87,6 +115,11 @@ args
 
     )
 
+
+Output target specification
+###########################
+
+
 :output_S3_bucket:
     - The name of the bucket where output files will be sent to.
 
@@ -114,6 +147,11 @@ args
 
     )
 
+
+Dependency specification
+########################
+
+
 :dependency:
     - List of other jobs that should finish before the job starts
     - Currently, only execution arns are accepted. An execution arn of a given run is printed out after running the ``invoke run_workflow`` command. It can also be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
@@ -123,6 +161,7 @@ args
         { 
             "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7927:md5_test"]
         }
+
 
 config
 ------
@@ -166,8 +205,8 @@ config
 
 
 
-Example input json
-------------------
+Example job description for CWL
+-------------------------------
 
 ::
 
