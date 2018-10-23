@@ -5,7 +5,8 @@
             "App_version": null, 
             "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/repliseq", 
             "main_cwl": "repliseq-parta.cwl", 
-            "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl"
+            "other_cwl_files": "clip.cwl,align.cwl,filtersort.cwl,dedup.cwl,count.cwl",
+            "language": "cwl_v1"
         }, 
         "Input": {
             "Input_files_data": {

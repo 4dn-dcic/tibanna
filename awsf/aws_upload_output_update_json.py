@@ -3,10 +3,15 @@ import json
 import sys
 import boto3
 json_old = sys.argv[1]
-cwl_json_out = sys.argv[2]
+execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
 md5file = sys.argv[4]
 json_new = sys.argv[5]
+
+if len(sys.argv)>6:
+    language = sys.argv[6]
+else:
+    language = 'cwl-draft3'
 
 source_directory = '/data1/out/'
 
@@ -40,10 +45,20 @@ with open(json_old, 'r') as json_old_f:
     output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
     secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
 
-# read cwl output json file
-with open(cwl_json_out, 'r') as json_out_f:
-    cwl_output = json.load(json_out_f)
-    old_dict['Job']['Output'].update({'Output files': cwl_output})
+if language == 'wdl':
+    # read wdl output json file
+    with open(execution_metadata, 'r') as json_out_f:
+        wdl_output = json.load(json_out_f)
+        old_dict['Job']['Output'].update({'Output files': {}})
+        for argname, outfile in wdl_output['outputs'].iteritems():
+            old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+else:
+    # read cwl output json file
+    with open(execution_metadata, 'r') as json_out_f:
+        cwl_output = json.load(json_out_f)
+        old_dict['Job']['Output'].update({'Output files': cwl_output})
+
+output_meta = old_dict['Job']['Output']['Output files']
 
 # fillig in md5
 with open(md5file, 'r') as md5_f:
@@ -54,7 +69,7 @@ with open(md5file, 'r') as md5_f:
         md5sum = a[0]
         md5dict[path] = md5sum
 
-for of, ofv in old_dict['Job']['Output']['Output files'].iteritems():
+for of, ofv in output_meta.iteritems():
     if ofv['path'] in md5dict:
         ofv['md5sum'] = md5dict[ofv['path']]
     if 'secondaryFiles' in ofv:
@@ -65,13 +80,13 @@ for of, ofv in old_dict['Job']['Output']['Output files'].iteritems():
 # sanity check for output target, this skips secondary files
 # - we assume secondary files are not explicitly specified in output_target.
 for k in output_target:
-    if k not in cwl_output:
+    if k not in output_meta:
         raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
 
 # upload output file
 s3 = boto3.client('s3')
-for k in cwl_output:
-    source = cwl_output[k].get('path')
+for k in output_meta:
+    source = output_meta[k].get('path')
     source_name = source.replace(source_directory, '')
     if k in output_target:
         target = output_target[k]  # change file name to what's specified in output_target
@@ -83,14 +98,14 @@ for k in cwl_output:
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
-        cwl_output[k]['target'] = target
+        output_meta[k]['target'] = target
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
 
-    if 'secondaryFiles' in cwl_output[k]:
+    if 'secondaryFiles' in output_meta[k]:
         n_assigned = 0
         n_target = sum([len(v) for u, v in secondary_output_target.items()])
-        for i, sf in enumerate(cwl_output[k]['secondaryFiles']):
+        for i, sf in enumerate(output_meta[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
             if k in secondary_output_target:
