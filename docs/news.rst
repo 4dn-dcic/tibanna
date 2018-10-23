@@ -11,6 +11,13 @@ Publication
 Version updates
 +++++++++++++++
 
-The latest version is 0.4.5. (https://github.com/4dn-dcic/tibanna/releases/tag/v0.4.5)
+  **Oct 22, 2018** The latest version is now 0.4.6. (https://github.com/4dn-dcic/tibanna/releases/tag/v0.4.6)
+
+    Basic WDL support is implemented for Tibanna Unicorn!
+
+
+  **Oct 11. 2018** The latest version is now 0.4.5. (https://github.com/4dn-dcic/tibanna/releases/tag/v0.4.5)
+
+    Killer CLIs `invoke kill` is available to kill specific jobs and `invoke kill_all` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
