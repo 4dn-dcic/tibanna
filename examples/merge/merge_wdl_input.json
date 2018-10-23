@@ -3,7 +3,7 @@
     "app_name": "merge",
     "app_version": "",
     "language": "wdl",
-    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl/examples/merge",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl2/examples/merge",
     "wdl_filename": "merge.wdl",
     "input_files": {
       "merge.smallfiles": {
