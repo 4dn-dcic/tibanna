@@ -108,8 +108,8 @@ To create your own, first you need to install docker on your (local) machine.
 Pipeline description
 ++++++++++++++++++++
 
-    CWL
-    ###
+CWL
+###
     
     A sample CWL file is below. This CWL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.cwl. 
     To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
@@ -143,8 +143,8 @@ Pipeline description
     The pipeline is ready!
     
     
-    WDL
-    ###
+WDL
+###
     
     Like CWL, WDL describes a pipeline structure. We describe individual runs (jobs) as separate json files.
     
@@ -184,8 +184,8 @@ Job description
 To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
 
-    Job description for CWL
-    #######################
+Job description for CWL
+#######################
     
     The example job description for CWL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_cwl_input.json.
     
@@ -233,8 +233,8 @@ To run the pipeline on a specific input file using Tibanna, we need to create an
     We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
     
     
-    Job description for WDL
-    #######################
+Job description for WDL
+#######################
     
     The example job description for WDL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_wdl_input.json.
     
