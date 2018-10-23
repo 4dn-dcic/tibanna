@@ -72,7 +72,7 @@ Contents:
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    news
    simple_example
