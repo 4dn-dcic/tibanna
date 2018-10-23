@@ -66,7 +66,7 @@ Input data specification
 ########################
 
 :input_files:
-    - A dictionary that contains input files. The keys must match the input argument names of the CWL.
+    - A dictionary that contains input files. The keys must match the input argument names of the CWL/WDL.
     - It contains `bucket_name`, `object_key` and optionally `profile` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
     - (e.g.
 
@@ -87,7 +87,7 @@ Input data specification
     )
 
 :secondary_files:
-    - A dictionary of the same format as `input_file` but contains secondary files. The keys must match the input argument name of the CWL where the secondary file belongs.
+    - A dictionary of the same format as `input_file` but contains secondary files. The keys must match the input argument name of the CWL/WDL where the secondary file belongs.
     - (e.g.
 
     ::
@@ -104,7 +104,7 @@ Input data specification
 
 
 :input_parameters:
-    - A dictionary that contains input parameter values. Default parameters don't need to be included. The keys must match the input argument name of the CWL.
+    - A dictionary that contains input parameter values. Default parameters don't need to be included. The keys must match the input argument name of the CWL/WDL.
     - (e.g.
 
     ::
