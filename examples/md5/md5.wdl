@@ -3,9 +3,9 @@ workflow md5 {
 }
 
 task md5_step {
-    File gz_file
+    File gzfile
     command {
-        run.sh ${gz_file}
+        run.sh ${gzfile}
     }
     output {
         File report = "report"
