@@ -125,7 +125,7 @@ The pipeline is ready!
 
 
 Data
-++++
+####
 
 For input data, let's use a file named ``somefastqfile.fastq.gz`` on a public bucket named ``my-tibanna-test-input-bucket``.
 
@@ -133,7 +133,7 @@ For input data, let's use a file named ``somefastqfile.fastq.gz`` on a public bu
 
 
 Input json
-++++++++++
+##########
 
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
@@ -186,7 +186,7 @@ We also specified in ``config``, that we need 10GB space total (``ebs_size``) an
 
 
 Tibanna run
-+++++++++++
+###########
 
 To run Tibanna,
 
