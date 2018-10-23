@@ -91,7 +91,12 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
             for item in inputs[category].keys():
                 v = inputs[category][item]
                 if isinstance(v['path'], list):
-                    yml[item] = [INPUT_DIR + '/' + pi for pi in v['path']]
+                    yml[item] = []
+                    for pi in v['path']:
+                      if isinstance(pi, list):
+                          yml[item].append([INPUT_DIR + '/' + ppi for ppi in pi])
+                      else:
+                          yml[item].append(INPUT_DIR + '/' + pi)
                 else:
                     yml[item] = INPUT_DIR + '/' + v['path']
         json.dump(yml, f_yml, indent=4, sort_keys=True)
