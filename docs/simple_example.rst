@@ -6,6 +6,7 @@ md5
 ---
 
 We will preprare a pipeline that calculated md5sum. To create this pipeline and run it through Tibanna, we will do the following.
+
 1. prepare for a component of the pipeline as a script (it could be a binary program)
 2. package the components as a Docker image
 3. create the pipeline description using either *CWL* or *WDL*.
@@ -107,6 +108,9 @@ To create your own, first you need to install docker on your (local) machine.
 CWL
 +++
 
+CWL
+###
+
 A sample CWL file is below. This CWL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.cwl. 
 To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
 To use your own CWL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above.
@@ -140,16 +144,13 @@ The pipeline is ready!
 
 
 
-Input json
-##########
+Job description
+###############
 
 
-To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
+To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
 The example below can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_cwl_input.json.
-
-The parts that are different from the WDL input json (in the WDL section below) is in bold.
-
 
 ::
 
@@ -157,12 +158,12 @@ The parts that are different from the WDL input json (in the WDL section below) 
       "args": {
         "app_name": "md5",
         "app_version": "v2",
-        **"cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",**
-        **"cwl_main_filename": "md5.cwl",**
-        **"cwl_child_filenames": [],**
-        **"cwl_version": "v1",**
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
+        "cwl_main_filename": "md5.cwl",
+        "cwl_child_filenames": [],
+        "cwl_version": "v1",
         "input_files": {
-          **"gzfile":** {
+          "gzfile": {
             "bucket_name": "my-tibanna-test-input-bucket",
             "object_key": "somefastqfile.fastq.gz"
           }
@@ -171,7 +172,7 @@ The parts that are different from the WDL input json (in the WDL section below) 
         "input_parameters": {},
         "output_S3_bucket": "my-tibanna-test-bucket",
         "output_target": {
-          **"report":** "some_sub_dirname/my_first_md5_report"
+          "report": "some_sub_dirname/my_first_md5_report"
         },
         "secondary_output_target": {}
       },
@@ -196,6 +197,11 @@ We also specified in ``config``, that we need 10GB space total (``ebs_size``) an
 
 WDL
 +++
+
+Like CWL, WDL describes a pipeline structure. We describe individual runs (jobs) as separate json files.
+
+WDL
+###
 
 A sample WDL file is below. This WDL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.wdl. 
 To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
@@ -227,11 +233,11 @@ The pipeline is ready!
 
 
 
-Input json
-##########
+Job description
+###############
 
 
-To run the pipeline on a specific input file using Tibanna, we need to create an *input json* file for each execution (or a dictionary object if you're using Tibanna as a python module).
+To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
 The example below can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_wdl_input.json.
 
@@ -243,11 +249,11 @@ Contentwise, the following input json is exactly the same as the one for CWL abo
       "args": {
         "app_name": "md5",
         "app_version": "v2",
-        **"wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",**
-        **"wdl_filename": "md5.wdl",**
-        **"language": "wdl",**
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
+        "wdl_filename": "md5.wdl",
+        "language": "wdl",
         "input_files": {
-          **"md5.md5_step.gzfile":** {
+          "md5.md5_step.gzfile": {
             "bucket_name": "my-tibanna-test-input-bucket",
             "object_key": "somefastqfile.fastq.gz"
           }
@@ -256,7 +262,7 @@ Contentwise, the following input json is exactly the same as the one for CWL abo
         "input_parameters": {},
         "output_S3_bucket": "my-tibanna-test-bucket",
         "output_target": {
-          **"md5.md5_step.report":** "some_sub_dirname/my_first_md5_report"
+          "md5.md5_step.report": "some_sub_dirname/my_first_md5_report"
         },
         "secondary_output_target": {}
       },
@@ -275,7 +281,7 @@ Contentwise, the following input json is exactly the same as the one for CWL abo
     }
 
 
-Like in the CWL input json, the json file specifies the input with ``gzfile``, matching the name in WDL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the WDL file with ``wdl_filename`` and its url with ``wdl_directory_url``. Note that the file name itself is not included in the url).
+The json file specifies the input with ``md5.md5_step.gzfile``, matching the name in WDL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the WDL file with ``wdl_filename`` and its url with ``wdl_directory_url``. Note that the file name itself is not included in the url).
 
 The config field is identical to the CWL input json. In ``config``, we specify that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
 
