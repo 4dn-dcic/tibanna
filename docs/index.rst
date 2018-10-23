@@ -23,7 +23,7 @@ Pipeline
 ++++++++
 
 - Your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/).
-- The commands to run your pipeline must be written in Common Workflow Language. (https://www.commonwl.org/).
+- The commands to run your pipeline must be written in either Common Workflow Language. (https://www.commonwl.org/) (recommended) or Workflow Description Language (https://software.broadinstitute.org/wdl/) (only basic support).
 
 
 Data
@@ -72,7 +72,7 @@ Contents:
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 4
 
    news
    simple_example
@@ -82,6 +82,7 @@ Contents:
    execution_json
    monitoring
    cwl
+   wdl
    ami
    pony
    how_it_works

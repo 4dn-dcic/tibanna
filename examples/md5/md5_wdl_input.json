@@ -6,7 +6,7 @@
     "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl/examples/md5",
     "wdl_filename": "md5.wdl",
     "input_files": {
-      "md5.md5_step.gz_file": {
+      "md5.md5_step.gzfile": {
         "bucket_name": "my-tibanna-test-input-bucket",
         "object_key": "somefastqfile.fastq.gz"
       }
