@@ -105,8 +105,8 @@ To create your own, first you need to install docker on your (local) machine.
 
 
 
-CWL
-+++
+Pipeline description
+++++++++++++++++++++
 
 CWL
 ###
@@ -143,14 +143,51 @@ To use your own CWL file, you'll need to make sure it is accessible via HTTP so 
 The pipeline is ready!
 
 
+WDL
+###
+
+Like CWL, WDL describes a pipeline structure. We describe individual runs (jobs) as separate json files.
+
+A sample WDL file is below. This WDL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.wdl. 
+To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
+To use your own WDL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above.
+Content-wise, this WDL does exactly the same as the above CWL.
+
+::
+
+    ---
+    workflow md5 {
+        call md5_step
+    }
+    
+    task md5_step {
+        File gzfile
+        command {
+            run.sh ${gzfile}
+        }
+        output {
+            File report = "report"
+        }
+        runtime {
+            docker: "duplexa/md5:v2"
+        }
+    }
+
+
+The pipeline is ready!
+
+
 
 Job description
-###############
-
++++++++++++++++
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-The example below can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_cwl_input.json.
+
+Job description for CWL
+#######################
+
+The example job description for CWL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_cwl_input.json.
 
 ::
 
@@ -195,53 +232,13 @@ The json file specifies the input with ``gzfile``, matching the name in CWL. In 
 
 We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
 
-WDL
-+++
 
-Like CWL, WDL describes a pipeline structure. We describe individual runs (jobs) as separate json files.
+Job description for WDL
+#######################
 
-WDL
-###
+The example job description for WDL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_wdl_input.json.
 
-A sample WDL file is below. This WDL file can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5.wdl. 
-To use your own docker image, replace ``duplexa/md5:v2`` with your docker image name.
-To use your own WDL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above.
-Content-wise, this WDL does exactly the same as the above CWL.
-
-::
-
-    ---
-    workflow md5 {
-        call md5_step
-    }
-    
-    task md5_step {
-        File gzfile
-        command {
-            run.sh ${gzfile}
-        }
-        output {
-            File report = "report"
-        }
-        runtime {
-            docker: "duplexa/md5:v2"
-        }
-    }
-
-
-The pipeline is ready!
-
-
-
-Job description
-###############
-
-
-To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
-
-The example below can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_wdl_input.json.
-
-Contentwise, the following input json is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_filename" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``gzfile``, ``report``), whereas with WDL, you have to specify the workflow name and the step name (e.g. ``md5.md5_step.gzfile``, ``md5.md5_step.report``).
+Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_filename" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``gzfile``, ``report``), whereas with WDL, you have to specify the workflow name and the step name (e.g. ``md5.md5_step.gzfile``, ``md5.md5_step.report``).
 
 ::
 
@@ -311,20 +308,20 @@ To run Tibanna,
 
 5. Run workflow as below.
 
-For CWL,
-
-::
-
-    cd tibanna
-    invoke run_workflow --input-json=examples/md5/md5_cwl_input.json
-
-or for WDL,
-
-::
-
-    cd tibanna
-    invoke run_workflow --input-json=examples/md5/md5_wdl_input.json
-
+    For CWL,
+    
+    ::
+    
+        cd tibanna
+        invoke run_workflow --input-json=examples/md5/md5_cwl_input.json
+    
+    or for WDL,
+    
+    ::
+    
+        cd tibanna
+        invoke run_workflow --input-json=examples/md5/md5_wdl_input.json
+    
 
 6. Check status
 
