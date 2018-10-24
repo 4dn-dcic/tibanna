@@ -25,6 +25,11 @@ def main():
     create_env_def_file(env_filename, Dict, language)
 
 
+def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, f):
+    cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n"
+    f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag))
+
+
 # create a download command list file from the information in json
 def create_download_command_list(downloadlist_filename, Dict_input):
     with open(downloadlist_filename, 'w') as f_download:
@@ -34,21 +39,18 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                 DATA_BUCKET = Dict_input[category][keys[i]]["dir"]
                 PROFILE = Dict_input[category][keys[i]].get("profile", '')
                 PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
-                if isinstance(Dict_input[category][keys[i]]["path"], list):
-                    for file in Dict_input[category][keys[i]]["path"]:
-                        DATA_FILE = file
-                        download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
-                                                                                     DATA_FILE,
-                                                                                     INPUT_DIR,
-                                                                                     PROFILE_FLAG)
-                        f_download.write(download_cmd)
+                path1 = Dict_input[category][keys[i]]["path"]
+                if isinstance(path1, list):
+                    for path2 in path1:
+                        if isinstance(path2, list):
+                            for data_file in path2:
+                                add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                        else:
+                            data_file = path2
+                            add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
                 else:
-                    DATA_FILE = Dict_input[category][keys[i]]["path"]
-                    download_cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n".format(DATA_BUCKET,
-                                                                                 DATA_FILE,
-                                                                                 INPUT_DIR,
-                                                                                 PROFILE_FLAG)
-                    f_download.write(download_cmd)
+                    data_file = path1
+                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
 
 
 # create an input yml file for cwl-runner
@@ -89,7 +91,12 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
             for item in inputs[category].keys():
                 v = inputs[category][item]
                 if isinstance(v['path'], list):
-                    yml[item] = [INPUT_DIR + '/' + pi for pi in v['path']]
+                    yml[item] = []
+                    for pi in v['path']:
+                      if isinstance(pi, list):
+                          yml[item].append([INPUT_DIR + '/' + ppi for ppi in pi])
+                      else:
+                          yml[item].append(INPUT_DIR + '/' + pi)
                 else:
                     yml[item] = INPUT_DIR + '/' + v['path']
         json.dump(yml, f_yml, indent=4, sort_keys=True)
