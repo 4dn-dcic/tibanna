@@ -2,6 +2,13 @@
 Simple Example Pipeline
 =======================
 
+
+.. toctree::
+   :hidden:
+
+   self
+
+
 .. toctree::
    :maxdepth: 2
 
