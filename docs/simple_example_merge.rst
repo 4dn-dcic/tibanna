@@ -12,7 +12,7 @@ It consists of two steps, ``paste`` and ``cat``, the former pastes input files h
 Data
 ++++
 
-For input data, let's use files named ``smallfile1``, ``smallfile2``, ``smallfile3`` and ``smallfile4`` in a public bucket named ``my-tibanna-test-input-bucket``. Each of these files contains a letter ('a', 'b', 'c', and 'd', respectively). We feed an array of array of these files in the following format:
+For input data, let's use files named ``smallfile1``, ``smallfile2``, ``smallfile3`` and ``smallfile4`` in a public bucket named ``my-tibanna-test-input-bucket``. Each of these files contains a letter ('``a``', '``b``', '``c``', and '``d``', respectively). We feed an array of array of these files in the following format:
 
   ::
 
@@ -58,6 +58,7 @@ CWL
     The following is ``merge.cwl``. It is of class 'workflow' and defines inputs, outputs and steps. For the other two CWL files (``paste.cwl`` and ``cat.cwl``), see the links above.
 
     ::
+
         ---
         class: Workflow
         cwlVersion: v1.0
