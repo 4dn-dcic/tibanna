@@ -6,7 +6,7 @@ Simple Example Pipeline
 .. toctree::
    :hidden:
 
-   self
+   simple_example
 
 
 .. toctree::
