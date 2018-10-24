@@ -1,0 +1,4 @@
+aws s3 cp s3://my-tibanna-test-input-bucket/smallfile1 /data1/input/smallfile1 
+aws s3 cp s3://my-tibanna-test-input-bucket/smallfile2 /data1/input/smallfile2 
+aws s3 cp s3://my-tibanna-test-input-bucket/smallfile3 /data1/input/smallfile3 
+aws s3 cp s3://my-tibanna-test-input-bucket/smallfile4 /data1/input/smallfile4 

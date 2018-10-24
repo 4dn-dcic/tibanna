@@ -1,0 +1,5 @@
+WDL_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl2/examples/merge
+MAIN_WDL=merge.wdl
+OUTBUCKET=my-tibanna-test-bucket
+PUBLIC_POSTRUN_JSON=0
+PRESERVED_ENV_OPTION=""
