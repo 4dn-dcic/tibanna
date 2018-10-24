@@ -1,0 +1,6 @@
+{
+  "files" : [
+        { "class": "File", "path": "sf1" },
+        { "class": "File", "path": "sf2" }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "smallfiles" : [
+     [
+        { "class": "File", "path": "sf1" },
+        { "class": "File", "path": "sf2" }
+     ],
+     [
+        { "class": "File", "path": "sf3" },
+        { "class": "File", "path": "sf4" }
+     ]
+  ]
+}
