@@ -36,13 +36,14 @@ def handler(event, context):
       input_parameters: input parameters in json format (parametername:value)
     # required for cwl
       cwl_main_filename: main cwl file name
-      cwl_child_filenames: names of the other cwl files used by main cwl file, delimiated by comma
+      cwl_child_filenames: names of the other cwl files used by main cwl file, delimited by comma
       cwl_directory_url: the url and subdirectories for the main cwl file
       cwl_version: the version of cwl (either 'draft3' or 'v1')
       language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
       language: 'wdl'
-      wdl_filename: wdl file name
+      wdl_main_filename: main wdl file name
+      wdl_child_filenames: names of the other wdl files used by main wdl file, delimited by comma
       wdl_directory_url: the url of the wdl file
     # optional
       dependency: {'exec_arn': [exec_arns]}
@@ -56,7 +57,7 @@ def handler(event, context):
     ARGS_KEYS = ["app_name", "app_version", "input_files", "output_S3_bucket",
                  "input_parameters", "secondary_files", "output_target", "secondary_output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_child_filenames", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_filename", "wdl_directory_url", "language"]
+    ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_child_filenames", "wdl_directory_url", "language"]
 
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:

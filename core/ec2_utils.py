@@ -94,7 +94,8 @@ def create_json_dict(input_dict):
                                  'main_cwl': a.get('cwl_main_filename', ''),
                                  'other_cwl_files': ','.join(a.get('cwl_child_filenames', [])),
                                  'wdl_url': a.get('wdl_directory_url', ''),
-                                 'main_wdl': a.get('wdl_filename', '')
+                                 'main_wdl': a.get('wdl_main_filename', ''),
+                                 'other_wdl_files': ','.join(a.get('wdl_child_filenames', [])),
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
