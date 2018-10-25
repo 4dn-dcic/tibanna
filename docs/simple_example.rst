@@ -14,3 +14,4 @@ Simple Example Pipeline
 
    simple_example_md5
    simple_example_merge
+   simple_example_merge_and_cut
