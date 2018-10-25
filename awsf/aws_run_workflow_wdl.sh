@@ -136,8 +136,12 @@ LOGFILE=$LOGFILE2
 send_log
 
 
-### download wdl from github or any other url.
-exl wget -O$LOCAL_CWLDIR/$MAIN_WDL $WDL_URL/$MAIN_WDL
+### download cwl from github or any other url.
+for WD_FILE in $MAIN_WDL $WDL_FILES
+do
+ exl wget -O$LOCAL_WDLDIR/$WDL_FILE $WDL_URL/$WDLFILE
+done
+
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
