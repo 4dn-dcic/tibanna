@@ -44,7 +44,7 @@ export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_OUTDIR=$EBS_DIR/out  
-export LOCAL_WDLDIR=$EBS_DIR/cwl 
+export LOCAL_WDLDIR=$EBS_DIR/wdl 
 export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_CWL_TMPDIR=$EBS_DIR/tmp
@@ -139,7 +139,7 @@ send_log
 ### download cwl from github or any other url.
 for WD_FILE in $MAIN_WDL $WDL_FILES
 do
- exl wget -O$LOCAL_WDLDIR/$WDL_FILE $WDL_URL/$WDLFILE
+ exl wget -O$LOCAL_WDLDIR/$WDL_FILE $WDL_URL/$WDL_FILE
 done
 
 
