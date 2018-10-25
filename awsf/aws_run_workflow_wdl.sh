@@ -137,7 +137,7 @@ send_log
 
 
 ### download cwl from github or any other url.
-for WD_FILE in $MAIN_WDL $WDL_FILES
+for WDL_FILE in $MAIN_WDL $WDL_FILES
 do
  exl wget -O$LOCAL_WDLDIR/$WDL_FILE $WDL_URL/$WDL_FILE
 done
