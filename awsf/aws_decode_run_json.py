@@ -43,8 +43,13 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                 if isinstance(path1, list):
                     for path2 in path1:
                         if isinstance(path2, list):
-                            for data_file in path2:
-                                add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                            for path3 in path2:
+                                if isinstance(path3, list):
+                                    for data_file in path3:
+                                        add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                                else:
+                                    data_file = path3
+                                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
                         else:
                             data_file = path2
                             add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
@@ -101,7 +106,13 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                     yml[item] = []
                     for pi in v['path']:
                       if isinstance(pi, list):
-                          yml[item].append([INPUT_DIR + '/' + ppi for ppi in pi])
+                          nested = []
+                          for ppi in pi:
+                              if isinstance(ppi, list):
+                                  nested.append([INPUT_DIR + '/' + pppi for pppi in ppi])
+                              else:
+                                  nested.append(INPUT_DIR + '/' + ppi)
+                          yml[item].append(nested)
                       else:
                           yml[item].append(INPUT_DIR + '/' + pi)
                 else:
@@ -119,6 +130,8 @@ def create_env_def_file(env_filename, Dict, language):
             f_env.write("WDL_URL={}\n".format(Dict["Job"]["App"]["wdl_url"]))
             # main cwl to be run (the other cwl files will be called by this one)
             f_env.write("MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
+            # list of cwl files in an array delimited by a space
+            f_env.write("WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
         else:  # cwl
             f_env.write("CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
             # main cwl to be run (the other cwl files will be called by this one)

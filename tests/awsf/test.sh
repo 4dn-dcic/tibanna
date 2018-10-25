@@ -6,8 +6,8 @@ set -o errexit
 python awsf/aws_decode_run_json.py tests/awsf/bqLd8oa7Tdzq.run.json
 
 # WDL
-python awsf/aws_decode_run_json.py tests/awsf/wdl/pzn3Us98y21I.run.json
-
+python awsf/aws_decode_run_json.py tests/awsf/wdl/pzn3Us98y21I.run.json   # nested
+python awsf/aws_decode_run_json.py tests/awsf/wdl/uGeIte1giKxt.run.json  # double-nested
 
 
 ## testing output upload / postrun json creation

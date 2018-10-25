@@ -25,6 +25,9 @@ For input data, let's use files named ``smallfile1``, ``smallfile2``, ``smallfil
 Pipeline description
 ++++++++++++++++++++
 
+.. image:: images/nested_array_example.png
+
+
 Thie pipeline takes an input 'smallfiles' which is an array of array of files. The input is scattered to the first step ``paste``, which means that each element of 'smallfiles' (i.e. each array of files) goes as the input of ``paste``, and the outputs will be gathered into an array before it is passed to the next step. From the input data above, there will be two runs of ``paste`` and one will take in ``[smallfile1, smallfile2]`` and the other ``[smallfile3, smallfile4]``, and the outputs will be combined into an array *[<paste_output1>, <paste_output2>]*. The second step, ``cat`` takes in this array and concatenates them.
 
 So, the output of the two ``paste`` runs would look like:
@@ -214,7 +217,7 @@ Job description for WDL
     
     The example job description for WDL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge_wdl_input.json.
     
-    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_filename" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``smallfiles``, ``merged``), whereas with WDL, you have to specify the workflow name (e.g. ``merge.smallfiles``, ``merge.merged``). We omit the step names in this case because we use global variables that are passed to and from the steps.
+    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_main_filename", "wdl_child_filenames" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``smallfiles``, ``merged``), whereas with WDL, you have to specify the workflow name (e.g. ``merge.smallfiles``, ``merge.merged``). We omit the step names in this case because we use global variables that are passed to and from the steps.
     
     ::
     
@@ -224,7 +227,8 @@ Job description for WDL
             "app_version": "",
             "language": "wdl",
             "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge",
-            "wdl_filename": "merge.wdl",
+            "wdl_main_filename": "merge.wdl",
+            "wdl_child_filenames": [],
             "input_files": {
               "merge.smallfiles": {
                 "bucket_name": "my-tibanna-test-input-bucket",
