@@ -234,7 +234,7 @@ Job description for WDL
     
     The example job description for WDL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5/md5_wdl_input.json.
     
-    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_filename" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``gzfile``, ``report``), whereas with WDL, you have to specify the workflow name and the step name (e.g. ``md5.md5_step.gzfile``, ``md5.md5_step.report``).
+    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_main_filename", "wdl_child_filenames" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``gzfile``, ``report``), whereas with WDL, you have to specify the workflow name and the step name (e.g. ``md5.md5_step.gzfile``, ``md5.md5_step.report``).
     
     ::
     
@@ -243,7 +243,8 @@ Job description for WDL
             "app_name": "md5",
             "app_version": "v2",
             "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
-            "wdl_filename": "md5.wdl",
+            "wdl_main_filename": "md5.wdl",
+            "wdl_child_filenames": [],
             "language": "wdl",
             "input_files": {
               "md5.md5_step.gzfile": {

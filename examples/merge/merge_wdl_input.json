@@ -4,7 +4,8 @@
     "app_version": "",
     "language": "wdl",
     "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge",
-    "wdl_filename": "merge.wdl",
+    "wdl_main_filename": "merge.wdl",
+    "wdl_child_filenames": [],
     "input_files": {
       "merge.smallfiles": {
         "bucket_name": "my-tibanna-test-input-bucket",

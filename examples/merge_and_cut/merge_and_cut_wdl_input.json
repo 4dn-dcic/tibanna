@@ -1,22 +1,25 @@
 {
   "args": {
-    "app_name": "md5",
-    "app_version": "v2",
+    "app_name": "merge_and_cut",
+    "app_version": "",
     "language": "wdl",
-    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
-    "wdl_main_filename": "md5.wdl",
-    "wdl_child_filenames": [],
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut",
+    "wdl_main_filename": "merge_and_cut.wdl",
+    "wdl_child_filenames": ["merge.wdl"],
     "input_files": {
-      "md5.md5_step.gzfile": {
+      "merge_and_cut.smallfiles": {
         "bucket_name": "my-tibanna-test-input-bucket",
-        "object_key": "somefastqfile.fastq.gz"
+        "object_key": [
+            [["smallfile1", "smallfile2"], ["smallfile3", "smallfile4"]],
+            [["smallfile5", "smallfile6"], ["smallfile7", "smallfile8"]]
+        ]
       }
     },
     "secondary_files": {},
     "input_parameters": {},
     "output_S3_bucket": "my-tibanna-test-bucket",
     "output_target": {
-      "md5.md5_step.report": "some_sub_dirname/my_first_md5_report"
+      "merge_and_cut.merged_and_cut": "some_sub_dirname/my_first_merged_and_cut_file"
     },
     "secondary_output_target": {}
   },
