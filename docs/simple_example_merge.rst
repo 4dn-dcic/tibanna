@@ -214,7 +214,7 @@ Job description for WDL
     
     The example job description for WDL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge_wdl_input.json.
     
-    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_filename" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``smallfiles``, ``merged``), whereas with WDL, you have to specify the workflow name (e.g. ``merge.smallfiles``, ``merge.merged``). We omit the step names in this case because we use global variables that are passed to and from the steps.
+    Content-wise, it is exactly the same as the one for CWL above. Notice that the only difference is that 1) you specify fields "wdl_main_filename", "wdl_child_filenames" and "wdl_directory_url" instead of "cwl_main_filename", "cwl_child_filenames", "cwl_directory_url", and "cwl_version" in ``args``, that 2) you have to specify ``"language" : "wdl"`` in ``args`` and that 3) when you refer to an input or an output, CWL allows you to use a global name (e.g. ``smallfiles``, ``merged``), whereas with WDL, you have to specify the workflow name (e.g. ``merge.smallfiles``, ``merge.merged``). We omit the step names in this case because we use global variables that are passed to and from the steps.
     
     ::
     
@@ -224,7 +224,8 @@ Job description for WDL
             "app_version": "",
             "language": "wdl",
             "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge",
-            "wdl_filename": "merge.wdl",
+            "wdl_main_filename": "merge.wdl",
+            "wdl_child_filenames": [],
             "input_files": {
               "merge.smallfiles": {
                 "bucket_name": "my-tibanna-test-input-bucket",

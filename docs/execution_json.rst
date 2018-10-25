@@ -56,10 +56,14 @@ WDL-specific
     - (e.g. 'https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/wdl')
     - The url must be public.
 
-:wdl_filename:
-    - <wdl_cwl_file> (e.g. 'pairsam-parse-sort.wdl')
-    - This file must be in the cwl url given by ``wdl_directory_url``.
-    - The actual cwl link would be ``wdl_directory_url`` + '\' + ``wdl_file_name``
+:wdl_main_filename:
+    - <main_wdl_file> (e.g. 'pairsam-parse-sort.wdl')
+    - This file must be in the wdl url given by ``wdl_directory_url``.
+    - The actual wdl link would be ``wdl_directory_url`` + '\' + ``wdl_file_name``
+
+:wdl_child_filenames:
+    - <list_of_wdl_files> or ``[]`` (e.g. ['subworkflow1.wdl', 'subworkflow2.wdl'])
+    - An array of all the other wdl files that are called by the main wdl file. This could happen if there are the main WDL file is using another WDL file as a subworkflow.
 
 
 Input data specification
