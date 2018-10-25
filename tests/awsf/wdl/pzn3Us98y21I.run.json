@@ -8,6 +8,7 @@
             "main_cwl": "", 
             "main_wdl": "merge.wdl", 
             "other_cwl_files": "", 
+            "other_wdl_files": "", 
             "wdl_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl2/examples/merge"
         }, 
         "Input": {
