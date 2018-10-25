@@ -1,0 +1,6 @@
+{
+    "merge.smallfiles": [
+       [["sf1", "sf2"], ["sf3", "sf4"]],
+       [["sf5", "sf6"], ["sf7", "sf8"]]
+    ]
+}
