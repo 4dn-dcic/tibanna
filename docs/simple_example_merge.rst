@@ -25,6 +25,9 @@ For input data, let's use files named ``smallfile1``, ``smallfile2``, ``smallfil
 Pipeline description
 ++++++++++++++++++++
 
+.. image:: images/nested_array_example.png
+
+
 Thie pipeline takes an input 'smallfiles' which is an array of array of files. The input is scattered to the first step ``paste``, which means that each element of 'smallfiles' (i.e. each array of files) goes as the input of ``paste``, and the outputs will be gathered into an array before it is passed to the next step. From the input data above, there will be two runs of ``paste`` and one will take in ``[smallfile1, smallfile2]`` and the other ``[smallfile3, smallfile4]``, and the outputs will be combined into an array *[<paste_output1>, <paste_output2>]*. The second step, ``cat`` takes in this array and concatenates them.
 
 So, the output of the two ``paste`` runs would look like:
