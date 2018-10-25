@@ -53,6 +53,10 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                     add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
 
 
+def file2cwlfile(filename, dir):
+    return {"class": 'File', "path": dir + '/' + filename}
+
+
 # create an input yml file for cwl-runner
 def create_input_for_cwl(input_yml_filename, Dict_input):
     with open(input_yml_filename, 'w') as f_yml:
@@ -70,8 +74,11 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     del v['profile']
                 if isinstance(v['path'], list):
                     v2 = []
-                    for i in range(0, len(v['path'])):
-                        v2.append({"class": v['class'], "path": INPUT_DIR + '/' + v['path'][i]})
+                    for pi in v['path']:
+                        if isinstance(pi, list):
+                            v2.append([file2cwlfile(ppi, INPUT_DIR) for ppi in pi])
+                        else:
+                            v2.append(file2cwlfile(pi, INPUT_DIR))
                     v = v2
                     yml[item] = v
                 else:
