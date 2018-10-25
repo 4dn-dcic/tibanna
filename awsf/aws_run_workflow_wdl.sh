@@ -44,7 +44,7 @@ export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_OUTDIR=$EBS_DIR/out  
-export LOCAL_CWLDIR=$EBS_DIR/cwl 
+export LOCAL_WDLDIR=$EBS_DIR/cwl 
 export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_CWL_TMPDIR=$EBS_DIR/tmp
@@ -130,7 +130,7 @@ exl chmod -R +x $EBS_DIR
 exl mkdir -p $LOCAL_OUTDIR
 exl mkdir -p $LOCAL_INPUT_DIR
 exl mkdir -p $LOCAL_REFERENCE_DIR
-exl mkdir -p $LOCAL_CWLDIR
+exl mkdir -p $LOCAL_WDLDIR
 mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
@@ -160,7 +160,7 @@ send_log
 
 ### run command
 cwd0=$(pwd)
-cd $LOCAL_CWLDIR  
+cd $LOCAL_WDLDIR  
 mkdir -p $LOCAL_CWL_TMPDIR
 send_log_regularly &
 exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
