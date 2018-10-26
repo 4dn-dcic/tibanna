@@ -2,10 +2,10 @@
   "args": {
     "app_name": "merge_and_cut",
     "app_version": "",
-    "language": "wdl",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut",
     "cwl_main_filename": "merge_and_cut.cwl",
     "cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl"],
+    "cwl_version": "v1",
     "input_files": {
       "smallfiles": {
         "bucket_name": "my-tibanna-test-input-bucket",
