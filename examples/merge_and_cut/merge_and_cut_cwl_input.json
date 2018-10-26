@@ -4,7 +4,7 @@
     "app_version": "",
     "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut",
     "cwl_main_filename": "merge_and_cut.cwl",
-    "cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl"],
+    "cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl", "cut.cwl"],
     "cwl_version": "v1",
     "input_files": {
       "smallfiles": {
@@ -28,7 +28,7 @@
     "json_bucket": "my-tibanna-test-bucket",
     "EBS_optimized": false,
     "ebs_iops": 500,
-    "shutdown_min": 30,
+    "shutdown_min": "now",
     "instance_type": "t2.micro",
     "ebs_type": "io1",
     "password": "whateverpasswordworks",
