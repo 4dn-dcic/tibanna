@@ -1,0 +1,78 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "merge_and_cut", 
+            "App_version": "", 
+            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut", 
+            "language": "cwl_v1", 
+            "main_cwl": "merge_and_cut.cwl", 
+            "main_wdl": "", 
+            "other_cwl_files": "merge.cwl,paste.cwl,cat.cwl", 
+            "other_wdl_files": "", 
+            "wdl_url": ""
+        }, 
+        "Input": {
+            "Env": {}, 
+            "Input_files_data": {
+                "smallfiles": {
+                    "class": "File", 
+                    "dir": "my-tibanna-test-input-bucket", 
+                    "path": [
+                        [
+                            [
+                                "smallfile1", 
+                                "smallfile2"
+                            ], 
+                            [
+                                "smallfile3", 
+                                "smallfile4"
+                            ]
+                        ], 
+                        [
+                            [
+                                "smallfile5", 
+                                "smallfile6"
+                            ], 
+                            [
+                                "smallfile7", 
+                                "smallfile8"
+                            ]
+                        ]
+                    ], 
+                    "profile": ""
+                }
+            }, 
+            "Input_parameters": {}, 
+            "Secondary_files_data": {}
+        }, 
+        "JOBID": "qD9zkkqAWjnE", 
+        "Log": {
+            "log_bucket_directory": "my-tibanna-test-bucket"
+        }, 
+        "Output": {
+            "output_bucket_directory": "my-tibanna-test-bucket", 
+            "output_target": {
+                "merged_and_cut": "some_sub_dirname/my_first_merged_and_cut_file"
+            }, 
+            "secondary_output_target": {}
+        }, 
+        "start_time": "20181026-20:43:10-UTC"
+    }, 
+    "config": {
+        "EBS_optimized": false, 
+        "ami_id": "ami-31caa14e", 
+        "ebs_iops": 500, 
+        "ebs_size": 10, 
+        "ebs_type": "io1", 
+        "instance_type": "t2.micro", 
+        "job_tag": "merge_and_cut", 
+        "json_bucket": "my-tibanna-test-bucket", 
+        "json_dir": "/tmp/json", 
+        "language": "cwl_v1", 
+        "log_bucket": "my-tibanna-test-bucket", 
+        "public_postrun_json": false, 
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/wdl3/awsf/", 
+        "shutdown_min": 30, 
+        "userdata_dir": "/tmp/userdata"
+    }
+}

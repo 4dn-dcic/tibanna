@@ -4,6 +4,7 @@ set -o errexit
 # testing decoding run.json in awsem
 # CWL
 python awsf/aws_decode_run_json.py tests/awsf/bqLd8oa7Tdzq.run.json
+python awsf/aws_decode_run_json.py tests/awsf/qD9zkkqAWjnE.run.json  # double-nested
 
 # WDL
 python awsf/aws_decode_run_json.py tests/awsf/wdl/pzn3Us98y21I.run.json   # nested
