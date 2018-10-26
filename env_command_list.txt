@@ -1,6 +1,0 @@
-WDL_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut
-MAIN_WDL=merge_and_cut.wdl
-WDL_FILES="merge.wdl"
-OUTBUCKET=my-tibanna-test-bucket
-PUBLIC_POSTRUN_JSON=0
-PRESERVED_ENV_OPTION=""
