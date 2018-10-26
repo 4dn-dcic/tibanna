@@ -81,7 +81,13 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     v2 = []
                     for pi in v['path']:
                         if isinstance(pi, list):
-                            v2.append([file2cwlfile(ppi, INPUT_DIR) for ppi in pi])
+                            nested = []
+                            for ppi in pi:
+                                if isinstance(ppi, list):
+                                    nested.append([file2cwlfile(pppi, INPUT_DIR) for pppi in ppi])
+                                else:
+                                    nested.append(file2cwlfile(ppi, INPUT_DIR))
+                            v2.append(nested)
                         else:
                             v2.append(file2cwlfile(pi, INPUT_DIR))
                     v = v2

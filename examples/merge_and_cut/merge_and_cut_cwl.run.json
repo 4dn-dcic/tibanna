@@ -1,0 +1,24 @@
+{
+  "smallfiles" : [
+     [
+       [
+          { "class": "File", "location": "sf1" },
+          { "class": "File", "location": "sf2" }
+       ],
+       [
+          { "class": "File", "location": "sf3" },
+          { "class": "File", "location": "sf4" }
+       ]
+     ],
+     [
+       [
+          { "class": "File", "location": "sf5" },
+          { "class": "File", "location": "sf6" }
+       ],
+       [
+          { "class": "File", "location": "sf7" },
+          { "class": "File", "location": "sf8" }
+       ]
+     ]
+  ]
+}
