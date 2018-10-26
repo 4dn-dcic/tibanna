@@ -36,12 +36,19 @@ Thie pipeline takes an input 'smallfiles' which is an array of array of array of
 CWL
 ###
 
-    Since this is a multi-step pipeline, we use three CWL files, ``merge.cwl`` (master workflow CWL) and two other CWL files ``paste.cwl`` and ``cat.cwl`` that are called by ``merge.cwl``.
+    The structure of this pipeline is a bit complex and we use five CWL files, three of which are identical to the ones from ``merge`` workflow example (``merge.cwl``, ``paste.cwl``, ``cat.cwl``) since we're using the ``merge`` workflow as a subworkflow. There is one master CWL (``merge_and_cut.cwl``) and an extra step CWL, ``cut.cwl``.
     
-    These CWL files can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge.cwl, https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/paste.cwl and https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/cat.cwl.
+    These CWL files can be found at the following URLs:
+
+    - https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/merge_and_cut.cwl
+    - https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/merge.cwl
+    - https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/paste.cwl
+    - https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/cat.cwl
+    - https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/cut.cwl
+
     To use your own CWL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above.
    
-    The following is ``merge.cwl``. It is of class 'workflow' and defines inputs, outputs and steps. For the other two CWL files (``paste.cwl`` and ``cat.cwl``), see the links above.
+    The following is ``merge_and_cut.cwl``.
 
     ::
 
@@ -54,38 +61,43 @@ CWL
                type: array
                items:
                  type: array
-                 items: File
+                 items:
+                   type: array
+                   items: File
         outputs:
           - 
-            id: "#merged"
+            id: "#merged_and_cut"
             type: File
-            outputSource: "#cat/concatenated"
+            outputSource: "#cut/cut1"
         steps:
           -
-            id: "#paste"
-            run: "paste.cwl"
+            id: "#merge"
+            run: "merge.cwl"
             in:
             - 
-              id: "#paste/files"
+              id: "#merge/smallfiles"
               source: "smallfiles"
-            scatter: "#paste/files"
+            scatter: "#merge/smallfiles"
             out:
             -
-              id: "#paste/pasted"
+              id: "#merge/merged"
           -
-            id: "#cat"
-            run: "cat.cwl"
+            id: "#cut"
+            run: "cut.cwl"
             in:
             - 
-              id: "#cat/files"
-              source: "#paste/pasted"
+              id: "#cut/files"
+              source: "#merge/merged"
             out:
             -
-              id: "#cat/concatenated"
+              id: "#cut/cut1"
         requirements:
           -
-            class: "ScatterFeatureRequirement"   
-   
+            class: "ScatterFeatureRequirement"
+          -
+            class: "SubworkflowFeatureRequirement"
+
+
  
     The pipeline is ready!
     
@@ -140,28 +152,31 @@ Job description for CWL
 #######################
     
     The example job description for CWL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge_cwl_input.json.
-    
+   
     ::
-    
+
         {
           "args": {
-            "app_name": "merge",
+            "app_name": "merge_and_cut",
             "app_version": "",
-            "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge",
-            "cwl_main_filename": "merge.cwl",
-            "cwl_child_filenames": ["paste.cwl", "cat.cwl"],
+            "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut",
+            "cwl_main_filename": "merge_and_cut.cwl",
+            "cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl", "cut.cwl"],
             "cwl_version": "v1",
             "input_files": {
               "smallfiles": {
                 "bucket_name": "my-tibanna-test-input-bucket",
-                "object_key": [["smallfile1", "smallfile2"], ["smallfile3", "smallfile4"]]
+                "object_key": [
+                    [["smallfile1", "smallfile2"], ["smallfile3", "smallfile4"]],
+                    [["smallfile5", "smallfile6"], ["smallfile7", "smallfile8"]]
+                ]
               }
             },
             "secondary_files": {},
             "input_parameters": {},
             "output_S3_bucket": "my-tibanna-test-bucket",
             "output_target": {
-              "merged": "some_sub_dirname/my_first_merged_file"
+              "merged_and_cut": "some_sub_dirname/my_first_merged_and_cut_file"
             },
             "secondary_output_target": {}
           },
@@ -170,7 +185,7 @@ Job description for CWL
             "json_bucket": "my-tibanna-test-bucket",
             "EBS_optimized": false,
             "ebs_iops": 500,
-            "shutdown_min": 30,
+            "shutdown_min": "now",
             "instance_type": "t2.micro",
             "ebs_type": "io1",
             "password": "whateverpasswordworks",
@@ -178,8 +193,9 @@ Job description for CWL
             "key_name": ""
           }
         } 
-    
-    The json file specifies the input nested file array ("smallfiles") (``[["smallfile1", "smallfile2"], ["smallfile3", "smallfile4"]]``), matching the name in CWL. The output file will be renamed to ``some_sub_dirname/my_first_merged_file`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url). Note that child CWL files are also specified in this case (``"cwl_child_filenames": ["paste.cwl", "cat.cwl"]``).
+   
+ 
+    The json file specifies the input double-nested file array ("smallfiles"), matching the name in CWL. The output file will be renamed to ``some_sub_dirname/my_first_merged_and_cut_file`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url). Note that child CWL files are also specified in this case (``"cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl", "cut.cwl"]``).
     
     We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
     
