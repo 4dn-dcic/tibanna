@@ -177,6 +177,75 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     return retval
 
 
+def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
+                extra_file_format='bw',
+                file_argument='input_fastq'):
+    if status == 'uploading':
+        # wait until this bad boy is finished
+        return
+    # keys
+    ff_key = tibanna.ff_keys
+    # move files to proper s3 location
+    # need to remove sbg from this line
+    accession = awsemfile.runner.get_file_accessions(file_argument)[0]
+    target_key = accession
+    zipped_report = awsemfile.key
+    boto3.
+    files_to_parse = datafiles
+    if report_html:
+        files_to_parse.append(report_html)
+    printlog("accession is %s" % accession)
+    try:
+        files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
+                                            acl='public-read')
+    except Exception as e:
+        printlog(tibanna.s3.__dict__)
+        raise Exception("%s (key={})\n".format(zipped_report) % e)
+    # schema. do not need to check_queue
+    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
+                                      key=ff_key,
+                                      ff_env=tibanna.env)
+    # parse fastqc metadata
+    printlog("files : %s" % str(files))
+    filedata = [files[_]['data'] for _ in datafiles]
+    if report_html in files:
+        qc_url = files[report_html]['s3key']
+    else:
+        qc_url = None
+    meta = parse_qc_table(filedata,
+                          qc_schema=qc_schema.get('properties'),
+                          url=qc_url)
+    printlog("qc meta is %s" % meta)
+    # post fastq metadata
+    qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
+    if qc_meta.get('@graph'):
+        qc_meta = qc_meta['@graph'][0]
+    printlog("qc_meta is %s" % qc_meta)
+    # update original file as well
+    try:
+        original_file = ff_utils.get_metadata(accession,
+                                              key=ff_key,
+                                              ff_env=tibanna.env,
+                                              add_on='frame=object',
+                                              check_queue=True)
+        printlog("original_file is %s" % original_file)
+    except Exception as e:
+        raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
+    patch_file = {'quality_metric': qc_meta['@id']}
+    try:
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+    except Exception as e:
+        raise Exception("patch_metadata failed in fastqc_updater." + str(e) +
+                        "original_file ={}\n".format(str(original_file)))
+    # patch the workflow run, value_qc is used to make drawing graphs easier.
+    output_files = ff_meta.output_files
+    output_files[0]['value_qc'] = qc_meta['@id']
+    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
+              'output_files': output_files}
+    printlog("retval is %s" % retval)
+    return retval
+
+
 def get_existing_md5(file_meta):
     md5 = file_meta.get('md5sum', False)
     content_md5 = file_meta.get('content_md5sum', False)
@@ -467,3 +536,4 @@ def get_postrunjson_url(event):
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['Output report file'] = md5_updater
 OUTFILE_UPDATERS['Output QC file'] = qc_updater
+OUTFILE_UPDATERS['Output to-be-extra-input file'] = extra_input_updater

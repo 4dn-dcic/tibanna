@@ -302,7 +302,7 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
                                                 custom_fields=None, user_supplied_output_files=None):
     output_files = []
     pf_meta = []
-    arg_type_list = ['Output processed file', 'Output report file', 'Output QC file']
+    arg_type_list = ['Output processed file', 'Output report file', 'Output QC file', 'Output to-be-extra-input file']
     for arg in wf_meta.get('arguments', []):
         printlog("processing arguments %s" % str(arg))
         if arg.get('argument_type') in arg_type_list:
