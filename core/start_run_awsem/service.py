@@ -134,6 +134,13 @@ def real_handler(event, context):
         arg_name = of.get('workflow_argument_name')
         if of.get('type') == 'Output processed file':
             args['output_target'][arg_name] = of.get('upload_key')
+        elif of.get('type') == 'Output to-be-extra-input file':
+            orgfile_key = input_files_for_ffmeta[0].get('upload_key')
+            orgfile_format = parse_formatstr(input_files_for_ffmeta[0].get('file_format'))
+            target_format = of.get('file_format')
+            fe_map = FormatExtensionMap(ff_keys)
+            target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
+            args['output_target'][arg_name] = target_key 
         else:
             random_tag = str(int(random.random() * 1000000000000))
             # add a random tag at the end for non-processed file e.g. md5 report,

@@ -178,50 +178,14 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
 
 
 def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
-                extra_file_format='bw',
-                file_argument='input_fastq'):
+                         extra_file_format='bw',
+                         file_argument='input_fastq'):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
     # keys
     ff_key = tibanna.ff_keys
-    # move files to proper s3 location
-    # need to remove sbg from this line
     accession = awsemfile.runner.get_file_accessions(file_argument)[0]
-    target_key = accession
-    zipped_report = awsemfile.key
-    boto3.
-    files_to_parse = datafiles
-    if report_html:
-        files_to_parse.append(report_html)
-    printlog("accession is %s" % accession)
-    try:
-        files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
-                                            acl='public-read')
-    except Exception as e:
-        printlog(tibanna.s3.__dict__)
-        raise Exception("%s (key={})\n".format(zipped_report) % e)
-    # schema. do not need to check_queue
-    qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
-                                      key=ff_key,
-                                      ff_env=tibanna.env)
-    # parse fastqc metadata
-    printlog("files : %s" % str(files))
-    filedata = [files[_]['data'] for _ in datafiles]
-    if report_html in files:
-        qc_url = files[report_html]['s3key']
-    else:
-        qc_url = None
-    meta = parse_qc_table(filedata,
-                          qc_schema=qc_schema.get('properties'),
-                          url=qc_url)
-    printlog("qc meta is %s" % meta)
-    # post fastq metadata
-    qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
-    if qc_meta.get('@graph'):
-        qc_meta = qc_meta['@graph'][0]
-    printlog("qc_meta is %s" % qc_meta)
-    # update original file as well
     try:
         original_file = ff_utils.get_metadata(accession,
                                               key=ff_key,
@@ -231,19 +195,36 @@ def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
         printlog("original_file is %s" % original_file)
     except Exception as e:
         raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
-    patch_file = {'quality_metric': qc_meta['@id']}
+    # move files to proper s3 location
+    fe_map = FormatExtensionMap(tibanna.ff_keys)
+    target_extension = fe_map.get_extension(extra_file_format)
+    target_uuid = original_file['uuid']
+    target_key = target_uuid + '/' + accession + '.' + target_extension
+    target_bucket = awsemfile.runner.input_file[0].bucket
+    s3 = boto3.client('s3')
     try:
-        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=ff_key)
+        s3.copy_object(Key=target_key,
+                       Bucket=target_bucket,
+                       ACL='public-read',
+                       CopySource={'Bucket': awsemfile.bucket, 'Key': awsemfile.key})
     except Exception as e:
-        raise Exception("patch_metadata failed in fastqc_updater." + str(e) +
+        printlog("failed to copy object to %s" % target_bucket + '/' + target_key)
+        raise e
+    # update original file as well
+    new_extra_file = {'file_format': extra_file_format}
+    if 'extra_files' in original_file:
+        for exf in original_file['extra_files']:
+            if parse_format(exf['file_format']) == extra_file_format:
+                raise Exception("Extra file %s already exists" % extra_file_format)
+        patch_file = {'extra_files': original_file['extra_files']}
+        patch_file['extra_files'].append(new_extra_file)
+    else:
+        patch_file = {'extra_files': [new_extra_file]}
+    try:
+        ff_utils.patch_metadata(patch_file, target_uuid, key=ff_key)
+    except Exception as e:
+        raise Exception("patch_metadata failed in extra_updater." + str(e) +
                         "original_file ={}\n".format(str(original_file)))
-    # patch the workflow run, value_qc is used to make drawing graphs easier.
-    output_files = ff_meta.output_files
-    output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
-              'output_files': output_files}
-    printlog("retval is %s" % retval)
-    return retval
 
 
 def get_existing_md5(file_meta):
