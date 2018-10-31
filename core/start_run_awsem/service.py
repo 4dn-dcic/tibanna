@@ -56,6 +56,7 @@ def real_handler(event, context):
     output_bucket = event.get('output_bucket')
     parameters = ff_utils.convert_param(event.get('parameters'), True)
     tibanna_settings = event.get('_tibanna', {})
+    overwrite_input_extra = event.get('overwrite_input_extra', False)
     tag = event.get('tag')
     # if they don't pass in env guess it from output_bucket
     try:
@@ -135,12 +136,23 @@ def real_handler(event, context):
         if of.get('type') == 'Output processed file':
             args['output_target'][arg_name] = of.get('upload_key')
         elif of.get('type') == 'Output to-be-extra-input file':
-            orgfile_key = input_files_for_ffmeta[0].get('upload_key')
-            orgfile_format = parse_formatstr(input_files_for_ffmeta[0].get('file_format'))
-            target_format = of.get('file_format')
-            fe_map = FormatExtensionMap(ff_keys)
-            target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
-            args['output_target'][arg_name] = target_key 
+            target_inf = input_files_for_ffmeta[0]  # assume only one input for now
+            orgfile_format = parse_formatstr(target_inf.get('file_format'))
+            target_inf_meta = ff_utils.get_metadata(target_inf.get('uuid'),
+                                                    key=tibanna.ff_keys,
+                                                    ff_env=tibanna.env,
+                                                    add_on='frame=object')
+            if target_inf_meta.get('extra_files'):
+                for exf in target_inf_meta.get('extra_files'):
+                    if parse_formatstr(exf.get('file_format')) == orgfile_format:
+                        extrafileexists = True
+                        break
+            if overwrite_input_extra or not extrafileexists:
+                orgfile_key = target_inf.get('upload_key')
+                target_format = of.get('file_format')
+                fe_map = FormatExtensionMap(tibanna.ff_keys)
+                target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
+                args['output_target'][arg_name] = target_key
         else:
             random_tag = str(int(random.random() * 1000000000000))
             # add a random tag at the end for non-processed file e.g. md5 report,
