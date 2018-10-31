@@ -6,7 +6,8 @@ from core.pony_utils import (
   ProcessedFileMetadata,
   Awsem,
   Tibanna,
-  create_ffmeta_awsem
+  create_ffmeta_awsem,
+  parse_formatstr
 )
 from core.utils import powerup
 from core.utils import printlog
@@ -214,7 +215,7 @@ def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
     new_extra_file = {'file_format': extra_file_format}
     if 'extra_files' in original_file:
         for exf in original_file['extra_files']:
-            if parse_format(exf['file_format']) == extra_file_format:
+            if parse_formatstr(exf['file_format']) == extra_file_format:
                 raise Exception("Extra file %s already exists" % extra_file_format)
         patch_file = {'extra_files': original_file['extra_files']}
         patch_file['extra_files'].append(new_extra_file)
@@ -517,4 +518,4 @@ def get_postrunjson_url(event):
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['Output report file'] = md5_updater
 OUTFILE_UPDATERS['Output QC file'] = qc_updater
-OUTFILE_UPDATERS['Output to-be-extra-input file'] = extra_input_updater
+# OUTFILE_UPDATERS['Output to-be-extra-input file'] = extra_input_updater

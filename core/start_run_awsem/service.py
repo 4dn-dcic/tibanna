@@ -137,22 +137,8 @@ def real_handler(event, context):
             args['output_target'][arg_name] = of.get('upload_key')
         elif of.get('type') == 'Output to-be-extra-input file':
             target_inf = input_files_for_ffmeta[0]  # assume only one input for now
-            orgfile_format = parse_formatstr(target_inf.get('file_format'))
-            target_inf_meta = ff_utils.get_metadata(target_inf.get('uuid'),
-                                                    key=tibanna.ff_keys,
-                                                    ff_env=tibanna.env,
-                                                    add_on='frame=object')
-            if target_inf_meta.get('extra_files'):
-                for exf in target_inf_meta.get('extra_files'):
-                    if parse_formatstr(exf.get('file_format')) == orgfile_format:
-                        extrafileexists = True
-                        break
-            if overwrite_input_extra or not extrafileexists:
-                orgfile_key = target_inf.get('upload_key')
-                target_format = of.get('file_format')
-                fe_map = FormatExtensionMap(tibanna.ff_keys)
-                target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
-                args['output_target'][arg_name] = target_key
+            target_key = output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra)
+            args['output_target'][arg_name] = target_key
         else:
             random_tag = str(int(random.random() * 1000000000000))
             # add a random tag at the end for non-processed file e.g. md5 report,
@@ -347,3 +333,25 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
             if of:
                 output_files.append(of.as_dict())
     return output_files, pf_meta
+
+
+def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra=False):
+    extrafileexists = False
+    orgfile_format = parse_formatstr(target_inf.get('file_format'))
+    target_inf_meta = ff_utils.get_metadata(target_inf.get('uuid'),
+                                            key=tibanna.ff_keys,
+                                            ff_env=tibanna.env,
+                                            add_on='frame=object')
+    if target_inf_meta.get('extra_files'):
+        for exf in target_inf_meta.get('extra_files'):
+            if parse_formatstr(exf.get('file_format')) == orgfile_format:
+                extrafileexists = True
+                break
+    if overwrite_input_extra or not extrafileexists:
+        orgfile_key = target_inf_meta.get('upload_key')
+        target_format = of.get('file_format')
+        fe_map = FormatExtensionMap(tibanna.ff_keys)
+        target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
+        return target_key
+    else:
+        raise Exception("input already has extra: 'User overwrite_input_extra': true")
