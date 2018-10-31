@@ -4,7 +4,7 @@ awscli==1.15.42
 botocore==1.10.42
 boto3==1.7.42
 urllib3==1.22
-requests==2.19.1
+requests==2.20.0
 # for tasks.py
 invoke==0.18.1
 # syntax checker
