@@ -251,7 +251,7 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
 def test_output_target_for_input_extra():
     tibanna = Tibanna('fourfront-webdev',
                       settings={"run_type": "bedGraphToBigWig", "env": "fourfront-webdev"})
-    target_inf = {'file_format': 'bg', 'uuid': '83a80cf8-ca2c-421a-bee9-118bd0572424'}
+    target_inf = {'workflow_argument_name': 'bgfile', 'value': '83a80cf8-ca2c-421a-bee9-118bd0572424'}
     of = {'file_format': 'bw'}
     target_key = output_target_for_input_extra(target_inf, of, tibanna)
     assert target_key == '83a80cf8-ca2c-421a-bee9-118bd0572424/4DNFIF14KRAK.bw'
