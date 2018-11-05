@@ -12,7 +12,7 @@
            "object_key": "4DNFIYM4916P.bedGraph.gz",
            "workflow_argument_name": "bgfile",
            "uuid": "b5fb15cd-7082-4fae-a499-667b34e71874",
-           "bucket_name": "elasticbeanstalk-fourfront-wfoutput"
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
        },
        { 
            "workflow_argument_name": "chromsize", 
