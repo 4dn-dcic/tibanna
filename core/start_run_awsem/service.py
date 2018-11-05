@@ -347,8 +347,25 @@ def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra
         for exf in target_inf_meta.get('extra_files'):
             if parse_formatstr(exf.get('file_format')) == target_format:
                 extrafileexists = True
+                if overwrite_input_extra:
+                    exf['status'] = 'to be uploaded by workflow'
                 break
+        if not extrafileexists:
+            new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+            target_inf_meta['extra_files'].append(new_extra)
+    else:
+        new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+        target_inf_meta['extra_files'] = [new_extra]
     if overwrite_input_extra or not extrafileexists:
+        # first patch metadata
+        ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
+                                target_inf.get('value'),
+                                key=tibanna.ff_keys,
+                                ff_env=tibanna.env)
+        # target key
+        # NOTE : The target bucket is assume to be the same as output bucket
+        # i.e. the bucket for the input file should be the same as the output bucket.
+        # which is true if both input and output are processed files.
         orgfile_key = target_inf_meta.get('upload_key')
         orgfile_format = parse_formatstr(target_inf_meta.get('file_format'))
         fe_map = FormatExtensionMap(tibanna.ff_keys)
