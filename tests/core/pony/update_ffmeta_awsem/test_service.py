@@ -281,13 +281,14 @@ def test__input_extra_updater():
                       settings={"run_type": "bedGraphToBigWig",
                                 "env": "fourfront-webdev"})
     accession = '4DNFIF14KRAK'
-    _input_extra_updater('uploaded', tibanna, accession, 'bw', 'some_md5', 1234)
+    _input_extra_updater('uploaded', tibanna, accession, 'bw', 'some_md5', 1234, 'some_higlass_uid')
     res = ff_utils.get_metadata(accession, tibanna.ff_keys, tibanna.env,
                                 add_on='frame=object', check_queue=True)
     assert res['extra_files'][0]['file_format'] == '/file-formats/bw/'
     assert res['extra_files'][0]['status'] == 'uploaded'
     assert res['extra_files'][0]['md5sum'] == 'some_md5'
     assert res['extra_files'][0]['file_size'] == 1234
+    assert res['higlass_uid'] == 'some_higlass_uid'
     _input_extra_updater('upload failed', tibanna, '4DNFIF14KRAK', 'bw', 'some_other_md5', 5678)
     res = ff_utils.get_metadata(accession, tibanna.ff_keys, tibanna.env,
                                 add_on='frame=object', check_queue=True)

@@ -181,12 +181,26 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
 def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     if ff_meta.awsem_app_name == 'bedGraphToBigWig':
         file_argument = 'bgfile'
-        accession = awsemfile.runner.get_file_accessions(file_argument)[0]
-        _input_extra_updater(status, tibanna, accession, 'bw', awsemfile.md5, awsemfile.filesize)
+        file_format = 'bw'
+    # higlass
+    if status == 'uploaded':
+        if file_format == 'bw':
+            higlass_uid = register_to_higlass(tibanna,
+                                              awsemfile.bucket,
+                                              awsemfile.key,
+                                              'bigwig',
+                                              'vector')
+        else:
+            higlass_uid = None
+    # update metadata
+    accession = awsemfile.runner.get_file_accessions(file_argument)[0]
+    _input_extra_updater(status, tibanna, accession, file_format,
+                         awsemfile.md5, awsemfile.filesize, higlass_uid)
     return None
 
 
-def _input_extra_updater(status, tibanna, accession, extra_file_format, md5=None, filesize=None):
+def _input_extra_updater(status, tibanna, accession, extra_file_format,
+                         md5=None, filesize=None, higlass_uid=None):
     try:
         original_file = ff_utils.get_metadata(accession,
                                               key=tibanna.ff_keys,
@@ -207,6 +221,8 @@ def _input_extra_updater(status, tibanna, accession, extra_file_format, md5=None
                     exf['file_size'] = filesize
     try:
         patch_file = {'extra_files': original_file['extra_files']}
+        if higlass_uid:
+            patch_file['higlass_uid'] = higlass_uid
         ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_keys)
     except Exception as e:
         raise Exception("patch_metadata failed in extra_updater." + str(e) +
