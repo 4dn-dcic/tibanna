@@ -10,6 +10,8 @@ import boto3
 from Benchmark import run as B
 from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 from core.utils import create_jobid
+from core.utils import EC2LaunchException
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -247,7 +249,8 @@ def launch_instance(par, jobid, profile=None):
         launch_args["BlockDeviceMappings"][0]["Ebs"]['Iops'] = par['ebs_iops']
 
     if par['ebs_size'] >= 16000:
-        raise Exception("EBS size limit (16TB) exceeded: (attempted size: %s)" % par['ebs_size'])
+        message = "EBS size limit (16TB) exceeded: (attempted size: %s)" % par['ebs_size']
+        raise EC2LaunchException(message)
  
     instance_id = launch_and_get_instance_id(launch_args, jobid)
 
