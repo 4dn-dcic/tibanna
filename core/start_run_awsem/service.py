@@ -358,6 +358,7 @@ def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra
         target_inf_meta['extra_files'] = [new_extra]
     if overwrite_input_extra or not extrafileexists:
         # first patch metadata
+        printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
         ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
                                 target_inf.get('value'),
                                 key=tibanna.ff_keys,

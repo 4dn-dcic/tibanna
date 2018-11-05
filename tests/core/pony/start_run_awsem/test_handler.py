@@ -12,6 +12,7 @@ from ..conftest import valid_env
 from core.pony_utils import Tibanna, ProcessedFileMetadata
 from dcicutils import ff_utils
 import mock
+import time
 
 
 @valid_env
@@ -248,10 +249,24 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
     add_secondary_files_to_args(input_file, tibanna.ff_keys, tibanna.env, args)
 
 
+@valid_env
+@pytest.mark.webtest
 def test_output_target_for_input_extra():
     tibanna = Tibanna('fourfront-webdev',
                       settings={"run_type": "bedGraphToBigWig", "env": "fourfront-webdev"})
     target_inf = {'workflow_argument_name': 'bgfile', 'value': '83a80cf8-ca2c-421a-bee9-118bd0572424'}
-    of = {'file_format': 'bw'}
+    of = {'format': 'bw'}
+
+    ff_utils.patch_metadata({'extra_files': []},
+                            '83a80cf8-ca2c-421a-bee9-118bd0572424',
+                            key=tibanna.ff_keys)
+    time.sleep(10)
     target_key = output_target_for_input_extra(target_inf, of, tibanna)
+    assert target_key == '83a80cf8-ca2c-421a-bee9-118bd0572424/4DNFIF14KRAK.bw'
+
+    with pytest.raises(Exception) as expinfo:
+        target_key = output_target_for_input_extra(target_inf, of, tibanna)
+        assert "input already has extra: 'User overwrite_input_extra'" in str(expinfo.value)
+
+    target_key = output_target_for_input_extra(target_inf, of, tibanna, True)
     assert target_key == '83a80cf8-ca2c-421a-bee9-118bd0572424/4DNFIF14KRAK.bw'
