@@ -10,6 +10,7 @@ from core.pony_utils import (
 )
 from core.utils import powerup
 from core.utils import printlog
+from core.pony_utils import parse_formatstr
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
@@ -179,37 +180,29 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
 
 def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     if ff_meta.awsem_app_name == 'bedGraphToBigWig':
-        _input_extra_updater(status, awsemfile, ff_meta, tibanna,
-                             extra_file_format='bw',
-                             file_argument='bgfile')
+        file_argument = 'bgfile'
+        accession = awsemfile.runner.get_file_accessions(file_argument)[0]
+        _input_extra_updater(status, tibanna, accession, 'bw')
     return None
 
 
-def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
-                         extra_file_format='bw',
-                         file_argument='bgfile'):
-    if status == 'uploading':
-        # wait until this bad boy is finished
-        return
-    # update original file as well
-    accession = awsemfile.runner.get_file_accessions(file_argument)[0]
+def _input_extra_updater(status, tibanna, accession, extra_file_format):
     try:
         original_file = ff_utils.get_metadata(accession,
-                                              key=tibanna.ff_key,
+                                              key=tibanna.ff_keys,
                                               ff_env=tibanna.env,
                                               add_on='frame=object',
                                               check_queue=True)
-        printlog("original_file is %s" % original_file)
     except Exception as e:
-        raise Exception("Can't get metadata for input file %" % e)
-    new_extra_file = {'file_format': extra_file_format}
-    if 'extra_files' in original_file:
-        patch_file = {'extra_files': original_file['extra_files']}
-        patch_file['extra_files'].append(new_extra_file)
-    else:
-        patch_file = {'extra_files': [new_extra_file]}
+        raise Exception("Can't get metadata for input file %s" % e)
+    if 'extra_files' not in original_file:
+        raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+    for exf in original_file['extra_files']:
+        if parse_formatstr(exf['file_format']) == extra_file_format:
+            exf['status'] = status
     try:
-        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_key)
+        patch_file = {'extra_files': original_file['extra_files']}
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_keys)
     except Exception as e:
         raise Exception("patch_metadata failed in extra_updater." + str(e) +
                         "original_file ={}\n".format(str(original_file)))

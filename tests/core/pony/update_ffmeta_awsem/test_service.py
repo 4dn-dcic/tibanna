@@ -5,9 +5,10 @@ from core.update_ffmeta_awsem.service import (
     md5_updater,
     _md5_updater,
     add_md5_filesize_to_pf_extra,
+    _input_extra_updater,
 )
 from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
-from core import pony_utils
+from core.pony_utils import Tibanna
 from core.utils import printlog
 # from core.check_export_sbg.service import get_inputfile_accession
 import pytest
@@ -180,7 +181,7 @@ def test_add_md5_filesize_to_pf_extra2():
 def test_md5_updater_oldmd5(update_ffmeta_event_data):
     event = update_ffmeta_event_data
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = pony_utils.Tibanna(**tibanna_settings)
+    tibanna = Tibanna(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data)
     ouf = awsem.output_files()[0]
     md5_updater('uploaded', ouf, None, tibanna)
@@ -191,7 +192,7 @@ def test_md5_updater_oldmd5(update_ffmeta_event_data):
 def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
     event = update_ffmeta_event_data_newmd5
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = pony_utils.Tibanna(**tibanna_settings)
+    tibanna = Tibanna(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data_newmd5)
     ouf = awsem.output_files()[0]
     md5_updater('uploaded', ouf, None, tibanna)
@@ -252,7 +253,7 @@ def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
 def test_register_to_higlass(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     mcool_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.mcool'
-    tibanna = pony_utils.Tibanna(used_env)
+    tibanna = Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, mcool_key, 'cooler', 'matrix')
         mock_request.assert_called_once()
@@ -264,9 +265,19 @@ def test_register_to_higlass(used_env):
 def test_register_to_higlass2(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigwig_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.bw'
-    tibanna = pony_utils.Tibanna(used_env)
+    tibanna = Tibanna(used_env)
     with mock.patch('requests.post') as mock_request:
         res = register_to_higlass(tibanna, bucket, bigwig_key, 'bigwig', 'vector')
         mock_request.assert_called_once()
         printlog(res)
         assert res
+
+
+@valid_env
+@pytest.mark.webtest
+def test__input_extra_updater():
+    tibanna = Tibanna('fourfront-webdev',
+                      settings={"run_type": "bedGraphToBigWig",
+                                "env": "fourfront-webdev"})
+    _input_extra_updater('uploaded', tibanna, '4DNFIF14KRAK', 'bw')
+    _input_extra_updater('upload failed', tibanna, '4DNFIF14KRAK', 'bw')

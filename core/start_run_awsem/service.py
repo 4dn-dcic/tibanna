@@ -341,7 +341,8 @@ def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra
     target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
                                             key=tibanna.ff_keys,
                                             ff_env=tibanna.env,
-                                            add_on='frame=object')
+                                            add_on='frame=object',
+                                            check_queue=True)
     target_format = parse_formatstr(of.get('format'))
     if target_inf_meta.get('extra_files'):
         for exf in target_inf_meta.get('extra_files'):
