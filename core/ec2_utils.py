@@ -251,7 +251,7 @@ def launch_instance(par, jobid, profile=None):
     if par['ebs_size'] >= 16000:
         message = "EBS size limit (16TB) exceeded: (attempted size: %s)" % par['ebs_size']
         raise EC2LaunchException(message)
- 
+
     instance_id = launch_and_get_instance_id(launch_args, jobid)
 
     # get public IP for the instance (This may not happen immediately)
