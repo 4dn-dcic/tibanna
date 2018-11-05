@@ -246,6 +246,9 @@ def launch_instance(par, jobid, profile=None):
     if par['ebs_iops']:    # io1 type, specify iops
         launch_args["BlockDeviceMappings"][0]["Ebs"]['Iops'] = par['ebs_iops']
 
+    if par['ebs_size'] >= 16000:
+        raise Exception("EBS size limit (16TB) exceeded")
+ 
     instance_id = launch_and_get_instance_id(launch_args, jobid)
 
     # get public IP for the instance (This may not happen immediately)
