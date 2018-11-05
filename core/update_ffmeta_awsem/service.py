@@ -182,11 +182,11 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     if ff_meta.awsem_app_name == 'bedGraphToBigWig':
         file_argument = 'bgfile'
         accession = awsemfile.runner.get_file_accessions(file_argument)[0]
-        _input_extra_updater(status, tibanna, accession, 'bw')
+        _input_extra_updater(status, tibanna, accession, 'bw', awsemfile.md5, awsemfile.filesize)
     return None
 
 
-def _input_extra_updater(status, tibanna, accession, extra_file_format):
+def _input_extra_updater(status, tibanna, accession, extra_file_format, md5=None, filesize=None):
     try:
         original_file = ff_utils.get_metadata(accession,
                                               key=tibanna.ff_keys,
@@ -200,6 +200,11 @@ def _input_extra_updater(status, tibanna, accession, extra_file_format):
     for exf in original_file['extra_files']:
         if parse_formatstr(exf['file_format']) == extra_file_format:
             exf['status'] = status
+            if status == 'uploaded':
+                if md5:
+                    exf['md5sum'] = md5
+                if filesize:
+                    exf['file_size'] = filesize
     try:
         patch_file = {'extra_files': original_file['extra_files']}
         ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_keys)
