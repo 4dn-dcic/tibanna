@@ -7,7 +7,6 @@ from core.pony_utils import (
   Awsem,
   Tibanna,
   create_ffmeta_awsem,
-  parse_formatstr
 )
 from core.utils import powerup
 from core.utils import printlog
@@ -178,51 +177,39 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     return retval
 
 
+def input_extra_updater(status, awsemfile, ff_meta, tibanna):
+    if ff_meta.awsem_app_name == 'bedGraphToBigWig':
+        _input_extra_updater(status, awsemfile, ff_meta, tibanna,
+                             extra_file_format='bw',
+                             file_argument='bgfile')
+    return None
+
+
 def _input_extra_updater(status, awsemfile, ff_meta, tibanna,
                          extra_file_format='bw',
-                         file_argument='input_fastq'):
+                         file_argument='bgfile'):
     if status == 'uploading':
         # wait until this bad boy is finished
         return
-    # keys
-    ff_key = tibanna.ff_keys
+    # update original file as well
     accession = awsemfile.runner.get_file_accessions(file_argument)[0]
     try:
         original_file = ff_utils.get_metadata(accession,
-                                              key=ff_key,
+                                              key=tibanna.ff_key,
                                               ff_env=tibanna.env,
                                               add_on='frame=object',
                                               check_queue=True)
         printlog("original_file is %s" % original_file)
     except Exception as e:
-        raise Exception("Couldn't get metadata for accession {} : ".format(accession) + str(e))
-    # move files to proper s3 location
-    fe_map = FormatExtensionMap(tibanna.ff_keys)
-    target_extension = fe_map.get_extension(extra_file_format)
-    target_uuid = original_file['uuid']
-    target_key = target_uuid + '/' + accession + '.' + target_extension
-    target_bucket = awsemfile.runner.input_file[0].bucket
-    s3 = boto3.client('s3')
-    try:
-        s3.copy_object(Key=target_key,
-                       Bucket=target_bucket,
-                       ACL='public-read',
-                       CopySource={'Bucket': awsemfile.bucket, 'Key': awsemfile.key})
-    except Exception as e:
-        printlog("failed to copy object to %s" % target_bucket + '/' + target_key)
-        raise e
-    # update original file as well
+        raise Exception("Can't get metadata for input file %" % e)
     new_extra_file = {'file_format': extra_file_format}
     if 'extra_files' in original_file:
-        for exf in original_file['extra_files']:
-            if parse_formatstr(exf['file_format']) == extra_file_format:
-                raise Exception("Extra file %s already exists" % extra_file_format)
         patch_file = {'extra_files': original_file['extra_files']}
         patch_file['extra_files'].append(new_extra_file)
     else:
         patch_file = {'extra_files': [new_extra_file]}
     try:
-        ff_utils.patch_metadata(patch_file, target_uuid, key=ff_key)
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_key)
     except Exception as e:
         raise Exception("patch_metadata failed in extra_updater." + str(e) +
                         "original_file ={}\n".format(str(original_file)))
@@ -518,4 +505,4 @@ def get_postrunjson_url(event):
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['Output report file'] = md5_updater
 OUTFILE_UPDATERS['Output QC file'] = qc_updater
-# OUTFILE_UPDATERS['Output to-be-extra-input file'] = extra_input_updater
+OUTFILE_UPDATERS['Output to-be-extra-input file'] = input_extra_updater
