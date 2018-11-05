@@ -211,14 +211,18 @@ def _input_extra_updater(status, tibanna, accession, extra_file_format,
         raise Exception("Can't get metadata for input file %s" % e)
     if 'extra_files' not in original_file:
         raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+    matching_exf_found = False
     for exf in original_file['extra_files']:
         if parse_formatstr(exf['file_format']) == extra_file_format:
+            matching_exf_found = True
             exf['status'] = status
             if status == 'uploaded':
                 if md5:
                     exf['md5sum'] = md5
                 if filesize:
                     exf['file_size'] = filesize
+    if not matching_exf_found:
+        raise Exception("inconsistency - extra file metadata deleted during workflow run?")
     try:
         patch_file = {'extra_files': original_file['extra_files']}
         if higlass_uid:

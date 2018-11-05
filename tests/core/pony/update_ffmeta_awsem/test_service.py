@@ -296,3 +296,6 @@ def test__input_extra_updater():
     assert res['extra_files'][0]['status'] == 'upload failed'
     assert res['extra_files'][0]['md5sum'] == 'some_md5'
     assert res['extra_files'][0]['file_size'] == 1234
+    with pytest.raises(Exception) as expinfo:
+        _input_extra_updater('uploaded', tibanna, accession, 'lalala')
+        assert "inconsistency - extra file metadata deleted during workflow run?" in str(expinfo.value)
