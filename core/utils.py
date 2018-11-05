@@ -99,6 +99,10 @@ class DependencyFailedException(Exception):
     pass
 
 
+class EC2LaunchException(Exception):
+    pass
+
+
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
