@@ -220,6 +220,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
     inf_object_key = args['input_files'][argname]['object_key']
     inf_keys = aslist(inf_object_key)
     fe_map = None
+    not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
     for i, inf_uuid in enumerate(inf_uuids):
         infile_meta = ff_utils.get_metadata(inf_uuid,
                                             key=ff_keys,
@@ -231,10 +232,10 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             if not fe_map:
                 fe_map = FormatExtensionMap(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
-                extra_file_format = parse_formatstr(extra_file.get('file_format'))
-                extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
-                extra_file_keys.append(extra_file_key)
-
+                if 'status' in extra_file and extra_file.get('status') not in not_ready_list:
+                    extra_file_format = parse_formatstr(extra_file.get('file_format'))
+                    extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
+                    extra_file_keys.append(extra_file_key)
     if len(extra_file_keys) > 0:
         if len(extra_file_keys) == 1:
             extra_file_keys = extra_file_keys[0]
