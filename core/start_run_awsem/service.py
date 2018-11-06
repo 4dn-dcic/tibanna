@@ -232,7 +232,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             if not fe_map:
                 fe_map = FormatExtensionMap(ff_keys)
             for extra_file in infile_meta.get('extra_files'):
-                if 'status' in extra_file and extra_file.get('status') not in not_ready_list:
+                if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
                     extra_file_format = parse_formatstr(extra_file.get('file_format'))
                     extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
                     extra_file_keys.append(extra_file_key)
