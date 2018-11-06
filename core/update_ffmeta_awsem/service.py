@@ -6,10 +6,11 @@ from core.pony_utils import (
   ProcessedFileMetadata,
   Awsem,
   Tibanna,
-  create_ffmeta_awsem
+  create_ffmeta_awsem,
 )
 from core.utils import powerup
 from core.utils import printlog
+from core.pony_utils import parse_formatstr
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
@@ -175,6 +176,61 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
               'output_files': output_files}
     printlog("retval is %s" % retval)
     return retval
+
+
+def input_extra_updater(status, awsemfile, ff_meta, tibanna):
+    if ff_meta.awsem_app_name == 'bedGraphToBigWig':
+        file_argument = 'bgfile'
+        file_format = 'bw'
+    # higlass
+    if status == 'uploaded':
+        if file_format == 'bw':
+            higlass_uid = register_to_higlass(tibanna,
+                                              awsemfile.bucket,
+                                              awsemfile.key,
+                                              'bigwig',
+                                              'vector')
+        else:
+            higlass_uid = None
+    # update metadata
+    accession = awsemfile.runner.get_file_accessions(file_argument)[0]
+    _input_extra_updater(status, tibanna, accession, file_format,
+                         awsemfile.md5, awsemfile.filesize, higlass_uid)
+    return None
+
+
+def _input_extra_updater(status, tibanna, accession, extra_file_format,
+                         md5=None, filesize=None, higlass_uid=None):
+    try:
+        original_file = ff_utils.get_metadata(accession,
+                                              key=tibanna.ff_keys,
+                                              ff_env=tibanna.env,
+                                              add_on='frame=object',
+                                              check_queue=True)
+    except Exception as e:
+        raise Exception("Can't get metadata for input file %s" % e)
+    if 'extra_files' not in original_file:
+        raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+    matching_exf_found = False
+    for exf in original_file['extra_files']:
+        if parse_formatstr(exf['file_format']) == extra_file_format:
+            matching_exf_found = True
+            exf['status'] = status
+            if status == 'uploaded':
+                if md5:
+                    exf['md5sum'] = md5
+                if filesize:
+                    exf['file_size'] = filesize
+    if not matching_exf_found:
+        raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+    try:
+        patch_file = {'extra_files': original_file['extra_files']}
+        if higlass_uid:
+            patch_file['higlass_uid'] = higlass_uid
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_keys)
+    except Exception as e:
+        raise Exception("patch_metadata failed in extra_updater." + str(e) +
+                        "original_file ={}\n".format(str(original_file)))
 
 
 def get_existing_md5(file_meta):
@@ -467,3 +523,4 @@ def get_postrunjson_url(event):
 OUTFILE_UPDATERS = defaultdict(lambda: donothing)
 OUTFILE_UPDATERS['Output report file'] = md5_updater
 OUTFILE_UPDATERS['Output QC file'] = qc_updater
+OUTFILE_UPDATERS['Output to-be-extra-input file'] = input_extra_updater
