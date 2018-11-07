@@ -1,0 +1,65 @@
+{
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "encode-chipseq"
+  },
+  "args": {
+    "app_name": "encode-chipseq",
+    "input_parameters": { 
+        "chip.pipeline_type" : "histone",
+        "chip.paired_end" : true,
+        "chip.choose_ctl.always_use_pooled_ctl" : true,
+        "chip.spp_cpu" : 2,
+        "chip.qc_report.name" : "test",
+        "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+        "chip.gensz" : "hs"
+    },
+    "wdl_child_filenames": [],
+    "language": "wdl",
+    "output_target": {
+       "chip.report": "test_chipseq_report.html",
+       "qc_json": "test_chipseq_qc.json",
+       "qc_json_match": "test_chipseq_qc_json_match.txt"
+    },
+    "secondary_output_target": {},
+    "wdl_main_filename": "chip.wdl",
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "dev",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
+    "input_files": {
+      "chip.fastqs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+        "object_key": [[["26e6a9a9-defe-46e4-bdc6-7af4675bd17a/4DNFI8KTY3QD.fastq.gz", "38969bef-628a-41d6-bc74-c6b347c2e688/4DNFI43RP96B.fastq.gz"]]]
+      },
+      "chip.ctl_fastqs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
+        "object_key": [[["4c3be0d1-cd00-4a14-85ed-43269591fe41/4DNFIGM25CMN.fastq.gz","67d23c45-6a26-4de0-9518-f986081b8fef/4DNFI438ZP4U.fastq.gz"]]]
+      },
+      "chip.bwa_idx_tar": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "4DNFIZQZ39L9.bwaIndex.tar"
+      },
+      "chip.blacklist": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "hg38.blacklist.bed.gz"
+      },
+      "chip.chrsz": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      }
+    }
+  },
+  "config": { 
+    "ebs_size": 50,
+    "ebs_type": "gp2",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": false,
+    "ebs_iops": "",
+    "shutdown_min": 120,
+    "instance_type": "t2.xlarge",   
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": ""
+  }
+}
