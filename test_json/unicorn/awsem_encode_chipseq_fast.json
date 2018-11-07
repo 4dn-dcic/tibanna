@@ -12,7 +12,8 @@
         "chip.spp_cpu" : 2,
         "chip.qc_report.name" : "test",
         "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
-        "chip.gensz" : "hs"
+        "chip.gensz" : "hs",
+        "chip.xcor.subsample" : 9500000
     },
     "wdl_child_filenames": [],
     "language": "wdl",
@@ -56,8 +57,8 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": "",
-    "shutdown_min": 120,
-    "instance_type": "t2.2xlarge",   
+    "shutdown_min": "now",
+    "instance_type": "c4.4xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": ""
