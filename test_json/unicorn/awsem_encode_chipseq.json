@@ -7,7 +7,7 @@
     "app_name": "encode-chipseq",
     "input_parameters": { 
         "chip.pipeline_type" : "histone",
-        "chip.paired_end" : false,
+        "chip.paired_end" : true,
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.spp_cpu" : 2,
         "chip.qc_report.name" : "test",
@@ -60,6 +60,6 @@
     "instance_type": "t2.medium",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
-    "key_name": "4dn-encode"
+    "key_name": ""
   }
 }
