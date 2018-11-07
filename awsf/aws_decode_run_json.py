@@ -25,14 +25,14 @@ def main():
     create_env_def_file(env_filename, Dict, language)
 
 
-def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, f):
-    cmd = "aws s3 cp s3://{0}/{1} {2}/{1} {3}\n"
-    f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag))
+def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, rename, f):
+    cmd = "aws s3 cp s3://{0}/{1} {2}/{4} {3}\n"
+    f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag, rename))
 
 
 # create a download command list file from the information in json
 def create_download_command_list(downloadlist_filename, Dict_input):
-    with open(downloadlist_filename, 'w') as f_download:
+    with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
             keys = Dict_input[category].keys()
             for i in range(0, len(Dict_input[category])):
@@ -40,22 +40,25 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                 PROFILE = Dict_input[category][keys[i]].get("profile", '')
                 PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
                 path1 = Dict_input[category][keys[i]]["path"]
+                rename1 = Dict_input[category][keys[i]].get("rename", None)
+                if not rename1:
+                    rename1 = path1
                 if isinstance(path1, list):
-                    for path2 in path1:
+                    for path2, rename2 in zip(path1, rename1):
                         if isinstance(path2, list):
-                            for path3 in path2:
+                            for path3, rename3 in zip(path2, rename2):
                                 if isinstance(path3, list):
-                                    for data_file in path3:
-                                        add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                                    for data_file, rename4 in zip(path3, rename3):
+                                        add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename4, f)
                                 else:
                                     data_file = path3
-                                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename3, f)
                         else:
                             data_file = path2
-                            add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                            add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename2, f)
                 else:
                     data_file = path1
-                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, f_download)
+                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename1, f)
 
 
 def file2cwlfile(filename, dir):
@@ -77,6 +80,12 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     del v['dir']
                 if 'profile' in v:
                     del v['profile']
+                if 'rename' in v:
+                    if isinstance(v['rename'], list):
+                        v['path'] = v['rename'].copy()
+                    else:
+                        v['path'] = v['rename']
+                    del v['rename']
                 if isinstance(v['path'], list):
                     v2 = []
                     for pi in v['path']:
@@ -111,16 +120,16 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                 if isinstance(v['path'], list):
                     yml[item] = []
                     for pi in v['path']:
-                      if isinstance(pi, list):
-                          nested = []
-                          for ppi in pi:
-                              if isinstance(ppi, list):
-                                  nested.append([INPUT_DIR + '/' + pppi for pppi in ppi])
-                              else:
-                                  nested.append(INPUT_DIR + '/' + ppi)
-                          yml[item].append(nested)
-                      else:
-                          yml[item].append(INPUT_DIR + '/' + pi)
+                        if isinstance(pi, list):
+                            nested = []
+                            for ppi in pi:
+                                if isinstance(ppi, list):
+                                    nested.append([INPUT_DIR + '/' + pppi for pppi in ppi])
+                                else:
+                                    nested.append(INPUT_DIR + '/' + ppi)
+                            yml[item].append(nested)
+                        else:
+                            yml[item].append(INPUT_DIR + '/' + pi)
                 else:
                     yml[item] = INPUT_DIR + '/' + v['path']
         json.dump(yml, f_yml, indent=4, sort_keys=True)

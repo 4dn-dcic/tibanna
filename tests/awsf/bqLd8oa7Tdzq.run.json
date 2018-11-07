@@ -13,7 +13,8 @@
                 "bwaIndex": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
-                    "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
+                    "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz",
+                    "rename": "hahaha.bwaIndex.tgz"
                 }, 
                 "chromsizes": {
                     "class": "File", 
