@@ -18,8 +18,8 @@
     "language": "wdl",
     "output_target": {
        "chip.report": "test_chipseq_report.html",
-       "qc_json": "test_chipseq_qc.json",
-       "qc_json_match": "test_chipseq_qc_json_match.txt"
+       "chip.qc_json": "test_chipseq_qc.json",
+       "chip.qc_json_match": "test_chipseq_qc_json_match.txt"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
