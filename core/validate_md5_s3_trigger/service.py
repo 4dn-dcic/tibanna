@@ -20,10 +20,15 @@ def handler(event, context):
     input_json = make_input(event)
     file_format, extra = get_file_format(event)
     if extra:  # the file is an extra file
+        extra_status = get_status_for_extra_file(event, file_format)
         if status != 'to be uploaded by workflow':
-            # for extra file-triggered md5 run, status check is skipped.
-            input_json['input_files'][0]['format_if_extra'] = file_format
-            response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+            if not extra_status or extra_status != 'to be uploaded by workflow':
+                input_json['input_files'][0]['format_if_extra'] = file_format
+                response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+            else:
+                return {'info': 'status for extra file is to be uploaded by workflow'}
+        else:
+            return {'info': 'parent status for extra file is to be uploaded by workflow'}
     else:
         # only run if status is uploading...
         if status == 'uploading' or event.get('force_run'):
@@ -98,6 +103,33 @@ def get_file_format(event):
                         (extension, fe_map.get_extension(file_format), file_format))
     else:
         raise Exception("Cannot get input metadata")
+
+
+def get_status_for_extra_file(event, extra_format):
+    if not extra_format:
+        return None
+    upload_key = event['Records'][0]['s3']['object']['key']
+    if upload_key.endswith('html'):
+        return False
+
+    uuid, object_key = upload_key.split('/')
+    accession = object_key.split('.')[0]
+
+    # guess env from bucket name
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    env = '-'.join(bucket.split('-')[1:3])
+
+    tibanna = Tibanna(env=env)
+    meta = get_metadata(accession,
+                        key=tibanna.ff_keys,
+                        ff_env=env,
+                        add_on='frame=object',
+                        check_queue=True)
+    if meta and 'extra_files' in meta:
+        for exf in meta['extra_files']:
+            if parse_formatstr(exf['file_format']) == extra_format:
+                return exf.get('status', None)
+    return None
 
 
 def get_status(event):
