@@ -71,7 +71,11 @@ Input data specification
 
 :input_files:
     - A dictionary that contains input files. The keys must match the input argument names of the CWL/WDL.
-    - It contains `bucket_name`, `object_key` and optionally `profile` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
+    - It contains ``bucket_name``, ``object_key`` as required fields.
+    - Optionally, it may contain the following fields:
+      - ``profile`` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
+      - ``rename`` if the file name must be changed upon download to the EC2 instance. This could be useful if your files are organized in certain names on S3 but the pipeline requires it to have a different name.
+    - ``object_key`` and ``rename`` can be a singlet, an array, an array of arrays or an array of arrays of arrays.
     - (e.g.
 
     ::
@@ -84,7 +88,8 @@ Input data specification
             },
             'chromsize': {
                 'bucket_name': 'suwangs_bucket',
-                'object_key': 'some_other_directory/hg38.chrom.sizes'
+                'object_key': 'some_other_directory/5sd4flvlg.chrom.sizes',
+                'rename': 'some_renamed_directory/hg38.chrom.sizes'
             }
         }
 

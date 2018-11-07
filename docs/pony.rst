@@ -65,7 +65,8 @@ Example Input Json for Pony
                "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
                "workflow_argument_name": "bwa_index",
                "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
-               "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+               "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+               "rename": "hg38.tar.gz"
            },
            {
                "workflow_argument_name": "fastq1",
@@ -106,7 +107,8 @@ Example Input Json for Pony
             "arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test",
             "arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7412:md5_test2"
         ]
-      }
+      },
+      "overwrite_input_extra": false
     }
 
 - The ``app_name`` field contains the name of the workflow.
@@ -114,10 +116,13 @@ Example Input Json for Pony
 - The ``workflow_uuid`` field contains the uuid of the 4DN workflow metadata.
 - The ``parameters`` field contains a set of workflow-specific parameters in a dictionary.
 - The ``input_files`` field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
+  - ``workflow_argument_name``, ``bucket``, ``uuid`` and ``object_key`` are required fields.
+  - ``rename`` (optional) can be used to rename a file upon download from s3 to an instance where the workflow will be executed.
 - The ``config`` field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 - The ``custom_pf_fields`` field (optional) contains a dictionary that can be directly passed to the processed file metadata. The key may be either ``ALL`` (applies to all processed files) or the argument name for a specific processed file (or both).
 - The ``wfr_meta`` field (optional) contains a dictionary that can be directly passed to the workflow run metadata.
 - The ``push_error_to_end`` field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
 - The ``dependency`` field (optional) sets dependent jobs. The job will not start until the dependencies successfully finish. If dependency fails, the current job will also fail. The ``exec_arn`` is the list of step function execution arns. The job will wait at the run_task_awsem step, not at the start_task_awsem step (for consistenty with unicorn). This field will be passed to run_task_awsem as ``dependency`` inside the ``args`` field.
+- The ``overwrite_input_extra`` (optional) allows overwriting on an existing extra file, if the workflow hasan output of type ``Output to-be-extra-input file`` (i.e., creating an extra file of an input rather than creating a new processed file object). Default ``false``.
 
 
