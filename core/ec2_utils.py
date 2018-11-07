@@ -121,11 +121,13 @@ def create_json_dict(input_dict):
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                          'dir': value.get('bucket_name'),
                                                          'path': value.get('object_key'),
+                                                         'rename': value.get('rename'),
                                                          'profile': value.get('profile', '')}
     for item, value in a['secondary_files'].iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
+                                                             'rename': value.get('rename'),
                                                              'profile': value.get('profile', '')}
 
     # remove the password and keyname info
