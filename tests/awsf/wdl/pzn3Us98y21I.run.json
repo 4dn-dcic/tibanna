@@ -28,6 +28,13 @@
                         ]
                     ], 
                     "profile": ""
+                },
+                "merge.some_other_input": {
+                    "class": "File",
+                    "dir": "my-tibanna-test-input-bucket",
+                    "rename": "hahaha",
+                    "path": "original_path",
+                    "profile": ""
                 }
             }, 
             "Input_parameters": {}, 

@@ -201,6 +201,7 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
                                                      len(input_file['uuid']), len(input_file['object_key'])))
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
+                                'rename': input_file.get('rename', ''),
                                 'object_key': object_key}})
     if input_file.get('format_if_extra', ''):
         args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
@@ -241,6 +242,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
             extra_file_keys = extra_file_keys[0]
         args['secondary_files'].update({input_file['workflow_argument_name']: {
                                         'bucket_name': input_file['bucket_name'],
+                                        'rename': input_file.get('rename', ''),
                                         'object_key': extra_file_keys}})
 
 

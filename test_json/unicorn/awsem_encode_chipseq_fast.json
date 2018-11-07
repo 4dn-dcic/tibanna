@@ -39,7 +39,8 @@
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar"
+        "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+        "object_key": "4DNFIZQZ39L9.bwaIndex.tar"
       },
       "chip.blacklist": {
         "bucket_name": "soos-4dn-bucket",
@@ -57,7 +58,7 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": "",
-    "shutdown_min": "now",
+    "shutdown_min": 120,
     "instance_type": "c4.4xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
