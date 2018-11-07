@@ -204,7 +204,8 @@ def test_process_input_file_info(run_awsem_event_data):
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "workflow_argument_name": "input_pairs",
         "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
-        "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
+        "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"],
+        "rename": ["lala.pairs.gz", "haha.pairs.gz"]
     }
     args = {'input_files': {"some_input": {}, "some_other_input": {}}}
     data = run_awsem_event_data
@@ -217,6 +218,9 @@ def test_process_input_file_info(run_awsem_event_data):
     process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
     assert len(args['input_files']) == 3
     assert 'secondary_files' in args
+    assert 'input_pairs' in args['input_files']
+    assert 'rename' in args['input_files']['input_pairs']
+    assert args['input_files']['input_pairs']['rename'][1] == 'haha.pairs.gz'
 
 
 @valid_env
