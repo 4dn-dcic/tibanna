@@ -116,8 +116,10 @@ Example Input Json for Pony
 - The ``workflow_uuid`` field contains the uuid of the 4DN workflow metadata.
 - The ``parameters`` field contains a set of workflow-specific parameters in a dictionary.
 - The ``input_files`` field specifies the argument names (matching the names in CWL), the input file metadata uuid and its bucket and object key name.
+
   - ``workflow_argument_name``, ``bucket``, ``uuid`` and ``object_key`` are required fields.
   - ``rename`` (optional) can be used to rename a file upon download from s3 to an instance where the workflow will be executed.
+
 - The ``config`` field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 - The ``custom_pf_fields`` field (optional) contains a dictionary that can be directly passed to the processed file metadata. The key may be either ``ALL`` (applies to all processed files) or the argument name for a specific processed file (or both).
 - The ``wfr_meta`` field (optional) contains a dictionary that can be directly passed to the workflow run metadata.
