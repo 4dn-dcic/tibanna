@@ -117,6 +117,12 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
         for category in ["Input_files_data"]:
             for item in inputs[category].keys():
                 v = inputs[category][item]
+                if 'rename' in v:
+                    if isinstance(v['rename'], list):
+                        v['path'] = v['rename'].copy()
+                    else:
+                        v['path'] = v['rename']
+                    del v['rename']
                 if isinstance(v['path'], list):
                     yml[item] = []
                     for pi in v['path']:
