@@ -80,7 +80,7 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     del v['dir']
                 if 'profile' in v:
                     del v['profile']
-                if 'rename' in v:
+                if 'rename' in v and v['rename']:
                     if isinstance(v['rename'], list):
                         v['path'] = v['rename'].copy()
                     else:
@@ -117,7 +117,7 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
         for category in ["Input_files_data"]:
             for item in inputs[category].keys():
                 v = inputs[category][item]
-                if 'rename' in v:
+                if 'rename' in v and v['rename']:
                     if isinstance(v['rename'], list):
                         v['path'] = v['rename'].copy()
                     else:
