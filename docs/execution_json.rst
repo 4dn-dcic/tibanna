@@ -73,8 +73,10 @@ Input data specification
     - A dictionary that contains input files. The keys must match the input argument names of the CWL/WDL.
     - It contains ``bucket_name``, ``object_key`` as required fields.
     - Optionally, it may contain the following fields:
+
       - ``profile`` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
       - ``rename`` if the file name must be changed upon download to the EC2 instance. This could be useful if your files are organized in certain names on S3 but the pipeline requires it to have a different name.
+
     - ``object_key`` and ``rename`` can be a singlet, an array, an array of arrays or an array of arrays of arrays.
     - (e.g.
 
