@@ -9,7 +9,6 @@ from core.pony_utils import (
     Tibanna,
     merge_source_experiments,
     create_ffmeta_awsem,
-    aslist,
     ProcessedFileMetadata,
     WorkflowRunOutputFiles,
     FormatExtensionMap,
@@ -179,26 +178,26 @@ def real_handler(event, context):
     return(event)
 
 
+def combine_two(a, b):
+    """a and b (e.g. uuids and object_keys) can be a singlet,
+    an array, an array of arrays or an array of arrays of arrays ...
+    """
+    if isinstance(a, list):
+        if not isinstance(b, list):
+            raise Exception("can't combine list and non-list")
+        if len(a) != len(b):
+            raise Exception("Can't combine lists of different lengths")
+        return [combine_two(a_, b_) for a_, b_, in zip(a, b)]
+    else:
+        return(str(a) + '/' + str(b))
+
+
 def process_input_file_info(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         args['input_files'] = dict()
     if not args or 'secondary_files' not in args:
         args['secondary_files'] = dict()
-    if isinstance(input_file['uuid'], unicode):
-        input_file['uuid'] = input_file['uuid'].encode('utf-8')
-    if isinstance(input_file['object_key'], unicode):
-        input_file['object_key'] = input_file['object_key'].encode('utf-8')
-    if isinstance(input_file['uuid'], str) and isinstance(input_file['object_key'], str):
-        object_key = input_file['uuid'] + '/' + input_file['object_key']
-    elif (isinstance(input_file['uuid'], list) and
-          isinstance(input_file['object_key'], list) and
-          len(input_file['uuid']) == len(input_file['object_key'])):
-
-        object_key = [a + '/' + b for a, b in zip(input_file['uuid'], input_file['object_key'])]
-    else:
-        raise Exception("input_file uuid and object_key should match in their type and length (if lists) : " +
-                        "type{}{} length{}{}".format(type(input_file['uuid']), type(input_file['object_key']),
-                                                     len(input_file['uuid']), len(input_file['object_key'])))
+    object_key = combine_two(input_file['uuid'], input_file['object_key'])
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'rename': input_file.get('rename', ''),
@@ -210,33 +209,59 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
         add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
 
 
+def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_env, fe_map):
+    extra_file_keys = []
+    not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
+    infile_meta = ff_utils.get_metadata(inf_uuid,
+                                        key=ff_keys,
+                                        ff_env=ff_env,
+                                        add_on='frame=object')
+    if infile_meta.get('extra_files'):
+        infile_format = parse_formatstr(infile_meta.get('file_format'))
+        for extra_file in infile_meta.get('extra_files'):
+            if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
+                extra_file_format = parse_formatstr(extra_file.get('file_format'))
+                extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
+                extra_file_keys.append(extra_file_key)
+    return extra_file_keys
+
+
+def run_on_nested_arrays(a, b, func, **param):
+    """run func on each pair of element in a and b:
+    a and b can be singlets, an array, an array of arrays, an array of arrays of arrays ...
+    The return value is a flattened array
+    """
+    if isinstance(a, list):
+        if not isinstance(b, list):
+            raise Exception("can't combine list and non-list")
+        if len(a) != len(b):
+            raise Exception("Can't combine lists of different lengths")
+        return([run_on_nested_arrays(a_, b_, func, **param) for a_, b_ in zip(a, b)])
+    else:
+        return(func(a, b, **param))
+
+
+def flatten(a):
+    b = list()
+    for a_ in a:
+        if isinstance(a_, list):
+            b.extend(a_)
+        else:
+            b.append(a_)
+    return(b)
+
+
 def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         raise Exception("args must contain key 'input_files'")
     if 'secondary_files'not in args:
         args['secondary_files'] = dict()
-    inf_uuids = aslist(input_file['uuid'])
     argname = input_file['workflow_argument_name']
-    extra_file_keys = []
-    inf_object_key = args['input_files'][argname]['object_key']
-    inf_keys = aslist(inf_object_key)
-    fe_map = None
-    not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
-    for i, inf_uuid in enumerate(inf_uuids):
-        infile_meta = ff_utils.get_metadata(inf_uuid,
-                                            key=ff_keys,
-                                            ff_env=ff_env,
-                                            add_on='frame=object')
-        if infile_meta.get('extra_files'):
-            infile_format = parse_formatstr(infile_meta.get('file_format'))
-            infile_key = inf_keys[i]
-            if not fe_map:
-                fe_map = FormatExtensionMap(ff_keys)
-            for extra_file in infile_meta.get('extra_files'):
-                if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
-                    extra_file_format = parse_formatstr(extra_file.get('file_format'))
-                    extra_file_key = get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map)
-                    extra_file_keys.append(extra_file_key)
+    fe_map = FormatExtensionMap(ff_keys)
+    extra_file_keys = run_on_nested_arrays(input_file['uuid'],
+                                           args['input_files'][argname]['object_key'],
+                                           get_extra_file_key_given_input_uuid_and_key,
+                                           ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
     if len(extra_file_keys) > 0:
         if len(extra_file_keys) == 1:
             extra_file_keys = extra_file_keys[0]
