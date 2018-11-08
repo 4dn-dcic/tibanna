@@ -81,11 +81,14 @@ def real_handler(event, context):
         raise Exception("FATAL, can't lookup workflow info for %s fourfront" % workflow_uuid)
 
     # get cwl info from wf_meta
-    for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames']:
+    for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames',
+              'wdl_directory_url', 'wdl_main_filename', 'wdl_child_filenames']:
         printlog(wf_meta.get(k))
-        args[k] = wf_meta.get(k)
+        args[k] = wf_meta.get(k, '')
     if not args['cwl_child_filenames']:
         args['cwl_child_filenames'] = []
+    if not args['wdl_child_filenames']:
+        args['wdl_child_filenames'] = []
 
     # switch to v1 if available
     if 'cwl_directory_url_v1' in wf_meta:  # use CWL v1
