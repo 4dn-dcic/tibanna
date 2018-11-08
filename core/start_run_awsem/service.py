@@ -16,6 +16,10 @@ from core.pony_utils import (
     create_ffmeta_input_files_from_pony_input_file_list,
     parse_formatstr
 )
+from core.nnested_array import (
+    run_on_nested_arrays,
+    combine_two
+)
 import random
 
 s3 = boto3.resource('s3')
@@ -178,20 +182,6 @@ def real_handler(event, context):
     return(event)
 
 
-def combine_two(a, b):
-    """a and b (e.g. uuids and object_keys) can be a singlet,
-    an array, an array of arrays or an array of arrays of arrays ...
-    """
-    if isinstance(a, list):
-        if not isinstance(b, list):
-            raise Exception("can't combine list and non-list")
-        if len(a) != len(b):
-            raise Exception("Can't combine lists of different lengths")
-        return [combine_two(a_, b_) for a_, b_, in zip(a, b)]
-    else:
-        return(str(a) + '/' + str(b))
-
-
 def process_input_file_info(input_file, ff_keys, ff_env, args):
     if not args or 'input_files' not in args:
         args['input_files'] = dict()
@@ -224,31 +214,6 @@ def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_e
                 extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
     return extra_file_keys
-
-
-def run_on_nested_arrays(a, b, func, **param):
-    """run func on each pair of element in a and b:
-    a and b can be singlets, an array, an array of arrays, an array of arrays of arrays ...
-    The return value is a flattened array
-    """
-    if isinstance(a, list):
-        if not isinstance(b, list):
-            raise Exception("can't combine list and non-list")
-        if len(a) != len(b):
-            raise Exception("Can't combine lists of different lengths")
-        return([run_on_nested_arrays(a_, b_, func, **param) for a_, b_ in zip(a, b)])
-    else:
-        return(func(a, b, **param))
-
-
-def flatten(a):
-    b = list()
-    for a_ in a:
-        if isinstance(a_, list):
-            b.extend(a_)
-        else:
-            b.append(a_)
-    return(b)
 
 
 def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
