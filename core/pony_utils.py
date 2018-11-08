@@ -11,6 +11,10 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     search_metadata
 )
+from core.nnested_array import (
+    flatten,
+    create_dim
+)
 from dcicutils.s3_utils import s3Utils
 from core.utils import run_workflow as _run_workflow
 from core.utils import check_output
@@ -221,23 +225,36 @@ def parse_formatstr(file_format_str):
     return file_format_str.replace('/file-formats/', '').replace('/', '')
 
 
+def create_ordinal(a):
+    if isinstance(a, list):
+        return list(range(1,len(a)+1))
+    else:
+        return 1
+
+
 def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
     input_files_for_ffmeta = []
     for input_file in input_file_list:
-        for idx, uuid in enumerate(ensure_list(input_file['uuid'])):
-            infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], uuid, idx + 1,
-                                            input_file.get('format_if_extra', ''))
+        dim = flatten(create_dim(input_file['uuid']))
+        if not dim:  # singlet
+            dim = '0'
+        uuid = flatten(input_file['uuid'])
+        ordinal = create_ordinal(uuid)
+        for d, u, o in zip(dim, uuid, ordinal):
+            infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], u, o,
+                                            input_file.get('format_if_extra', ''), d)
             input_files_for_ffmeta.append(infileobj.as_dict())
     printlog("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
     return input_files_for_ffmeta
 
 
 class InputFileForWFRMeta(object):
-    def __init__(self, workflow_argument_name=None, value=None, ordinal=None, format_if_extra=None):
+    def __init__(self, workflow_argument_name=None, value=None, ordinal=None, format_if_extra=None, dimension=None):
         self.workflow_argument_name = workflow_argument_name
         self.value = value
         self.ordinal = ordinal
-
+        if dimension:
+            self.dimension = dimension
         if format_if_extra:
             self.format_if_extra = format_if_extra
 

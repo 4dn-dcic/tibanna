@@ -41,7 +41,7 @@ def create_dim(a, dim=''):
     >>> create_dim(5)
     ''
     >>> create_dim([5,5])
-    ['-0', '-1']
+    ['0', '1']
     """
     if isinstance(a, list):
         if dim:
@@ -59,10 +59,13 @@ def flatten(a):
     >>> flatten([[1,2],[3,4],[5,6,[7,8],]])
     [1, 2, 3, 4, 5, 6, 7, 8]
     """
-    b = list()
-    for a_ in a:
-        if isinstance(a_, list):
-            b.extend(flatten(a_))
-        else:
-            b.append(a_)
-    return(b)
+    if isinstance(a, list):
+        b = list()
+        for a_ in a:
+            if isinstance(a_, list):
+                b.extend(flatten(a_))
+            else:
+                b.append(a_)
+        return(b)
+    else:
+        return(a)
