@@ -316,7 +316,7 @@ def get_source_experiment(input_file_uuid, ff_keys, ff_env):
     Takes a single input file uuid.
     """
     pf_source_experiments_set = set()
-    inf_uuids = aslist(input_file_uuid)
+    inf_uuids = aslist(flatten(input_file_uuid))
     for inf_uuid in inf_uuids:
         infile_meta = get_metadata(inf_uuid,
                                    key=ff_keys,
