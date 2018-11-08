@@ -13,7 +13,7 @@ Version updates
 
   **Nov 8, 2018** The latest version is now 0.5.0_.
 
-    - Double-nested input array is supported for Pony.
+    - WDL and Double-nested input array is now also supported for Pony.
 
 
   **Nov 7, 2018** The latest version is now 0.4.9_.
