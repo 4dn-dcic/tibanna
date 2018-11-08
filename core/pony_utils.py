@@ -227,7 +227,7 @@ def parse_formatstr(file_format_str):
 
 def create_ordinal(a):
     if isinstance(a, list):
-        return list(range(1,len(a)+1))
+        return list(range(1, len(a)+1))
     else:
         return 1
 
@@ -240,7 +240,7 @@ def create_ffmeta_input_files_from_pony_input_file_list(input_file_list):
             dim = '0'
         uuid = flatten(input_file['uuid'])
         ordinal = create_ordinal(uuid)
-        for d, u, o in zip(dim, uuid, ordinal):
+        for d, u, o in zip(aslist(dim), aslist(uuid), aslist(ordinal)):
             infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], u, o,
                                             input_file.get('format_if_extra', ''), d)
             input_files_for_ffmeta.append(infileobj.as_dict())
