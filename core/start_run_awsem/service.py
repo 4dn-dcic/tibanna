@@ -90,12 +90,15 @@ def real_handler(event, context):
     if not args['wdl_child_filenames']:
         args['wdl_child_filenames'] = []
 
-    # switch to v1 if available
-    if 'cwl_directory_url_v1' in wf_meta:  # use CWL v1
-        args['cwl_directory_url'] = wf_meta['cwl_directory_url_v1']
-        args['cwl_version'] = 'v1'
+    if 'workflow_language' in wf_meta and wf_meta['workflow_language'] == 'WDL':
+        args['language'] == 'wdl'
     else:
-        args['cwl_version'] = 'draft3'
+        # switch to v1 if available
+        if 'cwl_directory_url_v1' in wf_meta:  # use CWL v1
+            args['cwl_directory_url'] = wf_meta['cwl_directory_url_v1']
+            args['cwl_version'] = 'v1'
+        else:
+            args['cwl_version'] = 'draft3'
 
     # input file args for awsem
     for input_file in input_file_list:
