@@ -106,6 +106,11 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            quality_metric='quality_metric_flagstat_qc',
                            file_argument='bam',
                            datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'])
+    elif ff_meta.awsem_app_name == 'encode-chipseq':
+        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+                           quality_metric='quality_metric_encode_chipseq',
+                           file_argument='chip.macs2_pooled.sig_fc',
+                           datafiles=[])
 
 
 def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',

@@ -19,7 +19,8 @@
     "output_target": {
        "chip.report": "test_chipseq_report.html",
        "chip.qc_json": "test_chipseq_qc.json",
-       "chip.qc_json_match": "test_chipseq_qc_json_match.txt"
+       "chip.qc_json_match": "test_chipseq_qc_json_match.txt",
+       "chip.macs2_pooled.sig_fc": "test_chipseq_sigfc.bw"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
