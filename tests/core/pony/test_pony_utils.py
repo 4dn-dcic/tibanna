@@ -6,7 +6,8 @@ from core.pony_utils import (
     merge_source_experiments,
     ProcessedFileMetadata,
     FormatExtensionMap,
-    get_extra_file_key
+    get_extra_file_key,
+    create_ffmeta_input_files_from_pony_input_file_list
 )
 import pytest
 from conftest import valid_env
@@ -258,3 +259,28 @@ def test_get_extra_file_key(run_awsem_event_data):
 def test_powerup_add_awsem_error_to_output(ff_metadata):
     res = awsem_error_fun(ff_metadata, None)
     assert ('error' in res)
+
+
+def test_create_ffmeta_input_files_from_pony_input_file_list():
+    input_file_list = [{
+          "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+          "workflow_argument_name": "input_pairs1",
+          "uuid": [['a', 'b'], ['c', 'd']],
+          "object_key": [['e', 'f'], ['g', 'h']]
+       },
+       {
+          "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+          "workflow_argument_name": "input_pairs2",
+          "uuid": ["d2c897ec-bdb2-47ce-b1b1-845daccaa571", "d2c897ec-bdb2-47ce-b1b1-845daccaa571"],
+          "object_key": ["4DNFI25JXLLI.pairs.gz", "4DNFI25JXLLI.pairs.gz"]
+       }
+    ]
+    res = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
+    assert len(res) == 6
+    assert 'dimension' in res[0]
+    assert res[0]['dimension'] == '0-0'
+    assert 'dimension' in res[1]
+    assert res[1]['dimension'] == '0-1'
+    assert res[1]['ordinal'] == 2
+    assert 'dimension' in res[4]
+    assert res[4]['dimension'] == '0'
