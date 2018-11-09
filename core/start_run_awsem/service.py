@@ -91,7 +91,7 @@ def real_handler(event, context):
         args['wdl_child_filenames'] = []
 
     if 'workflow_language' in wf_meta and wf_meta['workflow_language'] == 'WDL':
-        args['language'] == 'wdl'
+        args['language'] = 'wdl'
     else:
         # switch to v1 if available
         if 'cwl_directory_url_v1' in wf_meta:  # use CWL v1
