@@ -102,6 +102,9 @@ class DependencyFailedException(Exception):
 class EC2LaunchException(Exception):
     pass
 
+class EBSClientException(Exception):
+    pass
+
 
 def powerup(lambda_name, metadata_only_func):
     '''
@@ -119,7 +122,7 @@ def powerup(lambda_name, metadata_only_func):
         logger = logging.getLogger('logger')
         ignored_exceptions = [EC2StartingException, StillRunningException,
                               TibannaStartException, FdnConnectionException,
-                              DependencyStillRunningException]
+                              DependencyStillRunningException, EBSClientException]
 
         def wrapper(event, context):
             if context:
@@ -289,6 +292,14 @@ def create_stepfunction(dev_suffix=None,
             "BackoffRate": 1.0
         }
     ]
+    sfn_update_ff_meta_retry_conditions = [
+        {
+            "ErrorEquals": ["EBSClientException"],
+            "IntervalSeconds": 30,
+            "MaxAttempts": 1000,
+            "BackoffRate": 1.0
+        }
+    ]
     sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
     sfn_state_defs = dict()
     sfn_state_defs['pony'] = {
@@ -313,6 +324,7 @@ def create_stepfunction(dev_suffix=None,
         "UpdateFFMetaAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
+            "Retry": sfn_update_ff_meta_retry_conditions,
             "End": True
         }
     }
