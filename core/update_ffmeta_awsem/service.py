@@ -12,7 +12,7 @@ from core.pony_utils import (
 from core.utils import (
     powerup,
     printlog,
-    EBSClientException
+    TibannaStartException
 )
 import boto3
 from collections import defaultdict
@@ -438,7 +438,7 @@ def real_handler(event, context):
     try:
         tibanna = Tibanna(tibanna_settings['env'], settings=tibanna_settings)
     except Exception as e:
-        raise EBSClientException('Could not initialize Tibanna class. Error: %s' % str(e))
+        raise TibannaStartException("%s" % e)
     ff_meta = create_ffmeta_awsem(
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')

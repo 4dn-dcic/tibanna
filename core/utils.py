@@ -103,10 +103,6 @@ class EC2LaunchException(Exception):
     pass
 
 
-class EBSClientException(Exception):
-    pass
-
-
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
@@ -123,7 +119,7 @@ def powerup(lambda_name, metadata_only_func):
         logger = logging.getLogger('logger')
         ignored_exceptions = [EC2StartingException, StillRunningException,
                               TibannaStartException, FdnConnectionException,
-                              DependencyStillRunningException, EBSClientException]
+                              DependencyStillRunningException]
 
         def wrapper(event, context):
             if context:
@@ -295,9 +291,9 @@ def create_stepfunction(dev_suffix=None,
     ]
     sfn_update_ff_meta_retry_conditions = [
         {
-            "ErrorEquals": ["EBSClientException"],
+            "ErrorEquals": ["TibannaStartException"],
             "IntervalSeconds": 30,
-            "MaxAttempts": 1000,
+            "MaxAttempts": 100,
             "BackoffRate": 1.0
         }
     ]
