@@ -374,7 +374,6 @@ def create_stepfunction(dev_suffix=None,
             print('State machine is still deleting. Will try again in 10 seconds...')
             time.sleep(10)
         except Exception as e:
-            # sfn_arn=None
             raise(e)
         else:
             break
