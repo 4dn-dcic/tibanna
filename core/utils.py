@@ -257,7 +257,7 @@ def create_stepfunction(dev_suffix=None,
         {
             "ErrorEquals": ["EC2StartingException"],
             "IntervalSeconds": 300,
-            "MaxAttempts": 4,
+            "MaxAttempts": 5,
             "BackoffRate": 1.0
         },
         {
