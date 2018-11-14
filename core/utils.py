@@ -257,7 +257,7 @@ def create_stepfunction(dev_suffix=None,
         {
             "ErrorEquals": ["EC2StartingException"],
             "IntervalSeconds": 300,
-            "MaxAttempts": 4,
+            "MaxAttempts": 5,
             "BackoffRate": 1.0
         },
         {
@@ -289,6 +289,14 @@ def create_stepfunction(dev_suffix=None,
             "BackoffRate": 1.0
         }
     ]
+    sfn_update_ff_meta_retry_conditions = [
+        {
+            "ErrorEquals": ["TibannaStartException"],
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
+            "BackoffRate": 1.0
+        }
+    ]
     sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
     sfn_state_defs = dict()
     sfn_state_defs['pony'] = {
@@ -313,6 +321,7 @@ def create_stepfunction(dev_suffix=None,
         "UpdateFFMetaAwsem": {
             "Type": "Task",
             "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
+            "Retry": sfn_update_ff_meta_retry_conditions,
             "End": True
         }
     }
@@ -337,7 +346,8 @@ def create_stepfunction(dev_suffix=None,
     }
     # if this encouters an existing step function with the same name, delete
     client = boto3.client('stepfunctions', region_name=region_name)
-    retries = 12  # wait 5 seconds between retries for total of 60s
+    retries = 12  # wait 10 seconds between retries for total of 120s
+    response = None
     for i in range(retries):
         try:
             response = client.create_state_machine(
@@ -352,24 +362,25 @@ def create_stepfunction(dev_suffix=None,
                 print('Cannot delete state machine. Exiting...' % exc_str)
                 raise(e)
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-            print('Step function with name %s already exists!\nDeleting and retrying in 5 seconds...' % sfn_name)
+            print('Step function with name %s already exists!\nDeleting and retrying in 10 seconds...' % sfn_name)
             try:
                 client.delete_state_machine(
                     stateMachineArn=sfn_arn
                 )
             except Exception as e:
                 print('Error deleting state machine: %s\nWill retry %s more times...' % (str(e), (retries - (i + 1))))
-            time.sleep(5)
+            time.sleep(10)
         except client.exceptions.StateMachineDeleting:
-            print('State machine is still deleting. Will try again in 5 seconds...')
-            time.sleep(5)
+            print('State machine is still deleting. Will try again in 10 seconds...')
+            time.sleep(10)
         except Exception as e:
-            # sfn_arn=None
             raise(e)
         else:
             break
-    # sfn_arn = response['stateMachineArn']
-    return(response)
+    if response is None:  # the StateMachine never initialized
+        print('Cannot create state machine. Exiting...')
+        raise Exception('Cannot create state machine %s' % sfn_name)
+    return response
 
 
 def check_dependency(exec_arn=None):

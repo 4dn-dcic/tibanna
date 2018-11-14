@@ -7,10 +7,13 @@ from core.pony_utils import (
   Awsem,
   Tibanna,
   create_ffmeta_awsem,
+  parse_formatstr
 )
-from core.utils import powerup
-from core.utils import printlog
-from core.pony_utils import parse_formatstr
+from core.utils import (
+    powerup,
+    printlog,
+    TibannaStartException
+)
 import boto3
 from collections import defaultdict
 from core.fastqc_utils import parse_qc_table
@@ -432,7 +435,10 @@ def real_handler(event, context):
     # get data
     # used to automatically determine the environment
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = Tibanna(tibanna_settings['env'], settings=tibanna_settings)
+    try:
+        tibanna = Tibanna(tibanna_settings['env'], settings=tibanna_settings)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
     ff_meta = create_ffmeta_awsem(
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
