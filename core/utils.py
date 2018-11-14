@@ -346,7 +346,7 @@ def create_stepfunction(dev_suffix=None,
     }
     # if this encouters an existing step function with the same name, delete
     client = boto3.client('stepfunctions', region_name=region_name)
-    retries = 12  # wait 5 seconds between retries for total of 120s
+    retries = 12  # wait 10 seconds between retries for total of 120s
     response = None
     for i in range(retries):
         try:
