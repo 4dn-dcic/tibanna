@@ -102,6 +102,7 @@ class DependencyFailedException(Exception):
 class EC2LaunchException(Exception):
     pass
 
+
 class EBSClientException(Exception):
     pass
 
