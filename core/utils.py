@@ -293,7 +293,7 @@ def create_stepfunction(dev_suffix=None,
         {
             "ErrorEquals": ["TibannaStartException"],
             "IntervalSeconds": 30,
-            "MaxAttempts": 100,
+            "MaxAttempts": 5,
             "BackoffRate": 1.0
         }
     ]
