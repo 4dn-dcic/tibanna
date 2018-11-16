@@ -29,11 +29,11 @@
     "input_files": {
       "chip.fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFIE6Y5WQM.h10M.fastq.gz", "4DNFIX27ZKYY.h10M.fastq.gz"]]]
+        "object_key": [[["4DNFIE6Y5WQM.h40M.fastq.gz", "4DNFIX27ZKYY.h40M.fastq.gz"]]]
       },
       "chip.ctl_fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFII5JIXFQ.h10M.fastq.gz", "4DNFIU4MKVH6.h10M.fastq.gz"]]]
+        "object_key": [[["4DNFII5JIXFQ.h40M.fastq.gz", "4DNFIU4MKVH6.h40M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
