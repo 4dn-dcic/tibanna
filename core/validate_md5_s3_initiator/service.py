@@ -3,6 +3,7 @@ from core.utils import _tibanna_settings
 # from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow
 from core.utils import serialize_startdate
+from core.utils import TibannaStartException
 from core.pony_utils import Tibanna, FormatExtensionMap
 from core.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
@@ -52,13 +53,6 @@ def handler(event, context):
     return response
 
 
-# fix non json-serializable datetime startDate
-def serialize_startdate(response):
-    tibanna_resp = response.get('_tibanna', {}).get('response')
-    if tibanna_resp and tibanna_resp.get('startDate'):
-        tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
-
-
 def get_fileformats_for_accession(accession, key, env):
     meta = get_metadata(accession,
                         key=key,
@@ -88,7 +82,10 @@ def get_file_format(event):
     accession = object_key.split('.')[0]
     extension = object_key.replace(accession + '.', '')
 
-    tibanna = Tibanna(env=env)
+    try:
+        tibanna = Tibanna(env=env)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
     file_format, extra_formats = get_fileformats_for_accession(accession, tibanna.ff_keys, env)
     if file_format:
         fe_map = FormatExtensionMap(tibanna.ff_keys)
@@ -123,7 +120,10 @@ def get_status_for_extra_file(event, extra_format):
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
 
-    tibanna = Tibanna(env=env)
+    try:
+        tibanna = Tibanna(env=env)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
     meta = get_metadata(accession,
                         key=tibanna.ff_keys,
                         ff_env=env,
@@ -149,7 +149,10 @@ def get_status(event):
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
 
-    tibanna = Tibanna(env=env)
+    try:
+        tibanna = Tibanna(env=env)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
     meta = get_metadata(accession,
                         key=tibanna.ff_keys,
                         ff_env=env,
