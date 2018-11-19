@@ -8,7 +8,7 @@ logfile = sys.argv[3]
 md5file = sys.argv[4]
 json_new = sys.argv[5]
 
-if len(sys.argv)>6:
+if len(sys.argv) > 6:
     language = sys.argv[6]
 else:
     language = 'cwl-draft3'
@@ -42,6 +42,7 @@ def parse_command(logfile):
 with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
     output_target = old_dict.get('Job').get('Output').get('output_target')
+    alt_output_argnames = old_dict.get('Job').get('Output').get('alt_cond_output_argnames')
     output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
     secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
 
@@ -79,9 +80,24 @@ for of, ofv in output_meta.iteritems():
 
 # sanity check for output target, this skips secondary files
 # - we assume secondary files are not explicitly specified in output_target.
+# in case conditional alternative output targets exist, replace the output target key with
+# the alternative name
+replace_list = []
 for k in output_target:
     if k not in output_meta:
-        raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
+        if k in alt_output_argnames:
+            key_exists = False  # initialize
+            for k_alt in alt_output_argnames[k]:
+                if k_alt in output_meta and output_meta[k_alt]['path']:
+                    key_exists = True
+                    replace_list.append((k, k_alt))
+            if not key_exists:
+                raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
+        else:
+            raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
+for k, k_alt in replace_list:
+    output_target[k_alt] = output_target[k]
+    del output_target[k]
 
 # upload output file
 s3 = boto3.client('s3')
