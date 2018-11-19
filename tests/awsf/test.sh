@@ -17,6 +17,5 @@ python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzq.run.json te
 
 # test for wdl
 #python awsf/aws_upload_output_update_json.py tests/awsf/wdl/a3T0RlZ09WuR.run.json tests/awsf/wdl/a3T0RlZ09WuR.log.json tests/awsf/wdl/a3T0RlZ09WuR.log tests/awsf/wdl/a3T0RlZ09WuR.md5sum.txt tests/awsf/wdl/a3T0RlZ09WuR.postrun.json.out wdl
-python awsf/aws_upload_output_update_json.py tests/awsf/wdl/a3T0RlZ09WuS.run.json tests/awsf/wdl/a3T0RlZ09WuS.log.json tests/awsf/wdl/a3T0RlZ09WuS.log tests/awsf/wdl/a3T0RlZ09WuS.md5sum.txt tests/awsf/wdl/a3T0RlZ09WuS.postrun.json.out wdl
-
+python awsf/aws_upload_output_update_json.py tests/awsf/wdl/a3T0RlZ09WuS.run.json tests/awsf/wdl/a3T0RlZ09WuS.log.json tests/awsf/wdl/a3T0RlZ09WuS.log tests/awsf/wdl/a3T0RlZ09WuS.md5sum.txt tests/awsf/wdl/a3T0RlZ09WuS.postrun.json.out wdl  # test for alt_cond_output_argnames
 
