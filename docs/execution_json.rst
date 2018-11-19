@@ -158,6 +158,20 @@ Output target specification
 
     )
 
+:alt_cond_output_argnames:
+    - In case output argnames are conditional (see an example in simple_example_cond_merge_), specify a global output name that can point to one of the conditional outputs.
+    - This applies only to WDL since CWL does not support conditional statements.
+    - (e.g.
+
+    ::
+
+        {
+          'cond_merge.cond_merged' : ['cond_merged.paste.pasted', 'cond_merged.cat.concatenated']
+        }
+
+
+.. _simple_example_cond_merge: https://tibanna.readthedocs.io/en/latest/simple_example_merge.html
+
 
 Dependency specification
 ########################
