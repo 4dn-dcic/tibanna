@@ -108,6 +108,7 @@ def create_json_dict(input_dict):
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
                                  'output_target': a['output_target'],
+                                 'alt_cond_output_argnames': a.get('alt_cond_output_argnames', []),
                                  'secondary_output_target': a['secondary_output_target']
                         },
                         'Log': {
