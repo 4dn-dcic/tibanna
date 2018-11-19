@@ -53,6 +53,8 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
         elif pf.file_format == "bw":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
+        elif pf.file_format == "beddb":
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'beddb', 'bedlike')
         # bedgraph: register extra bigwig file to higlass (if such extra file exists)
         elif pf.file_format == 'bg':
             for pfextra in pf.extra_files:
@@ -60,6 +62,12 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
                     fe_map = FormatExtensionMap(tibanna.ff_keys)
                     extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
                     higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
+        elif pf.file_format == 'bed':
+            for pfextra in pf.extra_files:
+                if pfextra.get('file_format') == 'beddb':
+                    fe_map = FormatExtensionMap(tibanna.ff_keys)
+                    extra_file_key = get_extra_file_key('bed', awsemfile.key, 'beddb', fe_map)
+                    higlass_uid = register_to_higlass_bucket(extra_file_key, 'beddb', 'bedlike')
         pf.add_higlass_uid(higlass_uid)
 
 
