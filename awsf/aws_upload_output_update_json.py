@@ -79,9 +79,10 @@ for of, ofv in output_meta.iteritems():
                 sf['md5sum'] = md5dict[sf['path']]
 
 # sanity check for output target, this skips secondary files
-# - we assume secondary files are not explicitly specified in output_target.
 # in case conditional alternative output targets exist, replace the output target key with
 # the alternative name
+# We don't need to do the same for secondary files because
+# conditional alternative names only occur in WDL which does not support secondary files
 replace_list = []
 for k in output_target:
     if k not in output_meta:
@@ -98,6 +99,7 @@ for k in output_target:
 for k, k_alt in replace_list:
     output_target[k_alt] = output_target[k]
     del output_target[k]
+
 
 # upload output file
 s3 = boto3.client('s3')
