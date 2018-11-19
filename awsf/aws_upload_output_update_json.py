@@ -52,7 +52,8 @@ if language == 'wdl':
         wdl_output = json.load(json_out_f)
         old_dict['Job']['Output'].update({'Output files': {}})
         for argname, outfile in wdl_output['outputs'].iteritems():
-            old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+            if outfile:
+                old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
 else:
     # read cwl output json file
     with open(execution_metadata, 'r') as json_out_f:
@@ -99,7 +100,6 @@ for k in output_target:
 for k, k_alt in replace_list:
     output_target[k_alt] = output_target[k]
     del output_target[k]
-
 
 # upload output file
 s3 = boto3.client('s3')

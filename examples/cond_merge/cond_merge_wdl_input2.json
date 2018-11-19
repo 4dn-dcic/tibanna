@@ -3,7 +3,7 @@
     "app_name": "cond_merge",
     "app_version": "",
     "language": "wdl",
-    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/cond_merge",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/condout/examples/cond_merge",
     "wdl_main_filename": "cond_merge.wdl",
     "wdl_child_filenames": [],
     "input_files": {
