@@ -199,8 +199,8 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
         file_argument = 'bgfile'
         file_format = 'bw'
     elif ff_meta.awsem_app_name == 'bedtobeddb':
-         file_argument = 'bedfile'
-         file_format = 'beddb'
+        file_argument = 'bedfile'
+        file_format = 'beddb'
     # higlass
     if status == 'uploaded':
         if file_format == 'bw':
@@ -209,7 +209,7 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
                                               awsemfile.key,
                                               'bigwig',
                                               'vector')
-        elif file_format = 'beddb':
+        elif file_format == 'beddb':
             higlass_uid = register_to_higlass(tibanna,
                                               awsemfile.bucket,
                                               awsemfile.key,
