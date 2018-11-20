@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from core.utils import _tibanna_settings
-# from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow
 from core.utils import serialize_startdate
 from core.utils import TibannaStartException
@@ -8,9 +8,6 @@ from core.pony_utils import Tibanna, FormatExtensionMap
 from core.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
 from core.utils import printlog
-
-
-TIBANNA_DEFAULT_STEP_FUNCTION_NAME = 'tibanna_pony_tmp_md5'
 
 
 def handler(event, context):
