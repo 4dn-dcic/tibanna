@@ -11,9 +11,17 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Nov 20, 2018** The latest version is now 0.5.2_.
+
+    - User permission error for setting postrun jsons public fixed
+    - ``--no-randomize`` option for `invoke setup_tibanna_env` command to turn off adding random number
+      at the end of usergroup name.
+
+
   **Nov 19, 2018** The latest version is now 0.5.1_.
 
     - Conditional alternative outputs can be assigned to a global output name (useful for WDL)
+
 
   **Nov 8, 2018** The latest version is now 0.5.0_.
 
@@ -45,6 +53,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.2: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.2
 .. _0.5.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.1
 .. _0.5.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.0
 .. _0.4.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.4.9
