@@ -3,11 +3,14 @@ import json
 import random
 
 
-def generate_policy_prefix(user_group_name):
+def generate_policy_prefix(user_group_name, no_randomize=False):
     '''policy prefix for user group'''
     # add rangom tag to avoid attempting to overwrite a previously created and deleted policy and silently failing.
-    random_tag = str(int(random.random() * 10000))
-    tibanna_policy_prefix = 'tibanna_' + user_group_name + '_' + random_tag
+    if no_randomize:
+        tibanna_policy_prefix = 'tibanna_' + user_group_name
+    else:
+        random_tag = str(int(random.random() * 10000))
+        tibanna_policy_prefix = 'tibanna_' + user_group_name + '_' + random_tag
     return tibanna_policy_prefix
 
 
@@ -66,7 +69,8 @@ def generate_policy_bucket_access(bucket_names):
                 "Action": [
                     "s3:PutObject",
                     "s3:GetObject",
-                    "s3:DeleteObject"
+                    "s3:DeleteObject",
+                    "s3:PutObjectAcl"
                 ],
                 "Resource": resource_list_objects
             }
@@ -315,14 +319,14 @@ def create_user_group(iam, group_name, bucket_policy_name, account_id, verbose=F
         print(response)
 
 
-def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False):
+def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False):
     """creates IAM policies and roles and a user group for tibanna
     returns prefix of all IAM policies, roles and group.
     Total 4 policies, 3 roles and 1 group is generated that is associated with a single user group
     A user group shares permission for buckets, tibanna execution and logs
     """
     # create prefix that represent a single user group
-    tibanna_policy_prefix = generate_policy_prefix(user_group_name)
+    tibanna_policy_prefix = generate_policy_prefix(user_group_name, no_randomize)
     iam = boto3.resource('iam')
     client = iam.meta.client
     # bucket policy

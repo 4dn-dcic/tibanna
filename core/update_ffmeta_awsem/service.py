@@ -53,6 +53,8 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
         elif pf.file_format == "bw":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
+        elif pf.file_format == "beddb":
+            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'beddb', 'bedlike')
         # bedgraph: register extra bigwig file to higlass (if such extra file exists)
         elif pf.file_format == 'bg':
             for pfextra in pf.extra_files:
@@ -60,6 +62,12 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
                     fe_map = FormatExtensionMap(tibanna.ff_keys)
                     extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
                     higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
+        elif pf.file_format == 'bed':
+            for pfextra in pf.extra_files:
+                if pfextra.get('file_format') == 'beddb':
+                    fe_map = FormatExtensionMap(tibanna.ff_keys)
+                    extra_file_key = get_extra_file_key('bed', awsemfile.key, 'beddb', fe_map)
+                    higlass_uid = register_to_higlass_bucket(extra_file_key, 'beddb', 'bedlike')
         pf.add_higlass_uid(higlass_uid)
 
 
@@ -190,6 +198,9 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     if ff_meta.awsem_app_name == 'bedGraphToBigWig':
         file_argument = 'bgfile'
         file_format = 'bw'
+    elif ff_meta.awsem_app_name == 'bedtobeddb':
+        file_argument = 'bedfile'
+        file_format = 'beddb'
     # higlass
     if status == 'uploaded':
         if file_format == 'bw':
@@ -198,6 +209,12 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
                                               awsemfile.key,
                                               'bigwig',
                                               'vector')
+        elif file_format == 'beddb':
+            higlass_uid = register_to_higlass(tibanna,
+                                              awsemfile.bucket,
+                                              awsemfile.key,
+                                              'beddb',
+                                              'bedlike')
         else:
             higlass_uid = None
     # update metadata
