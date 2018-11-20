@@ -452,14 +452,14 @@ def run_workflow(ctx, input_json='', sfn='', jobid=''):
 
 
 @task
-def setup_tibanna_env(ctx, buckets='', usergroup_tag='default'):
+def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=False):
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
     if not buckets:
         raise Exception("buckest must be specified to set up Tibanna environment.")
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
-                                               usergroup_tag, AWS_REGION)
+                                               usergroup_tag, AWS_REGION, no_randomize=no_randomize)
     tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
     print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
     return tibanna_usergroup
