@@ -166,10 +166,10 @@ Output target specification
     ::
 
         'alt_cond_output_argnames' : {
-          'cond_merge.cond_merged' : ['cond_merged.paste.pasted', 'cond_merged.cat.concatenated']
+          'merged' : ['cond_merged.paste.pasted', 'cond_merged.cat.concatenated']
         },
         'output_target': {
-          'cond_merge.cond_merged' : 'somedir_on_s3/somefilename'
+          'merged' : 'somedir_on_s3/somefilename'
         }
 
 
