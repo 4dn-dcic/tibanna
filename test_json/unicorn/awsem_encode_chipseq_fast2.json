@@ -21,9 +21,6 @@
        "chip.qc_json": "test_chipseq_qc.json",
        "chip.peak_calls": "test_chipseq_sigfc.bw"
     },
-    "alt_cond_output_argnames": {
-       "chip.peak_calls": ["chip.macs2.sig_fc", "chip.macs2_pooled.sig_fc"]
-    },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
     "secondary_files": {},
