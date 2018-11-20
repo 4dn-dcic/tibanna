@@ -16,6 +16,7 @@ Version updates
     - User permission error for setting postrun jsons public fixed
     - ``--no-randomize`` option for `invoke setup_tibanna_env` command to turn off adding random number
       at the end of usergroup name.
+    - Throttling error upon mass file upload for md5/fastqc trigger fixed.
 
 
   **Nov 19, 2018** The latest version is now 0.5.1_.
