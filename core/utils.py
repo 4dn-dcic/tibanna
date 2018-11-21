@@ -449,3 +449,10 @@ def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
                                          stateMachineArn=stateMachineArn, statusFilter='RUNNING')
         else:
             break
+
+
+# fix non json-serializable datetime startDate
+def serialize_startdate(response):
+    tibanna_resp = response.get('_tibanna', {}).get('response')
+    if tibanna_resp and tibanna_resp.get('startDate'):
+        tibanna_resp['startDate'] = str(tibanna_resp['startDate'])

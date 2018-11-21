@@ -77,6 +77,7 @@ def setenv(**kwargs):
 def get_all_core_lambdas():
     return [
         'validate_md5_s3_trigger',
+        'validate_md5_s3_initiator',
         'start_run_awsem',
         'run_task_awsem',
         'check_task_awsem',
@@ -110,9 +111,9 @@ def env_list(name):
         'update_ffmeta_awsem': {'SECRET': secret,
                                 'TIBANNA_AWS_REGION': AWS_REGION,
                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-        'validate_md5_s3_trigger': {'SECRET': secret,
-                                    'TIBANNA_AWS_REGION': AWS_REGION,
-                                    'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+        'validate_md5_s3_initiator': {'SECRET': secret,
+                                      'TIBANNA_AWS_REGION': AWS_REGION,
+                                      'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
     }
     if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
         envlist['run_task_awsem'].update({
