@@ -254,14 +254,14 @@ To set up environment on AWS without deploying tibanna, use `invoke setup_tibann
 
 ::
 
-  --usergroup-tag=<usergrouptag>    an identifier for a usergroup that shares a tibanna
-                                    step function permission
-  --no-randomize                    do not add a random number to generate a usergroup name
-                                    (e.g. the usergroup name used will be identical to the one
-                                    specified using the ``--usergrou-tag`` option.  By default,
-                                    a random number will be added at the end (e.g. default_2721).
-  --buckets=<bucket_list>           A comma-delimited list of bucket names - the buckets to which
-                                    Tibanna needs access to through IAM role (input, output, log).
+  --usergroup-tag=<usergrouptag>  an identifier for a usergroup that shares a tibanna
+                                  step function permission
+  --no-randomize                  do not add a random number to generate a usergroup name
+                                  (e.g. the usergroup name used will be identical to the one
+                                  specified using the ``--usergrou-tag`` option.  By default,
+                                  a random number will be added at the end (e.g. default_2721).
+  --buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
+                                  Tibanna needs access to through IAM role (input, output, log).
 
 
 deploy_tibanna
