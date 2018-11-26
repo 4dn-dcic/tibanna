@@ -67,7 +67,7 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": "",
-    "shutdown_min": 120,
+    "shutdown_min": 240,
     "instance_type": "c4.4xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
