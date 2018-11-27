@@ -250,7 +250,7 @@ def launch_instance(par, jobid, profile=None):
                                                          'VolumeType': par['ebs_type']}},
                                                 {'DeviceName': '/dev/sda1',
                                                  'Ebs': {'DeleteOnTermination': True,
-                                                         'VolumeSize': 20,
+                                                         'VolumeSize': 8,
                                                          'VolumeType': 'gp2'}}]})
     if par['ebs_iops']:    # io1 type, specify iops
         launch_args["BlockDeviceMappings"][0]["Ebs"]['Iops'] = par['ebs_iops']

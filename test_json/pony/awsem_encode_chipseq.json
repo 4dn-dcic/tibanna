@@ -62,7 +62,7 @@
        }
   ],
   "config": { 
-    "ebs_size": 50,
+    "ebs_size": 200,
     "ebs_type": "gp2",
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
