@@ -119,8 +119,9 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'])
     elif ff_meta.awsem_app_name == 'encode-chipseq':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
-                           quality_metric='quality_metric_encode_chipseq',
+                           quality_metric='quality_metric_chipseq',
                            file_argument='chip.peak_calls',
+                           report_html=awsemfile.key,
                            datafiles=[], zipped=False)
 
 
@@ -154,6 +155,10 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
         filedata = [files[_]['data'] for _ in datafiles]
     else:
         filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
+        reportdata =  awsemfile.s3.read_s3(report_html)
+        report_html = report_html + '.html'
+        awsemfile.s3.s3_put(reportdata, report_html, acl='public-read')
+        files = {report_html: {'data': reportdata, 's3key': report_html}}
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
