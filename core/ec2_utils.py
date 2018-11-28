@@ -11,7 +11,7 @@ from Benchmark import run as B
 from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 from core.utils import create_jobid
 from core.utils import EC2LaunchException
-
+from core.nnested_array import flatten, run_on_nested_arrays1
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -288,17 +288,11 @@ def update_config(config, app_name, input_files, parameters):
         for argname, f in input_files.iteritems():
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
-                size = []
-                for key in f['object_key']:
-                    try:
-                        size.append(get_file_size(key, bucket))
-                    except:
-                        raise Exception("Can't get input file size")
+                size = flatten(run_on_nested_arrays1(f['object_key'],
+                                                     get_file_size,
+                                                     **{'bucket': bucket}))
             else:
-                try:
-                    size = get_file_size(f['object_key'], bucket)
-                except:
-                    raise Exception("Can't get input file size")
+                size = get_file_size(f['object_key'], bucket)
             input_size_in_bytes.update({str(argname): size})
 
         print({"input_size_in_bytes": input_size_in_bytes})
@@ -339,7 +333,7 @@ def get_file_size(key, bucket, size_in_gb=False):
         '''
         meta = does_key_exist(bucket, key)
         if not meta:
-            raise Exception("key not found")
+            raise Exception("key not found: Can't get input file size")
         one_gb = 1073741824
         size = meta['ContentLength']
         if size_in_gb:
