@@ -528,7 +528,7 @@ def real_handler(event, context):
         raise Exception("Failed to update run_status %s" % str(e))
     # patch processed files - update only status, extra_files, md5sum and file_size
     if pf_meta:
-        patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
+        patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size', 'higlass_uid']
         try:
             for pf in pf_meta:
                 printlog(pf.as_dict())

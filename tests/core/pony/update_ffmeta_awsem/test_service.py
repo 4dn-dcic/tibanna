@@ -23,7 +23,9 @@ from dcicutils import ff_utils
 @pytest.mark.webtest
 def test_tmp(update_ffmeta_tmpdata, tibanna_env):
     update_ffmeta_tmpdata.update(tibanna_env)
-    ret = real_handler(update_ffmeta_tmpdata, None)
+    with mock.patch('core.pony_utils.patch_metadata') as mock_request:
+        ret = real_handler(update_ffmeta_tmpdata, None)
+        mock_request.assert_called_once()
     printlog(ret)
     # once for patch pf once for workflow run
     assert ret
