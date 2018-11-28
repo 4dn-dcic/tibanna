@@ -155,7 +155,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
         filedata = [files[_]['data'] for _ in datafiles]
     else:
         filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
-        reportdata =  awsemfile.s3.read_s3(report_html)
+        reportdata = awsemfile.s3.read_s3(report_html)
         report_html = accession + 'qc_report.html'
         awsemfile.s3.s3_put(reportdata, report_html, acl='public-read')
         qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
