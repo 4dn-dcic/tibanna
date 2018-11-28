@@ -17,7 +17,7 @@ from core.pony_utils import (
     parse_formatstr
 )
 from core.nnested_array import (
-    run_on_nested_arrays,
+    run_on_nested_arrays2,
     combine_two
 )
 import random
@@ -229,10 +229,10 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
         args['secondary_files'] = dict()
     argname = input_file['workflow_argument_name']
     fe_map = FormatExtensionMap(ff_keys)
-    extra_file_keys = run_on_nested_arrays(input_file['uuid'],
-                                           args['input_files'][argname]['object_key'],
-                                           get_extra_file_key_given_input_uuid_and_key,
-                                           ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
+    extra_file_keys = run_on_nested_arrays2(input_file['uuid'],
+                                            args['input_files'][argname]['object_key'],
+                                            get_extra_file_key_given_input_uuid_and_key,
+                                            ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
     if len(extra_file_keys) > 0:
         if len(extra_file_keys) == 1:
             extra_file_keys = extra_file_keys[0]

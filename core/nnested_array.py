@@ -18,7 +18,18 @@ def combine_two(a, b, delimiter='/'):
         return(str(a) + delimiter + str(b))
 
 
-def run_on_nested_arrays(a, b, func, **param):
+def run_on_nested_arrays1(a, func, **param):
+    """run func on each pair of element in a and b:
+    a and b can be singlets, an array, an array of arrays, an array of arrays of arrays ...
+    The return value is a flattened array
+    """
+    if isinstance(a, list):
+        return([run_on_nested_arrays1(_, func, **param) for _ in a])
+    else:
+        return(func(a, **param))
+
+
+def run_on_nested_arrays2(a, b, func, **param):
     """run func on each pair of element in a and b:
     a and b can be singlets, an array, an array of arrays, an array of arrays of arrays ...
     The return value is a flattened array
@@ -28,7 +39,7 @@ def run_on_nested_arrays(a, b, func, **param):
             raise Exception("can't combine list and non-list")
         if len(a) != len(b):
             raise Exception("Can't combine lists of different lengths")
-        return([run_on_nested_arrays(a_, b_, func, **param) for a_, b_ in zip(a, b)])
+        return([run_on_nested_arrays2(a_, b_, func, **param) for a_, b_ in zip(a, b)])
     else:
         return(func(a, b, **param))
 

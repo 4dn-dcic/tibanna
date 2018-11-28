@@ -27,6 +27,11 @@ def run_task_awsem_event_data2():
     return get_event_file_for('run_task_awsem', event_file='event_repliseq.json')
 
 
+@pytest.fixture(scope='session')
+def run_task_awsem_event_data_chipseq():
+    return get_event_file_for('run_task_awsem', event_file='event_chipseq.json')
+
+
 def get_test_json(file_name):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)

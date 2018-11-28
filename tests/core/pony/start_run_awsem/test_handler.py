@@ -8,7 +8,7 @@ from core.start_run_awsem.service import (
     add_secondary_files_to_args,
     output_target_for_input_extra,
     combine_two,
-    run_on_nested_arrays
+    run_on_nested_arrays2
 )
 from ..conftest import valid_env
 from core.pony_utils import Tibanna, ProcessedFileMetadata
@@ -291,12 +291,12 @@ def test_combine_two():
                  [['c1/g1', 'c2/g2'], ['d1/h1', 'd2/h2']]]
 
 
-def test_run_on_nested_arrays():
+def test_run_on_nested_arrays2():
     def sum0(a, b):
         return(a + b)
-    x = run_on_nested_arrays(1, 2, sum0)
+    x = run_on_nested_arrays2(1, 2, sum0)
     assert x == 3
-    x = run_on_nested_arrays([1, 2], [3, 4], sum0)
+    x = run_on_nested_arrays2([1, 2], [3, 4], sum0)
     assert x == [4, 6]
-    x = run_on_nested_arrays([[1, 2], [3, 4]], [[5, 6], [7, 8]], sum0)
+    x = run_on_nested_arrays2([[1, 2], [3, 4]], [[5, 6], [7, 8]], sum0)
     assert x == [[6, 8], [10, 12]]
