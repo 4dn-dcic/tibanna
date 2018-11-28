@@ -274,6 +274,16 @@ def test_register_to_higlass2(used_env):
         assert res
 
 
+@pytest.mark.webtest
+def test_register_to_higlass3(used_env):
+    bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
+    bigbed_key = 'a34d5ea5-eada-4def-a4a7-c227b0d32395/4DNFIC624FKJ.bb'
+    tibanna = Tibanna(used_env)
+    res = register_to_higlass(tibanna, bucket, bigbed_key, 'bigwig', 'vector')
+    printlog(res)
+    assert res
+
+
 @valid_env
 @pytest.mark.webtest
 def test__input_extra_updater():
