@@ -119,14 +119,15 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'])
     elif ff_meta.awsem_app_name == 'encode-chipseq':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
-                           quality_metric='quality_metric_encode_chipseq',
-                           file_argument='chip.macs2_pooled.sig_fc',
-                           datafiles=[])
+                           quality_metric='quality_metric_chipseq',
+                           file_argument='chip.peak_calls',
+                           report_html=awsemfile.key,
+                           datafiles=[], zipped=False)
 
 
 def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
-                datafiles=None):
+                datafiles=None, zipped=True):
     # avoid using [] as default argument
     if datafiles is None:
         datafiles = ['summary.txt', 'fastqc_data.txt']
@@ -143,19 +144,27 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     if report_html:
         files_to_parse.append(report_html)
     printlog("accession is %s" % accession)
-    try:
-        files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
-                                            acl='public-read')
-    except Exception as e:
-        printlog(tibanna.s3.__dict__)
-        raise Exception("%s (key={})\n".format(zipped_report) % e)
+    if zipped:
+        try:
+            files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
+                                                acl='public-read')
+        except Exception as e:
+            printlog(tibanna.s3.__dict__)
+            raise Exception("%s (key={})\n".format(zipped_report) % e)
+        printlog("files : %s" % str(files))
+        filedata = [files[_]['data'] for _ in datafiles]
+    else:
+        filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
+        reportdata = awsemfile.s3.read_s3(report_html)
+        report_html = accession + 'qc_report.html'
+        awsemfile.s3.s3_put(reportdata, report_html, acl='public-read')
+        qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
+        files = {report_html: {'data': reportdata, 's3key': qc_url}}
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
                                       ff_env=tibanna.env)
     # parse fastqc metadata
-    printlog("files : %s" % str(files))
-    filedata = [files[_]['data'] for _ in datafiles]
     if report_html in files:
         qc_url = files[report_html]['s3key']
     else:
@@ -519,7 +528,7 @@ def real_handler(event, context):
         raise Exception("Failed to update run_status %s" % str(e))
     # patch processed files - update only status, extra_files, md5sum and file_size
     if pf_meta:
-        patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size']
+        patch_fields = ['uuid', 'status', 'extra_files', 'md5sum', 'file_size', 'higlass_uid']
         try:
             for pf in pf_meta:
                 printlog(pf.as_dict())

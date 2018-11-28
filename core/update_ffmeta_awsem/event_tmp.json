@@ -1,0 +1,565 @@
+{
+  "push_error_to_end": true,
+  "args": {
+    "secondary_output_target": {},
+    "wdl_child_filenames": [],
+    "app_name": "encode-chipseq",
+    "wdl_main_filename": "chip.wdl",
+    "input_parameters": {
+      "chip.qc_report.desc": "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+      "chip.paired_end": true,
+      "chip.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+      "chip.gensz": "hs",
+      "chip.choose_ctl.always_use_pooled_ctl": true,
+      "chip.qc_report.name": "H3K27ac_HFFc6",
+      "chip.pipeline_type": "histone"
+    },
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
+    "cwl_child_filenames": [],
+    "output_target": {
+      "chip.report": "e3323a96-2a69-449c-9c5f-53f4ee109564/chip.report334151115094",
+      "chip.peak_calls": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd/4DNFIGZNSW74.bw",
+      "chip.qc_json": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b/4DNFIN6VQZ8Z.other"
+    },
+    "language": "wdl",
+    "cwl_main_filename": "",
+    "secondary_files": {
+      "chip.fastqs": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": [
+          [
+            [],
+            []
+          ],
+          [
+            [],
+            []
+          ]
+        ]
+      },
+      "chip.ctl_fastqs": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": [
+          [
+            [],
+            []
+          ],
+          [
+            [],
+            []
+          ]
+        ]
+      }
+    },
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "app_version": "dev",
+    "cwl_directory_url": "",
+    "input_files": {
+      "chip.fastqs": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": [
+          [
+            [
+              "9eddf3bb-fde3-4156-9b58-4689b22bacab/4DNFIY13CD93.fastq.gz",
+              "65725bf4-d35e-443e-a1b0-b4bbe7e41d4c/4DNFINBXXW77.fastq.gz"
+            ],
+            [
+              "26e6a9a9-defe-46e4-bdc6-7af4675bd17a/4DNFI8KTY3QD.fastq.gz",
+              "38969bef-628a-41d6-bc74-c6b347c2e688/4DNFI43RP96B.fastq.gz"
+            ]
+          ]
+        ]
+      },
+      "chip.ctl_fastqs": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": [
+          [
+            [
+              "35a1b573-9690-41b3-b0c0-0da8af5c55e8/4DNFI5JD6GGN.fastq.gz",
+              "bf1cbd5e-4eaf-4d0a-ba1c-b8cf758ff90b/4DNFI89RWX1M.fastq.gz"
+            ],
+            [
+              "4c3be0d1-cd00-4a14-85ed-43269591fe41/4DNFIGM25CMN.fastq.gz",
+              "67d23c45-6a26-4de0-9518-f986081b8fef/4DNFI438ZP4U.fastq.gz"
+            ]
+          ]
+        ]
+      },
+      "chip.chrsz": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "9866d158-da3c-4d9b-96a9-1d59632eabeb/4DNFIZJB62D1.chrom.sizes"
+      },
+      "chip.bwa_idx_tar": {
+        "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "38077b98-3862-45cd-b4be-8e28e9494549/4DNFIZQB369V.bwaIndex.tar"
+      },
+      "chip.blacklist": {
+        "rename": "",
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "9562ffbd-9f7a-4bd7-9c10-c335137d8966/4DNFIZ1TGJZR.bed.gz"
+      }
+    }
+  },
+  "instance_ip": "54.158.96.58",
+  "app_name": "encode-chipseq",
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "run_type": "encode-chipseq",
+      "run_id": "4f22b92c-6c50-4f8c-aef8-f87582a67072",
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:encode-chipseq_4f22b92c-6c50-4f8c-aef8-f87582a67072",
+      "run_name": "encode-chipseq_4f22b92c-6c50-4f8c-aef8-f87582a67072",
+      "env": "fourfront-webdev",
+      "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:encode-chipseq_4f22b92c-6c50-4f8c-aef8-f87582a67072"
+    }
+  },
+  "postrunjson": {
+    "Job": {
+      "status": "0",
+      "total_tmp_size": "4.0K",
+      "Log": {
+        "log_bucket_directory": "tibanna-output"
+      },
+      "App": {
+        "main_wdl": "chip.wdl",
+        "other_cwl_files": "",
+        "App_name": "encode-chipseq",
+        "language": "wdl",
+        "other_wdl_files": "",
+        "main_cwl": "",
+        "cwl_url": "",
+        "wdl_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
+        "App_version": "dev"
+      },
+      "JOBID": "JpWL7pf12836",
+      "instance_id": "",
+      "end_time": "20181128-05:49:17-UTC",
+      "total_input_size": "12G",
+      "Input": {
+        "Input_files_data": {
+          "chip.ctl_fastqs": {
+            "profile": "",
+            "path": [
+              [
+                [
+                  "35a1b573-9690-41b3-b0c0-0da8af5c55e8/4DNFI5JD6GGN.fastq.gz",
+                  "bf1cbd5e-4eaf-4d0a-ba1c-b8cf758ff90b/4DNFI89RWX1M.fastq.gz"
+                ],
+                [
+                  "4c3be0d1-cd00-4a14-85ed-43269591fe41/4DNFIGM25CMN.fastq.gz",
+                  "67d23c45-6a26-4de0-9518-f986081b8fef/4DNFI438ZP4U.fastq.gz"
+                ]
+              ]
+            ],
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          },
+          "chip.fastqs": {
+            "profile": "",
+            "path": [
+              [
+                [
+                  "9eddf3bb-fde3-4156-9b58-4689b22bacab/4DNFIY13CD93.fastq.gz",
+                  "65725bf4-d35e-443e-a1b0-b4bbe7e41d4c/4DNFINBXXW77.fastq.gz"
+                ],
+                [
+                  "26e6a9a9-defe-46e4-bdc6-7af4675bd17a/4DNFI8KTY3QD.fastq.gz",
+                  "38969bef-628a-41d6-bc74-c6b347c2e688/4DNFI43RP96B.fastq.gz"
+                ]
+              ]
+            ],
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          },
+          "chip.blacklist": {
+            "profile": "",
+            "path": "9562ffbd-9f7a-4bd7-9c10-c335137d8966/4DNFIZ1TGJZR.bed.gz",
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          },
+          "chip.chrsz": {
+            "profile": "",
+            "path": "9866d158-da3c-4d9b-96a9-1d59632eabeb/4DNFIZJB62D1.chrom.sizes",
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          },
+          "chip.bwa_idx_tar": {
+            "profile": "",
+            "path": "38077b98-3862-45cd-b4be-8e28e9494549/4DNFIZQB369V.bwaIndex.tar",
+            "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          }
+        },
+        "Secondary_files_data": {
+          "chip.fastqs": {
+            "profile": "",
+            "path": [
+              [
+                [],
+                []
+              ],
+              [
+                [],
+                []
+              ]
+            ],
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          },
+          "chip.ctl_fastqs": {
+            "profile": "",
+            "path": [
+              [
+                [],
+                []
+              ],
+              [
+                [],
+                []
+              ]
+            ],
+            "rename": "",
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files"
+          }
+        },
+        "Env": {},
+        "Input_parameters": {
+          "chip.qc_report.desc": "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+          "chip.paired_end": true,
+          "chip.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+          "chip.gensz": "hs",
+          "chip.choose_ctl.always_use_pooled_ctl": true,
+          "chip.qc_report.name": "H3K27ac_HFFc6",
+          "chip.pipeline_type": "histone"
+        }
+      },
+      "Output": {
+        "output_target": {
+          "chip.qc_json": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b/4DNFIN6VQZ8Z.other",
+          "chip.peak_calls": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd/4DNFIGZNSW74.bw",
+          "chip.report": "e3323a96-2a69-449c-9c5f-53f4ee109564/chip.report334151115094"
+        },
+        "secondary_output_target": {},
+        "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "Output files": {
+          "chip.qc_json": {
+            "path": "/data1/wdl/cromwell-executions/chip/f1bb300a-d3f6-4720-8cf8-da18922811c5/call-qc_report/execution/glob-3440f922973abb7a616aaf203e0db08b/qc.json",
+            "target": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b/4DNFIN6VQZ8Z.other"
+          },
+          "chip.peak_calls": {
+            "path": "/data1/wdl/cromwell-executions/chip/f1bb300a-d3f6-4720-8cf8-da18922811c5/call-macs2/shard-0/execution/glob-8876d8ced974dc46a0c7a4fac20a3a95/4DNFIY13CD93.merged.nodup_x_ctl_for_rep1.fc.signal.bigwig",
+            "target": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd/4DNFIGZNSW74.bw"
+          },
+          "chip.report": {
+            "path": "/data1/wdl/cromwell-executions/chip/f1bb300a-d3f6-4720-8cf8-da18922811c5/call-qc_report/execution/glob-eae855c82d0f7e2185388856e7b2cc7b/qc.html",
+            "target": "e3323a96-2a69-449c-9c5f-53f4ee109564/chip.report334151115094"
+          }
+        },
+        "alt_cond_output_argnames": []
+      },
+      "total_output_size": "256K",
+      "start_time": "20181127-21:11:03-UTC"
+    },
+    "config": {
+      "ebs_size": 200,
+      "ami_id": "ami-0f06a8358d41c4b9c",
+      "language": "wdl",
+      "json_bucket": "4dn-aws-pipeline-run-json",
+      "json_dir": "/tmp/json",
+      "EBS_optimized": false,
+      "ebs_iops": "",
+      "userdata_dir": "/tmp/userdata",
+      "shutdown_min": 240,
+      "instance_type": "c4.4xlarge",
+      "public_postrun_json": true,
+      "ebs_type": "gp2",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "job_tag": "encode-chipseq",
+      "log_bucket": "tibanna-output"
+    },
+    "commands": []
+  },
+  "start_time": "20181127-21:11:13-UTC",
+  "ff_meta": {
+    "run_platform": "AWSEM",
+    "uuid": "e3323a96-2a69-449c-9c5f-53f4ee109564",
+    "parameters": [
+      {
+        "workflow_argument_name": "chip.qc_report.desc",
+        "value": "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab"
+      },
+      {
+        "workflow_argument_name": "chip.paired_end",
+        "value": "True"
+      },
+      {
+        "workflow_argument_name": "chip.bam2ta.regex_grep_v_ta",
+        "value": "chr[MUE]|random|alt"
+      },
+      {
+        "workflow_argument_name": "chip.gensz",
+        "value": "hs"
+      },
+      {
+        "workflow_argument_name": "chip.choose_ctl.always_use_pooled_ctl",
+        "value": "True"
+      },
+      {
+        "workflow_argument_name": "chip.qc_report.name",
+        "value": "H3K27ac_HFFc6"
+      },
+      {
+        "workflow_argument_name": "chip.pipeline_type",
+        "value": "histone"
+      }
+    ],
+    "workflow": "5b44ce1b-0347-40a6-bc9c-f39fb5d7bce3",
+    "title": "encode-chipseq run 2018-11-27 21:11:02.137818",
+    "award": "1U01CA200059-01",
+    "awsem_job_id": "",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:encode-chipseq_4f22b92c-6c50-4f8c-aef8-f87582a67072",
+    "awsem_app_name": "encode-chipseq",
+    "lab": "4dn-dcic-lab",
+    "run_status": "started",
+    "output_files": [
+      {
+        "upload_key": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd/4DNFIGZNSW74.bw",
+        "type": "Output processed file",
+        "workflow_argument_name": "chip.peak_calls",
+        "value": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd",
+        "format": "/file-formats/bw/"
+      },
+      {
+        "type": "Output QC file",
+        "workflow_argument_name": "chip.report"
+      },
+      {
+        "upload_key": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b/4DNFIN6VQZ8Z.other",
+        "type": "Output processed file",
+        "workflow_argument_name": "chip.qc_json",
+        "value": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b",
+        "format": "/file-formats/other/"
+      }
+    ],
+    "input_files": [
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chip.bwa_idx_tar",
+        "value": "38077b98-3862-45cd-b4be-8e28e9494549",
+        "dimension": "0"
+      },
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chip.fastqs",
+        "value": "9eddf3bb-fde3-4156-9b58-4689b22bacab",
+        "dimension": "0-0-0"
+      },
+      {
+        "ordinal": 2,
+        "workflow_argument_name": "chip.fastqs",
+        "value": "65725bf4-d35e-443e-a1b0-b4bbe7e41d4c",
+        "dimension": "0-0-1"
+      },
+      {
+        "ordinal": 3,
+        "workflow_argument_name": "chip.fastqs",
+        "value": "26e6a9a9-defe-46e4-bdc6-7af4675bd17a",
+        "dimension": "0-1-0"
+      },
+      {
+        "ordinal": 4,
+        "workflow_argument_name": "chip.fastqs",
+        "value": "38969bef-628a-41d6-bc74-c6b347c2e688",
+        "dimension": "0-1-1"
+      },
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chip.ctl_fastqs",
+        "value": "35a1b573-9690-41b3-b0c0-0da8af5c55e8",
+        "dimension": "0-0-0"
+      },
+      {
+        "ordinal": 2,
+        "workflow_argument_name": "chip.ctl_fastqs",
+        "value": "bf1cbd5e-4eaf-4d0a-ba1c-b8cf758ff90b",
+        "dimension": "0-0-1"
+      },
+      {
+        "ordinal": 3,
+        "workflow_argument_name": "chip.ctl_fastqs",
+        "value": "4c3be0d1-cd00-4a14-85ed-43269591fe41",
+        "dimension": "0-1-0"
+      },
+      {
+        "ordinal": 4,
+        "workflow_argument_name": "chip.ctl_fastqs",
+        "value": "67d23c45-6a26-4de0-9518-f986081b8fef",
+        "dimension": "0-1-1"
+      },
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chip.blacklist",
+        "value": "9562ffbd-9f7a-4bd7-9c10-c335137d8966",
+        "dimension": "0"
+      },
+      {
+        "ordinal": 1,
+        "workflow_argument_name": "chip.chrsz",
+        "value": "9866d158-da3c-4d9b-96a9-1d59632eabeb",
+        "dimension": "0"
+      }
+    ]
+  },
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "jobid": "JpWL7pf12836",
+  "instance_id": "i-0be015872ddf455c9",
+  "pf_meta": [
+    {
+      "status": "to be uploaded by workflow",
+      "source_experiments": [
+        "eb60be89-487c-46d1-9dbd-ca45227c4e8e",
+        "b97ad256-bb54-4d5e-b543-6ceb716c8155",
+        "fbc60ecb-244f-4ef9-9f1f-097e45aa858b",
+        "a97dd892-242c-4816-92bf-0c149b79c06b"
+      ],
+      "uuid": "d12725a1-8f36-45dd-b7bb-25b48c3eaafd",
+      "file_format": "bw",
+      "accession": "4DNFIGZNSW74",
+      "award": "1U01CA200059-01",
+      "lab": "4dn-dcic-lab"
+    },
+    {
+      "status": "to be uploaded by workflow",
+      "source_experiments": [
+        "eb60be89-487c-46d1-9dbd-ca45227c4e8e",
+        "b97ad256-bb54-4d5e-b543-6ceb716c8155",
+        "fbc60ecb-244f-4ef9-9f1f-097e45aa858b",
+        "a97dd892-242c-4816-92bf-0c149b79c06b"
+      ],
+      "uuid": "18c4712e-8a9b-4a88-bbb6-ba697dd1349b",
+      "file_format": "other",
+      "accession": "4DNFIN6VQZ8Z",
+      "award": "1U01CA200059-01",
+      "lab": "4dn-dcic-lab"
+    }
+  ],
+  "parameters": {
+    "chip.qc_report.desc": "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+    "chip.paired_end": true,
+    "chip.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+    "chip.gensz": "hs",
+    "chip.choose_ctl.always_use_pooled_ctl": true,
+    "chip.qc_report.name": "H3K27ac_HFFc6",
+    "chip.pipeline_type": "histone"
+  },
+  "config": {
+    "ebs_size": 200,
+    "password": "dragonfly",
+    "ebs_type": "gp2",
+    "language": "wdl",
+    "ebs_iops": "",
+    "json_dir": "/tmp/json",
+    "EBS_optimized": false,
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "userdata_dir": "/tmp/userdata",
+    "shutdown_min": 240,
+    "instance_type": "c4.4xlarge",
+    "job_tag": "encode-chipseq",
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "public_postrun_json": true,
+    "ami_id": "ami-0f06a8358d41c4b9c",
+    "log_bucket": "tibanna-output",
+    "key_name": ""
+  },
+  "workflow_uuid": "5b44ce1b-0347-40a6-bc9c-f39fb5d7bce3",
+  "input_files": [
+    {
+      "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+      "workflow_argument_name": "chip.bwa_idx_tar",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+      "uuid": "38077b98-3862-45cd-b4be-8e28e9494549",
+      "object_key": "4DNFIZQB369V.bwaIndex.tar"
+    },
+    {
+      "workflow_argument_name": "chip.fastqs",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+      "uuid": [
+        [
+          [
+            "9eddf3bb-fde3-4156-9b58-4689b22bacab",
+            "65725bf4-d35e-443e-a1b0-b4bbe7e41d4c"
+          ],
+          [
+            "26e6a9a9-defe-46e4-bdc6-7af4675bd17a",
+            "38969bef-628a-41d6-bc74-c6b347c2e688"
+          ]
+        ]
+      ],
+      "object_key": [
+        [
+          [
+            "4DNFIY13CD93.fastq.gz",
+            "4DNFINBXXW77.fastq.gz"
+          ],
+          [
+            "4DNFI8KTY3QD.fastq.gz",
+            "4DNFI43RP96B.fastq.gz"
+          ]
+        ]
+      ]
+    },
+    {
+      "workflow_argument_name": "chip.ctl_fastqs",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+      "uuid": [
+        [
+          [
+            "35a1b573-9690-41b3-b0c0-0da8af5c55e8",
+            "bf1cbd5e-4eaf-4d0a-ba1c-b8cf758ff90b"
+          ],
+          [
+            "4c3be0d1-cd00-4a14-85ed-43269591fe41",
+            "67d23c45-6a26-4de0-9518-f986081b8fef"
+          ]
+        ]
+      ],
+      "object_key": [
+        [
+          [
+            "4DNFI5JD6GGN.fastq.gz",
+            "4DNFI89RWX1M.fastq.gz"
+          ],
+          [
+            "4DNFIGM25CMN.fastq.gz",
+            "4DNFI438ZP4U.fastq.gz"
+          ]
+        ]
+      ]
+    },
+    {
+      "workflow_argument_name": "chip.blacklist",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+      "uuid": "9562ffbd-9f7a-4bd7-9c10-c335137d8966",
+      "object_key": "4DNFIZ1TGJZR.bed.gz"
+    },
+    {
+      "workflow_argument_name": "chip.chrsz",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+      "uuid": "9866d158-da3c-4d9b-96a9-1d59632eabeb",
+      "object_key": "4DNFIZJB62D1.chrom.sizes"
+    }
+  ]
+}

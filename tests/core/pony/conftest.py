@@ -133,6 +133,11 @@ def update_ffmeta_metaonly_data2(ff_keys):
 
 
 @pytest.fixture(scope='session')
+def update_ffmeta_tmpdata(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_tmp.json')
+
+
+@pytest.fixture(scope='session')
 def update_ffmeta_hicbam(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_hicbam.json')
 

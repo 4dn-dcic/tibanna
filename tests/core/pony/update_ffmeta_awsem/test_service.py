@@ -1,5 +1,6 @@
 from core.update_ffmeta_awsem.service import (
     handler,
+    real_handler,
     get_postrunjson_url,
     register_to_higlass,
     md5_updater,
@@ -16,6 +17,18 @@ from ..conftest import valid_env
 import json
 import mock
 from dcicutils import ff_utils
+
+
+@valid_env
+@pytest.mark.webtest
+def test_tmp(update_ffmeta_tmpdata, tibanna_env):
+    update_ffmeta_tmpdata.update(tibanna_env)
+    with mock.patch('core.pony_utils.patch_metadata') as mock_request:
+        ret = real_handler(update_ffmeta_tmpdata, None)
+        mock_request.assert_called_once()
+    printlog(ret)
+    # once for patch pf once for workflow run
+    assert ret
 
 
 def test__md5_updater_1():
