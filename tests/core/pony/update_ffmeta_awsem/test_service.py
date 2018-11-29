@@ -292,7 +292,9 @@ def test_register_to_higlass3(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigbed_key = 'a34d5ea5-eada-4def-a4a7-c227b0d32395/4DNFIC624FKJ.bb'
     tibanna = Tibanna(used_env)
-    res = register_to_higlass(tibanna, bucket, bigbed_key, 'bigwig', 'vector')
+    with mock.patch('requests.post') as mock_request:
+        res = register_to_higlass(tibanna, bucket, bigbed_key, 'bigwig', 'vector')
+        mock_request.assert_called_once()
     printlog(res)
     assert res
 
