@@ -1,0 +1,65 @@
+{
+    "_tibanna": {
+      "run_type": "encode-atacseq",
+      "env": "fourfront-webdev"
+    },
+    "app_name": "encode-atacseq",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "workflow_uuid": "6fb021e9-858c-4561-8ce1-e0adc673e0b5",
+    "parameters": { 
+        "atac.pipeline_type" : "atac",
+        "atac.paired_end" : true,
+        "atac.qc_report.name" : "H3K27ac_HFFc6",
+        "atac.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+        "atac.gensz" : "hs",
+        "atac.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+        "atac.disable_ataqc": true,
+        "atac.enable_xcor": false,
+        "atac.trim_adapter.auto_detect_adapter": true
+    },
+    "input_files" : [
+       {
+           "workflow_argument_name": "atac.bowtie2_idx_tar",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "28ab6265-f426-4a23-bb8a-f28467ad505b",
+           "object_key": "4DNFIJMZMFT4.bowtie2Index.tar",
+           "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar"
+       },
+       { 
+           "workflow_argument_name": "atac.fastqs", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": [
+                    [["80bf2712-a1e3-4cc1-9556-4a12ac83637d","9641e9c0-53b2-4cbf-a9c4-8b24037e9f35"],
+                     ["8dd44b3e-5cc4-445e-b8fd-c2fe88cf5f8d","bd2826e8-ec74-44c0-b020-ad7712819235"]]
+           ],
+           "object_key": [
+                          [["4DNFIIG3K5CI.fastq.gz", "4DNFIOUW1IYU.fastq.gz"],
+                           ["4DNFIFR8NLIK.fastq.gz", "4DNFI1EPEKJZ.fastq.gz"]]
+           ]
+       },
+       { 
+           "workflow_argument_name": "atac.blacklist", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "9562ffbd-9f7a-4bd7-9c10-c335137d8966",
+           "object_key": "4DNFIZ1TGJZR.bed.gz"
+       },
+       { 
+           "workflow_argument_name": "atac.chrsz", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "9866d158-da3c-4d9b-96a9-1d59632eabeb",
+           "object_key": "4DNFIZJB62D1.chrom.sizes"
+       }
+  ],
+  "config": { 
+    "ebs_size": 100,
+    "ebs_type": "gp2",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": true,
+    "ebs_iops": "",
+    "shutdown_min": "now",
+    "instance_type": "c4.4xlarge",   
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": ""
+  }
+}

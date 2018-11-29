@@ -7,6 +7,7 @@
     "app_name": "encode-chipseq",
     "input_parameters": { 
         "chip.pipeline_type" : "histone",
+        "chip.peak_caller": "spp",
         "chip.paired_end" : true,
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.qc_report.name" : "test",
@@ -19,7 +20,8 @@
     "output_target": {
        "chip.report": "test_chipseq_report.html",
        "chip.qc_json": "test_chipseq_qc.json",
-       "chip.peak_calls": "test_chipseq_sigfc.bw"
+       "chip.sig_fc": "test_chipseq_sigfc.bw",
+       "chip.peak_calls": "test_chipseq_peak_call.bb"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",

@@ -9,6 +9,7 @@
     "parameters": { 
         "chip.pipeline_type" : "histone",
         "chip.paired_end" : true,
+        "chip.peak_caller" : "spp",
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.qc_report.name" : "H3K27ac_HFFc6",
         "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
