@@ -51,7 +51,7 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
         # register mcool/bigwig with fourfront-higlass
         if pf.file_format == "mcool":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
-        elif pf.file_format == "bw":
+        elif pf.file_format == "bw" or pf.file_format == "bigbed":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
         elif pf.file_format == "beddb":
             higlass_uid = register_to_higlass_bucket(awsemfile.key, 'beddb', 'bedlike')

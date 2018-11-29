@@ -25,7 +25,7 @@ def test_tmp(update_ffmeta_tmpdata, tibanna_env):
     update_ffmeta_tmpdata.update(tibanna_env)
     with mock.patch('core.pony_utils.patch_metadata') as mock_request:
         ret = real_handler(update_ffmeta_tmpdata, None)
-        mock_request.assert_called_once()
+        mock_request.call_count == 3
     printlog(ret)
     # once for patch pf once for workflow run
     assert ret
@@ -285,6 +285,18 @@ def test_register_to_higlass2(used_env):
         mock_request.assert_called_once()
         printlog(res)
         assert res
+
+
+@pytest.mark.webtest
+def test_register_to_higlass3(used_env):
+    bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
+    bigbed_key = 'a34d5ea5-eada-4def-a4a7-c227b0d32395/4DNFIC624FKJ.bb'
+    tibanna = Tibanna(used_env)
+    with mock.patch('requests.post') as mock_request:
+        res = register_to_higlass(tibanna, bucket, bigbed_key, 'bigwig', 'vector')
+        mock_request.assert_called_once()
+    printlog(res)
+    assert res
 
 
 @valid_env
