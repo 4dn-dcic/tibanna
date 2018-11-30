@@ -1,6 +1,6 @@
 {
     "_tibanna": {
-      "run_type": "encode-chipseq",
+      "run_type": "encode-chipseq-test",
       "env": "fourfront-webdev"
     },
     "app_name": "encode-chipseq",
@@ -68,7 +68,7 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": "",
     "ebs_iops": "",
-    "shutdown_min": "now",
+    "shutdown_min": 240,
     "instance_type": "",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",

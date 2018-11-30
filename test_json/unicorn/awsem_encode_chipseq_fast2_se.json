@@ -8,12 +8,14 @@
     "input_parameters": { 
         "chip.pipeline_type" : "histone",
         "chip.peak_caller": "spp",
-        "chip.paired_end" : true,
+        "chip.paired_end" : false,
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.qc_report.name" : "test",
         "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
         "chip.gensz" : "hs",
-        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt"
+        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
+        "chip.fraglen": 300,
+        "chip.bwa.cpu": 16
     },
     "wdl_child_filenames": [],
     "language": "wdl",
@@ -32,11 +34,11 @@
     "input_files": {
       "chip.fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz", "4DNFI43RP96B.h10M.fastq.gz"]]]
+        "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz"]]]
       },
       "chip.ctl_fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz","4DNFI438ZP4U.h10M.fastq.gz"]]]
+        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "soos-4dn-bucket",

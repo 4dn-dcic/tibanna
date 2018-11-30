@@ -34,7 +34,6 @@
                           [["4DNFIY13CD93.fastq.gz"],
                            ["4DNFI8KTY3QD.fastq.gz"]]
            ]
-
        },
        { 
            "workflow_argument_name": "chip.ctl_fastqs", 
@@ -67,7 +66,7 @@
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": "",
     "ebs_iops": "",
-    "shutdown_min": "now",
+    "shutdown_min": 120,
     "instance_type": "",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
