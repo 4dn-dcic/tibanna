@@ -15,7 +15,8 @@
         "atac.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
         "atac.disable_ataqc": true,
         "atac.enable_xcor": false,
-        "atac.trim_adapter.auto_detect_adapter": true
+        "atac.trim_adapter.auto_detect_adapter": true,
+        "atac.bowtie2.cpu" : 48
     },
     "input_files" : [
        {
@@ -57,7 +58,7 @@
     "EBS_optimized": true,
     "ebs_iops": "",
     "shutdown_min": "now",
-    "instance_type": "c4.4xlarge",   
+    "instance_type": "x1.32xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": ""
