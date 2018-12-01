@@ -26,8 +26,9 @@ def main():
 
 
 def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, rename, f):
-    cmd = "aws s3 cp s3://{0}/{1} {2}/{4} {3}\n"
-    f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag, rename))
+    if data_file:
+        cmd = "aws s3 cp s3://{0}/{1} {2}/{4} {3}\n"
+        f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag, rename))
 
 
 # create a download command list file from the information in json

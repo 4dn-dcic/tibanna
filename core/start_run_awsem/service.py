@@ -219,6 +219,8 @@ def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_e
                 extra_file_format = parse_formatstr(extra_file.get('file_format'))
                 extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
                 extra_file_keys.append(extra_file_key)
+    if len(extra_file_keys) == 0:
+        extra_file_keys = None
     return extra_file_keys
 
 
