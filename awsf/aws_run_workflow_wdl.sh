@@ -198,6 +198,14 @@ fi
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
 
+# more comprehensive log for wdl
+cd /data1/wdl
+find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
+-name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
+| xargs tar -zcvf debug.tar.gz
+aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+
+
 ### how do we send a signal that the job finished?
 #<some script>
  
