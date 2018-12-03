@@ -198,6 +198,10 @@ fi
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
 
+df -h >> $LOGFILE
+send_log
+
+
 # more comprehensive log for wdl
 cd /data1/wdl
 find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
