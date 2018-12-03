@@ -333,7 +333,7 @@ def get_file_size(key, bucket, size_in_gb=False):
         '''
         meta = does_key_exist(bucket, key)
         if not meta:
-            raise Exception("key not found: Can't get input file size")
+            raise Exception("key not found: Can't get input file size : %s" % key)
         one_gb = 1073741824
         size = meta['ContentLength']
         if size_in_gb:
