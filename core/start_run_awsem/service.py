@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # import json
 import boto3
+import json
 from dcicutils import ff_utils
 from core.utils import powerup
 from core.utils import TibannaStartException
@@ -48,6 +49,14 @@ def real_handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
+    # keep the input json on s3
+    logbucket = event.get('config', {}).get('log_bucket', '')
+    jobid = event.get('jobid', '')
+    if logbucket and jobid:
+        boto3.client('s3').put_object(Body=json.dumps(event, indent=4).encode('ascii'),
+                                      Key=jobid + '.input.json',
+                                      Bucket=logbucket)
+
     # get incomming data
     input_file_list = event.get('input_files')
     for infile in input_file_list:
@@ -235,7 +244,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
                                             args['input_files'][argname]['object_key'],
                                             get_extra_file_key_given_input_uuid_and_key,
                                             ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
-    if len(extra_file_keys) > 0:
+    if extra_file_keys and len(extra_file_keys) > 0:
         if len(extra_file_keys) == 1:
             extra_file_keys = extra_file_keys[0]
         args['secondary_files'].update({input_file['workflow_argument_name']: {

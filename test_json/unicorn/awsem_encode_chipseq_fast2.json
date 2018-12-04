@@ -1,7 +1,7 @@
 {
   "_tibanna": {
     "env": "fourfront-webdev",
-    "run_type": "encode-chipseq"
+    "run_type": "chipseq-test-histone-pe-1rep-alignonly"
   },
   "args": {
     "app_name": "encode-chipseq",
@@ -19,15 +19,16 @@
         "chip.merge_fastq.cpu": 16,
         "chip.filter.cpu": 16,
         "chip.bam2ta.cpu": 16,
-        "chip.xcor.cpu": 16
+        "chip.xcor.cpu": 16,
+        "chip.align_only": true
     },
     "wdl_child_filenames": [],
     "language": "wdl",
     "output_target": {
-       "chip.report": "test_chipseq_report.html",
-       "chip.qc_json": "test_chipseq_qc.json",
-       "chip.sig_fc": "test_chipseq_sigfc.bw",
-       "chip.peak_calls": "test_chipseq_peak_call.bb"
+       "chip.report": "test2_chipseq_report.html",
+       "chip.qc_json": "test2_chipseq_qc.json",
+       "chip.sig_fc": "test2_chipseq_sigfc.bw",
+       "chip.peak_calls": "test2_chipseq_peak_call.bb"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",

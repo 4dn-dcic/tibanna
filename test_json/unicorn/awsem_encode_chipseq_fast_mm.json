@@ -12,13 +12,20 @@
         "chip.qc_report.name" : "test",
         "chip.qc_report.desc" : "CTCF ChIP-seq on mouse Patski wild-type by the Christine Disteche lab",
         "chip.gensz" : "mm",
-        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt"
+        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
+        "chip.bwa.cpu": 16,
+        "chip.merge_fastq.cpu": 16,
+        "chip.filter.cpu": 16,
+        "chip.bam2ta.cpu": 16,
+        "chip.xcor.cpu": 16
     },
     "wdl_child_filenames": [],
     "language": "wdl",
     "output_target": {
-       "chip.report": "test_chipseq_report.html",
-       "chip.qc_json": "test_chipseq_qc.json"
+       "chip.report": "testm_chipseq_report.html",
+       "chip.qc_json": "testm_chipseq_qc.json",
+       "chip.idr.bfilt_idr_peak_bb": "testm_idr_peak.bb",
+       "chip.idr_ppr.bfilt_idr_peak_bb": "testm_idr_ppr_peak.bb"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
