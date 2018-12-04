@@ -5,38 +5,35 @@
   },
   "app_name": "repliseq-parta",
   "output_bucket": "elasticbeanstalk-fourfront-webprod-wfoutput",
-  "workflow_uuid": "146da22a-502d-4500-bf57-a7cf0b4b2364",
-  "parameters" :  { "nthreads": 4, "memperthread": "2G" },
+  "workflow_uuid": "4459a4d8-1bd8-4b6a-b2cc-2506f4270a34",
+  "parameters" :  { "nthreads": 16, "memperthread": "2G" },
   "input_files" : [
        {
-           "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
+           "object_key": "4DNFI823LSI8.bwaIndex.tgz",
            "workflow_argument_name": "bwaIndex",
-           "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
+           "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e1",
            "bucket_name": "elasticbeanstalk-fourfront-webprod-files"
        },
        { 
            "workflow_argument_name": "fastq", 
            "bucket_name": "elasticbeanstalk-fourfront-webprod-files",
-           "uuid": "281988c5-6355-4aeb-9429-c1b627fdd7a",
-           "object_key": "4DNFISNUWDWW.fastq.gz"
+           "uuid": "619da19f-c269-45f3-9b0b-3d59c7632fd5",
+           "object_key": "4DNFI64XJOEQ.fastq.gz"
        },
        {
-           "object_key": "4DNFI823LSII.chrom.sizes",
+           "object_key": "4DNFI3UBJ3HZ.chrom.sizes",
            "workflow_argument_name": "chromsizes",
-           "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+           "uuid": "bd0784a5-2a3d-42f0-ba9c-d9b3dc0539c6",
            "bucket_name": "elasticbeanstalk-fourfront-webprod-files"
       }
   ],
   "config": {
-    
-    "ebs_type": "io1",
+    "ebs_type": "gp2",
     "json_bucket": "4dn-aws-pipeline-run-json",
-    "ebs_iops": 500,
-    "shutdown_min": 120,
-    
-    
-    "password": "dragonfly",
+    "ebs_iops": "",
+    "shutdown_min": 30,
+    "password": "",
     "log_bucket": "tibanna-output",
-    "key_name": ""
+    "key_name": "4dn-encode"
   }
 }

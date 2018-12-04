@@ -38,6 +38,24 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
     aws s3 cp s3://<tibanna_lob_bucket_name>/<jobid>.log .
 
 
+For WDL, a more comprehensive log is provided as ``<jobid>.debug.tar.gz`` in the same log bucket, starting from version 0.5.3. This file is a tar ball created by the following command on the EC2 instance:
+
+::
+
+    cd /data1/wdl/
+    find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
+    -name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
+    | xargs tar -zcvf debug.tar.gz
+
+
+Likewise, you can download this file using a ``aws s3 cp`` command.
+
+::
+
+    aws s3 cp s3://<tibanna_lob_bucket_name>/<jobid>.debug.tar.gz .
+
+
+
 Detailed monitoring through ssh
 +++++++++++++++++++++++++++++++
 
@@ -61,11 +79,23 @@ The password is the password you entered as part of the input json (inside 'conf
 
 On the instance, one can check the following, for example.
 
+
+For CWL,
+
 - ``/data1/input/`` : input files
 - ``/data1/tmp*`` : temp/intermediate files (need sudo access)
 - ``/data1/output/`` : output files (need sudo access)
 - ``top`` : to see what processes are running and how much cpu/memory is being used
 - ``ps -fe`` : to see what processes are running, in more detail
+
+
+For WDL,
+
+- ``/data1/input/`` : input files
+- ``/data1/wdl/cromwell-execution/*`` : temp/intermediate files, output files and logs
+- ``top`` : to see what processes are running and how much cpu/memory is being used
+- ``ps -fe`` : to see what processes are running, in more detail
+
 
 
 Console
