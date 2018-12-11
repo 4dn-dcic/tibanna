@@ -18,7 +18,7 @@
     },
     "output_S3_bucket": "leelab-datafiles",
     "app_version": "0.0.1",
-    "cwl_directory_url": "https://s3.amazonaws.com/leelab-datafiles",
+    "cwl_directory_url": "https://gitlab.com/simon_chu/xtea_bin/raw/master",
     "input_files": {
       "bam": {
         "bucket_name": "sscwgs",
@@ -42,9 +42,7 @@
     "EBS_optimized": true,
     "ebs_iops": "",
     "shutdown_min": 30,
-    "instance_type": "m4.16xlarge",
-    
-    
+    "instance_type": "t2.xlarge",
     "password": "",
     "log_bucket": "leelab-tibanna-log",
     "key_name": "leelab-aws-simon"
