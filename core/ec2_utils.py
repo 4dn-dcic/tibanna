@@ -190,7 +190,8 @@ def create_run_workflow(jobid, shutdown_min,
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
-    str += "RUN_SCRIPT=aws_run_workflow_" + language + ".sh\n"
+    #str += "RUN_SCRIPT=aws_run_workflow_" + language + ".sh\n"
+    str += "RUN_SCRIPT=aws_run_workflow_generic.sh\n"
     str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
     str += "LOGBUCKET={}\n".format(log_bucket)

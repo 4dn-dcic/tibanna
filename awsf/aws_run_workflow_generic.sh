@@ -187,7 +187,11 @@ if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
 else
-  alias cwl-runner=cwltool
+  if [[ $LANGUAGE == 'cwl_draft3' ]]
+  then
+    # checkout to older version of cwltool
+    cd  ~ubuntu/venv/cwltool/; git checkout c7f029e; cd $LOCAL_WFDIR
+  fi
   exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
 fi
 cd $cwd0
