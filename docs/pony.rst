@@ -34,13 +34,13 @@ For full tibanna test (actually running jobs through step function) besides trav
 
 ::
 
-    test_json/pony/awsem_md5.json  
-    test_json/pony/awsem_fastqc.json
-    test_json/pony/awsem_bwa_new.json
-    test_json/pony/awsem_pairsqc.json
-    test_json/pony/awsem_hicpairs_easy.json
-    test_json/pony/awsem_hic_processing_bam-2.pony.json
-    test_json/pony/awsem_repliseq_parta-pony.json
+    test_json/pony/md5.json  
+    test_json/pony/fastqc.json
+    test_json/pony/bwa_new.json
+    test_json/pony/pairsqc.json
+    test_json/pony/hicpairs_easy.json
+    test_json/pony/hic_processing_bam-2.pony.json
+    test_json/pony/repliseq_parta-pony.json
 
 - note: these files are listed in ``tests/webdevtestlist``. One could use this file for batch testing for a given tibanna pony instance like an example below for Mac (replace tibanna_pony_uno with your step function mame).
 
