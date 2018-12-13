@@ -1,11 +1,11 @@
 {
   "args": {
     "app_name": "xtea",
-    "input_parameters": { "nThreads": 64 },
+    "input_parameters": { "nThreads": 2 },
     "cwl_child_filenames": [],
     "cwl_version": "v1",
     "output_target": {
-      "output": "11002-SSC03070.tar.gz"
+      "output": "11002-SSC03070.2core.tar.gz"
     },
     "secondary_output_target": {},
     "cwl_main_filename": "xtea.cwl",
@@ -42,9 +42,9 @@
     "EBS_optimized": false,
     "ebs_iops": "",
     "shutdown_min": 30,
-    "instance_type": "t2.xlarge",
-    "password": "",
+    "instance_type": "t3.medium",
+    "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
-    "key_name": "leelab-aws-simon"
+    "key_name": ""
   }
 }

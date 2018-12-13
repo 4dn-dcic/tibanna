@@ -1,24 +1,32 @@
 {
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "chipseq-test-histone-pe-2rep-alignonly"
+  },
   "args": {
     "app_name": "encode-chipseq",
     "input_parameters": { 
-        "chip.pipeline_type" : "tf",
+        "chip.pipeline_type" : "histone",
         "chip.paired_end" : true,
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.qc_report.name" : "test",
-        "chip.qc_report.desc" : "CTCF ChIP-seq on mouse Patski wild-type by the Christine Disteche lab",
-        "chip.gensz" : "mm",
+        "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+        "chip.gensz" : "hs",
         "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
-        "chip.bwa.cpu": 16,
+        "chip.fraglen": [],
+        "chip.bwa.cpu": 4,
         "chip.merge_fastq.cpu": 16,
-        "chip.filter.cpu": 16,
-        "chip.bam2ta.cpu": 16,
+        "chip.filter.cpu": 8,
+        "chip.bam2ta.cpu": 8,
         "chip.xcor.cpu": 16,
         "chip.align_only": true
     },
     "wdl_child_filenames": [],
     "language": "wdl",
-    "output_target": {},
+    "output_target": {
+       "chip.report": "test2_chipseq_report.html",
+       "chip.qc_json": "test2_chipseq_qc.json"
+    },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
     "secondary_files": {},
@@ -28,35 +36,35 @@
     "input_files": {
       "chip.fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFIE6Y5WQM.h40M.fastq.gz", "4DNFIX27ZKYY.h40M.fastq.gz"]], [["4DNFIE6Y5WQM.2h40M.fastq.gz", "4DNFIX27ZKYY.2h40M.fastq.gz"]]]
+        "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz", "4DNFI43RP96B.h10M.fastq.gz"]],[["4DNFI8KTY3QD.2h10M.fastq.gz", "4DNFI43RP96B.2h10M.fastq.gz"]]]
       },
       "chip.ctl_fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFII5JIXFQ.h40M.fastq.gz", "4DNFIU4MKVH6.h40M.fastq.gz"]], [["4DNFII5JIXFQ.2h40M.fastq.gz", "4DNFIU4MKVH6.2h40M.fastq.gz"]]]
+        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz","4DNFI438ZP4U.h10M.fastq.gz"]], [["4DNFIGM25CMN.2h10M.fastq.gz", "4DNFI438ZP4U.2h10M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "rename": "mm10_no_alt_analysis_set_ENCODE.fasta.tar",
-        "object_key": "f4b63d31-65d8-437f-a76a-6bedbb52ae6f/4DNFIZ2PWCC2.bwaIndex.tar"
+        "bucket_name": "soos-4dn-bucket",
+        "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+        "object_key": "4DNFIZQZ39L9.bwaIndex.tar"
       },
       "chip.blacklist": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "a32747a3-8a9e-4a9e-a7a1-4db0e8b65925/4DNFIZ3FBPK8.bed.gz"
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "hg38.blacklist.bed.gz"
       },
       "chip.chrsz": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "be0a9819-d2ce-4422-be4b-234fb1677dd9/4DNFIBP173GC.chrom.sizes"
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "GRCh38_EBV.chrom.sizes"
       }
     }
   },
   "config": { 
-    "ebs_size": 100,
+    "ebs_size": 50,
     "ebs_type": "gp2",
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": "",
     "shutdown_min": 240,
-    "instance_type": "c4.8xlarge",
+    "instance_type": "c4.8xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": ""
