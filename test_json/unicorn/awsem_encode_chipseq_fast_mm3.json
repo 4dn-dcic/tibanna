@@ -1,4 +1,8 @@
 {
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "encode-chipseq"
+  },
   "args": {
     "app_name": "encode-chipseq",
     "input_parameters": { 
@@ -13,26 +17,29 @@
         "chip.merge_fastq.cpu": 16,
         "chip.filter.cpu": 16,
         "chip.bam2ta.cpu": 16,
-        "chip.xcor.cpu": 16,
-        "chip.align_only": true
+        "chip.xcor.cpu": 16
     },
     "wdl_child_filenames": [],
     "language": "wdl",
-    "output_target": {},
+    "output_target": {
+       "chip.report": "testm_chipseq_report.html",
+       "chip.qc_json": "testm_chipseq_qc.json",
+       "chip.idr_ppr.bfilt_idr_peak_bb": "testm_idr_ppr_peak.bb"
+    },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
     "secondary_files": {},
     "output_S3_bucket": "soos-4dn-bucket",
     "app_version": "dev",
-    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/no_out/",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
     "input_files": {
       "chip.fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFIE6Y5WQM.h40M.fastq.gz", "4DNFIX27ZKYY.h40M.fastq.gz"]], [["4DNFIE6Y5WQM.2h40M.fastq.gz", "4DNFIX27ZKYY.2h40M.fastq.gz"]]]
+        "object_key": [[["4DNFIE6Y5WQM.h40M.fastq.gz", "4DNFIX27ZKYY.h40M.fastq.gz"]]]
       },
       "chip.ctl_fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFII5JIXFQ.h40M.fastq.gz", "4DNFIU4MKVH6.h40M.fastq.gz"]], [["4DNFII5JIXFQ.2h40M.fastq.gz", "4DNFIU4MKVH6.2h40M.fastq.gz"]]]
+        "object_key": [[["4DNFII5JIXFQ.h40M.fastq.gz", "4DNFIU4MKVH6.h40M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
@@ -50,13 +57,13 @@
     }
   },
   "config": { 
-    "ebs_size": 100,
+    "ebs_size": 50,
     "ebs_type": "gp2",
     "json_bucket": "4dn-aws-pipeline-run-json",
     "EBS_optimized": false,
     "ebs_iops": "",
-    "shutdown_min": 240,
-    "instance_type": "c4.8xlarge",
+    "shutdown_min": 120,
+    "instance_type": "c4.4xlarge",   
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": ""

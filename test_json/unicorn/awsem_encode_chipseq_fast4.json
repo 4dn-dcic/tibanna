@@ -1,0 +1,75 @@
+{
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "encode-chipseq"
+  },
+  "args": {
+    "app_name": "encode-chipseq",
+    "input_parameters": { 
+        "chip.pipeline_type" : "histone",
+        "chip.peak_caller": "macs2",
+        "chip.paired_end" : true,
+        "chip.choose_ctl.always_use_pooled_ctl" : true,
+        "chip.qc_report.name" : "test",
+        "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+        "chip.gensz" : "hs",
+        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
+        "chip.fraglen": [],
+        "chip.bwa.cpu": 16,
+        "chip.merge_fastq.cpu": 16,
+        "chip.filter.cpu": 16,
+        "chip.bam2ta.cpu": 16,
+        "chip.xcor.cpu": 16
+    },
+    "wdl_child_filenames": [],
+    "language": "wdl",
+    "output_target": {
+       "chip.report": "test4_chipseq_report.html",
+       "chip.qc_json": "test4_chipseq_qc.json",
+       "chip.sig_fc": "test4_chipseq_sigfc.bw",
+       "chip.peak_calls": "test4_chipseq_peak_call.bb",
+       "chip.overlap_ppr.bfilt_overlap_peak_bb": "test4_chipseq_overlap_ppr_peak_call.bb"
+    },
+    "secondary_output_target": {},
+    "wdl_main_filename": "chip.wdl",
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "dev",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
+    "input_files": {
+      "chip.fastqs": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz", "4DNFI43RP96B.h10M.fastq.gz"]]]
+      },
+      "chip.ctl_fastqs": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz","4DNFI438ZP4U.h10M.fastq.gz"]]]
+      },
+      "chip.bwa_idx_tar": {
+        "bucket_name": "soos-4dn-bucket",
+        "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+        "object_key": "4DNFIZQZ39L9.bwaIndex.tar"
+      },
+      "chip.blacklist": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "hg38.blacklist.bed.gz"
+      },
+      "chip.chrsz": {
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "GRCh38_EBV.chrom.sizes"
+      }
+    }
+  },
+  "config": { 
+    "ebs_size": 50,
+    "ebs_type": "gp2",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": false,
+    "ebs_iops": "",
+    "shutdown_min": 240,
+    "instance_type": "c4.4xlarge",   
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": ""
+  }
+}
