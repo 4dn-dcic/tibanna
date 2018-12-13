@@ -118,7 +118,7 @@ exl echo "main wdl=$MAIN_WDL"
 
 ###  mount the EBS volume to the EBS_DIR
 exl lsblk $TMPLOGFILE
-EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
+export EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount
