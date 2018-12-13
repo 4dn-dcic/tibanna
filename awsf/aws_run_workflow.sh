@@ -36,7 +36,6 @@ while getopts "i:m:j:l:u:p:a:s:r:" opt; do
         esac
 done
 
-export EBS_DEVICE=/dev/xvdb
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
@@ -118,6 +117,7 @@ exl echo "main cwl=$MAIN_CWL"
 
 ###  mount the EBS volume to the EBS_DIR
 exl lsblk $TMPLOGFILE
+EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir $EBS_DIR
 exl mount $EBS_DEVICE $EBS_DIR # mount

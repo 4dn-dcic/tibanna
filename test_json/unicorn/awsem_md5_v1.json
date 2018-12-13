@@ -31,7 +31,7 @@
     "EBS_optimized": "",
     "ebs_iops": 500,
     "shutdown_min": 30,
-    "instance_type": "",
+    "instance_type": "t3.medium",
     "password": "",
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode"
