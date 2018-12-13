@@ -189,8 +189,12 @@ then
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
-    # checkout to older version of cwltool
-    cd  ~ubuntu/venv/cwltool/; git checkout c7f029e; cd $LOCAL_WFDIR
+    # older version of cwltoolthat works with draft3
+    pip uninstall cwltool
+    git clone https://github.com/SooLee/cwltool
+    cd cwltool
+    git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
+    python setup.py install
   fi
   exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
 fi
