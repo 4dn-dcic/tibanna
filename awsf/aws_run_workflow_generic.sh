@@ -10,7 +10,7 @@ export REGION=
 export SINGULARITY_OPTION=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-L LANGUAGE] [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
     echo "-i JOBID : awsem job id (required)"
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
@@ -46,10 +46,9 @@ export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_OUTDIR=$EBS_DIR/out  
-export LOCAL_CWLDIR=$EBS_DIR/cwl 
 export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
-export LOCAL_CWL_TMPDIR=$EBS_DIR/tmp
+export LOCAL_WF_TMPDIR=$EBS_DIR/tmp
 export MD5FILE=$JOBID.md5sum.txt
 export INPUT_YML_FILE=inputs.yml
 export DOWNLOAD_COMMAND_FILE=download_command_list.txt
@@ -60,6 +59,13 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/wdl
+else
+  export LOCAL_WFDIR=$EBS_DIR/cwl
+fi
 
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
@@ -72,6 +78,7 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
 exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one separates stdout to json as well.
 exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
+
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
@@ -107,7 +114,7 @@ if [ ! -z $PASSWORD ]; then
 fi
 
 
-### 2. get the run.json file and parse it to get environmental variables CWL_URL, MAIN_CWL, CWL_FILES and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
+### 2. get the run.json file and parse it to get environmental variables WDL_URL, MAIN_WDL, and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
 exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
@@ -118,7 +125,6 @@ exl chown -R ubuntu .
 exl chmod -R +x .
 exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
-exl echo "main cwl=$MAIN_CWL"
 
 ###  mount the EBS volume to the EBS_DIR
 exl lsblk $TMPLOGFILE
@@ -134,17 +140,28 @@ exl chmod -R +x $EBS_DIR
 exl mkdir -p $LOCAL_OUTDIR
 exl mkdir -p $LOCAL_INPUT_DIR
 exl mkdir -p $LOCAL_REFERENCE_DIR
-exl mkdir -p $LOCAL_CWLDIR
+exl mkdir -p $LOCAL_WFDIR
 mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
 
 ### download cwl from github or any other url.
-for CWL_FILE in $MAIN_CWL $CWL_FILES
-do
- exl wget -O$LOCAL_CWLDIR/$CWL_FILE $CWL_URL/$CWL_FILE
-done
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  exl echo "main wdl=$MAIN_WDL"
+  for WDL_FILE in $MAIN_WDL $WDL_FILES
+  do
+   exl wget -O$LOCAL_WFDIR/$WDL_FILE $WDL_URL/$WDL_FILE
+  done
+else
+  exl echo "main cwl=$MAIN_CWL"
+  for CWL_FILE in $MAIN_CWL $CWL_FILES
+  do
+   exl wget -O$LOCAL_WFDIR/$CWL_FILE $CWL_URL/$CWL_FILE
+  done
+fi
+
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
@@ -163,11 +180,16 @@ send_log
 
 ### run command
 cwd0=$(pwd)
-cd $LOCAL_CWLDIR  
-mkdir -p $LOCAL_CWL_TMPDIR
+cd $LOCAL_WFDIR  
+mkdir -p $LOCAL_WF_TMPDIR
 send_log_regularly &
-alias cwl-runner=cwltool
-exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_CWL_TMPDIR --tmpdir-prefix $LOCAL_CWL_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+else
+  alias cwl-runner=cwltool
+  exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+fi
 cd $cwd0
 send_log 
 
@@ -179,7 +201,13 @@ send_log
 exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 pip install boto3
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  WDLOPTION=wdl
+else
+  WDLOPTION=
+fi
+exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $WDLOPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  
@@ -201,6 +229,20 @@ else
 fi
 if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
 send_log
+
+df -h >> $LOGFILE
+send_log
+
+
+# more comprehensive log for wdl
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  cd $LOCAL_WFDIR
+  find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
+-name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
+| xargs tar -zcvf debug.tar.gz
+  aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+fi
 
 ### how do we send a signal that the job finished?
 #<some script>

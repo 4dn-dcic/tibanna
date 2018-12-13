@@ -2,6 +2,7 @@
 shopt -s extglob
 export SHUTDOWN_MIN=now
 export SCRIPTS_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/
+export LANGUAGE=cwl_draft3
 export PASSWORD=
 export ACCESS_KEY=
 export SECRET_KEY=
@@ -14,6 +15,7 @@ printHelpAndExit() {
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
+    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1' or 'wdl') (default cwl_draft3)"
     echo "-u SCRIPTS_URL : Tibanna repo url (default: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
@@ -28,6 +30,7 @@ while getopts "i:m:j:l:u:p:a:s:r:g" opt; do
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        L) export LANGUAGE=$OPTARG;;  # workflow language
         u) export SCRIPTS_URL=$OPTARG;;  # Tibanna repo url (e.g. https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access

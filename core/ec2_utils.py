@@ -195,10 +195,11 @@ def create_run_workflow(jobid, shutdown_min,
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
     str += "LOGBUCKET={}\n".format(log_bucket)
     str += "SCRIPT_URL={}\n".format(script_url)
+    str += "LANGUAGE={}\n".format(language)
     str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
     str += "chmod +x $RUN_SCRIPT\n"
     str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
-    str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL"
+    str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL -L $LANGUAGE"
     if password:
         str += " -p {}".format(password)
     if profile:
