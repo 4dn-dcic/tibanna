@@ -11,6 +11,20 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Dec 14, 2018** The latest version is now 0.5.4_.
+
+    - Problem of EBS mounting with newer instances (e.g. c5, t3, etc) fixed.
+    - Now a common AMI is used for `CWL v1`, `CWL draft3` and `WDL` and it is handled by `awsf/aws_run_workflow_generic.sh`
+
+      - To use the new features, redeploy `run_task_awsem` lambda.
+      
+      ::
+
+      git pull
+      invoke deploy_core run_task_awsem --usergroup=<usergroup>  # e.g. usergroup=default_3046
+
+
+
   **Dec 4, 2018** The latest version is now 0.5.3_.
 
     - For WDL workflow executions, a more comprehensive log named ``<jobid>.debug.tar.gz`` is collected and sent to the log bucket.
@@ -66,6 +80,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.4: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.4
 .. _0.5.3: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.3
 .. _0.5.2: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.2
 .. _0.5.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.1

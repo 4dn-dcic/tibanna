@@ -24,7 +24,7 @@ printHelpAndExit() {
     echo "-g : use singularity"
     exit "$1"
 }
-while getopts "i:m:j:l:u:p:a:s:r:g" opt; do
+while getopts "i:m:j:l:L:u:p:a:s:r:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
