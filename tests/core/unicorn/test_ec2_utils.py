@@ -34,4 +34,4 @@ def test_update_config3(run_task_awsem_event_data_chipseq):
     update_config(config, data['args']['app_name'], data['args']['input_files'], data['args']['input_parameters'])
     assert config['instance_type'] == 'c4.4xlarge'
     assert config['EBS_optimized'] is True
-    assert config['ebs_size'] == 81
+    assert config['ebs_size'] == 87
