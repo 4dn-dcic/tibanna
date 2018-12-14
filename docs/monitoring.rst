@@ -128,3 +128,14 @@ When the run finishes successfully, you'll see in your bucket a file <jobid>.suc
 .. |unicorn_stepfun_fail| image:: images/stepfunction_unicorn_screenshot_fail.png
 
 
+Cloud Watch
++++++++++++
+
+
+Cloud Watch Metrics give you an idea about how Memory Used, CPU Utilization, Disk Space Used change while the workflow is running. Tibanna collects these metrics for all runs, but with ``"cloudwatch_dashboard" : true`` in the ``config`` field of the input execution json, a Dashboard will be created for the run, which collectively visualizes all the metrics at one page.
+
+|cloudwatch_dashboard|
+
+.. |cloudwatch_dashboard| image:: images/cloudwatch_dashboard_example.png
+
+
