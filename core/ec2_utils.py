@@ -190,7 +190,6 @@ def create_run_workflow(jobid, shutdown_min,
     str = ''
     str += "#!/bin/bash\n"
     str += "JOBID={}\n".format(jobid)
-    #str += "RUN_SCRIPT=aws_run_workflow_" + language + ".sh\n"
     str += "RUN_SCRIPT=aws_run_workflow_generic.sh\n"
     str += "SHUTDOWN_MIN={}\n".format(shutdown_min)
     str += "JSON_BUCKET_NAME={}\n".format(json_bucket)
@@ -279,6 +278,127 @@ def launch_instance(par, jobid, profile=None):
             try_again = True
 
     return({'instance_id': instance_id, 'instance_ip': instance_ip, 'start_time': get_start_time()})
+
+
+def create_cloudwatch_dashboard(instance_id, dashboard_name):
+    body = {
+       "widgets": [
+          {
+             "type": "metric",
+             "x": 0,
+             "y": 0,
+             "width": 12,
+             "height": 4,
+             "properties": {
+                "stacked":  True,
+                "metrics": [
+                   [
+                      "System/Linux",
+                      "MemoryUsed",
+                      "InstanceId",
+                      instance_id
+                   ],
+                   [
+                      ".",
+                      "MemoryAvailable",
+                      "InstanceId",
+                      instance_id
+                   ]
+                ],
+                "period": 60,
+                "stat": "Average",
+                "region": AWS_REGION,
+                "title": "Memory Used"
+             }
+          },
+          {
+             "type": "metric",
+             "x": 0,
+             "y": 5,
+             "width": 12,
+             "height": 4,
+             "properties": {
+                "metrics": [
+                   [
+                      "System/Linux",
+                      "DiskSpaceUtilization",
+                      "MountPath",
+                      "/data1",
+                      "InstanceId",
+                      instance_id,
+                      "Filesystem",
+                      "/dev/xvdb"
+                   ],
+                   [
+                      "System/Linux",
+                      "DiskSpaceUtilization",
+                      "MountPath",
+                      "/",
+                      "InstanceId",
+                      instance_id,
+                      "Filesystem",
+                      "/dev/xvda1"
+                   ]
+                ],
+                "period": 60,
+                "stat": "Average",
+                "region": AWS_REGION,
+                "title": "Disk Space Utilization"
+             }
+          },
+          {
+             "type": "metric",
+             "x": 0,
+             "y": 10,
+             "width": 12,
+             "height": 3,
+             "properties": {
+                "metrics": [
+                   [
+                      "System/Linux",
+                      "DiskSpaceUsed",
+                      "MountPath",
+                      "/data1",
+                      "InstanceId",
+                      instance_id,
+                      "Filesystem",
+                      "/dev/xvdb"
+                   ]
+                ],
+                "period": 60,
+                "stat": "Average",
+                "region": AWS_REGION,
+                "title": "Data Disk Space Used"
+             }
+          },
+          {
+             "type": "metric",
+             "x": 0,
+             "y": 13,
+             "width": 12,
+             "height": 3,
+             "properties": {
+                "metrics": [
+                   [
+                      "AWS/EC2",
+                      "CPUUtilization",
+                      "InstanceId",
+                      instance_id
+                   ]
+                ],
+                "period": 60,
+                "stat": "Average",
+                "region": AWS_REGION,
+                "title": "CPU Utilization"
+             }
+          }
+       ]
+    }
+    cw = boto3.client('cloudwatch', AWS_REGION)
+    cw.put_dashboard(
+        DashboardName=dashboard_name,
+        DashboardBody=json.dumps(body)
+    )
 
 
 def update_config(config, app_name, input_files, parameters):

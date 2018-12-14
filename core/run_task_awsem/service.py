@@ -25,6 +25,7 @@ def handler(event, context):
       log_bucket: bucket for collecting logs (started, postrun, success, error, log)
     # optional
       public_postrun_json (optional): whether postrun json should be made public (default false)
+      cloudwatch_dashboard (optional) : create a cloudwatch dashboard named awsem-<jobid>
 
     args:
     # required (i.e. field must exist, value may be null):
@@ -124,6 +125,11 @@ def handler(event, context):
 
     # launch instance and execute workflow
     launch_instance_log = ec2_utils.launch_instance(cfg, jobid, profile=profile)
+
+    # setup cloudwatch dashboard
+    if 'cloudwatch_dashboard' in cfg and cfg['cloudwatch_dashboard']:
+        instance_id = launch_instance_log['instance_id']
+        ec2_utils.create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
 
     if 'jobid' not in event:
         event.update({'jobid': jobid})

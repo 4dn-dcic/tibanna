@@ -32,8 +32,6 @@ build_dir = os.path.join(docs_dir, '_build')
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
 NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
-#AMI_ID_CWL_V1 = 'ami-31caa14e'
-#AMI_ID_CWL_DRAFT3 = 'ami-cfb14bb5'
 AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'
 AMI_ID_CWL_DRAFT3 = 'ami-0f06a8358d41c4b9c'
 AMI_ID_WDL = 'ami-0f06a8358d41c4b9c'
@@ -451,6 +449,10 @@ def run_workflow(ctx, input_json='', sfn='', jobid=''):
             resp = _run_workflow(data, sfn=sfn, jobid=jobid)
         print("JOBID %s submitted" % resp['jobid'])
         print("EXECUTION ARN = %s" % resp[_tibanna]['exec_arn'])
+        if 'cloudwatch_dashboard' in resp['config'] and resp['config']['cloudwatch_dashboard']:
+            cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
+                'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
+            print("Cloudwatch Dashboard = %s" % cw_db_url)
         run('open %s' % resp[_tibanna]['url'])
 
 

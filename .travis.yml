@@ -1,7 +1,7 @@
 language: python
 sudo: false
 cache:
-  pip: true
+  pip: false
 env:
   global:
   - AWS_ACCOUNT_NUMBER=643366669028
