@@ -12,6 +12,7 @@ Version updates
 +++++++++++++++
 
   **Dec 14, 2018** The latest version is now 0.5.5_.
+
     - Now memory, Disk space, CPU utilization are reported to CloudWatch at 1min interval from the Awsem instance.
     - To turn on Cloudwatch Dashboard (a collective visualization for all of the metrics combined),
       add ``"cloudwatch_dashboard" : true`` to ``"config"`` field of the input execution json.
