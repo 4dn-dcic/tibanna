@@ -145,6 +145,17 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
+# set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
+cwd0=$(pwd)
+cd ~
+apt-get update
+apt-get install -y unzip libwww-perl libdatetime-perl
+curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip -O
+unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
+cat cloudwatch.jobs | crontab -
+cd $cwd0
 
 ### download cwl from github or any other url.
 if [[ $LANGUAGE == 'wdl' ]]
