@@ -15,7 +15,7 @@ General stats
 
 ::
 
-    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED]
+    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-v]
 
 The output is a table (an example below)
 
@@ -26,6 +26,17 @@ The output is a table (an example below)
     3hbkJB3hv92S        SUCCEEDED       hicprocessingbam   2018-08-15 16:04        2018-08-15 16:09
     UlkvH3gbBBA2        FAILED  repliseq-parta     2018-08-09 18:26        2018-08-09 19:01
     j7hvisheBV27        SUCCEEDED       bwa-mem    2018-08-09 18:44        2018-08-09 18:59
+
+
+To print out more information, use the ``-v`` (verbose) option. The additional information includes the ID, type, status and public ip of the EC2 instance. Keyname and Password information is shown for ssh.
+
+::
+
+    jobid	status	name	start_time	stop_time	instance_id	instance_type	instance_status	ip	key	password
+    O37462jD9Kf7	ABORTED	bwa-mem_092ac447-06f3-45b7-b2ad-cbcf3265ae25	2018-12-14 23:37	2018-12-14 23:40	i-009880382ee22a5b1	t2.large	shutting-down	-	4dn-encode      somepassword
+    jN4ubJNlNKIi	ABORTED	bwa-mem_e0ebc354-ea09-4c34-8b7c-c28a25637a40	2018-12-14 23:33	2018-12-14 23:36	i-0df66d22d485bbc05	t2.large	terminated	-	4dn-encode      someotherpassword
+    dWBRxy0R8LXi	SUCCEEDED	bwa-mem_f13cc54b-0aff-4520-9a5e-cf8f3c9dd49b	2018-12-14 22:44	2018-12-14 22:59	i-00f222fe5e4580007	t2.large	terminated	-	4dn-encode	-
+
 
 
 Execution logs

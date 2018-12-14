@@ -180,11 +180,22 @@ This example will rerun all the jobs of default step function that failed after 
 kill
 ----
 
-To kill a specific job through its execution arn
+To kill a specific job through its execution arn or a jobid
 
 ::
 
     invoke kill --exec-arn=<execution_arn>
+
+or
+
+::
+
+    invoke kill --job-id=<jobid> --sfn=<stepfunctionname>
+
+
+If ``jobid`` is specified but not ``stepfunctionname``, then only the EC2 instance will be terminated and the step function status may still be RUNNING.
+
+
 
 **Example**
 

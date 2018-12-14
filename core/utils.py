@@ -411,27 +411,59 @@ def check_output(exec_arn):
             return None
 
 
-def kill(exec_arn):
+def kill(exec_arn=None, job_id=None, sfn=None):
     sf = boto3.client('stepfunctions')
-    desc = sf.describe_execution(executionArn=exec_arn)
-    if desc['status'] == 'RUNNING':
-        jobid = str(json.loads(desc['input'])['jobid'])
-        ec2 = boto3.resource('ec2')
-        terminated = None
-        for i in ec2.instances.all():
-            if i.tags:
-                for tag in i.tags:
-                    if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
-                        continue
-                    if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
-                        response = i.terminate()
-                        printlog(response)
-                        terminated = True
+    if exec_arn:
+        desc = sf.describe_execution(executionArn=exec_arn)
+        if desc['status'] == 'RUNNING':
+            jobid = str(json.loads(desc['input'])['jobid'])
+            ec2 = boto3.resource('ec2')
+            terminated = None
+            for i in ec2.instances.all():
+                if i.tags:
+                    for tag in i.tags:
+                        if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
+                            continue
+                        if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
+                            printlog("terminating EC2 instance")
+                            response = i.terminate()
+                            printlog(response)
+                            terminated = True
+                            break
+                    if terminated:
                         break
-                if terminated:
+            printlog("terminating step function execution")
+            resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
+            printlog(resp_sf)
+    elif job_id:
+        ec2 = boto3.client('ec2')
+        res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+        if not res['Reservations']:
+            raise("instance not available - if you just submitted the job, try again later")
+        instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+        printlog("terminating EC2 instance")
+        resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
+        printlog(resp_term)
+        if not sfn:
+            printlog("Can't stop step function because step function name is not given.")
+            return None
+        stateMachineArn = STEP_FUNCTION_ARN(sfn)
+        res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+        while True:
+            if 'executions' not in res or not res['executions']:
+                break
+            for exc in res['executions']:
+                desc = sf.describe_execution(executionArn=exc['executionArn'])
+                if job_id == str(json.loads(desc['input'])['jobid']):
+                    printlog("terminating step function execution")
+                    resp_sf = sf.stop_execution(executionArn=exc['executionArn'], error="Aborted")
+                    printlog(resp_sf)
                     break
-        resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-        printlog(resp_sf)
+            if 'nextToken' in res:
+                res = sf.list_executions(nextToken=res['nextToken'],
+                                         stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+            else:
+                break
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
