@@ -125,6 +125,11 @@ def handler(event, context):
     # launch instance and execute workflow
     launch_instance_log = ec2_utils.launch_instance(cfg, jobid, profile=profile)
 
+    # setup cloudwatch dashboard
+    if 'cloudwatch_dashboard' in event and event['cloudwatch_dashboard']:
+        instance_id = launch_instance_log['instance_id']
+        ec2_utils.create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
+
     if 'jobid' not in event:
         event.update({'jobid': jobid})
     event.update(launch_instance_log)
