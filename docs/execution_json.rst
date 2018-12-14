@@ -231,6 +231,11 @@ config
 :ebs_iops: 500
 :ebs_type: io1
 
+:cloudwatch_dashboard:
+    - if true, Memory Used, Disk Used, CPU Utilization Cloudwatch metrics are collected into a single Cloudwatch Dashboard page. (default ``false``)
+    - There is a limit of 1,000 CloudWatch Dashboards per account, so do not turn on this option for more than 1,000 runs.
+      Cloudwatch metrics are collected for every awsem EC2 instances even if this option is turned off.
+      The Dashboard option makes it easier to look at them together.
 
 
 Example job description for CWL

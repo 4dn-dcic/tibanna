@@ -11,6 +11,12 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Dec 14, 2018** The latest version is now 0.5.5_.
+    - Now memory, Disk space, CPU utilization are reported to CloudWatch at 1min interval from the Awsem instance.
+    - To turn on Cloudwatch Dashboard (a collective visualization for all of the metrics combined),
+      add ``"cloudwatch_dashboard" : true`` to ``"config"`` field of the input execution json.
+      
+
   **Dec 14, 2018** The latest version is now 0.5.4_.
 
     - Problem of EBS mounting with newer instances (e.g. c5, t3, etc) fixed.
@@ -80,6 +86,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.5: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.5
 .. _0.5.4: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.4
 .. _0.5.3: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.3
 .. _0.5.2: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.2
