@@ -20,8 +20,8 @@ Version updates
       
       ::
 
-      git pull
-      invoke deploy_core run_task_awsem --usergroup=<usergroup>  # e.g. usergroup=default_3046
+        git pull
+        invoke deploy_core run_task_awsem --usergroup=<usergroup>  # e.g. usergroup=default_3046
 
 
 
