@@ -611,9 +611,14 @@ def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False
                     instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
                     instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
                     instance_type = res['Reservations'][0]['Instances'][0]['InstanceType']
-                    instance_ip = res['Reservations'][0]['Instances'][0].get('PublicIpAddress', '-')
-                    keyname = res['Reservations'][0]['Instances'][0].get('KeyName', '-')
-                    password = json.loads(desc['input'])['config'].get('password', '-')
+                    if instance_status not in ['terminated', 'shutting-down']:
+                        instance_ip = res['Reservations'][0]['Instances'][0].get('PublicIpAddress', '-')
+                        keyname = res['Reservations'][0]['Instances'][0].get('KeyName', '-')
+                        password = json.loads(desc['input'])['config'].get('password', '-')
+                    else:
+                        instance_ip = '-'
+                        keyname = '-'
+                        password = '-'
                 else:
                     instance_status = '-'
                     instance_id = '-'

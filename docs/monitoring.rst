@@ -33,9 +33,9 @@ To print out more information, use the ``-v`` (verbose) option. The additional i
 ::
 
     jobid	status	name	start_time	stop_time	instance_id	instance_type	instance_status	ip	key	password
-    O37462jD9Kf7	ABORTED	bwa-mem_092ac447-06f3-45b7-b2ad-cbcf3265ae25	2018-12-14 23:37	2018-12-14 23:40	i-009880382ee22a5b1	t2.large	shutting-down	-	4dn-encode      somepassword
-    jN4ubJNlNKIi	ABORTED	bwa-mem_e0ebc354-ea09-4c34-8b7c-c28a25637a40	2018-12-14 23:33	2018-12-14 23:36	i-0df66d22d485bbc05	t2.large	terminated	-	4dn-encode      someotherpassword
-    dWBRxy0R8LXi	SUCCEEDED	bwa-mem_f13cc54b-0aff-4520-9a5e-cf8f3c9dd49b	2018-12-14 22:44	2018-12-14 22:59	i-00f222fe5e4580007	t2.large	terminated	-	4dn-encode	-
+    O37462jD9Kf7	RUNNING	bwa-mem	2018-12-14 23:37	2018-12-14 23:40	i-009880382ee22a5b1	t2.large	running 3.25.66.32	4dn-encode      somepassword
+    jN4ubJNlNKIi	ABORTED	bwa-mem	2018-12-14 23:33	2018-12-14 23:36	i-0df66d22d485bbc05	c4.4xlarge	shutting-down   -	-       -
+    dWBRxy0R8LXi	SUCCEEDED	bwa-mem	2018-12-14 22:44	2018-12-14 22:59	i-00f222fe5e4580007	t3.medium	terminated	-	-       -
 
 
 
@@ -71,22 +71,27 @@ Detailed monitoring through ssh
 +++++++++++++++++++++++++++++++
 
 
-You can also ssh into your running instance to check more details. The 'instance_ip' field in the 'input' of 'CheckTaskAwsem' contains the IP.
-
-If your CWL version is draft-3 (AMI is based on Amazon Linux)
-
-::
-
-    ssh ec2-user@<ip>
-
-If your CWL version is v1 (AMI is based on ubuntu)
+You can also ssh into your running instance to check more details. The IP of the instance can be found using ``invoke stat -v``
 
 ::
 
     ssh ubuntu@<ip>
 
 
-The password is the password you entered as part of the input json (inside 'config' field, in this case, 'whateverpasswordworks') The purpose of the ssh is to monitor things, so refrain from doing various things there, which could interfere with the run. It is recommended, unless you're a developer, to use the log file than ssh.
+if ``keyname`` was provided in the input execution json,
+
+::
+
+    ssh -i <keyfilename>.pem ubuntu@<ip>
+
+The keyname (and/or password) can also be found using ``invoke stat -v``.
+
+Alternatively, the Step Function execution page of AWS Web Console contains details of the ssh options. ``keyname`` and ``password`` can be found inside the input json of the execution. The IP can be found inside the output json of the ``RunTaskAwsem`` step or the input json of the ``CheckTaskAwsem`` step.
+
+The purpose of the ssh is to monitor things, so refrain from doing various things there, which could interfere with the run. It is recommended, unless you're a developer, to use the log file than ssh.
+
+The instance may be set to run for some time after the run finishes, to allow debugging time with the ssh option. This parameter (in minutes) can be set in the ``shutdown_min`` field inside the ``config`` field of the input execution json.
+
 
 On the instance, one can check the following, for example.
 
