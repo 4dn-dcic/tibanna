@@ -550,8 +550,8 @@ def kill_all(ctx, sfn='tibanna_pony'):
 
 
 @task
-def kill(ctx, exec_arn):
-    _kill(exec_arn)
+def kill(ctx, exec_arn=None, job_id=None, sfn=None):
+    _kill(exec_arn, job_id, sfn)
 
 
 @task
@@ -571,7 +571,7 @@ def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
 
 
 @task
-def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
+def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
     """status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"""
     args = {
         'stateMachineArn': STEP_FUNCTION_ARN(sfn),
@@ -581,8 +581,16 @@ def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
         args['statusFilter'] = status
     res = dict()
     client = boto3.client('stepfunctions')
-    print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
+    if verbose:
+        print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name',
+                                                                  'start_time', 'stop_time',
+                                                                  'instance_id', 'instance_type',
+                                                                  'instance_status', 'ip', 'key',
+                                                                  'password'))
+    else:
+        print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
     res = client.list_executions(**args)
+    ec2 = boto3.client('ec2')
     while True:
         if 'executions' not in res or not res['executions']:
             break
@@ -596,7 +604,33 @@ def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None):
                 stop_time = exc['stopDate'].strftime("%Y-%m-%d %H:%M")
             else:
                 stop_time = ''
-            print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))
+            if verbose:
+                # collect instance stats
+                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + jobid]}])
+                if res['Reservations']:
+                    instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
+                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                    instance_type = res['Reservations'][0]['Instances'][0]['InstanceType']
+                    if instance_status not in ['terminated', 'shutting-down']:
+                        instance_ip = res['Reservations'][0]['Instances'][0].get('PublicIpAddress', '-')
+                        keyname = res['Reservations'][0]['Instances'][0].get('KeyName', '-')
+                        password = json.loads(desc['input'])['config'].get('password', '-')
+                    else:
+                        instance_ip = '-'
+                        keyname = '-'
+                        password = '-'
+                else:
+                    instance_status = '-'
+                    instance_id = '-'
+                    instance_type = '-'
+                    instance_ip = '-'
+                    keyname = '-'
+                    password = '-'
+                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time,
+                                                                          instance_id, instance_type, instance_status,
+                                                                          instance_ip, keyname, password))
+            else:
+                print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))
         if 'nextToken' in res:
             res = client.list_executions(nextToken=res['nextToken'], **args)
         else:
