@@ -227,8 +227,8 @@ def create_role_robust(client, rolename, roledoc, verbose=False):
                    RoleName=rolename,
                    AssumeRolePolicyDocument=roledoc
                 )
-            except Exception as e:
-                raise("Can't create role %s: %s" % (rolename, e))
+            except Exception as e2:
+                raise("Can't create role %s: %s" % (rolename, e2))
     if verbose:
         print(response)
 
@@ -348,9 +348,19 @@ def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
 def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
                       account_id, verbose=False):
     client = iam.meta.client
-    response = client.create_group(
-        GroupName=group_name
-    )
+    try:
+        response = client.create_group(
+           GroupName=group_name
+        )
+    except Exception as e:
+        if 'EntityAlreadyExists' in e:
+            client.delete_group(group_name)
+            try:
+                response = client.create_group(
+                    GroupName=group_name
+                )
+            except Exception as e2:
+                raise("Can't create group %s : %s" % (group_name, e2))
     if verbose:
         print(response)
     group = iam.Group(group_name)
@@ -401,8 +411,8 @@ def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=Fa
                     PolicyName=policy_name,
                     PolicyDocument=policy_doc,
                 )
-            except:
-                raise("Can't create policy %s" % policy_name)
+            except Exception as e2:
+                raise("Can't create policy %s : %s" % (policy_name, e2))
     if verbose:
         print(response)
 
