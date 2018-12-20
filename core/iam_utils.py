@@ -220,15 +220,32 @@ def create_role_robust(client, rolename, roledoc, verbose=False):
            AssumeRolePolicyDocument=roledoc
         )
     except Exception as e:
-        if 'EntityAlreadyExists' in e:
-            client.delete_role(rolename)
+        if 'EntityAlreadyExists' in str(e):
             try:
+                # first remove instance profiles attached to it
+                res = client.list_instance_profiles_for_role(RoleName=rolename)
+                for inst in res['InstanceProfiles']:
+                    client.remove_role_from_instance_profile(
+                        RoleName=rolename,
+                        InstanceProfileName=inst['InstanceProfileName']
+                    )
+                # detach all policies
+                iam = boto3.resource('iam')
+                role = iam.Role(rolename)
+                for pol in list(role.attached_policies.all()):
+                    client.detach_role_policy(
+                        RoleName=rolename,
+                        PolicyArn=pol.arn
+                    )
+                # delete role
+                client.delete_role(RoleName=rolename)
+                # recreate
                 response = client.create_role(
                    RoleName=rolename,
                    AssumeRolePolicyDocument=roledoc
                 )
             except Exception as e2:
-                raise("Can't create role %s: %s" % (rolename, e2))
+                raise Exception("Can't create role %s: %s" % (rolename, str(e2)))
     if verbose:
         print(response)
 
@@ -352,17 +369,19 @@ def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
         response = client.create_group(
            GroupName=group_name
         )
+        if verbose:
+            print(response)
     except Exception as e:
-        if 'EntityAlreadyExists' in e:
-            client.delete_group(group_name)
+        if 'EntityAlreadyExists' in str(e):
             try:
-                response = client.create_group(
-                    GroupName=group_name
-                )
+                # do not actually delete the group, just detach existing policies.
+                # deleting a group would require users to be detached from the group.
+                for pol in list(iam.Group(group_name).attached_policies.all()):
+                    res = client.detach_group_policy(GroupName=group_name, PolicyArn=pol.arn)
+                    if verbose:
+                        print(res)
             except Exception as e2:
-                raise("Can't create group %s : %s" % (group_name, e2))
-    if verbose:
-        print(response)
+                raise Exception("Can't detach policies from group %s : %s" % (group_name, str(e2)))
     group = iam.Group(group_name)
     response = group.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
@@ -402,19 +421,34 @@ def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=Fa
             PolicyName=policy_name,
             PolicyDocument=policy_doc,
         )
+        if verbose:
+            print(response)
     except Exception as e:
-        if 'EntityAlreadyExists' in e:
+        if 'EntityAlreadyExists' in str(e):
             try:
                 policy_arn = 'arn:aws:iam::' + account_id + ':policy/' + policy_name
-                client.delete_policy(policy_arn)
+                # first detach roles and groups and delete versions (requirements for deleting policy)
+                res = client.list_entities_for_policy(PolicyArn=policy_arn)
+                iam = boto3.resource('iam')
+                policy = iam.Policy(policy_arn)
+                for role in res['PolicyRoles']:
+                    policy.detach_role(RoleName=role['RoleName'])
+                for group in res['PolicyGroups']:
+                    policy.detach_group(GroupName=group['GroupName'])
+                for v in list(policy.versions.all()):
+                    if not v.is_default_version:
+                        client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
+                # delete policy
+                client.delete_policy(PolicyArn=policy_arn)
+                # recreate policy
                 response = client.create_policy(
                     PolicyName=policy_name,
                     PolicyDocument=policy_doc,
                 )
+                if verbose:
+                    print(response)
             except Exception as e2:
-                raise("Can't create policy %s : %s" % (policy_name, e2))
-    if verbose:
-        print(response)
+                raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
 
 
 def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False):
@@ -483,14 +517,36 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     # role for step function
     create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)
     # instance profile
+    # create instance profile
     instance_profile_name = get_ec2_role_name(tibanna_policy_prefix)
-    client.create_instance_profile(
-        InstanceProfileName=instance_profile_name
-    )
+    try:
+        client.create_instance_profile(
+            InstanceProfileName=instance_profile_name
+        )
+    except Exception as e:
+        if 'EntityAlreadyExists' in str(e):
+            client.delete_instance_profile(InstanceProfileName=instance_profile_name)
+            try:
+                client.create_instance_profile(
+                    InstanceProfileName=instance_profile_name
+                )
+            except Exception as e2:
+                raise Exception("Can't create instance profile %s: %s" % (instance_profile_name, str(e2)))
+    # add role to instance profile
     ip = iam.InstanceProfile(instance_profile_name)
-    ip.add_role(
-        RoleName=instance_profile_name
-    )
+    try:
+        ip.add_role(
+            RoleName=instance_profile_name
+        )
+    except Exception as e:
+        if 'LimitExceeded' in e:
+            ip.remove_role(instance_profile_name)
+            try:
+                ip.add_role(
+                    RoleName=instance_profile_name
+                )
+            except Exception as e2:
+                raise Exception("Can't add role %s: %s" % (instance_profile_name, str(e2)))
     # create IAM group for users who share permission
     create_user_group(iam, tibanna_policy_prefix, bucket_policy_name, ec2_desc_policy_name, account_id)
     return tibanna_policy_prefix
