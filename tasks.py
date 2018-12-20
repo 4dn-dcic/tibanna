@@ -550,7 +550,7 @@ def kill_all(ctx, sfn='tibanna_pony'):
 
 
 @task
-def kill(ctx, exec_arn=None, job_id=None, sfn=None):
+def kill(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     _kill(exec_arn, job_id, sfn)
 
 
