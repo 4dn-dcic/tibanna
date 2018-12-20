@@ -28,8 +28,7 @@
     "ebs_iops": 500,
     "shutdown_min": 120,
     "instance_type": "t2.micro",
-    
-    
+    "cloudwatch_dashboard" : true,    
     "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
     "key_name": ""

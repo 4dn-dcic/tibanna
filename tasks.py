@@ -21,7 +21,7 @@ from core.launch_utils import rerun_many as _rerun_many
 from core.utils import kill as _kill
 from core.utils import kill_all as _kill_all
 from core.iam_utils import create_tibanna_iam
-from core.iam_utils import get_bucket_role_name, get_lambda_role_name
+from core.iam_utils import get_ec2_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
 import requests
@@ -342,7 +342,7 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     if name == 'run_task_awsem':
         if usergroup:
             lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                = get_bucket_role_name('tibanna_' + usergroup)
+                = get_ec2_role_name('tibanna_' + usergroup)
         else:
             lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
     # add role
