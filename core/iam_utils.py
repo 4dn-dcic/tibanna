@@ -213,6 +213,26 @@ def get_stepfunction_role_name(tibanna_policy_prefix):
     return tibanna_policy_prefix + '_states'
 
 
+def create_role_robust(client, rolename, roledoc, verbose=False):
+    try:
+        response = client.create_role(
+           RoleName=rolename,
+           AssumeRolePolicyDocument=roledoc
+        )
+    except Exception as e:
+        if 'EntityAlreadyExists' in e:
+            client.delete_role(rolename)
+            try:
+                response = client.create_role(
+                   RoleName=rolename,
+                   AssumeRolePolicyDocument=roledoc
+                )
+            except Exception as e:
+                raise("Can't create role %s: %s" % (rolename, e))
+    if verbose:
+        print(response)
+
+
 def create_empty_role_for_lambda(iam, verbose=False):
     client = iam.meta.client
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
@@ -221,12 +241,7 @@ def create_empty_role_for_lambda(iam, verbose=False):
         client.get_role(RoleName=empty_role_name)
     except Exception:
         print("creating %s", empty_role_name)
-        response = client.create_role(
-           RoleName=empty_role_name,
-           AssumeRolePolicyDocument=json.dumps(role_policy_doc_lambda)
-        )
-    if verbose:
-        print(response)
+        create_role_robust(client, empty_role_name, json.dumps(role_policy_doc_lambda), verbose)
 
 
 def create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
@@ -235,12 +250,7 @@ def create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
     client = iam.meta.client
     ec2_role_name = get_ec2_role_name(tibanna_policy_prefix)
     role_policy_doc_ec2 = generate_assume_role_policy_document('ec2')
-    response = client.create_role(
-        RoleName=ec2_role_name,
-        AssumeRolePolicyDocument=json.dumps(role_policy_doc_ec2)
-    )
-    if verbose:
-        print(response)
+    create_role_robust(client, ec2_role_name, json.dumps(role_policy_doc_ec2), verbose)
     role_bucket = iam.Role(ec2_role_name)
     response = role_bucket.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
@@ -261,10 +271,7 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
     client = iam.meta.client
     lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, 'run_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
-    response = client.create_role(
-        RoleName=lambda_run_role_name,
-        AssumeRolePolicyDocument=json.dumps(role_policy_doc_lambda)
-    )
+    create_role_robust(client, lambda_run_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_run_role_name)
     response = role_lambda_run.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + list_policy_name
@@ -309,12 +316,7 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
     client = iam.meta.client
     lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, 'check_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
-    response = client.create_role(
-        RoleName=lambda_check_role_name,
-        AssumeRolePolicyDocument=json.dumps(role_policy_doc_lambda)
-    )
-    if verbose:
-        print(response)
+    create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
     response = role_lambda_run.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_policy_name
@@ -333,12 +335,7 @@ def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
     client = iam.meta.client
     stepfunction_role_name = get_stepfunction_role_name(tibanna_policy_prefix)
     role_policy_doc = generate_assume_role_policy_document('states')
-    response = client.create_role(
-        RoleName=stepfunction_role_name,
-        AssumeRolePolicyDocument=json.dumps(role_policy_doc)
-    )
-    if verbose:
-        print(response)
+    create_role_robust(client, stepfunction_role_name, json.dumps(role_policy_doc), verbose)
     role_stepfunction = iam.Role(stepfunction_role_name)
     response = role_stepfunction.attach_policy(
         PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
@@ -389,6 +386,27 @@ def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
         print(response)
 
 
+def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=False):
+    try:
+        response = client.create_policy(
+            PolicyName=policy_name,
+            PolicyDocument=policy_doc,
+        )
+    except Exception as e:
+        if 'EntityAlreadyExists' in e:
+            try:
+                policy_arn = 'arn:aws:iam::' + account_id + ':policy/' + policy_name
+                client.delete_policy(policy_arn)
+                response = client.create_policy(
+                    PolicyName=policy_name,
+                    PolicyDocument=policy_doc,
+                )
+            except:
+                raise("Can't create policy %s" % policy_name)
+    if verbose:
+        print(response)
+
+
 def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False):
     """creates IAM policies and roles and a user group for tibanna
     returns prefix of all IAM policies, roles and group.
@@ -402,79 +420,43 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     # bucket policy
     bucket_policy_name = tibanna_policy_prefix + '_bucket_access'
     policy_ba = generate_policy_bucket_access(bucket_names)
-    response = client.create_policy(
-        PolicyName=bucket_policy_name,
-        PolicyDocument=json.dumps(policy_ba),
-    )
+    create_policy_robust(client, bucket_policy_name, json.dumps(policy_ba), account_id, verbose)
     # lambda policies
     # list_instanceprofiles : by default not user-dependent,
     # but create per user group to allow future modification per user-group
     list_policy_name = tibanna_policy_prefix + '_list_instanceprofiles'
-    response = client.create_policy(
-        PolicyName=list_policy_name,
-        PolicyDocument=json.dumps(generate_policy_list_instanceprofiles()),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, list_policy_name,
+                         json.dumps(generate_policy_list_instanceprofiles()), account_id, verbose)
     # cloudwatchlogs: by default not user-dependent,
     # but create per user group to allow future modification per user-group
     cloudwatch_policy_name = tibanna_policy_prefix + '_cloudwatchlogs'
-    response = client.create_policy(
-        PolicyName=cloudwatch_policy_name,
-        PolicyDocument=json.dumps(generate_policy_cloudwatchlogs()),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, cloudwatch_policy_name,
+                         json.dumps(generate_policy_cloudwatchlogs()), account_id, verbose)
     # iam_passrole_s3: passrole policy per user group
     passrole_policy_name = tibanna_policy_prefix + '_iam_passrole_s3'
     policy_iam_ps3 = generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=passrole_policy_name,
-        PolicyDocument=json.dumps(policy_iam_ps3),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, passrole_policy_name, json.dumps(policy_iam_ps3), account_id, verbose)
     # lambdainvoke policy for step function
     lambdainvoke_policy_name = tibanna_policy_prefix + '_lambdainvoke'
     policy_lambdainvoke = generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=lambdainvoke_policy_name,
-        PolicyDocument=json.dumps(policy_lambdainvoke),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, lambdainvoke_policy_name, json.dumps(policy_lambdainvoke), account_id, verbose)
     desc_stepfunction_policy_name = tibanna_policy_prefix + '_desc_sts'
     policy_desc_stepfunction = generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=desc_stepfunction_policy_name,
-        PolicyDocument=json.dumps(policy_desc_stepfunction),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, desc_stepfunction_policy_name,
+                         json.dumps(policy_desc_stepfunction), account_id, verbose)
+    # permission to send cloudwatch metric (ec2)
     cloudwatch_metric_policy_name = tibanna_policy_prefix + '_cw_metric'
     policy_cloudwatch_metric = generate_cloudwatch_metric_policy(account_id, region, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=cloudwatch_metric_policy_name,
-        PolicyDocument=json.dumps(policy_cloudwatch_metric),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, cloudwatch_metric_policy_name,
+                         json.dumps(policy_cloudwatch_metric), account_id, verbose)
+    # permission for cloudwatch dashboard creation (run_task_awsem)
     cw_dashboard_policy_name = tibanna_policy_prefix + '_cw_dashboard'
     policy_cw_dashboard = generate_cw_dashboard_policy(account_id, region, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=cw_dashboard_policy_name,
-        PolicyDocument=json.dumps(policy_cw_dashboard),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, cw_dashboard_policy_name, json.dumps(policy_cw_dashboard), account_id, verbose)
+    # ec2 describe policy for invoke stat -v (user)
     ec2_desc_policy_name = tibanna_policy_prefix + '_ec2_desc'
     policy_ec2_desc = generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix)
-    response = client.create_policy(
-        PolicyName=ec2_desc_policy_name,
-        PolicyDocument=json.dumps(policy_ec2_desc),
-    )
-    if verbose:
-        print(response)
+    create_policy_robust(client, ec2_desc_policy_name, json.dumps(policy_ec2_desc), account_id, verbose)
     # roles
     # role for bucket
     create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
