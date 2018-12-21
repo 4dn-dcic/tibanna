@@ -193,7 +193,7 @@ or
     invoke kill --job-id=<jobid> --sfn=<stepfunctionname>
 
 
-If ``jobid`` is specified but not ``stepfunctionname``, then only the EC2 instance will be terminated and the step function status may still be RUNNING.
+If ``jobid`` is specified but not ``stepfunctionname``, then by default it assumes ``TIBANNA_DEFAULT_STEP_FUNCTION_NAME``. If the job id is not found in the executions on the default or specified step function, then  only the EC2 instance will be terminated and the step function status may still be RUNNING.
 
 
 

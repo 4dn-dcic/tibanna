@@ -11,6 +11,32 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Dec 21, 2018** The latest version is now 0.5.6_.
+
+    - CloudWatch set up permission error fixed
+    - `invoke kill` works with jobid (previously it worked only with execution arn)
+    
+    ::
+
+        invoke kill --job-id=<jobid> [--sfn=<stepfunctionname>]
+
+    - A more comprehensive monitoring using `invoke stat -v` that prints out instance ID, IP, instance status, ssh key and password.
+    - To update an existing Tibanna on AWS, do the following
+    
+    ::
+
+        invoke setup_tibanna_env --buckets=<bucket1>,<bucket2>,...
+        invoke deploy_tibanna --sfn-type=unicorn --usergroup=<usergroup_name>
+
+    e.g.
+
+    ::
+
+        invoke setup_tibanna_env --buckets=leelab-datafiles,leelab-tibanna-log
+        invoke deploy_tibanna --sfn-type=unicorn --usergroup=default_3225
+
+
+
   **Dec 14, 2018** The latest version is now 0.5.5_.
 
     - Now memory, Disk space, CPU utilization are reported to CloudWatch at 1min interval from the Awsem instance.
@@ -87,6 +113,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.6: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.6
 .. _0.5.5: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.5
 .. _0.5.4: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.4
 .. _0.5.3: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.3
