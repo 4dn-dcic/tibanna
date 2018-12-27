@@ -1,13 +1,12 @@
 {
   "_tibanna": {
     "env": "fourfront-webdev",
-    "run_type": "chipseq-test-histone-pe-1rep-alignonly"
+    "run_type": "chipseq-test-pe-1rep-alignonly-chiponly"
   },
   "args": {
     "app_name": "encode-chipseq",
     "input_parameters": { 
         "chip.pipeline_type" : "histone",
-        "chip.peak_caller": "macs2",
         "chip.paired_end" : true,
         "chip.choose_ctl.always_use_pooled_ctl" : true,
         "chip.qc_report.name" : "test",
@@ -39,10 +38,6 @@
       "chip.fastqs": {
         "bucket_name": "soos-4dn-bucket",
         "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz", "4DNFI43RP96B.h10M.fastq.gz"]]]
-      },
-      "chip.ctl_fastqs": {
-        "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz","4DNFI438ZP4U.h10M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "soos-4dn-bucket",
