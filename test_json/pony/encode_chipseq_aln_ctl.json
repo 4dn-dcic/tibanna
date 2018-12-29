@@ -1,0 +1,69 @@
+{
+    "_tibanna": {
+      "run_type": "chipseq-test-aln-ctl",
+      "env": "fourfront-webdev"
+    },
+    "app_name": "encode-chipseq-aln-ctl",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "workflow_uuid": "1dfb78e8-9844-48c6-804e-d05e7257e179",
+    "parameters": { 
+        "chip.pipeline_type" : "histone",
+        "chip.paired_end" : true,
+        "chip.choose_ctl.always_use_pooled_ctl" : true,
+        "chip.qc_report.name" : "H3K27ac_HFFc6",
+        "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
+        "chip.gensz" : "hs",
+        "chip.bam2ta_ctl.regex_grep_v_ta": "chr[MUE]|random|alt",
+        "chip.bwa_ctl.cpu": 16,
+        "chip.merge_fastq_ctl.cpu": 16,
+        "chip.filter_ctl.cpu": 16,
+        "chip.bam2ta_ctl.cpu": 16,
+        "chip.align_only": true
+    },
+    "input_files" : [
+       {
+           "workflow_argument_name": "chip.ctl_fastqs",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": [
+                    [["35a1b573-9690-41b3-b0c0-0da8af5c55e8", "bf1cbd5e-4eaf-4d0a-ba1c-b8cf758ff90b"],
+                     ["4c3be0d1-cd00-4a14-85ed-43269591fe41", "67d23c45-6a26-4de0-9518-f986081b8fef"]]
+           ],
+           "object_key": [
+                          [["4DNFI5JD6GGN.fastq.gz", "4DNFI89RWX1M.fastq.gz"],
+                           ["4DNFIGM25CMN.fastq.gz", "4DNFI438ZP4U.fastq.gz"]]
+           ]
+       },
+       {
+           "workflow_argument_name": "chip.bwa_idx_tar",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "38077b98-3862-45cd-b4be-8e28e9494549",
+           "object_key": "4DNFIZQB369V.bwaIndex.tar",
+           "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar"
+       },
+       { 
+           "workflow_argument_name": "chip.blacklist", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "9562ffbd-9f7a-4bd7-9c10-c335137d8966",
+           "object_key": "4DNFIZ1TGJZR.bed.gz"
+       },
+       { 
+           "workflow_argument_name": "chip.chrsz", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "9866d158-da3c-4d9b-96a9-1d59632eabeb",
+           "object_key": "4DNFIZJB62D1.chrom.sizes"
+       }
+  ],
+  "config": { 
+    "ebs_size": 100,
+    "ebs_type": "gp2",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": true,
+    "ebs_iops": "",
+    "shutdown_min": "now",
+    "instance_type": "c4.4xlarge",   
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": "",
+    "cloudwatch_dashboard": true
+  }
+}
