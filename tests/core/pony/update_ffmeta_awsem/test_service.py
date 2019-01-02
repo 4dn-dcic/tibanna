@@ -147,15 +147,32 @@ def test__md5_updater_extra_file():
                  }
     md5 = '1234'
     content_md5 = '5678'
-    new_file = _md5_updater(inputjson, md5, content_md5, format_if_extra='pairs_px2')
+    new_file = _md5_updater(inputjson, md5, content_md5, format_if_extra='pairs_px2', file_size=6789)
     assert new_file
     assert 'extra_files' in new_file
     assert new_file['extra_files'][0]['file_format'] == 'pairs_px2'
     assert new_file['extra_files'][0]['md5sum'] == '1234'
     assert new_file['extra_files'][0]['content_md5sum'] == '5678'
+    assert new_file['extra_files'][0]['file_size'] == 6789
     assert 'md5sum' not in new_file
     assert 'content_md5sum' not in new_file
     assert 'status' not in new_file
+
+
+def test__md5_updater_file_size():
+    inputjson = {'status': 'uploaded',
+                 'md5sum': '1234',
+                 }
+    md5 = '1234'
+    content_md5 = '5678'
+    new_file = _md5_updater(inputjson, md5, content_md5, file_size=6789)
+    assert new_file
+    assert 'content_md5sum' in new_file
+    assert new_file['content_md5sum'] == '5678'
+    assert 'md5sum' not in new_file
+    assert 'status' not in new_file
+    assert 'file_size' in new_file
+    assert new_file['file_size'] == 6789
 
 
 def test_add_md5_filesize_to_pf_extra():

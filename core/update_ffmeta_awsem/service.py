@@ -299,7 +299,7 @@ def check_mismatch(md5a, md5b):
         return False
 
 
-def create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5):
+def create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5, file_size=None):
     new_content = {}
 
     def check_mismatch_and_update(x, original_x, fieldname):
@@ -309,6 +309,8 @@ def create_patch_content_for_md5(md5, content_md5, original_md5, original_conten
             new_content[fieldname] = x
     check_mismatch_and_update(md5, original_md5, 'md5sum')
     check_mismatch_and_update(content_md5, original_content_md5, 'content_md5sum')
+    if file_size:
+        new_content['file_size'] = file_size
     return new_content
 
 
@@ -325,17 +327,17 @@ def add_status_to_patch_content(content, current_status):
     return new_file
 
 
-def _md5_updater(original_file, md5, content_md5, format_if_extra=None):
+def _md5_updater(original_file, md5, content_md5, format_if_extra=None, file_size=None):
     new_file = {}
     current_extra = which_extra(original_file, format_if_extra)
     if current_extra:  # extra file
         original_md5, original_content_md5 = get_existing_md5(current_extra)
-        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5, file_size)
         if new_content:
             new_file = create_extrafile_patch_content_for_md5(new_content, current_extra, original_file)
     else:
         original_md5, original_content_md5 = get_existing_md5(original_file)
-        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5)
+        new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5, file_size)
         if new_content:
             current_status = original_file.get('status', "uploading")
             new_file = add_status_to_patch_content(new_content, current_status)
@@ -369,18 +371,16 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
                                           check_queue=True)
     if status.lower() == 'uploaded':  # md5 report file is uploaded
         md5, content_md5 = parse_md5_report(awsemfile.read())
+        # add file size to input file metadata
+        input_file = awsemfile.runner.input_files()[0]
+        file_size = boto3.client('s3').head_object(Bucket=input_file.bucket,
+                                                   Key=input_file.key).get('ContentLength', '')
         for format_if_extra in format_if_extras:
-            new_file = _md5_updater(original_file, md5, content_md5, format_if_extra)
+            new_file = _md5_updater(original_file, md5, content_md5, format_if_extra, file_size)
             if new_file:
                 break
         printlog("new_file = %s" % str(new_file))
         if new_file:
-            # add file size to input file metadata
-            input_file = awsemfile.runner.input_files()[0].s3
-            file_size = boto3.client('s3').head_object(Bucket=input_file.bucket, Key=input_file.key).get('ContentLength', '')
-            if file_size:
-                new_file['file_size'] file_size
-            # patch metadata
             try:
                 resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
                 printlog(resp)
