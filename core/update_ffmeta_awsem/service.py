@@ -373,6 +373,12 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
                 break
         printlog("new_file = %s" % str(new_file))
         if new_file:
+            # add file size to input file metadata
+            input_file = awsemfile.runner.input_files()[0].s3
+            file_size = boto3.client('s3').head_object(Bucket=input_file.bucket, Key=input_file.key).get('ContentLength', '')
+            if file_size:
+                new_file['file_size'] file_size
+            # patch metadata
             try:
                 resp = ff_utils.patch_metadata(new_file, accession, key=ff_key)
                 printlog(resp)
