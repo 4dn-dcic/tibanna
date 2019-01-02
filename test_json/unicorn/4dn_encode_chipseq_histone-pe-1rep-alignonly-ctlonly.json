@@ -1,7 +1,7 @@
 {
   "_tibanna": {
     "env": "fourfront-webdev",
-    "run_type": "chipseq-test-pe-1rep-alignonly-chiponly"
+    "run_type": "chipseq-test-pe-1rep-alignonly-ctlonly"
   },
   "args": {
     "app_name": "encode-chipseq",
@@ -12,20 +12,17 @@
         "chip.qc_report.name" : "test",
         "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
         "chip.gensz" : "hs",
-        "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
-        "chip.fraglen": [],
-        "chip.bwa.cpu": 16,
-        "chip.merge_fastq.cpu": 16,
-        "chip.filter.cpu": 16,
-        "chip.bam2ta.cpu": 16,
-        "chip.xcor.cpu": 16,
+        "chip.bam2ta_ctl.regex_grep_v_ta" : "chr[MUE]|random|alt",
+        "chip.bwa_ctl.cpu": 16,
+        "chip.merge_fastq_ctl.cpu": 16,
+        "chip.filter_ctl.cpu": 16,
+        "chip.bam2ta_ctl.cpu": 16,
         "chip.align_only": true
     },
     "wdl_child_filenames": [],
     "language": "wdl",
     "output_target": {
-       "chip.first_ta": "ta.bed.gz",
-       "chip.first_ta_xcor": "ta_xcor.bed.gz"
+       "chip.first_ta_ctl": "ta_ctl.bed.gz"
     },
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
@@ -34,9 +31,9 @@
     "app_version": "dev",
     "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/no_out/",
     "input_files": {
-      "chip.fastqs": {
+      "chip.ctl_fastqs": {
         "bucket_name": "soos-4dn-bucket",
-        "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz", "4DNFI43RP96B.h10M.fastq.gz"]]]
+        "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz","4DNFI438ZP4U.h10M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
         "bucket_name": "soos-4dn-bucket",
