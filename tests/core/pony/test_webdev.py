@@ -45,7 +45,7 @@ def testrun_md5(env='webdev'):
         "output_bucket": bucket,
         "wfr_meta": {"notes": "processed file md5 trigger test from test_webdev.py"}
     }
-    resp = run_workflow(input_json, sfn='tibanna_pony_dev')
+    resp = run_workflow(input_json)
     print(resp)
 
     # check result
@@ -106,7 +106,7 @@ def testrun_md5_input_json_w_extra_file_object_name(env='webdev'):
         "output_bucket": bucket,
         "wfr_meta": {"notes": "extra file md5 trigger test from test_webdev.py"}
     }
-    resp = run_workflow(input_json, sfn='tibanna_pony_dev')
+    resp = run_workflow(input_json)
     print(resp)
 
     # check result
@@ -114,13 +114,16 @@ def testrun_md5_input_json_w_extra_file_object_name(env='webdev'):
     filemeta = get_metadata(uuid, key=ff_key, add_on='?datastore=database')
     content_md5sum = filemeta.get('extra_files')[0].get('content_md5sum')
     md5sum = filemeta.get('extra_files')[0].get('md5sum')
+    file_size = filemeta.get('extra_files')[0].get('file_size')
     wfr_uuid = get_wfr_uuid(resp['_tibanna']['exec_arn'])
     wfr_meta = get_metadata(wfr_uuid, key=ff_key, add_on='?datastore=database')
     assert 'input_files' in wfr_meta
     assert 'format_if_extra' in wfr_meta['input_files'][0]
     assert md5sum
     assert content_md5sum
+    assert file_size
     print(content_md5sum)
     print(md5sum)
+    print(file_size)
     patch_metadata({'status': 'deleted'}, uuid, key=ff_key)
     patch_metadata({'status': 'deleted'}, wfr_uuid, key=ff_key)
