@@ -287,7 +287,7 @@ def which_extra(original_file, format_if_extra=None):
             raise Exception("input file has no extra_files," +
                             "yet the tag 'format_if_extra' is found in the input json")
         for extra in original_file.get('extra_files'):
-            if extra.get('file_format') == format_if_extra:
+            if parse_formatstr(extra.get('file_format')) == format_if_extra:
                 return extra
     return None
 
@@ -307,6 +307,7 @@ def create_patch_content_for_md5(md5, content_md5, original_md5, original_conten
             raise Exception(fieldname + " not matching the original one")
         if x and not original_x:
             new_content[fieldname] = x
+        printlog("check_mismatch_and_update: new_content = %s" % str(new_content))
     check_mismatch_and_update(md5, original_md5, 'md5sum')
     check_mismatch_and_update(content_md5, original_content_md5, 'content_md5sum')
     if file_size:
@@ -376,6 +377,7 @@ def md5_updater(status, awsemfile, ff_meta, tibanna):
         file_size = boto3.client('s3').head_object(Bucket=input_file.bucket,
                                                    Key=input_file.key).get('ContentLength', '')
         for format_if_extra in format_if_extras:
+            printlog("format_if_extra : %s" % format_if_extra)
             new_file = _md5_updater(original_file, md5, content_md5, format_if_extra, file_size)
             if new_file:
                 break

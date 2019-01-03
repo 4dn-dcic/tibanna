@@ -22,6 +22,7 @@ from core.utils import _tibanna_settings
 from core.utils import printlog
 from time import sleep
 import boto3
+import gzip
 
 
 ###########################################
@@ -673,7 +674,7 @@ def post_random_file(bucket, ff_key,
     }
     upload_key = uuid + '/' + accession + '.' + file_extension
     tmpfilename = 'alsjekvjf'
-    with open(tmpfilename, 'w') as f:
+    with gzip.open(tmpfilename, 'wb') as f:
         f.write(uuid)
     s3 = boto3.resource('s3')
     s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
