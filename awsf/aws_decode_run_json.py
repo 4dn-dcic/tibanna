@@ -120,7 +120,7 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                 v = inputs[category][item]
                 if 'rename' in v and v['rename']:
                     if isinstance(v['rename'], list):
-                        v['path'] = v['rename'].copy()
+                        v['path'] = list(v['rename'])
                     else:
                         v['path'] = v['rename']
                     del v['rename']
