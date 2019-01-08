@@ -337,16 +337,19 @@ def add_status_to_patch_content(content, current_status):
 def _md5_updater(original_file, md5, content_md5, format_if_extra=None, file_size=None):
     new_file = {}
     current_extra = which_extra(original_file, format_if_extra)
+    current_status = original_file.get('status', "uploading")
     if current_extra:  # extra file
         original_md5, original_content_md5 = get_existing_md5(current_extra)
         new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5, file_size)
         if new_content:
+            extra_status = current_extra.get('status', '')
+            if extra_status and extra_status in ["uploading", "upload failed"]:
+                new_content['status'] = 'uploaded'
             new_file = create_extrafile_patch_content_for_md5(new_content, current_extra, original_file)
     else:
         original_md5, original_content_md5 = get_existing_md5(original_file)
         new_content = create_patch_content_for_md5(md5, content_md5, original_md5, original_content_md5, file_size)
         if new_content:
-            current_status = original_file.get('status', "uploading")
             new_file = add_status_to_patch_content(new_content, current_status)
     print("new_file = %s" % str(new_file))
     return new_file

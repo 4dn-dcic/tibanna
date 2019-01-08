@@ -656,7 +656,7 @@ def get_wfr_uuid(exec_arn):
 def post_random_file(bucket, ff_key,
                      file_format='pairs', extra_file_format='pairs_px2',
                      file_extension='pairs.gz', extra_file_extension='pairs.gz.px2',
-                     schema='file_processed'):
+                     schema='file_processed', extra_status=None):
     """Generates a fake file with random uuid and accession
     and posts it to fourfront. The content is unique since it contains
     its own uuid. The file metadata does not contain md5sum or
@@ -688,6 +688,8 @@ def post_random_file(bucket, ff_key,
                "uuid": uuid
             }
         ]
+        if extra_status:
+            newfile["extra_files"][0]['status'] = extra_status
         extra_upload_key = uuid + '/' + accession + '.' + extra_file_extension
         extra_tmpfilename = 'alsjekvjf-extra'
         with open(extra_tmpfilename, 'w') as f:
