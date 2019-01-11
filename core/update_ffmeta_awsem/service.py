@@ -513,6 +513,15 @@ def real_handler(event, context):
         ff_meta.run_status = 'error'
         ff_meta.description = event.get('error')
         ff_meta.patch(key=tibanna.ff_keys)
+        # sending a notification email before throwing error
+        if 'email' in event['config'] and event['config']['email']:
+            try:
+                send_notification_email(event['_tibanna']['settings']['run_name'],
+                                        event['jobid'],
+                                        ff_meta.run_status,
+                                        event['_tibanna']['settings']['url'])
+            except Exception as e:
+                printlog("Cannot send email: %s" % e)
         raise Exception(event.get('error'))
 
     metadata_only = event.get('metadata_only', False)
