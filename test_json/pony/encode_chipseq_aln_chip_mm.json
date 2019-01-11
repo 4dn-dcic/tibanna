@@ -1,0 +1,67 @@
+{
+    "_tibanna": {
+      "run_type": "chipseq-test-aln-chip",
+      "env": "fourfront-webdev"
+    },
+    "app_name": "encode-chipseq-aln-chip",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "workflow_uuid": "1dfb78e8-9844-48c6-804e-d05e7257e178",
+    "parameters": { 
+        "chip.pipeline_type" : "tf",
+        "chip.paired_end" : true,
+        "chip.choose_ctl.always_use_pooled_ctl" : true,
+        "chip.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+        "chip.gensz" : "mm",
+        "chip.bwa.cpu": 16,
+        "chip.merge_fastq.cpu": 16,
+        "chip.filter.cpu": 16,
+        "chip.bam2ta.cpu": 16,
+        "chip.xcor.cpu": 16,
+        "chip.align_only": true
+    },
+    "input_files" : [
+       {
+           "workflow_argument_name": "chip.bwa_idx_tar",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "f4b63d31-65d8-437f-a76a-6bedbb52ae6f",
+           "object_key": "4DNFIZ2PWCC2.bwaIndex.tar",
+           "rename": "mm10_no_alt_analysis_set_ENCODE.fasta.tar"
+       },
+       { 
+           "workflow_argument_name": "chip.fastqs", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": [
+                    [["bb2740d2-b59e-4d62-80a8-27e7966c5d3d", "a4521260-d780-4e28-88bb-814564fecd79"]]
+           ],
+           "object_key": [
+                          [["4DNFIGIHTBXY.fastq.gz", "4DNFINHLSJV2.fastq.gz"]]
+           ]
+
+       },
+       { 
+           "workflow_argument_name": "chip.blacklist", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "a32747a3-8a9e-4a9e-a7a1-4db0e8b65925",
+           "object_key": "4DNFIZ3FBPK8.bed.gz"
+       },
+       { 
+           "workflow_argument_name": "chip.chrsz", 
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+           "uuid": "be0a9819-d2ce-4422-be4b-234fb1677dd9",
+           "object_key": "4DNFIBP173GC.chrom.sizes"
+       }
+  ],
+  "config": { 
+    "ebs_size": 100,
+    "ebs_type": "gp2",
+    "json_bucket": "4dn-aws-pipeline-run-json",
+    "EBS_optimized": true,
+    "ebs_iops": "",
+    "shutdown_min": 240,
+    "instance_type": "c4.4xlarge",   
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": "",
+    "cloudwatch_dashboard": true
+  }
+}

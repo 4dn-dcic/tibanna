@@ -490,13 +490,13 @@ def serialize_startdate(response):
         tibanna_resp['startDate'] = str(tibanna_resp['startDate'])
 
 
-def send_notification_email(receiver, sfn, jobid, status, exec_url=None, sender='tibanna@4dndcic.org'):
+def send_notification_email(receiver, job_name, jobid, status, exec_url=None, sender='tibanna@4dndcic.org'):
     import smtplib
     from email.mime.text import MIMEText
-    text = 'Job %s on step function %s finished with status %s' % (jobid, sfn, status) \
+    text = 'Job %s (%s) finished with status %s' % (jobid, job_name, status) \
            + 'For more detail, go to %s' % exec_url
     msg = MIMEText(text)
-    msg['Subject'] = 'job %s finished with status %s' % (jobid, status)
+    msg['Subject'] = 'job finished with status %s : %s' % (status, job_name)
     msg['From'] = sender
     msg['To'] = receiver
     s = smtplib.SMTP('localhost')

@@ -12,7 +12,8 @@ from core.pony_utils import (
 from core.utils import (
     powerup,
     printlog,
-    TibannaStartException
+    TibannaStartException,
+    send_notification_email
 )
 import boto3
 from collections import defaultdict
@@ -563,6 +564,17 @@ def real_handler(event, context):
 
     event['ff_meta'] = ff_meta.as_dict()
     event['pf_meta'] = [_.as_dict() for _ in pf_meta]
+
+    # sending a notification email after the job finishes
+    if 'email' in event['config']:
+        try:
+            send_notification_email(event['config']['email'],
+                                    event['_tibanna']['settings']['run_name'],
+                                    event['jobid'],
+                                    event['ff_meta']['status'],
+                                    event['_tibanna']['settings']['url'])
+        except:
+            printlog("Cannot send email")
 
     return event
 
