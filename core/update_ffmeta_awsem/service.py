@@ -566,15 +566,14 @@ def real_handler(event, context):
     event['pf_meta'] = [_.as_dict() for _ in pf_meta]
 
     # sending a notification email after the job finishes
-    if 'email' in event['config']:
+    if 'email' in event['config'] and event['config']['email']:
         try:
-            send_notification_email(event['config']['email'],
-                                    event['_tibanna']['settings']['run_name'],
+            send_notification_email(event['_tibanna']['settings']['run_name'],
                                     event['jobid'],
-                                    event['ff_meta']['status'],
+                                    event['ff_meta']['run_status'],
                                     event['_tibanna']['settings']['url'])
-        except:
-            printlog("Cannot send email")
+        except Exception as e:
+            printlog("Cannot send email: %s" % e)
 
     return event
 
