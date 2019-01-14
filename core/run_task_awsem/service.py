@@ -48,6 +48,7 @@ def handler(event, context):
       wdl_directory_url: the url of the wdl file
     # optional
       dependency: {'exec_arn': [exec_arns]}
+      spot_duration: 60  # block minutes 60-360 if requesting spot instance
     '''
 
     # read default variables in config
@@ -60,6 +61,8 @@ def handler(event, context):
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_child_filenames", "cwl_directory_url"]
     ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_child_filenames", "wdl_directory_url", "language"]
 
+    # args: parameters needed by the instance to run a workflow
+    # cfg: parameters needed to launch an instance
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
         assert k in cfg, "%s not in config_field" % k
@@ -77,40 +80,8 @@ def handler(event, context):
     if 'dependency' in args:
         check_dependency(**args['dependency'])
 
-    # args: parameters needed by the instance to run a workflow
-    # cfg: parameters needed to launch an instance
-    cfg['job_tag'] = args.get('app_name')
-    cfg['userdata_dir'] = '/tmp/userdata'
-
-    # local directory in which the json file will be first created.
-    cfg['json_dir'] = '/tmp/json'
-
-    # postrun json should be made public?
-    if 'public_postrun_json' not in cfg:
-        cfg['public_postrun_json'] = False
-        # 4dn will use 'true' --> this will automatically be added by start_run_awsem
-
-    # script url
-    cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
-        os.environ.get('TIBANNA_REPO_NAME') + '/' + \
-        os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf/'
-
-    # AMI and script directory according to cwl version
-    if 'language' in args and args['language'] == 'wdl':
-        cfg['ami_id'] = os.environ.get('AMI_ID_WDL')
-    else:
-        if args['cwl_version'] == 'v1':
-            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
-            args['language'] = 'cwl_v1'
-        else:
-            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
-            args['language'] = 'cwl_draft3'
-        if args.get('singularity', False):
-            cfg['singularity'] = True
-
-    cfg['language'] = args['language']
-    ec2_utils.update_config(cfg, args['app_name'],
-                            args['input_files'], args['input_parameters'])
+    # update input json to add various other info automatically
+    ec2_utils.auto_update_input_json(args, cfg)
 
     # create json and copy to s3
     jobid = ec2_utils.create_json(event)

@@ -22,7 +22,8 @@ logger.setLevel(logging.INFO)
 
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
-
+NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
+                          'MaxCount', 'MinCount', 'DisableApiTermination']
 
 def get_start_time():
     return time.strftime("%Y%m%d-%H:%M:%S-%Z")
@@ -32,18 +33,34 @@ def create_json_filename(jobid, json_dir):
     return json_dir + '/' + jobid + '.run.json'
 
 
-def launch_and_get_instance_id(launch_args, jobid):
+def launch_and_get_instance_id(launch_args, jobid, spot_duration=None):
     try:  # capturing stdout from the launch command
         os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
-        session = botocore.session.get_session()
-        x = session.create_client('ec2')
-
+        ec2 = boto3.client('ec2')
     except Exception as e:
         raise Exception("Failed to create a client for EC2")
+
+    if spot_duration:
+        spot_options = {'SpotInstanceType': 'one-time',
+                        'BlockDurationMinutes': spot_duration}
+        launch_args.update({'InstanceMarketOptions': {'MarketType': 'spot',
+                                                      'SpotOptions': spot_options}})
+        #for param in NONSPOT_EC2_PARAM_LIST:
+        #    del launch_args[param]
+        #try:
+        #    res = 0
+        #    res = ec2.request_spot_instances(BlockDurationMinutes=spot_duration,
+        #                                     InstanceCount=1,
+        #                                     LaunchSpecification=launch_args,
+        #                                     InstanceInterruptionBehavior='terminate'
+        #                                     Type='one-time')
+        #except Exception as e:
+        #    raise Exception("failed to request spot instance for job {jobid}: {log}. %s"
+        #                    .format(jobid=jobid, log=res) % e)
+    #else:
     try:
         res = 0
-        res = x.run_instances(**launch_args)
-
+        res = ec2.run_instances(**launch_args)
     except Exception as e:
         raise Exception("failed to launch instance for job {jobid}: {log}. %s"
                         .format(jobid=jobid, log=res) % e)
@@ -211,18 +228,7 @@ def create_run_workflow(jobid, shutdown_min,
     return(str)
 
 
-def launch_instance(par, jobid, profile=None):
-    '''profile is a dictionary { access_key: , secret_key: }'''
-    # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
-    try:
-        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
-                                           par['password'], par['json_bucket'], par['log_bucket'],
-                                           par.get('language', 'cwl_draft3'),
-                                           profile,
-                                           par.get('singularity', None))
-    except Exception as e:
-        raise Exception("Cannot create run_workflow script. %s" % e)
-
+def create_launch_args(par, jobid, userdata_str):
     # creating a launch command
     launch_args = {'ImageId': par['ami_id'],
                    'InstanceType': par['instance_type'],
@@ -259,8 +265,23 @@ def launch_instance(par, jobid, profile=None):
     if par['ebs_size'] >= 16000:
         message = "EBS size limit (16TB) exceeded: (attempted size: %s)" % par['ebs_size']
         raise EC2LaunchException(message)
+    return launch_args
 
-    instance_id = launch_and_get_instance_id(launch_args, jobid)
+
+def launch_instance(par, jobid, profile=None):
+    '''profile is a dictionary { access_key: , secret_key: }'''
+    # Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
+    try:
+        userdata_str = create_run_workflow(jobid, par['shutdown_min'], par['script_url'],
+                                           par['password'], par['json_bucket'], par['log_bucket'],
+                                           par.get('language', 'cwl_draft3'),
+                                           profile,
+                                           par.get('singularity', None))
+    except Exception as e:
+        raise Exception("Cannot create run_workflow script. %s" % e)
+
+    launch_args = create_launch_args(par, jobid, userdata_str)
+    instance_id = launch_and_get_instance_id(launch_args, jobid, par.get('spot_duration', None))
 
     # get public IP for the instance (This may not happen immediately)
     session = botocore.session.get_session()
@@ -471,3 +492,40 @@ def does_key_exist(bucket, object_name):
         print(str(e))
         return False
     return file_metadata
+
+
+def auto_update_input_json(args, cfg):
+    # args: parameters needed by the instance to run a workflow
+    # cfg: parameters needed to launch an instance
+    cfg['job_tag'] = args.get('app_name')
+    cfg['userdata_dir'] = '/tmp/userdata'
+
+    # local directory in which the json file will be first created.
+    cfg['json_dir'] = '/tmp/json'
+
+    # postrun json should be made public?
+    if 'public_postrun_json' not in cfg:
+        cfg['public_postrun_json'] = False
+        # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+
+    # script url
+    cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
+        os.environ.get('TIBANNA_REPO_NAME') + '/' + \
+        os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf/'
+
+    # AMI and script directory according to cwl version
+    if 'language' in args and args['language'] == 'wdl':
+        cfg['ami_id'] = os.environ.get('AMI_ID_WDL')
+    else:
+        if args['cwl_version'] == 'v1':
+            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
+            args['language'] = 'cwl_v1'
+        else:
+            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
+            args['language'] = 'cwl_draft3'
+        if args.get('singularity', False):
+            cfg['singularity'] = True
+
+    cfg['language'] = args['language']
+    update_config(cfg, args['app_name'],
+                  args['input_files'], args['input_parameters'])
