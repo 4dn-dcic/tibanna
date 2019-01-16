@@ -237,6 +237,13 @@ config
       Cloudwatch metrics are collected for every awsem EC2 instances even if this option is turned off.
       The Dashboard option makes it easier to look at them together.
 
+:spot_instance:
+    - if true, request spot instance instead of an On-Demand instance (default ``false``)
+
+:spot_duration: 360
+    - Max duration of spot instance in min (no default). If set, request a fixed-duration spot instance instead of a regular spot instance. ``spot_instance`` must be set ``true``.
+
+
 
 Example job description for CWL
 -------------------------------
@@ -283,7 +290,9 @@ Example job description for CWL
         "ebs_type": "io1",
         "password": "whateverpasswordworks",
         "log_bucket": "suwang",
-        "key_name": ""
+        "key_name": "",
+        "cloudwatch_dashboard": true,
+        "spot_instance": false
       }
     }
 
