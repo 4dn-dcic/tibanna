@@ -63,7 +63,7 @@
     "log_bucket": "tibanna-output",
     "key_name": "",
     "cloudwatch_dashboard": true,
-    "email": true,
-    "dependency": {"exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:chipseq-test-aln-chip_b3acd8fc-8549-4ae9-abd4-a3c3dc377e5f"]}
-  }
+    "email": true
+  },
+  "dependency": {"exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:chipseq-test-aln-chip_b3acd8fc-8549-4ae9-abd4-a3c3dc377e5f"]}
 }
