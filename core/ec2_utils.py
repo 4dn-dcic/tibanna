@@ -25,6 +25,7 @@ S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AW
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
+
 def get_start_time():
     return time.strftime("%Y%m%d-%H:%M:%S-%Z")
 
@@ -33,31 +34,20 @@ def create_json_filename(jobid, json_dir):
     return json_dir + '/' + jobid + '.run.json'
 
 
-def launch_and_get_instance_id(launch_args, jobid, spot_duration=None):
+def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_duration=None):
     try:  # capturing stdout from the launch command
         os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
         ec2 = boto3.client('ec2')
     except Exception as e:
         raise Exception("Failed to create a client for EC2")
 
-    if spot_duration:
+    if spot_instance:
         spot_options = {'SpotInstanceType': 'one-time',
-                        'BlockDurationMinutes': spot_duration}
+                        'InstanceInterruptionBehavior': 'terminate'}
+        if spot_duration:
+            spot_options['BlockDurationMinutes'] = spot_duration
         launch_args.update({'InstanceMarketOptions': {'MarketType': 'spot',
                                                       'SpotOptions': spot_options}})
-        #for param in NONSPOT_EC2_PARAM_LIST:
-        #    del launch_args[param]
-        #try:
-        #    res = 0
-        #    res = ec2.request_spot_instances(BlockDurationMinutes=spot_duration,
-        #                                     InstanceCount=1,
-        #                                     LaunchSpecification=launch_args,
-        #                                     InstanceInterruptionBehavior='terminate'
-        #                                     Type='one-time')
-        #except Exception as e:
-        #    raise Exception("failed to request spot instance for job {jobid}: {log}. %s"
-        #                    .format(jobid=jobid, log=res) % e)
-    #else:
     try:
         res = 0
         res = ec2.run_instances(**launch_args)
@@ -281,7 +271,9 @@ def launch_instance(par, jobid, profile=None):
         raise Exception("Cannot create run_workflow script. %s" % e)
 
     launch_args = create_launch_args(par, jobid, userdata_str)
-    instance_id = launch_and_get_instance_id(launch_args, jobid, par.get('spot_duration', None))
+    instance_id = launch_and_get_instance_id(launch_args, jobid,
+                                             par.get('spot_instance', None),
+                                             par.get('spot_duration', None))
 
     # get public IP for the instance (This may not happen immediately)
     session = botocore.session.get_session()
