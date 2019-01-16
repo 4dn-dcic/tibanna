@@ -176,6 +176,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     if report_html:
         files_to_parse.append(report_html)
     printlog("accession is %s" % accession)
+    jsondata = dict()
     if zipped:
         try:
             files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
@@ -189,7 +190,6 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
         if datajson_argument:
             datajson_key = awsemfile.runner.get_file_key(datajson_argument)
             jsondata0 = [json.loads(awsemfile.s3.read_s3(_)) for _ in datajson_key]
-            jsondata = dict()
             for d in jsondata0:
                 jsondata.update(d)
         filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
