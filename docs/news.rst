@@ -11,6 +11,16 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Jan 16, 2019** The latest version is now 0.5.7_.
+
+    - Spot instance is now supported. To use a spot instance, use ``"spot_instance": true`` in the ``config`` field in the input execution json.
+
+    ::
+
+        "spot_instance": true,
+        "spot_duration": 360
+
+
   **Dec 21, 2018** The latest version is now 0.5.6_.
 
     - CloudWatch set up permission error fixed

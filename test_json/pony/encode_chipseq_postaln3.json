@@ -20,9 +20,9 @@
        { 
            "workflow_argument_name": "chip.tas", 
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-           "uuid": ["e29bdac9-7776-4de9-ac0c-1cd90713b443"],
-           "object_key": ["4DNFI33PWLMZ.bed.gz"],
-           "rename": ["4DNFI33PWLMZ.tagAlign.gz"]
+           "uuid": ["a8000163-cc34-4121-a786-e27dfa5da725"],
+           "object_key": ["4DNFIY8P8ULA.bed.gz"],
+           "rename": ["4DNFIY8P8ULA.tagAlign.gz"]
        },
        { 
            "workflow_argument_name": "chip.ctl_tas", 
@@ -34,9 +34,9 @@
        { 
            "workflow_argument_name": "chip.bam2ta_no_filt_R1.ta", 
            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-           "uuid": ["09b9a818-87f0-47a2-a5cf-ab23131b57db"],
-           "object_key": ["4DNFIA6DU2K4.bed.gz"],
-           "rename": ["4DNFIA6DU2K4.tagAlign.gz"]
+           "uuid": ["25959690-61cd-4a15-9a85-29b558734ff2"],
+           "object_key": ["4DNFISJC1NLL.bed.gz"],
+           "rename": ["4DNFISJC1NLL.tagAlign.gz"]
        },
        { 
            "workflow_argument_name": "chip.blacklist", 
@@ -64,6 +64,5 @@
     "key_name": "",
     "cloudwatch_dashboard": true,
     "email": true
-  },
-  "dependency": {"exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:chipseq-test-aln-chip_b3acd8fc-8549-4ae9-abd4-a3c3dc377e5f"]}
+  }
 }
