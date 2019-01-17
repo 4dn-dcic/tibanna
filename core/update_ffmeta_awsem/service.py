@@ -126,10 +126,25 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
                            file_argument='chip.peak_calls',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
+    elif ff_meta.awsem_app_name == 'encode-chipseq-aln-chip':
+        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+                           quality_metric='quality_metric_chipseq',
+                           file_argument='chip.first_ta',
+                           datajson_argument='chip.qc_json',
+                           report_html=awsemfile.key,
+                           datafiles=[], zipped=False)
+    elif ff_meta.awsem_app_name == 'encode-chipseq-aln-ctl':
+        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+                           quality_metric='quality_metric_chipseq',
+                           file_argument='chip.first_ta_ctl',
+                           datajson_argument='chip.qc_json',
+                           report_html=awsemfile.key,
+                           datafiles=[], zipped=False)
     elif ff_meta.awsem_app_name == 'encode-chipseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.sig_fc',
+                           datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
     elif ff_meta.awsem_app_name == 'encode-atacseq':
@@ -142,7 +157,9 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
 
 def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
-                datafiles=None, zipped=True):
+                datafiles=None, zipped=True, datajson_argument=None):
+    if datajson_argument == awsemfile.argument_name:
+        return
     # avoid using [] as default argument
     if datafiles is None:
         datafiles = ['summary.txt', 'fastqc_data.txt']
@@ -159,6 +176,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     if report_html:
         files_to_parse.append(report_html)
     printlog("accession is %s" % accession)
+    jsondata = dict()
     if zipped:
         try:
             files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
@@ -169,6 +187,11 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
         printlog("files : %s" % str(files))
         filedata = [files[_]['data'] for _ in datafiles]
     else:
+        if datajson_argument:
+            datajson_key = awsemfile.runner.get_file_key(datajson_argument)
+            jsondata0 = [json.loads(awsemfile.s3.read_s3(_)) for _ in datajson_key]
+            for d in jsondata0:
+                jsondata.update(d)
         filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
         reportdata = awsemfile.s3.read_s3(report_html)
         report_html = accession + 'qc_report.html'
@@ -187,6 +210,8 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     meta = parse_qc_table(filedata,
                           qc_schema=qc_schema.get('properties'),
                           url=qc_url)
+    if jsondata:
+        meta.update(jsondata)
     printlog("qc meta is %s" % meta)
     # post fastq metadata
     qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)

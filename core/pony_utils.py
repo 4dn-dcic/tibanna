@@ -537,6 +537,13 @@ class Awsem(object):
                 accessions.append(v.accession)
         return accessions
 
+    def get_file_key(self, argname):
+        keys = []
+        for v in self.all_files():
+            if argname == v.argument_name:
+                keys.append(v.key)
+        return keys
+
 
 def run_md5(env, accession, uuid):
     tibanna = Tibanna(env=env)
