@@ -4,8 +4,6 @@
       "ebs_iops" : 500,
       "json_bucket": "4dn-aws-pipeline-run-json",
       "shutdown_min" : 30,
-      
-      
       "log_bucket" : "tibanna-output",
       "key_name": "4dn-encode",
       "password": ""
@@ -16,7 +14,7 @@
     },
     "parameters": {}, 
     "app_name": "md5", 
-    "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
+    "workflow_uuid": "4dn-dcic-lab:wf-md5-0.2.6",
     "input_files": [
                     {"workflow_argument_name": "input_file", 
                      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",

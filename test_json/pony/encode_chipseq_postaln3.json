@@ -14,7 +14,8 @@
         "chip.qc_report.desc" : "H3K27ac ChIP-seq on human HFFc6 produced by the Feng Yue lab",
         "chip.gensz" : "hs",
         "chip.xcor.cpu": 4,
-        "chip.spp_cpu": 4
+        "chip.spp_cpu": 4,
+        "chip.fraglen": [300]
     },
     "input_files" : [
        { 

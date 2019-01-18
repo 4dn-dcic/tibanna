@@ -26,11 +26,12 @@
     "json_bucket": "leelab-tibanna-log",
     "EBS_optimized": false,
     "ebs_iops": 500,
-    "shutdown_min": 120,
-    "instance_type": "t2.micro",
+    "shutdown_min": "now",
+    "instance_type": "c4.4xlarge",
     "cloudwatch_dashboard" : true,    
     "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
-    "key_name": ""
+    "key_name": "",
+    "spot_instance": true
   }
 }
