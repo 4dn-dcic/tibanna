@@ -5,7 +5,7 @@
     },
     "app_name": "encode-atacseq-aln",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "workflow_uuid": "d497c075-ab57-4c5b-8c65-7bb8410f26fa",
+    "workflow_uuid": "4dn-dcic-lab:wf-encode-atacseq-aln",
     "parameters": { 
         "atac.pipeline_type" : "atac",
         "atac.paired_end" : true,

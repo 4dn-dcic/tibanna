@@ -5,7 +5,7 @@
     },
     "app_name": "encode-atacseq-postaln",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "workflow_uuid": "510d321f-8a79-479d-95eb-c8fd703972a7",
+    "workflow_uuid": "4dn-dcic-lab:wf-encode-atacseq-postaln",
     "parameters": { 
         "atac.pipeline_type" : "atac",
         "atac.paired_end" : true,
@@ -18,13 +18,13 @@
            "workflow_argument_name": "atac.tas", 
            "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
            "uuid": [
-                    [["767cfbd5-2f51-456f-a39c-2e4bd2e36980"]]
+                    [["63677ea0-8126-42a0-8167-1f2da5ce9840"]]
            ],
            "object_key": [
-                    [["4DNFIEBLX9V3.bed.gz"]]
+                    [["4DNFI2UVOVDS.bed.gz"]]
            ],
            "rename": [
-                    [["4DNFIEBLX9V3.tagAlign.gz"]]
+                    [["4DNFI2UVOVDS.tagAlign.gz"]]
            ]
        },
        { 
@@ -54,5 +54,5 @@
     "email": true,
     "cloudwatch_dashboard": true
   },
-  "dependency": { "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:encode-atacseq-aln_cc84176d-a091-45f4-b3f7-03c070348aab"] }
+  "dependency": { "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:encode-atacseq-aln_68f7c986-cd4e-4e75-a825-601c9328343f"] }
 }
