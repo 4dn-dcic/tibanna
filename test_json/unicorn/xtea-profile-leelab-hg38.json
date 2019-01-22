@@ -10,7 +10,7 @@
     "secondary_output_target": {},
     "cwl_main_filename": "xtea.cwl",
     "secondary_files": { 
-      "bam": {
+      "cram": {
         "bucket_name": "sscwgs-hg38",
         "object_key": "phase2/SS0012980.final.cram.crai",
         "profile": "user1"
@@ -20,7 +20,7 @@
     "app_version": "0.0.1",
     "cwl_directory_url": "https://gitlab.com/simon_chu/xtea_bin/raw/master",
     "input_files": {
-      "bam": {
+      "cram": {
         "bucket_name": "sscwgs-hg38",
         "object_key": "phase2/SS0012980.final.cram",
         "profile": "user1"
