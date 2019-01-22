@@ -5,7 +5,7 @@
     },
     "app_name": "encode-chipseq-aln-chip",
     "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "workflow_uuid": "1dfb78e8-9844-48c6-804e-d05e7257e178",
+    "workflow_uuid": "4dn-dcic-lab:wf-encode-chipseq-aln-chip",
     "parameters": { 
         "chip.pipeline_type" : "histone",
         "chip.paired_end" : true,
@@ -64,6 +64,7 @@
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": "",
-    "cloudwatch_dashboard": true
+    "cloudwatch_dashboard": true,
+    "email": true
   }
 }

@@ -1,0 +1,52 @@
+{
+  "args": {
+    "app_name": "xtea",
+    "input_parameters": { "nThreads": 16 },
+    "cwl_child_filenames": [],
+    "cwl_version": "v1",
+    "output_target": {
+      "output": "SS0012980.tar.gz"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "xtea.cwl",
+    "secondary_files": { 
+      "bam": {
+        "bucket_name": "sscwgs-hg38",
+        "object_key": "phase2/SS0012980.final.cram.crai",
+        "profile": "user1"
+      }
+    },
+    "output_S3_bucket": "leelab-datafiles",
+    "app_version": "0.0.1",
+    "cwl_directory_url": "https://gitlab.com/simon_chu/xtea_bin/raw/master",
+    "input_files": {
+      "bam": {
+        "bucket_name": "sscwgs-hg38",
+        "object_key": "phase2/SS0012980.final.cram",
+        "profile": "user1"
+      },
+      "genome_tar": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "hg38.tar.gz"
+      },
+      "rep_library_tar": {
+        "bucket_name": "leelab-datafiles",
+        "object_key": "rep_lib_annotation.tar.gz"
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 500,
+    "ebs_type": "gp2",
+    "json_bucket": "leelab-tibanna-log",
+    "EBS_optimized": false,
+    "ebs_iops": "",
+    "shutdown_min": "now",
+    "instance_type": "c4.4xlarge",
+    "spot_instance": true,
+    "password": "dragonfly",
+    "log_bucket": "leelab-tibanna-log",
+    "key_name": "",
+    "cloudwatch_dashboard": true
+  }
+}
