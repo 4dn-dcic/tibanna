@@ -18,7 +18,7 @@
     },
     "output_S3_bucket": "leelab-datafiles",
     "app_version": "0.0.1",
-    "cwl_directory_url": "https://gitlab.com/simon_chu/xtea_bin/raw/master",
+    "cwl_directory_url": "https://github.com/parklab/xTEA_bin/raw/master",
     "input_files": {
       "cram": {
         "bucket_name": "sscwgs-hg38",
@@ -42,7 +42,7 @@
     "EBS_optimized": false,
     "ebs_iops": "",
     "shutdown_min": "now",
-    "instance_type": "c4.4xlarge",
+    "instance_type": "c5.4xlarge",
     "spot_instance": true,
     "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
