@@ -75,7 +75,7 @@ class WorkflowRunMetadata(object):
                  run_platform='AWSEM', title=None, output_files=None,
                  run_status='started', awsem_job_id=None,
                  run_url='', aliases=None, awsem_postrun_json=None,
-                 submitted_by=None, extra_meta=None,**kwargs):
+                 submitted_by=None, extra_meta=None, **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
