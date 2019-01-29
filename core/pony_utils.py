@@ -40,6 +40,7 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', tag=None,
                         aliases=None, awsem_postrun_json=None, submitted_by=None, extra_meta=None,
+                        jobid=None,
                         **kwargs):
 
     input_files = [] if input_files is None else input_files
@@ -60,7 +61,7 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None,
                                lab=lab, run_platform=run_platform, run_url=run_url,
                                title=title, output_files=output_files, run_status=run_status,
                                aliases=aliases, awsem_postrun_json=awsem_postrun_json,
-                               submitted_by=submitted_by, extra_meta=extra_meta)
+                               submitted_by=submitted_by, extra_meta=extra_meta, awsem_job_id=jobid)
 
 
 class WorkflowRunMetadata(object):
@@ -74,7 +75,7 @@ class WorkflowRunMetadata(object):
                  run_platform='AWSEM', title=None, output_files=None,
                  run_status='started', awsem_job_id=None,
                  run_url='', aliases=None, awsem_postrun_json=None,
-                 submitted_by=None, extra_meta=None, **kwargs):
+                 submitted_by=None, extra_meta=None,**kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
         Workflow (uuid of the workflow to run) has to be given.
         Workflow_run uuid is auto-generated when the object is created.
