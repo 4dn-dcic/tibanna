@@ -539,9 +539,20 @@ def notebook(ctx):
 
 
 @task
-def rerun(ctx, exec_arn, sfn='tibanna_pony'):
+def rerun(ctx, exec_arn, sfn='tibanna_pony',
+          instance_type=None, shutdown_min=None, ebs_size=None,
+          overwrite_input_extra=None):
     """ rerun a specific job"""
-    _rerun(exec_arn, sfn=sfn)
+    override_config = dict()
+    if instance_type:
+        override_config['instance_type'] = instance_type
+    if shutdown_min:
+        override_config['shutdown_min'] = shutdown_min
+    if ebs_size:
+        override_config['ebs_size'] = ebs_size
+    if overwrite_input_extra:
+        override_config['overwrite_input_extra'] = overwrite_input_extra
+    _rerun(exec_arn, sfn=sfn, override_config=override_config)
 
 
 @task

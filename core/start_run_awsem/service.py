@@ -68,7 +68,10 @@ def real_handler(event, context):
     output_bucket = event.get('output_bucket')
     parameters = ff_utils.convert_param(event.get('parameters'), True)
     tibanna_settings = event.get('_tibanna', {})
-    overwrite_input_extra = event.get('overwrite_input_extra', False)
+    if 'overwrite_input_extra' in event.get('config'):
+        overwrite_input_extra = event.get('config')['overwrite_input_extra']
+    else:
+        overwrite_input_extra = event.get('overwrite_input_extra', False)
     tag = event.get('tag')
     # if they don't pass in env guess it from output_bucket
     try:
