@@ -541,7 +541,7 @@ def notebook(ctx):
 @task
 def rerun(ctx, exec_arn, sfn='tibanna_pony',
           instance_type=None, shutdown_min=None, ebs_size=None,
-          overwrite_input_extra=None):
+          overwrite_input_extra=None, key_name=None):
     """ rerun a specific job"""
     override_config = dict()
     if instance_type:
@@ -552,6 +552,8 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
         override_config['ebs_size'] = ebs_size
     if overwrite_input_extra:
         override_config['overwrite_input_extra'] = overwrite_input_extra
+    if key_name:
+        override_config['key_name'] = key_name
     _rerun(exec_arn, sfn=sfn, override_config=override_config)
 
 
