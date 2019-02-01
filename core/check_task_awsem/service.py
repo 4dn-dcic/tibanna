@@ -60,21 +60,22 @@ def handler(event, context):
         print("completed successfully")
     else:
         raise StillRunningException("job %s still running" % jobid)
+    return event
 
 
 def handle_postrun_json(bucket_name, jobid, event, raise_error=True):
     postrunjson = "%s.postrun.json" % jobid
-    postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
     if not does_key_exist(bucket_name, postrunjson):
         if raise_error:
+            postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
             raise Exception("Postrun json not found at %s" % postrunjson_location)
         return None
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
-    add_postrun_json(postrunjsoncontent, event, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
     if 'instance_id' in event:
         update_postrun_json(postrunjsoncontent, event['instance_id'])
     boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
                                   Body=json.dumps(postrunjsoncontent, indent=4).encode())
+    add_postrun_json(postrunjsoncontent, event, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
 
 
 def add_postrun_json(postrunjsoncontent, event, limit):

@@ -157,7 +157,7 @@ for k in output_meta:
 old_dict['commands'] = parse_command(logfile)
 
 # add file system info
-old_dict['filesystem'] = os.environ.get('EBS_DEVICE', '')
+old_dict['Job']['filesystem'] = os.environ.get('EBS_DEVICE', '')
 
 # write to new json file
 with open(json_new, 'w') as json_new_f:
