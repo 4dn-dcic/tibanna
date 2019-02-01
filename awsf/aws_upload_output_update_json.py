@@ -2,6 +2,7 @@
 import json
 import sys
 import boto3
+import os
 json_old = sys.argv[1]
 execution_metadata = sys.argv[2]
 logfile = sys.argv[3]

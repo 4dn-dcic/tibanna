@@ -1,5 +1,5 @@
 import boto3
-import pandas as pd
+# import pandas as pd
 # from datetime import datetime
 # from datetime import timezone
 # from datetime import timedelta
@@ -34,9 +34,9 @@ class TibannaResource(object):
         del(d['instance_id'])
         return(d)
 
-    def as_table(self):
-        d = self.as_dict()
-        return(pd.DataFrame(d.items(), columns=['metric', 'value']))
+    # def as_table(self):
+    #    d = self.as_dict()
+    #    return(pd.DataFrame(d.items(), columns=['metric', 'value']))
 
     def max_memory_used(self):
         res = self.client.get_metric_statistics(
