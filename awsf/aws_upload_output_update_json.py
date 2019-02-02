@@ -2,6 +2,7 @@
 import json
 import sys
 import boto3
+import os
 json_old = sys.argv[1]
 execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
@@ -154,6 +155,9 @@ for k in output_meta:
 
 # add commands
 old_dict['commands'] = parse_command(logfile)
+
+# add file system info
+old_dict['Job']['filesystem'] = os.environ.get('EBS_DEVICE', '')
 
 # write to new json file
 with open(json_new, 'w') as json_new_f:

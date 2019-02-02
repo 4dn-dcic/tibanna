@@ -1,5 +1,6 @@
 import boto3
-import pandas as pd
+from core.utils import printlog
+# import pandas as pd
 # from datetime import datetime
 # from datetime import timezone
 # from datetime import timedelta
@@ -19,14 +20,16 @@ class TibannaResource(object):
         # get resource metrics
         self.max_mem_used_MB = self.max_memory_used()
         self.max_mem_available_MB = self.max_memory_available()
-        self.total_mem_MB = self.max_mem_used_MB + self.max_mem_available_MB
-        self.max_mem_utilization_percent = self.max_mem_used_MB / self.total_mem_MB
+        if self.max_mem_used_MB:
+            self.total_mem_MB = self.max_mem_used_MB + self.max_mem_available_MB
+            self.max_mem_utilization_percent = self.max_mem_used_MB / self.total_mem_MB
         self.max_cpu_utilization_percent = self.max_cpu_utilization()
         self.max_disk_space_utilization_percent = self.max_disk_space_utilization()
         self.max_disk_space_used_GB = self.max_disk_space_used()
 
     def as_dict(self):
         d = self.__dict__.copy()
+        printlog(d)
         del(d['client'])
         del(d['starttime'])
         del(d['endtime'])
@@ -34,9 +37,9 @@ class TibannaResource(object):
         del(d['instance_id'])
         return(d)
 
-    def as_table(self):
-        d = self.as_dict()
-        return(pd.DataFrame(d.items(), columns=['metric', 'value']))
+    # def as_table(self):
+    #    d = self.as_dict()
+    #    return(pd.DataFrame(d.items(), columns=['metric', 'value']))
 
     def max_memory_used(self):
         res = self.client.get_metric_statistics(
@@ -52,7 +55,7 @@ class TibannaResource(object):
             Unit='Megabytes'
         )
         x = [r['Average'] for r in res['Datapoints']]
-        return(max(x))
+        return(max(x) if x else '')
 
     def max_memory_available(self):
         res = self.client.get_metric_statistics(
@@ -68,7 +71,7 @@ class TibannaResource(object):
             Unit='Megabytes'
         )
         x = [r['Average'] for r in res['Datapoints']]
-        return(min(x))
+        return(min(x) if x else '')
 
     def max_cpu_utilization(self):
         res = self.client.get_metric_statistics(
@@ -84,7 +87,7 @@ class TibannaResource(object):
             Unit='Percent'
         )
         x = [r['Average'] for r in res['Datapoints']]
-        return(max(x))
+        return(max(x) if x else '')
 
     def max_disk_space_utilization(self):
         res = self.client.get_metric_statistics(
@@ -102,7 +105,7 @@ class TibannaResource(object):
             Unit='Percent'
         )
         x = [r['Average'] for r in res['Datapoints']]
-        return(max(x))
+        return(max(x) if x else '')
 
     def max_disk_space_used(self):
         res = self.client.get_metric_statistics(
@@ -120,4 +123,4 @@ class TibannaResource(object):
             Unit='Gigabytes'
         )
         x = [r['Average'] for r in res['Datapoints']]
-        return(max(x))
+        return(max(x) if x else '')
