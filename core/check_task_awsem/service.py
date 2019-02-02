@@ -10,7 +10,7 @@ from core.utils import (
 )
 import json
 from core.ec2_utils import does_key_exist
-from core import cw_utils
+from core.cw_utils import TibannaResource
 from datetime import datetime
 
 
@@ -73,6 +73,8 @@ def handle_postrun_json(bucket_name, jobid, event, raise_error=True):
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
     if 'instance_id' in event:
         update_postrun_json(postrunjsoncontent, event['instance_id'])
+    printlog("inside funtion handle_postrun_json")
+    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
     boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
                                   Body=json.dumps(postrunjsoncontent, indent=4).encode())
     add_postrun_json(postrunjsoncontent, event, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
@@ -101,4 +103,5 @@ def update_postrun_json(postrunjsoncontent, instance_id, filesystem=None):
             filesystem = job['filesystem']
         elif not filesystem:
             return None
+        job['instance_id'] = instance_id
         job['Metrics'] = TibannaResource(instance_id, filesystem, starttime, endtime).as_dict()

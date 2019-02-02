@@ -499,3 +499,35 @@ def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dnd
                       Destination={'ToAddresses': [sender]},
                       Message={'Subject': {'Data': subject},
                                'Body': {'Text': {'Data': msg}}})
+
+
+def log(exec_arn=None, job_id=None, sfn=None):
+    sf = boto3.client('stepfunctions')
+    if exec_arn:
+        desc = sf.describe_execution(executionArn=exec_arn)
+        if desc['status'] == 'RUNNING':
+            jobid = str(json.loads(desc['input'])['jobid'])
+            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + '.log')
+            if res_s3:
+                return(res_s3['Body'].read())
+    elif job_id:
+        stateMachineArn = STEP_FUNCTION_ARN(sfn)
+        res = sf.list_executions(stateMachineArn=stateMachineArn)
+        while True:
+            if 'executions' not in res or not res['executions']:
+                break
+            for exc in res['executions']:
+                desc = sf.describe_execution(executionArn=exc['executionArn'])
+                if job_id == str(json.loads(desc['input'])['jobid']):
+                    logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+                    res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + '.log')
+                    if res_s3:
+                        return(res_s3['Body'].read())
+                    break
+            if 'nextToken' in res:
+                res = sf.list_executions(nextToken=res['nextToken'],
+                                         stateMachineArn=stateMachineArn)
+            else:
+                break
+    return None

@@ -19,6 +19,7 @@ from core.utils import _tibanna
 from core.launch_utils import rerun as _rerun
 from core.launch_utils import rerun_many as _rerun_many
 from core.utils import kill as _kill
+from core.utils import log as _log
 from core.utils import kill_all as _kill_all
 from core.iam_utils import create_tibanna_iam
 from core.iam_utils import get_ec2_role_name, get_lambda_role_name
@@ -558,7 +559,12 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
 
 
 @task
-def kill_all(ctx, sfn='tibanna_pony'):
+def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    print(_log(exec_arn, job_id, sfn))
+
+
+@task
+def kill_all(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """ killing all the running jobs"""
     _kill_all(sfn)
 
@@ -569,7 +575,7 @@ def kill(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 
 @task
-def rerun_many(ctx, sfn='tibanna_pony', stopdate='13Feb2018', stophour=13,
+def rerun_many(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=0, sleeptime=5, status='FAILED'):
     """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
     By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
