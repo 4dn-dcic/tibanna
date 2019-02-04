@@ -89,9 +89,7 @@ def get_all_core_lambdas():
 
 def env_list(name):
     # don't set this as a global, since not all tasks require it
-    secret = os.environ.get("SECRET")
-    if secret is None:
-        raise RuntimeError("SECRET should be defined in env")
+    secret = os.environ.get("SECRET", '')
     envlist = {
         'run_workflow': {'SECRET': secret,
                          'TIBANNA_AWS_REGION': AWS_REGION,
