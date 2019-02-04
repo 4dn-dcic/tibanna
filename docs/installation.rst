@@ -5,9 +5,11 @@ Installation
 Tibanna's installation is two-step. 
 
 1. Installation of the python package content of the repo
+  * The ``python setup.py install`` command
   * Installation of Tibanna package on a local machine or any other environment where the user intends to use as a base, to launch workflow runs and check statuses and logs.
 
 2. Deployment of Tibanna on the AWS cloud
+  * The ``invoke deploy_unicorn`` command
   * Deployment of a set of AWS Lambda functions and an AWS Step Function that coordinates the Lambda functions
 
     * These Lambda functions work as minions that launches and monitors individual executions. They live on the cloud and they are called only when an execution is submitted. Thanks to these Lambda functions, Tibanna does not require a constantly running master server to operate.
