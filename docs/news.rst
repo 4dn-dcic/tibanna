@@ -15,6 +15,8 @@ Version updates
 
     - ``invoke log`` can be used to stream log or postrun json file.
     - postrun json file now contains Cloudwatch metrics for memory/CPU and disk space for all jobs.
+    - ``invoke rerun`` has config override options such as ``--instance-type``, ``shutdown-min``, ``ebs-size`` and ``key-name``
+      to rerun a job with a different configuration.
 
 
   **Jan 16, 2019** The latest version is now 0.5.7_.

@@ -151,6 +151,12 @@ To rerun a failed job with the same input json
                                    Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
                                    An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
+  --instance-type=<instance_type>  Override instance type for the rerun
+  --shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+  --ebs-size=<ebs_size>            Override EBS size for the rerun
+  --key-name=<key_name>            Override keyname for the rerun
+
+
 
 rerun_many
 ----------
