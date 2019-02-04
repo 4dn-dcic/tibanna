@@ -2,6 +2,17 @@
 Installation
 ============
 
+Tibanna's installation is two-step. 
+
+1. The python package content of the repo must be installed on a local machine or any other environment where the user intends to use as a base, to launch workflow runs and check statuses and logs. This can be done using either ``pip install -r requirement.txt`` or ``python setup.py install`` (see below **Installing_Tibanna_package_**)
+
+2. One needs to deploy Tibanna on the AWS cloud, through the ``invoke deploy_unicorn`` command (see below **Deploying_Tibanna_to_AWS_**). This command deploys the set of AWS Lambda functions and a step function that coordinates the Lambda functions, in addition to configuring permissions for the AWS Lambda, EC2 instance and S3 buckets. These Lambda functions work as minions that launches and monitors individual executions. They live on the cloud and they are called only when an execution is submitted. Thanks to these Lambda functions, Tibanna does not require a constantly running master server to operate.
+
+One may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users. Unlike clusters, a copy of Tibanna is not limited to a single instance type or a shared runtime storage space (EBS). Tibanna's organization is more intuitive and practically more useful, since a single project may involve different input sizes and therefore different compute resource requirements. For developers, different copies of Tibanna may be used to test different modifications of Tibanna during development.
+
+.. _Installing_Tibanna_package: https://tibanna.readthedocs.io/en/latest/installation.html#installing-tibanna-package
+.. _Deploying_Tibanna_to_AWS: https://tibanna.readthedocs.io/en/latest/installation.html#deploying-tibanna-to-aws
+
 
 Installing Tibanna package
 --------------------------
@@ -42,6 +53,12 @@ Alternatively, use ``setup.py``
 
 Deploying Tibanna to AWS
 ------------------------
+
+To deploy Tibanna the AWS Cloud, one must first has an AWS account and an admin user credentials. If you do not have it yet, check out (**Before_using_Tibanna_**) first.
+
+
+.. _Before_using_Tibanna: https://tibanna.readthedocs.io/en/latest/startaws.html
+
 
 To set up and deploy Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 

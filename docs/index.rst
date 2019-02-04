@@ -2,7 +2,7 @@
 Overview
 ========
 
-Tibanna is a software tool that helps you run genomic pipelines on the cloud.
+Tibanna is a software tool that helps you run genomic pipelines on the the Amazon (AWS) cloud.
 It is also used by 4DN-DCIC (4D Nucleome Data Coordination and Integration Center) to process data.
 
 
