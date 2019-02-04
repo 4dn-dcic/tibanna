@@ -460,7 +460,10 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
     if not buckets:
-        raise Exception("buckest must be specified to set up Tibanna environment.")
+        print("Without setting buckets (using --buckets)," +
+              "Tibanna would have access to only public buckets." +
+              "To give permission to Tibanna for private buckets," +
+              "use --buckets=<bucket1>,<bucket2>,...")
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION, no_randomize=no_randomize,
@@ -485,7 +488,7 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
-            outfile.write("export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
+            outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
