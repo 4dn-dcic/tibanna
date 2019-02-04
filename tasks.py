@@ -2,6 +2,7 @@
 import os
 import errno
 import sys
+import time
 import webbrowser
 import json
 from invoke import task, run
@@ -460,10 +461,11 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
     '''The very first function to run as admin to set up environment on AWS'''
     print("setting up tibanna environment on AWS...")
     if not buckets:
-        print("Without setting buckets (using --buckets)," +
+        print("WARNING: Without setting buckets (using --buckets)," +
               "Tibanna would have access to only public buckets." +
               "To give permission to Tibanna for private buckets," +
               "use --buckets=<bucket1>,<bucket2>,...")
+        time.sleep(2)
     bucket_names = buckets.split(',')
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION, no_randomize=no_randomize,
@@ -477,7 +479,10 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
 def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=False,
                    setup=False, buckets='', setenv=False):
     if setup:
-        usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
+        if usergroup:
+            usergroup = setup_tibanna_env(ctx, buckets, usergroup, True)
+        else:
+            usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
     print("creating a new step function...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
@@ -499,9 +504,11 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
 
 
 @task
-def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='', no_setenv=False):
-    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn', tests=False,
-                   setup=not no_setup, buckets=buckets, setenv=not no_setenv)
+def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='',
+                   no_setenv=False, usergroup=None):
+    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn',
+                   tests=False, usergroup=usergroup, setup=not no_setup,
+                   buckets=buckets, setenv=not no_setenv)
 
 
 @task
