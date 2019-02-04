@@ -142,7 +142,7 @@ Once the job is finished, you should be able to find the ``<jobid>.postrun.json`
             "Metrics": {
                 "max_cpu_utilization_percent": 86.4, 
                 "max_mem_used_MB": 14056.421875, 
-                "max_mem_utilization_percent": 0.45124831006539534, 
+                "max_mem_utilization_percent": 45.124831006539534, 
                 "max_disk_space_utilization_percent": 72.0912267060547, 
                 "total_mem_MB": 31150.08203125, 
                 "max_mem_available_MB": 17093.66015625, 
