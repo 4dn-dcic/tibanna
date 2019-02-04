@@ -11,6 +11,14 @@ Publication
 Version updates
 +++++++++++++++
 
+  **Feb 4, 2019** The latest version is now 0.5.8_.
+
+    - ``invoke log`` can be used to stream log or postrun json file.
+    - postrun json file now contains Cloudwatch metrics for memory/CPU and disk space for all jobs.
+    - ``invoke rerun`` has config override options such as ``--instance-type``, ``shutdown-min``, ``ebs-size`` and ``key-name``
+      to rerun a job with a different configuration.
+
+
   **Jan 16, 2019** The latest version is now 0.5.7_.
 
     - Spot instance is now supported. To use a spot instance, use ``"spot_instance": true`` in the ``config`` field in the input execution json.
@@ -123,6 +131,8 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.8
+.. _0.5.7: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.7
 .. _0.5.6: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.6
 .. _0.5.5: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.5
 .. _0.5.4: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.4

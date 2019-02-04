@@ -559,8 +559,8 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
 
 
 @task
-def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
-    print(_log(exec_arn, job_id, sfn))
+def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
+    print(_log(exec_arn, job_id, sfn, p))
 
 
 @task

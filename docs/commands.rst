@@ -106,6 +106,30 @@ The output is a table (an example below)
     UlkvH3gbBBA2	FAILED	repliseq-parta	2018-08-09 18:26	2018-08-09 19:01
     j7hvisheBV27	SUCCEEDED	bwa-mem	2018-08-09 18:44	2018-08-09 18:59
 
+log
+---
+
+To check the log or postrun json (summary) of a workflow run
+
+::
+
+    invoke log --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
+
+
+**Options**
+
+::
+
+  --sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
+                                   Not necessary to rerun by ``exec-arn``.
+                                   Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
+                                   An example step function name may be 'tibanna_unicorn_defaut_3978'.
+
+  -p                               The -p option streams out a postrun json file instead of a log file.
+                                   A postrun json file is available only after the run finishes.
+                                   It contains the summary of the job including input, output, EC2 config and
+                                   Cloudwatch metrics on memory/CPU/disk space.
+
 
 rerun
 -----
@@ -115,19 +139,23 @@ To rerun a failed job with the same input json
 
 ::
 
-    invoke rerun --exec-arn=<stepfunctionrun_arn> [<options>]
+    invoke rerun --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
 
 
 **Options**
 
 ::
 
-  --sfn=<stepfunctionname>         An example step function name may be
-                                   'tibanna_unicorn_defaut_3978'. If not specified, default
-                                   value is taken from environmental variable
-                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                   variable is not set, it uses name 'tibanna_pony' (4dn
-                                   default, works only for 4dn).
+  --sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
+                                   Not necessary to rerun by ``exec-arn``.
+                                   Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
+                                   An example step function name may be 'tibanna_unicorn_defaut_3978'.
+
+  --instance-type=<instance_type>  Override instance type for the rerun
+  --shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+  --ebs-size=<ebs_size>            Override EBS size for the rerun
+  --key-name=<key_name>            Override keyname for the rerun
+
 
 
 rerun_many
