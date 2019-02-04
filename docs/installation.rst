@@ -12,10 +12,11 @@ Tibanna's installation is two-step.
   * The ``invoke deploy_unicorn`` command
   * Deployment of a set of AWS Lambda functions and an AWS Step Function that coordinates the Lambda functions
 
-    * These Lambda functions work as serverless minions that launches and monitors individual executions. They live on the cloud and they are called (and charged) only when an execution is submitted. Tibanna does not require a constantly running master server.
+    * Note: these Lambda functions work as serverless minions that launches and monitors individual executions. They live on the cloud and they are called (and charged) only when an execution is submitted. (Tibanna does not require a constantly running master server.)
 
-  * Configuring permissions for the AWS Lambda, AWS Step Function, S3 buckets and a user group.
-  * With this second step, one may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users.
+  * Permission configuration for the AWS Lambda, AWS Step Function, S3 buckets and a user group.
+
+With the second step, one may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users.
 
 
 Installing Tibanna package
