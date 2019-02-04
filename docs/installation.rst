@@ -4,14 +4,14 @@ Installation
 
 Tibanna's installation is two-step. 
 
-1. The python package content of the repo must be installed on a local machine or any other environment where the user intends to use as a base, to launch workflow runs and check statuses and logs. This can be done using either ``pip install -r requirement.txt`` or ``python setup.py install`` (see below **Installing_Tibanna_package_**)
+1. Installation of the python package content of the repo
+  * Installation of Tibanna package on a local machine or any other environment where the user intends to use as a base, to launch workflow runs and check statuses and logs.
 
-2. One needs to deploy Tibanna on the AWS cloud, through the ``invoke deploy_unicorn`` command (see below **Deploying_Tibanna_to_AWS_**). This command deploys the set of AWS Lambda functions and a step function that coordinates the Lambda functions, in addition to configuring permissions for the AWS Lambda, EC2 instance and S3 buckets. These Lambda functions work as minions that launches and monitors individual executions. They live on the cloud and they are called only when an execution is submitted. Thanks to these Lambda functions, Tibanna does not require a constantly running master server to operate.
-
-One may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users. Unlike clusters, a copy of Tibanna is not limited to a single instance type or a shared runtime storage space (EBS). Tibanna's organization is more intuitive and practically more useful, since a single project may involve different input sizes and therefore different compute resource requirements. For developers, different copies of Tibanna may be used to test different modifications of Tibanna during development.
-
-.. _Installing_Tibanna_package: https://tibanna.readthedocs.io/en/latest/installation.html#installing-tibanna-package
-.. _Deploying_Tibanna_to_AWS: https://tibanna.readthedocs.io/en/latest/installation.html#deploying-tibanna-to-aws
+2. Deployment of Tibanna on the AWS cloud
+  * Deployment of a set of AWS Lambda functions and a step function that coordinates the Lambda functions
+    * These Lambda functions work as minions that launches and monitors individual executions. They live on the cloud and they are called only when an execution is submitted. Thanks to these Lambda functions, Tibanna does not require a constantly running master server to operate.
+  * Configuring permissions for the AWS Lambda, EC2 instance and S3 buckets.
+  * With this second step, one may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users.
 
 
 Installing Tibanna package
