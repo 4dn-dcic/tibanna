@@ -23,6 +23,21 @@ Then, create your credential and config files in one of the two ways below:
 ``aws configure`` and enter your access key, secret key, region('us-east-1'), output type('json'). This will automatically create the files described in Option 2.
 
 
+::
+
+    aws configure
+
+
+Type in your keys, region and output format ('json') as below.
+
+::
+
+    AWS Access Key ID [None]: <your_aws_key>
+    AWS Secret Access Key [None]: <your_aws_secret_key>
+    Default region name [None]: us-east-1
+    Default output format [None]: json
+
+
 **Option 2:**
 
 have your AWS keys in file ``~/.aws/credentials`` with the following content.
