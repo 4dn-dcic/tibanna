@@ -63,7 +63,7 @@ def handler(event, context):
     return event
 
 
-def handle_postrun_json(bucket_name, jobid, event, raise_error=True):
+def handle_postrun_json(bucket_name, jobid, event, raise_error=True, filesystem=None):
     postrunjson = "%s.postrun.json" % jobid
     if not does_key_exist(bucket_name, postrunjson):
         if raise_error:
@@ -72,7 +72,7 @@ def handle_postrun_json(bucket_name, jobid, event, raise_error=True):
         return None
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
     if 'instance_id' in event:
-        update_postrun_json(postrunjsoncontent, event['instance_id'])
+        update_postrun_json(postrunjsoncontent, event['instance_id'], filesystem)
     printlog("inside funtion handle_postrun_json")
     printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
     boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
