@@ -13,3 +13,4 @@ aws_secret_access_key:
 # dist_directory: dist
 timeout: 300 
 memory_size: 128 
+runtime: python3.6
