@@ -3,7 +3,6 @@ import os
 import errno
 import sys
 import time
-import webbrowser
 import json
 from invoke import task, run
 import boto3
@@ -29,8 +28,6 @@ import aws_lambda
 import requests
 import random
 
-docs_dir = 'docs'
-build_dir = os.path.join(docs_dir, '_build')
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
 NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
@@ -181,7 +178,7 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     """
     import pytest
     if not no_flake:
-        flake(ctx)
+        flake()
     args = ['-rxs', ]
     if k:
         args.append('-k %s' % k)
@@ -216,13 +213,13 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     return retcode
 
 
-def flake(ctx):
+def flake():
     """Run flake8 on codebase."""
     run('flake8 .', echo=True)
     print("flake8 passed!!!")
 
 
-def clean(ctx):
+def clean():
     run("rm -rf build")
     run("rm -rf dist")
     print("Cleaned up.")
@@ -252,17 +249,17 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     for name in get_all_core_lambdas():
         print("cleaning house before deploying")
         with chdir("./core/%s" % (name)):
-            clean(ctx)
+            clean()
 
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
         with chdir("./core/%s" % (name)):
             print("clean up previous builds.")
-            clean(ctx)
+            clean()
             print("building lambda package")
             deploy_lambda_package(ctx, name, suffix=suffix, usergroup=usergroup)
             # need to clean up all dist, otherwise, installing local package takes forever
-            clean(ctx)
+            clean()
 
 
 def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
@@ -331,50 +328,6 @@ def _tbenv(env_data=None):
     if env_data and env_data.get('env'):
         return env_data('env')
     return os.environ.get('ENV_NAME')
-
-
-def clean_docs(ctx):
-    run("rm -rf %s" % build_dir, echo=True)
-
-
-def browse_docs(ctx):
-    path = os.path.join(build_dir, 'index.html')
-    webbrowser.open_new_tab(path)
-
-
-def docs(ctx, clean=False, browse=False, watch=False):
-    """Build the docs."""
-    if clean:
-        clean_docs(ctx)
-    run("sphinx-build %s %s" % (docs_dir, build_dir), echo=True)
-    if browse:
-        browse_docs(ctx)
-    if watch:
-        watch_docs(ctx)
-
-
-def watch_docs(ctx):
-    """Run build the docs when a file changes."""
-    try:
-        import sphinx_autobuild  # noqa
-    except ImportError:
-        print('ERROR: watch task requires the sphinx_autobuild package.')
-        print('Install it with:')
-        print('    pip install sphinx-autobuild')
-        sys.exit(1)
-    run('sphinx-autobuild {0} {1} --watch {2}'.format(
-        docs_dir, build_dir, '4DNWranglerTools'), echo=True, pty=True)
-
-
-def publish(ctx, test=False):
-    """Publish to the cheeseshop."""
-    clean(ctx)
-    if test:
-        run('python setup.py register -r test sdist bdist_wheel', echo=True)
-        run('twine upload dist/* -r test', echo=True)
-    else:
-        run('python setup.py register sdist bdist_wheel', echo=True)
-        run('twine upload dist/*', echo=True)
 
 
 @task
@@ -466,7 +419,7 @@ def add_user(ctx, user, usergroup):
 
 
 @task
-def list_users(ctx):
+def users(ctx):
     """list all users along with their associated tibanna user groups"""
     client = boto3.client('iam')
     marker = None
