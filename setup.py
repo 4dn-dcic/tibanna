@@ -26,10 +26,10 @@ setup_requires += ['Benchmark']
 
 
 setup(
-    name='core',
+    name='tibanna',
     version=open("core/_version.py").readlines()[-1].split()[-1].strip("\"'"),
     description='core functionality for lambda',
-    packages=['core'],
+    packages=['tibanna'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu',
@@ -46,5 +46,10 @@ setup(
     setup_requires=setup_requires,
     dependency_links=[
         'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
-    ]
+    ],
+    entrypoints={
+        'console_scripts': [
+            "tibanna=tibanna.cli:main",
+        ]
+    }
 )
