@@ -49,7 +49,6 @@ def get_random_line_in_gist(url):
     return random.choice(listing.text.split("\n"))
 
 
-@task
 def play(ctx, positive=False):
     type_url = POSITIVE if positive else NEGATIVE
     # no spaces in url
@@ -149,18 +148,6 @@ def upload(keyname, data, s3bucket, secret=None):
                   SSECustomerAlgorithm='AES256')
 
 
-@task
-def loc(ctx):
-    """
-    Count lines-of-code.
-    """
-    excludes = ['/tests/', '/Data_files', 'Submit4DN.egg-info', 'docs', 'htmlcov',
-                'README.md', 'README.rst', '.eggs']
-
-    run('find . -iname "*py" | grep -v {} | xargs wc -l | sort -n'.format(
-        ' '.join('-e ' + e for e in excludes)))
-
-
 def copytree(src, dst, symlinks=False, ignore=None):
     skipfiles = ['.coverage', 'dist', 'htmlcov', '__init__.pyc', 'coverage.xml', 'service.pyc']
     for item in os.listdir(src):
@@ -184,25 +171,6 @@ def mkdir(path):
             pass
         else:
             raise
-
-
-@task
-def new_lambda(ctx, name, base='run_task_sbg'):
-    '''
-    create a new lambda by copy from a base one and replacing some core strings.
-    '''
-    src_dir = './core/%s' % base
-    dest_dir = './core/%s' % name
-    mkdir(dest_dir)
-    copytree(src=src_dir, dst=dest_dir)
-    chdir(dest_dir)
-    # TODO: awk some lines here...
-
-
-@task
-def get_url(ctx, prj_name='lambda_sbg'):
-    url = run('cd %s; chalice url' % prj_name).stdout.strip('\n')
-    return url
 
 
 @task
@@ -248,14 +216,12 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     return retcode
 
 
-@task
 def flake(ctx):
     """Run flake8 on codebase."""
     run('flake8 .', echo=True)
     print("flake8 passed!!!")
 
 
-@task
 def clean(ctx):
     run("rm -rf build")
     run("rm -rf dist")
@@ -263,14 +229,8 @@ def clean(ctx):
 
 
 @task
-def deploy_chalice(ctx, name='lambda_sbg'):
-    print("deploying %s" % (name))
-    print("a chalice based lambda api")
-    run("cd %s; chalice deploy" % (name))
-
-
-@task
 def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
+    """deploy/update lambdas only"""
     print("preparing for deploy...")
     if tests:
         print("running tests...")
@@ -305,7 +265,6 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
             clean(ctx)
 
 
-@task
 def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     # create the temporary local dev lambda directories
     if usergroup:
@@ -374,25 +333,15 @@ def _tbenv(env_data=None):
     return os.environ.get('ENV_NAME')
 
 
-@task
-def git_tag(ctx, tag_name, msg):
-    run('git tag -a %s -m "%s"' % (tag_name, msg))
-    run('git push --tags')
-    run('git push')
-
-
-@task
 def clean_docs(ctx):
     run("rm -rf %s" % build_dir, echo=True)
 
 
-@task
 def browse_docs(ctx):
     path = os.path.join(build_dir, 'index.html')
     webbrowser.open_new_tab(path)
 
 
-@task
 def docs(ctx, clean=False, browse=False, watch=False):
     """Build the docs."""
     if clean:
@@ -404,7 +353,6 @@ def docs(ctx, clean=False, browse=False, watch=False):
         watch_docs(ctx)
 
 
-@task
 def watch_docs(ctx):
     """Run build the docs when a file changes."""
     try:
@@ -418,14 +366,6 @@ def watch_docs(ctx):
         docs_dir, build_dir, '4DNWranglerTools'), echo=True, pty=True)
 
 
-@task
-def readme(ctx, browse=False):
-    run('rst2html.py README.rst > README.html')
-    if browse:
-        webbrowser.open_new_tab('README.html')
-
-
-@task
 def publish(ctx, test=False):
     """Publish to the cheeseshop."""
     clean(ctx)
@@ -439,6 +379,7 @@ def publish(ctx, test=False):
 
 @task
 def run_workflow(ctx, input_json='', sfn='', jobid=''):
+    """run a workflow"""
     if not jobid:
         jobid = create_jobid()
     with open(input_json) as input_file:
@@ -458,8 +399,10 @@ def run_workflow(ctx, input_json='', sfn='', jobid=''):
 
 @task
 def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
-    '''The very first function to run as admin to set up environment on AWS'''
-    print("setting up tibanna environment on AWS...")
+    """set up usergroup environment on AWS
+    This function is called automatically by deploy_tibanna or deploy_unicorn
+    Use it only when the IAM permissions need to be reset"""
+    print("setting up tibanna usergroup environment on AWS...")
     if not buckets:
         print("WARNING: Without setting buckets (using --buckets)," +
               "Tibanna would have access to only public buckets." +
@@ -478,6 +421,7 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
 @task
 def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=False,
                    setup=False, buckets='', setenv=False):
+    """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
     if setup:
         if usergroup:
             usergroup = setup_tibanna_env(ctx, buckets, usergroup, True)
@@ -506,28 +450,15 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
 @task
 def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
+    """deploy tibanna unicorn to AWS cloud"""
     deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn',
                    tests=False, usergroup=usergroup, setup=not no_setup,
                    buckets=buckets, setenv=not no_setenv)
 
 
 @task
-def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
-    # lambdas use logging
-    import logging
-    logging.basicConfig()
-
-    from core.travis_deploy.service import handler as travis
-    data = {'branch': branch,
-            'repo_owner': owner,
-            'repo_name': repo_name
-            }
-    travis(data, None)
-    # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
-
-
-@task
 def add_user(ctx, user, usergroup):
+    """add a user to a tibanna group"""
     boto3.client('iam').add_user_to_group(
         GroupName='tibanna_' + usergroup,
         UserName=user
@@ -535,7 +466,32 @@ def add_user(ctx, user, usergroup):
 
 
 @task
+def list_users(ctx):
+    """list all users along with their associated tibanna user groups"""
+    client = boto3.client('iam')
+    marker = None
+    while True:
+        if marker:
+            res = client.list_users(Marker=marker)
+        else:
+            res = client.list_users()
+        print("user\ttibanna_usergroup")
+        for r in res['Users']:
+            res_groups = client.list_groups_for_user(
+                UserName=r['UserName']
+            )
+            groups = [rg['GroupName'] for rg in res_groups['Groups']]
+            groups = filter(lambda x: 'tibanna_' in x, groups)
+            groups = [x.replace('tibanna_', '') for x in groups]
+            print("%s\t%s" % (r['UserName'], ','.join(groups)))
+        marker = res.get('Marker', '')
+        if not marker:
+            break
+
+
+@task
 def list(ctx, numbers=False, sfn_type="unicorn"):
+    """list all step functions, optionally with a summary (-n)"""
     st = boto3.client('stepfunctions')
     res = st.list_state_machines(
         maxResults=1000
@@ -565,35 +521,13 @@ def count_status(sfn_arn, client):
             if next_token:
                 args['nextToken'] = next_token
             res = client.list_executions(**args)
-            # count = count + len(res['executions'])
             for status in ['RUNNING', 'SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED_OUT']:
-                count[status] = count.get(status, 0) + sum([r['status']==status for r in res['executions']])
+                count[status] = count.get(status, 0) + sum([r['status'] == status for r in res['executions']])
             if res.get('nextToken', ''):
                 next_token = res['nextToken']
             else:
                 break
         return count
-
-
-@task(aliases=['notebooks'])
-def notebook(ctx):
-    """
-    Start IPython notebook server.
-    """
-    with setenv(PYTHONPATH='{root}/core:{root}:{root}/tests'.format(root=ROOT_DIR),
-                JUPYTER_CONFIG_DIR='{root}/notebooks'.format(root=ROOT_DIR)):
-
-        os.chdir('notebooks')
-
-        # Need pty=True to let Ctrl-C kill the notebook server. Shrugs.
-        try:
-            run('jupyter nbextension enable --py widgetsnbextension')
-            run('jupyter notebook --ip=*', pty=True)
-        except KeyboardInterrupt:
-            pass
-        print("If notebook does not open on your chorme automagically, try adding this to your bash_profie")
-        print("export BROWSER=/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome")
-        print("*for MacOS and Chrome only")
 
 
 @task
@@ -617,29 +551,34 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
 
 @task
 def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
+    """print execution log or postrun json (-p) for a job"""
     print(_log(exec_arn, job_id, sfn, p))
 
 
 @task
 def kill_all(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
-    """ killing all the running jobs"""
+    """kill all the running jobs on a step function"""
     _kill_all(sfn)
 
 
 @task
 def kill(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    """kill a specific job"""
     _kill(exec_arn, job_id, sfn)
 
 
 @task
 def rerun_many(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=0, sleeptime=5, status='FAILED'):
-    """Reruns step function jobs that failed after a given time point (stopdate, stophour (24-hour format), stopminute)
+    """rerun all the jobs that failed after a given time point
+    filtered by the time when the run failed (stopdate, stophour (24-hour format), stopminute)
     By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
     If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
     Sleeptime is sleep time in seconds between rerun submissions.
     By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
-    examples)
+
+    Examples
+
     rerun_many('tibanna_pony-dev')
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
@@ -649,7 +588,9 @@ def rerun_many(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018'
 
 @task
 def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
-    """status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"""
+    """print out executions with details (-v)
+    status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
+    """
     args = {
         'stateMachineArn': STEP_FUNCTION_ARN(sfn),
         'maxResults': 100
