@@ -526,6 +526,55 @@ def travis(ctx, branch='production', owner='4dn-dcic', repo_name='fourfront'):
     # print("https://travis-ci.org/%s" % res.json()['repository']['slug'])
 
 
+@task
+def add_user(ctx, user, usergroup):
+    boto3.client('iam').add_user_to_group(
+        GroupName='tibanna_' + usergroup,
+        UserName=user
+    )
+
+
+@task
+def list(ctx, numbers=False, sfn_type="unicorn"):
+    st = boto3.client('stepfunctions')
+    res = st.list_state_machines(
+        maxResults=1000
+    )
+    header = "name\tcreation_date"
+    if numbers:
+        header = header + "\trunning\tsucceeded\tfailed\taborted\ttimed_out"
+    print(header)
+    for s in res['stateMachines']:
+        if not s['name'].startswith('tibanna_' + sfn_type):
+            continue
+        line = "%s\t%s" % (s['name'], str(s['creationDate']))
+        if numbers:
+            counts = count_status(s['stateMachineArn'], st)
+            for status in ['RUNNING', 'SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED_OUT']:
+                line = line + "\t%i" % counts[status]
+        print(line)
+
+
+def count_status(sfn_arn, client):
+        next_token = None
+        count = dict()
+        while True:
+            args = {'stateMachineArn': sfn_arn,
+                    # 'statusFilter': status,
+                    'maxResults': 1000}
+            if next_token:
+                args['nextToken'] = next_token
+            res = client.list_executions(**args)
+            # count = count + len(res['executions'])
+            for status in ['RUNNING', 'SUCCEEDED', 'FAILED', 'ABORTED', 'TIMED_OUT']:
+                count[status] = count.get(status, 0) + sum([r['status']==status for r in res['executions']])
+            if res.get('nextToken', ''):
+                next_token = res['nextToken']
+            else:
+                break
+        return count
+
+
 @task(aliases=['notebooks'])
 def notebook(ctx):
     """
