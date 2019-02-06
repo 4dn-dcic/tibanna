@@ -59,11 +59,32 @@ Alternatively, use ``setup.py``
 Deploying Tibanna to AWS
 ------------------------
 
-To deploy Tibanna the AWS Cloud, one must first has an AWS account and an admin user credentials. If you do not have it yet, check out (**Before_using_Tibanna_**) first.
+
+AWS configuration
++++++++++++++++++
 
 
-.. _Before_using_Tibanna: https://tibanna.readthedocs.io/en/latest/startaws.html
+To deploy Tibanna the AWS Cloud, you must first have an AWS account and an admin user credentials. For more details, check out https://aws.amazon.com/.
 
+Once you have the user credentials, we can add that information to the local machine using ``aws configure``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
+
+::
+
+    aws configure
+
+
+Type in your keys, region and output format ('json') as below.
+
+::
+
+    AWS Access Key ID [None]: <your_aws_key>
+    AWS Secret Access Key [None]: <your_aws_secret_key>
+    Default region name [None]: us-east-1
+    Default output format [None]: json
+
+
+Deploy Tibanna
+++++++++++++++
 
 To set up and deploy Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
@@ -73,23 +94,50 @@ To set up and deploy Tibanna, you need an AWS account and the following environm
     export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
 
 
+You can find your aws account number from the AWS Web Console.
+
+=================  ========================
+|console_account|  |console_account_number|
+=================  ========================
+
+.. |console_account| image:: images/console_account.png
+.. |console_account_number| image:: images/console_account_number.png
+
+
 If you're using a forked repo or want to use a specific branch set the following variables as well. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (4dn-dcic/tibanna, master), no need to set these variables.
 
 ::
 
+    # only if you're using a forked repo
     export TIBANNA_REPO_NAME=<git_hub_repo_name>  # (default: 4dn-dcic/tibanna)
     export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: master)
 
 
-Then, set up buckets and user group permission for Tibanna as below.
+Then, deploy a copy of Tibanna as below. This will also set up buckets and user group permission for Tibanna as below.
+
+If you want to operate multiple copies of Tibanna (e.g. for different projects), you can try to name each copy of Tibanna using ``--usergroup`` option (by default the name is ``default_<random_number>``).
+
+Here, we're naming it ``hahaha`` - come up with a better name if you want to.
+
 
 ::
 
-    invoke deploy_unicorn --buckets=<bucket1>,<bucket2>,...
-    # add all the buckets your input/output files and log files will go to. The buckets must already exist.
+    invoke deploy_unicorn --uesrgroup=hahaha
+    # This will give permission to only public buckets.
+    # To add permission to private buckets, use --buckets option.
 
+
+Run a test workflow
++++++++++++++++++++
 
 The above command will first create a usergroup that shares the permission to use a single tibanna environment. Then, it will deploy a tibanna instance (step function / lambda). The name of the tibanna step function is added to your ``~/.bashrc`` file. Check that you can see the following line in the ``~/.bashrc`` file.
+
+::
+
+    # check your ~/.bashrc file
+    tail -1 ~/.bashrc
+
+You should be able to see the following.
 
 ::
 
@@ -110,14 +158,23 @@ You can run a workflow using Tibanna if you're an admin user or if you are a use
     invoke run_workflow --input-json=<input_json_for_a_workflow_run>
 
 
-Example
--------
-
-Let's try setting up Tibanna that uses public buckets ``my-tibanna-test-bucket`` and ``my-tibanna-test-input-bucket``. The public has permission to these buckets - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Please use it only for initial testing of Tibanna.
+As an example you can try to run a test workflow as below. This one uses only public buckets ``my-tibanna-test-bucket`` and ``my-tibanna-test-input-bucket``. The public has permission to these buckets - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Please use it only for initial testing of Tibanna.
 
 ::
 
-    invoke deploy_unicorn --buckets=my-tibanna-test-bucket,my-tibanna-test-input-bucket
+    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
+
+
+
+Example with private buckets
+----------------------------
+
+Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. Let's name this one ``lalala``.
+
+
+::
+
+    invoke deploy_unicorn --buckets=<bucket1>,<bucket2>,... --usergroup=lalala
 
 
 Export the environmental variable for Tibanna step function name.
@@ -132,4 +189,12 @@ As an example you can try to run a test workflow as below.
 ::
 
     invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
+
+
+Now we have two different copies of deployed Tibanna. According to your `~/.bashrc`, the latest deployed copy is your default copy. However, if you want to run a workflow on a different copy of Tibanna, use ``--sfn`` option. For example, now your default copy is ``lalala`` (the latest one), but you want to run our workflow on ``hahaha``. Then, do the following.
+
+::
+
+    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json --sfn=tibanna_unicorn_hahaha
+
 
