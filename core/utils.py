@@ -27,6 +27,7 @@ AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_pony')
+DYNAMODB_TABLE = 'tibanna-master'
 
 # just store this in one place
 _tibanna = '_tibanna'
@@ -223,12 +224,46 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
         time.sleep(sleep)
     except Exception as e:
         raise(e)
-
+    # adding execution info to dynamoDB for fast search by awsem job id
+    add_to_dydb(jobid, run_name, sfn, input_json['config']['log_bucket'])
+    # print some info
     print("response from aws was: \n %s" % response)
     print("url to view status:")
     print(input_json[_tibanna]['url'])
     input_json[_tibanna]['response'] = response
     return input_json
+
+
+def add_to_dydb(awsem_job_id, execution_name, sfn, logbucket):
+    dydb = boto3.client('dynamodb')
+    try:
+        # first check the table exists
+        dydb.describe_table(TableName=DYNAMODB_TABLE)
+    except Exception as e:
+        printlog("Not adding to dynamo table: %s" % e)
+        return
+    try:
+        response = dydb.put_item(
+            TableName=DYNAMODB_TABLE,
+            Item={
+                'Job Id': {
+                    'S': awsem_job_id
+                },
+                'Execution Name': {
+                    'S': execution_name
+                },
+                'Step Function': {
+                    'S': sfn
+                },
+                'Log Bucket': {
+                    'S': logbucket
+                },
+            }
+        )
+    except Except as e:
+        raise(e)
+    
+
 
 
 def create_stepfunction(dev_suffix=None,
