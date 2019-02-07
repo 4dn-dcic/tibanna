@@ -28,6 +28,7 @@ AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_pony')
 DYNAMODB_TABLE = 'tibanna-master'
+BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
 
 # just store this in one place
 _tibanna = '_tibanna'
@@ -35,6 +36,10 @@ _tibanna = '_tibanna'
 
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_ARN % ('stateMachine', sfn)
+
+
+def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    return BASE_EXEC_ARN % (sfn, exec_name)
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
@@ -536,20 +541,21 @@ def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dnd
                                'Body': {'Text': {'Data': msg}}})
 
 
-def log(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     if postrunjson:
         suffix = '.postrun.json'
     else:
         suffix = '.log'
     sf = boto3.client('stepfunctions')
+    if not exec_arn and exec_name:
+        exec_arn = EXECUTION_ARN(exec_name, sfn)
     if exec_arn:
         desc = sf.describe_execution(executionArn=exec_arn)
-        if desc['status'] == 'RUNNING':
-            jobid = str(json.loads(desc['input'])['jobid'])
-            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
-            if res_s3:
-                return(res_s3['Body'].read())
+        jobid = str(json.loads(desc['input'])['jobid'])
+        logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+        res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
+        if res_s3:
+            return(res_s3['Body'].read())
     elif job_id:
         stateMachineArn = STEP_FUNCTION_ARN(sfn)
         res = sf.list_executions(stateMachineArn=stateMachineArn)
