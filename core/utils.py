@@ -536,7 +536,7 @@ def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dnd
                                'Body': {'Text': {'Data': msg}}})
 
 
-def log(exec_arn=None, job_id=None, sfn=None, postrunjson=False):
+def log(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     if postrunjson:
         suffix = '.postrun.json'
     else:
