@@ -503,9 +503,9 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
 
 
 @task
-def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
+def log(ctx, exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
     """print execution log or postrun json (-p) for a job"""
-    print(_log(exec_arn, job_id, sfn, p))
+    print(_log(exec_arn, job_id, exec_name, sfn, p))
 
 
 @task

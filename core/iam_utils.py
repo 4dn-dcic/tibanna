@@ -142,7 +142,8 @@ def generate_cloudwatch_metric_policy(account_id, region, tibanna_policy_prefix)
             {
                 "Effect": "Allow",
                 "Action": [
-                    "cloudwatch:PutMetricData"
+                    "cloudwatch:PutMetricData",
+                    "cloudwatch:GetMetricStatistics"
                 ],
                 "Resource": "*"
             }
@@ -329,12 +330,18 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
 
 def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
+                                     cloudwatch_metric_policy_name,
                                      verbose=False):
     client = iam.meta.client
     lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, 'check_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
+    response = role_lambda_run.attach_policy(
+        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_metric_policy_name
+    )
+    if verbose:
+        print(response)
     response = role_lambda_run.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_policy_name
     )
@@ -512,7 +519,8 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
                                    desc_stepfunction_policy_name,
                                    cw_dashboard_policy_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
-                                     cloudwatch_policy_name, bucket_policy_name)
+                                     cloudwatch_policy_name, bucket_policy_name,
+                                     cloudwatch_metric_policy_name)
     create_empty_role_for_lambda(iam)
     # role for step function
     create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)
