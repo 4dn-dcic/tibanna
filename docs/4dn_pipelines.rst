@@ -2,7 +2,7 @@
 Running 4DN pipelines using Tibanna
 ===================================
 
-* For 4DN pipelines, benchmark functions are pre-implemented in Tibanna through the Benchmark package. This means that the user does not have to choose EC2 instance type or EBS size. Use the following blank values instead:
+* For 4DN pipelines, benchmark functions are pre-implemented in Tibanna through the Benchmark package. This means that the user does not have to choose EC2 instance type or EBS size (they are auto-determined). Use the following blank values for these config fields. The user may choose specific instance type or EBS size if needed.
 
 ::
 
@@ -22,9 +22,9 @@ md5
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/dev/cwl_awsem_v1/md5.cwl
 * Docker : ``duplexa/md5:v2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-md5-0.2.6
-* 4DN example run:
-  * https://data.4dnucleome.org/workflow-runs-awsem/75ce5f66-f98f-4222-9d1c-3daed262856b/#graph
-    |md5_4dn_run|
+* 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/75ce5f66-f98f-4222-9d1c-3daed262856b/#graph
+
+|md5_4dn_run|
 
 .. |md5_4dn_run| image:: images/md5_4dn_run.png
 
@@ -32,14 +32,18 @@ md5
 
 ::
 
-    invoke run_workflow --wf=md5-0.2.6 --I-input-file=<input_bucket>/<input_file_path> --O-report=<output_bucket>/<output_file_path>
+    invoke run_workflow --wf=md5-0.2.6 \
+        --I-input-file=<input_bucket>/<input_file_path> \
+        --O-report=<output_bucket>/<output_file_path>
 
 ::
 
-    invoke run_workflow --wf=md5-0.2.6 --I-input-file=my-tibanna-test-input-bucket/somefastqfile.fastq.gz --O-report=my-tibanna-test-bucket/my_outdir/report
+    invoke run_workflow --wf=md5-0.2.6 \
+        --I-input-file=my-tibanna-test-input-bucket/somefastqfile.fastq.gz \
+        --O-report=my-tibanna-test-bucket/my_outdir/report
 
 
-Corresponding execution json :
+Example execution json :
 
 ::
 
