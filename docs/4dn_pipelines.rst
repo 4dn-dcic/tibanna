@@ -28,7 +28,7 @@ md5
 
 .. |md5_4dn_run| image:: images/md5_4dn_run.png
 
-* Fastrun : 
+* Easy run : 
 
 ::
 
@@ -42,8 +42,14 @@ md5
         --I-input-file=my-tibanna-test-input-bucket/somefastqfile.fastq.gz \
         --O-report=my-tibanna-test-bucket/my_outdir/report
 
+* Regular run :
 
-Example execution json :
+::
+
+    invoke run_workflow --input-json=<input_json>
+
+
+* Example execution json :
 
 ::
 
