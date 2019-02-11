@@ -265,10 +265,9 @@ def add_to_dydb(awsem_job_id, execution_name, sfn, logbucket):
                 },
             }
         )
-    except Except as e:
+        printlog(response)
+    except Exception as e:
         raise(e)
-    
-
 
 
 def create_stepfunction(dev_suffix=None,

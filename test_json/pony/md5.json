@@ -13,7 +13,6 @@
       "run_type": "md5"
     },
     "parameters": {}, 
-    "app_name": "md5", 
     "workflow_uuid": "4dn-dcic-lab:wf-md5-0.2.6",
     "input_files": [
                     {"workflow_argument_name": "input_file", 

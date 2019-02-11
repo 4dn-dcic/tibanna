@@ -35,7 +35,7 @@ import gzip
 ###########################
 
 
-def create_ffmeta_awsem(workflow, app_name, input_files=None,
+def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', tag=None,
@@ -51,10 +51,13 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None,
         lab = '4dn-dcic-lab'
 
     if title is None:
-        if tag is None:
-            title = app_name + " run " + str(datetime.datetime.now())
+        if app_version:
+            title = app_name + ' ' + app_version
         else:
-            title = app_name + ' ' + tag + " run " + str(datetime.datetime.now())
+            title = app_name
+        if tag:
+            title = title + ' ' + tag
+        title = title + " run " + str(datetime.datetime.now())
 
     return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,

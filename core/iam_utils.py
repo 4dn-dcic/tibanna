@@ -185,7 +185,6 @@ def generate_dynamodb_policy(account_id, region, tibanna_policy_prefix):
     return policy
 
 
-
 def generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix):
     policy = {
         "Version": "2012-10-17",

@@ -62,8 +62,6 @@ def real_handler(event, context):
     for infile in input_file_list:
         if not infile:
             raise("malformed input, check your input_files")
-    app_name = event.get('app_name')
-    print(app_name)
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
     parameters = ff_utils.convert_param(event.get('parameters'), True)
@@ -135,8 +133,8 @@ def real_handler(event, context):
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = create_ffmeta_awsem(
-        workflow_uuid, app_name, input_files_for_ffmeta, tag=tag,
-        run_url=tibanna.settings.get('url', ''),
+        workflow_uuid, args['app_name'], args['app_version'], input_files_for_ffmeta,
+        tag=tag, run_url=tibanna.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=event.get('wfr_meta'), jobid=jobid
     )
