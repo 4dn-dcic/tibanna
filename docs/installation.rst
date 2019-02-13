@@ -169,6 +169,46 @@ As an example you can try to run a test workflow as below. This one uses only pu
 Example with private buckets
 ----------------------------
 
+
+
+Uploading files to bucket
+#########################
+
+If you are an admin or have a permission to create a bucket, you can either use the AWS Web Console or use the following command using `awscli`. For example, a data (input/output) bucket and a tibanna log bucket may be created. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
+
+::
+
+    aws s3api create-bucket --bucket <bucketname>
+
+
+**Example**
+
+::
+
+    aws s3api create-bucket --bucket suwangs_data_bucket  # choose your own data bucket name
+    aws s3api create-bucket --bucket suwangs_tibanna_log_bucket  # choose your own log bucket name
+
+
+
+Upload your files to the data bucket by using the following
+
+::
+
+    aws s3 cp <filename> s3://<bucketname>/<filename>
+    aws s3 cp -R <dirname> s3://<bucketname>/<dirname>
+
+
+**Example**
+
+::
+
+    aws s3 cp somebamfile.bam s3://suwangs_data_bucket/somebamfile.bam
+    aws s3 cp -R suwangs_input_data_folder s3://suwangs_data_bucket/suwangs_input_data_folder
+
+
+
+
+
 Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. Let's name this one ``lalala``.
 
 
@@ -184,18 +224,20 @@ Export the environmental variable for Tibanna step function name.
     source ~/.bashrc
 
 
-As an example you can try to run a test workflow as below.
+Create an input json using your buckets.
+
+Then, run workflow.
 
 ::
 
-    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
+    invoke run_workflow --input-json=<input_json>
 
 
 Now we have two different copies of deployed Tibanna. According to your `~/.bashrc`, the latest deployed copy is your default copy. However, if you want to run a workflow on a different copy of Tibanna, use ``--sfn`` option. For example, now your default copy is ``lalala`` (the latest one), but you want to run our workflow on ``hahaha``. Then, do the following.
 
 ::
 
-    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json --sfn=tibanna_unicorn_hahaha
+    invoke run_workflow --input-json=<input_json> --sfn=tibanna_unicorn_hahaha
 
 
 User permission
