@@ -97,7 +97,7 @@ def create_json_dict(input_dict):
     pre.update({'Job': {'JOBID': jobid,
                         'App': {
                                  'App_name': a['app_name'],
-                                 'App_version': a['app_version'],
+                                 'App_version': a.get('app_version',''),
                                  'language': a.get('language', ''),
                                  'cwl_url': a.get('cwl_directory_url', ''),
                                  'main_cwl': a.get('cwl_main_filename', ''),
@@ -109,14 +109,14 @@ def create_json_dict(input_dict):
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
                                  'Secondary_files_data': {},   # fill in later (below)
-                                 'Input_parameters': a['input_parameters'],
+                                 'Input_parameters': a.get('input_parameters', {}),
                                  'Env': a.get('input_env', {})
                         },
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
                                  'output_target': a['output_target'],
                                  'alt_cond_output_argnames': a.get('alt_cond_output_argnames', []),
-                                 'secondary_output_target': a['secondary_output_target']
+                                 'secondary_output_target': a.get('secondary_output_target', {})
                         },
                         'Log': {
                                  'log_bucket_directory': log_bucket
@@ -131,7 +131,7 @@ def create_json_dict(input_dict):
                                                          'path': value.get('object_key'),
                                                          'rename': value.get('rename'),
                                                          'profile': value.get('profile', '')}
-    for item, value in a['secondary_files'].iteritems():
+    for item, value in a.get('secondary_files', []).iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
