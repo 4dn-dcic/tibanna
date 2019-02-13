@@ -222,7 +222,9 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
 
 ::
 
-    invoke deploy_unicorn --buckets=suwangs_data_bucket,suwangs_tibanna_log_bucket
+    invoke deploy_unicorn --buckets=suwangs_data_bucket,suwangs_tibanna_log_bucket \
+                          --usergroup=lalala
+
     # no space between bucket names!
 
 
