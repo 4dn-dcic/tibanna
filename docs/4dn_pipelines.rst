@@ -28,52 +28,41 @@ md5
 
 .. |md5_4dn_run| image:: images/md5_4dn_run.png
 
-* Easy run : 
 
-::
-
-    invoke run_workflow --wf=md5-0.2.6 \
-        --I-input-file=<input_bucket>/<input_file_path> \
-        --O-report=<output_bucket>/<output_file_path>
-
-::
-
-    invoke run_workflow --wf=md5-0.2.6 \
-        --I-input-file=my-tibanna-test-input-bucket/somefastqfile.fastq.gz \
-        --O-report=my-tibanna-test-bucket/my_outdir/report
-
-* Regular run :
+* Run using tibanna :
 
 ::
 
     invoke run_workflow --input-json=<input_json>
 
 
-* Example execution json :
+* Example input execution json :
+
+Use the following as a template and replace ``<YOUR....>`` with your input/output/log bucket/file(object) informatio.n
 
 ::
 
     {
       "args": {
         "app_name": "md5",
-        "input_parameters": {},
-        "cwl_child_filenames": [],
-        "cwl_version": "v1",
-        "output_target": {
-          "report": "my_outdir/report"
-        },
-        "secondary_output_target": {},
-        "cwl_main_filename": "md5.cwl",
-        "secondary_files": {},
-        "output_S3_bucket": "my-tibanna-test-bucket",
         "app_version": "0.2.6",
         "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem/",
+        "cwl_version": "v1",
+        "cwl_main_filename": "md5.cwl",
+        "cwl_child_filenames": [],
         "input_files": {
           "input_file": {
-            "bucket_name": "my-tibanna-test-input-bucket",
-            "object_key": "somefastqfile.fastq.gz"
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_FILE_NAME_IN_INPUT_BUCKET>"
           }
-        }
+        },
+        "input_parameters": {},
+        "secondary_files": {},
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+          "report": "<YOUR_OUTPUT_FILE_NAME_IN_OUTPUT_BUCKET>"
+        },
+        "secondary_output_target": {}
       },
       "config": {
         "instance_type": "",
@@ -82,9 +71,9 @@ md5
         "ebs_type": "io1",
         "ebs_iops": 500,
         "shutdown_min": "now",
-        "password": "dragonfly",
-        "log_bucket": "my-tibanna-test-bucket",
-        "key_name": ""
+        "password": "",
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
       }
     }
 
