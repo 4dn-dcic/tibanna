@@ -83,8 +83,8 @@ Type in your keys, region and output format ('json') as below.
     Default output format [None]: json
 
 
-Deploy Tibanna
-++++++++++++++
+Deploying Tibanna
++++++++++++++++++
 
 To set up and deploy Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
@@ -165,9 +165,8 @@ As an example you can try to run a test workflow as below. This one uses only pu
     invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
 
 
-
-Deploy Tibanna with private buckets
-----------------------------
+Deploying Tibanna with private buckets
+--------------------------------------
 
 Creating a bucket
 +++++++++++++++++
@@ -205,8 +204,8 @@ Upload your files to the data bucket by using the following
 
 
 
-Deploy Tibanna
-++++++++++++++
+Deploying Tibanna
++++++++++++++++++
 
 Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. You can name this new copy of Tibanna by specifying a new user group (e.g. ``lalala``.)
 
