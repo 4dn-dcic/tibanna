@@ -59,10 +59,11 @@ Alternatively, use ``setup.py``
 AWS configuration
 -----------------
 
+To use Tibanna the AWS Cloud, you must first have an AWS account.
 
-To deploy Tibanna the AWS Cloud, you must first have an AWS account and an admin user credentials. For more details, check out https://aws.amazon.com/.
-To run workflows using Tibanna, you need a regular user credentials.
+Deployment requires an admin user credentials. For more details, check out https://aws.amazon.com/.
 
+To only run workflows using Tibanna, you need a regular user credentials.
 
 Once you have the user credentials, we can add that information to the local machine using ``aws configure``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
 
@@ -81,11 +82,7 @@ Type in your keys, region and output format ('json') as below.
     Default output format [None]: json
 
 
-Deploying Tibanna to AWS
-------------------------
-
-
-To set up and deploy Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
+To use Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
 ::
 
@@ -103,7 +100,10 @@ You can find your aws account number from the AWS Web Console.
 .. |console_account_number| image:: images/console_account_number.png
 
 
-If you're using a forked repo or want to use a specific branch set the following variables as well. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (4dn-dcic/tibanna, master), no need to set these variables.
+Deploying Tibanna to AWS
+------------------------
+
+If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
 
 ::
 
