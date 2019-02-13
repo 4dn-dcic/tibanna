@@ -113,7 +113,7 @@ If you're using a forked repo or want to use a specific branch set the following
     export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: master)
 
 
-Then, deploy a copy of Tibanna as below. This will also set up buckets and user group permission for Tibanna as below.
+Then, deploy a copy of Tibanna as below.
 
 If you want to operate multiple copies of Tibanna (e.g. for different projects), you can try to name each copy of Tibanna using ``--usergroup`` option (by default the name is ``default_<random_number>``).
 
@@ -141,7 +141,7 @@ You should be able to see the following.
 
 ::
 
-    export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=tibanna_unicorn_<usergroup_name>
+    export TIBANNA_DEFAULT_STEP_FUNCTION_NAME=tibanna_unicorn_hahaha
 
 
 To set this environmental variable,
@@ -170,6 +170,8 @@ Deploying Tibanna with private buckets
 
 Creating a bucket
 +++++++++++++++++
+
+You can skip this section if you want to use existing buckets for input/output/logs..
 
 If you are an admin or have a permission to create a bucket, you can either use the AWS Web Console or use the following command using `awscli`. For example, a data (input/output) bucket and a tibanna log bucket may be created. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
 
@@ -207,7 +209,8 @@ Upload your files to the data bucket by using the following
 Deploying Tibanna
 +++++++++++++++++
 
-Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. You can name this new copy of Tibanna by specifying a new user group (e.g. ``lalala``.)
+Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names.
+Again, you can name this new copy of Tibanna by specifying a new user group (e.g. ``lalala``.)
 
 
 ::
@@ -259,6 +262,6 @@ For example, if you have a user named ``myuser1`` and you want to give permissio
 
 ::
 
-    invoke add_uesrs --user=myuser1 --group=lalala
+    invoke add_uesrs --user=suwang --group=lalala
 
 
