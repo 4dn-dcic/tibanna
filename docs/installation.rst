@@ -218,6 +218,15 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
     invoke deploy_unicorn --buckets=<bucket1>,<bucket2>,... --usergroup=lalala
 
 
+**Example**
+
+
+::
+
+    invoke deploy_unicorn --buckets=suwangs_data_bucket,suwangs_tibanna_log_bucket
+    # no space between bucket names!
+
+
 Export the environmental variable for Tibanna step function name.
 
 ::
@@ -251,6 +260,17 @@ To run a workflow, the user must be either an admin or in the IAM group ``tibann
  
     invoke users
 
+
+You will see the list of users.
+
+**Example**
+
+::
+    user	tibanna_usergroup
+    soo
+    suwang	
+
+
 This command will print out the list of users.
 
 ::
@@ -263,5 +283,20 @@ For example, if you have a user named ``suwang`` and you want to give permission
 ::
 
     invoke add_uesrs --user=suwang --group=lalala
+
+
+Check users again.
+
+::
+
+    invoke users
+
+
+::
+    user	tibanna_usergroup
+    soo
+    suwang	lalala
+
+Now ``suwang`` can use ``tibanna_unicorn_lalala`` and access buckets ``suwangs_data_bucket`` and ``suwangs_tibanna_log_bucket``
 
 
