@@ -59,10 +59,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
         "output_target": {
           "report": "<YOUR_OUTPUT_FILE_NAME_IN_OUTPUT_BUCKET>"
-        },
-        "input_parameters": {},
-        "secondary_files": {},
-        "secondary_output_target": {}
+        }
       },
       "config": {
         "instance_type": "",
