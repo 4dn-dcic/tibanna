@@ -14,14 +14,14 @@ Version updates
   
   **Feb 13, 2019** The latest version is now 0.5.9_.
 
-    - Wrong requirement of SECRET env is removed from unicorn installation
+    - Wrong requirement of ``SECRET`` env is removed from unicorn installation
     - deploy_unicorn without specified buckets also works
-    - deploy_unicorn now has `--usergroup` option
+    - deploy_unicorn now has ``--usergroup`` option
     - cloud metric statistics aggregation with runs > 24 hr now fixed
-    - `invoke -l` lists all invoke commands
-    - `invoke add_user`, `invoke list` and `invoke users` added
-    - `log()` function not assuming default step function fixed
-    - `invoke log` working only for currently running jobs fixed
+    - ``invoke -l`` lists all invoke commands
+    - ``invoke add_user``, ``invoke list`` and ``invoke users`` added
+    - ``log()`` function not assuming default step function fixed
+    - ``invoke log`` working only for currently running jobs fixed
 
 
   **Feb 4, 2019** The latest version is now 0.5.8_.

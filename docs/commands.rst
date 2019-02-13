@@ -15,7 +15,7 @@ To list all available commands, use ``invoke -l``
 Basic_commands
 ++++++++++++++
 
-Admin_only
+Admin only
 ##########
 
 The following commands require admin previlege to one's AWS account.
@@ -335,6 +335,10 @@ To list all step functions
 
 Advanced_commands
 +++++++++++++++++
+
+
+Admin only
+##########
 
 
 setup_tibanna_env
