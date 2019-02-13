@@ -156,7 +156,10 @@ def powerup(lambda_name, metadata_only_func):
                     elif not event.get('push_error_to_end', False):
                         raise e
                     else:
-                        error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
+                        if e.__class__ == AWSEMJobErrorException:
+                            error_msg = e
+                        else:
+                            error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
                         event['error'] = error_msg
                         logger.info(error_msg)
                         return event
