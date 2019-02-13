@@ -166,13 +166,11 @@ As an example you can try to run a test workflow as below. This one uses only pu
 
 
 
-Example with private buckets
+Deploy Tibanna with private buckets
 ----------------------------
 
-
-
-Uploading files to bucket
-#########################
+Creating a bucket
++++++++++++++++++
 
 If you are an admin or have a permission to create a bucket, you can either use the AWS Web Console or use the following command using `awscli`. For example, a data (input/output) bucket and a tibanna log bucket may be created. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
 
@@ -207,9 +205,10 @@ Upload your files to the data bucket by using the following
 
 
 
+Deploy Tibanna
+++++++++++++++
 
-
-Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. Let's name this one ``lalala``.
+Let's try setting up Tibanna that uses private buckets. As you deploy your tibanna, add your private bucket names. You can name this new copy of Tibanna by specifying a new user group (e.g. ``lalala``.)
 
 
 ::
