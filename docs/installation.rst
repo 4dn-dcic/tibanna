@@ -265,6 +265,7 @@ You will see the list of users.
 **Example**
 
 ::
+
     user	tibanna_usergroup
     soo
     suwang	
@@ -292,6 +293,7 @@ Check users again.
 
 
 ::
+
     user	tibanna_usergroup
     soo
     suwang	lalala
