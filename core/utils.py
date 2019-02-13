@@ -148,8 +148,12 @@ def powerup(lambda_name, metadata_only_func):
                     if type(e) in ignored_exceptions:
                         raise e
                         # update ff_meta to error status
-                    elif lambda_name == 'update_ffmeta_awsem' or not event.get('push_error_to_end', False):
+                    elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
+                        error_msg = "error from earlier step: %s\n" % event.get("error", '')
+                        error_msg += "error from update_ffmeta: %s" % str(e)
+                        raise Exception(error_msg)
+                    elif not event.get('push_error_to_end', False):
                         raise e
                     else:
                         error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
