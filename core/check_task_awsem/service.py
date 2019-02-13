@@ -42,8 +42,6 @@ def handler(event, context):
     job_started = "%s.job_started" % jobid
     job_success = "%s.success" % jobid
     job_error = "%s.error" % jobid
-    job_log = "%s.log" % jobid
-    job_log_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, job_log)
 
     # check to see ensure this job has started else fail
     if not does_key_exist(bucket_name, job_started):
@@ -52,7 +50,7 @@ def handler(event, context):
     # check to see if job has error, report if so
     if does_key_exist(bucket_name, job_error):
         handle_postrun_json(bucket_name, jobid, event, False)
-        raise AWSEMJobErrorException("Job encountered an error check log at %s" % job_log_location)
+        raise AWSEMJobErrorException("Job encountered an error check log using invoke log --job-id=%s" % jobid)
 
     # check to see if job has completed if not throw retry error
     if does_key_exist(bucket_name, job_success):

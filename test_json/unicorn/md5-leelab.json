@@ -27,11 +27,13 @@
     "EBS_optimized": false,
     "ebs_iops": 500,
     "shutdown_min": "now",
-    "instance_type": "c4.4xlarge",
+    "instance_type": "t2.micro",
     "cloudwatch_dashboard" : true,    
     "password": "dragonfly",
     "log_bucket": "leelab-tibanna-log",
-    "key_name": "",
-    "spot_instance": true
+    "key_name": ""
+  },
+  "_tibanna": {
+    "run_type": "md5_test"
   }
 }

@@ -148,11 +148,20 @@ def powerup(lambda_name, metadata_only_func):
                     if type(e) in ignored_exceptions:
                         raise e
                         # update ff_meta to error status
-                    elif lambda_name == 'update_ffmeta_awsem' or not event.get('push_error_to_end', False):
+                    elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
+                        if 'error' in event:
+                            error_msg = "error from earlier step: %s\n" % event["error"]
+                        else:
+                            error_msg += "error from update_ffmeta: %s" % str(e)
+                        raise Exception(error_msg)
+                    elif not event.get('push_error_to_end', False):
                         raise e
                     else:
-                        error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
+                        if e.__class__ == AWSEMJobErrorException:
+                            error_msg = 'Error on step: %s: %s' % (lambda_name, str(e))
+                        else:
+                            error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
                         event['error'] = error_msg
                         logger.info(error_msg)
                         return event
@@ -168,7 +177,7 @@ def randomize_run_name(run_name, sfn):
                 executionArn=arn
         )
         if response:
-            run_name += str(uuid4())
+            run_name += '-' + str(uuid4())
     except Exception:
         pass
     return run_name
@@ -265,10 +274,9 @@ def add_to_dydb(awsem_job_id, execution_name, sfn, logbucket):
                 },
             }
         )
-    except Except as e:
+        printlog(response)
+    except Exception as e:
         raise(e)
-    
-
 
 
 def create_stepfunction(dev_suffix=None,

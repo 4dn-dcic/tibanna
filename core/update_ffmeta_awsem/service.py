@@ -251,8 +251,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     # patch the workflow run, value_qc is used to make drawing graphs easier.
     output_files = ff_meta.output_files
     output_files[0]['value_qc'] = qc_meta['@id']
-    retval = {"output_quality_metrics": [{"name": quality_metric, "value": qc_meta['@id']}],
-              'output_files': output_files}
+    retval = {'output_files': output_files}
     printlog("retval is %s" % retval)
     return retval
 
