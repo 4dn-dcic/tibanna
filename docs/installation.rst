@@ -258,7 +258,7 @@ This command will print out the list of users.
     invoke add_users --user=<user> --group=<usergroup>
 
 
-For example, if you have a user named ``myuser1`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
+For example, if you have a user named ``suwang`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
 
 ::
 
