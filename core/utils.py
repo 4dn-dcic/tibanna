@@ -168,7 +168,7 @@ def randomize_run_name(run_name, sfn):
                 executionArn=arn
         )
         if response:
-            run_name += str(uuid4())
+            run_name += '-' + str(uuid4())
     except Exception:
         pass
     return run_name
