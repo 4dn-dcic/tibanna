@@ -128,7 +128,7 @@ Here, we're naming it ``hahaha`` - come up with a better name if you want to.
 
 
 Run a test workflow
-+++++++++++++++++++
+-------------------
 
 The above command will first create a usergroup that shares the permission to use a single tibanna environment. Then, it will deploy a tibanna instance (step function / lambda). The name of the tibanna step function is added to your ``~/.bashrc`` file. Check that you can see the following line in the ``~/.bashrc`` file.
 
@@ -196,5 +196,29 @@ Now we have two different copies of deployed Tibanna. According to your `~/.bash
 ::
 
     invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json --sfn=tibanna_unicorn_hahaha
+
+
+User permission
+---------------
+
+To deploy Tibanna, one must be an admin for an AWS account.
+To run a workflow, the user must be either an admin or in the IAM group ``tibanna_<usergroup>``. To add a user to a user group, you have to be an admin. To do this, use the ``invoke`` command.
+
+::
+ 
+    invoke users
+
+This command will print out the list of users.
+
+::
+
+    invoke add_users --user=<user> --group=<usergroup>
+
+
+For example, if you have a user named ``myuser1`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
+
+::
+
+    invoke add_uesrs --user=myuser1 --group=lalala
 
 

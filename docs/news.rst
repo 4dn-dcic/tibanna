@@ -11,6 +11,19 @@ Publication
 Version updates
 +++++++++++++++
 
+  
+  **Feb 13, 2019** The latest version is now 0.5.9_.
+
+    - Wrong requirement of SECRET env is removed from unicorn installation
+    - deploy_unicorn without specified buckets also works
+    - deploy_unicorn now has `--usergroup` option
+    - cloud metric statistics aggregation with runs > 24 hr now fixed
+    - `invoke -l` lists all invoke commands
+    - `invoke add_user`, `invoke list` and `invoke users` added
+    - `log()` function not assuming default step function fixed
+    - `invoke log` working only for currently running jobs fixed
+
+
   **Feb 4, 2019** The latest version is now 0.5.8_.
 
     - ``invoke log`` can be used to stream log or postrun json file.
@@ -131,6 +144,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.5.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.9
 .. _0.5.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.8
 .. _0.5.7: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.7
 .. _0.5.6: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.6
