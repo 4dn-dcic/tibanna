@@ -49,7 +49,6 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem/",
         "cwl_version": "v1",
         "cwl_main_filename": "md5.cwl",
-        "cwl_child_filenames": [],
         "input_files": {
           "input_file": {
             "bucket_name": "<YOUR_INPUT_BUCKET>",
