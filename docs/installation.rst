@@ -56,15 +56,13 @@ Alternatively, use ``setup.py``
     python setup.py install
 
 
-Deploying Tibanna to AWS
-------------------------
-
-
 AWS configuration
-+++++++++++++++++
+-----------------
 
 
 To deploy Tibanna the AWS Cloud, you must first have an AWS account and an admin user credentials. For more details, check out https://aws.amazon.com/.
+To run workflows using Tibanna, you need a regular user credentials.
+
 
 Once you have the user credentials, we can add that information to the local machine using ``aws configure``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
 
@@ -83,8 +81,9 @@ Type in your keys, region and output format ('json') as below.
     Default output format [None]: json
 
 
-Deploying Tibanna
-+++++++++++++++++
+Deploying Tibanna to AWS
+------------------------
+
 
 To set up and deploy Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
