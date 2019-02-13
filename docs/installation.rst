@@ -179,8 +179,8 @@ If you are an admin or have a permission to create a bucket, you can either use 
 
 ::
 
-    aws s3api create-bucket --bucket suwangs_data_bucket  # choose your own data bucket name
-    aws s3api create-bucket --bucket suwangs_tibanna_log_bucket  # choose your own log bucket name
+    aws s3api create-bucket --bucket montys_data_bucket  # choose your own data bucket name
+    aws s3api create-bucket --bucket montys_tibanna_log_bucket  # choose your own log bucket name
 
 
 
@@ -196,8 +196,8 @@ Upload your files to the data bucket by using the following
 
 ::
 
-    aws s3 cp somebamfile.bam s3://suwangs_data_bucket/somebamfile.bam
-    aws s3 cp -R suwangs_input_data_folder s3://suwangs_data_bucket/suwangs_input_data_folder
+    aws s3 cp somebamfile.bam s3://montys_data_bucket/somebamfile.bam
+    aws s3 cp -R montys_input_data_folder s3://montys_data_bucket/montys_input_data_folder
 
 
 
@@ -218,7 +218,7 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
 
 ::
 
-    invoke deploy_unicorn --buckets=suwangs_data_bucket,suwangs_tibanna_log_bucket \
+    invoke deploy_unicorn --buckets=montys_data_bucket,montys_tibanna_log_bucket \
                           --usergroup=lalala
 
     # no space between bucket names!
@@ -266,7 +266,7 @@ You will see the list of users.
 
     user	tibanna_usergroup
     soo
-    suwang	
+    monty	
 
 
 This command will print out the list of users.
@@ -276,11 +276,11 @@ This command will print out the list of users.
     invoke add_users --user=<user> --group=<usergroup>
 
 
-For example, if you have a user named ``suwang`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
+For example, if you have a user named ``monty`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
 
 ::
 
-    invoke add_uesrs --user=suwang --group=lalala
+    invoke add_uesrs --user=monty --group=lalala
 
 
 Check users again.
@@ -294,8 +294,8 @@ Check users again.
 
     user	tibanna_usergroup
     soo
-    suwang	lalala
+    monty	lalala
 
-Now ``suwang`` can use ``tibanna_unicorn_lalala`` and access buckets ``suwangs_data_bucket`` and ``suwangs_tibanna_log_bucket``
+Now ``monty`` can use ``tibanna_unicorn_lalala`` and access buckets ``montys_data_bucket`` and ``montys_tibanna_log_bucket``
 
 
