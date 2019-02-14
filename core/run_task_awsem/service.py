@@ -28,24 +28,26 @@ def handler(event, context):
       cloudwatch_dashboard (optional) : create a cloudwatch dashboard named awsem-<jobid>
 
     args:
-    # required (i.e. field must exist, value may be null):
+    # required (i.e. field must exist):
       app_name: name of the app
-      app_version: version of the app
-      output_S3_bucket: bucket name and subdirectory for output files and logs
       input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
+      output_S3_bucket: bucket name and subdirectory for output files and logs
+    # optional
+      app_version: version of the app
       secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})
       input_parameters: input parameters in json format (parametername:value)
+      secondary_output_target: secondary output files in json format (similar to secondary_files)
     # required for cwl
       cwl_main_filename: main cwl file name
-      cwl_child_filenames: names of the other cwl files used by main cwl file, delimited by comma
       cwl_directory_url: the url and subdirectories for the main cwl file
       cwl_version: the version of cwl (either 'draft3' or 'v1')
+      cwl_child_filenames (optional): names of the other cwl files used by main cwl file, delimited by comma
       language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
       language: 'wdl'
       wdl_main_filename: main wdl file name
-      wdl_child_filenames: names of the other wdl files used by main wdl file, delimited by comma
       wdl_directory_url: the url of the wdl file
+      wdl_child_filenames (optional): names of the other wdl files used by main wdl file, delimited by comma
     # optional
       dependency: {'exec_arn': [exec_arns]}
       spot_duration: 60  # block minutes 60-360 if requesting spot instance
@@ -53,25 +55,17 @@ def handler(event, context):
 
     # read default variables in config
     CONFIG_FIELD = "config"
-    CONFIG_KEYS = ["EBS_optimized", "shutdown_min", "instance_type", "ebs_size", "key_name",
-                   "ebs_type", "ebs_iops", "json_bucket", "password", "log_bucket"]
+    CONFIG_KEYS = ["log_bucket"]
     ARGS_FIELD = "args"
-    ARGS_KEYS = ["app_name", "app_version", "input_files", "output_S3_bucket",
-                 "input_parameters", "secondary_files", "output_target", "secondary_output_target"]
-    ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_child_filenames", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_child_filenames", "wdl_directory_url", "language"]
+    ARGS_KEYS = ["app_name", "input_files", "output_S3_bucket", "output_target"]
+    ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
+    ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
     cfg = event.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
         assert k in cfg, "%s not in config_field" % k
-
-    if "instance_type" not in cfg:
-        cfg["instance_type"] = ""
-    if "ebs_size" not in cfg:
-        cfg["ebs_size"] = 0
-    
 
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
