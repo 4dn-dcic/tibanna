@@ -82,11 +82,11 @@ fastqc
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/dev/cwl_awsem_v1/fastqc-0-11-4-1.cwl
 * Docker : ``duplexa/4dn-hic:v32``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-fastqc-0.2.0
-* 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/75ce5f66-f98f-4222-9d1c-3daed262856b/#graph
+* 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/be8edc0a-f74a-4fae-858e-2915af283ee3/#details
 
-|md5_4dn_run|
+|fastqc_4dn_run|
 
-.. |md5_4dn_run| image:: images/md5_4dn_run.png
+.. |fastqc_4dn_run| image:: images/fastqc_4dn_run.png
 
 
 * Run using tibanna :
@@ -100,7 +100,32 @@ fastqc
 
 Use the following as a template and replace ``<YOUR....>`` with your input/output/log bucket/file(object) informatio.n
 
+::
 
+    {
+        "args" {
+          "app_name": "fastqc-0-11-4-1",
+          "app_version": "0.2.0",
+          "cwl_version": "v1",
+          "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+          "cwl_main_filename": "fastqc-0-11-4-1.cwl",
+          "cwl_child_filenames": ["fastqc-0-11-4.cwl"],
+          "input_files": {
+              "input_fastq": {
+                 "bucket_name": "<YOUR_INPUT_BUCKET>",
+                 "object_key": "<YOUR_INPUT_FILE>"
+              }
+          },
+          "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+          "output_target": {
+              "report_zip": "<YOUR_OUTPUT_REPORT_NAME>.zip"
+          }
+        },
+        "config": {
+          "log_bucket" : "<YOUR_LOG_BUCKET>",
+          "key_name": "<YOUR_KEY_NAME>"
+        }
+    }
 
 Hi-C data processing & QC
 +++++++++++++++++++++++++
