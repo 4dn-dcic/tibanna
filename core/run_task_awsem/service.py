@@ -67,6 +67,12 @@ def handler(event, context):
     for k in CONFIG_KEYS:
         assert k in cfg, "%s not in config_field" % k
 
+    if "instance_type" not in cfg:
+        cfg["instance_type"] = ""
+    if "ebs_size" not in cfg:
+        cfg["ebs_size"] = 0
+    
+
     args = event.get(ARGS_FIELD)
     for k in ARGS_KEYS:
         assert k in args, "%s not in args field" % k
