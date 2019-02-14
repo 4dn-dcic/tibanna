@@ -537,4 +537,4 @@ def auto_update_input_json(args, cfg):
 
     cfg['language'] = args['language']
     update_config(cfg, args['app_name'],
-                  args['input_files'], args['input_parameters'])
+                  args['input_files'], args.get('input_parameters', {}))
