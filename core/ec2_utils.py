@@ -97,7 +97,7 @@ def create_json_dict(input_dict):
     pre.update({'Job': {'JOBID': jobid,
                         'App': {
                                  'App_name': a['app_name'],
-                                 'App_version': a['app_version'],
+                                 'App_version': a.get('app_version', ''),
                                  'language': a.get('language', ''),
                                  'cwl_url': a.get('cwl_directory_url', ''),
                                  'main_cwl': a.get('cwl_main_filename', ''),
@@ -109,14 +109,14 @@ def create_json_dict(input_dict):
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
                                  'Secondary_files_data': {},   # fill in later (below)
-                                 'Input_parameters': a['input_parameters'],
+                                 'Input_parameters': a.get('input_parameters', {}),
                                  'Env': a.get('input_env', {})
                         },
                         'Output': {
                                  'output_bucket_directory': a['output_S3_bucket'],
                                  'output_target': a['output_target'],
                                  'alt_cond_output_argnames': a.get('alt_cond_output_argnames', []),
-                                 'secondary_output_target': a['secondary_output_target']
+                                 'secondary_output_target': a.get('secondary_output_target', {})
                         },
                         'Log': {
                                  'log_bucket_directory': log_bucket
@@ -131,7 +131,7 @@ def create_json_dict(input_dict):
                                                          'path': value.get('object_key'),
                                                          'rename': value.get('rename'),
                                                          'profile': value.get('profile', '')}
-    for item, value in a['secondary_files'].iteritems():
+    for item, value in a.get('secondary_files', []).iteritems():
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
@@ -414,9 +414,26 @@ def create_cloudwatch_dashboard(instance_id, dashboard_name):
     )
 
 
-def update_config(config, app_name, input_files, parameters):
-
-    if config['instance_type'] != '' and config['ebs_size'] != 0 and config['EBS_optimized'] != '':
+def update_config(cfg, app_name, input_files, parameters):
+    # deal with missing fields
+    if "instance_type" not in cfg:
+        cfg["instance_type"] = ""
+    if "ebs_size" not in cfg:
+        cfg["ebs_size"] = 0
+    if "EBS_optimized" not in cfg:
+        cfg['EBS_optimized'] = ""
+    if "ebs_type" not in cfg:
+        cfg['ebs_type'] = 'gp2'
+    if "ebs_iops" not in cfg:
+        cfg['ebs_iops'] = ''
+    if "shutdown_min" not in cfg:
+        cfg['shutdown_min'] = 'now'
+    if 'password' not in cfg:
+        cfg['password'] = ''
+    if 'key_name' not in cfg:
+        cfg['key_name'] = ''
+    # add benchmarking result
+    if cfg['instance_type'] != '' and cfg['ebs_size'] != 0 and cfg['EBS_optimized'] != '':
         pass
     else:
         input_size_in_bytes = dict()
@@ -446,18 +463,18 @@ def update_config(config, app_name, input_files, parameters):
             ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
             ebs_opt = res['aws']['EBS_optimized']
 
-            if config['instance_type'] == '':
-                config['instance_type'] = instance_type
-            if config['ebs_size'] == 0:
-                config['ebs_size'] = ebs_size
-            if config['EBS_optimized'] == '':
-                config['EBS_optimized'] = ebs_opt
+            if cfg['instance_type'] == '':
+                cfg['instance_type'] = instance_type
+            if cfg['ebs_size'] == 0:
+                cfg['ebs_size'] = ebs_size
+            if cfg['EBS_optimized'] == '':
+                cfg['EBS_optimized'] = ebs_opt
 
-        elif config['instance_type'] == '':
+        elif cfg['instance_type'] == '':
             raise Exception("instance type cannot be determined nor given")
-        elif config['ebs_size'] == 0:
+        elif cfg['ebs_size'] == 0:
             raise Exception("ebs_size cannot be determined nor given")
-        elif config['EBS_optimized'] == '':
+        elif cfg['EBS_optimized'] == '':
             raise Exception("EBS_optimized cannot be determined nor given")
 
 
@@ -520,4 +537,4 @@ def auto_update_input_json(args, cfg):
 
     cfg['language'] = args['language']
     update_config(cfg, args['app_name'],
-                  args['input_files'], args['input_parameters'])
+                  args['input_files'], args.get('input_parameters', {}))

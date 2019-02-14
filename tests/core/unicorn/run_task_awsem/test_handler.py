@@ -5,8 +5,8 @@ from ..conftest import valid_env
 
 @valid_env
 @pytest.mark.webtest
-def test_run_task_md5_reference_file(run_task_awsem_event_md5):
+def test_run_task_md5_reference_file(run_task_awsem_event_md5_fail):
     # invalid file name specified
-    res = handler(run_task_awsem_event_md5, None)
+    res = handler(run_task_awsem_event_md5_fail, None)
     assert(res)
     assert res.get('error')

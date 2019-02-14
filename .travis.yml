@@ -22,7 +22,8 @@ jobs:
   - stage: unit tests
     python: '2.7'
     script:
-    - invoke test --ignore-webdev  # temporarily ignore test_webdev which uses tibanna_pony
+    - if [ "$TRAVIS_BRANCH" != "doc" ]; then
+      invoke test --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
     - ./tests/awsf/test.sh
     after_success:
     - echo "finished running tests on repo"

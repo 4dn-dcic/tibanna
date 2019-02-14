@@ -1,11 +1,4 @@
-from core.ec2_utils import update_config, create_json_dict
-
-
-def test_create_json_dict(run_task_awsem_event_data):
-    data = run_task_awsem_event_data
-    json = create_json_dict(data)
-    assert json
-    assert json['Job']['Input']['Env']['TESTENV'] == 1234
+from core.ec2_utils import update_config
 
 
 def test_update_config(run_task_awsem_event_data):
@@ -35,3 +28,13 @@ def test_update_config3(run_task_awsem_event_data_chipseq):
     assert config['instance_type'] == 'c5.4xlarge'
     assert config['EBS_optimized'] is True
     assert config['ebs_size'] == 87
+
+
+def test_update_config4(run_task_awsem_event_omit_fields):
+    data = run_task_awsem_event_omit_fields
+    config = data['config']
+    update_config(config, data['args']['app_name'], data['args']['input_files'], {})
+    assert config['instance_type'] == 't3.micro'
+    assert config['EBS_optimized'] is True
+    assert config['ebs_size'] >= 10
+    assert config['shutdown_min'] == "now"

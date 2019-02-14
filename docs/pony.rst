@@ -2,7 +2,7 @@
 Tibanna Pony for 4DN-DCIC
 =========================
 
-Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC. Pony has two additional steps that communicate with the 4DN Data Portal and handle 4DN metadata. Pony is only for 4DN-DCIC and requires access keys to the Data Portal and the 4DN DCIC AWS account.
+Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC (4D Nucleome Data Coordination and Integration Center). Pony has two additional steps that communicate with the 4DN Data Portal and handle 4DN metadata. Pony is only for 4DN-DCIC and requires access keys to the Data Portal and the 4DN DCIC AWS account.
 
 
 =================  ==================
