@@ -535,6 +535,8 @@ def auto_update_input_json(args, cfg):
         if args.get('singularity', False):
             cfg['singularity'] = True
 
+    cfg['json_bucket'] = cfg['log_bucket']
+
     cfg['language'] = args['language']
     update_config(cfg, args['app_name'],
                   args['input_files'], args.get('input_parameters', {}))
