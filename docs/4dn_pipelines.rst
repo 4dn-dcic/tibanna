@@ -61,13 +61,6 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         }
       },
       "config": {
-        "instance_type": "",
-        "ebs_size": 0,
-        "EBS_optimized": "",
-        "ebs_type": "io1",
-        "ebs_iops": 500,
-        "shutdown_min": "now",
-        "password": "",
         "log_bucket": "<YOUR_LOG_BUCKET>",
         "key_name": "<YOUR_KEY_NAME>"
       }
