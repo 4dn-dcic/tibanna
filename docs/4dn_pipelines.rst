@@ -121,11 +121,12 @@ Hi-C data processing & QC
 bwa-mem
 -------
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : aligns Hi-C fastq files to a reference genome using `bwa mem -SP5M`. The output is a single bam file. The bam file is not resorted, and does not accompany a `.bai` index file. The bwa reference genome index must be bundled in a tar.gz file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/bwa-mem.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-bwa-mem-0.2.6
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/14fd752d-ede1-4cc2-bb69-6fae5726e173/
+* 4DN reference files: https://data.4dnucleome.org/search/?file_format.file_format=bwaIndex&file_type=genome+index&type=FileReference
 
 |bwa_4dn_wf|
 
@@ -138,6 +139,40 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "bwa-mem",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "cwl_main_filename": "bwa-mem.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "fastq1": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_FASTQ_FILE_R1>"
+          },
+          "fastq2": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_FASTQ_FILE_R2>"
+          },
+          "bwa_index": {
+            "bucket_name": "<YOUR_INPUT_BUCKET",
+            "object_key": "<YOUR_TGZ_BWA_INDEX_FILE>"
+          }
+        },
+        "input_parameters": {
+            "nThreads": 2
+        },
+        "output_S3_bucket": "tibanna-output",
+        "output_target": {
+          "out_bam": "<YOUR_OUTPUT_BAM_FILE>"
+        }
+      },
+      "config": {
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>",
+      }
+    }
 
 
 hi-c-processing-bam
