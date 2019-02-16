@@ -178,7 +178,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 hi-c-processing-bam
 -------------------
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in a set of bam files and performs merging, sorting, filtering and produces a `.pairs.gz` file (and a `.pairs.gz.px2` index file). The output includes a merged and filter-annotated lossless bam file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-bam..cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-bam-0.2.6
