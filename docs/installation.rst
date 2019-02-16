@@ -45,7 +45,7 @@ Alternatively, use ``setup.py``
 AWS configuration
 -----------------
 
-To use Tibanna the AWS Cloud, you must first have an AWS account.
+To deploy and use Tibanna on the AWS Cloud, you must first have an AWS account.
 
 Deployment requires an admin user credentials. For more details, check out https://aws.amazon.com/.
 
