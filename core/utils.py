@@ -312,14 +312,14 @@ def create_stepfunction(dev_suffix=None,
     sfn_check_task_retry_conditions = [
         {
             "ErrorEquals": ["EC2StartingException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 5,
+            "IntervalSeconds": 60,
+            "MaxAttempts": 25,
             "BackoffRate": 1.0
         },
         {
             "ErrorEquals": ["StillRunningException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 10000,
+            "IntervalSeconds": 60,
+            "MaxAttempts": 100000,
             "BackoffRate": 1.0
         }
     ]
