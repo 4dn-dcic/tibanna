@@ -356,6 +356,9 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
     print("setting up tibanna usergroup environment on AWS...")
+    if not AWS_ACCOUNT_NUMBER or not AWS_REGION:
+        print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+        exit(1)
     if not buckets:
         print("WARNING: Without setting buckets (using --buckets)," +
               "Tibanna would have access to only public buckets." +
@@ -393,7 +396,7 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
-            outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
+            outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':

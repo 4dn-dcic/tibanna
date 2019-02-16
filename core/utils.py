@@ -23,8 +23,8 @@ def printlog(message):
     LOG.info(message)
 
 
-AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
-AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
+AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
+AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_pony')
 DYNAMODB_TABLE = 'tibanna-master'
@@ -209,9 +209,14 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
 
     # build from appropriate input json
     # assume run_type and and run_id
+    if 'run_name' in input_json['config']:
+        if _tibanna not in input_json:
+            input_json[_tibanna] = dict()
+        input_json[_tibanna]['run_name'] = input_json['config']['run_name']
     input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
     run_name = randomize_run_name(input_json[_tibanna]['run_name'], sfn)
     input_json[_tibanna]['run_name'] = run_name
+    input_json['config']['run_name'] = run_name
 
     # updated arn
     arn = get_exec_arn(sfn, run_name)
@@ -284,6 +289,9 @@ def create_stepfunction(dev_suffix=None,
                         region_name=AWS_REGION,
                         aws_acc=AWS_ACCOUNT_NUMBER,
                         usergroup=None):
+    if not aws_acc or not region_name:
+        print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+        exit(1)
     if usergroup:
         if dev_suffix:
             lambda_suffix = '_' + usergroup + '_' + dev_suffix
