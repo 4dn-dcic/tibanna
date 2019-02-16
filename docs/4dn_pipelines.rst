@@ -121,7 +121,7 @@ Hi-C data processing & QC
 bwa-mem
 -------
 
-* Description : aligns Hi-C fastq files to a reference genome using `bwa mem -SP5M`. The output is a single bam file. The bam file is not resorted, and does not accompany a `.bai` index file. The bwa reference genome index must be bundled in a `.tgz` file.
+* Description : aligns Hi-C fastq files to a reference genome using ``bwa mem -SP5M``. The output is a single bam file. The bam file is not resorted, and does not accompany a ``.bai`` index file. The bwa reference genome index must be bundled in a ``.tgz`` file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/bwa-mem.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-bwa-mem-0.2.6
@@ -178,12 +178,13 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 hi-c-processing-bam
 -------------------
 
-* Description : takes in a set of bam files and performs merging, sorting, filtering and produces a `.pairs.gz` file (and a `.pairs.gz.px2` index file). The output includes a merged and filter-annotated lossless bam file.
+* Description : takes in a set of bam files and performs merging, sorting, filtering and produces a ``.pairs.gz`` file (and a ``.pairs.gz.px2`` index file). The output includes a merged and filter-annotated lossless bam file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-bam..cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-bam-0.2.6
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/b13b2ab8-f176-422f-a1eb-ed213ac991af/
-* 4DN reference files: 
+* 4DN reference files:
+
   * chromsizes files : e.g.) https://data.4dnucleome.org/files-reference/4DNFI823LSII (GRCh38, main chromosomes only)
   * restriction site files : https://data.4dnucleome.org/search/?file_type=restriction+sites&type=FileReference
 
