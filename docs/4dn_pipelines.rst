@@ -121,7 +121,7 @@ Hi-C data processing & QC
 bwa-mem
 -------
 
-* Description : aligns Hi-C fastq files to a reference genome using `bwa mem -SP5M`. The output is a single bam file. The bam file is not resorted, and does not accompany a `.bai` index file. The bwa reference genome index must be bundled in a tar.gz file.
+* Description : aligns Hi-C fastq files to a reference genome using `bwa mem -SP5M`. The output is a single bam file. The bam file is not resorted, and does not accompany a `.bai` index file. The bwa reference genome index must be bundled in a `.tgz` file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/bwa-mem.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-bwa-mem-0.2.6
@@ -156,21 +156,21 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
             "object_key": "<YOUR_FASTQ_FILE_R2>"
           },
           "bwa_index": {
-            "bucket_name": "<YOUR_INPUT_BUCKET",
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
             "object_key": "<YOUR_TGZ_BWA_INDEX_FILE>"
           }
         },
         "input_parameters": {
             "nThreads": 2
         },
-        "output_S3_bucket": "tibanna-output",
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
         "output_target": {
-          "out_bam": "<YOUR_OUTPUT_BAM_FILE>"
+          "out_bam": "<YOUR_OUTPUT_BAM_FILE>.bam"
         }
       },
       "config": {
         "log_bucket": "<YOUR_LOG_BUCKET>",
-        "key_name": "<YOUR_KEY_NAME>",
+        "key_name": "<YOUR_KEY_NAME>"
       }
     }
 
@@ -216,6 +216,57 @@ hi-c-processing-pairs
 Use the following as a template and replace ``<YOUR....>`` with your input/output/log bucket/file(object) information.
 
 ::
+
+    {
+      "args": {
+        "app_name": "hi-c-processing-bam",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "cwl_main_filename": "hi-c-processing-bam.cwl",
+        "cwl_child_filenames": [
+          "pairsam-parse-sort.cwl",
+          "pairsam-merge.cwl",
+          "pairsam-markasdup.cwl",
+          "pairsam-filter.cwl",
+          "addfragtopairs.cwl"
+        ],
+        "input_files": {
+          "chromsize": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_CHROMSIZES_FILE>"
+          },
+          "input_bams": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": [
+              "<YOUR_BAM_FILE1>",
+              "<YOUT_BAM_FILE2>",
+              "<YOUT_BAM_FILE3>"
+            ]
+          },
+          "restriction_file": {
+             "bucket_name": "<YOUR_INPUT_BUCKET>",
+             "object_key": "<YOUR_RESTRICTION_SITE_FILE>"
+          }
+        },
+        "input_parameters": {
+          "nthreads_parse_sort": 8,
+          "nthreads_merge": 8
+        },
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+          "out_pairs": "<YOUR_OUTPUT_PAIRS_FILE>.pairs.gz",
+          "merged_annotated_bam": "<YOUR_OUTPUT_MERGED_BAM_FILE>.bam"
+        },
+        "secondary_output_target": {
+          "out_pairs": "<YOUR_OUTPUT_PAIRS_FILE>.pairs.gz.px2"
+        }
+      },
+      "config": {
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
 
 
 pairsqc
