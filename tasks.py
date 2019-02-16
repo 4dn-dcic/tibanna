@@ -362,7 +362,10 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
               "To give permission to Tibanna for private buckets," +
               "use --buckets=<bucket1>,<bucket2>,...")
         time.sleep(2)
-    bucket_names = buckets.split(',')
+    if buckets:
+        bucket_names = buckets.split(',')
+    else:
+        bucket_names = None
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION, no_randomize=no_randomize,
                                                verbose=verbose)
