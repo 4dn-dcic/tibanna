@@ -2,17 +2,7 @@
 Installation
 ============
 
-Tibanna's installation is two-step. 
-
-1. Installation of the python package content of the repo
-  * The ``python setup.py install`` command
-  * Installation of Tibanna package on a local machine to launch and monitor workflows.
-
-2. Deployment of Tibanna to the AWS cloud
-  * The ``invoke deploy_unicorn`` command
-  * Deploying Tibanna components (AWS Lambda / Step Function / IAM Permissions) from a local machine to the AWS Cloud.
-
-Since the second step is separated from the first step, one may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users.
+Tibanna's installation is two-step - installation of the tibanna package on the local machine and deployment of its serverless components to the AWS Cloud. Since the second step is separated from the first step, one may deploy as many copies of Tibanna as one wishes for different projects, with different bucket permissions and users.
 
 
 Installing Tibanna package
@@ -117,7 +107,7 @@ Here, we're naming it ``hahaha`` - come up with a better name if you want to.
 
 ::
 
-    invoke deploy_unicorn --uesrgroup=hahaha
+    invoke deploy_unicorn --usergroup=hahaha
     # This will give permission to only public buckets.
     # To add permission to private buckets, use --buckets option.
 
@@ -179,8 +169,8 @@ If you are an admin or have a permission to create a bucket, you can either use 
 
 ::
 
-    aws s3api create-bucket --bucket montys_data_bucket  # choose your own data bucket name
-    aws s3api create-bucket --bucket montys_tibanna_log_bucket  # choose your own log bucket name
+    aws s3api create-bucket --bucket montys-data-bucket  # choose your own data bucket name
+    aws s3api create-bucket --bucket montys-tibanna-log-bucket  # choose your own log bucket name
 
 
 
@@ -196,8 +186,8 @@ Upload your files to the data bucket by using the following
 
 ::
 
-    aws s3 cp somebamfile.bam s3://montys_data_bucket/somebamfile.bam
-    aws s3 cp -R montys_input_data_folder s3://montys_data_bucket/montys_input_data_folder
+    aws s3 cp somebamfile.bam s3://montys-data-bucket/somebamfile.bam
+    aws s3 cp -R montys-input-data-folder s3://montys-data-bucket/montys-input-data-folder
 
 
 
@@ -218,7 +208,7 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
 
 ::
 
-    invoke deploy_unicorn --buckets=montys_data_bucket,montys_tibanna_log_bucket \
+    invoke deploy_unicorn --buckets=montys-data-bucket,montys-tibanna-log-bucket \
                           --usergroup=lalala
 
     # no space between bucket names!
@@ -296,6 +286,6 @@ Check users again.
     soo
     monty	lalala
 
-Now ``monty`` can use ``tibanna_unicorn_lalala`` and access buckets ``montys_data_bucket`` and ``montys_tibanna_log_bucket``
+Now ``monty`` can use ``tibanna_unicorn_lalala`` and access buckets ``montys-data-bucket`` and ``montys-tibanna-log-bucket``
 
 
