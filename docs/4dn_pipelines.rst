@@ -183,32 +183,13 @@ hi-c-processing-bam
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-bam-0.2.6
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/b13b2ab8-f176-422f-a1eb-ed213ac991af/
+* 4DN reference files: 
+  * chromsizes files : e.g.) https://data.4dnucleome.org/files-reference/4DNFI823LSII (GRCh38, main chromosomes only)
+  * restriction site files : https://data.4dnucleome.org/search/?file_type=restriction+sites&type=FileReference
 
 |hicbam_4dn_wf|
 
 .. |hicbam_4dn_wf| image:: images/hicbam_4dn_wf.png
-
-
-* Example input execution json template :
-
-Use the following as a template and replace ``<YOUR....>`` with your input/output/log bucket/file(object) information.
-
-::
-
-
-
-hi-c-processing-pairs
----------------------
-
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
-* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-pairs.cwl
-* Docker : ``duplexa/4dn-hic:v42.2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-pairs-0.2.6
-* 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/c0e0da16-a2f9-4e87-a3b2-8f6b4c675a52/
-
-|hicpairs_4dn_wf|
-
-.. |hicpairs_4dn_wf| image:: images/hicpairs_4dn_wf.png
 
 
 * Example input execution json template :
@@ -266,6 +247,28 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "key_name": "<YOUR_KEY_NAME>"
       }
     }
+
+
+hi-c-processing-pairs
+---------------------
+
+* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-pairs.cwl
+* Docker : ``duplexa/4dn-hic:v42.2``
+* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-pairs-0.2.6
+* 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/c0e0da16-a2f9-4e87-a3b2-8f6b4c675a52/
+
+|hicpairs_4dn_wf|
+
+.. |hicpairs_4dn_wf| image:: images/hicpairs_4dn_wf.png
+
+
+* Example input execution json template :
+
+Use the following as a template and replace ``<YOUR....>`` with your input/output/log bucket/file(object) information.
+
+::
+
 
 
 
