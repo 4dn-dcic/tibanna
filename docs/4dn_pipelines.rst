@@ -22,7 +22,7 @@ md5
 ---
 
 * Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
-* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/dev/cwl_awsem_v1/md5.cwl
+* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/md5.cwl
 * Docker : ``duplexa/md5:v2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-md5-0.2.6
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/75ce5f66-f98f-4222-9d1c-3daed262856b/#graph
@@ -42,7 +42,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
       "args": {
         "app_name": "md5",
         "app_version": "0.2.6",
-        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem/",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
         "cwl_version": "v1",
         "cwl_main_filename": "md5.cwl",
         "input_files": {
@@ -68,7 +68,7 @@ fastqc
 ------
 
 * Description : run fastqc on a fastq file
-* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/dev/cwl_awsem_v1/fastqc-0-11-4-1.cwl
+* CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/fastqc-0-11-4-1.cwl
 * Docker : ``duplexa/4dn-hic:v32``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-fastqc-0.2.0
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/be8edc0a-f74a-4fae-858e-2915af283ee3/#details
@@ -464,7 +464,7 @@ encode-chipseq-aln-chip
 
 
 * Description : takes in fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate. The output includes another TagAlign file exclusively for xcor analysis in the next step (``encode-chipseq-postaln``).
-* WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
+* WDL : https://github.com/4dn-dcic/chip-seq-pipeline2/blob/4dn-v1.1.1/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-aln-chip
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/3e0fc011-5e84-476e-93a7-176d4ce718c6/
@@ -484,7 +484,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
       "args": {
         "app_name": "encode-chipseq-aln-chip",
         "app_version": "v1.1.1",
-        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/4dn-v1.1.1/",
         "wdl_main_filename": "chip.wdl",
         "language": "wdl",
         "input_files": {
@@ -544,7 +544,7 @@ encode-chipseq-aln-ctl
 
 
 * Description : takes in control fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate.
-* WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
+* WDL : https://github.com/4dn-dcic/chip-seq-pipeline2/blob/4dn-v1.1.1/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-aln-ctl
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/f02336f6-aa6e-491d-8562-db61bcc86303/
@@ -564,7 +564,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
       "args": {
         "app_name": "encode-chipseq-aln-ctl",
         "app_version": "v1.1.1",
-        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/4dn-v1.1.1/",
         "wdl_main_filename": "chip.wdl",
         "language": "wdl",
         "input_files": {
@@ -623,7 +623,7 @@ encode-chipseq-postaln
 
 
 * Description : takes in TagAlign files generates from ``encode-chipseq-aln-chip`` and ``encode-chipsq-aln-ctl`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed). The pipeline cannot handle more than two biological replicates due to the limitation of the ENCODE pipeline.
-* WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
+* WDL : https://github.com/4dn-dcic/chip-seq-pipeline2/blob/4dn-v1.1.1/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-postaln
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/8666c89e-eccb-4dc1-9b12-ceb04802ca09/
@@ -644,7 +644,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "args": {
           "app_name": "encode-chipseq-postaln",
           "app_version": "v1.1.1",
-          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/4dn-v1.1.1/",
           "wdl_main_filename": "chip.wdl",
           "language": "wdl",
           "input_files" : {
@@ -720,7 +720,7 @@ encode-atacseq-aln
 
 
 * Description : takes in fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate.
-* WDL : https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl
+* WDL : https://github.com/4dn-dcic/atac-seq-pipeline/blob/4dn-v1.1.1/atac.wdl
 * Docker : ``4dndcic/encode-atacseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-atacseq-aln
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/c57697c4-c589-4025-ad81-e212a5220f74/
@@ -740,7 +740,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
       "args": {
         "app_name": "encode-atacseq-aln",
         "app_version": "1.1.1",
-        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/4dn-v1.1.1/",
         "wdl_main_filename": "atac.wdl",
         "language": "wdl",
         "input_files": {
@@ -797,7 +797,7 @@ encode-atacseq-postaln
 ----------------------
 
 * Description : takes in TagAlign files generates from ``encode-atacseq-aln`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed). The pipeline cannot handle more than two biological replicates due to the limitation of the ENCODE pipeline.
-* WDL : https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl
+* WDL : https://github.com/4dn-dcic/atac-seq-pipeline/blob/4dn-v1.1.1/atac.wdl
 * Docker : ``4dndcic/encode-atacseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-atacseq-postaln
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/afe50cb7-7417-4870-a5be-060600738fb0/
@@ -817,7 +817,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "args": {
           "app_name": "encode-atacseq-postaln",
           "app_version": "v1.1.1",
-          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl",
+          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/4dn-v1.1.1/",
           "wdl_main_filename": "atac.wdl",
           "language": "wdl",
           "input_files" : {
