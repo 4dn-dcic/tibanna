@@ -622,7 +622,7 @@ encode-chipseq-postaln
 ----------------------
 
 
-* Description : takes in TagAlign files generates from ``encode-chipseq-aln-chip`` and ``encode-chipsq-aln-ctl`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed).
+* Description : takes in TagAlign files generates from ``encode-chipseq-aln-chip`` and ``encode-chipsq-aln-ctl`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed). The pipeline cannot handle more than two biological replicates due to the limitation of the ENCODE pipeline.
 * WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-postaln
@@ -796,7 +796,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 encode-atacseq-postaln
 ----------------------
 
-* Description : takes in TagAlign files generates from ``encode-atacseq-aln`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed).
+* Description : takes in TagAlign files generates from ``encode-atacseq-aln`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed). The pipeline cannot handle more than two biological replicates due to the limitation of the ENCODE pipeline.
 * WDL : https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl
 * Docker : ``4dndcic/encode-atacseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-atacseq-postaln
