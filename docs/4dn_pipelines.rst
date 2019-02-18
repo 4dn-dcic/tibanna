@@ -348,39 +348,43 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 ::
 
     {
-        "app_name": "pairsqc-single",
-        "app_version": "0.2.6",
-        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/",
-        "cwl_main_filename": "pairsqc-single.cwl",
-        "cwl_version": "v1",
-        "input_files": {
-          "input_pairs" : {
-            "bucket_name": "<YOUR_INPUT_BUCKET>",
-            "object_key": "<YOUR_PAIRS_FILE>"
+        "args": {
+          "app_name": "pairsqc-single",
+          "app_version": "0.2.6",
+          "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/",
+          "cwl_main_filename": "pairsqc-single.cwl",
+          "cwl_version": "v1",
+          "input_files": {
+            "input_pairs" : {
+              "bucket_name": "<YOUR_INPUT_BUCKET>",
+              "object_key": "<YOUR_PAIRS_FILE>"
+            },
+            "chromsizes" : {
+              "bucket_name": "<YOUR_INPUT_BUCKET>",
+              "object_key": "<YOUR_INPUT_CHROMSIZES_FILE>"
+            }
           },
-          "chromsizes" : {
-            "bucket_name": "<YOUR_INPUT_BUCKET>",
-            "object_key": "<YOUR_INPUT_CHROMSIZES_FILE>"
+          "secondary_files": {
+            "input_pairs": {
+              "bucket_name": "<YOUR_INPUT_BUCKET>",
+              "object_key": "<YOUR_PAIRS_FILE>.px2"
+            }
+          },
+          "input_parameters" :  {
+            "enzyme": "6",
+            "sample_name": "4DNFI1ZLO9D7",
+            "max_distance": 8.2
+          },
+          "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+          "output_target": {
+            "report": "<YOUR_OUTPUT_REPORT_FILE>.zip"
           }
         },
-        "secondary_files": {
-          "input_pairs": {
-            "bucket_name": "<YOUR_INPUT_BUCKET>",
-            "object_key": "<YOUR_PAIRS_FILE>.px2"
-          }
-        },
-        "input_parameters" :  { "enzyme": "6", "sample_name": "4DNFI1ZLO9D7", "max_distance": 8.2 },
-        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
-        "output_target": {
-          "report": "<YOUR_OUTPUT_REPORT_FILE>.zip"
-        },
-    }
         "config": {
           "log_bucket": "<YOUR_LOG_BUCKET>",
           "key_name": "<YOUR_KEY_NAME>"
         }
     }
-
 
 
 Repli-seq data processing & QC
@@ -646,21 +650,21 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
                "object_key": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.bed.gz",
                               "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.bed.gz"],
                "rename": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.tagAlign.gz",
-                           <YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+                          "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
              },
              "chip.ctl_tas" : { 
                "bucket_name": "<YOUR_INPUT_BUCKET>",
                "object_key": ["<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP1>.bed.gz",
                               "<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP2>.bed.gz"],
                "rename": ["<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP1>.tagAlign.gz",
-                           <YOUR_INPUT_CTL_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+                          "<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
              },
              "chip.bam2ta_no_filt_R1.ta" : { 
                "bucket_name": "<YOUR_INPUT_BUCKET>",
                "object_key": ["<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.bed.gz",
-                               <YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.bed.gz"],
+                              "<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.bed.gz"],
                "rename": ["<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.tagAlign.gz",
-                           <YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+                          "<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
              },
              "chip.blacklist" : { 
                "bucket_name": "<YOUR_INPUT_BUCKET>",
@@ -819,7 +823,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
                "object_key": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.bed.gz",
                               "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.bed.gz"],
                "rename": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.tagAlign.gz",
-                           <YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+                          "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
              },
              "atac.blacklist" : { 
                "bucket_name": "<YOUR_INPUT_BUCKET>",
