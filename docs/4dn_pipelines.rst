@@ -354,7 +354,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
         "args": {
           "app_name": "pairsqc-single",
           "app_version": "0.2.6",
-          "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/",
+          "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
           "cwl_main_filename": "pairsqc-single.cwl",
           "cwl_version": "v1",
           "input_files": {
