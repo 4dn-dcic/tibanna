@@ -2,14 +2,17 @@
 Running 4DN pipelines using Tibanna
 ===================================
 
-* For 4DN pipelines, benchmark functions are pre-implemented in Tibanna through the Benchmark package. This means that the user does not have to choose EC2 instance type or EBS size (they are auto-determined). Use the following blank values for these config fields. The user may choose specific instance type or EBS size if needed.
+* For 4DN pipelines, benchmark functions are pre-implemented in Tibanna through the Benchmark package. This means that the user does not have to choose EC2 instance type or EBS size (they are auto-determined). However, if the user wants to specify them, the following fields can be used. ``EBS_optimized`` makes IO slightly faster, but it is not supported by all isntance types. If you're not sure, choose ``False``.
+
+**Example**
 
 ::
 
       "config": {
-        "instance_type": "",
-        "ebs_size": 0,
-        "EBS_optimized": "",
+        "instance_type": "instance_type",
+        "ebs_size": 10,
+        "EBS_optimized": False,
+
 
 
 General Quality Control
