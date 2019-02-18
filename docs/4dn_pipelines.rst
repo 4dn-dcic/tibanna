@@ -24,7 +24,7 @@ md5
 * Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/md5.cwl
 * Docker : ``duplexa/md5:v2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-md5-0.2.6
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/c77a117b-9a58-477e-aaa5-291a109a99f6/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/75ce5f66-f98f-4222-9d1c-3daed262856b/#graph
 
 |md5_4dn_run|
@@ -70,7 +70,7 @@ fastqc
 * Description : run fastqc on a fastq file
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/fastqc-0-11-4-1.cwl
 * Docker : ``duplexa/4dn-hic:v32``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-fastqc-0.2.0
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/2324ad76-ff37-4157-8bcc-3ce72b7dace9/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/be8edc0a-f74a-4fae-858e-2915af283ee3/#details
 
 |fastqc_4dn_run|
@@ -127,7 +127,7 @@ bwa-mem
 * Description : aligns Hi-C fastq files to a reference genome using ``bwa mem -SP5M``. The output is a single bam file. The bam file is not resorted, and does not accompany a ``.bai`` index file. The bwa reference genome index must be bundled in a ``.tgz`` file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/bwa-mem.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-bwa-mem-0.2.6
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/3feedadc-50f9-4bb4-919b-09a8b731d0cc/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/14fd752d-ede1-4cc2-bb69-6fae5726e173/
 * 4DN reference files: https://data.4dnucleome.org/search/?file_format.file_format=bwaIndex&file_type=genome+index&type=FileReference
 
@@ -184,7 +184,7 @@ hi-c-processing-bam
 * Description : takes in a set of bam files and performs merging, sorting, filtering and produces a ``.pairs.gz`` file (and a ``.pairs.gz.px2`` index file). The output includes a merged and filter-annotated lossless bam file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-bam..cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-bam-0.2.6
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/023bfb3e-9a8b-42b9-a9d4-216079526f68/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/b13b2ab8-f176-422f-a1eb-ed213ac991af/
 * 4DN reference files:
 
@@ -259,7 +259,7 @@ hi-c-processing-pairs
 * Description : takes in a set of pairs files, merges them and creates contact matrix files in both ``.mcool`` and ``.hic`` formats. The output includes a merged pairs file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-pairs.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-pairs-0.2.6
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/c9e0e6f7-b0ed-4a42-9466-cadc2dd84df0/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/c0e0da16-a2f9-4e87-a3b2-8f6b4c675a52/
 
 |hicpairs_4dn_wf|
@@ -336,7 +336,7 @@ pairsqc
 * Description : calculated QC stats for a pairs file and generates a report zip file containing an ``.html`` file and other table files.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/pairsqc-single.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-pairsqc-single-0.2.6
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/b8c533e0-f8c0-4510-b4a1-ac35158e27c3/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/902f34fa-dff9-4f26-9af5-64b39b13a069/
 
 |pairsqc_4dn_wf|
@@ -399,7 +399,7 @@ repliseq-parta
 * Description : takes in repli-seq single-end fastq file and performs alignment, sorting, filtering and produces a bedgraph file containing read counts per bin.
 * CWL : https://raw.githubusercontent.com/4dn-dcic/docker-4dn-repliseq/v14/cwl/repliseq-parta.cwl
 * Docker : ``duplexa/4dn-repliseq:v14``
-* 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-repliseq-parta-v14
+* 4DN workflow metadata : https://data.4dnucleome.org/workflows/4459a4d8-1bd8-4b6a-b2cc-2506f4270a34/
 * 4DN example run: https://data.4dnucleome.org/workflow-runs-awsem/66e76f78-0495-4a2a-abfc-2d494d724ded/
 
 |repliseq_a_4dn_wf|
