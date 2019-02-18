@@ -253,7 +253,7 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 hi-c-processing-pairs
 ---------------------
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in a set of pairs files, merges them and creates contact matrix files in both ``.mcool`` and ``.hic`` formats. The output includes a merged pairs file.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/hi-c-processing-pairs.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-hi-c-processing-pairs-0.2.6
@@ -270,6 +270,59 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "hi-c-processing-pairs",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "cwl_main_filename": "hi-c-processing-pairs.cwl",
+        "cwl_child_filenames": [
+          "merge-pairs.cwl",
+          "addfragtopairs.cwl",
+          "pairs2hic.cwl",
+          "cooler.cwl",
+          "cool2mcool.cwl",
+          "extract-mcool-normvector-for-juicebox.cwl",
+          "add-hic-normvector-to-mcool.cwl"
+        ],
+        "cwl_version": "v1",
+        "input_files": {
+          "chromsizes": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_CHROMSIZES_FILE>"
+          },
+          "input_pairs": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": [
+                "<YOUR_INPUT_PAIRS_FILE1>",
+                "<YOUR_INPUT_PAIRS_FILE2>",
+                "<YOUR_INPUT_PAIRS_FILE3>"
+            ]
+          },
+          "restriction_file": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_RESTRICTION_SITE_FILE>"
+          }
+        },
+        "input_parameters": {
+          "ncores": 1,
+          "maxmem": "8g"
+        },
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+          "mcool": "<YOUR_OUTPUT_MULTIRES_COOL_FILE>.mcool",
+          "merged_pairs": "<YOUR_OUTPUT_MERGED_PAIRS_FILE>.pairs.gz",
+          "hic": "<YOUR_OUTPUT_HIC_FILE>.hic"
+        },
+        "secondary_output_target": {
+          "output_pairs": "<YOUR_OUTPUT_MERGED_PAIRS_FILE>.pairs.gz.px2"
+        }
+      },
+      "config": {
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
 
 
 
@@ -277,7 +330,7 @@ pairsqc
 -------
 
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : calculated QC stats for a pairs file and generates a report zip file containing an `.html` file and other table files.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/pairsqc-single.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-pairsqc-single-0.2.6
@@ -294,13 +347,49 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+        "app_name": "pairsqc-single",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem_v1/",
+        "cwl_main_filename": "pairsqc-single.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "input_pairs" : {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_PAIRS_FILE>"
+          },
+          "chromsizes" : {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_CHROMSIZES_FILE>"
+          }
+        },
+        "secondary_files": {
+          "input_pairs": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_PAIRS_FILE>.px2"
+          }
+        },
+        "input_parameters" :  { "enzyme": "6", "sample_name": "4DNFI1ZLO9D7", "max_distance": 8.2 },
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+          "report": "<YOUR_OUTPUT_REPORT_FILE>.zip"
+        },
+    }
+        "config": {
+          "log_bucket": "<YOUR_LOG_BUCKET>",
+          "key_name": "<YOUR_KEY_NAME>"
+        }
+    }
+
+
+
 Repli-seq data processing & QC
 ++++++++++++++++++++++++++++++
 
 repliseq-parta
 --------------
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in repli-seq single-end fastq file and performs alignment, sorting, filtering and produces a bedgraph file containing read counts per bin.
 * CWL : https://raw.githubusercontent.com/4dn-dcic/docker-4dn-repliseq/v14/cwl/repliseq-parta.cwl
 * Docker : ``duplexa/4dn-repliseq:v14``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-repliseq-parta-v14
@@ -317,6 +406,42 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "repliseq-parta",
+        "app_version": "v14",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/docker-4dn-repliseq/v14/cwl/"
+        "cwl_main_filename": "repliseq-parta.cwl",
+        "cwl_child_filenames": ["clip.cwl","align.cwl","filtersort.cwl","dedup.cwl","count.cwl"],
+        "cwl_version": "v1",
+        "input_files": {
+          "fastq": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_FASTQ>"
+          },
+          "bwaIndex": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_INPUT_TGZ_BWA_INDEX>"
+          },
+          "chromsizes": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_CHROMSIZES_FILE>"
+          }
+        },
+        "input_parameters": { "nthreads": 8 },
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+           "filtered_sorted_deduped_bam": "<YOUR_OUTPUT_FILTERED_BAM>.bam",
+           "dedup_qc_report": "<YOUR_QC_REPORT>.zip",
+           "count_bg": "<YOUR_OUTPUT_COUNT_BEDGRAPH_FILE>.bg"
+        }
+      },
+      "config": {
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
 
 ChIP-seq data processing & QC
 +++++++++++++++++++++++++++++
@@ -331,7 +456,7 @@ encode-chipseq-aln-chip
 -----------------------
 
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate. The output includes another TagAlign file exclusively for xcor analysis in the next step (``encode-chipseq-postaln``).
 * WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-aln-chip
@@ -348,11 +473,70 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "encode-chipseq-aln-chip",
+        "app_version": "v1.1.1",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+        "wdl_main_filename": "chip.wdl",
+        "language": "wdl",
+        "input_files": {
+          "chip.fastqs": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": [[
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP1>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP1>.fastq.gz"],
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP2>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP2>.fastq.gz"]
+            ]]
+          },
+          "chip.bwa_idx_tar": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+            "object_key": "<YOUR_INPUT_TAR_BWA_INDEX>"
+          },
+          "chip.blacklist": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_BLACKLIST_FILE>.bed.gz"
+          },
+          "chip.chrsz": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_CHROMSIZES_FILE>.chrom.sizes"
+          }
+        },
+        "input_parameters": { 
+            "chip.pipeline_type" : "histone",
+            "chip.paired_end" : true,
+            "chip.choose_ctl.always_use_pooled_ctl" : true,
+            "chip.qc_report.name" : "<YOUR_QC_REPORT_NAME>",
+            "chip.qc_report.desc" : "<YOUR_QC_REPORT_DESCRIPTION>",
+            "chip.gensz" : "hs",
+            "chip.bam2ta.regex_grep_v_ta" : "chr[MUE]|random|alt",
+            "chip.fraglen": [],
+            "chip.bwa.cpu": 16,
+            "chip.merge_fastq.cpu": 16,
+            "chip.filter.cpu": 16,
+            "chip.bam2ta.cpu": 16,
+            "chip.xcor.cpu": 16,
+            "chip.align_only": true
+        },
+        "output_S3_bucket": "<YOUR_INPUT_BUCKET>",
+        "output_target": {
+           "chip.first_ta": "<YOUR_OUTPUT_TAG_ALIGN_FILE>.bed.gz",
+           "chip.first_ta_xcor": "<YOUR_OUTPUT_TAG_ALIGN_FILE_FOR_XCOR>.bed.gz"
+        }
+      },
+      "config": { 
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
+
+
 encode-chipseq-aln-ctl
 ----------------------
 
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in control fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate.
 * WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-aln-ctl
@@ -369,12 +553,69 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "encode-chipseq-aln-ctl",
+        "app_version": "v1.1.1",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+        "wdl_main_filename": "chip.wdl",
+        "language": "wdl",
+        "input_files": {
+          "chip.ctl_fastqs": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": [[
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP1>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP1>.fastq.gz"],
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP2>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP2>.fastq.gz"]
+            ]]
+          },
+          "chip.bwa_idx_tar": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
+            "object_key": "<YOUR_INPUT_TAR_BWA_INDEX>"
+          },
+          "chip.blacklist": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_BLACKLIST_FILE>.bed.gz"
+          },
+          "chip.chrsz": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_CHROMSIZES_FILE>.chrom.sizes"
+          }
+        },
+        "input_parameters": { 
+            "chip.pipeline_type" : "histone",
+            "chip.paired_end" : true,
+            "chip.choose_ctl.always_use_pooled_ctl" : true,
+            "chip.qc_report.name" : "<YOUR_QC_REPORT_NAME>",
+            "chip.qc_report.desc" : "<YOUR_QC_REPORT_DESCRIPTION>",
+            "chip.gensz" : "hs",
+            "chip.bam2ta_ctl.regex_grep_v_ta" : "chr[MUE]|random|alt",
+            "chip.fraglen": [],
+            "chip.bwa_ctl.cpu": 16,
+            "chip.merge_fastq_ctl.cpu": 16,
+            "chip.filter_ctl.cpu": 16,
+            "chip.bam2ta_ctl.cpu": 16,
+            "chip.align_only": true
+        },
+        "output_S3_bucket": "<YOUR_INPUT_BUCKET>",
+        "output_target": {
+           "chip.first_ta": "<YOUR_OUTPUT_TAG_ALIGN_FILE>.bed.gz",
+           "chip.first_ta_xcor": "<YOUR_OUTPUT_TAG_ALIGN_FILE_FOR_XCOR>.bed.gz"
+        }
+      },
+      "config": { 
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
+
 
 encode-chipseq-postaln
 ----------------------
 
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in TagAlign files generates from ``encode-chipseq-aln-chip`` and ``encode-chipsq-aln-ctl`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed).
 * WDL : https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl
 * Docker : ``4dndcic/encode-chipseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-chipseq-postaln
@@ -392,6 +633,70 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 ::
 
 
+    {
+        "args": {
+          "app_name": "encode-chipseq-postaln",
+          "app_version": "v1.1.1",
+          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/chip.wdl",
+          "wdl_main_filename": "chip.wdl",
+          "language": "wdl",
+          "input_files" : {
+             "chip.tas" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.bed.gz",
+                              "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.bed.gz"],
+               "rename": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.tagAlign.gz",
+                           <YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+             },
+             "chip.ctl_tas" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": ["<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP1>.bed.gz",
+                              "<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP2>.bed.gz"],
+               "rename": ["<YOUR_INPUT_CTL_TAG_ALIGN_BIOREP1>.tagAlign.gz",
+                           <YOUR_INPUT_CTL_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+             },
+             "chip.bam2ta_no_filt_R1.ta" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": ["<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.bed.gz",
+                               <YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.bed.gz"],
+               "rename": ["<YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP1>.tagAlign.gz",
+                           <YOUR_INPUT_XCOR_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+             },
+             "chip.blacklist" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": "<YOUR_BLACKLIST_FILE>.bed.gz"
+             },
+             "chip.chrsz" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": "<YOUR_CHROMSIZES_FILE>"
+             }
+          },
+          "input_parameters": { 
+            "chip.pipeline_type" : "histone",
+            "chip.paired_end" : true,
+            "chip.choose_ctl.always_use_pooled_ctl" : true,
+            "chip.qc_report.name" : "<YOUR_QC_REPORT_NAME>",
+            "chip.qc_report.desc" : "<YOUR_QC_REPORT_DESCRIPTION>",
+            "chip.gensz" : "hs",
+            "chip.xcor.cpu": 4,
+            "chip.spp_cpu": 4
+          },
+          "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+          "output_target": {
+            "chip.sig_fc": "<YOUR_OUTPUT_SIGNAL_FC_FILE>.bw",
+            "chip.optimal_peak": "<YOUR_OUTPUT_OPTIMAL_PEAK_FILE>.bb",
+            "chip.conservative_peak": "<YOUR_OUTPUT_CONSERVATIVE_PEAK_FILE>.bb",
+            "chip.report": "<YOUR_OUTPUT_QC_REPORT>.html",
+            "chip.qc_json": "<YOUR_OUTPUT_QC_JSON>.json"
+          }
+      },
+      "config": { 
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
+
 
 ATAC-seq data processing & QC
 +++++++++++++++++++++++++++++
@@ -407,7 +712,7 @@ encode-atacseq-aln
 ------------------
 
 
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in fastq files from a single biological replicate (may consist of multiple technical replicates) and generates a TagAlign file for that biological replicate.
 * WDL : https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl
 * Docker : ``4dndcic/encode-atacseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-atacseq-aln
@@ -424,12 +729,67 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
+    {
+      "args": {
+        "app_name": "encode-atacseq-aln",
+        "app_version": "1.1.1",
+        "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/",
+        "wdl_main_filename": "atac.wdl",
+        "language": "wdl",
+        "input_files": {
+          "atac.bowtie2_idx_tar": {
+            "rename": "mm10_no_alt_analysis_set_ENCODE.fasta.tar",
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_TAR_BOWTIE2_INDEX>"
+          },
+          "atac.fastqs": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": [[
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP1>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP1>.fastq.gz"],
+                ["<YOUR_INPUT_FASTQ_R1_TECHREP2>.fastq.gz", "<YOUR_INPUT_FASTQ_R2_TECHREP2>.fastq.gz"]
+            ]]
+          },
+          "atac.blacklist": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_BLACKLIST_FILE>.bed.gz"
+          },
+          "atac.chrsz": {
+            "bucket_name": "<YOUR_INPUT_BUCKET>",
+            "object_key": "<YOUR_CHROMSIZES_FILE>"
+          }
+        },
+        "input_parameters": {
+          "atac.trim_adapter.cpu": 4,
+          "atac.paired_end": true,
+          "atac.bam2ta.regex_grep_v_ta": "chr[MUE]|random|alt",
+          "atac.enable_xcor": false,
+          "atac.disable_ataqc": true,
+          "atac.filter.cpu": 4,
+          "atac.trim_adapter.auto_detect_adapter": true,
+          "atac.bam2ta.cpu": 4,
+          "atac.bowtie2.cpu": 4,
+          "atac.gensz": "mm",
+          "atac.pipeline_type": "atac",
+          "atac.align_only": true
+        },
+        "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+        "output_target": {
+          "atac.first_ta": "<YOUR_OUTPUT_TAGALIGN>.bed.gz",
+          "atac.report": "<YOUR_OUTPUT_QC_REPORT>.html",
+          "atac.qc_json": "<YOUR_OUTPUT_QC_JSON.json",
+        }
+      },
+      "config": {
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
+
 
 encode-atacseq-postaln
 ----------------------
 
-
-* Description : calculates two md5sum values (one the file itself, one for ungzipped) for an input file. If the input file is not gzipped, it reports only the first one.
+* Description : takes in TagAlign files generates from ``encode-atacseq-aln`` and calls peaks. The output files are signal fold change (bigwig) and two peak call sets (bigbed).
 * WDL : https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl
 * Docker : ``4dndcic/encode-atacseq:v1.1.1``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-encode-atacseq-postaln
@@ -446,4 +806,48 @@ Use the following as a template and replace ``<YOUR....>`` with your input/outpu
 
 ::
 
-
+    {
+        "args": {
+          "app_name": "encode-atacseq-postaln",
+          "app_version": "v1.1.1",
+          "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/atac-seq-pipeline/master/atac.wdl",
+          "wdl_main_filename": "atac.wdl",
+          "language": "wdl",
+          "input_files" : {
+             "atac.tas" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.bed.gz",
+                              "<YOUR_INPUT_TAG_ALIGN_BIOREP2>.bed.gz"],
+               "rename": ["<YOUR_INPUT_TAG_ALIGN_BIOREP1>.tagAlign.gz",
+                           <YOUR_INPUT_TAG_ALIGN_BIOREP2>.tagAlign.gz"]
+             },
+             "atac.blacklist" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": "<YOUR_BLACKLIST_FILE>.bed.gz"
+             },
+             "atac.chrsz" : { 
+               "bucket_name": "<YOUR_INPUT_BUCKET>",
+               "object_key": "<YOUR_CHROMSIZES_FILE>"
+             }
+          },
+          "input_parameters": { 
+            "atac.pipeline_type" : "atac",
+            "atac.paired_end" : true,
+            "atac.gensz" : "hs",
+            "atac.disable_ataqc": true,
+            "atac.enable_xcor": false
+          },
+          "output_S3_bucket": "<YOUR_OUTPUT_BUCKET>",
+          "output_target": {
+            "atac.sig_fc": "<YOUR_OUTPUT_SIGNAL_FC_FILE>.bw",
+            "atac.optimal_peak": "<YOUR_OUTPUT_OPTIMAL_PEAK_FILE>.bb",
+            "atac.conservative_peak": "<YOUR_OUTPUT_CONSERVATIVE_PEAK_FILE>.bb",
+            "atac.report": "<YOUR_OUTPUT_QC_REPORT>.html",
+            "atac.qc_json": "<YOUR_OUTPUT_QC_JSON>.json"
+          }
+      },
+      "config": { 
+        "log_bucket": "<YOUR_LOG_BUCKET>",
+        "key_name": "<YOUR_KEY_NAME>"
+      }
+    }
