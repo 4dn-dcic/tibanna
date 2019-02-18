@@ -333,7 +333,7 @@ pairsqc
 -------
 
 
-* Description : calculated QC stats for a pairs file and generates a report zip file containing an `.html` file and other table files.
+* Description : calculated QC stats for a pairs file and generates a report zip file containing an ``.html`` file and other table files.
 * CWL : https://github.com/4dn-dcic/pipelines-cwl/blob/0.2.6/cwl_awsem_v1/pairsqc-single.cwl
 * Docker : ``duplexa/4dn-hic:v42.2``
 * 4DN workflow metadata : https://data.4dnucleome.org/4dn-dcic-lab:wf-pairsqc-single-0.2.6
