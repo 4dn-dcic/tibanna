@@ -5,6 +5,44 @@ Job Description JSON Schema
 The Job Description json (input of Tibanna) defines an individual execution. It has two parts, `args` and `config`. `args` contains information about pipeline, input files, output bucket, input parameters, etc. `config` has parameters about AWS such as instance type, EBS size, ssh password, etc.
 
 
+Example job description for CWL
+-------------------------------
+
+::
+
+    {
+      "args": {
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+        "cwl_main_filename": "pairsam-parse-sort.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "bam": {
+            "bucket_name": "montys-data-bucket",
+            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam"
+          },
+          "chromsize": {
+            "bucket_name": "montys-data-bucket",
+            "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+          }
+        },
+        "input_parameters": {
+          "nThreads": 16
+        },
+        "output_S3_bucket": "montys-data-bucket",
+        "output_target": {
+          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
+        }
+      },
+      "config": {
+        "ebs_size": 10,
+        "EBS_optimized": false,
+        "instance_type": "t2.micro",
+        "log_bucket": "montys-log-bucket"
+      }
+    }
+
+
+
 args
 ----
 
@@ -14,6 +52,10 @@ Pipeline specification
 :app_name:
     - <name of the app> (e.g. 'pairsam-parse-sort')
     - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
+    - This field is optional and is used only by ``Benchmark`` which auto-termines instance type
+      and EBS size based on input size and parameters. If the workflow doesn't have an associated
+      Benchmark function, this field can be omitted, but ``instance_type``, ``ebs_size``, ``EBS_optimized``
+      must be specified in ``config``.
 
 :app_version:
     - <version of the app> (e.g. 0.2.0)
@@ -244,55 +286,4 @@ config
     - Max duration of spot instance in min (no default). If set, request a fixed-duration spot instance instead of a regular spot instance. ``spot_instance`` must be set ``true``.
 
 
-
-Example job description for CWL
--------------------------------
-
-::
-
-    {
-      "args": {
-        "app_name": "pairsam-parse-sort",
-        "app_version": "0.2.0"
-        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
-        "cwl_main_filename": "pairsam-parse-sort.cwl",
-        "cwl_child_filenames": [],
-        "cwl_version": "v1",
-        "singularity": False,
-        "input_files": {
-          "bam": {
-            "bucket_name": "some_public_bucket",
-            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam",
-            "profile": "user1"
-          },
-          "chromsize": {
-            "bucket_name": "suwang",
-            "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
-          }
-        },
-        "secondary_files": {},
-        "input_parameters": {
-          "nThreads": 16
-        },
-        "output_S3_bucket": "suwang",
-        "output_target": {
-          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
-        },
-        "secondary_output_target": {}
-      },
-      "config": {
-        "ebs_size": 0,
-        "json_bucket": "suwang",
-        "EBS_optimized": "",
-        "ebs_iops": 500,
-        "shutdown_min": 30,
-        "instance_type": "",
-        "ebs_type": "io1",
-        "password": "whateverpasswordworks",
-        "log_bucket": "suwang",
-        "key_name": "",
-        "cloudwatch_dashboard": true,
-        "spot_instance": false
-      }
-    }
 
