@@ -46,24 +46,11 @@ Example job description for CWL
 args
 ----
 
+The ``args`` field describe pipeline, input and output.
+
+
 Pipeline specification
 ######################
-
-:app_name:
-    - <name of the app> (e.g. 'pairsam-parse-sort')
-    - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
-    - This field is optional and is used only by ``Benchmark`` which auto-termines instance type
-      and EBS size based on input size and parameters. If the workflow doesn't have an associated
-      Benchmark function, this field can be omitted, but ``instance_type``, ``ebs_size``, ``EBS_optimized``
-      must be specified in ``config``.
-
-:app_version:
-    - <version of the app> (e.g. 0.2.0)
-    - Version of the pipeline/app, for the user to keep in track.
-
-:language:
-    - 'cwl_v1', 'cwl_draft3' or 'wdl'
-    - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 CWL-specific
 ++++++++++++
@@ -106,6 +93,27 @@ WDL-specific
 :wdl_child_filenames:
     - <list_of_wdl_files> or ``[]`` (e.g. ['subworkflow1.wdl', 'subworkflow2.wdl'])
     - An array of all the other wdl files that are called by the main wdl file. This could happen if there are the main WDL file is using another WDL file as a subworkflow.
+
+
+Other pipeline-related fields
++++++++++++++++++++++++++++++
+
+:app_name:
+    - <name of the app> (e.g. 'pairsam-parse-sort')
+    - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
+    - This field is optional and is used only by ``Benchmark`` which auto-termines instance type
+      and EBS size based on input size and parameters. If the workflow doesn't have an associated
+      Benchmark function, this field can be omitted, but ``instance_type``, ``ebs_size``, ``EBS_optimized``
+      must be specified in ``config``.
+
+:app_version:
+    - optional
+    - <version of the app> (e.g. 0.2.0)
+    - Version of the pipeline/app, for the user to keep in track.
+
+:language:
+    - 'cwl_v1', 'cwl_draft3' or 'wdl'
+    - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 
 Input data specification
@@ -236,17 +244,16 @@ Dependency specification
 config
 ------
 
-:ebs_size:
-    - <ebs_size_in_gb>
-    - It can be specified by the user or left to be 0 (auto-determine) if Benchmark function is available for a given workflow/pipeline.
+The ``config`` field describes execution configuration.
 
 :log_bucket:
     - <log_bucket_name>
     - This is where the logs of the Tibanna runs are sent to.
+    - required
 
-:json_bucket:
-    - <log_bucket_name>
-    - This is where Tibanna sends an instruction to for an AWSEM EC2 instance.
+:ebs_size:
+    - <ebs_size_in_gb>
+    - It can be specified by the user or left to be 0 (auto-determine) if Benchmark function is available for a given workflow/pipeline.
 
 :instance_type:
     - <instance_type>
@@ -259,31 +266,40 @@ config
 :shutdown_min:
     - either number of minutes or string 'now'
     - 'now' would make the EC2 instance to terminate immediately after a workflow run. This option saves cost if the pipeline is stable. If debugging may be needed, one could set shutdown_min to be for example, 30, in which case the instance will keep running for 30 minutes after completion of the workflow run. During this time, a user could ssh into the instance.
+    - optional (default : "now")
 
 :password:
     - <password_for_ssh> or '' (blank)
     - One can use either password or key_name (below) as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
     - The password can be any string and anyone with the password and the ip address of the EC2 instance can ssh into the machine.
+    - optional (default : no password-based ssh)
 
 :key_name:
     - <key_pair_name> or '' (blank)
     - One can use either password (above) or key_name as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
     - The key pair should be an existing key pair and anyone with the key pair ``.pem`` file and the ip address of the EC2 instance can ssh into the machine.
+    - optional (default : no key-based ssh)
 
-:ebs_iops: 500
-:ebs_type: io1
+:ebs_iops: 
+    - IOPS of the io1 type EBS
+    - optional (default: unset)
+
+:ebs_type:
+    - type of EBS (either ``gp2`` or ``io1``)
+    - optional (default: gp2)
 
 :cloudwatch_dashboard:
     - if true, Memory Used, Disk Used, CPU Utilization Cloudwatch metrics are collected into a single Cloudwatch Dashboard page. (default ``false``)
-    - There is a limit of 1,000 CloudWatch Dashboards per account, so do not turn on this option for more than 1,000 runs.
+    - Warning: very expensive - Do not use it unless absolutely neessary.
       Cloudwatch metrics are collected for every awsem EC2 instances even if this option is turned off.
       The Dashboard option makes it easier to look at them together.
+    - There is a limit of 1,000 CloudWatch Dashboards per account, so do not turn on this option for more than 1,000 runs.
 
 :spot_instance:
-    - if true, request spot instance instead of an On-Demand instance (default ``false``)
+    - if true, request spot instance instead of an On-Demand instance
+    - optional (default ``false``)
 
-:spot_duration: 360
+:spot_duration:
     - Max duration of spot instance in min (no default). If set, request a fixed-duration spot instance instead of a regular spot instance. ``spot_instance`` must be set ``true``.
-
-
+    - optional (no default)
 
