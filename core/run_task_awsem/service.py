@@ -29,10 +29,10 @@ def handler(event, context):
 
     args:
     # required (i.e. field must exist):
-      app_name: name of the app
       input_files: input files in json format (parametername: {'bucket_name':bucketname, 'object_key':filename})
       output_S3_bucket: bucket name and subdirectory for output files and logs
     # optional
+      app_name: name of the app, used by Benchmark
       app_version: version of the app
       secondary_files: secondary files in json format (parametername: {'bucket_name':bucketnname, 'object_ke':filename})
       input_parameters: input parameters in json format (parametername:value)
@@ -57,7 +57,7 @@ def handler(event, context):
     CONFIG_FIELD = "config"
     CONFIG_KEYS = ["log_bucket"]
     ARGS_FIELD = "args"
-    ARGS_KEYS = ["app_name", "input_files", "output_S3_bucket", "output_target"]
+    ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
     ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
 

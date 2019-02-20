@@ -33,7 +33,17 @@ def test_update_config3(run_task_awsem_event_data_chipseq):
 def test_update_config4(run_task_awsem_event_omit_fields):
     data = run_task_awsem_event_omit_fields
     config = data['config']
-    update_config(config, data['args']['app_name'], data['args']['input_files'], {})
+    update_config(config, data['args'].get('app_name', ''), data['args']['input_files'], {})
+    assert config['instance_type'] == 't3.micro'
+    assert config['EBS_optimized'] is True
+    assert config['ebs_size'] >= 10
+    assert config['shutdown_min'] == "now"
+
+
+def test_update_config5(run_task_awsem_event_omit_fields2):
+    data = run_task_awsem_event_omit_fields2
+    config = data['config']
+    update_config(config, data['args'].get('app_name', ''), data['args']['input_files'], {})
     assert config['instance_type'] == 't3.micro'
     assert config['EBS_optimized'] is True
     assert config['ebs_size'] >= 10

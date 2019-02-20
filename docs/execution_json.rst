@@ -18,11 +18,11 @@ Example job description for CWL
         "input_files": {
           "bam": {
             "bucket_name": "montys-data-bucket",
-            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam"
+            "object_key": "dataset1/sample1.bam"
           },
           "chromsize": {
             "bucket_name": "montys-data-bucket",
-            "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+            "object_key": "references/hg38.chrom.sizes"
           }
         },
         "input_parameters": {
@@ -30,13 +30,13 @@ Example job description for CWL
         },
         "output_S3_bucket": "montys-data-bucket",
         "output_target": {
-          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
+          "out_pairsam": "output/dataset1/sample1.sam.pairs.gz"
         }
       },
       "config": {
+        "instance_type": "t2.micro",
         "ebs_size": 10,
         "EBS_optimized": false,
-        "instance_type": "t2.micro",
         "log_bucket": "montys-log-bucket"
       }
     }

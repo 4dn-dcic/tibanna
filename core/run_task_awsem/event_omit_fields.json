@@ -1,14 +1,13 @@
 {
   "args": {
     "app_name": "md5",
-    "cwl_version": "draft-3",
+    "cwl_version": "v1",
     "output_target": {
       "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
     },
     "cwl_main_filename": "md5.cwl",
     "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "app_version": "0.0.4",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
     "input_files": {
       "input_file": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
@@ -17,7 +16,6 @@
     }
   },
   "config": {
-    "log_bucket": "tibanna-output",
-    "key_name": "4dn-encode"
+    "log_bucket": "tibanna-output"
   }
 }

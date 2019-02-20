@@ -96,7 +96,7 @@ def create_json_dict(input_dict):
     pre = {'config': input_dict.get('config').copy()}  # copy only config since arg is redundant with 'Job'
     pre.update({'Job': {'JOBID': jobid,
                         'App': {
-                                 'App_name': a['app_name'],
+                                 'App_name': a.get('app_name', ''),
                                  'App_version': a.get('app_version', ''),
                                  'language': a.get('language', ''),
                                  'cwl_url': a.get('cwl_directory_url', ''),
@@ -448,6 +448,11 @@ def update_config(cfg, app_name, input_files, parameters):
             input_size_in_bytes.update({str(argname): size})
 
         print({"input_size_in_bytes": input_size_in_bytes})
+        if not app_name:
+            err_msg = "app_name must be provided to use Benchmarking." + \
+                      "Without app_name, instance_type, ebs_size and EBS_optimized must be" + \
+                      "in the config field of the execution json."
+            raise Exception(err_msg)
         try:
             res = B.benchmark(app_name, {'input_size_in_bytes': input_size_in_bytes, 'parameters': parameters})
         except:
@@ -506,7 +511,7 @@ def does_key_exist(bucket, object_name):
 def auto_update_input_json(args, cfg):
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
-    cfg['job_tag'] = args.get('app_name')
+    cfg['job_tag'] = args.get('app_name', '')
     cfg['userdata_dir'] = '/tmp/userdata'
 
     # local directory in which the json file will be first created.
@@ -538,5 +543,5 @@ def auto_update_input_json(args, cfg):
     cfg['json_bucket'] = cfg['log_bucket']
 
     cfg['language'] = args['language']
-    update_config(cfg, args['app_name'],
+    update_config(cfg, args.get('app_name', ''),
                   args['input_files'], args.get('input_parameters', {}))
