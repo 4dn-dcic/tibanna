@@ -263,6 +263,9 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     elif ff_meta.awsem_app_name == 'bedtobeddb':
         file_argument = 'bedfile'
         file_format = 'beddb'
+    elif ff_meta.awsem_app_name == 'bedtomultivec':
+        file_argument = 'multivec_file'
+        file_format = 'bed.multires.mv5'
     # higlass
     if status == 'uploaded':
         if file_format == 'bw':
@@ -277,6 +280,13 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
                                               awsemfile.key,
                                               'beddb',
                                               'bedlike')
+
+        elif file_format == 'bed.multires.mv5':
+            higlass_uid = register_to_higlass(tibanna,
+                                              awsemfile.bucket,
+                                              awsemfile.key,
+                                              'multivec',
+                                              'multivec')                                              'bedlike')
         else:
             higlass_uid = None
     # update metadata
