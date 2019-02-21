@@ -280,7 +280,6 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
                                               awsemfile.key,
                                               'beddb',
                                               'bedlike')
-
         elif file_format == 'bed.multires.mv5':
             higlass_uid = register_to_higlass(tibanna,
                                               awsemfile.bucket,
