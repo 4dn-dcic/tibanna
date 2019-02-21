@@ -286,7 +286,7 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
                                               awsemfile.bucket,
                                               awsemfile.key,
                                               'multivec',
-                                              'multivec')                                              'bedlike')
+                                              'multivec')
         else:
             higlass_uid = None
     # update metadata
