@@ -491,8 +491,8 @@ def count_status(sfn_arn, client):
 
 @task
 def rerun(ctx, exec_arn, sfn='tibanna_pony',
-          instance_type=None, shutdown_min=None, ebs_size=None,
-          overwrite_input_extra=None, key_name=None):
+          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+          overwrite_input_extra=None, key_name=None, name=None):
     """ rerun a specific job"""
     override_config = dict()
     if instance_type:
@@ -500,12 +500,18 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
     if shutdown_min:
         override_config['shutdown_min'] = shutdown_min
     if ebs_size:
-        override_config['ebs_size'] = ebs_size
+        override_config['ebs_size'] = int(ebs_size)
     if overwrite_input_extra:
         override_config['overwrite_input_extra'] = overwrite_input_extra
     if key_name:
         override_config['key_name'] = key_name
-    _rerun(exec_arn, sfn=sfn, override_config=override_config)
+    if ebs_type:
+        override_config['ebs_type'] = ebs_type
+        if ebs_type == 'gp2':
+            override_config['ebs_iops'] = ''
+    if ebs_iops:
+        override_config['ebs_iops'] = ebs_iops
+    _rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
 
 
 @task
