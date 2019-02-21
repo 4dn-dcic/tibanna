@@ -1,0 +1,29 @@
+[2019-02-21 04:39:59,450 INFO] ['/software/atac-seq-pipeline/src/encode_spr.py', '/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-spr/shard-1/inputs/609996275/4DNFI87P5BYU.tagAlign.gz', '--paired-end']
+[2019-02-21 04:39:59,450 INFO] Initializing and making output directory...
+[2019-02-21 04:39:59,450 INFO] Making self-pseudo replicates...
+[2019-02-21 04:39:59,451 INFO] run_shell_cmd: PID=17, CMD=zcat -f /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-spr/shard-1/inputs/609996275/4DNFI87P5BYU.tagAlign.gz | wc -l
+PID=17: 151182473
+[2019-02-21 04:40:21,941 INFO] run_shell_cmd: PID=20, CMD=bash -c "zcat -f /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-spr/shard-1/inputs/609996275/4DNFI87P5BYU.tagAlign.gz | sed 'N;s/\n/\t/' | shuf --random-source=<(openssl enc -aes-256-ctr -pass pass:$(zcat -f /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-spr/shard-1/inputs/609996275/4DNFI87P5BYU.tagAlign.gz | wc -c) -nosalt </dev/zero 2>/dev/null) | split -d -l 37795618 - 4DNFI87P5BYU."
+[2019-02-21 04:42:51,159 INFO] run_shell_cmd: PID=31, CMD=zcat -f 4DNFI87P5BYU.00 | awk 'BEGIN{OFS="\t"} {printf "%s\t%s\t%s\t%s\t%s\t%s\n%s\t%s\t%s\t%s\t%s\t%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12}' | gzip -nc > 4DNFI87P5BYU.pr1.tagAlign.gz
+[2019-02-21 04:44:15,665 INFO] run_shell_cmd: PID=35, CMD=zcat -f 4DNFI87P5BYU.01 | awk 'BEGIN{OFS="\t"} {printf "%s\t%s\t%s\t%s\t%s\t%s\n%s\t%s\t%s\t%s\t%s\t%s\n",$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12}' | gzip -nc > 4DNFI87P5BYU.pr2.tagAlign.gz
+[2019-02-21 04:45:38,637 INFO] run_shell_cmd: PID=39, CMD=rm -f 4DNFI87P5BYU.00 4DNFI87P5BYU.01
+[2019-02-21 04:45:39,063 INFO] List all files in output directory...
+[2019-02-21 04:45:39,064 INFO] run_shell_cmd: PID=41, CMD=ls -l 
+PID=41: total 1086044
+PID=41: -rw-r--r-- 1 root root        68 Feb 21 04:42 4DNFI87P5BYU.02
+PID=41: -rw-r--r-- 1 root root 556015302 Feb 21 04:44 4DNFI87P5BYU.pr1.tagAlign.gz
+PID=41: -rw-r--r-- 1 root root 556043308 Feb 21 04:45 4DNFI87P5BYU.pr2.tagAlign.gz
+PID=41: -rw-r--r-- 1 root root        64 Feb 21 04:39 docker_cid
+PID=41: -rw-r--r-- 1 root root      5314 Feb 21 04:39 script
+PID=41: -rw-r--r-- 1 root root       337 Feb 21 04:39 script.background
+PID=41: -rw-r--r-- 1 root root      1203 Feb 21 04:39 script.submit
+PID=41: -rw-r--r-- 1 root root         0 Feb 21 04:39 stderr
+PID=41: -rw-r--r-- 1 root root      5189 Feb 21 04:39 stderr.background
+PID=41: -rw-r--r-- 1 root root      1789 Feb 21 04:45 stdout
+PID=41: -rw-r--r-- 1 root root      1794 Feb 21 04:45 stdout.background
+[2019-02-21 04:45:39,066 INFO] Checking if output is empty...
+[2019-02-21 04:45:39,067 INFO] run_shell_cmd: PID=43, CMD=zcat -f 4DNFI87P5BYU.pr1.tagAlign.gz | wc -l
+PID=43: 75591236
+[2019-02-21 04:45:52,834 INFO] run_shell_cmd: PID=46, CMD=zcat -f 4DNFI87P5BYU.pr2.tagAlign.gz | wc -l
+PID=46: 75591236
+[2019-02-21 04:46:06,513 INFO] All done.

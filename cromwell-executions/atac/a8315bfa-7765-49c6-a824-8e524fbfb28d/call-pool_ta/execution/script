@@ -1,0 +1,50 @@
+#!/bin/bash
+
+cd /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution
+tmpDir=$(mkdir -p "/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/tmp.345a15c8" && echo "/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/tmp.345a15c8")
+chmod 777 "$tmpDir"
+export _JAVA_OPTIONS=-Djava.io.tmpdir="$tmpDir"
+export TMPDIR="$tmpDir"
+export HOME="$HOME"
+(
+cd /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution
+
+)
+outa8315bfa="${tmpDir}/out.$$" erra8315bfa="${tmpDir}/err.$$"
+mkfifo "$outa8315bfa" "$erra8315bfa"
+trap 'rm "$outa8315bfa" "$erra8315bfa"' EXIT
+tee '/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/stdout' < "$outa8315bfa" &
+tee '/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/stderr' < "$erra8315bfa" >&2 &
+(
+cd /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution
+
+
+python $(which encode_pool_ta.py) \
+	/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFIUZBIYW9.tagAlign.gz /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFI87P5BYU.tagAlign.gz
+)  > "$outa8315bfa" 2> "$erra8315bfa"
+echo $? > /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/rc.tmp
+(
+# add a .file in every empty directory to facilitate directory delocalization on the cloud
+cd /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution
+find . -type d -empty -print0 | xargs -0 -I % touch %/.file
+)
+(
+cd /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution
+sync
+# make the directory which will keep the matching files
+mkdir /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4
+
+# create the glob control file that will allow for the globbing to succeed even if there is 0 match
+echo "This file is used by Cromwell to allow for globs that would not match any file.
+By its presence it works around the limitation of some backends that do not allow empty globs.
+Regardless of the outcome of the glob, this file will not be part of the final list of globbed files." > /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4/cromwell_glob_control_file
+
+# hardlink or symlink all the files into the glob directory
+( ln -L /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/*.tagAlign.gz /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4 2> /dev/null ) || ( ln /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/*.tagAlign.gz /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4 )
+
+# list all the files (except the control file) that match the glob into a file called glob-[md5 of glob].list
+ls -1 /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4 | grep -v cromwell_glob_control_file > /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/glob-199637d3015dccbe277f621a18be9eb4.list
+
+
+)
+mv /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/rc.tmp /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/execution/rc

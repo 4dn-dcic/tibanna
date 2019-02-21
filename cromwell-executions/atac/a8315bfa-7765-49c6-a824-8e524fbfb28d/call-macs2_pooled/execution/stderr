@@ -1,0 +1,166 @@
+Traceback (most recent call last):
+  File "/software/atac-seq-pipeline/src/encode_macs2_atac.py", line 213, in <module>
+    main()
+  File "/software/atac-seq-pipeline/src/encode_macs2_atac.py", line 186, in main
+    args.out_dir)
+  File "/software/atac-seq-pipeline/src/encode_macs2_atac.py", line 80, in macs2
+    run_shell_cmd(cmd0)
+  File "/software/atac-seq-pipeline/src/encode_common.py", line 263, in run_shell_cmd
+    pid, pgid, cmd, ret))
+Exception: Killed PID=17, PGID=17
+CMD=macs2 callpeak -t /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-macs2_pooled/inputs/-1070201304/4DNFIUZBIYW9.pooled.tagAlign.gz -f BED -n 4DNFIUZBIYW9.pooled -g hs -p 0.01 --shift -75 --extsize 150 --nomodel -B --SPMR --keep-dup all --call-summits 
+STDOUT=INFO  @ Thu, 21 Feb 2019 04:44:17: 
+# Command line: callpeak -t /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-macs2_pooled/inputs/-1070201304/4DNFIUZBIYW9.pooled.tagAlign.gz -f BED -n 4DNFIUZBIYW9.pooled -g hs -p 0.01 --shift -75 --extsize 150 --nomodel -B --SPMR --keep-dup all --call-summits
+# ARGUMENTS LIST:
+# name = 4DNFIUZBIYW9.pooled
+# format = BED
+# ChIP-seq file = ['/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-macs2_pooled/inputs/-1070201304/4DNFIUZBIYW9.pooled.tagAlign.gz']
+# control file = None
+# effective genome size = 2.70e+09
+# band width = 300
+# model fold = [5, 50]
+# pvalue cutoff = 1.00e-02
+# qvalue will not be calculated and reported as -1 in the final output.
+# Larger dataset will be scaled towards smaller dataset.
+# Range for calculating regional lambda is: 10000 bps
+# Broad region calling is off
+# Paired-End mode is off
+# Searching for subpeak summits is on
+# MACS will save fragment pileup signal per million reads
+ 
+INFO  @ Thu, 21 Feb 2019 04:44:17: #1 read tag files... 
+INFO  @ Thu, 21 Feb 2019 04:44:17: #1 read treatment tags... 
+INFO  @ Thu, 21 Feb 2019 04:44:18:  1000000 
+INFO  @ Thu, 21 Feb 2019 04:44:19:  2000000 
+INFO  @ Thu, 21 Feb 2019 04:44:20:  3000000 
+INFO  @ Thu, 21 Feb 2019 04:44:21:  4000000 
+INFO  @ Thu, 21 Feb 2019 04:44:22:  5000000 
+INFO  @ Thu, 21 Feb 2019 04:44:23:  6000000 
+INFO  @ Thu, 21 Feb 2019 04:44:24:  7000000 
+INFO  @ Thu, 21 Feb 2019 04:44:25:  8000000 
+INFO  @ Thu, 21 Feb 2019 04:44:26:  9000000 
+INFO  @ Thu, 21 Feb 2019 04:44:27:  10000000 
+INFO  @ Thu, 21 Feb 2019 04:44:28:  11000000 
+INFO  @ Thu, 21 Feb 2019 04:44:29:  12000000 
+INFO  @ Thu, 21 Feb 2019 04:44:30:  13000000 
+INFO  @ Thu, 21 Feb 2019 04:44:31:  14000000 
+INFO  @ Thu, 21 Feb 2019 04:44:32:  15000000 
+INFO  @ Thu, 21 Feb 2019 04:44:33:  16000000 
+INFO  @ Thu, 21 Feb 2019 04:44:34:  17000000 
+INFO  @ Thu, 21 Feb 2019 04:44:35:  18000000 
+INFO  @ Thu, 21 Feb 2019 04:44:36:  19000000 
+INFO  @ Thu, 21 Feb 2019 04:44:37:  20000000 
+INFO  @ Thu, 21 Feb 2019 04:44:38:  21000000 
+INFO  @ Thu, 21 Feb 2019 04:44:39:  22000000 
+INFO  @ Thu, 21 Feb 2019 04:44:40:  23000000 
+INFO  @ Thu, 21 Feb 2019 04:44:41:  24000000 
+INFO  @ Thu, 21 Feb 2019 04:44:42:  25000000 
+INFO  @ Thu, 21 Feb 2019 04:44:43:  26000000 
+INFO  @ Thu, 21 Feb 2019 04:44:44:  27000000 
+INFO  @ Thu, 21 Feb 2019 04:44:45:  28000000 
+INFO  @ Thu, 21 Feb 2019 04:44:45:  29000000 
+INFO  @ Thu, 21 Feb 2019 04:44:46:  30000000 
+INFO  @ Thu, 21 Feb 2019 04:44:47:  31000000 
+INFO  @ Thu, 21 Feb 2019 04:44:48:  32000000 
+INFO  @ Thu, 21 Feb 2019 04:44:49:  33000000 
+INFO  @ Thu, 21 Feb 2019 04:44:50:  34000000 
+INFO  @ Thu, 21 Feb 2019 04:44:51:  35000000 
+INFO  @ Thu, 21 Feb 2019 04:44:52:  36000000 
+INFO  @ Thu, 21 Feb 2019 04:44:53:  37000000 
+INFO  @ Thu, 21 Feb 2019 04:44:54:  38000000 
+INFO  @ Thu, 21 Feb 2019 04:44:55:  39000000 
+INFO  @ Thu, 21 Feb 2019 04:44:56:  40000000 
+INFO  @ Thu, 21 Feb 2019 04:44:57:  41000000 
+INFO  @ Thu, 21 Feb 2019 04:44:58:  42000000 
+INFO  @ Thu, 21 Feb 2019 04:44:59:  43000000 
+INFO  @ Thu, 21 Feb 2019 04:45:00:  44000000 
+INFO  @ Thu, 21 Feb 2019 04:45:01:  45000000 
+INFO  @ Thu, 21 Feb 2019 04:45:02:  46000000 
+INFO  @ Thu, 21 Feb 2019 04:45:03:  47000000 
+INFO  @ Thu, 21 Feb 2019 04:45:04:  48000000 
+INFO  @ Thu, 21 Feb 2019 04:45:05:  49000000 
+INFO  @ Thu, 21 Feb 2019 04:45:06:  50000000 
+INFO  @ Thu, 21 Feb 2019 04:45:07:  51000000 
+INFO  @ Thu, 21 Feb 2019 04:45:08:  52000000 
+INFO  @ Thu, 21 Feb 2019 04:45:09:  53000000 
+INFO  @ Thu, 21 Feb 2019 04:45:10:  54000000 
+INFO  @ Thu, 21 Feb 2019 04:45:11:  55000000 
+INFO  @ Thu, 21 Feb 2019 04:45:12:  56000000 
+INFO  @ Thu, 21 Feb 2019 04:45:13:  57000000 
+INFO  @ Thu, 21 Feb 2019 04:45:14:  58000000 
+INFO  @ Thu, 21 Feb 2019 04:45:15:  59000000 
+INFO  @ Thu, 21 Feb 2019 04:45:16:  60000000 
+INFO  @ Thu, 21 Feb 2019 04:45:17:  61000000 
+INFO  @ Thu, 21 Feb 2019 04:45:18:  62000000 
+INFO  @ Thu, 21 Feb 2019 04:45:19:  63000000 
+INFO  @ Thu, 21 Feb 2019 04:45:20:  64000000 
+INFO  @ Thu, 21 Feb 2019 04:45:21:  65000000 
+INFO  @ Thu, 21 Feb 2019 04:45:22:  66000000 
+INFO  @ Thu, 21 Feb 2019 04:45:23:  67000000 
+INFO  @ Thu, 21 Feb 2019 04:45:24:  68000000 
+INFO  @ Thu, 21 Feb 2019 04:45:25:  69000000 
+INFO  @ Thu, 21 Feb 2019 04:45:26:  70000000 
+INFO  @ Thu, 21 Feb 2019 04:45:26:  71000000 
+INFO  @ Thu, 21 Feb 2019 04:45:27:  72000000 
+INFO  @ Thu, 21 Feb 2019 04:45:28:  73000000 
+INFO  @ Thu, 21 Feb 2019 04:45:29:  74000000 
+INFO  @ Thu, 21 Feb 2019 04:45:30:  75000000 
+INFO  @ Thu, 21 Feb 2019 04:45:31:  76000000 
+INFO  @ Thu, 21 Feb 2019 04:45:32:  77000000 
+INFO  @ Thu, 21 Feb 2019 04:45:33:  78000000 
+INFO  @ Thu, 21 Feb 2019 04:45:34:  79000000 
+INFO  @ Thu, 21 Feb 2019 04:45:35:  80000000 
+INFO  @ Thu, 21 Feb 2019 04:45:36:  81000000 
+INFO  @ Thu, 21 Feb 2019 04:45:37:  82000000 
+INFO  @ Thu, 21 Feb 2019 04:45:38:  83000000 
+INFO  @ Thu, 21 Feb 2019 04:45:39:  84000000 
+INFO  @ Thu, 21 Feb 2019 04:45:40:  85000000 
+INFO  @ Thu, 21 Feb 2019 04:45:41:  86000000 
+INFO  @ Thu, 21 Feb 2019 04:45:42:  87000000 
+INFO  @ Thu, 21 Feb 2019 04:45:43:  88000000 
+INFO  @ Thu, 21 Feb 2019 04:45:44:  89000000 
+INFO  @ Thu, 21 Feb 2019 04:45:45:  90000000 
+INFO  @ Thu, 21 Feb 2019 04:45:46:  91000000 
+INFO  @ Thu, 21 Feb 2019 04:45:47:  92000000 
+INFO  @ Thu, 21 Feb 2019 04:45:48:  93000000 
+INFO  @ Thu, 21 Feb 2019 04:45:49:  94000000 
+INFO  @ Thu, 21 Feb 2019 04:45:50:  95000000 
+INFO  @ Thu, 21 Feb 2019 04:45:51:  96000000 
+INFO  @ Thu, 21 Feb 2019 04:45:52:  97000000 
+INFO  @ Thu, 21 Feb 2019 04:45:53:  98000000 
+INFO  @ Thu, 21 Feb 2019 04:45:54:  99000000 
+INFO  @ Thu, 21 Feb 2019 04:45:55:  100000000 
+INFO  @ Thu, 21 Feb 2019 04:45:56:  101000000 
+INFO  @ Thu, 21 Feb 2019 04:45:57:  102000000 
+INFO  @ Thu, 21 Feb 2019 04:45:58:  103000000 
+INFO  @ Thu, 21 Feb 2019 04:45:59:  104000000 
+INFO  @ Thu, 21 Feb 2019 04:46:00:  105000000 
+INFO  @ Thu, 21 Feb 2019 04:46:01:  106000000 
+INFO  @ Thu, 21 Feb 2019 04:46:02:  107000000 
+INFO  @ Thu, 21 Feb 2019 04:46:03:  108000000 
+INFO  @ Thu, 21 Feb 2019 04:46:04:  109000000 
+INFO  @ Thu, 21 Feb 2019 04:46:05:  110000000 
+INFO  @ Thu, 21 Feb 2019 04:46:06:  111000000 
+INFO  @ Thu, 21 Feb 2019 04:46:07:  112000000 
+INFO  @ Thu, 21 Feb 2019 04:46:08:  113000000 
+INFO  @ Thu, 21 Feb 2019 04:46:09:  114000000 
+INFO  @ Thu, 21 Feb 2019 04:46:10:  115000000 
+INFO  @ Thu, 21 Feb 2019 04:46:11:  116000000 
+INFO  @ Thu, 21 Feb 2019 04:46:12:  117000000 
+INFO  @ Thu, 21 Feb 2019 04:46:12:  118000000 
+INFO  @ Thu, 21 Feb 2019 04:46:13:  119000000 
+INFO  @ Thu, 21 Feb 2019 04:46:14:  120000000 
+Traceback (most recent call last):
+  File "/usr/local/bin/macs2", line 617, in <module>
+    main()
+  File "/usr/local/bin/macs2", line 57, in main
+    run( args )
+  File "/usr/local/lib/python2.7/dist-packages/MACS2/callpeak_cmd.py", line 73, in run
+    else:       (treat, control) = load_tag_files_options  (options)
+  File "/usr/local/lib/python2.7/dist-packages/MACS2/callpeak_cmd.py", line 399, in load_tag_files_options
+    treat = tp.build_fwtrack()
+  File "MACS2/IO/Parser.pyx", line 191, in MACS2.IO.Parser.GenericParser.build_fwtrack (MACS2/IO/Parser.c:4345)
+  File "MACS2/IO/Parser.pyx", line 206, in MACS2.IO.Parser.GenericParser.build_fwtrack (MACS2/IO/Parser.c:4018)
+  File "MACS2/IO/Parser.pyx", line 337, in MACS2.IO.Parser.BEDParser.__fw_parse_line (MACS2/IO/Parser.c:5989)
+MACS2.IO.Parser.StrandFormatError: 'Strand information can not be recognized in this line: "chr6\t28267092\t282671chr1\t10099\t10131\tN\t1000\t-","N"'
+

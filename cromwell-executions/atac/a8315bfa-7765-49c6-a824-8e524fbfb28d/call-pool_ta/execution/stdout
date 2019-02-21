@@ -1,0 +1,17 @@
+[2019-02-21 04:39:59,642 INFO] ['/software/atac-seq-pipeline/src/encode_pool_ta.py', '/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFIUZBIYW9.tagAlign.gz', '/cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFI87P5BYU.tagAlign.gz']
+[2019-02-21 04:39:59,642 INFO] Initializing and making output directory...
+[2019-02-21 04:39:59,642 INFO] Pooling TAGALIGNs...
+[2019-02-21 04:39:59,643 INFO] run_shell_cmd: PID=17, CMD=zcat -f /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFIUZBIYW9.tagAlign.gz /cromwell-executions/atac/a8315bfa-7765-49c6-a824-8e524fbfb28d/call-pool_ta/inputs/609996275/4DNFI87P5BYU.tagAlign.gz | gzip -nc > 4DNFIUZBIYW9.pooled.tagAlign.gz
+[2019-02-21 04:43:22,198 INFO] List all files in output directory...
+[2019-02-21 04:43:22,199 INFO] run_shell_cmd: PID=20, CMD=ls -l 
+PID=20: total 1110528
+PID=20: -rw-r--r-- 1 root root 1137142506 Feb 21 04:43 4DNFIUZBIYW9.pooled.tagAlign.gz
+PID=20: -rw-r--r-- 1 root root         64 Feb 21 04:39 docker_cid
+PID=20: -rw-r--r-- 1 root root       3612 Feb 21 04:39 script
+PID=20: -rw-r--r-- 1 root root        329 Feb 21 04:39 script.background
+PID=20: -rw-r--r-- 1 root root       1175 Feb 21 04:39 script.submit
+PID=20: -rw-r--r-- 1 root root          0 Feb 21 04:39 stderr
+PID=20: -rw-r--r-- 1 root root       5157 Feb 21 04:39 stderr.background
+PID=20: -rw-r--r-- 1 root root        935 Feb 21 04:43 stdout
+PID=20: -rw-r--r-- 1 root root        940 Feb 21 04:43 stdout.background
+[2019-02-21 04:43:22,201 INFO] All done.
