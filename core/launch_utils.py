@@ -35,6 +35,7 @@ def clear_awsem_template(awsem_template):
         del(awsem_template['_tibanna']['response'])
     if 'run_name' in awsem_template['_tibanna'] and len(awsem_template['_tibanna']['run_name']) > 40:
         awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
+        awsem_template['config']['run_name'] = awsem_template['config']['run_name'][:-36]
 
 
 def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None, app_name_filter=None, name=None):
