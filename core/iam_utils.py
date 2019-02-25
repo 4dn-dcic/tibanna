@@ -60,7 +60,7 @@ def generate_policy_bucket_access(bucket_names):
             ],
             "Resource": "*",
             "Condition": {
-                "Bool": {
+                "String": {
                     "s3:x-amz-grant-read": "true"
                 }
             }
@@ -72,7 +72,7 @@ def generate_policy_bucket_access(bucket_names):
             ],
             "Resource": "*",
             "Condition": {
-                "Bool": {
+                "String": {
                     "s3:x-amz-grant-read": "true"
                 }
             }
@@ -87,7 +87,7 @@ def generate_policy_bucket_access(bucket_names):
             ],
             "Resource": "*",
             "Condition": {
-                "Bool": {
+                "String": {
                     "s3:x-amz-grant-read": "true",
                     "s3:x-amz-grant-write": "true"
                 }
