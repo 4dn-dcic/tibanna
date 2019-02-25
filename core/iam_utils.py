@@ -52,12 +52,10 @@ def generate_policy_cloudwatchlogs():
 
 
 def generate_policy_bucket_access(bucket_names):
-    if bucket_names:
-        resource_list_buckets = ["arn:aws:s3:::" + bn for bn in bucket_names]
-        resource_list_objects = ["arn:aws:s3:::" + bn + "/*" for bn in bucket_names]
-    else:
-        resource_list_buckets = "*"
-        resource_list_objects = "*"
+    if not bucket_names:
+        return None
+    resource_list_buckets = ["arn:aws:s3:::" + bn for bn in bucket_names]
+    resource_list_objects = ["arn:aws:s3:::" + bn + "/*" for bn in bucket_names]
     policy_bucket_access = {
         "Version": "2012-10-17",
         "Statement": [
@@ -291,9 +289,12 @@ def create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
     role_policy_doc_ec2 = generate_assume_role_policy_document('ec2')
     create_role_robust(client, ec2_role_name, json.dumps(role_policy_doc_ec2), verbose)
     role_bucket = iam.Role(ec2_role_name)
-    response = role_bucket.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
-    )
+    if bucket_policy_name:
+        response = role_bucket.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
+        )
+        if verbose:
+            print(response)
     response = role_bucket.attach_policy(
         PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_metric_policy_name
     )
@@ -318,6 +319,12 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                cw_dashboard_policy_name]:
         response = role_lambda_run.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
+        )
+        if verbose:
+            print(response)
+    if bucket_policy_name:
+        response = role_lambda_run.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
         )
         if verbose:
             print(response)
@@ -347,11 +354,12 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
     )
     if verbose:
         print(response)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
-    )
-    if verbose:
-        print(response)
+    if bucket_policy_name:
+        response = role_lambda_run.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
+        )
+        if verbose:
+            print(response)
 
 
 def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
@@ -411,7 +419,13 @@ def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
     )
     if verbose:
         print(response)
-    for pn in [bucket_policy_name, ec2_desc_policy_name, dynamodb_policy_name]:
+    if bucket_policy_name:
+        response = group.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
+        )
+        if verbose:
+            print(response)
+    for pn in [ec2_desc_policy_name, dynamodb_policy_name]:
         response = group.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
         )
@@ -445,12 +459,15 @@ def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=Fa
                 # delete policy
                 client.delete_policy(PolicyArn=policy_arn)
                 # recreate policy
-                response = client.create_policy(
-                    PolicyName=policy_name,
-                    PolicyDocument=policy_doc,
-                )
-                if verbose:
-                    print(response)
+                # delete but don't recreate if updated policy doesn't have a policy doc
+                # (e.g. no private bucket access)
+                if policy_doc:
+                    response = client.create_policy(
+                        PolicyName=policy_name,
+                        PolicyDocument=policy_doc,
+                    )
+                    if verbose:
+                        print(response)
             except Exception as e2:
                 raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
 
@@ -469,6 +486,8 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     bucket_policy_name = tibanna_policy_prefix + '_bucket_access'
     policy_ba = generate_policy_bucket_access(bucket_names)
     create_policy_robust(client, bucket_policy_name, json.dumps(policy_ba), account_id, verbose)
+    if not policy_ba:
+        bucket_policy_name = None
     # lambda policies
     # list_instanceprofiles : by default not user-dependent,
     # but create per user group to allow future modification per user-group
