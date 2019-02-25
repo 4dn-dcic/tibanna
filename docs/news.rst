@@ -12,6 +12,12 @@ Version updates
 +++++++++++++++
 
   
+  **Feb 25, 2019** The latest version is now 0.6.0_.
+    - ``app_name``, ``app_version``, ``input_parameters``, ``secondary_output_target``, ``secondary_files`` fields can now be omitted (now optional)
+    - ``instance_type``, ``ebs_size``, ``EBS_optimized`` can be omitted if benchmark is provided (``app_name`` is a required field to use benchmark)
+    - ``ebs_type``, ``ebs_iops``, ``shutdown_min`` can be omitted if using default ('gp2', '', 'now', respectively)
+    - ``password`` and ``key_name`` can be omitted if user doesn't care to ssh into running/failed instances
+
   **Feb 13, 2019** The latest version is now 0.5.9_.
 
     - Wrong requirement of ``SECRET`` env is removed from unicorn installation
@@ -144,6 +150,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0
 .. _0.5.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.9
 .. _0.5.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.8
 .. _0.5.7: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.7
