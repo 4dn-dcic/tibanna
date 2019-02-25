@@ -56,8 +56,10 @@ def generate_policy_bucket_access(bucket_names):
         resource_list_buckets = ["arn:aws:s3:::" + bn for bn in bucket_names]
         resource_list_objects = ["arn:aws:s3:::" + bn + "/*" for bn in bucket_names]
     else:
-        resource_list_buckets = "*"
-        resource_list_objects = "*"
+        resource_list_buckets = ["arn:aws:s3:::" + "my-tibanna-test-bucket",
+                                 "arn:aws:s3:::" + "my-tibanna-test-input-bucket"]
+        resource_list_objects = ["arn:aws:s3:::" + "my-tibanna-test-bucket/*",
+                                 "arn:aws:s3:::" + "my-tibanna-test-input-bucket/*"]
     policy_bucket_access = {
         "Version": "2012-10-17",
         "Statement": [
