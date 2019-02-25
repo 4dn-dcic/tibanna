@@ -52,17 +52,52 @@ def generate_policy_cloudwatchlogs():
 
 
 def generate_policy_bucket_access(bucket_names):
+    policy_statement_default = [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "s3:x-amz-grant-read": "true"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "s3:x-amz-grant-read": "true"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "s3:x-amz-grant-read": "true",
+                    "s3:x-amz-grant-write": "true"
+                }
+            }
+        }
+    ]
     if bucket_names:
         resource_list_buckets = ["arn:aws:s3:::" + bn for bn in bucket_names]
         resource_list_objects = ["arn:aws:s3:::" + bn + "/*" for bn in bucket_names]
-    else:
-        resource_list_buckets = ["arn:aws:s3:::" + "my-tibanna-test-bucket",
-                                 "arn:aws:s3:::" + "my-tibanna-test-input-bucket"]
-        resource_list_objects = ["arn:aws:s3:::" + "my-tibanna-test-bucket/*",
-                                 "arn:aws:s3:::" + "my-tibanna-test-input-bucket/*"]
-    policy_bucket_access = {
-        "Version": "2012-10-17",
-        "Statement": [
+        policy_statement_private = [
             {
                 "Effect": "Allow",
                 "Action": [
@@ -81,6 +116,12 @@ def generate_policy_bucket_access(bucket_names):
                 "Resource": resource_list_objects
             }
         ]
+    else:
+        policy_statement_private = []
+    policy_statement = policy_statement_default + policy_statement_private
+    policy_bucket_access = {
+        "Version": "2012-10-17",
+        "Statement": policy_statement
     }
     return policy_bucket_access
 

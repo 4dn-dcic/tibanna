@@ -416,10 +416,10 @@ def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='',
 
 
 @task
-def add_user(ctx, user, usergroup):
+def add_user(ctx, user, group):
     """add a user to a tibanna group"""
     boto3.client('iam').add_user_to_group(
-        GroupName='tibanna_' + usergroup,
+        GroupName='tibanna_' + group,
         UserName=user
     )
 
