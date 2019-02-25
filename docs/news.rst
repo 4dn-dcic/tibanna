@@ -13,10 +13,15 @@ Version updates
 
   
   **Feb 25, 2019** The latest version is now 0.6.0_.
-    - ``app_name``, ``app_version``, ``input_parameters``, ``secondary_output_target``, ``secondary_files`` fields can now be omitted (now optional)
-    - ``instance_type``, ``ebs_size``, ``EBS_optimized`` can be omitted if benchmark is provided (``app_name`` is a required field to use benchmark)
-    - ``ebs_type``, ``ebs_iops``, ``shutdown_min`` can be omitted if using default ('gp2', '', 'now', respectively)
-    - ``password`` and ``key_name`` can be omitted if user doesn't care to ssh into running/failed instances
+
+    - The input json can now be simplified.
+
+      - ``app_name``, ``app_version``, ``input_parameters``, ``secondary_output_target``, ``secondary_files`` fields can now be omitted (now optional)
+      - ``instance_type``, ``ebs_size``, ``EBS_optimized`` can be omitted if benchmark is provided (``app_name`` is a required field to use benchmark)
+      - ``ebs_type``, ``ebs_iops``, ``shutdown_min`` can be omitted if using default ('gp2', '', 'now', respectively)
+      - ``password`` and ``key_name`` can be omitted if user doesn't care to ssh into running/failed instances
+
+    - issue with rerun with a short run name containing uuid now fixed.
 
   **Feb 13, 2019** The latest version is now 0.5.9_.
 
