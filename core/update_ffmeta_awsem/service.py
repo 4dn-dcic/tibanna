@@ -264,7 +264,7 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
         file_argument = 'bedfile'
         file_format = 'beddb'
     elif ff_meta.awsem_app_name == 'bedtomultivec':
-        file_argument = 'multivec_file'
+        file_argument = 'bedfile'
         file_format = 'bed.multires.mv5'
     # higlass
     if status == 'uploaded':
