@@ -1,0 +1,165 @@
+[2019-02-21 16:25:58,484 INFO] ['/software/atac-seq-pipeline/src/encode_macs2_atac.py', '/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz', '--gensz', 'hs', '--chrsz', '/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-1873131033/4DNFIZJB62D1.chrom.sizes', '--cap-num-peak', '300000', '--pval-thresh', '0.01', '--smooth-win', '150', '--blacklist', '/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/1792182009/4DNFIZ1TGJZR.bed.gz']
+[2019-02-21 16:25:58,484 INFO] Initializing and making output directory...
+[2019-02-21 16:25:58,484 INFO] Calling peaks and generating signal tracks with MACS2...
+[2019-02-21 16:25:58,485 INFO] run_shell_cmd: PID=17, CMD=macs2 callpeak -t /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz -f BED -n 4DNFIUZBIYW9.pr1 -g hs -p 0.01 --shift -75 --extsize 150 --nomodel -B --SPMR --keep-dup all --call-summits 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:25:58: 
+PID=17: # Command line: callpeak -t /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz -f BED -n 4DNFIUZBIYW9.pr1 -g hs -p 0.01 --shift -75 --extsize 150 --nomodel -B --SPMR --keep-dup all --call-summits
+PID=17: # ARGUMENTS LIST:
+PID=17: # name = 4DNFIUZBIYW9.pr1
+PID=17: # format = BED
+PID=17: # ChIP-seq file = ['/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz']
+PID=17: # control file = None
+PID=17: # effective genome size = 2.70e+09
+PID=17: # band width = 300
+PID=17: # model fold = [5, 50]
+PID=17: # pvalue cutoff = 1.00e-02
+PID=17: # qvalue will not be calculated and reported as -1 in the final output.
+PID=17: # Larger dataset will be scaled towards smaller dataset.
+PID=17: # Range for calculating regional lambda is: 10000 bps
+PID=17: # Broad region calling is off
+PID=17: # Paired-End mode is off
+PID=17: # Searching for subpeak summits is on
+PID=17: # MACS will save fragment pileup signal per million reads
+PID=17:  
+PID=17: INFO  @ Thu, 21 Feb 2019 16:25:58: #1 read tag files... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:25:58: #1 read treatment tags... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:25:59:  1000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:00:  2000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:01:  3000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:02:  4000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:04:  5000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:05:  6000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:06:  7000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:07:  8000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:08:  9000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:09:  10000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:10:  11000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:11:  12000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:12:  13000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:13:  14000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:14:  15000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:15:  16000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:16:  17000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:17:  18000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:18:  19000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:20:  20000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:21:  21000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:22:  22000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:23:  23000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:24:  24000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:25:  25000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:26:  26000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:27:  27000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:28:  28000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:29:  29000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:30:  30000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:31:  31000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:32:  32000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:33:  33000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:34:  34000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:36:  35000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:37:  36000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:38:  37000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:39:  38000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:40:  39000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:41:  40000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:42:  41000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:43:  42000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:44:  43000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:45:  44000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:46:  45000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:48:  46000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:49:  47000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:50:  48000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:51:  49000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:52:  50000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:53:  51000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:55:  52000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:56:  53000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:57:  54000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:58:  55000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:26:59:  56000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:00:  57000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:01:  58000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:02:  59000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:03:  60000000 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #1 tag size is determined as 45 bps 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #1 tag size = 45 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #1  total tags in treatment: 60076010 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #1 finished! 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #2 Build Peak Model... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #2 Skipped... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #2 Sequencing ends will be shifted towards 5' by 75 bp(s) 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #2 Use 150 as fragment length 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #3 Call peaks... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #3 Going to call summits inside each peak ... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #3 Call peaks with given -log10pvalue cutoff: 2.00000 ... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:27:07: #3 Pre-compute pvalue-qvalue table... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:28:45: #3 In the peak calling step, the following will be performed simultaneously: 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:28:45: #3   Write bedGraph files for treatment pileup (after scaling if necessary)... 4DNFIUZBIYW9.pr1_treat_pileup.bdg 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:28:45: #3   Write bedGraph files for control lambda (after scaling if necessary)... 4DNFIUZBIYW9.pr1_control_lambda.bdg 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:28:45: #3   --SPMR is requested, so pileup will be normalized by sequencing depth in million reads. 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:28:45: #3 Call peaks for each chromosome... 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:36:18: #4 Write output xls file... 4DNFIUZBIYW9.pr1_peaks.xls 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:36:19: #4 Write peak in narrowPeak format file... 4DNFIUZBIYW9.pr1_peaks.narrowPeak 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:36:20: #4 Write summits bed file... 4DNFIUZBIYW9.pr1_summits.bed 
+PID=17: INFO  @ Thu, 21 Feb 2019 16:36:21: Done! 
+[2019-02-21 16:36:21,400 INFO] run_shell_cmd: PID=26, CMD=LC_COLLATE=C sort -k 8gr,8gr "4DNFIUZBIYW9.pr1"_peaks.narrowPeak | awk 'BEGIN{OFS="\t"}{$4="Peak_"NR; if ($2<0) $2=0; if ($3<0) $3=0; print $0}' > 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz.tmp
+[2019-02-21 16:36:22,027 INFO] run_shell_cmd: PID=32, CMD=head -n 300000 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz.tmp | gzip -nc > 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz
+[2019-02-21 16:36:22,986 INFO] run_shell_cmd: PID=35, CMD=rm -f 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz.tmp
+[2019-02-21 16:36:22,991 INFO] run_shell_cmd: PID=37, CMD=rm -f 4DNFIUZBIYW9.pr1.fc.signal.bedgraph 4DNFIUZBIYW9.pr1.fc.signal.srt.bedgraph 4DNFIUZBIYW9.pr1.pval.signal.bedgraph 4DNFIUZBIYW9.pr1.pval.signal.srt.bedgraph 4DNFIUZBIYW9.pr1_*
+[2019-02-21 16:36:23,280 INFO] Checking if output is empty...
+[2019-02-21 16:36:23,281 INFO] run_shell_cmd: PID=39, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz | wc -l
+PID=39: 295511
+[2019-02-21 16:36:23,410 INFO] Blacklist-filtering peaks...
+[2019-02-21 16:36:23,411 INFO] run_shell_cmd: PID=42, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz | wc -l
+PID=42: 295511
+[2019-02-21 16:36:23,540 INFO] run_shell_cmd: PID=45, CMD=zcat -f /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/1792182009/4DNFIZ1TGJZR.bed.gz | wc -l
+PID=45: 38
+[2019-02-21 16:36:23,542 INFO] run_shell_cmd: PID=48, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz > 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.tmp1
+[2019-02-21 16:36:23,674 INFO] run_shell_cmd: PID=50, CMD=zcat -f /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/1792182009/4DNFIZ1TGJZR.bed.gz > 4DNFIZ1TGJZR.bed.tmp2
+[2019-02-21 16:36:23,676 INFO] run_shell_cmd: PID=52, CMD=bedtools intersect -v -a 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.tmp1 -b 4DNFIZ1TGJZR.bed.tmp2 | awk 'BEGIN{OFS="\t"} {if ($5>1000) $5=1000; print $0}' | grep -P 'chr[\dXY]+[ \t]' | gzip -nc > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz
+[2019-02-21 16:36:24,634 INFO] run_shell_cmd: PID=57, CMD=rm -f 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.tmp1 4DNFIZ1TGJZR.bed.tmp2
+[2019-02-21 16:36:24,638 INFO] Converting peak to bigbed...
+[2019-02-21 16:36:24,639 INFO] run_shell_cmd: PID=59, CMD=cat /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-1873131033/4DNFIZJB62D1.chrom.sizes | grep -P 'chr[\dXY]+[ \t]' > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.chrsz.tmp
+[2019-02-21 16:36:24,641 INFO] run_shell_cmd: PID=62, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz | sort -k1,1 -k2,2n > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp
+[2019-02-21 16:36:25,246 INFO] run_shell_cmd: PID=65, CMD=bedClip 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.chrsz.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp2
+[2019-02-21 16:36:25,424 INFO] run_shell_cmd: PID=67, CMD=bedToBigBed -type=bed6+4 -as=4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.as 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp2 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.chrsz.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.bb
+PID=67: pass1 - making usageList (19 chroms): 91 millis
+PID=67: pass2 - checking and writing primary data (295473 records, 10 fields): 1133 millis
+[2019-02-21 16:36:27,268 INFO] run_shell_cmd: PID=69, CMD=rm -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.as 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.chrsz.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.bb.tmp2
+[2019-02-21 16:36:27,274 INFO] Converting peak to hammock...
+[2019-02-21 16:36:27,275 INFO] run_shell_cmd: PID=71, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz | wc -l
+PID=71: 295473
+[2019-02-21 16:36:27,404 INFO] run_shell_cmd: PID=74, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz | sed '/^\(chr\)/!d' | sort -k1,1V -k2,2n > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.tmp
+[2019-02-21 16:36:28,552 INFO] run_shell_cmd: PID=78, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.tmp2 | sort -k1,1 -k2,2n | bgzip -cf > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.gz
+[2019-02-21 16:36:29,774 INFO] run_shell_cmd: PID=82, CMD=tabix -f -p bed 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.gz
+[2019-02-21 16:36:30,109 INFO] run_shell_cmd: PID=84, CMD=rm -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.tmp 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.tmp2
+[2019-02-21 16:36:30,116 INFO] FRiP without fragment length...
+[2019-02-21 16:36:30,117 INFO] run_shell_cmd: PID=86, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz | wc -l
+PID=86: 295473
+[2019-02-21 16:36:30,246 INFO] run_shell_cmd: PID=89, CMD=zcat -f /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz > 4DNFIUZBIYW9.pr1.tagAlign.tmp1
+[2019-02-21 16:36:51,233 INFO] run_shell_cmd: PID=91, CMD=zcat -f 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz > 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.tmp2
+[2019-02-21 16:36:51,375 INFO] run_shell_cmd: PID=93, CMD=bedtools intersect -a 4DNFIUZBIYW9.pr1.tagAlign.tmp1 -b 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.tmp2 -wa -u | wc -l
+PID=93: 30110001
+[2019-02-21 16:38:22,978 INFO] run_shell_cmd: PID=96, CMD=zcat -f /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-macs2_pr1/shard-0/inputs/-2000831505/4DNFIUZBIYW9.pr1.tagAlign.gz | wc -l
+PID=96: 60076010
+[2019-02-21 16:38:34,097 INFO] run_shell_cmd: PID=99, CMD=rm -f 4DNFIUZBIYW9.pr1.tagAlign.tmp1 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.tmp2
+[2019-02-21 16:38:34,279 INFO] List all files in output directory...
+[2019-02-21 16:38:34,280 INFO] run_shell_cmd: PID=101, CMD=ls -l 
+PID=101: total 33404
+PID=101: -rw-r--r-- 1 root root       15 Feb 21 16:38 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.frip.qc
+PID=101: -rw-r--r-- 1 root root 13373026 Feb 21 16:36 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.bb
+PID=101: -rw-r--r-- 1 root root  5791255 Feb 21 16:36 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.gz
+PID=101: -rw-r--r-- 1 root root  8499338 Feb 21 16:36 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.gz
+PID=101: -rw-r--r-- 1 root root   640996 Feb 21 16:36 4DNFIUZBIYW9.pr1.pval0.01.300K.bfilt.narrowPeak.hammock.gz.tbi
+PID=101: -rw-r--r-- 1 root root  5821180 Feb 21 16:36 4DNFIUZBIYW9.pr1.pval0.01.300K.narrowPeak.gz
+PID=101: -rw-r--r-- 1 root root       64 Feb 21 16:25 docker_cid
+PID=101: -rw-r--r-- 1 root root    18354 Feb 21 16:25 script
+PID=101: -rw-r--r-- 1 root root      349 Feb 21 16:25 script.background
+PID=101: -rw-r--r-- 1 root root     1245 Feb 21 16:25 script.submit
+PID=101: -rw-r--r-- 1 root root        0 Feb 21 16:25 stderr
+PID=101: -rw-r--r-- 1 root root        0 Feb 21 16:25 stderr.background
+PID=101: -rw-r--r-- 1 root root    13444 Feb 21 16:38 stdout
+PID=101: -rw-r--r-- 1 root root    13449 Feb 21 16:38 stdout.background
+[2019-02-21 16:38:34,282 INFO] All done.

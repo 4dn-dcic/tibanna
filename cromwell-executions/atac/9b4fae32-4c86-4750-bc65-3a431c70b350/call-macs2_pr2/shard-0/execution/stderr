@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/software/atac-seq-pipeline/src/encode_macs2_atac.py", line 213, in <module>
+    main()
+  File "/software/atac-seq-pipeline/src/encode_macs2_atac.py", line 203, in main
+    frip_qc = frip( args.ta, bfilt_npeak, args.out_dir)
+  File "/software/atac-seq-pipeline/src/encode_frip.py", line 54, in frip
+    write_txt(frip_qc, str(float(val1)/float(val2)))
+ValueError: could not convert string to float: Error: Invalid record in file 4DNFIUZBIYW9.pr2.tagAlign.tmp1. Record is 
+chr6	28267092	282671			
+9464770

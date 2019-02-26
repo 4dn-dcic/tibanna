@@ -1,0 +1,65 @@
+#!/bin/bash
+
+cd /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution
+tmpDir=$(mkdir -p "/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/tmp.316b037e" && echo "/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/tmp.316b037e")
+chmod 777 "$tmpDir"
+export _JAVA_OPTIONS=-Djava.io.tmpdir="$tmpDir"
+export TMPDIR="$tmpDir"
+export HOME="$HOME"
+(
+cd /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution
+
+)
+out9b4fae32="${tmpDir}/out.$$" err9b4fae32="${tmpDir}/err.$$"
+mkfifo "$out9b4fae32" "$err9b4fae32"
+trap 'rm "$out9b4fae32" "$err9b4fae32"' EXIT
+tee '/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/stdout' < "$out9b4fae32" &
+tee '/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/stderr' < "$err9b4fae32" >&2 &
+(
+cd /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution
+
+
+python $(which encode_spr.py) \
+	/cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/inputs/609996275/4DNFIMFQVBJQ.tagAlign.gz \
+	--paired-end
+)  > "$out9b4fae32" 2> "$err9b4fae32"
+echo $? > /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/rc.tmp
+(
+# add a .file in every empty directory to facilitate directory delocalization on the cloud
+cd /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution
+find . -type d -empty -print0 | xargs -0 -I % touch %/.file
+)
+(
+cd /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution
+sync
+# make the directory which will keep the matching files
+mkdir /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e
+
+# create the glob control file that will allow for the globbing to succeed even if there is 0 match
+echo "This file is used by Cromwell to allow for globs that would not match any file.
+By its presence it works around the limitation of some backends that do not allow empty globs.
+Regardless of the outcome of the glob, this file will not be part of the final list of globbed files." > /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e/cromwell_glob_control_file
+
+# hardlink or symlink all the files into the glob directory
+( ln -L /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/*.pr1.tagAlign.gz /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e 2> /dev/null ) || ( ln /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/*.pr1.tagAlign.gz /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e )
+
+# list all the files (except the control file) that match the glob into a file called glob-[md5 of glob].list
+ls -1 /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e | grep -v cromwell_glob_control_file > /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-478c0ad30d0d033ce59a75ef84dab32e.list
+
+# make the directory which will keep the matching files
+mkdir /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c
+
+# create the glob control file that will allow for the globbing to succeed even if there is 0 match
+echo "This file is used by Cromwell to allow for globs that would not match any file.
+By its presence it works around the limitation of some backends that do not allow empty globs.
+Regardless of the outcome of the glob, this file will not be part of the final list of globbed files." > /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c/cromwell_glob_control_file
+
+# hardlink or symlink all the files into the glob directory
+( ln -L /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/*.pr2.tagAlign.gz /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c 2> /dev/null ) || ( ln /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/*.pr2.tagAlign.gz /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c )
+
+# list all the files (except the control file) that match the glob into a file called glob-[md5 of glob].list
+ls -1 /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c | grep -v cromwell_glob_control_file > /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/glob-a7cc663e5a8a49cc3d9bc036f4370f1c.list
+
+
+)
+mv /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/rc.tmp /cromwell-executions/atac/9b4fae32-4c86-4750-bc65-3a431c70b350/call-spr/shard-1/execution/rc
