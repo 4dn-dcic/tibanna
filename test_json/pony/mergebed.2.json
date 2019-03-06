@@ -1,0 +1,26 @@
+{
+    "_tibanna": {
+      "run_type": "mergebed-test",
+      "env": "fourfront-webdev"
+    },
+    "app_name": "mergebed",
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "workflow_uuid": "2b10e472-065e-43ed-992c-fccad6417b65",
+    "parameters" :  {"sortv": "0"},
+    "input_files" : [
+       {
+           "workflow_argument_name": "input_bed",
+           "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+           "object_key": ["4DNFIR8RTKAA.bed.gz"],
+           "uuid": ["a039c92b-67ff-4c90-9ebc-986ee76d7b5d"]
+       }
+  ],
+  "config": {
+    "ebs_type": "io1",
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": ""
+  }
+}
