@@ -108,8 +108,8 @@ Here, we're naming it ``hahaha`` - come up with a better name if you want to.
 ::
 
     invoke deploy_unicorn --usergroup=hahaha
-    # This will give permission to only public buckets.
-    # To add permission to private buckets, use --buckets option.
+    # This will give permission to only public tibanna test buckets.
+    # To add permission to other private or public buckets, use --buckets option.
 
 
 Run a test workflow
@@ -156,7 +156,7 @@ Deploying Tibanna with private buckets
 Creating a bucket
 +++++++++++++++++
 
-You can skip this section if you want to use existing buckets for input/output/logs..
+You can skip this section if you want to use existing buckets for input/output/logs.
 
 If you are an admin or have a permission to create a bucket, you can either use the AWS Web Console or use the following command using `awscli`. For example, a data (input/output) bucket and a tibanna log bucket may be created. You could also separate input and output buckets, or have multiple input buckets, etc. Bucket names are globally unique.
 
