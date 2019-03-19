@@ -46,6 +46,9 @@ with open(json_old, 'r') as json_old_f:
     alt_output_argnames = old_dict.get('Job').get('Output').get('alt_cond_output_argnames')
     output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
     secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
+    for u, v in secondary_output_target.items():
+        if not isinstance(v, list):
+            secondary_output_target[u] = [v]
 
 if language == 'wdl':
     # read wdl output json file
