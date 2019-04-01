@@ -157,14 +157,14 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.first_ta',
-                           datajson_argument='chip.qc_json',
+                           datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
     elif ff_meta.awsem_app_name == 'encode-atacseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.sig_fc',
-                           datajson_argument='chip.qc_json',
+                           datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
 
