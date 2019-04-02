@@ -18,7 +18,6 @@
   "config": {
     "ebs_type": "io1",
     "ebs_iops": 500,
-    "shutdown_min": 30,
     "password": "dragonfly",
     "log_bucket": "tibanna-output",
     "key_name": ""

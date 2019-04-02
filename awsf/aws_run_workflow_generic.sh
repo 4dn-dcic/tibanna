@@ -87,7 +87,7 @@ send_log_regularly(){
     du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
     du -h $LOCAL_WF_TMPDIR* >> $LOGFILE; \
     du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
-    send_log &>/dev/null;"
+    send_log &>/dev/null";
 }  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
