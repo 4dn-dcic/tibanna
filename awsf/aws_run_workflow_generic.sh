@@ -82,13 +82,12 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
-alias watch="watch "
 send_log_regularly(){  
     watch -n 60 "top -b | head -15 >> $LOGFILE; \
     du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
     du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; \
     du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
-    send_log &>/dev/null";
+    aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null";
 }  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
