@@ -84,9 +84,9 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 send_log_regularly(){  
     watch -n 60 "top -b | head -15 >> $LOGFILE; \
-    du -h /data1/input/ >> $LOGFILE; \
-    du -h /data1/tmp* >> $LOGFILE; \
-    du -h /ata1/out >> $LOGFILE; \
+    du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
+    du -h $LOCAL_WF_TMPDIR* >> $LOGFILE; \
+    du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
     send_log &>/dev/null;"
 }  ## usage: send_log_regularly (no argument)
 
