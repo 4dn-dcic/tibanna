@@ -87,6 +87,8 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
     printlog("awsemfile.is_extra=%s" % awsemfile.is_extra)
     if awsemfile.is_extra:
         for pfextra in pf.extra_files:
+            printlog("pfextra : %s" % str(pfextra))
+            printlog("awsemfile.format_if_extra : %s" % awsemfile.format_if_extra)
             if pfextra.get('file_format') == awsemfile.format_if_extra:
                 if awsemfile.md5:
                     pfextra['md5sum'] = awsemfile.md5

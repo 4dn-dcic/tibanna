@@ -490,7 +490,7 @@ class Awsem(object):
             if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
                 for pfextra in pf['extra_files']:
                     if pfextra['upload_key'] == key:
-                        return pfextra['file_format']
+                        return parse_formatstr(pfextra['file_format'])
         return None
 
     def secondary_output_files(self):
