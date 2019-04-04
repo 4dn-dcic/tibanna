@@ -9,6 +9,7 @@ import boto3
 import json
 from uuid import uuid4
 import time
+import copy
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -207,31 +208,33 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     client = boto3.client('stepfunctions', region_name='us-east-1')
     base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
 
+    input_json_copy = copy.deepcopy(input_json)
+
     # build from appropriate input json
     # assume run_type and and run_id
-    if 'run_name' in input_json['config']:
-        if _tibanna not in input_json:
-            input_json[_tibanna] = dict()
-        input_json[_tibanna]['run_name'] = input_json['config']['run_name']
-    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
-    run_name = randomize_run_name(input_json[_tibanna]['run_name'], sfn)
-    input_json[_tibanna]['run_name'] = run_name
-    input_json['config']['run_name'] = run_name
+    if 'run_name' in input_json_copy['config']:
+        if _tibanna not in input_json_copy:
+            input_json_copy[_tibanna] = dict()
+        input_json_copy[_tibanna]['run_name'] = input_json_copy['config']['run_name']
+    input_json_copy = _tibanna_settings(input_json_copy, force_inplace=True, env=env)
+    run_name = randomize_run_name(input_json_copy[_tibanna]['run_name'], sfn)
+    input_json_copy[_tibanna]['run_name'] = run_name
+    input_json_copy['config']['run_name'] = run_name
 
     # updated arn
     arn = get_exec_arn(sfn, run_name)
-    input_json[_tibanna]['exec_arn'] = arn
+    input_json_copy[_tibanna]['exec_arn'] = arn
 
     # calculate what the url will be
     url = "%s%s" % (base_url, arn)
-    input_json[_tibanna]['url'] = url
+    input_json_copy[_tibanna]['url'] = url
 
     # add jobid
     if not jobid:
         jobid = create_jobid()
-    input_json['jobid'] = jobid
+    input_json_copy['jobid'] = jobid
 
-    aws_input = json.dumps(input_json)
+    aws_input = json.dumps(input_json_copy)
     print("about to start run %s" % run_name)
     # trigger the step function to run
     try:
@@ -244,13 +247,13 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     except Exception as e:
         raise(e)
     # adding execution info to dynamoDB for fast search by awsem job id
-    add_to_dydb(jobid, run_name, sfn, input_json['config']['log_bucket'])
+    add_to_dydb(jobid, run_name, sfn, input_json_copy['config']['log_bucket'])
     # print some info
     print("response from aws was: \n %s" % response)
     print("url to view status:")
-    print(input_json[_tibanna]['url'])
-    input_json[_tibanna]['response'] = response
-    return input_json
+    print(input_json_copy[_tibanna]['url'])
+    input_json_copy[_tibanna]['response'] = response
+    return input_json_copy
 
 
 def add_to_dydb(awsem_job_id, execution_name, sfn, logbucket):
