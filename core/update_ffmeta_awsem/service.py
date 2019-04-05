@@ -145,7 +145,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
     elif ff_meta.awsem_app_name == 'encode-chipseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
-                           file_argument='chip.sig_fc',
+                           file_argument='chip.optimal_peak',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
@@ -165,7 +165,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna):
     elif ff_meta.awsem_app_name == 'encode-atacseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
-                           file_argument='atac.sig_fc',
+                           file_argument='atac.optimal_peak',
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False)
