@@ -154,8 +154,8 @@ curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScrip
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
+echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
-echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" | crontab -
 cd $cwd0
 
 ### download cwl from github or any other url.
