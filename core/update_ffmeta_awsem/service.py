@@ -97,83 +97,88 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
         printlog("add_md5_filesize_to_pf_extra: %s" % pf.extra_files)
 
 
-def qc_updater(status, awsemfile, ff_meta, tibanna):
+def qc_updater(status, awsemfile, ff_meta, tibanna, other_fields=None):
     if ff_meta.awsem_app_name == 'fastqc-0-11-4-1':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_fastqc',
                            file_argument='input_fastq',
                            report_html='fastqc_report.html',
-                           datafiles=['summary.txt', 'fastqc_data.txt'])
+                           datafiles=['summary.txt', 'fastqc_data.txt'],
+                           other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'pairsqc-single':
         file_argument = 'input_pairs'
         input_accession = str(awsemfile.runner.get_file_accessions(file_argument)[0])
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric="quality_metric_pairsqc",
                            file_argument=file_argument, report_html='pairsqc_report.html',
-                           datafiles=[input_accession + '.summary.out'])
+                           datafiles=[input_accession + '.summary.out'],
+                           other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'repliseq-parta':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_dedupqc_repliseq',
                            file_argument='filtered_sorted_deduped_bam',
-                           datafiles=['summary.txt'])
+                           datafiles=['summary.txt'],
+                           other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'chip-seq-alignment':
         input_accession = str(awsemfile.runner.get_file_accessions('fastqs')[0])
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_flagstat_qc',
                            file_argument='bam',
-                           datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'])
+                           datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'],
+                           other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.peak_calls',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False,
+                           other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-aln-chip':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.first_ta',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-aln-ctl':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.first_ta_ctl',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.optimal_peak',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.peak_calls',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq-aln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.first_ta',
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq-postaln':
         return _qc_updater(status, awsemfile, ff_meta, tibanna,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.optimal_peak',
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
-                           datafiles=[], zipped=False)
+                           datafiles=[], zipped=False, other_fields=other_fields)
 
 
 def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
-                datafiles=None, zipped=True, datajson_argument=None):
+                datafiles=None, zipped=True, datajson_argument=None, other_fields=None):
     if datajson_argument == awsemfile.argument_name:
         return
     # avoid using [] as default argument
@@ -228,6 +233,10 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
                           url=qc_url)
     if jsondata:
         meta.update(jsondata)
+    # custom fields
+    if other_fields:
+        for field in other_fields:
+            meta.update(other_fields)
     printlog("qc meta is %s" % meta)
     # post fastq metadata
     qc_meta = ff_utils.post_metadata(meta, quality_metric, key=ff_key)
@@ -418,7 +427,7 @@ def parse_md5_report(read):
     return md5, content_md5
 
 
-def md5_updater(status, awsemfile, ff_meta, tibanna):
+def md5_updater(status, awsemfile, ff_meta, tibanna, **kwargs):
     # get key
     ff_key = tibanna.ff_keys
     # get metadata about original input file
@@ -483,15 +492,23 @@ def update_processed_file(awsemfile, pf_meta, tibanna):
                 raise Exception("failed to update processed file metadata %s" % e)
 
 
-def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna):
+def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna, custom_qc_fields=None):
     patch_meta = False
     upload_key = awsemfile.key
     status = awsemfile.status
     printlog("awsemfile res is %s" % status)
     if status == 'COMPLETED':
-        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded', awsemfile, ff_meta, tibanna)
+        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded',
+                                                               awsemfile,
+                                                               ff_meta,
+                                                               tibanna,
+                                                               other_fields=custom_qc_fields)
     elif status in ['FAILED']:
-        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed', awsemfile, ff_meta, tibanna)
+        patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed',
+                                                               awsemfile,
+                                                               ff_meta,
+                                                               tibanna,
+                                                               other_fields=custom_qc_fields)
         ff_meta.run_status = 'error'
         ff_meta.patch(key=tibanna.ff_keys)
         raise Exception("Failed to export file %s" % (upload_key))
@@ -545,6 +562,7 @@ def real_handler(event, context):
         **event.get('ff_meta')
     )
     pf_meta = [ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
+    custom_qc_fields = event.get('custom_qc_fields', None)
 
     # ensure this bad boy is always initialized
     awsem = Awsem(event)
@@ -588,7 +606,7 @@ def real_handler(event, context):
     def update_metadata_from_awsemfile_list(awsemfile_list):
         patch_meta = False
         for awsemfile in awsemfile_list:
-            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna)
+            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna, custom_qc_fields)
             if not metadata_only:
                 update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna)
         # allow for a simple way for updater to add appropriate meta_data

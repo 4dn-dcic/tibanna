@@ -1,4 +1,5 @@
 {
+    "custom_qc_fields": {"genome_assembly": "GRCh38"},
     "config": {
     
       "log_bucket" : "tibanna-output",
