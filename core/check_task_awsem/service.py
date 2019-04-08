@@ -70,6 +70,7 @@ def handler(event, context):
             ec2_state = res['Reservations'][0]['Instances'][0]['State']['Name']
             if ec2_state in ['stopped', 'shutting-down', 'terminated']:
                 errmsg = "EC2 is terminated unintendedly for job %s - please rerun." % jobid
+                printlog(errmsg)
                 raise EC2UnintendedTerminationException(errmsg)
 
         # check CPU utilization for the past hour
@@ -80,7 +81,13 @@ def handler(event, context):
         if 'max_cpu_utilization_percent' in cw_res:
             if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
                 # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-                boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                try:
+                    boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                except Exception as e:
+                    errmsg = "Nothing has been running for the past hour for job %s," + \
+                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
+                             jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
+                    printlog(errmsg)
                 raise EC2IdleException("Nothing has been running for the past hour for job%s - terminating." % jobid)
 
     # if none of the above

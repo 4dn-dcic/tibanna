@@ -7,7 +7,7 @@ import traceback
 import os
 import boto3
 import json
-from uuid import uuid4
+from uuid import uuid4, UUID
 import time
 import copy
 
@@ -190,7 +190,14 @@ def randomize_run_name(run_name, sfn):
                 executionArn=arn
         )
         if response:
+            if len(run_name) > 36:
+                try:
+                    UUID(run_name[-36:])
+                    run_name = run_name[:-37]  # remove previous uuid
+                except:
+                    pass
             run_name += '-' + str(uuid4())
+
     except Exception:
         pass
     return run_name
