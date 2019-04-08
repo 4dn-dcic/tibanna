@@ -40,11 +40,8 @@
   "_tibanna": {
     "env": "fourfront-webdev",
     "settings": {
-      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:generic_54e3c2b6-b2dc-4bb5-a72b-22975b5a1010",
-      "run_type": "generic",
-      "run_id": "54e3c2b6-b2dc-4bb5-a72b-22975b5a1010",
+      "run_type": "hi-c-processing-bam-metadata-test2",
       "env": "fourfront-webdev",
-      "run_name": "generic_54e3c2b6-b2dc-4bb5-a72b-22975b5a1010"
     }
   },
   "postrunjson": "metadata_only",
