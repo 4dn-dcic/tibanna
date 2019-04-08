@@ -1,17 +1,11 @@
 {
-    "custom_qc_fields": {"genome_assembly": "GRCh38"},
+    "custom_qc_fields": {"lab": "6240db37-c902-4f2a-b8eb-44a3e6ccfe11"},
     "config": {
-    
       "log_bucket" : "tibanna-output",
       "ebs_type" : "io1",
       "ebs_iops" : 500,
-      "json_bucket": "4dn-aws-pipeline-run-json",
-      "shutdown_min" : "300",
-      
-      
       "log_bucket": "tibanna-output",
-      "key_name": "4dn-encode",
-      "password": ""
+      "key_name": "4dn-encode"
     },
     "workflow_uuid": "2324ad76-ff37-4157-8bcc-3ce72b7dace9",
     "input_files": [

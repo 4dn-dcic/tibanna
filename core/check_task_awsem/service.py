@@ -54,6 +54,13 @@ def handler(event, context):
         handle_postrun_json(bucket_name, jobid, event, False)
         raise AWSEMJobErrorException("Job encountered an error check log using invoke log --job-id=%s" % jobid)
 
+    # check to see if job has completed
+    if does_key_exist(bucket_name, job_success):
+        handle_postrun_json(bucket_name, jobid, event)
+        print("completed successfully")
+        return event
+
+    # checking if instance is terminated for no reason
     instance_id = event.get('instance_id', '')
     if instance_id:  # skip test for instance_id by not giving it to event
         res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
@@ -76,13 +83,8 @@ def handler(event, context):
                 boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
                 raise EC2IdleException("Nothing has been running for the past hour for job%s - terminating." % jobid)
 
-    # check to see if job has completed if not throw retry error
-    if does_key_exist(bucket_name, job_success):
-        handle_postrun_json(bucket_name, jobid, event)
-        print("completed successfully")
-    else:
-        raise StillRunningException("job %s still running" % jobid)
-    return event
+    # if none of the above
+    raise StillRunningException("job %s still running" % jobid)
 
 
 def handle_postrun_json(bucket_name, jobid, event, raise_error=True, filesystem=None):
