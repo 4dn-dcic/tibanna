@@ -63,7 +63,13 @@ def handler(event, context):
     # checking if instance is terminated for no reason
     instance_id = event.get('instance_id', '')
     if instance_id:  # skip test for instance_id by not giving it to event
-        res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
+        try:
+            res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
+        except Exception as e:
+            if 'InvalidInstanceID.NotFound' in str(e):
+                raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
+            else:
+                raise e
         if not res['Reservations']:
             raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
         else:
