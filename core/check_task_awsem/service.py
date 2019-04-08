@@ -5,13 +5,15 @@ from core.utils import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
+    EC2UnintendedTerminationException,
+    EC2IdleException,
     powerup,
     printlog
 )
 import json
 from core.ec2_utils import does_key_exist
 from core.cw_utils import TibannaResource
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
@@ -52,13 +54,50 @@ def handler(event, context):
         handle_postrun_json(bucket_name, jobid, event, False)
         raise AWSEMJobErrorException("Job encountered an error check log using invoke log --job-id=%s" % jobid)
 
-    # check to see if job has completed if not throw retry error
+    # check to see if job has completed
     if does_key_exist(bucket_name, job_success):
         handle_postrun_json(bucket_name, jobid, event)
         print("completed successfully")
-    else:
-        raise StillRunningException("job %s still running" % jobid)
-    return event
+        return event
+
+    # checking if instance is terminated for no reason
+    instance_id = event.get('instance_id', '')
+    if instance_id:  # skip test for instance_id by not giving it to event
+        try:
+            res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
+        except Exception as e:
+            if 'InvalidInstanceID.NotFound' in str(e):
+                raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
+            else:
+                raise e
+        if not res['Reservations']:
+            raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
+        else:
+            ec2_state = res['Reservations'][0]['Instances'][0]['State']['Name']
+            if ec2_state in ['stopped', 'shutting-down', 'terminated']:
+                errmsg = "EC2 is terminated unintendedly for job %s - please rerun." % jobid
+                printlog(errmsg)
+                raise EC2UnintendedTerminationException(errmsg)
+
+        # check CPU utilization for the past hour
+        filesystem = '/dev/nvme1n1'  # doesn't matter for cpu utilization
+        end = datetime.now()
+        start = end - timedelta(hours=1)
+        cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+        if 'max_cpu_utilization_percent' in cw_res:
+            if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
+                # the instance wasn't terminated - otherwise it would have been captured in the previous error.
+                try:
+                    boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                except Exception as e:
+                    errmsg = "Nothing has been running for the past hour for job %s," + \
+                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
+                             jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
+                    printlog(errmsg)
+                raise EC2IdleException("Nothing has been running for the past hour for job%s - terminating." % jobid)
+
+    # if none of the above
+    raise StillRunningException("job %s still running" % jobid)
 
 
 def handle_postrun_json(bucket_name, jobid, event, raise_error=True, filesystem=None):

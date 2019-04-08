@@ -7,7 +7,7 @@ import traceback
 import os
 import boto3
 import json
-from uuid import uuid4
+from uuid import uuid4, UUID
 import time
 import copy
 
@@ -110,6 +110,14 @@ class EC2LaunchException(Exception):
     pass
 
 
+class EC2UnintendedTerminationException(Exception):
+    pass
+
+
+class EC2IdleException(Exception):
+    pass
+
+
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
@@ -161,6 +169,10 @@ def powerup(lambda_name, metadata_only_func):
                     else:
                         if e.__class__ == AWSEMJobErrorException:
                             error_msg = 'Error on step: %s: %s' % (lambda_name, str(e))
+                        elif e.__class__ == EC2UnintendedTerminationException:
+                            error_msg = 'EC2 unintended termination error on step: %s: %s' % (lambda_name, str(e))
+                        elif e.__class__ == EC2IdleException:
+                            error_msg = 'EC2 Idle error on step: %s: %s' % (lambda_name, str(e))
                         else:
                             error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
                         event['error'] = error_msg
@@ -178,7 +190,14 @@ def randomize_run_name(run_name, sfn):
                 executionArn=arn
         )
         if response:
+            if len(run_name) > 36:
+                try:
+                    UUID(run_name[-36:])
+                    run_name = run_name[:-37]  # remove previous uuid
+                except:
+                    pass
             run_name += '-' + str(uuid4())
+
     except Exception:
         pass
     return run_name

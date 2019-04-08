@@ -13,7 +13,7 @@ def run_workflow_input():
                   "nthreads_parse_sort": 16
                 },
           "_tibanna": {
-                  "run_type": "hi-c-processing-bam",
+                  "run_type": "hi-c-processing-bam-tibanna_run_workflow_test",
                   "env": "fourfront-webdev"
                 },
           "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",

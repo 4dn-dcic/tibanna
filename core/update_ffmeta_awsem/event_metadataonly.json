@@ -41,7 +41,7 @@
     "_tibanna": {
         "env": "fourfront-webdev",
         "settings": {
-            "run_type": "hi-c-processing-bam",
+            "run_type": "hi-c-processing-bam-metadataonly-test",
             "env": "fourfront-webdev"
         }
     },
