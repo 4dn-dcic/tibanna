@@ -41,7 +41,7 @@
     "env": "fourfront-webdev",
     "settings": {
       "run_type": "hi-c-processing-bam-metadata-test2",
-      "env": "fourfront-webdev",
+      "env": "fourfront-webdev"
     }
   },
   "postrunjson": "metadata_only",
