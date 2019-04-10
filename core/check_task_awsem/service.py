@@ -112,8 +112,11 @@ def handle_postrun_json(bucket_name, jobid, event, raise_error=True, filesystem=
         update_postrun_json(postrunjsoncontent, event['instance_id'], filesystem)
     printlog("inside funtion handle_postrun_json")
     printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
-    boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
-                                  Body=json.dumps(postrunjsoncontent, indent=4).encode())
+    try:
+        boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
+                                      Body=json.dumps(postrunjsoncontent, indent=4).encode())
+    except Exception as e:
+        raise "error in updating postrunjson %s" % str(e)
     add_postrun_json(postrunjsoncontent, event, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
 
 

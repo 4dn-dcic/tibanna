@@ -160,7 +160,7 @@ def powerup(lambda_name, metadata_only_func):
                     elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
                         if 'error' in event:
-                            error_msg = "error from earlier step: %s\n" % event["error"]
+                            error_msg = "error from earlier step: %s" % event["error"]
                         else:
                             error_msg = "error from update_ffmeta: %s" % str(e)
                         raise Exception(error_msg)

@@ -561,25 +561,12 @@ def real_handler(event, context):
         app_name=event.get('ff_meta').get('awsem_app_name'),
         **event.get('ff_meta')
     )
-    pf_meta = [ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
-    custom_qc_fields = event.get('custom_qc_fields', None)
-
-    # ensure this bad boy is always initialized
-    awsem = Awsem(event)
-
-    # go through this and replace awsemfile_report with awsf format
-    # actually interface should be look through ff_meta files and call
-    # give me the status of this thing from the runner, and runner.output_files.length
-    # so we just build a runner with interface to sbg and awsem
-    # runner.output_files.length()
-    # runner.output_files.file.status
-    # runner.output_files.file.loc
-    # runner.output_files.file.get
 
     if event.get('error', False):
         ff_meta.run_status = 'error'
         ff_meta.description = event.get('error')
-        ff_meta.patch(key=tibanna.ff_keys)
+        patch_res = ff_meta.patch(key=tibanna.ff_keys)
+        printlog("patch response: " + str(patch_res))
         # sending a notification email before throwing error
         if 'email' in event['config'] and event['config']['email']:
             try:
@@ -592,6 +579,20 @@ def real_handler(event, context):
         raise Exception(event.get('error'))
 
     metadata_only = event.get('metadata_only', False)
+
+    pf_meta = [ProcessedFileMetadata(**pf) for pf in event.get('pf_meta')]
+    custom_qc_fields = event.get('custom_qc_fields', None)
+
+    # ensure this bad boy is always initialized
+    awsem = Awsem(event)
+    # go through this and replace awsemfile_report with awsf format
+    # actually interface should be look through ff_meta files and call
+    # give me the status of this thing from the runner, and runner.output_files.length
+    # so we just build a runner with interface to sbg and awsem
+    # runner.output_files.length()
+    # runner.output_files.file.status
+    # runner.output_files.file.loc
+    # runner.output_files.file.get
 
     awsem_output = awsem.output_files()
     awsem_output_extra = awsem.secondary_output_files()
