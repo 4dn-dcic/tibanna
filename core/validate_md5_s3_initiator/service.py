@@ -75,7 +75,8 @@ def get_file_format(event):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
-    # env will always be fourfront-webprod, since it is using file bucket name
+    if env == 'fourfront-webprod':
+        env = 'data'
     upload_key = event['Records'][0]['s3']['object']['key']
     uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
