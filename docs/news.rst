@@ -14,7 +14,7 @@ Version updates
 
   **Mar 7, 2019** The latest version is now 0.6.1_.
 
-    - Default **public bucket access is depricated** now, since it also allows access to all buckets in one's own account.
+    - Default **public bucket access is deprecated** now, since it also allows access to all buckets in one's own account.
       The users must specify buckets at deployment, even for public buckets.
       If the user doesn't specify any bucket, the deployed Tibanna will only have access to the public tibanna test buckets of the 4dn AWS account.
     - A newly introduced issue of ``rerun`` with no ``run_name`` in ``config`` fixed.
