@@ -283,12 +283,18 @@ def ensure_list(val):
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
     infile_extension = fe_map.get_extension(infile_format)
     extra_file_extension = fe_map.get_extension(extra_file_format)
+    if not infile_extension or not extra_file_extension:
+        errmsg = "Extension not found for infile_format %s (key=%s)" % (infile_format, infile_key)
+        errmsg += "extra_file_format %s" % extra_file_format
+        errmsg += "(infile extension %s, extra_file_extension %s)" % (infile_extension, extra_file_extension)
+        raise Exception(errmsg)
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
 class FormatExtensionMap(object):
     def __init__(self, ff_keys):
         try:
+            printlog("Searching in server : " + ff_keys['server'])
             ffe_all = search_metadata("/search/?type=FileFormat&frame=object", key=ff_keys)
         except Exception as e:
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
