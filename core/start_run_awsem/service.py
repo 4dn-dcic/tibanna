@@ -74,8 +74,11 @@ def real_handler(event, context):
     # if they don't pass in env guess it from output_bucket
     try:
         env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
+        printlog("Tibanna setting : env= " + env)
         # tibanna provides access to keys based on env and stuff like that
         tibanna = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
+        printlog("Tibanna ff_keys url : " + tibanna.ff_keys['server'])
+        printlog("Tibanna.s3.url: " + tibanna.s3.url)
     except Exception as e:
         raise TibannaStartException("%s" % e)
 
