@@ -5,6 +5,7 @@ News and updates
 Publication
 +++++++++++
 
+- **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 - **Oct 11. 2018**  Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 
 
