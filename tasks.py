@@ -391,7 +391,6 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     # this function will remove existing step function on a conflict
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
-    print(res.get('stateMachineArn').split(':'))
     step_function_name = res.get('stateMachineArn').split(':')[6]
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
