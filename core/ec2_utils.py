@@ -54,12 +54,12 @@ def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_dura
         res = 0
         res = ec2.run_instances(**launch_args)
     except Exception as e:
-        if 'InsufficientInstanceCapacity' in str(e):
+        if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
             if behavior_on_capacity_limit == 'fail':
                 errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option"
                 errmsg += "to change the behavior to wait_and_retry, or retry_without_spot. %s" % str(e)
                 raise EC2InstanceLimitException(errmsg)
-            elif behavior_on_capacity_limit == 'EC2InstanceLimitWaitException':
+            elif behavior_on_capacity_limit == 'wait_and_retry':
                 errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
                 raise EC2InstanceLimitWaitException(errmsg)
             elif behavior_on_capacity_limit == 'retry_without_spot':

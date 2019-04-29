@@ -377,7 +377,7 @@ def create_stepfunction(dev_suffix=None,
         {
             "ErrorEquals": ["EC2InstanceLimitWaitException"],
             "IntervalSeconds": 600,
-            "MaxAttempts": 168,
+            "MaxAttempts": 1008, # 1 wk
             "BackoffRate": 1.0
         }
     ]
