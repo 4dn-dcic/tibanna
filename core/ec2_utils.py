@@ -8,6 +8,7 @@ import logging
 import botocore.session
 import boto3
 from Benchmark import run as B
+from core.utils import printlog
 from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 from core.utils import create_jobid
 from core.utils import EC2LaunchException
@@ -70,11 +71,13 @@ def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_dura
                 del(launch_args['InstanceMarketOptions'])
                 try:
                     res = ec2.run_instances(**launch_args)
+                    printlog("trying without spot : %s" % str(res))
                 except Exception as e2:
                     errmsg = "Instance limit exception without spot instance %s" % str(e2)
                     raise EC2InstanceLimitException(errmsg)
-        raise Exception("failed to launch instance for job {jobid}: {log}. %s"
-                        .format(jobid=jobid, log=res) % e)
+        else:
+            raise Exception("failed to launch instance for job {jobid}: {log}. %s"
+                            .format(jobid=jobid, log=res) % e)
 
     try:
         instance_id = res['Instances'][0]['InstanceId']
