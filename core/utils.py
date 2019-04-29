@@ -456,7 +456,7 @@ def create_stepfunction(dev_suffix=None,
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
             print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
             try:
-                sfn.update_state_machine(
+                response = sfn.update_state_machine(
                     stateMachineArn=sfn_arn,
                     definition=json.dumps(definition, indent=4, sort_keys=True),
                     roleArn=sfn_role_arn
