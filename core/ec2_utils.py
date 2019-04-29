@@ -63,6 +63,10 @@ def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_dura
                 errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
                 raise EC2InstanceLimitWaitException(errmsg)
             elif behavior_on_capacity_limit == 'retry_without_spot':
+                if not spot_instance:
+                    errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with"
+                    errmsg += "'spot_instance' : true. %s" % str(e)
+                    raise Exception(errmsg)
                 del(launch_args['InstanceMarketOptions'])
                 try:
                     res = ec2.run_instances(**launch_args)
