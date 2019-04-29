@@ -8,9 +8,11 @@ import logging
 import botocore.session
 import boto3
 from Benchmark import run as B
+from core.utils import printlog
 from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
 from core.utils import create_jobid
 from core.utils import EC2LaunchException
+from core.utils import EC2InstanceLimitException, EC2InstanceLimitWaitException
 from core.nnested_array import flatten, run_on_nested_arrays1
 
 logger = logging.getLogger()
@@ -34,7 +36,8 @@ def create_json_filename(jobid, json_dir):
     return json_dir + '/' + jobid + '.run.json'
 
 
-def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_duration=None):
+def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_duration=None,
+                               behavior_on_capacity_limit='fail'):
     try:  # capturing stdout from the launch command
         os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
         ec2 = boto3.client('ec2')
@@ -52,8 +55,29 @@ def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_dura
         res = 0
         res = ec2.run_instances(**launch_args)
     except Exception as e:
-        raise Exception("failed to launch instance for job {jobid}: {log}. %s"
-                        .format(jobid=jobid, log=res) % e)
+        if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
+            if behavior_on_capacity_limit == 'fail':
+                errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option"
+                errmsg += "to change the behavior to wait_and_retry, or retry_without_spot. %s" % str(e)
+                raise EC2InstanceLimitException(errmsg)
+            elif behavior_on_capacity_limit == 'wait_and_retry':
+                errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
+                raise EC2InstanceLimitWaitException(errmsg)
+            elif behavior_on_capacity_limit == 'retry_without_spot':
+                if not spot_instance:
+                    errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with"
+                    errmsg += "'spot_instance' : true. %s" % str(e)
+                    raise Exception(errmsg)
+                del(launch_args['InstanceMarketOptions'])
+                try:
+                    res = ec2.run_instances(**launch_args)
+                    printlog("trying without spot : %s" % str(res))
+                except Exception as e2:
+                    errmsg = "Instance limit exception without spot instance %s" % str(e2)
+                    raise EC2InstanceLimitException(errmsg)
+        else:
+            raise Exception("failed to launch instance for job {jobid}: {log}. %s"
+                            .format(jobid=jobid, log=res) % e)
 
     try:
         instance_id = res['Instances'][0]['InstanceId']
@@ -273,7 +297,8 @@ def launch_instance(par, jobid, profile=None):
     launch_args = create_launch_args(par, jobid, userdata_str)
     instance_id = launch_and_get_instance_id(launch_args, jobid,
                                              par.get('spot_instance', None),
-                                             par.get('spot_duration', None))
+                                             par.get('spot_duration', None),
+                                             par.get('behavior_on_capacity_limit', 'fail'))
 
     # get public IP for the instance (This may not happen immediately)
     session = botocore.session.get_session()

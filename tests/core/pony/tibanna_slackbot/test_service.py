@@ -1,5 +1,4 @@
 # from core.tibanna_slackbot.service import lambda_handler as handler
-from core.tibanna_slackbot.service import giphy
 from core.tibanna_slackbot.build import BuildStatus
 import pytest
 from ..conftest import valid_env
