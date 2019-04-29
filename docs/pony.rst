@@ -104,6 +104,10 @@ Example Input Json for Pony
       "wfr_meta": {
         "notes": "a nice workflow run"
       },
+      "custom_qc_fields": {
+        "award": "/awards/5UM1HL128773-04/",
+        "lab": "/labs/bing-ren-lab/"
+      },
       "push_error_to_end": true
       "dependency": {
         "exec_arn": [
@@ -128,6 +132,7 @@ Example Input Json for Pony
 - The ``config`` field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 - The ``custom_pf_fields`` field (optional) contains a dictionary that can be directly passed to the processed file metadata. The key may be either ``ALL`` (applies to all processed files) or the argument name for a specific processed file (or both).
 - The ``wfr_meta`` field (optional) contains a dictionary that can be directly passed to the workflow run metadata.
+- The ``custom_qc_fields`` field (optional) contains a dictionary that can be directly passed to an associated Quality Metric object.
 - The ``push_error_to_end`` field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
 - The ``dependency`` field (optional) sets dependent jobs. The job will not start until the dependencies successfully finish. If dependency fails, the current job will also fail. The ``exec_arn`` is the list of step function execution arns. The job will wait at the run_task_awsem step, not at the start_task_awsem step (for consistenty with unicorn). This field will be passed to run_task_awsem as ``dependency`` inside the ``args`` field.
 - The ``overwrite_input_extra`` (optional) allows overwriting on an existing extra file, if the workflow hasan output of type ``Output to-be-extra-input file`` (i.e., creating an extra file of an input rather than creating a new processed file object). Default ``false``.
