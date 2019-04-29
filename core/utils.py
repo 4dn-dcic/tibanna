@@ -118,6 +118,14 @@ class EC2IdleException(Exception):
     pass
 
 
+class EC2InstanceLimitException(Exception):
+    pass
+
+
+class EC2InstanceLimitWaitException(Exception):
+    pass
+
+
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
@@ -134,7 +142,7 @@ def powerup(lambda_name, metadata_only_func):
         logger = logging.getLogger('logger')
         ignored_exceptions = [EC2StartingException, StillRunningException,
                               TibannaStartException, FdnConnectionException,
-                              DependencyStillRunningException]
+                              DependencyStillRunningException, EC2InstanceLimitWaitException]
 
         def wrapper(event, context):
             if context:
@@ -365,6 +373,12 @@ def create_stepfunction(dev_suffix=None,
             "IntervalSeconds": 600,
             "MaxAttempts": 10000,
             "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["EC2InstanceLimitWaitException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 168,
+            "BackoffRate": 1.0
         }
     ]
     sfn_update_ff_meta_retry_conditions = [
@@ -423,41 +437,35 @@ def create_stepfunction(dev_suffix=None,
       "States": sfn_state_defs[sfn_type]
     }
     # if this encouters an existing step function with the same name, delete
-    client = boto3.client('stepfunctions', region_name=region_name)
+    sfn = boto3.client('stepfunctions', region_name=region_name)
     retries = 12  # wait 10 seconds between retries for total of 120s
     response = None
     for i in range(retries):
         try:
-            response = client.create_state_machine(
+            response = sfn.create_state_machine(
                 name=sfn_name,
                 definition=json.dumps(definition, indent=4, sort_keys=True),
                 roleArn=sfn_role_arn
             )
-        except client.exceptions.StateMachineAlreadyExists as e:
+        except sfn.exceptions.StateMachineAlreadyExists as e:
             # get ARN from the error and format as necessary
             exc_str = str(e)
             if 'State Machine Already Exists:' not in exc_str:
                 print('Cannot delete state machine. Exiting...' % exc_str)
                 raise(e)
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-            print('Step function with name %s already exists!\nDeleting and retrying in 10 seconds...' % sfn_name)
+            print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
             try:
-                client.delete_state_machine(
-                    stateMachineArn=sfn_arn
+                sfn.update_state_machine(
+                    stateMachineArn=sfn_arn,
+                    definition=json.dumps(definition, indent=4, sort_keys=True),
+                    roleArn=sfn_role_arn
                 )
             except Exception as e:
-                print('Error deleting state machine: %s\nWill retry %s more times...' % (str(e), (retries - (i + 1))))
-            time.sleep(10)
-        except client.exceptions.StateMachineDeleting:
-            print('State machine is still deleting. Will try again in 10 seconds...')
-            time.sleep(10)
+                print('Error updating state machine %s' % str(e))
+                raise(e)
         except Exception as e:
             raise(e)
-        else:
-            break
-    if response is None:  # the StateMachine never initialized
-        print('Cannot create state machine. Exiting...')
-        raise Exception('Cannot create state machine %s' % sfn_name)
     return response
 
 
