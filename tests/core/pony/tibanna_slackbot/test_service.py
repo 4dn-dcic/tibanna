@@ -8,14 +8,6 @@ from ..conftest import valid_env
 
 @valid_env
 @pytest.mark.webtest
-def test_giphy():
-    url = giphy("testing")
-    print(url)
-    assert url
-
-
-@valid_env
-@pytest.mark.webtest
 def test_build_status():
     assert BuildStatus.name == '/ffstatus'
 
