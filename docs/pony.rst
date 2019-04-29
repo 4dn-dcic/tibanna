@@ -91,7 +91,10 @@ Example Input Json for Pony
         "launch_instance": true,
         "password": "dragonfly",
         "log_bucket": "tibanna-output",
-        "key_name": ""
+        "key_name": "",
+        "spot_instance": true,
+        "spot_duration": 360,
+        "behavior_on_capacity_limit": "wait_and_retry"
       },
       "custom_pf_fields": {
         "out_bam": {
@@ -110,8 +113,6 @@ Example Input Json for Pony
       },
       "overwrite_input_extra": false,
       "cloudwatch_dashboard", false,
-      "spot_instance": true,
-      "spot_duration": 360,
       "email": true
     }
 
@@ -134,4 +135,5 @@ Example Input Json for Pony
 - The ``spot_instance`` field (optional), if set ``true``, requests a spot instance instead of an on-demand instance.
 - The ``spot_duration`` field (optional), if set, requests a fixed-duration spot instance instead of a regular spot instance. The value is the duration in minutes. This field has no effect if ``spot_instance`` is either ``false`` or not set.
 - The ``email`` field (optional), if set ``true``, sends a notification email to ``4dndcic@gmail.com`` when a workflow run finishes.
+- The ``behavior_on_capacity_limit`` field (optional) sets the behavior of Tibanna in case AWS instance Limit or Spot instance capacity limit is encountered. Default value is ``fail``. If set to ``wait_and_retry``, Tibanna will wait until the instance becomes available and rerun (10 min interval, for 1 week). If ``spot_instance`` is ``true`` and ``behavior_on_capacity_limit`` is set to ``retry_without_spot``, when the spot instance is not available, it will automatically switch to a regular instance of the same type (applicable only when ``spot_instance`` is ``true``).
 
