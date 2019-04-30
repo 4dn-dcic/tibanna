@@ -14,7 +14,7 @@ import json
 from core.ec2_utils import does_key_exist
 from core.cw_utils import TibannaResource
 from datetime import datetime, timedelta
-
+from dateutil.tz import tzutc
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
 
@@ -81,20 +81,22 @@ def handler(event, context):
 
         # check CPU utilization for the past hour
         filesystem = '/dev/nvme1n1'  # doesn't matter for cpu utilization
-        end = datetime.now()
+        end = datetime.now(tzutc())
         start = end - timedelta(hours=1)
-        cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
-        if 'max_cpu_utilization_percent' in cw_res:
-            if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
-                # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-                try:
-                    boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                except Exception as e:
-                    errmsg = "Nothing has been running for the past hour for job %s," + \
-                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
-                             jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
-                    printlog(errmsg)
-                raise EC2IdleException("Nothing has been running for the past hour for job%s - terminating." % jobid)
+        jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
+        if jobstart_time + timedelta(hours=1) < end:
+            cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+            if 'max_cpu_utilization_percent' in cw_res:
+                if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
+                    # the instance wasn't terminated - otherwise it would have been captured in the previous error.
+                    try:
+                        boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                    except Exception as e:
+                        errmsg = "Nothing has been running for the past hour for job %s," + \
+                                 "but cannot terminate the instance (cpu utilization (%s) : %s" % \
+                                 jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
+                        printlog(errmsg)
+                        raise EC2IdleException(errmsg)
 
     # if none of the above
     raise StillRunningException("job %s still running" % jobid)
