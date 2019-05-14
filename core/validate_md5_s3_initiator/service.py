@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 from core.utils import _tibanna_settings
-from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+# from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from core.utils import run_workflow
 from core.utils import serialize_startdate
-from core.utils import TibannaStartException
+from core.utils import TibannaStartException, FdnConnectionException
 from core.pony_utils import Tibanna, FormatExtensionMap
 from core.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
 from core.utils import printlog
+
+TIBANNA_DEFAULT_STEP_FUNCTION_NAME = 'tibanna_pony_tmp_md5'
 
 
 def handler(event, context):
@@ -51,11 +53,14 @@ def handler(event, context):
 
 
 def get_fileformats_for_accession(accession, key, env):
-    meta = get_metadata(accession,
-                        key=key,
-                        ff_env=env,
-                        add_on='frame=object',
-                        check_queue=True)
+    try:
+        meta = get_metadata(accession,
+                            key=key,
+                            ff_env=env,
+                            add_on='frame=object',
+                            check_queue=True)
+    except Exception as e:
+        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
     if meta:
         file_format = parse_formatstr(meta.get('file_format'))
         extra_formats = [parse_formatstr(v.get('file_format')) for v in meta.get('extra_files', [])]
@@ -73,7 +78,8 @@ def get_file_format(event):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
-    # env will always be fourfront-webprod, since it is using file bucket name
+    if env == 'fourfront-webprod':
+        env = 'data'
     upload_key = event['Records'][0]['s3']['object']['key']
     uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
@@ -121,11 +127,14 @@ def get_status_for_extra_file(event, extra_format):
         tibanna = Tibanna(env=env)
     except Exception as e:
         raise TibannaStartException("%s" % e)
-    meta = get_metadata(accession,
-                        key=tibanna.ff_keys,
-                        ff_env=env,
-                        add_on='frame=object',
-                        check_queue=True)
+    try:
+        meta = get_metadata(accession,
+                            key=tibanna.ff_keys,
+                            ff_env=env,
+                            add_on='frame=object',
+                            check_queue=True)
+    except Exception as e:
+        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
     if meta and 'extra_files' in meta:
         for exf in meta['extra_files']:
             if parse_formatstr(exf['file_format']) == extra_format:
@@ -150,11 +159,14 @@ def get_status(event):
         tibanna = Tibanna(env=env)
     except Exception as e:
         raise TibannaStartException("%s" % e)
-    meta = get_metadata(accession,
-                        key=tibanna.ff_keys,
-                        ff_env=env,
-                        add_on='frame=object',
-                        check_queue=True)
+    try:
+        meta = get_metadata(accession,
+                            key=tibanna.ff_keys,
+                            ff_env=env,
+                            add_on='frame=object',
+                            check_queue=True)
+    except Exception as e:
+        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
     if meta:
         return meta.get('status', '')
     else:

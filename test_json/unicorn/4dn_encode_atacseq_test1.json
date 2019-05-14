@@ -9,7 +9,7 @@
         "atac.disable_ataqc": true,
         "atac.enable_xcor": false,
         "atac.trim_adapter.auto_detect_adapter": true,
-        "atac.bowtie2.cpu" : 48,
+        "atac.bowtie2.cpu" : 16,
         "atac.align_only": true
     },
     "wdl_child_filenames": [],

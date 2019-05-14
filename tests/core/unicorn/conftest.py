@@ -18,8 +18,18 @@ def run_task_awsem_event_data():
 
 
 @pytest.fixture(scope='session')
-def run_task_awsem_event_md5():
+def run_task_awsem_event_md5_fail():
     return get_event_file_for('run_task_awsem', event_file='event_fail.json')
+
+
+@pytest.fixture(scope='session')
+def run_task_awsem_event_omit_fields():
+    return get_event_file_for('run_task_awsem', event_file='event_omit_fields.json')
+
+
+@pytest.fixture(scope='session')
+def run_task_awsem_event_omit_fields2():
+    return get_event_file_for('run_task_awsem', event_file='event_omit_fields2.json')
 
 
 @pytest.fixture(scope='session')

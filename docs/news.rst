@@ -5,11 +5,44 @@ News and updates
 Publication
 +++++++++++
 
+- **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 - **Oct 11. 2018**  Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 
 
 Version updates
 +++++++++++++++
+
+
+  **Mar 7, 2019** The latest version is now 0.6.1_.
+
+    - Default **public bucket access is deprecated** now, since it also allows access to all buckets in one's own account.
+      The users must specify buckets at deployment, even for public buckets.
+      If the user doesn't specify any bucket, the deployed Tibanna will only have access to the public tibanna test buckets of the 4dn AWS account.
+    - A newly introduced issue of ``rerun`` with no ``run_name`` in ``config`` fixed.
+
+  
+  **Feb 25, 2019** The latest version is now 0.6.0_.
+
+    - The input json can now be simplified.
+
+      - ``app_name``, ``app_version``, ``input_parameters``, ``secondary_output_target``, ``secondary_files`` fields can now be omitted (now optional)
+      - ``instance_type``, ``ebs_size``, ``EBS_optimized`` can be omitted if benchmark is provided (``app_name`` is a required field to use benchmark)
+      - ``ebs_type``, ``ebs_iops``, ``shutdown_min`` can be omitted if using default ('gp2', '', 'now', respectively)
+      - ``password`` and ``key_name`` can be omitted if user doesn't care to ssh into running/failed instances
+
+    - issue with rerun with a short run name containing uuid now fixed.
+
+  **Feb 13, 2019** The latest version is now 0.5.9_.
+
+    - Wrong requirement of ``SECRET`` env is removed from unicorn installation
+    - deploy_unicorn without specified buckets also works
+    - deploy_unicorn now has ``--usergroup`` option
+    - cloud metric statistics aggregation with runs > 24 hr now fixed
+    - ``invoke -l`` lists all invoke commands
+    - ``invoke add_user``, ``invoke list`` and ``invoke users`` added
+    - ``log()`` function not assuming default step function fixed
+    - ``invoke log`` working only for currently running jobs fixed
+
 
   **Feb 4, 2019** The latest version is now 0.5.8_.
 
@@ -131,6 +164,9 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1
+.. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0
+.. _0.5.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.9
 .. _0.5.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.8
 .. _0.5.7: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.7
 .. _0.5.6: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.6

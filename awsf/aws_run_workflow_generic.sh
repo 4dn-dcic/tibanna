@@ -84,10 +84,10 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 send_log_regularly(){  
     watch -n 60 "top -b | head -15 >> $LOGFILE; \
-    du -h /data1/input/ >> $LOGFILE; \
-    du -h /data1/tmp* >> $LOGFILE; \
-    du -h /ata1/out >> $LOGFILE; \
-    send_log &>/dev/null;"
+    du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
+    du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; \
+    du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
+    aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null";
 }  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
@@ -154,6 +154,7 @@ curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScrip
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
+echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
@@ -193,7 +194,7 @@ send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
 mkdir -p $LOCAL_WF_TMPDIR
-send_log_regularly &
+#send_log_regularly &
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE

@@ -2,9 +2,23 @@
 Command-line tools
 ==================
 
+Listing all commands
+++++++++++++++++++++
+
+To list all available commands, use ``invoke -l``
+
+::
+
+    invoke -l
+
 
 Basic_commands
 ++++++++++++++
+
+Admin only
+##########
+
+The following commands require admin previlege to one's AWS account.
 
 deploy_unicorn
 --------------
@@ -46,6 +60,31 @@ To deploy Tibanna unicorn, you need the following environmental variables set on
     export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
     export AWS_ACCOUNT_NUMBER=<aws_account_number>
 
+
+users
+-----
+
+To list users
+
+::
+
+    invoke users
+
+add_user
+--------
+
+To add users to a tibanna user group
+
+::
+
+    invoke add_user --user=<user> --group=<usergroup>
+
+
+
+Non-admin
+#########
+
+The following commands can be used by a non-admin user, as long as the user belongs to the right user group.
 
 
 run_workflow
@@ -276,9 +315,30 @@ To kill all currently running jobs for a given step function
                                    variable is not set, it uses name 'tibanna_pony' (4dn
                                    default, works only for 4dn).
 
+list
+----
+
+To list all step functions
+
+::
+
+    invoke list [-n]
+
+**Options**
+
+::
+
+    -n      show stats of the number of jobs for per status (using this option could slow down the
+            process)
+
+
 
 Advanced_commands
 +++++++++++++++++
+
+
+Admin only
+##########
 
 
 setup_tibanna_env

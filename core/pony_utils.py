@@ -35,7 +35,7 @@ import gzip
 ###########################
 
 
-def create_ffmeta_awsem(workflow, app_name, input_files=None,
+def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
                         output_files=None, award='1U01CA200059-01', lab='4dn-dcic-lab',
                         run_status='started', run_platform='AWSEM', run_url='', tag=None,
@@ -51,10 +51,13 @@ def create_ffmeta_awsem(workflow, app_name, input_files=None,
         lab = '4dn-dcic-lab'
 
     if title is None:
-        if tag is None:
-            title = app_name + " run " + str(datetime.datetime.now())
+        if app_version:
+            title = app_name + ' ' + app_version
         else:
-            title = app_name + ' ' + tag + " run " + str(datetime.datetime.now())
+            title = app_name
+        if tag:
+            title = title + ' ' + tag
+        title = title + " run " + str(datetime.datetime.now())
 
     return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,
@@ -280,12 +283,18 @@ def ensure_list(val):
 def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
     infile_extension = fe_map.get_extension(infile_format)
     extra_file_extension = fe_map.get_extension(extra_file_format)
+    if not infile_extension or not extra_file_extension:
+        errmsg = "Extension not found for infile_format %s (key=%s)" % (infile_format, infile_key)
+        errmsg += "extra_file_format %s" % extra_file_format
+        errmsg += "(infile extension %s, extra_file_extension %s)" % (infile_extension, extra_file_extension)
+        raise Exception(errmsg)
     return infile_key.replace(infile_extension, extra_file_extension)
 
 
 class FormatExtensionMap(object):
     def __init__(self, ff_keys):
         try:
+            printlog("Searching in server : " + ff_keys['server'])
             ffe_all = search_metadata("/search/?type=FileFormat&frame=object", key=ff_keys)
         except Exception as e:
             raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
@@ -487,7 +496,7 @@ class Awsem(object):
             if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
                 for pfextra in pf['extra_files']:
                     if pfextra['upload_key'] == key:
-                        return pfextra['file_format']
+                        return parse_formatstr(pfextra['file_format'])
         return None
 
     def secondary_output_files(self):

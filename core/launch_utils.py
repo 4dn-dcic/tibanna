@@ -33,11 +33,12 @@ def clear_awsem_template(awsem_template):
     """clear awsem template for reuse"""
     if 'response' in awsem_template['_tibanna']:
         del(awsem_template['_tibanna']['response'])
-    if 'run_name' in awsem_template['_tibanna'] and len(awsem_template['_tibanna']['run_name']) > 50:
+    if 'run_name' in awsem_template['_tibanna'] and len(awsem_template['_tibanna']['run_name']) > 40:
         awsem_template['_tibanna']['run_name'] = awsem_template['_tibanna']['run_name'][:-36]
+        awsem_template['config']['run_name'] = awsem_template['_tibanna']['run_name']
 
 
-def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None, app_name_filter=None):
+def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None, app_name_filter=None, name=None):
     """rerun a specific job
     override_config : dictionary for overriding config (keys are the keys inside config)
         e.g. override_config = { 'instance_type': 't2.micro' }

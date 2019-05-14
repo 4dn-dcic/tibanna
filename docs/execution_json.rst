@@ -5,23 +5,55 @@ Job Description JSON Schema
 The Job Description json (input of Tibanna) defines an individual execution. It has two parts, `args` and `config`. `args` contains information about pipeline, input files, output bucket, input parameters, etc. `config` has parameters about AWS such as instance type, EBS size, ssh password, etc.
 
 
+Example job description for CWL
+-------------------------------
+
+::
+
+    {
+      "args": {
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+        "cwl_main_filename": "pairsam-parse-sort.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "bam": {
+            "bucket_name": "montys-data-bucket",
+            "object_key": "dataset1/sample1.bam"
+          },
+          "chromsize": {
+            "bucket_name": "montys-data-bucket",
+            "object_key": "references/hg38.chrom.sizes"
+          }
+        },
+        "input_parameters": {
+          "nThreads": 16
+        },
+        "output_S3_bucket": "montys-data-bucket",
+        "output_target": {
+          "out_pairsam": "output/dataset1/sample1.sam.pairs.gz"
+        },
+        "secondary_output_target": {
+          "out_pairsam": "output/dataset1/sample1.sam.pairs.gz.px2"
+        }
+      },
+      "config": {
+        "instance_type": "t2.micro",
+        "ebs_size": 10,
+        "EBS_optimized": false,
+        "log_bucket": "montys-log-bucket"
+      }
+    }
+
+
+
 args
 ----
 
+The ``args`` field describe pipeline, input and output.
+
+
 Pipeline specification
 ######################
-
-:app_name:
-    - <name of the app> (e.g. 'pairsam-parse-sort')
-    - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
-
-:app_version:
-    - <version of the app> (e.g. 0.2.0)
-    - Version of the pipeline/app, for the user to keep in track.
-
-:language:
-    - 'cwl_v1', 'cwl_draft3' or 'wdl'
-    - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 CWL-specific
 ++++++++++++
@@ -66,6 +98,27 @@ WDL-specific
     - An array of all the other wdl files that are called by the main wdl file. This could happen if there are the main WDL file is using another WDL file as a subworkflow.
 
 
+Other pipeline-related fields
++++++++++++++++++++++++++++++
+
+:app_name:
+    - <name of the app> (e.g. 'pairsam-parse-sort')
+    - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
+    - This field is optional and is used only by ``Benchmark`` which auto-termines instance type
+      and EBS size based on input size and parameters. If the workflow doesn't have an associated
+      Benchmark function, this field can be omitted, but ``instance_type``, ``ebs_size``, ``EBS_optimized``
+      must be specified in ``config``.
+
+:app_version:
+    - optional
+    - <version of the app> (e.g. 0.2.0)
+    - Version of the pipeline/app, for the user to keep in track.
+
+:language:
+    - 'cwl_v1', 'cwl_draft3' or 'wdl'
+    - For WDL, it is a required field. For CWL, the language field can be omitted.
+
+
 Input data specification
 ########################
 
@@ -83,15 +136,14 @@ Input data specification
     ::
 
         {
-            'bam': {
-                'bucket_name': 'some_public_bucket',
-                'object_key': 'some_directory/some_file_name.bam',
-                'profile': 'user1'
+            "bam": {
+                "bucket_name": "montys-data-bucket",
+                "object_key": "dataset1/sample1.bam"
             },
-            'chromsize': {
-                'bucket_name': 'suwangs_bucket',
-                'object_key': 'some_other_directory/5sd4flvlg.chrom.sizes',
-                'rename': 'some_renamed_directory/hg38.chrom.sizes'
+            "chromsize": {
+                "bucket_name": "montys-data-bucket",
+                "object_key": "references/JKGFALIFVG.chrom.sizes"
+                'rename': 'some_dir_on_ec2/hg38.chrom.sizes'
             }
         }
 
@@ -104,10 +156,9 @@ Input data specification
     ::
 
         {
-            'bam': {
-                'bucket_name': 'some_public_bucket',
-                'object_key': 'some_directory/some_file_name.bai',
-                'profile': 'user1'
+            "bam": {
+                "bucket_name": "montys-data-bucket",
+                "object_key": "dataset1/sample1.bam.bai"
             }
         }
 
@@ -141,7 +192,7 @@ Output target specification
     ::
 
         {
-          'out_pairsam': '7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz'
+          "out_pairsam": "output/dataset1/sample1.sam.pairs.gz"
         }
 
     )
@@ -153,7 +204,7 @@ Output target specification
     ::
 
         {
-          'out_pairsam': '7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz.px2'
+          "out_pairsam": "output/dataset1/sample1.sam.pairs.gz.px2"
         }
 
     )
@@ -194,105 +245,63 @@ Dependency specification
 config
 ------
 
-:ebs_size:
-    - <ebs_size_in_gb>
-    - It can be specified by the user or left to be 0 (auto-determine) if Benchmark function is available for a given workflow/pipeline.
+The ``config`` field describes execution configuration.
 
 :log_bucket:
     - <log_bucket_name>
     - This is where the logs of the Tibanna runs are sent to.
-
-:json_bucket:
-    - <log_bucket_name>
-    - This is where Tibanna sends an instruction to for an AWSEM EC2 instance.
+    - required
 
 :instance_type:
     - <instance_type>
-    - Instance type (e.g. t2.micro) can be specified by the user or left to be '' (auto-determine) if Benchmark function is available for a given workflow.
+    - required if Benchmark is not available for a given workflow.
+
+:ebs_size:
+    - <ebs_size_in_gb>
+    - required if Benchmark is not available for a given workflow.
 
 :EBS_optimized:
     - <ebs_optimized> ``true``, ``false`` or '' (blank)
+    - required if Benchmark is not available for a given workflow.
     - Whether the specific instance type should be EBS_optimized. It can be True only for an instance type that can be EBS optimized. If instance type is unspecified, leave this as blank.
 
 :shutdown_min:
     - either number of minutes or string 'now'
     - 'now' would make the EC2 instance to terminate immediately after a workflow run. This option saves cost if the pipeline is stable. If debugging may be needed, one could set shutdown_min to be for example, 30, in which case the instance will keep running for 30 minutes after completion of the workflow run. During this time, a user could ssh into the instance.
+    - optional (default : "now")
 
 :password:
     - <password_for_ssh> or '' (blank)
     - One can use either password or key_name (below) as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
     - The password can be any string and anyone with the password and the ip address of the EC2 instance can ssh into the machine.
+    - optional (default : no password-based ssh)
 
 :key_name:
     - <key_pair_name> or '' (blank)
     - One can use either password (above) or key_name as ssh mechanism, if the user wants an option to ssh into the instance manually for monitoring/debugging purpose. Tibanna itself does not use ssh.
     - The key pair should be an existing key pair and anyone with the key pair ``.pem`` file and the ip address of the EC2 instance can ssh into the machine.
+    - optional (default : no key-based ssh)
 
-:ebs_iops: 500
-:ebs_type: io1
+:ebs_iops: 
+    - IOPS of the io1 type EBS
+    - optional (default: unset)
+
+:ebs_type:
+    - type of EBS (either ``gp2`` or ``io1``)
+    - optional (default: gp2)
 
 :cloudwatch_dashboard:
     - if true, Memory Used, Disk Used, CPU Utilization Cloudwatch metrics are collected into a single Cloudwatch Dashboard page. (default ``false``)
-    - There is a limit of 1,000 CloudWatch Dashboards per account, so do not turn on this option for more than 1,000 runs.
+    - Warning: very expensive - Do not use it unless absolutely neessary.
       Cloudwatch metrics are collected for every awsem EC2 instances even if this option is turned off.
       The Dashboard option makes it easier to look at them together.
+    - There is a limit of 1,000 CloudWatch Dashboards per account, so do not turn on this option for more than 1,000 runs.
 
 :spot_instance:
-    - if true, request spot instance instead of an On-Demand instance (default ``false``)
+    - if true, request spot instance instead of an On-Demand instance
+    - optional (default ``false``)
 
-:spot_duration: 360
+:spot_duration:
     - Max duration of spot instance in min (no default). If set, request a fixed-duration spot instance instead of a regular spot instance. ``spot_instance`` must be set ``true``.
-
-
-
-Example job description for CWL
--------------------------------
-
-::
-
-    {
-      "args": {
-        "app_name": "pairsam-parse-sort",
-        "app_version": "0.2.0"
-        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
-        "cwl_main_filename": "pairsam-parse-sort.cwl",
-        "cwl_child_filenames": [],
-        "cwl_version": "v1",
-        "singularity": False,
-        "input_files": {
-          "bam": {
-            "bucket_name": "some_public_bucket",
-            "object_key": "5ae5edb2-8917-445a-b93f-46936a1478a8/4DNFI3F894Y3.bam",
-            "profile": "user1"
-          },
-          "chromsize": {
-            "bucket_name": "suwang",
-            "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
-          }
-        },
-        "secondary_files": {},
-        "input_parameters": {
-          "nThreads": 16
-        },
-        "output_S3_bucket": "suwang",
-        "output_target": {
-          "out_pairsam": "7b932aca-62f6-4d42-841b-0d7496567103/4DNFIPJMZ922.sam.pairs.gz"
-        },
-        "secondary_output_target": {}
-      },
-      "config": {
-        "ebs_size": 0,
-        "json_bucket": "suwang",
-        "EBS_optimized": "",
-        "ebs_iops": 500,
-        "shutdown_min": 30,
-        "instance_type": "",
-        "ebs_type": "io1",
-        "password": "whateverpasswordworks",
-        "log_bucket": "suwang",
-        "key_name": "",
-        "cloudwatch_dashboard": true,
-        "spot_instance": false
-      }
-    }
+    - optional (no default)
 

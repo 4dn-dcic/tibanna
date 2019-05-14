@@ -62,8 +62,6 @@ def real_handler(event, context):
     for infile in input_file_list:
         if not infile:
             raise("malformed input, check your input_files")
-    app_name = event.get('app_name')
-    print(app_name)
     workflow_uuid = event.get('workflow_uuid')
     output_bucket = event.get('output_bucket')
     parameters = ff_utils.convert_param(event.get('parameters'), True)
@@ -76,8 +74,11 @@ def real_handler(event, context):
     # if they don't pass in env guess it from output_bucket
     try:
         env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
+        printlog("Tibanna setting : env= " + env)
         # tibanna provides access to keys based on env and stuff like that
         tibanna = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
+        printlog("Tibanna ff_keys url : " + tibanna.ff_keys['server'])
+        printlog("Tibanna.s3.url: " + tibanna.s3.url)
     except Exception as e:
         raise TibannaStartException("%s" % e)
 
@@ -135,8 +136,8 @@ def real_handler(event, context):
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = create_ffmeta_awsem(
-        workflow_uuid, app_name, input_files_for_ffmeta, tag=tag,
-        run_url=tibanna.settings.get('url', ''),
+        workflow_uuid, args['app_name'], args['app_version'], input_files_for_ffmeta,
+        tag=tag, run_url=tibanna.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=event.get('wfr_meta'), jobid=jobid
     )

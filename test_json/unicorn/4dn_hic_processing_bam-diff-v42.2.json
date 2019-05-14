@@ -1,0 +1,54 @@
+{
+  "app_name": "hi-c-processing-bam",
+  "args": {
+    "app_name": "hi-c-processing-bam",
+    "input_parameters": {
+      "nthreads_parse_sort": 4,
+      "nthreads_merge": 4
+    },
+    "cwl_version": "v1",
+    "cwl_child_filenames": [
+      "pairsam-parse-sort.cwl",
+      "pairsam-merge.cwl",
+      "pairsam-markasdup.cwl",
+      "pairsam-filter.cwl",
+      "addfragtopairs.cwl"
+    ],
+    "output_target": {
+      "filtered_pairs": "hicprocessingbam_test.out.v42.3.pairs.gz",
+      "annotated_bam": "hicprocessingbam_test.out.v42.3.bam"
+    },
+    "secondary_output_target": {
+      "filtered_pairs": "hicprocessingbam_test.out.v42.3.pairs.gz.px2"
+    },
+    "cwl_main_filename": "hi-c-processing-bam.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-output",
+    "app_version": "v42.3",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/docker-4dn-hic/v42.3/cwl/",
+    "input_files": {
+      "chromsize": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "bd0784a5-2a3d-42f0-ba9c-d9b3dc0539c6/4DNFI3UBJ3HZ.chrom.sizes"
+      },
+      "input_bams": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "object_key": [
+            "79240c57-4f41-400e-b898-fb1946919edb/4DNFIOVQA96M.bam"
+        ]
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 100,
+    "ebs_type": "io1",
+    "EBS_optimized": true,
+    "ebs_iops": 500,
+    "shutdown_min": "now",
+    "instance_type": "m5a.xlarge",
+    "spot_instance": true,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "run_name": "hicbam-diff-v42.3"
+  }
+}

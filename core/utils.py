@@ -7,8 +7,9 @@ import traceback
 import os
 import boto3
 import json
-from uuid import uuid4
+from uuid import uuid4, UUID
 import time
+import copy
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -23,10 +24,12 @@ def printlog(message):
     LOG.info(message)
 
 
-AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER')
-AWS_REGION = os.environ.get('TIBANNA_AWS_REGION')
+AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
+AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_pony')
+DYNAMODB_TABLE = 'tibanna-master'
+BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
 
 # just store this in one place
 _tibanna = '_tibanna'
@@ -34,6 +37,10 @@ _tibanna = '_tibanna'
 
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_ARN % ('stateMachine', sfn)
+
+
+def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    return BASE_EXEC_ARN % (sfn, exec_name)
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
@@ -103,6 +110,22 @@ class EC2LaunchException(Exception):
     pass
 
 
+class EC2UnintendedTerminationException(Exception):
+    pass
+
+
+class EC2IdleException(Exception):
+    pass
+
+
+class EC2InstanceLimitException(Exception):
+    pass
+
+
+class EC2InstanceLimitWaitException(Exception):
+    pass
+
+
 def powerup(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...
@@ -119,7 +142,7 @@ def powerup(lambda_name, metadata_only_func):
         logger = logging.getLogger('logger')
         ignored_exceptions = [EC2StartingException, StillRunningException,
                               TibannaStartException, FdnConnectionException,
-                              DependencyStillRunningException]
+                              DependencyStillRunningException, EC2InstanceLimitWaitException]
 
         def wrapper(event, context):
             if context:
@@ -142,11 +165,24 @@ def powerup(lambda_name, metadata_only_func):
                     if type(e) in ignored_exceptions:
                         raise e
                         # update ff_meta to error status
-                    elif lambda_name == 'update_ffmeta_awsem' or not event.get('push_error_to_end', False):
+                    elif lambda_name == 'update_ffmeta_awsem':
                         # for last step just pit out error
+                        if 'error' in event:
+                            error_msg = "error from earlier step: %s" % event["error"]
+                        else:
+                            error_msg = "error from update_ffmeta: %s" % str(e)
+                        raise Exception(error_msg)
+                    elif not event.get('push_error_to_end', False):
                         raise e
                     else:
-                        error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
+                        if e.__class__ == AWSEMJobErrorException:
+                            error_msg = 'Error on step: %s: %s' % (lambda_name, str(e))
+                        elif e.__class__ == EC2UnintendedTerminationException:
+                            error_msg = 'EC2 unintended termination error on step: %s: %s' % (lambda_name, str(e))
+                        elif e.__class__ == EC2IdleException:
+                            error_msg = 'EC2 Idle error on step: %s: %s' % (lambda_name, str(e))
+                        else:
+                            error_msg = 'Error on step: %s. Full traceback: %s' % (lambda_name, traceback.format_exc())
                         event['error'] = error_msg
                         logger.info(error_msg)
                         return event
@@ -162,7 +198,14 @@ def randomize_run_name(run_name, sfn):
                 executionArn=arn
         )
         if response:
-            run_name += str(uuid4())
+            if len(run_name) > 36:
+                try:
+                    UUID(run_name[-36:])
+                    run_name = run_name[:-37]  # remove previous uuid
+                except:
+                    pass
+            run_name += '-' + str(uuid4())
+
     except Exception:
         pass
     return run_name
@@ -192,26 +235,33 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
     client = boto3.client('stepfunctions', region_name='us-east-1')
     base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
 
+    input_json_copy = copy.deepcopy(input_json)
+
     # build from appropriate input json
     # assume run_type and and run_id
-    input_json = _tibanna_settings(input_json, force_inplace=True, env=env)
-    run_name = randomize_run_name(input_json[_tibanna]['run_name'], sfn)
-    input_json[_tibanna]['run_name'] = run_name
+    if 'run_name' in input_json_copy['config']:
+        if _tibanna not in input_json_copy:
+            input_json_copy[_tibanna] = dict()
+        input_json_copy[_tibanna]['run_name'] = input_json_copy['config']['run_name']
+    input_json_copy = _tibanna_settings(input_json_copy, force_inplace=True, env=env)
+    run_name = randomize_run_name(input_json_copy[_tibanna]['run_name'], sfn)
+    input_json_copy[_tibanna]['run_name'] = run_name
+    input_json_copy['config']['run_name'] = run_name
 
     # updated arn
     arn = get_exec_arn(sfn, run_name)
-    input_json[_tibanna]['exec_arn'] = arn
+    input_json_copy[_tibanna]['exec_arn'] = arn
 
     # calculate what the url will be
     url = "%s%s" % (base_url, arn)
-    input_json[_tibanna]['url'] = url
+    input_json_copy[_tibanna]['url'] = url
 
     # add jobid
     if not jobid:
         jobid = create_jobid()
-    input_json['jobid'] = jobid
+    input_json_copy['jobid'] = jobid
 
-    aws_input = json.dumps(input_json)
+    aws_input = json.dumps(input_json_copy)
     print("about to start run %s" % run_name)
     # trigger the step function to run
     try:
@@ -223,12 +273,45 @@ def run_workflow(input_json, accession='', sfn='tibanna_pony',
         time.sleep(sleep)
     except Exception as e:
         raise(e)
-
+    # adding execution info to dynamoDB for fast search by awsem job id
+    add_to_dydb(jobid, run_name, sfn, input_json_copy['config']['log_bucket'])
+    # print some info
     print("response from aws was: \n %s" % response)
     print("url to view status:")
-    print(input_json[_tibanna]['url'])
-    input_json[_tibanna]['response'] = response
-    return input_json
+    print(input_json_copy[_tibanna]['url'])
+    input_json_copy[_tibanna]['response'] = response
+    return input_json_copy
+
+
+def add_to_dydb(awsem_job_id, execution_name, sfn, logbucket):
+    dydb = boto3.client('dynamodb')
+    try:
+        # first check the table exists
+        dydb.describe_table(TableName=DYNAMODB_TABLE)
+    except Exception as e:
+        printlog("Not adding to dynamo table: %s" % e)
+        return
+    try:
+        response = dydb.put_item(
+            TableName=DYNAMODB_TABLE,
+            Item={
+                'Job Id': {
+                    'S': awsem_job_id
+                },
+                'Execution Name': {
+                    'S': execution_name
+                },
+                'Step Function': {
+                    'S': sfn
+                },
+                'Log Bucket': {
+                    'S': logbucket
+                },
+            }
+        )
+        printlog(response)
+    except Exception as e:
+        raise(e)
 
 
 def create_stepfunction(dev_suffix=None,
@@ -236,6 +319,9 @@ def create_stepfunction(dev_suffix=None,
                         region_name=AWS_REGION,
                         aws_acc=AWS_ACCOUNT_NUMBER,
                         usergroup=None):
+    if not aws_acc or not region_name:
+        print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+        exit(1)
     if usergroup:
         if dev_suffix:
             lambda_suffix = '_' + usergroup + '_' + dev_suffix
@@ -257,13 +343,13 @@ def create_stepfunction(dev_suffix=None,
         {
             "ErrorEquals": ["EC2StartingException"],
             "IntervalSeconds": 300,
-            "MaxAttempts": 5,
+            "MaxAttempts": 25,
             "BackoffRate": 1.0
         },
         {
             "ErrorEquals": ["StillRunningException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 10000,
+            "IntervalSeconds": 300,
+            "MaxAttempts": 100000,
             "BackoffRate": 1.0
         }
     ]
@@ -286,6 +372,12 @@ def create_stepfunction(dev_suffix=None,
             "ErrorEquals": ["DependencyStillRunningException"],
             "IntervalSeconds": 600,
             "MaxAttempts": 10000,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["EC2InstanceLimitWaitException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 1008,  # 1 wk
             "BackoffRate": 1.0
         }
     ]
@@ -345,41 +437,35 @@ def create_stepfunction(dev_suffix=None,
       "States": sfn_state_defs[sfn_type]
     }
     # if this encouters an existing step function with the same name, delete
-    client = boto3.client('stepfunctions', region_name=region_name)
+    sfn = boto3.client('stepfunctions', region_name=region_name)
     retries = 12  # wait 10 seconds between retries for total of 120s
     response = None
     for i in range(retries):
         try:
-            response = client.create_state_machine(
+            response = sfn.create_state_machine(
                 name=sfn_name,
                 definition=json.dumps(definition, indent=4, sort_keys=True),
                 roleArn=sfn_role_arn
             )
-        except client.exceptions.StateMachineAlreadyExists as e:
+        except sfn.exceptions.StateMachineAlreadyExists as e:
             # get ARN from the error and format as necessary
             exc_str = str(e)
             if 'State Machine Already Exists:' not in exc_str:
                 print('Cannot delete state machine. Exiting...' % exc_str)
                 raise(e)
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-            print('Step function with name %s already exists!\nDeleting and retrying in 10 seconds...' % sfn_name)
+            print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
             try:
-                client.delete_state_machine(
-                    stateMachineArn=sfn_arn
+                response = sfn.update_state_machine(
+                    stateMachineArn=sfn_arn,
+                    definition=json.dumps(definition, indent=4, sort_keys=True),
+                    roleArn=sfn_role_arn
                 )
             except Exception as e:
-                print('Error deleting state machine: %s\nWill retry %s more times...' % (str(e), (retries - (i + 1))))
-            time.sleep(10)
-        except client.exceptions.StateMachineDeleting:
-            print('State machine is still deleting. Will try again in 10 seconds...')
-            time.sleep(10)
+                print('Error updating state machine %s' % str(e))
+                raise(e)
         except Exception as e:
             raise(e)
-        else:
-            break
-    if response is None:  # the StateMachine never initialized
-        print('Cannot create state machine. Exiting...')
-        raise Exception('Cannot create state machine %s' % sfn_name)
     return response
 
 
@@ -501,20 +587,21 @@ def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dnd
                                'Body': {'Text': {'Data': msg}}})
 
 
-def log(exec_arn=None, job_id=None, sfn=None, postrunjson=False):
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     if postrunjson:
         suffix = '.postrun.json'
     else:
         suffix = '.log'
     sf = boto3.client('stepfunctions')
+    if not exec_arn and exec_name:
+        exec_arn = EXECUTION_ARN(exec_name, sfn)
     if exec_arn:
         desc = sf.describe_execution(executionArn=exec_arn)
-        if desc['status'] == 'RUNNING':
-            jobid = str(json.loads(desc['input'])['jobid'])
-            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
-            if res_s3:
-                return(res_s3['Body'].read())
+        jobid = str(json.loads(desc['input'])['jobid'])
+        logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+        res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
+        if res_s3:
+            return(res_s3['Body'].read())
     elif job_id:
         stateMachineArn = STEP_FUNCTION_ARN(sfn)
         res = sf.list_executions(stateMachineArn=stateMachineArn)

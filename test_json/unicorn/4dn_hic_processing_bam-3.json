@@ -1,0 +1,60 @@
+{
+  "app_name": "hi-c-processing-bam",
+  "args": {
+    "app_name": "hi-c-processing-bam",
+    "input_parameters": {
+      "nthreads_parse_sort": 4,
+      "nthreads_merge": 4
+    },
+    "cwl_version": "v1",
+    "cwl_child_filenames": [
+      "pairsam-parse-sort.cwl",
+      "pairsam-merge.cwl",
+      "pairsam-markasdup.cwl",
+      "pairsam-filter.cwl",
+      "addfragtopairs.cwl"
+    ],
+    "output_target": {
+      "filtered_pairs": "hicprocessingbam_test.out2.pairs.gz",
+      "annotated_bam": "hicprocessingbam_test.out2.bam"
+    },
+    "secondary_output_target": {
+      "filtered_pairs": "hicprocessingbam_test.out2.pairs.gz.px2"
+    },
+    "cwl_main_filename": "hi-c-processing-bam.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-output",
+    "app_version": "v43",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/docker-4dn-hic/v43/cwl/",
+    "input_files": {
+      "chromsize": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "bd0784a5-2a3d-42f0-ba9c-d9b3dc0539c6/4DNFI3UBJ3HZ.chrom.sizes"
+      },
+      "input_bams": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "object_key": [
+            "79240c57-4f41-400e-b898-fb1946919edb/4DNFIOVQA96M.bam",
+            "9709d089-9d99-4ca1-a74e-563fb3c3edad/4DNFI3Q6XNFA.bam",
+            "3f30bad1-3b6b-454a-8afd-60260b14e192/4DNFI8QWWEJF.bam",
+            "9a0782d0-749d-4de1-9579-64e28d3f958b/4DNFIJVPVJB5.bam",
+            "890eebe5-8d74-4ffd-be61-79d2f5b92a32/4DNFIRRHXNE6.bam",
+            "a4a302d0-4235-4a2a-bd23-5661c091c258/4DNFIDH9KLH8.bam",
+            "cfde423a-0e30-4b16-a416-9c1255c8be09/4DNFITXS2N4G.bam",
+            "647abf69-f984-41d8-9e6e-4ee078b4a012/4DNFIL7WH6SP.bam"
+        ]
+      }
+    }
+  },
+  "config": {
+    "ebs_size": 200,
+    "ebs_type": "io1",
+    "EBS_optimized": true,
+    "ebs_iops": 500,
+    "shutdown_min": "now",
+    "instance_type": "m5a.xlarge",
+    "spot_instance": true,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode"
+  }
+}

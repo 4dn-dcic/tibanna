@@ -356,13 +356,19 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
     print("setting up tibanna usergroup environment on AWS...")
+    if not AWS_ACCOUNT_NUMBER or not AWS_REGION:
+        print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+        exit(1)
     if not buckets:
         print("WARNING: Without setting buckets (using --buckets)," +
               "Tibanna would have access to only public buckets." +
               "To give permission to Tibanna for private buckets," +
               "use --buckets=<bucket1>,<bucket2>,...")
         time.sleep(2)
-    bucket_names = buckets.split(',')
+    if buckets:
+        bucket_names = buckets.split(',')
+    else:
+        bucket_names = None
     tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                usergroup_tag, AWS_REGION, no_randomize=no_randomize,
                                                verbose=verbose)
@@ -385,12 +391,11 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     # this function will remove existing step function on a conflict
     res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
-    print(res.get('stateMachineArn').split(':'))
     step_function_name = res.get('stateMachineArn').split(':')[6]
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
-            outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=" + step_function_name)
+            outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
@@ -485,8 +490,8 @@ def count_status(sfn_arn, client):
 
 @task
 def rerun(ctx, exec_arn, sfn='tibanna_pony',
-          instance_type=None, shutdown_min=None, ebs_size=None,
-          overwrite_input_extra=None, key_name=None):
+          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+          overwrite_input_extra=None, key_name=None, name=None):
     """ rerun a specific job"""
     override_config = dict()
     if instance_type:
@@ -494,18 +499,24 @@ def rerun(ctx, exec_arn, sfn='tibanna_pony',
     if shutdown_min:
         override_config['shutdown_min'] = shutdown_min
     if ebs_size:
-        override_config['ebs_size'] = ebs_size
+        override_config['ebs_size'] = int(ebs_size)
     if overwrite_input_extra:
         override_config['overwrite_input_extra'] = overwrite_input_extra
     if key_name:
         override_config['key_name'] = key_name
-    _rerun(exec_arn, sfn=sfn, override_config=override_config)
+    if ebs_type:
+        override_config['ebs_type'] = ebs_type
+        if ebs_type == 'gp2':
+            override_config['ebs_iops'] = ''
+    if ebs_iops:
+        override_config['ebs_iops'] = ebs_iops
+    _rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
 
 
 @task
-def log(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
+def log(ctx, exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
     """print execution log or postrun json (-p) for a job"""
-    print(_log(exec_arn, job_id, sfn, p))
+    print(_log(exec_arn, job_id, exec_name, sfn, p))
 
 
 @task
