@@ -4,4 +4,4 @@
 
 ***
 
-### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**Preprint on BioRxiv**](https://www.biorxiv.org/content/early/2018/10/11/440974) 
+### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi-org.ezp-prod1.hul.harvard.edu/10.1093/bioinformatics/btz379)
