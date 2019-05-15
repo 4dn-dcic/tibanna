@@ -5,3 +5,5 @@
 ***
 
 ### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi-org.ezp-prod1.hul.harvard.edu/10.1093/bioinformatics/btz379)
+
+#### Python2.7 support is depricated now! Please switch to Python3.6!
