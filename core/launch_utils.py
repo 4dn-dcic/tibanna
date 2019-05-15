@@ -60,7 +60,7 @@ def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, override_config=None
 
     # override config
     if override_config:
-        for k, v in override_config.iteritems():
+        for k, v in iter(override_config.items()):
             awsem_template['config'][k] = v
 
     return(_run_workflow(awsem_template, sfn=sfn))

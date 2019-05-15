@@ -21,8 +21,6 @@ from core.fastqc_utils import parse_qc_table
 import requests
 import json
 
-s3 = boto3.resource('s3')
-
 
 def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):
     return None
@@ -213,8 +211,8 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
             jsondata0 = [json.loads(awsemfile.s3.read_s3(_)) for _ in datajson_key]
             for d in jsondata0:
                 jsondata.update(d)
-        filedata = [awsemfile.s3.read_s3(_) for _ in datafiles]
-        reportdata = awsemfile.s3.read_s3(report_html)
+        filedata = [awsemfile.s3.read_s3(_).decode('utf-8') for _ in datafiles]
+        reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8')
         report_html = accession + 'qc_report.html'
         awsemfile.s3.s3_put(reportdata, report_html, acl='public-read')
         qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
@@ -439,7 +437,7 @@ def md5_updater(status, awsemfile, ff_meta, tibanna, **kwargs):
                                           add_on='frame=object',
                                           check_queue=True)
     if status.lower() == 'uploaded':  # md5 report file is uploaded
-        md5, content_md5 = parse_md5_report(awsemfile.read())
+        md5, content_md5 = parse_md5_report(awsemfile.read().decode('utf-8'))
         # add file size to input file metadata
         input_file = awsemfile.runner.input_files()[0]
         file_size = boto3.client('s3').head_object(Bucket=input_file.bucket,

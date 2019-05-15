@@ -149,13 +149,13 @@ def create_json_dict(input_dict):
                         }})
 
     # fill in input_files (restructured)
-    for item, value in a['input_files'].iteritems():
+    for item, value in iter(a['input_files'].items()):
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                          'dir': value.get('bucket_name'),
                                                          'path': value.get('object_key'),
                                                          'rename': value.get('rename'),
                                                          'profile': value.get('profile', '')}
-    for item, value in a.get('secondary_files', {}).iteritems():
+    for item, value in iter(a.get('secondary_files', {}).items()):
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
@@ -172,38 +172,28 @@ def create_json_dict(input_dict):
 
 
 def create_json(input_dict):
-    json_dir = input_dict.get('config').get('json_dir')
     json_bucket = input_dict.get('config').get('json_bucket')
     pre = create_json_dict(input_dict)
     jobid = pre['Job']['JOBID']
-    # writing to a json file
-    json_filename = create_json_filename(jobid, json_dir)
-    try:
-        os.stat(json_dir)
-    except:
-        os.makedirs(json_dir)
-
-    # write to new json file
-    with open(json_filename, 'w') as json_new_f:
-        json.dump(pre, json_new_f, indent=4, sort_keys=True)
+    jsonbody = json.dumps(pre, indent=4, sort_keys=True)
+    jsonkey = jobid + '.run.json'
 
     # Keep log of the final json
-    logger.info(str(pre))
+    logger.info("jsonbody=\n" + jsonbody)
 
     # copy the json file to the s3 bucket
     logger.info(json_bucket)
+    logger.info(os.environ)
 
     if json_bucket:
-        runjson_file = "{jobid}.run.json".format(jobid=jobid)
         try:
             s3 = boto3.client('s3')
         except Exception:
-            raise Exception("boto3 client error: Failed to upload run.json file {} to s3".format(runjson_file))
+            raise Exception("boto3 client error: Failed to connect to s3")
         try:
-            s3.upload_file(json_dir + '/' + runjson_file, json_bucket, runjson_file)
-        except Exception as e:
-            raise Exception("file upload error: Failed to upload run.json file {} to s3 %s"
-                            .format(runjson_file) % e)
+            res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=json_bucket, Key=jsonkey)
+        except Exception:
+            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
 
     # print & retur JOBID
     print("jobid={}".format(jobid))
@@ -462,7 +452,7 @@ def update_config(cfg, app_name, input_files, parameters):
         pass
     else:
         input_size_in_bytes = dict()
-        for argname, f in input_files.iteritems():
+        for argname, f in iter(input_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
                 size = flatten(run_on_nested_arrays1(f['object_key'],

@@ -10,7 +10,7 @@ from core.pony_utils import (
     create_ffmeta_input_files_from_pony_input_file_list
 )
 import pytest
-from conftest import valid_env
+from tests.core.pony.conftest import valid_env
 from ..unicorn.test_utils import awsem_error_fun
 from core.utils import printlog
 import mock

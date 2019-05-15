@@ -1,4 +1,3 @@
-from __future__ import print_function
 import json
 import os
 import sys
@@ -117,7 +116,7 @@ class WorkflowRunMetadata(object):
             self.submitted_by = submitted_by
 
         if extra_meta:
-            for k, v in extra_meta.iteritems():
+            for k, v in iter(extra_meta.items()):
                 self.__dict__[k] = v
 
     def append_outputfile(self, outjson):
@@ -474,7 +473,7 @@ class Awsem(object):
 
     def output_files(self):
         files = []
-        for argname, key in self.args.get('output_target').iteritems():
+        for argname, key in iter(self.args.get('output_target').items()):
             md5, filesize = self.get_md5_filesize_from_output_info(argname)
             wff = AwsemFile(self.output_s3, key, self,
                             argument_type=self.output_type(argname),
@@ -501,7 +500,7 @@ class Awsem(object):
 
     def secondary_output_files(self):
         files = []
-        for argname, keylist in self.args.get('secondary_output_target').iteritems():
+        for argname, keylist in iter(self.args.get('secondary_output_target').items()):
             if not isinstance(keylist, list):
                 keylist = [keylist]
             for key in keylist:
@@ -517,7 +516,7 @@ class Awsem(object):
 
     def input_files(self):
         files = []
-        for arg_name, item in self.args.get('input_files').iteritems():
+        for arg_name, item in iter(self.args.get('input_files').items()):
             wff = AwsemFile(item.get('bucket_name'),
                             item.get('object_key'),
                             self,
@@ -692,7 +691,7 @@ def post_random_file(bucket, ff_key,
     upload_key = uuid + '/' + accession + '.' + file_extension
     tmpfilename = 'alsjekvjf'
     with gzip.open(tmpfilename, 'wb') as f:
-        f.write(uuid)
+        f.write(uuid.encode('utf-8'))
     s3 = boto3.resource('s3')
     s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
 
