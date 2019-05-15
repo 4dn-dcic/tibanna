@@ -1,4 +1,4 @@
-python-lambda-4dn==0.11.0
+python-lambda-4dn==0.11.1
 dcicutils==0.6.0
 Benchmark-4dn==0.5.2
 # for tasks.py
