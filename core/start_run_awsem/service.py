@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # import json
+import os
 import boto3
 import json
 from dcicutils import ff_utils
@@ -22,8 +23,6 @@ from core.nnested_array import (
     combine_two
 )
 import random
-
-s3 = boto3.resource('s3')
 
 
 def metadata_only(event):
@@ -49,13 +48,15 @@ def real_handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
+    printlog(os.environ)
     # keep the input json on s3
     logbucket = event.get('config', {}).get('log_bucket', '')
     jobid = event.get('jobid', '')
     if logbucket and jobid:
-        boto3.client('s3').put_object(Body=json.dumps(event, indent=4).encode('ascii'),
-                                      Key=jobid + '.input.json',
-                                      Bucket=logbucket)
+        s3 = boto3.client('s3')
+        s3.put_object(Body=json.dumps(event, indent=4).encode('ascii'),
+                      Key=jobid + '.input.json',
+                      Bucket=logbucket)
 
     # get incomming data
     input_file_list = event.get('input_files')

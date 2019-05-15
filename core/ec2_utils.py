@@ -183,6 +183,7 @@ def create_json(input_dict):
 
     # copy the json file to the s3 bucket
     logger.info(json_bucket)
+    logger.info(os.environ)
 
     if json_bucket:
         try:

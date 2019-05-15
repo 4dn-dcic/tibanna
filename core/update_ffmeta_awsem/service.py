@@ -21,8 +21,6 @@ from core.fastqc_utils import parse_qc_table
 import requests
 import json
 
-s3 = boto3.resource('s3')
-
 
 def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):
     return None
