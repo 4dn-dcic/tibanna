@@ -115,7 +115,7 @@ def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
     assert(res)
 
     # did we set additional fields correctly
-    for k, v in wfr_meta.iteritems():
+    for k, v in iter(wfr_meta.items()):
         assert res['ff_meta'][k] == v
 
     # just to be extra safe, also check pfmeta

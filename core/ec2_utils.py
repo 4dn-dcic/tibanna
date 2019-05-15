@@ -149,13 +149,13 @@ def create_json_dict(input_dict):
                         }})
 
     # fill in input_files (restructured)
-    for item, value in a['input_files'].iteritems():
+    for item, value in iter(a['input_files'].items()):
         pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                          'dir': value.get('bucket_name'),
                                                          'path': value.get('object_key'),
                                                          'rename': value.get('rename'),
                                                          'profile': value.get('profile', '')}
-    for item, value in a.get('secondary_files', {}).iteritems():
+    for item, value in iter(a.get('secondary_files', {}).items()):
         pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
@@ -462,7 +462,7 @@ def update_config(cfg, app_name, input_files, parameters):
         pass
     else:
         input_size_in_bytes = dict()
-        for argname, f in input_files.iteritems():
+        for argname, f in iter(input_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
                 size = flatten(run_on_nested_arrays1(f['object_key'],
