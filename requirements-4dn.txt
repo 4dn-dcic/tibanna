@@ -1,6 +1,6 @@
-python-lambda-4dn==0.10.2
+python-lambda-4dn==0.11.0
 dcicutils==0.6.0
--e "git+https://github.com/SooLee/Benchmark.git#egg=Benchmark"
+Benchmark-4dn==0.5.2
 # for tasks.py
 invoke==0.18.1
 # syntax checker
