@@ -17,7 +17,11 @@ Version updates
   **May 15, 2019** The latest version is now 0.7.0_.
 
     - Now works with **Python3.6** (2.7 is deprecated!)
-
+    - newly introduced issue with non-list secondary output target handling fixed
+    - fixed the issue with top command reporting from ec2 not working any more
+    - now the `run_workflow` function does not later the original input dictionary
+    - auto-terminates instance when CPU utilization is zero (inactivity) for an hour (mostly due to aws-related issue but could be others).
+    - The `rerun` function with a run name that contains a uuid at the end(to differentiate identical run names) now removes it from run_name before adding another uuid.
 
   **Mar 7, 2019** The latest version is now 0.6.1_.
 
@@ -169,7 +173,7 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
-
+.. _0.7.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.7.0
 .. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1
 .. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0
 .. _0.5.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.9
