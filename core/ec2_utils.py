@@ -188,8 +188,8 @@ def create_json(input_dict):
     if json_bucket:
         try:
             s3 = boto3.client('s3')
-        except Exception:
-            raise Exception("boto3 client error: Failed to connect to s3")
+        except Exception as e:
+            raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
         try:
             res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=json_bucket, Key=jsonkey)
         except Exception:
