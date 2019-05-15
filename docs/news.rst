@@ -5,12 +5,18 @@ News and updates
 Publication
 +++++++++++
 
+- **May 15, 2019**  Tibanna paper is out on Bioinformatics now! https://academic.oup.com/bioinformatics/advance-article-abstract/doi/10.1093/bioinformatics/btz379/5488124
 - **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
-- **Oct 11. 2018**  Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
+- **Oct 11. 2018**  Tibanna paper preprint is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 
 
 Version updates
 +++++++++++++++
+
+
+  **May 15, 2019** The latest version is now 0.7.0_.
+
+    - Now works with **Python3.6** (2.7 is deprecated!)
 
 
   **Mar 7, 2019** The latest version is now 0.6.1_.

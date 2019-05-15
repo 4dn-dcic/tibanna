@@ -1,4 +1,3 @@
-from __future__ import print_function
 from core.iam_utils import get_stepfunction_role_name
 import random
 import string
@@ -213,7 +212,8 @@ def randomize_run_name(run_name, sfn):
 
 # random string generator
 def randomword(length):
-    return ''.join(random.choice(string.lowercase+string.uppercase+string.digits) for i in range(length))
+    choices = string.ascii_lowercase + string.ascii_uppercase + string.digits
+    return ''.join(random.choice(choices) for i in range(length))
 
 
 def create_jobid():

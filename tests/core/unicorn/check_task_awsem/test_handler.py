@@ -95,7 +95,8 @@ def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
     s3.put_object(Body=b'', Key=job_success)
     postrunjson = "%s.postrun.json" % jobid
     verylongstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(50000))
-    s3.put_object(Body=b'{"test": "' + verylongstring + '", "Job": {"Output": {}}}', Key=postrunjson)
+    jsoncontent = '{"test": "' + verylongstring + '", "Job": {"Output": {}}}'
+    s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
     retval = service.handler(check_task_input_modified, '')
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})

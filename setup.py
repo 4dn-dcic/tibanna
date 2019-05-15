@@ -15,9 +15,8 @@ except:
 # full requirements for unicorn (does not require dcicutils)
 with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
+# to add packages installed from github, use `dependency_links` in setup
 setup_requires = [req.strip() for req in set_parsed if 'git+' not in req]
-# need to add packages specified in dependency_links
-setup_requires += ['Benchmark']
 
 # full requirements for pony and running tests (includes dcicutils)
 # with open('requirements-4dn.txt') as f:
@@ -43,8 +42,5 @@ setup(
             ],
     install_requires=setup_requires,
     include_package_data=True,
-    setup_requires=setup_requires,
-    dependency_links=[
-        'git+https://github.com/SooLee/Benchmark.git#egg=Benchmark'
-    ]
+    setup_requires=setup_requires
 )
