@@ -466,7 +466,8 @@ def create_stepfunction(dev_suffix=None,
                 raise(e)
         except Exception as e:
             raise(e)
-    return response
+        break
+    return sfn_name
 
 
 def check_dependency(exec_arn=None):

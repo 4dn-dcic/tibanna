@@ -390,13 +390,11 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     # this function will remove existing step function on a conflict
-    res = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
-    step_function_name = res.get('stateMachineArn').split(':')[6]
+    step_function_name = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
             outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
-    print(res)
     print("deploying lambdas...")
     if sfn_type == 'pony':
         deploy_core(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
