@@ -20,7 +20,7 @@ install:
 jobs:
   include:
   - stage: unit tests
-    python: '2.7'
+    python: '3.6'
     script:
     - if [ "$TRAVIS_BRANCH" != "doc" ]; then
       invoke test --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
@@ -32,7 +32,7 @@ jobs:
       invoke deploy_core all; fi
     - python-codacy-coverage -r coverage.xml
   - stage: version tests
-    python: '2.7'
+    python: '3.6'
     script:
     - echo "now ensure setup.py installs without version conflicts"
     - python setup.py install  # ensure that this works
