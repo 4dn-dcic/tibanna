@@ -1,4 +1,5 @@
 from lambdas.check_task_awsem import service
+from tibanna.utils import EC2StartingException, StillRunningException
 from ..conftest import valid_env
 import pytest
 import boto3
@@ -29,7 +30,7 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     check_task_input_modified['jobid'] = jobid
     job_started = "%s.job_started" % jobid
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
-    with pytest.raises(service.EC2StartingException) as excinfo:
+    with pytest.raises(EC2StartingException) as excinfo:
         service.handler(check_task_input_modified, '')
 
     assert 'Failed to find jobid' in str(excinfo.value)
@@ -54,7 +55,7 @@ def test_check_task_awsem_fails_if_job_error_found(check_task_input, s3):
 @valid_env
 @pytest.mark.webtest
 def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
-    with pytest.raises(service.StillRunningException) as excinfo:
+    with pytest.raises(StillRunningException) as excinfo:
         service.handler(check_task_input, '')
 
     assert 'still running' in str(excinfo.value)

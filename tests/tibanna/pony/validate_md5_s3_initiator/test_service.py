@@ -23,7 +23,7 @@ def test_s3_trigger_e2e(s3_trigger_event_data):
     s3_trigger_event_data['run_name'] = "testrun_%s" % datetime.now().strftime("%Y%m%d%H%M%S%f")
 
     # force this thing to not run, so I don't get the new workflow run
-    with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status') as uploading:
+    with mock.patch('lambdas.validate_md5_s3_initiator.service.get_status') as uploading:
         uploading.return_value = 'released'
         ret = validate_md5_s3_initiator(s3_trigger_event_data, None)
         assert ret
@@ -46,9 +46,9 @@ def test_s3_trigger_extra_to_be_uploaded_by_workflow(s3_trigger_event_data_pf_ex
     s3_trigger_event_data_pf_extra_status['run_name'] = "testrun_%s" % datetime.now().strftime("%Y%m%d%H%M%S%f")
 
     # force this thing to not run, so I don't get the new workflow run
-    with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status') as uploading:
+    with mock.patch('lambdas.validate_md5_s3_initiator.service.get_status') as uploading:
         uploading.return_value = 'released'
-        with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status_for_extra_file') as tobeuploadedbywf:
+        with mock.patch('lambdas.validate_md5_s3_initiator.service.get_status_for_extra_file') as tobeuploadedbywf:
             tobeuploadedbywf.return_value = 'to be uploaded by workflow'
             ret = validate_md5_s3_initiator(s3_trigger_event_data_pf_extra_status, None)
             assert ret
@@ -62,7 +62,7 @@ def test_s3_trigger_to_be_uploaded_by_workflow(s3_trigger_event_data_pf_extra_st
     s3_trigger_event_data_pf_extra_status['run_name'] = "testrun_%s" % datetime.now().strftime("%Y%m%d%H%M%S%f")
 
     # force this thing to not run, so I don't get the new workflow run
-    with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status') as uploading:
+    with mock.patch('lambdas.validate_md5_s3_initiator.service.get_status') as uploading:
         uploading.return_value = 'to be uploaded by workflow'
         ret = validate_md5_s3_initiator(s3_trigger_event_data_pf_extra_status, None)
         assert ret
