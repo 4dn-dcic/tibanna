@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from dcicutils import ff_utils
-from tibanna.pony_utils import (
+from tibanna_4dn.pony_utils import (
   FormatExtensionMap,
   get_extra_file_key,
   ProcessedFileMetadata,

@@ -4,8 +4,8 @@ from tibanna.utils import _tibanna_settings
 from tibanna.utils import run_workflow
 from tibanna.utils import serialize_startdate
 from tibanna.utils import TibannaStartException, FdnConnectionException
-from tibanna.pony_utils import TibannaSettings, FormatExtensionMap
-from tibanna.pony_utils import parse_formatstr
+from tibanna_4dn.pony_utils import TibannaSettings, FormatExtensionMap
+from tibanna_4dn.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
 from tibanna.utils import printlog
 

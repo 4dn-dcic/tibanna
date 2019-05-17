@@ -5,7 +5,7 @@ import json
 from dcicutils import ff_utils
 from tibanna.utils import TibannaStartException
 from tibanna.utils import printlog
-from tibanna.pony_utils import (
+from tibanna_4dn.pony_utils import (
     TibannaSettings,
     merge_source_experiments,
     create_ffmeta_awsem,
