@@ -226,7 +226,7 @@ def clean():
 
 
 @task
-def deploy_tibanna(ctx, name, tests=False, suffix=None, usergroup=None):
+def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     """deploy/update lambdas only"""
     print("preparing for deploy...")
     if tests:
@@ -397,9 +397,9 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
             outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_tibanna(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_tibanna(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
     return step_function_name
 
 

@@ -48,8 +48,8 @@ def test_s3_trigger_extra_to_be_uploaded_by_workflow(s3_trigger_event_data_pf_ex
     # force this thing to not run, so I don't get the new workflow run
     with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status') as uploading:
         uploading.return_value = 'released'
-        with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status_for_extra_file') as tobeuploadedbyworkflow:
-            tobeuploadedbyworkflow.return_value = 'to be uploaded by workflow'
+        with mock.patch('tibanna.validate_md5_s3_initiator.service.get_status_for_extra_file') as tobeuploadedbywf:
+            tobeuploadedbywf.return_value = 'to be uploaded by workflow'
             ret = validate_md5_s3_initiator(s3_trigger_event_data_pf_extra_status, None)
             assert ret
             assert ret['info'] == 'status for extra file is to be uploaded by workflow'

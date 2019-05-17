@@ -118,7 +118,7 @@ def add_postrun_json(postrunjsoncontent, input_json, limit):
         input_json['postrunjson'] = postrunjsoncontent
     else:
         input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit',
-                                'Job': {'Output':  postrunjsoncontent['Job']['Output']}}
+                                     'Job': {'Output':  postrunjsoncontent['Job']['Output']}}
 
 
 def update_postrun_json(postrunjsoncontent, instance_id, filesystem=None):

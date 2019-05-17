@@ -59,11 +59,11 @@ def run_task(input_json):
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
-    cfg = input_json.get(CONFIG_FIELD)
+    cfg = input_json_copy.get(CONFIG_FIELD)
     for k in CONFIG_KEYS:
         assert k in cfg, "%s not in config_field" % k
 
-    args = input_json.get(ARGS_FIELD)
+    args = input_json_copy.get(ARGS_FIELD)
     for k in ARGS_KEYS:
         assert k in args, "%s not in args field" % k
     if 'language' in args and args['language'] == 'wdl':
@@ -77,10 +77,10 @@ def run_task(input_json):
         check_dependency(**args['dependency'])
 
     # update input json to add various other info automatically
-    ec2_utils.auto_update_input_json(args, cfg)
+    ec2_utils.auto_update_input_json_copy(args, cfg)
 
     # create json and copy to s3
-    jobid = ec2_utils.create_json(input_json)
+    jobid = ec2_utils.create_json(input_json_copy)
 
     # profile
     if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
@@ -98,7 +98,7 @@ def run_task(input_json):
         instance_id = launch_instance_log['instance_id']
         ec2_utils.create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
 
-    if 'jobid' not in input_json:
-        input_json.update({'jobid': jobid})
-    input_json.update(launch_instance_log)
-    return(input_json)
+    if 'jobid' not in input_json_copy:
+        input_json_copy.update({'jobid': jobid})
+    input_json_copy.update(launch_instance_log)
+    return(input_json_copy)

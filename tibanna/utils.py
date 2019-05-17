@@ -439,10 +439,9 @@ def create_stepfunction(dev_suffix=None,
     # if this encouters an existing step function with the same name, delete
     sfn = boto3.client('stepfunctions', region_name=region_name)
     retries = 12  # wait 10 seconds between retries for total of 120s
-    response = None
     for i in range(retries):
         try:
-            response = sfn.create_state_machine(
+            sfn.create_state_machine(
                 name=sfn_name,
                 definition=json.dumps(definition, indent=4, sort_keys=True),
                 roleArn=sfn_role_arn
@@ -456,7 +455,7 @@ def create_stepfunction(dev_suffix=None,
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
             print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
             try:
-                response = sfn.update_state_machine(
+                sfn.update_state_machine(
                     stateMachineArn=sfn_arn,
                     definition=json.dumps(definition, indent=4, sort_keys=True),
                     roleArn=sfn_role_arn
@@ -629,4 +628,3 @@ def read_s3(bucket, object_name):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
     printlog(str(response))
     return response['Body'].read()
-
