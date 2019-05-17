@@ -28,7 +28,7 @@ setup(
     name='tibanna',
     version=open("tibanna/_version.py").readlines()[-1].split()[-1].strip("\"'"),
     description='tibanna functionality for lambda',
-    packages=['tibanna', 'lambdas'],
+    packages=['tibanna', 'lambdas', 'tibanna_4dn'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu',
