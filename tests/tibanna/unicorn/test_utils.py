@@ -1,4 +1,4 @@
-from core.utils import (
+from tibanna.utils import (
     powerup,
     StillRunningException,
     AWSEMJobErrorException,

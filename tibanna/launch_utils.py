@@ -1,7 +1,7 @@
 import boto3
 import json
-from core.utils import run_workflow as _run_workflow
-from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
+from tibanna.utils import run_workflow as _run_workflow
+from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
 from datetime import datetime
 import time
 import os
@@ -13,7 +13,7 @@ import os
 
 
 def prep_awsem_template(filename, webprod=False, tag=None):
-    Tibanna_dir = os.path.dirname(os.path.realpath(__file__)).replace('/core', '')
+    Tibanna_dir = os.path.dirname(os.path.realpath(__file__)).replace('/tibanna', '')
     template = Tibanna_dir + '/test_json/' + filename
     with open(template, 'r') as f:
         awsem_template = json.load(f)

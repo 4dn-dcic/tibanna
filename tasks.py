@@ -8,21 +8,21 @@ from invoke import task, run
 import boto3
 import contextlib
 import shutil
-# from botocore.errorfactory import ExecutionAlreadyExists
-from core.ec2_utils import AWS_S3_ROLE_NAME
-from core.utils import create_jobid
-from core.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
-from core.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
-from core.utils import run_workflow as _run_workflow
-from core.utils import create_stepfunction as _create_stepfunction
-from core.utils import _tibanna
-from core.launch_utils import rerun as _rerun
-from core.launch_utils import rerun_many as _rerun_many
-from core.utils import kill as _kill
-from core.utils import log as _log
-from core.utils import kill_all as _kill_all
-from core.iam_utils import create_tibanna_iam
-from core.iam_utils import get_ec2_role_name, get_lambda_role_name
+# from bototibanna.errorfactory import ExecutionAlreadyExists
+from tibanna.ec2_utils import AWS_S3_ROLE_NAME
+from tibanna.utils import create_jobid
+from tibanna.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
+from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
+from tibanna.utils import run_workflow as _run_workflow
+from tibanna.utils import create_stepfunction as _create_stepfunction
+from tibanna.utils import _tibanna
+from tibanna.launch_utils import rerun as _rerun
+from tibanna.launch_utils import rerun_many as _rerun_many
+from tibanna.utils import kill as _kill
+from tibanna.utils import log as _log
+from tibanna.utils import kill_all as _kill_all
+from tibanna.iam_utils import create_tibanna_iam
+from tibanna.iam_utils import get_ec2_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
 import requests
@@ -72,7 +72,7 @@ def setenv(**kwargs):
             del os.environ[k]
 
 
-def get_all_core_lambdas():
+def get_all_tibanna_lambdas():
     return [
         'validate_md5_s3_trigger',
         'validate_md5_s3_initiator',
@@ -197,10 +197,10 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
         args.append(ignore)
     if ignore_pony:
         args.append('--ignore')
-        args.append('tests/core/pony')
+        args.append('tests/tibanna/pony')
     if ignore_webdev:
         args.append('--ignore')
-        args.append('tests/core/pony/test_webdev.py')
+        args.append('tests/tibanna/pony/test_webdev.py')
     retcode = pytest.main(args)
     try:
         good = True if retcode == 0 else False
@@ -226,7 +226,7 @@ def clean():
 
 
 @task
-def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
+def deploy_tibanna(ctx, name, tests=False, suffix=None, usergroup=None):
     """deploy/update lambdas only"""
     print("preparing for deploy...")
     if tests:
@@ -237,7 +237,7 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     else:
         print("skipping tests. execute with --tests flag to run them")
     if name == 'all':
-        names = get_all_core_lambdas()
+        names = get_all_tibanna_lambdas()
 
     elif name == 'unicorn':
         names = UNICORN_LAMBDAS
@@ -246,14 +246,14 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     print('deploying the following lambdas: %s' % names)
 
     # dist directores are the enemy, clean them all
-    for name in get_all_core_lambdas():
+    for name in get_all_tibanna_lambdas():
         print("cleaning house before deploying")
-        with chdir("./core/%s" % (name)):
+        with chdir("./tibanna/%s" % (name)):
             clean()
 
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
-        with chdir("./core/%s" % (name)):
+        with chdir("./tibanna/%s" % (name)):
             print("clean up previous builds.")
             clean()
             print("building lambda package")
@@ -397,9 +397,9 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
             outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_core(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_tibanna(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_core(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_tibanna(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
     return step_function_name
 
 

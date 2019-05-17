@@ -1,4 +1,4 @@
-from core.ec2_utils import update_config
+from tibanna.ec2_utils import update_config
 
 
 def test_update_config(run_task_awsem_event_data):

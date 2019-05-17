@@ -50,7 +50,7 @@ def get_test_json(file_name):
 
 def get_event_file_for(lambda_name, sbg_keys=None, event_file='event.json'):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    event_file_name = os.path.join(dir_path, '..', '..', '..', 'core', lambda_name, event_file)
+    event_file_name = os.path.join(dir_path, '..', '..', '..', 'tibanna', lambda_name, event_file)
     return read_event_file(event_file_name, sbg_keys)
 
 

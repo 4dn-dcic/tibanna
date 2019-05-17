@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from core import utils
+from tibanna import utils
 
 
 def handler(event, context):

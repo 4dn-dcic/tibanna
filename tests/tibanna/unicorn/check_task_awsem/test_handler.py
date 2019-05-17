@@ -1,4 +1,4 @@
-from core.check_task_awsem import service
+from tibanna.check_task_awsem import service
 from ..conftest import valid_env
 import pytest
 import boto3

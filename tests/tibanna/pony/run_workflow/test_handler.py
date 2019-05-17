@@ -1,5 +1,5 @@
 import pytest
-from core.run_workflow import service
+from tibanna.run_workflow import service
 from ..conftest import valid_env
 import mock
 
@@ -71,7 +71,7 @@ def run_workflow_input():
 @valid_env
 @pytest.mark.webtest
 def test_run_workflow(run_workflow_input):
-    with mock.patch('core.utils.run_workflow') as mock_run:
+    with mock.patch('tibanna.utils.run_workflow') as mock_run:
         res = service.handler(run_workflow_input, '')
         env = run_workflow_input['env_name']
         mock_run.assert_called_once_with(run_workflow_input, env=env)

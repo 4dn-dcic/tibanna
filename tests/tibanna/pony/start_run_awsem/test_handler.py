@@ -1,5 +1,5 @@
 import pytest
-from core.start_run_awsem.service import (
+from tibanna.start_run_awsem.service import (
     handler,
     real_handler,
     create_wfr_output_files_and_processed_files,
@@ -11,7 +11,7 @@ from core.start_run_awsem.service import (
     run_on_nested_arrays2
 )
 from ..conftest import valid_env
-from core.pony_utils import Tibanna, ProcessedFileMetadata
+from tibanna.pony_utils import Tibanna, ProcessedFileMetadata
 from dcicutils import ff_utils
 import mock
 import time
@@ -20,7 +20,7 @@ import time
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler(run_awsem_event_data):
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+    with mock.patch('tibanna.pony_utils.post_metadata') as mock_request:
         res = handler(run_awsem_event_data, '')
         assert mock_request.call_count == 1  # one for wfr, no pf
     assert(res)
@@ -34,7 +34,7 @@ def test_start_awsem_handler(run_awsem_event_data):
 @valid_env
 @pytest.mark.webtest
 def test_start_awsem_handler_processed_files_pf(run_awsem_event_data_processed_files):
-    with mock.patch('core.pony_utils.ProcessedFileMetadata.post') as mock_request:
+    with mock.patch('tibanna.pony_utils.ProcessedFileMetadata.post') as mock_request:
         res = handler(run_awsem_event_data_processed_files, '')
         assert mock_request.call_count == 1  # one pf (bam).
     assert(res)
@@ -79,7 +79,7 @@ def test_user_supplied_proc_file(run_awsem_event_data_processed_files, proc_file
 
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('core.pony_utils.get_metadata', return_value=file_with_type):
+    with mock.patch('tibanna.pony_utils.get_metadata', return_value=file_with_type):
         pf, _ = user_supplied_proc_file(of, 'output_file1', tibanna)
         assert type(pf) == ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
@@ -87,7 +87,7 @@ def test_user_supplied_proc_file(run_awsem_event_data_processed_files, proc_file
 
 @pytest.mark.webtest
 def test_pseudo_run(run_task_awsem_pseudo_workflow_event_data):
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+    with mock.patch('tibanna.pony_utils.post_metadata') as mock_request:
         res = handler(run_task_awsem_pseudo_workflow_event_data, '')
         mock_request.assert_called_once()
     assert(res)
@@ -109,7 +109,7 @@ def test_pseudo_run_add_extra_meta(run_task_awsem_pseudo_workflow_event_data):
                 }
 
     run_task_awsem_pseudo_workflow_event_data['wfr_meta'] = wfr_meta
-    with mock.patch('core.pony_utils.post_metadata') as mock_request:
+    with mock.patch('tibanna.pony_utils.post_metadata') as mock_request:
         res = handler(run_task_awsem_pseudo_workflow_event_data, '')
         mock_request.assert_called_once()
     assert(res)

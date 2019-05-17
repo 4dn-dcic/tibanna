@@ -1,4 +1,4 @@
-from core.pony_utils import (
+from tibanna.pony_utils import (
     Tibanna,
     WorkflowRunMetadata,
     ensure_list,
@@ -10,9 +10,9 @@ from core.pony_utils import (
     create_ffmeta_input_files_from_pony_input_file_list
 )
 import pytest
-from tests.core.pony.conftest import valid_env
+from tests.tibanna.pony.conftest import valid_env
 from ..unicorn.test_utils import awsem_error_fun
-from core.utils import printlog
+from tibanna.utils import printlog
 import mock
 
 
@@ -186,7 +186,7 @@ def proc_file_in_webdev():
 
 def test_create_ProcessedFileMetadata_from_get_error_if_no_at_type(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
-    with mock.patch('core.pony_utils.get_metadata', return_value=proc_file_in_webdev):
+    with mock.patch('tibanna.pony_utils.get_metadata', return_value=proc_file_in_webdev):
         with pytest.raises(Exception) as expinfo:
             ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert "only load ProcessedFiles" in str(expinfo.value)
@@ -196,7 +196,7 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     # can use acc, uuid, @id, any valid url
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
-    with mock.patch('core.pony_utils.get_metadata', return_value=file_with_type) as ff:
+    with mock.patch('tibanna.pony_utils.get_metadata', return_value=file_with_type) as ff:
         pf = ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
         assert pf.__dict__ == proc_file_in_webdev
         assert type(pf) is ProcessedFileMetadata

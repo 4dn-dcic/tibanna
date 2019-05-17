@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from core.utils import STEP_FUNCTION_ARN, AWS_REGION
-from core.utils import printlog
+from tibanna.utils import STEP_FUNCTION_ARN, AWS_REGION
+from tibanna.utils import printlog
 import boto3
 import json
 import uuid

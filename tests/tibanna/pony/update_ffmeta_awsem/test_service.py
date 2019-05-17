@@ -1,4 +1,4 @@
-from core.update_ffmeta_awsem.service import (
+from tibanna.update_ffmeta_awsem.service import (
     handler,
     real_handler,
     get_postrunjson_url,
@@ -8,10 +8,10 @@ from core.update_ffmeta_awsem.service import (
     add_md5_filesize_to_pf_extra,
     _input_extra_updater,
 )
-from core.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
-from core.pony_utils import Tibanna
-from core.utils import printlog
-# from core.check_export_sbg.service import get_inputfile_accession
+from tibanna.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
+from tibanna.pony_utils import Tibanna
+from tibanna.utils import printlog
+# from tibanna.check_export_sbg.service import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
@@ -23,7 +23,7 @@ from dcicutils import ff_utils
 @pytest.mark.webtest
 def test_tmp(update_ffmeta_tmpdata, tibanna_env):
     update_ffmeta_tmpdata.update(tibanna_env)
-    with mock.patch('core.pony_utils.patch_metadata') as mock_request:
+    with mock.patch('tibanna.pony_utils.patch_metadata') as mock_request:
         ret = real_handler(update_ffmeta_tmpdata, None)
         mock_request.call_count == 3
     printlog(ret)
@@ -312,7 +312,7 @@ def test_update_ffmeta_awsem_extra_md5(update_ffmeta_hicbam, tibanna_env):
 @valid_env
 def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
     update_ffmeta_mcool.update(tibanna_env)
-    with mock.patch('core.pony_utils.patch_metadata'):
+    with mock.patch('tibanna.pony_utils.patch_metadata'):
         with mock.patch('requests.post') as mock_request:
             ret = handler(update_ffmeta_mcool, None)
             mock_request.assert_called_once()
@@ -323,7 +323,7 @@ def test_mcool_updates_fourfront_higlass(update_ffmeta_mcool, tibanna_env):
 @pytest.mark.webtest
 def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
     update_ffmeta_metaonly_data2.update(tibanna_env)
-    with mock.patch('core.pony_utils.patch_metadata') as mock_request:
+    with mock.patch('tibanna.pony_utils.patch_metadata') as mock_request:
         ret = handler(update_ffmeta_metaonly_data2, None)
         # once for patch pf once for workflow run
         mock_request.call_count == 2
