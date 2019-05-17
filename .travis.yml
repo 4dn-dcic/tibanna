@@ -24,7 +24,6 @@ jobs:
     script:
     - if [ "$TRAVIS_BRANCH" != "doc" ]; then
       invoke test --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
-    - ./tests/awsf/test.sh
     after_success:
     - echo "finished running tests on repo"
     - echo " now deploy core lambda pacakges"
@@ -38,3 +37,9 @@ jobs:
     - python setup.py install  # ensure that this works
     after_success:
     - echo "versions do not conflict!"
+  - stage: awsf tests
+    python: '2.7'
+    script:
+    - ./tests/awsf/test.sh
+    after_success:
+    - echo "finished running awsf tests"
