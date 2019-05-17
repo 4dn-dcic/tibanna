@@ -1,6 +1,8 @@
 from lambdas.update_ffmeta_awsem.service import (
     handler,
-    real_handler,
+    real_handler
+)
+from tibanna_4dn.update_ffmeta import (
     get_postrunjson_url,
     register_to_higlass,
     md5_updater,
