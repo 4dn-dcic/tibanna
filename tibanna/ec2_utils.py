@@ -5,7 +5,7 @@ import time
 import os
 import logging
 # from invoke import run
-import bototibanna.session
+import botocore.session
 import boto3
 from Benchmark import run as B
 from tibanna.utils import printlog
@@ -291,7 +291,7 @@ def launch_instance(par, jobid, profile=None):
                                              par.get('behavior_on_capacity_limit', 'fail'))
 
     # get public IP for the instance (This may not happen immediately)
-    session = bototibanna.session.get_session()
+    session = botocore.session.get_session()
     x = session.create_client('ec2')
 
     try_again = True

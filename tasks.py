@@ -8,7 +8,7 @@ from invoke import task, run
 import boto3
 import contextlib
 import shutil
-# from bototibanna.errorfactory import ExecutionAlreadyExists
+# from botocore.errorfactory import ExecutionAlreadyExists
 from tibanna.ec2_utils import AWS_S3_ROLE_NAME
 from tibanna.utils import create_jobid
 from tibanna.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
