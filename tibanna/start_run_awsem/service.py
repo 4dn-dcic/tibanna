@@ -4,10 +4,10 @@ import os
 import boto3
 import json
 from dcicutils import ff_utils
-from core.utils import powerup
-from core.utils import TibannaStartException
-from core.utils import printlog
-from core.pony_utils import (
+from tibanna.utils import powerup
+from tibanna.utils import TibannaStartException
+from tibanna.utils import printlog
+from tibanna.pony_utils import (
     Tibanna,
     merge_source_experiments,
     create_ffmeta_awsem,
@@ -18,7 +18,7 @@ from core.pony_utils import (
     create_ffmeta_input_files_from_pony_input_file_list,
     parse_formatstr
 )
-from core.nnested_array import (
+from tibanna.nnested_array import (
     run_on_nested_arrays2,
     combine_two
 )

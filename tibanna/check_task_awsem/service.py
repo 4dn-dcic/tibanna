@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from core.utils import powerup
-from core.check_task import check_task
+from tibanna.utils import powerup
+from tibanna.check_task import check_task
 
 
 def metadata_only(event):

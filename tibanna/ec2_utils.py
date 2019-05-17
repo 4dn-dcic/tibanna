@@ -5,15 +5,15 @@ import time
 import os
 import logging
 # from invoke import run
-import botocore.session
+import bototibanna.session
 import boto3
 from Benchmark import run as B
-from core.utils import printlog
-from core.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
-from core.utils import create_jobid
-from core.utils import EC2LaunchException
-from core.utils import EC2InstanceLimitException, EC2InstanceLimitWaitException
-from core.nnested_array import flatten, run_on_nested_arrays1
+from tibanna.utils import printlog
+from tibanna.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
+from tibanna.utils import create_jobid
+from tibanna.utils import EC2LaunchException
+from tibanna.utils import EC2InstanceLimitException, EC2InstanceLimitWaitException
+from tibanna.nnested_array import flatten, run_on_nested_arrays1
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -291,7 +291,7 @@ def launch_instance(par, jobid, profile=None):
                                              par.get('behavior_on_capacity_limit', 'fail'))
 
     # get public IP for the instance (This may not happen immediately)
-    session = botocore.session.get_session()
+    session = bototibanna.session.get_session()
     x = session.create_client('ec2')
 
     try_again = True

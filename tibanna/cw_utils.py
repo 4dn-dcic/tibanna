@@ -1,5 +1,5 @@
 import boto3
-from core.utils import printlog
+from tibanna.utils import printlog
 # import pandas as pd
 # from datetime import datetime
 # from datetime import timezone

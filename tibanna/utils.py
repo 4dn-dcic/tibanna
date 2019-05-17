@@ -1,4 +1,4 @@
-from core.iam_utils import get_stepfunction_role_name
+from tibanna.iam_utils import get_stepfunction_role_name
 import random
 import string
 import logging

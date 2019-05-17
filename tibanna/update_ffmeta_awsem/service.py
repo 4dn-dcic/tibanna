@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from dcicutils import ff_utils
-from core.pony_utils import (
+from tibanna.pony_utils import (
   FormatExtensionMap,
   get_extra_file_key,
   ProcessedFileMetadata,
@@ -9,7 +9,7 @@ from core.pony_utils import (
   create_ffmeta_awsem,
   parse_formatstr
 )
-from core.utils import (
+from tibanna.utils import (
     powerup,
     printlog,
     TibannaStartException,
@@ -17,7 +17,7 @@ from core.utils import (
 )
 import boto3
 from collections import defaultdict
-from core.fastqc_utils import parse_qc_table
+from tibanna.fastqc_utils import parse_qc_table
 import requests
 import json
 

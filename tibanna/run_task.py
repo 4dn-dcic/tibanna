@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from core import ec2_utils
-from core.utils import check_dependency
+from tibanna import ec2_utils
+from tibanna.utils import check_dependency
 import os
 import copy
 

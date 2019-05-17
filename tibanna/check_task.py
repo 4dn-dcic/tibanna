@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import boto3
-from core.utils import (
+from tibanna.utils import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
@@ -10,11 +10,11 @@ from core.utils import (
     printlog
 )
 import json
-from core.ec2_utils import does_key_exist
-from core.cw_utils import TibannaResource
+from tibanna.ec2_utils import does_key_exist
+from tibanna.cw_utils import TibannaResource
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
-from core.utils import read_s3
+from tibanna.utils import read_s3
 import copy
 
 
