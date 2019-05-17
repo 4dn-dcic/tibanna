@@ -77,7 +77,7 @@ def run_task(input_json):
         check_dependency(**args['dependency'])
 
     # update input json to add various other info automatically
-    ec2_utils.auto_update_input_json_copy(args, cfg)
+    ec2_utils.auto_update_input_json(args, cfg)
 
     # create json and copy to s3
     jobid = ec2_utils.create_json(input_json_copy)

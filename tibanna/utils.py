@@ -43,12 +43,12 @@ def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
-    tibanna = {"run_id": str(uuid4()),
-               "env": env,
-               "url": '',
-               'run_type': 'generic',
-               'run_name': '',
-               }
+    tbn = {"run_id": str(uuid4()),
+           "env": env,
+           "url": '',
+           'run_type': 'generic',
+           'run_name': '',
+           }
     in_place = None
     if force_inplace:
         if not settings_patch.get(_tibanna):
@@ -56,20 +56,20 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
     if settings_patch:
         in_place = settings_patch.get(_tibanna, None)
         if in_place is not None:
-            tibanna.update(in_place)
+            tbn.update(in_place)
         else:
-            tibanna.update(settings_patch)
+            tbn.update(settings_patch)
 
     # generate run name
-    if not tibanna.get('run_name'):
+    if not tbn.get('run_name'):
         # aws doesn't like / in names
-        tibanna['run_name'] = "%s_%s" % (tibanna['run_type'].replace('/', '-'), tibanna['run_id'])
+        tbn['run_name'] = "%s_%s" % (tbn['run_type'].replace('/', '-'), tbn['run_id'])
 
     if in_place is not None:
-        settings_patch[_tibanna] = tibanna
+        settings_patch[_tibanna] = tbn
         return settings_patch
     else:
-        return {_tibanna: tibanna}
+        return {_tibanna: tbn}
 
 
 # logger

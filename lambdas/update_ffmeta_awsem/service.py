@@ -26,10 +26,10 @@ def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):
     return None
 
 
-def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, datatype):
+def register_to_higlass(tbn, awsemfile_bucket, awsemfile_key, filetype, datatype):
     payload = {"filepath": awsemfile_bucket + "/" + awsemfile_key,
                "filetype": filetype, "datatype": datatype}
-    higlass_keys = tibanna.s3.get_higlass_key()
+    higlass_keys = tbn.s3.get_higlass_key()
     if not isinstance(higlass_keys, dict):
         raise Exception("Bad higlass keys found: %s" % higlass_keys)
     auth = (higlass_keys['key'], higlass_keys['secret'])
@@ -41,9 +41,9 @@ def register_to_higlass(tibanna, awsemfile_bucket, awsemfile_key, filetype, data
     return res.json()['uuid']
 
 
-def add_higlass_to_pf(pf, tibanna, awsemfile):
+def add_higlass_to_pf(pf, tbn, awsemfile):
     def register_to_higlass_bucket(key, file_format, file_type):
-        return register_to_higlass(tibanna, awsemfile.bucket, key, file_format, file_type)
+        return register_to_higlass(tbn, awsemfile.bucket, key, file_format, file_type)
 
     if awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
         higlass_uid = None
@@ -59,14 +59,14 @@ def add_higlass_to_pf(pf, tibanna, awsemfile):
             if hasattr(pf, 'extra_files'):
                 for pfextra in pf.extra_files:
                     if pfextra.get('file_format') == 'bw':
-                        fe_map = FormatExtensionMap(tibanna.ff_keys)
+                        fe_map = FormatExtensionMap(tbn.ff_keys)
                         extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
                         higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
         elif pf.file_format == 'bed':
             if hasattr(pf, 'extra_files'):
                 for pfextra in pf.extra_files:
                     if pfextra.get('file_format') == 'beddb':
-                        fe_map = FormatExtensionMap(tibanna.ff_keys)
+                        fe_map = FormatExtensionMap(tbn.ff_keys)
                         extra_file_key = get_extra_file_key('bed', awsemfile.key, 'beddb', fe_map)
                         higlass_uid = register_to_higlass_bucket(extra_file_key, 'beddb', 'bedlike')
         pf.add_higlass_uid(higlass_uid)
@@ -95,9 +95,9 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
         printlog("add_md5_filesize_to_pf_extra: %s" % pf.extra_files)
 
 
-def qc_updater(status, awsemfile, ff_meta, tibanna, other_fields=None):
+def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
     if ff_meta.awsem_app_name == 'fastqc-0-11-4-1':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_fastqc',
                            file_argument='input_fastq',
                            report_html='fastqc_report.html',
@@ -106,67 +106,67 @@ def qc_updater(status, awsemfile, ff_meta, tibanna, other_fields=None):
     elif ff_meta.awsem_app_name == 'pairsqc-single':
         file_argument = 'input_pairs'
         input_accession = str(awsemfile.runner.get_file_accessions(file_argument)[0])
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric="quality_metric_pairsqc",
                            file_argument=file_argument, report_html='pairsqc_report.html',
                            datafiles=[input_accession + '.summary.out'],
                            other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'repliseq-parta':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_dedupqc_repliseq',
                            file_argument='filtered_sorted_deduped_bam',
                            datafiles=['summary.txt'],
                            other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'chip-seq-alignment':
         input_accession = str(awsemfile.runner.get_file_accessions('fastqs')[0])
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_flagstat_qc',
                            file_argument='bam',
                            datafiles=[input_accession + '.merged.trim_50bp.' + 'flagstat.qc'],
                            other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.peak_calls',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False,
                            other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-aln-chip':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.first_ta',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-aln-ctl':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.first_ta_ctl',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-chipseq-postaln':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_chipseq',
                            file_argument='chip.optimal_peak',
                            datajson_argument='chip.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.peak_calls',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq-aln':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.first_ta',
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
     elif ff_meta.awsem_app_name == 'encode-atacseq-postaln':
-        return _qc_updater(status, awsemfile, ff_meta, tibanna,
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_atacseq',
                            file_argument='atac.optimal_peak',
                            datajson_argument='atac.qc_json',
@@ -174,7 +174,7 @@ def qc_updater(status, awsemfile, ff_meta, tibanna, other_fields=None):
                            datafiles=[], zipped=False, other_fields=other_fields)
 
 
-def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_metric_fastqc',
+def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
                 datafiles=None, zipped=True, datajson_argument=None, other_fields=None):
     if datajson_argument == awsemfile.argument_name:
@@ -186,7 +186,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
         # wait until this bad boy is finished
         return
     # keys
-    ff_key = tibanna.ff_keys
+    ff_key = tbn.ff_keys
     # move files to proper s3 location
     # need to remove sbg from this line
     accession = awsemfile.runner.get_file_accessions(file_argument)[0]
@@ -201,7 +201,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
             files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
                                                 acl='public-read')
         except Exception as e:
-            printlog(tibanna.s3.__dict__)
+            printlog(tbn.s3.__dict__)
             raise Exception("%s (key={})\n".format(zipped_report) % e)
         printlog("files : %s" % str(files))
         filedata = [files[_]['data'] for _ in datafiles]
@@ -220,7 +220,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
-                                      ff_env=tibanna.env)
+                                      ff_env=tbn.env)
     # parse fastqc metadata
     if report_html in files:
         qc_url = files[report_html]['s3key']
@@ -245,7 +245,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     try:
         original_file = ff_utils.get_metadata(accession,
                                               key=ff_key,
-                                              ff_env=tibanna.env,
+                                              ff_env=tbn.env,
                                               add_on='frame=object',
                                               check_queue=True)
         printlog("original_file is %s" % original_file)
@@ -265,7 +265,7 @@ def _qc_updater(status, awsemfile, ff_meta, tibanna, quality_metric='quality_met
     return retval
 
 
-def input_extra_updater(status, awsemfile, ff_meta, tibanna):
+def input_extra_updater(status, awsemfile, ff_meta, tbn):
     if ff_meta.awsem_app_name == 'bedGraphToBigWig':
         file_argument = 'bgfile'
         file_format = 'bw'
@@ -278,19 +278,19 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
     # higlass
     if status == 'uploaded':
         if file_format == 'bw':
-            higlass_uid = register_to_higlass(tibanna,
+            higlass_uid = register_to_higlass(tbn,
                                               awsemfile.bucket,
                                               awsemfile.key,
                                               'bigwig',
                                               'vector')
         elif file_format == 'beddb':
-            higlass_uid = register_to_higlass(tibanna,
+            higlass_uid = register_to_higlass(tbn,
                                               awsemfile.bucket,
                                               awsemfile.key,
                                               'beddb',
                                               'bedlike')
         elif file_format == 'bed.multires.mv5':
-            higlass_uid = register_to_higlass(tibanna,
+            higlass_uid = register_to_higlass(tbn,
                                               awsemfile.bucket,
                                               awsemfile.key,
                                               'multivec',
@@ -299,17 +299,17 @@ def input_extra_updater(status, awsemfile, ff_meta, tibanna):
             higlass_uid = None
     # update metadata
     accession = awsemfile.runner.get_file_accessions(file_argument)[0]
-    _input_extra_updater(status, tibanna, accession, file_format,
+    _input_extra_updater(status, tbn, accession, file_format,
                          awsemfile.md5, awsemfile.filesize, higlass_uid)
     return None
 
 
-def _input_extra_updater(status, tibanna, accession, extra_file_format,
+def _input_extra_updater(status, tbn, accession, extra_file_format,
                          md5=None, filesize=None, higlass_uid=None):
     try:
         original_file = ff_utils.get_metadata(accession,
-                                              key=tibanna.ff_keys,
-                                              ff_env=tibanna.env,
+                                              key=tbn.ff_keys,
+                                              ff_env=tbn.env,
                                               add_on='frame=object',
                                               check_queue=True)
     except Exception as e:
@@ -332,7 +332,7 @@ def _input_extra_updater(status, tibanna, accession, extra_file_format,
         patch_file = {'extra_files': original_file['extra_files']}
         if higlass_uid:
             patch_file['higlass_uid'] = higlass_uid
-        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tibanna.ff_keys)
+        ff_utils.patch_metadata(patch_file, original_file['uuid'], key=tbn.ff_keys)
     except Exception as e:
         raise Exception("patch_metadata failed in extra_updater." + str(e) +
                         "original_file ={}\n".format(str(original_file)))
@@ -425,15 +425,15 @@ def parse_md5_report(read):
     return md5, content_md5
 
 
-def md5_updater(status, awsemfile, ff_meta, tibanna, **kwargs):
+def md5_updater(status, awsemfile, ff_meta, tbn, **kwargs):
     # get key
-    ff_key = tibanna.ff_keys
+    ff_key = tbn.ff_keys
     # get metadata about original input file
     accession = awsemfile.runner.get_file_accessions('input_file')[0]
     format_if_extras = awsemfile.runner.get_format_if_extras('input_file')
     original_file = ff_utils.get_metadata(accession,
                                           key=ff_key,
-                                          ff_env=tibanna.env,
+                                          ff_env=tbn.env,
                                           add_on='frame=object',
                                           check_queue=True)
     if status.lower() == 'uploaded':  # md5 report file is uploaded
@@ -469,7 +469,7 @@ def find_pf(pf_meta, accession):
     return None
 
 
-def update_processed_file(awsemfile, pf_meta, tibanna):
+def update_processed_file(awsemfile, pf_meta, tbn):
     if pf_meta:
         pf = find_pf(pf_meta, awsemfile.accession)
         if not pf:
@@ -481,7 +481,7 @@ def update_processed_file(awsemfile, pf_meta, tibanna):
                 raise Exception("failed to update processed file metadata %s" % e)
         else:
             try:
-                add_higlass_to_pf(pf, tibanna, awsemfile)
+                add_higlass_to_pf(pf, tbn, awsemfile)
             except Exception as e:
                 raise Exception("failed to regiter to higlass %s" % e)
             try:
@@ -490,7 +490,7 @@ def update_processed_file(awsemfile, pf_meta, tibanna):
                 raise Exception("failed to update processed file metadata %s" % e)
 
 
-def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna, custom_qc_fields=None):
+def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tbn, custom_qc_fields=None):
     patch_meta = False
     upload_key = awsemfile.key
     status = awsemfile.status
@@ -499,26 +499,26 @@ def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna, custom_qc_fields=N
         patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded',
                                                                awsemfile,
                                                                ff_meta,
-                                                               tibanna,
+                                                               tbn,
                                                                other_fields=custom_qc_fields)
     elif status in ['FAILED']:
         patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('upload failed',
                                                                awsemfile,
                                                                ff_meta,
-                                                               tibanna,
+                                                               tbn,
                                                                other_fields=custom_qc_fields)
         ff_meta.run_status = 'error'
-        ff_meta.patch(key=tibanna.ff_keys)
+        ff_meta.patch(key=tbn.ff_keys)
         raise Exception("Failed to export file %s" % (upload_key))
     return patch_meta
 
 
-def update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna):
+def update_pfmeta_from_awsemfile(awsemfile, pf_meta, tbn):
     status = awsemfile.status
     printlog("awsemfile res is %s" % status)
     if status == 'COMPLETED':
         if awsemfile.argument_type == 'Output processed file':
-            update_processed_file(awsemfile, pf_meta, tibanna)
+            update_processed_file(awsemfile, pf_meta, tbn)
 
 
 def metadata_only(event):
@@ -550,9 +550,9 @@ def real_handler(event, context):
     '''
     # get data
     # used to automatically determine the environment
-    tibanna_settings = event.get('_tibanna', {})
+    tbn_settings = event.get('_tibanna', {})
     try:
-        tibanna = Tibanna(tibanna_settings['env'], settings=tibanna_settings)
+        tbn = Tibanna(tbn_settings['env'], settings=tbn_settings)
     except Exception as e:
         raise TibannaStartException("%s" % e)
     ff_meta = create_ffmeta_awsem(
@@ -563,7 +563,7 @@ def real_handler(event, context):
     if event.get('error', False):
         ff_meta.run_status = 'error'
         ff_meta.description = event.get('error')
-        patch_res = ff_meta.patch(key=tibanna.ff_keys)
+        patch_res = ff_meta.patch(key=tbn.ff_keys)
         printlog("patch response: " + str(patch_res))
         # sending a notification email before throwing error
         if 'email' in event['config'] and event['config']['email']:
@@ -598,16 +598,16 @@ def real_handler(event, context):
     if len(awsem_output) != ff_output:
         ff_meta.run_status = 'error'
         ff_meta.description = "%d files output expected %s" % (ff_output, len(awsem_output))
-        ff_meta.patch(key=tibanna.ff_keys)
+        ff_meta.patch(key=tbn.ff_keys)
         raise Exception("Failing the workflow because outputed files = %d and ffmeta = %d" %
                         (awsem_output, ff_output))
 
     def update_metadata_from_awsemfile_list(awsemfile_list):
         patch_meta = False
         for awsemfile in awsemfile_list:
-            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tibanna, custom_qc_fields)
+            patch_meta = update_ffmeta_from_awsemfile(awsemfile, ff_meta, tbn, custom_qc_fields)
             if not metadata_only:
-                update_pfmeta_from_awsemfile(awsemfile, pf_meta, tibanna)
+                update_pfmeta_from_awsemfile(awsemfile, pf_meta, tbn)
         # allow for a simple way for updater to add appropriate meta_data
         if patch_meta:
             ff_meta.__dict__.update(patch_meta)
@@ -624,7 +624,7 @@ def real_handler(event, context):
     # make all the file awsemfile meta-data stuff here
     # TODO: fix bugs with ff_meta mapping for output and input file
     try:
-        ff_meta.patch(key=tibanna.ff_keys)
+        ff_meta.patch(key=tbn.ff_keys)
     except Exception as e:
         raise Exception("Failed to update run_status %s" % str(e))
     # patch processed files - update only status, extra_files, md5sum and file_size
@@ -633,7 +633,7 @@ def real_handler(event, context):
         try:
             for pf in pf_meta:
                 printlog(pf.as_dict())
-                pf.patch(key=tibanna.ff_keys, fields=patch_fields)
+                pf.patch(key=tbn.ff_keys, fields=patch_fields)
         except Exception as e:
             raise Exception("Failed to update processed metadata %s" % str(e))
 

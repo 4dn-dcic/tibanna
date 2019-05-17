@@ -248,12 +248,12 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     # dist directores are the enemy, clean them all
     for name in get_all_tibanna_lambdas():
         print("cleaning house before deploying")
-        with chdir("./tibanna/%s" % (name)):
+        with chdir("./lambdas/%s" % (name)):
             clean()
 
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
-        with chdir("./tibanna/%s" % (name)):
+        with chdir("./lambdas/%s" % (name)):
             print("clean up previous builds.")
             clean()
             print("building lambda package")

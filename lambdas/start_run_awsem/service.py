@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # import json
-import os
 import boto3
 import json
 from dcicutils import ff_utils
@@ -48,7 +47,6 @@ def real_handler(event, context):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
-    printlog(os.environ)
     # keep the input json on s3
     logbucket = event.get('config', {}).get('log_bucket', '')
     jobid = event.get('jobid', '')
@@ -77,9 +75,7 @@ def real_handler(event, context):
         env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
         printlog("Tibanna setting : env= " + env)
         # tibanna provides access to keys based on env and stuff like that
-        tibanna = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
-        printlog("Tibanna ff_keys url : " + tibanna.ff_keys['server'])
-        printlog("Tibanna.s3.url: " + tibanna.s3.url)
+        tbn = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
     except Exception as e:
         raise TibannaStartException("%s" % e)
 
@@ -87,8 +83,8 @@ def real_handler(event, context):
 
     # get argument format & type info from workflow
     wf_meta = ff_utils.get_metadata(workflow_uuid,
-                                    key=tibanna.ff_keys,
-                                    ff_env=tibanna.env,
+                                    key=tbn.ff_keys,
+                                    ff_env=tbn.env,
                                     add_on='frame=object')
     printlog("workflow info  %s" % wf_meta)
     if 'error' in wf_meta.get('@type', []):
@@ -116,7 +112,7 @@ def real_handler(event, context):
 
     # input file args for awsem
     for input_file in input_file_list:
-        process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
+        process_input_file_info(input_file, tbn.ff_keys, tbn.env, args)
 
     # create the ff_meta output info
     input_files_for_ffmeta = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
@@ -124,12 +120,12 @@ def real_handler(event, context):
     # source experiments
     input_file_uuids = [_['uuid'] for _ in input_file_list]
     pf_source_experiments = merge_source_experiments(input_file_uuids,
-                                                     tibanna.ff_keys,
-                                                     tibanna.env)
+                                                     tbn.ff_keys,
+                                                     tbn.env)
 
     # processed file metadata
     output_files, pf_meta = \
-        create_wfr_output_files_and_processed_files(wf_meta, tibanna,
+        create_wfr_output_files_and_processed_files(wf_meta, tbn,
                                                     pf_source_experiments,
                                                     custom_fields=event.get('custom_pf_fields'),
                                                     user_supplied_output_files=event.get('output_files'))
@@ -138,7 +134,7 @@ def real_handler(event, context):
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = create_ffmeta_awsem(
         workflow_uuid, args['app_name'], args['app_version'], input_files_for_ffmeta,
-        tag=tag, run_url=tibanna.settings.get('url', ''),
+        tag=tag, run_url=tbn.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=event.get('wfr_meta'), jobid=jobid
     )
@@ -146,7 +142,7 @@ def real_handler(event, context):
     printlog("ff_meta is %s" % ff_meta.__dict__)
 
     # store metadata so we know the run has started
-    ff_meta.post(key=tibanna.ff_keys)
+    ff_meta.post(key=tbn.ff_keys)
 
     # parameters
     args['input_parameters'] = event.get('parameters')
@@ -160,7 +156,7 @@ def real_handler(event, context):
             args['output_target'][arg_name] = of.get('upload_key')
         elif of.get('type') == 'Output to-be-extra-input file':
             target_inf = input_files_for_ffmeta[0]  # assume only one input for now
-            target_key = output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra)
+            target_key = output_target_for_input_extra(target_inf, of, tbn, overwrite_input_extra)
             args['output_target'][arg_name] = target_key
         else:
             random_tag = str(int(random.random() * 1000000000000))
@@ -196,7 +192,7 @@ def real_handler(event, context):
 
     event.update({"ff_meta": ff_meta.as_dict(),
                   'pf_meta': [meta.as_dict() for meta in pf_meta],
-                  "_tibanna": tibanna.as_dict(),
+                  "_tibanna": tbn.as_dict(),
                   "args": args
                   })
     return(event)
@@ -258,7 +254,7 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
                                         'object_key': extra_file_keys}})
 
 
-def user_supplied_proc_file(user_supplied_output_files, arg_name, tibanna):
+def user_supplied_proc_file(user_supplied_output_files, arg_name, tbn):
     if not user_supplied_output_files:
         raise Exception("user supplied processed files missing\n")
     of = [output for output in user_supplied_output_files if output.get('workflow_argument_name') == arg_name]
@@ -266,13 +262,13 @@ def user_supplied_proc_file(user_supplied_output_files, arg_name, tibanna):
         if len(of) > 1:
             raise Exception("multiple output files supplied with same workflow_argument_name")
         of = of[0]
-        return ProcessedFileMetadata.get(of.get('uuid'), tibanna.ff_keys,
-                                         tibanna.env, return_data=True)
+        return ProcessedFileMetadata.get(of.get('uuid'), tbn.ff_keys,
+                                         tbn.env, return_data=True)
     else:
         printlog("no output_files found in input_json matching arg_name")
         printlog("user_supplied_output_files: %s" % str(user_supplied_output_files))
         printlog("arg_name: %s" % str(arg_name))
-        printlog("tibanna is %s" % str(tibanna))
+        printlog("tibanna is %s" % str(tbn))
         raise Exception("user supplied processed files missing\n")
 
 
@@ -318,7 +314,7 @@ def create_wfr_outputfiles(arg, resp):
                                   resp.get('upload_key', None), resp.get('uuid', None), resp.get('extra_files', None))
 
 
-def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_experiments=None,
+def create_wfr_output_files_and_processed_files(wf_meta, tbn, pf_source_experiments=None,
                                                 custom_fields=None, user_supplied_output_files=None):
     output_files = []
     pf_meta = []
@@ -329,12 +325,12 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
             if user_supplied_output_files:
                 pf, resp = user_supplied_proc_file(user_supplied_output_files,
                                                    arg.get('workflow_argument_name'),
-                                                   tibanna)
+                                                   tbn)
                 printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
             else:
                 if arg.get('argument_type', '') == 'Output processed file':
                     argname = arg.get('workflow_argument_name')
-                    pf, resp = create_and_post_processed_file(tibanna.ff_keys,
+                    pf, resp = create_and_post_processed_file(tbn.ff_keys,
                                                               arg.get('argument_format', ''),
                                                               arg.get('secondary_file_formats', []),
                                                               pf_source_experiments,
@@ -350,12 +346,12 @@ def create_wfr_output_files_and_processed_files(wf_meta, tibanna, pf_source_expe
     return output_files, pf_meta
 
 
-def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra=False):
+def output_target_for_input_extra(target_inf, of, tbn, overwrite_input_extra=False):
     extrafileexists = False
     printlog("target_inf = %s" % str(target_inf))  # debugging
     target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
-                                            key=tibanna.ff_keys,
-                                            ff_env=tibanna.env,
+                                            key=tbn.ff_keys,
+                                            ff_env=tbn.env,
                                             add_on='frame=object',
                                             check_queue=True)
     target_format = parse_formatstr(of.get('format'))
@@ -377,15 +373,15 @@ def output_target_for_input_extra(target_inf, of, tibanna, overwrite_input_extra
         printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
         ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
                                 target_inf.get('value'),
-                                key=tibanna.ff_keys,
-                                ff_env=tibanna.env)
+                                key=tbn.ff_keys,
+                                ff_env=tbn.env)
         # target key
         # NOTE : The target bucket is assume to be the same as output bucket
         # i.e. the bucket for the input file should be the same as the output bucket.
         # which is true if both input and output are processed files.
         orgfile_key = target_inf_meta.get('upload_key')
         orgfile_format = parse_formatstr(target_inf_meta.get('file_format'))
-        fe_map = FormatExtensionMap(tibanna.ff_keys)
+        fe_map = FormatExtensionMap(tbn.ff_keys)
         printlog("orgfile_key = %s" % orgfile_key)
         printlog("orgfile_format = %s" % orgfile_format)
         printlog("target_format = %s" % target_format)

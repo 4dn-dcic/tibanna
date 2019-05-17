@@ -1,4 +1,4 @@
-from tibanna.update_ffmeta_awsem.service import (
+from lambdas.update_ffmeta_awsem.service import (
     handler,
     real_handler,
     get_postrunjson_url,

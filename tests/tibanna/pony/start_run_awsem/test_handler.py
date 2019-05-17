@@ -1,5 +1,5 @@
 import pytest
-from tibanna.start_run_awsem.service import (
+from lambdas.start_run_awsem.service import (
     handler,
     real_handler,
     create_wfr_output_files_and_processed_files,

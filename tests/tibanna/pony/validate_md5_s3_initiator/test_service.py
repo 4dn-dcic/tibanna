@@ -1,5 +1,5 @@
-from tibanna.validate_md5_s3_initiator.service import handler as validate_md5_s3_initiator
-from tibanna.validate_md5_s3_initiator.service import make_input, get_status_for_extra_file
+from lambdas.validate_md5_s3_initiator.service import handler as validate_md5_s3_initiator
+from lambdas.validate_md5_s3_initiator.service import make_input, get_status_for_extra_file
 # from tibanna.validate_md5_s3_initiator.service import STEP_FUNCTION_ARN
 import pytest
 from ..conftest import valid_env
