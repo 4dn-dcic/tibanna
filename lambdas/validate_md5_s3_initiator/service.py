@@ -4,7 +4,7 @@ from tibanna.utils import _tibanna_settings
 from tibanna.utils import run_workflow
 from tibanna.utils import serialize_startdate
 from tibanna.utils import TibannaStartException, FdnConnectionException
-from tibanna.pony_utils import Tibanna, FormatExtensionMap
+from tibanna.pony_utils import TibannaSettings, FormatExtensionMap
 from tibanna.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
 from tibanna.utils import printlog
@@ -86,12 +86,12 @@ def get_file_format(event):
     extension = object_key.replace(accession + '.', '')
 
     try:
-        tibanna = Tibanna(env=env)
+        tbn = TibannaSettings(env=env)
     except Exception as e:
         raise TibannaStartException("%s" % e)
-    file_format, extra_formats = get_fileformats_for_accession(accession, tibanna.ff_keys, env)
+    file_format, extra_formats = get_fileformats_for_accession(accession, tbn.ff_keys, env)
     if file_format:
-        fe_map = FormatExtensionMap(tibanna.ff_keys)
+        fe_map = FormatExtensionMap(tbn.ff_keys)
         printlog(fe_map)
         if extension == fe_map.get_extension(file_format):
             return (file_format, None)
@@ -124,12 +124,12 @@ def get_status_for_extra_file(event, extra_format):
     env = '-'.join(bucket.split('-')[1:3])
 
     try:
-        tibanna = Tibanna(env=env)
+        tbn = TibannaSettings(env=env)
     except Exception as e:
         raise TibannaStartException("%s" % e)
     try:
         meta = get_metadata(accession,
-                            key=tibanna.ff_keys,
+                            key=tbn.ff_keys,
                             ff_env=env,
                             add_on='frame=object',
                             check_queue=True)
@@ -156,12 +156,12 @@ def get_status(event):
     env = '-'.join(bucket.split('-')[1:3])
 
     try:
-        tibanna = Tibanna(env=env)
+        tbn = TibannaSettings(env=env)
     except Exception as e:
         raise TibannaStartException("%s" % e)
     try:
         meta = get_metadata(accession,
-                            key=tibanna.ff_keys,
+                            key=tbn.ff_keys,
                             ff_env=env,
                             add_on='frame=object',
                             check_queue=True)

@@ -11,7 +11,7 @@ from lambdas.start_run_awsem.service import (
     run_on_nested_arrays2
 )
 from ..conftest import valid_env
-from tibanna.pony_utils import Tibanna, ProcessedFileMetadata
+from tibanna.pony_utils import TibannaSettings, ProcessedFileMetadata
 from dcicutils import ff_utils
 import mock
 import time
@@ -74,13 +74,13 @@ def test_user_supplied_proc_file(run_awsem_event_data_processed_files, proc_file
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
-                      settings=tibanna_settings)
+    tbn = TibannaSettings(env, ff_keys=run_awsem_event_data_processed_files.get('ff_keys'),
+                          settings=tibanna_settings)
 
     file_with_type = proc_file_in_webdev.copy()
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
     with mock.patch('tibanna.pony_utils.get_metadata', return_value=file_with_type):
-        pf, _ = user_supplied_proc_file(of, 'output_file1', tibanna)
+        pf, _ = user_supplied_proc_file(of, 'output_file1', tbn)
         assert type(pf) == ProcessedFileMetadata
         assert pf.__dict__ == proc_file_in_webdev
 
@@ -150,12 +150,12 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
-                      settings=tibanna_settings)
+    tbn = TibannaSettings(env, ff_keys=data.get('ff_keys'),
+                          settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
-    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys, ff_env=tibanna.env, add_on='frame=object')
+    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tbn.ff_keys, ff_env=tbn.env, add_on='frame=object')
 
-    output_files, pf_meta = create_wfr_output_files_and_processed_files(wf_meta, tibanna)
+    output_files, pf_meta = create_wfr_output_files_and_processed_files(wf_meta, tbn)
     assert(output_files)
     assert len(output_files) == 3
     for of in output_files:
@@ -183,13 +183,13 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
-                      settings=tibanna_settings)
+    tbn = TibannaSettings(env, ff_keys=data.get('ff_keys'),
+                          settings=tibanna_settings)
     workflow_uuid = data['workflow_uuid']
-    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tibanna.ff_keys, ff_env=tibanna.env, add_on='frame=object')
+    wf_meta = ff_utils.get_metadata(workflow_uuid, key=tbn.ff_keys, ff_env=tbn.env, add_on='frame=object')
 
     output_files, pf_meta = create_wfr_output_files_and_processed_files(
-        wf_meta, tibanna, custom_fields=data.get('custom_pf_fields')
+        wf_meta, tbn, custom_fields=data.get('custom_pf_fields')
     )
     assert(pf_meta)
     assert(output_files)
@@ -215,9 +215,9 @@ def test_process_input_file_info(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
-                      settings=tibanna_settings)
-    process_input_file_info(input_file, tibanna.ff_keys, tibanna.env, args)
+    tbn = TibannaSettings(env, ff_keys=data.get('ff_keys'),
+                          settings=tibanna_settings)
+    process_input_file_info(input_file, tbn.ff_keys, tbn.env, args)
     assert len(args['input_files']) == 3
     assert 'secondary_files' in args
     assert 'input_pairs' in args['input_files']
@@ -250,31 +250,31 @@ def test_add_secondary_files_to_args(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
-                      settings=tibanna_settings)
-    add_secondary_files_to_args(input_file, tibanna.ff_keys, tibanna.env, args)
+    tbn = TibannaSettings(env, ff_keys=data.get('ff_keys'),
+                          settings=tibanna_settings)
+    add_secondary_files_to_args(input_file, tbn.ff_keys, tbn.env, args)
 
 
 @valid_env
 @pytest.mark.webtest
 def test_output_target_for_input_extra():
-    tibanna = Tibanna('fourfront-webdev',
-                      settings={"run_type": "bedGraphToBigWig", "env": "fourfront-webdev"})
+    tbn = TibannaSettings('fourfront-webdev',
+                          settings={"run_type": "bedGraphToBigWig", "env": "fourfront-webdev"})
     target_inf = {'workflow_argument_name': 'bgfile', 'value': '83a80cf8-ca2c-421a-bee9-118bd0572424'}
     of = {'format': 'bw'}
 
     ff_utils.patch_metadata({'extra_files': []},
                             '83a80cf8-ca2c-421a-bee9-118bd0572424',
-                            key=tibanna.ff_keys)
+                            key=tbn.ff_keys)
     time.sleep(10)
-    target_key = output_target_for_input_extra(target_inf, of, tibanna)
+    target_key = output_target_for_input_extra(target_inf, of, tbn)
     assert target_key == '83a80cf8-ca2c-421a-bee9-118bd0572424/4DNFIF14KRAK.bw'
 
     with pytest.raises(Exception) as expinfo:
-        target_key = output_target_for_input_extra(target_inf, of, tibanna)
+        target_key = output_target_for_input_extra(target_inf, of, tbn)
         assert "input already has extra: 'User overwrite_input_extra'" in str(expinfo.value)
 
-    target_key = output_target_for_input_extra(target_inf, of, tibanna, True)
+    target_key = output_target_for_input_extra(target_inf, of, tbn, True)
     assert target_key == '83a80cf8-ca2c-421a-bee9-118bd0572424/4DNFIF14KRAK.bw'
 
 

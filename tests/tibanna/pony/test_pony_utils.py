@@ -1,5 +1,5 @@
 from tibanna.pony_utils import (
-    Tibanna,
+    TibannaSettings,
     WorkflowRunMetadata,
     ensure_list,
     Awsem,
@@ -118,7 +118,7 @@ def test_create_workflowrun_from_event_parameter(update_ffmeta_event_data_newmd5
 def test_tibanna():
     data = {'env': 'fourfront-webdev',
             'settings': {'1': '1'}}
-    tibanna = Tibanna(**data)
+    tibanna = TibannaSettings(**data)
     assert tibanna
     assert tibanna.as_dict() == data
 
@@ -210,8 +210,8 @@ def test_format_extension_map(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
-                      settings=tibanna_settings)
+    tibanna = TibannaSettings(env, ff_keys=run_awsem_event_data.get('ff_keys'),
+                              settings=tibanna_settings)
 
     fe_map = FormatExtensionMap(tibanna.ff_keys)
     assert(fe_map)
@@ -232,8 +232,8 @@ def test_merge_source_experiment(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=data.get('ff_keys'),
-                      settings=tibanna_settings)
+    tibanna = TibannaSettings(env, ff_keys=data.get('ff_keys'),
+                              settings=tibanna_settings)
     res = merge_source_experiments(input_file['uuid'], tibanna.ff_keys, tibanna.env)
     printlog(res)
     assert 'fake_source_experiment' in res
@@ -246,8 +246,8 @@ def test_get_extra_file_key(run_awsem_event_data):
     # if they don't pass in env guess it from output_bucket
     env = tibanna_settings.get('env')
     # tibanna provides access to keys based on env and stuff like that
-    tibanna = Tibanna(env, ff_keys=run_awsem_event_data.get('ff_keys'),
-                      settings=tibanna_settings)
+    tibanna = TibannaSettings(env, ff_keys=run_awsem_event_data.get('ff_keys'),
+                              settings=tibanna_settings)
     fe_map = FormatExtensionMap(tibanna.ff_keys)
     infile_key = 'hahaha/lalala.bedGraph.gz'
     infile_format = 'bg'

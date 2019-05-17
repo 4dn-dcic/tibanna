@@ -7,7 +7,7 @@ from tibanna.utils import powerup
 from tibanna.utils import TibannaStartException
 from tibanna.utils import printlog
 from tibanna.pony_utils import (
-    Tibanna,
+    TibannaSettings,
     merge_source_experiments,
     create_ffmeta_awsem,
     ProcessedFileMetadata,
@@ -75,7 +75,7 @@ def real_handler(event, context):
         env = tibanna_settings.get('env', '-'.join(output_bucket.split('-')[1:-1]))
         printlog("Tibanna setting : env= " + env)
         # tibanna provides access to keys based on env and stuff like that
-        tbn = Tibanna(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
+        tbn = TibannaSettings(env, ff_keys=event.get('ff_keys'), settings=tibanna_settings)
     except Exception as e:
         raise TibannaStartException("%s" % e)
 

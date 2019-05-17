@@ -356,7 +356,7 @@ def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
     return list(pf_source_experiments)
 
 
-class Tibanna(object):
+class TibannaSettings(object):
 
     def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
         self.env = env
@@ -555,7 +555,7 @@ class Awsem(object):
 
 
 def run_md5(env, accession, uuid):
-    tibanna = Tibanna(env=env)
+    tibanna = TibannaSettings(env=env)
     meta_data = get_metadata(accession, key=tibanna.ff_keys)
     file_name = meta_data['upload_key'].split('/')[-1]
 
@@ -579,7 +579,7 @@ def batch_fastqc(env, batch_size=20):
 
     signal.signal(signal.SIGINT, report)
 
-    tibanna = Tibanna(env=env)
+    tibanna = TibannaSettings(env=env)
     uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
                                      key=tibanna.ff_key, ff_env=tibanna.env)
 

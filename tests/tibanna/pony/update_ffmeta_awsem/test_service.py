@@ -9,7 +9,7 @@ from lambdas.update_ffmeta_awsem.service import (
     _input_extra_updater,
 )
 from tibanna.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
-from tibanna.pony_utils import Tibanna
+from tibanna.pony_utils import TibannaSettings
 from tibanna.utils import printlog
 # from tibanna.check_export_sbg.service import get_inputfile_accession
 import pytest
@@ -262,10 +262,10 @@ def test_add_md5_filesize_to_pf_extra2():
 def test_md5_updater_oldmd5(update_ffmeta_event_data):
     event = update_ffmeta_event_data
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = Tibanna(**tibanna_settings)
+    tbn = TibannaSettings(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data)
     ouf = awsem.output_files()[0]
-    md5_updater('uploaded', ouf, None, tibanna)
+    md5_updater('uploaded', ouf, None, tbn)
 
 
 @valid_env
@@ -273,10 +273,10 @@ def test_md5_updater_oldmd5(update_ffmeta_event_data):
 def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
     event = update_ffmeta_event_data_newmd5
     tibanna_settings = event.get('_tibanna', {})
-    tibanna = Tibanna(**tibanna_settings)
+    tbn = TibannaSettings(**tibanna_settings)
     awsem = Awsem(update_ffmeta_event_data_newmd5)
     ouf = awsem.output_files()[0]
-    md5_updater('uploaded', ouf, None, tibanna)
+    md5_updater('uploaded', ouf, None, tbn)
 
 
 @valid_env
@@ -334,9 +334,9 @@ def test_metadata_only(update_ffmeta_metaonly_data2, tibanna_env):
 def test_register_to_higlass(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     mcool_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.mcool'
-    tibanna = Tibanna(used_env)
+    tbn = TibannaSettings(used_env)
     with mock.patch('requests.post') as mock_request:
-        res = register_to_higlass(tibanna, bucket, mcool_key, 'cooler', 'matrix')
+        res = register_to_higlass(tbn, bucket, mcool_key, 'cooler', 'matrix')
         mock_request.assert_called_once()
         printlog(res)
         assert res
@@ -346,9 +346,9 @@ def test_register_to_higlass(used_env):
 def test_register_to_higlass2(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigwig_key = 'a940cf00-6001-473e-80d1-1e4a43866863/4DNFI75GAT6T.bw'
-    tibanna = Tibanna(used_env)
+    tbn = TibannaSettings(used_env)
     with mock.patch('requests.post') as mock_request:
-        res = register_to_higlass(tibanna, bucket, bigwig_key, 'bigwig', 'vector')
+        res = register_to_higlass(tbn, bucket, bigwig_key, 'bigwig', 'vector')
         mock_request.assert_called_once()
         printlog(res)
         assert res
@@ -358,9 +358,9 @@ def test_register_to_higlass2(used_env):
 def test_register_to_higlass3(used_env):
     bucket = 'elasticbeanstalk-fourfront-webdev-wfoutput'
     bigbed_key = 'a34d5ea5-eada-4def-a4a7-c227b0d32395/4DNFIC624FKJ.bb'
-    tibanna = Tibanna(used_env)
+    tbn = TibannaSettings(used_env)
     with mock.patch('requests.post') as mock_request:
-        res = register_to_higlass(tibanna, bucket, bigbed_key, 'bigwig', 'vector')
+        res = register_to_higlass(tbn, bucket, bigbed_key, 'bigwig', 'vector')
         mock_request.assert_called_once()
     printlog(res)
     assert res
@@ -369,25 +369,25 @@ def test_register_to_higlass3(used_env):
 @valid_env
 @pytest.mark.webtest
 def test__input_extra_updater():
-    tibanna = Tibanna('fourfront-webdev',
-                      settings={"run_type": "bedGraphToBigWig",
-                                "env": "fourfront-webdev"})
+    tbn = TibannaSettings('fourfront-webdev',
+                          settings={"run_type": "bedGraphToBigWig",
+                                    "env": "fourfront-webdev"})
     accession = '4DNFIF14KRAK'
-    _input_extra_updater('uploaded', tibanna, accession, 'bw', 'some_md5', 1234, 'some_higlass_uid')
-    res = ff_utils.get_metadata(accession, tibanna.ff_keys, tibanna.env,
+    _input_extra_updater('uploaded', tbn, accession, 'bw', 'some_md5', 1234, 'some_higlass_uid')
+    res = ff_utils.get_metadata(accession, tbn.ff_keys, tbn.env,
                                 add_on='frame=object', check_queue=True)
     assert res['extra_files'][0]['file_format'] == '/file-formats/bw/'
     assert res['extra_files'][0]['status'] == 'uploaded'
     assert res['extra_files'][0]['md5sum'] == 'some_md5'
     assert res['extra_files'][0]['file_size'] == 1234
     assert res['higlass_uid'] == 'some_higlass_uid'
-    _input_extra_updater('upload failed', tibanna, '4DNFIF14KRAK', 'bw', 'some_other_md5', 5678)
-    res = ff_utils.get_metadata(accession, tibanna.ff_keys, tibanna.env,
+    _input_extra_updater('upload failed', tbn, '4DNFIF14KRAK', 'bw', 'some_other_md5', 5678)
+    res = ff_utils.get_metadata(accession, tbn.ff_keys, tbn.env,
                                 add_on='frame=object', check_queue=True)
     assert res['extra_files'][0]['file_format'] == '/file-formats/bw/'
     assert res['extra_files'][0]['status'] == 'upload failed'
     assert res['extra_files'][0]['md5sum'] == 'some_md5'
     assert res['extra_files'][0]['file_size'] == 1234
     with pytest.raises(Exception) as expinfo:
-        _input_extra_updater('uploaded', tibanna, accession, 'lalala')
+        _input_extra_updater('uploaded', tbn, accession, 'lalala')
         assert "inconsistency - extra file metadata deleted during workflow run?" in str(expinfo.value)

@@ -5,7 +5,7 @@ from tibanna.pony_utils import (
   get_extra_file_key,
   ProcessedFileMetadata,
   Awsem,
-  Tibanna,
+  TibannaSettings,
   create_ffmeta_awsem,
   parse_formatstr
 )
@@ -552,7 +552,7 @@ def real_handler(event, context):
     # used to automatically determine the environment
     tbn_settings = event.get('_tibanna', {})
     try:
-        tbn = Tibanna(tbn_settings['env'], settings=tbn_settings)
+        tbn = TibannaSettings(tbn_settings['env'], settings=tbn_settings)
     except Exception as e:
         raise TibannaStartException("%s" % e)
     ff_meta = create_ffmeta_awsem(
