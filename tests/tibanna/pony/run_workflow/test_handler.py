@@ -1,5 +1,5 @@
 import pytest
-from lambdas.run_workflow import service
+from tibanna_4dn.lambdas.run_workflow import service
 from ..conftest import valid_env
 import mock
 

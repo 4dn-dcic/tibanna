@@ -84,6 +84,14 @@ def get_all_tibanna_lambdas():
     ]
 
 
+def get_lambda_dir(name, relative_path='.'):
+    """
+    Use `relative_path` to specify the relative path to tibanna pkg location
+    """
+    tib_dir = 'tibanna' if name in UNICORN_LAMBDAS else 'tibanna_4dn'
+    return os.path.join(relative_path, tib_dir, 'lambdas', name)
+
+
 def env_list(name):
     # don't set this as a global, since not all tasks require it
     secret = os.environ.get("SECRET", '')
@@ -248,12 +256,12 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
     # dist directores are the enemy, clean them all
     for name in get_all_tibanna_lambdas():
         print("cleaning house before deploying")
-        with chdir("./lambdas/%s" % (name)):
+        with chdir(get_lambda_dir(name, relative_path='.')):
             clean()
 
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
-        with chdir("./lambdas/%s" % (name)):
+        with chdir(get_lambda_dir(name, relative_path='.')):
             print("clean up previous builds.")
             clean()
             print("building lambda package")
@@ -289,7 +297,7 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
     else:
         requirements_file = '../../requirements-lambda-pony.txt'
     with chdir(new_src):
-        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements=requirements_file)
+        aws_lambda.deploy(os.getcwd(), local_package='../../..', requirements=requirements_file)
     # add environment variables
     lambda_update_config = {'FunctionName': new_name}
     envs = env_list(name)

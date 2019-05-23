@@ -56,16 +56,6 @@ def md5_event_data():
 
 
 @pytest.fixture(scope='session')
-def export_files_event_data(sbg_keys, ff_keys):
-    return get_event_file_for('export_files_sbg', sbg_keys, ff_keys)
-
-
-@pytest.fixture(scope='session')
-def check_export_event_data(sbg_keys, ff_keys):
-    return get_event_file_for('check_export_sbg', sbg_keys, ff_keys)
-
-
-@pytest.fixture(scope='session')
 def run_awsem_event_data(ff_keys):
     return get_event_file_for('start_run_awsem', ff_keys=ff_keys)
 
@@ -150,7 +140,7 @@ def get_test_json(file_name):
 
 def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None, event_file='event.json'):
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    event_file_name = os.path.join(dir_path, '..', '..', '..', 'lambdas', lambda_name, event_file)
+    event_file_name = os.path.join(dir_path, '..', '..', '..', 'tibanna_4dn', 'lambdas', lambda_name, event_file)
     return read_event_file(event_file_name, sbg_keys, ff_keys)
 
 

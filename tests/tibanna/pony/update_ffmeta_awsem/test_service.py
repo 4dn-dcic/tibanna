@@ -1,4 +1,4 @@
-from lambdas.update_ffmeta_awsem.service import (
+from tibanna_4dn.lambdas.update_ffmeta_awsem.service import (
     handler,
     real_handler
 )

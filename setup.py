@@ -1,12 +1,11 @@
 import os
+import io
 from setuptools import setup
 
 # variables used in buildout
 here = os.path.abspath(os.path.dirname(__file__))
-try:
-    README = open(os.path.join(here, 'README.md')).read()
-except:
-    pass  # don't know why this fails with tox
+with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 # for the time being, use the UNICORN (non-4DN) requirements when
 # installing via setup.py. The other requirements are commented out
@@ -28,7 +27,9 @@ setup(
     name='tibanna',
     version=open("tibanna/_version.py").readlines()[-1].split()[-1].strip("\"'"),
     description='tibanna functionality for lambda',
-    packages=['tibanna', 'lambdas', 'tibanna_4dn'],
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    packages=['tibanna', 'tibanna_4dn'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu',
@@ -39,6 +40,7 @@ setup(
             'Operating System :: POSIX :: Linux',
             'Programming Language :: Python',
             'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3.6'
             ],
     install_requires=setup_requires,
     include_package_data=True,

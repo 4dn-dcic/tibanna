@@ -1,0 +1,5 @@
+include README.md
+include LICENSE.txt
+include requirements-4dn.txt
+include requirements.txt
+include tasks.py

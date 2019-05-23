@@ -1,4 +1,4 @@
-from lambdas.check_task_awsem import service
+from tibanna.lambdas.check_task_awsem import service
 from tibanna.utils import EC2StartingException, StillRunningException
 from ..conftest import valid_env
 import pytest
