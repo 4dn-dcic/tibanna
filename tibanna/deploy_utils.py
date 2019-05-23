@@ -4,29 +4,20 @@ import errno
 import sys
 import time
 import json
-from invoke import task, run
 import boto3
 import contextlib
 import shutil
+from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
 from tibanna.ec2_utils import AWS_S3_ROLE_NAME
-from tibanna.utils import create_jobid
 from tibanna.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
 from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
-from tibanna.utils import run_workflow as _run_workflow
 from tibanna.utils import create_stepfunction as _create_stepfunction
-from tibanna.utils import _tibanna
-from tibanna.launch_utils import rerun as _rerun
-from tibanna.launch_utils import rerun_many as _rerun_many
-from tibanna.utils import kill as _kill
-from tibanna.utils import log as _log
-from tibanna.utils import kill_all as _kill_all
 from tibanna.iam_utils import create_tibanna_iam
 from tibanna.iam_utils import get_ec2_role_name, get_lambda_role_name
 from contextlib import contextmanager
 import aws_lambda
-import requests
-import random
+
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
 POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
@@ -39,18 +30,6 @@ TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
 TIBANNA_PROFILE_ACCESS_KEY = os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', '')
 TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
-
-
-def get_random_line_in_gist(url):
-    listing = requests.get(url)
-    return random.choice(listing.text.split("\n"))
-
-
-def play(ctx, positive=False):
-    type_url = POSITIVE if positive else NEGATIVE
-    # no spaces in url
-    media_url = '%20'.join(get_random_line_in_gist(type_url).split())
-    run("vlc -I rc %s --play-and-exit -q" % (media_url))
 
 
 @contextmanager
@@ -72,13 +51,11 @@ def setenv(**kwargs):
             del os.environ[k]
 
 
-def get_all_tibanna_lambdas():
+def get_pony_only_tibanna_lambdas():
     return [
         'validate_md5_s3_trigger',
         'validate_md5_s3_initiator',
         'start_run_awsem',
-        'run_task_awsem',
-        'check_task_awsem',
         'update_ffmeta_awsem',
         'run_workflow',
     ]
@@ -170,8 +147,7 @@ def mkdir(path):
             raise
 
 
-@task
-def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
+def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
          ignore='', ignore_pony=False, ignore_webdev=False):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
@@ -202,11 +178,6 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
         args.append('--ignore')
         args.append('tests/tibanna/pony/test_webdev.py')
     retcode = pytest.main(args)
-    try:
-        good = True if retcode == 0 else False
-        play(ctx, good)
-    except:
-        print("install vlc for more exciting test runs...")
     if retcode != 0:
         print("test failed exiting")
         sys.exit(retcode)
@@ -225,19 +196,18 @@ def clean():
     print("Cleaned up.")
 
 
-@task
-def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
+def deploy_core(name, tests=False, suffix=None, usergroup=None, package='tibanna'):
     """deploy/update lambdas only"""
     print("preparing for deploy...")
     if tests:
         print("running tests...")
-        if test(ctx) != 0:
+        if test() != 0:
             print("tests need to pass first before deploy")
             return
     else:
         print("skipping tests. execute with --tests flag to run them")
-    if name == 'all':
-        names = get_all_tibanna_lambdas()
+    if name == 'pony_only':
+        names = get_pony_only_tibanna_lambdas()
 
     elif name == 'unicorn':
         names = UNICORN_LAMBDAS
@@ -245,24 +215,19 @@ def deploy_core(ctx, name, tests=False, suffix=None, usergroup=None):
         names = [name, ]
     print('deploying the following lambdas: %s' % names)
 
-    # dist directores are the enemy, clean them all
-    for name in get_all_tibanna_lambdas():
-        print("cleaning house before deploying")
-        with chdir("./lambdas/%s" % (name)):
-            clean()
-
     for name in names:
         print("=" * 20, "Deploying lambda", name, "=" * 20)
-        with chdir("./lambdas/%s" % (name)):
+        with chdir(package + "/lambdas/%s" % (name)):
             print("clean up previous builds.")
+            # dist directores are the enemy, clean them all
             clean()
             print("building lambda package")
-            deploy_lambda_package(ctx, name, suffix=suffix, usergroup=usergroup)
+            deploy_lambda_package(name, suffix=suffix, usergroup=usergroup, package=package)
             # need to clean up all dist, otherwise, installing local package takes forever
             clean()
 
 
-def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
+def deploy_lambda_package(name, suffix=None, usergroup=None, package='tibanna'):
     # create the temporary local dev lambda directories
     if usergroup:
         if suffix:
@@ -285,11 +250,11 @@ def deploy_lambda_package(ctx, name, suffix=None, usergroup=None):
         new_src = '../' + new_name
     # use the lightweight requirements for the lambdas to simplify deployment
     if name in UNICORN_LAMBDAS:
-        requirements_file = '../../requirements-lambda-unicorn.txt'
+        requirements_file = package + '/lambdas/requirements-lambda-unicorn.txt'
     else:
-        requirements_file = '../../requirements-lambda-pony.txt'
+        requirements_file = package + '/lambdas/requirements-lambda-pony.txt'
     with chdir(new_src):
-        aws_lambda.deploy(os.getcwd(), local_package='../..', requirements=requirements_file)
+        aws_lambda.deploy(os.getcwd(), local_package=package + '/lambdas', requirements=requirements_file)
     # add environment variables
     lambda_update_config = {'FunctionName': new_name}
     envs = env_list(name)
@@ -330,28 +295,7 @@ def _tbenv(env_data=None):
     return os.environ.get('ENV_NAME')
 
 
-@task
-def run_workflow(ctx, input_json='', sfn='', jobid=''):
-    """run a workflow"""
-    if not jobid:
-        jobid = create_jobid()
-    with open(input_json) as input_file:
-        data = json.load(input_file)
-        if sfn == '':
-            resp = _run_workflow(data, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=jobid)
-        else:
-            resp = _run_workflow(data, sfn=sfn, jobid=jobid)
-        print("JOBID %s submitted" % resp['jobid'])
-        print("EXECUTION ARN = %s" % resp[_tibanna]['exec_arn'])
-        if 'cloudwatch_dashboard' in resp['config'] and resp['config']['cloudwatch_dashboard']:
-            cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
-                'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
-            print("Cloudwatch Dashboard = %s" % cw_db_url)
-        run('open %s' % resp[_tibanna]['url'])
-
-
-@task
-def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
+def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
     """set up usergroup environment on AWS
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
@@ -377,15 +321,14 @@ def setup_tibanna_env(ctx, buckets='', usergroup_tag='default', no_randomize=Fal
     return tibanna_usergroup
 
 
-@task
-def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=False,
+def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
                    setup=False, buckets='', setenv=False):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
     if setup:
         if usergroup:
-            usergroup = setup_tibanna_env(ctx, buckets, usergroup, True)
+            usergroup = setup_tibanna_env(buckets, usergroup, True)
         else:
-            usergroup = setup_tibanna_env(ctx, buckets)  # override usergroup
+            usergroup = setup_tibanna_env(buckets)  # override usergroup
     print("creating a new step function...")
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
@@ -397,23 +340,22 @@ def deploy_tibanna(ctx, suffix=None, sfn_type='pony', usergroup=None, tests=Fals
             outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print("deploying lambdas...")
     if sfn_type == 'pony':
-        deploy_core(ctx, 'all', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core('pony_only', tests=tests, suffix=suffix, usergroup=usergroup, package='tibanna_4dn')
+        deploy_core('unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
     else:
-        deploy_core(ctx, 'unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
+        deploy_core('unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
     return step_function_name
 
 
-@task
-def deploy_unicorn(ctx, suffix=None, no_setup=False, buckets='',
+def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
     """deploy tibanna unicorn to AWS cloud"""
-    deploy_tibanna(ctx, suffix=suffix, sfn_type='unicorn',
+    deploy_tibanna(suffix=suffix, sfn_type='unicorn',
                    tests=False, usergroup=usergroup, setup=not no_setup,
                    buckets=buckets, setenv=not no_setenv)
 
 
-@task
-def add_user(ctx, user, usergroup):
+def add_user(user, usergroup):
     """add a user to a tibanna group"""
     boto3.client('iam').add_user_to_group(
         GroupName='tibanna_' + usergroup,
@@ -421,8 +363,7 @@ def add_user(ctx, user, usergroup):
     )
 
 
-@task
-def users(ctx):
+def users():
     """list all users along with their associated tibanna user groups"""
     client = boto3.client('iam')
     marker = None
@@ -445,8 +386,7 @@ def users(ctx):
             break
 
 
-@task
-def list(ctx, numbers=False, sfn_type="unicorn"):
+def list_sfns(numbers=False, sfn_type="unicorn"):
     """list all step functions, optionally with a summary (-n)"""
     st = boto3.client('stepfunctions')
     res = st.list_state_machines(
@@ -486,70 +426,7 @@ def count_status(sfn_arn, client):
         return count
 
 
-@task
-def rerun(ctx, exec_arn, sfn='tibanna_pony',
-          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
-          overwrite_input_extra=None, key_name=None, name=None):
-    """ rerun a specific job"""
-    override_config = dict()
-    if instance_type:
-        override_config['instance_type'] = instance_type
-    if shutdown_min:
-        override_config['shutdown_min'] = shutdown_min
-    if ebs_size:
-        override_config['ebs_size'] = int(ebs_size)
-    if overwrite_input_extra:
-        override_config['overwrite_input_extra'] = overwrite_input_extra
-    if key_name:
-        override_config['key_name'] = key_name
-    if ebs_type:
-        override_config['ebs_type'] = ebs_type
-        if ebs_type == 'gp2':
-            override_config['ebs_iops'] = ''
-    if ebs_iops:
-        override_config['ebs_iops'] = ebs_iops
-    _rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
-
-
-@task
-def log(ctx, exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
-    """print execution log or postrun json (-p) for a job"""
-    print(_log(exec_arn, job_id, exec_name, sfn, p))
-
-
-@task
-def kill_all(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
-    """kill all the running jobs on a step function"""
-    _kill_all(sfn)
-
-
-@task
-def kill(ctx, exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
-    """kill a specific job"""
-    _kill(exec_arn, job_id, sfn)
-
-
-@task
-def rerun_many(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=0, sleeptime=5, status='FAILED'):
-    """rerun all the jobs that failed after a given time point
-    filtered by the time when the run failed (stopdate, stophour (24-hour format), stopminute)
-    By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
-    If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
-    Sleeptime is sleep time in seconds between rerun submissions.
-    By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
-
-    Examples
-
-    rerun_many('tibanna_pony-dev')
-    rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
-    """
-    _rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
-                stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
-
-
-@task
-def stat(ctx, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
+def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
     """print out executions with details (-v)
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
