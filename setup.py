@@ -14,13 +14,27 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 # full requirements for unicorn (does not require dcicutils)
 with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
-# to add packages installed from github, use `dependency_links` in setup
-setup_requires = [req.strip() for req in set_parsed if 'git+' not in req]
+install_requires = [req.strip() for req in set_parsed if 'git+' not in req]
 
-# full requirements for pony and running tests (includes dcicutils)
-# with open('requirements-4dn.txt') as f:
-#     tests_parsed = f.read().splitlines()
-# tests_require = [req.strip() for req in tests_parsed if 'git+' not in req]
+# install_requires = [
+#     'python-lambda-4dn==0.11.1',
+#     'Benchmark-4dn==0.5.2',
+#     'awscli==1.15.42',
+#     'botocore==1.10.42',
+#     'boto3==1.7.42',
+#     'urllib3==1.23',
+#     'requests==2.20.0'
+# ]
+
+setup_requires = install_requires + ['pytest-runner']
+
+tests_requires = [
+    'flake8',
+    'pytest',
+    'pytest-cov',
+    'pytest-runner',
+    'mock'
+]
 
 
 setup(
@@ -39,10 +53,10 @@ setup(
             'License :: OSI Approved :: MIT License',
             'Operating System :: POSIX :: Linux',
             'Programming Language :: Python',
-            'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3.6'
+            'Programming Language :: Python :: 3'
             ],
-    install_requires=setup_requires,
+    install_requires=install_requires,
     include_package_data=True,
-    setup_requires=setup_requires
+    setup_requires=setup_requires,
+    tests_require=tests_requires
 )

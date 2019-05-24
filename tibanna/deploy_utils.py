@@ -7,6 +7,7 @@ import json
 import boto3
 import contextlib
 import shutil
+import importlib
 from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
 from tibanna.ec2_utils import AWS_S3_ROLE_NAME
@@ -15,6 +16,8 @@ from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
 from tibanna.utils import create_stepfunction as _create_stepfunction
 from tibanna.iam_utils import create_tibanna_iam
 from tibanna.iam_utils import get_ec2_role_name, get_lambda_role_name
+from tibanna import lambdas as unicorn_lambdas
+from tibanna_4dn import lambdas as pony_lambdas
 from contextlib import contextmanager
 import aws_lambda
 
@@ -196,6 +199,59 @@ def clean():
     print("Cleaned up.")
 
 
+def deploy_lambda(name, suffix, dev, usergroup):
+    """
+    deploy a single lambda using the aws_lambda.deploy_tibanna (BETA)
+    """
+    if name in dir(unicorn_lambdas):
+        lambdas_module = unicorn_lambdas
+    elif name in dir(pony_lambdas):
+        lambdas_module = pony_lambdas
+    else:
+        raise Exception("Could not find lambda function file for %s" % name)
+
+    lambda_fxn_module = importlib.import_module('.'.join([lambdas_module.__name__,  name]))
+    requirements_fpath = os.path.join(lambdas_module.__path__[0], 'requirements.txt')
+
+    # add extra config to the lambda deployment
+    extra_config = {}
+    envs = env_list(name)
+    if envs:
+        extra_config['Environment'] = {'Variables': envs}
+    if name == 'run_task_awsem':
+        if usergroup:
+            extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
+                = get_ec2_role_name('tibanna_' + usergroup)
+        else:
+            extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
+    # add role
+    print('name=%s' % name)
+    if name in ['run_task_awsem', 'check_task_awsem']:
+        role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
+        if usergroup:
+            role_arn = role_arn_prefix + get_lambda_role_name('tibanna_' + usergroup, name)
+        else:
+            role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
+            print(role_arn)
+        extra_config['Role'] = role_arn
+
+    # install the python pkg in the current working directory if --dev is set
+    local_pkg = '.' if dev else None
+
+    aws_lambda.deploy_tibanna(lambda_fxn_module, suffix, requirements_fpath, extra_config, local_pkg)
+
+
+def deploy_packaged_lambdas(name, suffix=None, dev=False, usergroup=None):
+    if name == 'pony_only':
+        names = get_pony_only_tibanna_lambdas()
+
+    elif name == 'unicorn':
+        names = UNICORN_LAMBDAS
+    else:
+        names = [name, ]
+    for name in names:
+        deploy_lambda(name, suffix, dev, usergroup)
+
 def deploy_core(name, tests=False, suffix=None, usergroup=None, package='tibanna'):
     """deploy/update lambdas only"""
     print("preparing for deploy...")
@@ -249,10 +305,11 @@ def deploy_lambda_package(name, suffix=None, usergroup=None, package='tibanna'):
         new_name = name
         new_src = '../' + new_name
     # use the lightweight requirements for the lambdas to simplify deployment
-    if name in UNICORN_LAMBDAS:
-        requirements_file = package + '/lambdas/requirements-lambda-unicorn.txt'
-    else:
-        requirements_file = package + '/lambdas/requirements-lambda-pony.txt'
+    # if name in UNICORN_LAMBDAS:
+    #     requirements_file = package + '/lambdas/requirements-lambda-unicorn.txt'
+    # else:
+    #     requirements_file = package + '/lambdas/requirements-lambda-pony.txt'
+    requirements_file = '../requirements.txt'
     with chdir(new_src):
         aws_lambda.deploy(os.getcwd(), local_package=package + '/lambdas', requirements=requirements_file)
     # add environment variables

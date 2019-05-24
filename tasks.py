@@ -13,6 +13,7 @@ from tibanna.utils import kill as _kill
 from tibanna.utils import log as _log
 from tibanna.utils import kill_all as _kill_all
 from tibanna.deploy_utils import deploy_core as _deploy_core
+from tibanna.deploy_utils import deploy_packaged_lambdas as _deploy_packaged_lambdas
 from tibanna.deploy_utils import deploy_unicorn as _deploy_unicorn
 from tibanna.deploy_utils import deploy_tibanna as _deploy_tibanna
 from tibanna.deploy_utils import users as _users
@@ -31,6 +32,15 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     """
     _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
           extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
+
+
+@task
+def deploy_new(ctx, name, suffix=None, dev=False, usergroup=None):
+    """
+    New method of deploying pacaked lambdas (BETA)
+    * Running with --dev will cause the Python pkg in the current working dir to be installed
+    """
+    _deploy_packaged_lambdas(name, suffix, dev, usergroup=usergroup)
 
 
 @task
