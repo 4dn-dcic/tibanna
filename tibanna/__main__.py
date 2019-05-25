@@ -33,11 +33,13 @@ from tibanna.deploy_utils import test as _test
 
 subcommand_desc = {
     # add more later
-    'run_workflow': 'run a workflow',
-    'stat': 'print out executions with details',
+    'add_user': 'add an (IAM) user to a Tibanna usergroup',
     'kill': 'kill a specific job',
     'kill_all': 'kill all the running jobs on a step function',
-    'log': 'print execution log or postrun json for a job'
+    'log': 'print execution log or postrun json for a job',
+    'run_workflow': 'run a workflow',
+    'stat': 'print out executions with details',
+    'users': 'list all users along with their associated tibanna user groups',
 }
 
 
@@ -106,6 +108,12 @@ def main():
     subparser['log'].add_argument("-p", "--postrunjson",
                                   help="print out postrun json instead", action="store_true")
 
+    subparser['add_user'].add_argument("-u", "--user",
+                                       help="user to add to a Tibanna usergroup")
+    subparser['add_user'].add_argument("-g", "--usergroup",
+                                       help="Tibanna usergroup to add the user to")
+
+
     # two step argument parsing
     # first check for top level -v or -h (i.e. `tibanna -v`)
     (primary_namespace, remaining) = primary_parser.parse_known_args()
@@ -173,7 +181,7 @@ def add_user(user, usergroup):
     _add_user(user=user, usergroup=usergroup)
 
 
-def users(ctx):
+def users():
     """list all users along with their associated tibanna user groups"""
     _users()
 
