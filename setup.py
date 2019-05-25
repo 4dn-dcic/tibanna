@@ -32,7 +32,7 @@ setup(
     packages=['tibanna', 'tibanna_4dn'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
-    author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu',
+    author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu, carl_vitzthum@hms.harvard.edu',
     url='http://data.4dnucleome.org',
     license='MIT',
     classifiers=[
@@ -45,7 +45,7 @@ setup(
     install_requires=setup_requires,
     include_package_data=True,
     setup_requires=setup_requires,
-    entry_points = {
+    entry_points={
         'console_scripts': [
              'tibanna = tibanna.__main__:main',
         ]
