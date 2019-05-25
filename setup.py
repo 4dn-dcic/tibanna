@@ -44,5 +44,10 @@ setup(
             ],
     install_requires=setup_requires,
     include_package_data=True,
-    setup_requires=setup_requires
+    setup_requires=setup_requires,
+    entry_points = {
+        'console_scripts': [
+             'tibanna = tibanna.__main__:main',
+        ]
+    }
 )
