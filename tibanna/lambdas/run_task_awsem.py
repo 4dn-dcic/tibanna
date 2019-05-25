@@ -1,5 +1,5 @@
-from tibanna.exceptions import exception_coordinator
 from tibanna.run_task import run_task
+from tibanna.exceptions import exception_coordinator
 
 config = {
     'function_name': 'run_task_awsem',

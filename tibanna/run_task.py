@@ -2,17 +2,17 @@
 import os
 import copy
 import boto3
-from tibanna.ec2_utils import (
+from .ec2_utils import (
     auto_update_input_json,
     create_json,
     launch_instance,
     create_cloudwatch_dashboard
 )
-from tibanna.exceptions import (
+from .exceptions import (
     DependencyStillRunningException,
     DependencyFailedException
 )
-from tibanna.vars import AWS_REGION
+from .vars import AWS_REGION
 
 
 def run_task(input_json):

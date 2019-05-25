@@ -15,6 +15,11 @@ from tibanna.utils import (
 from tibanna.vars import (
     AWS_REGION,
     S3_ACCESS_ARN,
+    TIBANNA_REPO_NAME,
+    TIBANNA_REPO_BRANCH,
+    AMI_ID_WDL,
+    AMI_ID_CWL_V1,
+    AMI_ID_CWL_DRAFT3
 )
 from tibanna.exceptions import (
     EC2LaunchException,
@@ -26,10 +31,6 @@ from Benchmark import run as B
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-###########################################
-# These utils exclusively live in Tibanna #
-###########################################
 
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
@@ -46,7 +47,7 @@ def create_json_filename(jobid, json_dir):
 def launch_and_get_instance_id(launch_args, jobid, spot_instance=None, spot_duration=None,
                                behavior_on_capacity_limit='fail'):
     try:  # capturing stdout from the launch command
-        os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'  # necessary? not sure just put it in there
+        os.environ['AWS_DEFAULT_REGION'] = AWS_REGION
         ec2 = boto3.client('ec2')
     except Exception as e:
         raise Exception("Failed to create a client for EC2")
@@ -536,18 +537,17 @@ def auto_update_input_json(args, cfg):
 
     # script url
     cfg['script_url'] = 'https://raw.githubusercontent.com/' + \
-        os.environ.get('TIBANNA_REPO_NAME') + '/' + \
-        os.environ.get('TIBANNA_REPO_BRANCH') + '/awsf/'
+        TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/awsf/'
 
     # AMI and script directory according to cwl version
     if 'language' in args and args['language'] == 'wdl':
-        cfg['ami_id'] = os.environ.get('AMI_ID_WDL')
+        cfg['ami_id'] = AMI_ID_WDL
     else:
         if args['cwl_version'] == 'v1':
-            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_V1')
+            cfg['ami_id'] = AMI_ID_CWL_V1
             args['language'] = 'cwl_v1'
         else:
-            cfg['ami_id'] = os.environ.get('AMI_ID_CWL_DRAFT3')
+            cfg['ami_id'] = AMI_ID_CWL_DRAFT3
             args['language'] = 'cwl_draft3'
         if args.get('singularity', False):
             cfg['singularity'] = True
