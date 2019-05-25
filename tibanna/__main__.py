@@ -8,7 +8,7 @@ import inspect
 from ._version import __version__
 import shutil
 import json
-from invoke import task, run
+from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
 from tibanna.utils import create_jobid
 from tibanna.utils import AWS_REGION
@@ -31,10 +31,13 @@ from tibanna.deploy_utils import setup_tibanna_env as _setup_tibanna_env
 from tibanna.deploy_utils import test as _test
 
 
-task_desc = {
+subcommand_desc = {
     # add more later
     'run_workflow': 'run a workflow',
-    'stat': 'print out executions with details'
+    'stat': 'print out executions with details',
+    'kill': 'kill a specific job',
+    'kill_all': 'kill all the running jobs on a step function',
+    'log': 'print execution log or postrun json for a job'
 }
 
 
@@ -54,27 +57,54 @@ def main():
         title='Tibanna subcommands',
         description='choose one of the following subcommands to run tibanna:',
         dest='subcommand',
-        metavar='subcommand: {%s}' % ', '.join(task_desc.keys())
+        metavar='subcommand: {%s}' % ', '.join(subcommand_desc.keys())
     )
     subparsers.required = True
 
     subparser = dict()
-    for task, desc in task_desc.items():
-        subparser[task] = subparsers.add_parser(task, help=desc, description=desc)
+    for sc, desc in subcommand_desc.items():
+        subparser[sc] = subparsers.add_parser(sc, help=desc, description=desc)
 
     subparser['run_workflow'].add_argument("-i", "--input-json",
                                            help="tibanna input json file")
     subparser['run_workflow'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                           help="tibanna step function name (e.g. 'tibanna_unicorn_monty')")
+                                           help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                                "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
     subparser['run_workflow'].add_argument("-j", "--jobid",
                                            help="specify a user-defined job id (randomly generated if not specified)")
 
     subparser['stat'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                   help="tibanna step function name (e.g. 'tibanna_unicorn_monty')")
+                                   help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                        "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
     subparser['stat'].add_argument("-t", "--status",
                                    help="filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'")
     subparser['stat'].add_argument("-l", "--long",
                                    help="more comprehensive information", action="store_true")
+
+    subparser['kill'].add_argument("-e", "--exec-arn",
+                                   help="execution arn of the specific job to kill")
+    subparser['kill'].add_argument("-j", "--job-id",
+                                   help="job id of the specific job to kill (alternative to --exec-arn/-e)")
+    subparser['kill'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                                   help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                        "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+
+    subparser['kill_all'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                                       help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                            "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+
+    subparser['log'].add_argument("-e", "--exec-arn",
+                                  help="execution arn of the specific job to log")
+    subparser['log'].add_argument("-j", "--job-id",
+                                  help="job id of the specific job to log (alternative to --exec-arn/-e)")
+    subparser['log'].add_argument("-n", "--exec-name",
+                                  help="execution name of the specific job to log " +
+                                       "(alternative to --exec-arn/-e or --job-id/-j")
+    subparser['log'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                                  help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+    subparser['log'].add_argument("-p", "--postrunjson",
+                                  help="print out postrun json instead", action="store_true")
 
     # two step argument parsing
     # first check for top level -v or -h (i.e. `tibanna -v`)
@@ -177,9 +207,9 @@ def rerun(exec_arn, sfn='tibanna_pony',
     _rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
 
 
-def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, p=False):
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     """print execution log or postrun json (-p) for a job"""
-    print(_log(exec_arn, job_id, exec_name, sfn, p))
+    print(_log(exec_arn, job_id, exec_name, sfn, postrunjson))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
