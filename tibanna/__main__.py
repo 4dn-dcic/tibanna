@@ -36,9 +36,12 @@ subcommand_desc = {
     'add_user': 'add an (IAM) user to a Tibanna usergroup',
     'kill': 'kill a specific job',
     'kill_all': 'kill all the running jobs on a step function',
+    'list_sfns': 'list all step functions, optionally with a summary (-n)',
     'log': 'print execution log or postrun json for a job',
+    'rerun': 'rerun a specific job',
     'run_workflow': 'run a workflow',
     'stat': 'print out executions with details',
+    'test': 'test tibanna code (currently reserved for development at 4dn-dcic)',  # test doesn't work
     'users': 'list all users along with their associated tibanna user groups',
 }
 
@@ -113,6 +116,50 @@ def main():
     subparser['add_user'].add_argument("-g", "--usergroup",
                                        help="Tibanna usergroup to add the user to")
 
+    subparser['list_sfns'].add_argument("-s", "--sfn-type", default='unicorn',
+                                        help="tibanna step function type ('unicorn' vs 'pony')")
+    subparser['list_sfns'].add_argument("-n", "--numbers",
+                                        help="print out the number of executions along with the step functions",
+                                        action="store_true")
+
+    subparser['test'].add_argument("-F", "--no-flake",
+                                   help="skip flake8 tests", action="store_true")
+    subparser['test'].add_argument("-P", "--ignore-pony",
+                                   help="skip tests for tibanna pony", action="store_true")
+    subparser['test'].add_argument("-W", "--ignore-webdev",
+                                   help="skip tests for 4DN test portal webdev", action="store_true")
+    subparser['test'].add_argument("-w", "--watch",
+                                   help="watch", action="store_true")  # need more detail
+    subparser['test'].add_argument("-f", "--last-failing",
+                                   help="last failing", action="store_true")  # need more detail
+    subparser['test'].add_argument("-i", "--ignore",
+                                   help="ignore")  # need more detail
+    subparser['test'].add_argument("-x", "--extra",
+                                   help="extra")  # need more detail
+    subparser['test'].add_argument("-k", "--k",
+                                   help="k")  # need more detail
+
+    subparser['rerun'].add_argument("-e", "--exec-arn",
+                                    help="execution arn of the specific job to rerun")
+    subparser['rerun'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                                    help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                                         "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+    subparser['rerun'].add_argument("-i", "--instance-type",
+                                    help="use a specified instance type for the rerun")
+    subparser['rerun'].add_argument("-d", "--shutdown-min",
+                                    help="use a specified shutdown mininutes for the rerun")
+    subparser['rerun'].add_argument("-b", "--ebs-size",
+                                    help="use a specified ebs size for the rerun (GB)")
+    subparser['rerun'].add_argument("-t", "--ebs-type",
+                                    help="use a specified ebs type for the rerun (gp2 vs io1)")
+    subparser['rerun'].add_argument("-p", "--ebs-iops",
+                                    help="use a specified ebs iops for the rerun (applicable only to io1)")
+    subparser['rerun'].add_argument("-k", "--key-name",
+                                    help="use a specified key name for the rerun")
+    subparser['rerun'].add_argument("-n", "--name",
+                                    help="use a specified run name for the rerun")
+    subparser['rerun'].add_argument("-x", "--overwrite-input-extra",
+                                    help="overwrite input extra file if it already exists (reserved for pony)")
 
     # two step argument parsing
     # first check for top level -v or -h (i.e. `tibanna -v`)
@@ -186,12 +233,12 @@ def users():
     _users()
 
 
-def list(numbers=False, sfn_type="unicorn"):
+def list_sfns(numbers=False, sfn_type="unicorn"):
     """list all step functions, optionally with a summary (-n)"""
-    _list_sfns(numbers=False, sfn_type="unicorn")
+    _list_sfns(numbers=numbers, sfn_type="unicorn")
 
 
-def rerun(exec_arn, sfn='tibanna_pony',
+def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
           instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
           overwrite_input_extra=None, key_name=None, name=None):
     """ rerun a specific job"""
