@@ -34,12 +34,18 @@ from tibanna.deploy_utils import test as _test
 subcommand_desc = {
     # add more later
     'add_user': 'add an (IAM) user to a Tibanna usergroup',
+    'deploy_core': 'deploy/update lambdas only',
+    'deploy_pony': 'deploy tibanna pony to AWS cloud (pony is for 4DN-DCIC only)',
+    'deploy_unicorn': 'deploy tibanna unicorn to AWS cloud (unicorn is for everyone)',
     'kill': 'kill a specific job',
     'kill_all': 'kill all the running jobs on a step function',
     'list_sfns': 'list all step functions, optionally with a summary (-n)',
     'log': 'print execution log or postrun json for a job',
     'rerun': 'rerun a specific job',
     'run_workflow': 'run a workflow',
+    'setup_tibanna_env': 'set up usergroup environment on AWS.' +
+                         'This function is called automatically by deploy_tibanna or deploy_unicorn.' +
+                         'Use it only when the IAM permissions need to be reset',
     'stat': 'print out executions with details',
     'test': 'test tibanna code (currently reserved for development at 4dn-dcic)',  # test doesn't work
     'users': 'list all users along with their associated tibanna user groups',
@@ -70,96 +76,167 @@ def main():
     for sc, desc in subcommand_desc.items():
         subparser[sc] = subparsers.add_parser(sc, help=desc, description=desc)
 
-    subparser['run_workflow'].add_argument("-i", "--input-json",
-                                           help="tibanna input json file")
-    subparser['run_workflow'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                           help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                                "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    subparser['run_workflow'].add_argument("-j", "--jobid",
-                                           help="specify a user-defined job id (randomly generated if not specified)")
+    def add_arg(name, flag, help=None, default=None, action=None):
+        kwargs = dict()
+        if help:
+            kwargs['help'] = help
+        if default:
+            kwargs['default'] = default
+        if action:
+            kwargs['action'] = action
+        subparser[name].add_argument(flag[0], flag[1], **kwargs)
 
-    subparser['stat'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                   help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                        "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    subparser['stat'].add_argument("-t", "--status",
-                                   help="filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'")
-    subparser['stat'].add_argument("-l", "--long",
-                                   help="more comprehensive information", action="store_true")
+    def add_args(name, argdictlist):
+        for argdict in argdictlist:
+            add_arg(name, **argdict)
 
-    subparser['kill'].add_argument("-e", "--exec-arn",
-                                   help="execution arn of the specific job to kill")
-    subparser['kill'].add_argument("-j", "--job-id",
-                                   help="job id of the specific job to kill (alternative to --exec-arn/-e)")
-    subparser['kill'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                   help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                        "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+    add_args('run_workflow',
+             [{'flag': ["-i", "--input-json"], 'help': "tibanna input json file"},
+              {'flag': ["-s", "--sfn"],
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+              {'flag': ["-j", "--jobid"],
+               'help': "specify a user-defined job id (randomly generated if not specified)"}])
 
-    subparser['kill_all'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                       help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                            "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
+    add_args('stat',
+             [{'flag': ["-s", "--sfn"],
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+              {'flag': ["-t", "--status"],
+               'help': "filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
+              {'flag': ["-l", "--long"],
+               'help': "more comprehensive information",
+               'action': "store_true"}])
 
-    subparser['log'].add_argument("-e", "--exec-arn",
-                                  help="execution arn of the specific job to log")
-    subparser['log'].add_argument("-j", "--job-id",
-                                  help="job id of the specific job to log (alternative to --exec-arn/-e)")
-    subparser['log'].add_argument("-n", "--exec-name",
-                                  help="execution name of the specific job to log " +
-                                       "(alternative to --exec-arn/-e or --job-id/-j")
-    subparser['log'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                  help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    subparser['log'].add_argument("-p", "--postrunjson",
-                                  help="print out postrun json instead", action="store_true")
+    add_args('kill',
+             [{'flag': ["-e", "--exec-arn"],
+               'help': "execution arn of the specific job to kill"},
+              {'flag': ["-j", "--job-id"],
+               'help': "job id of the specific job to kill (alternative to --exec-arn/-e)"},
+              {'flag': ["-s", "--sfn"],
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}])
 
-    subparser['add_user'].add_argument("-u", "--user",
-                                       help="user to add to a Tibanna usergroup")
-    subparser['add_user'].add_argument("-g", "--usergroup",
-                                       help="Tibanna usergroup to add the user to")
+    add_args('kill_all',
+             [{'flag': ["-s", "--sfn"],
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}])
 
-    subparser['list_sfns'].add_argument("-s", "--sfn-type", default='unicorn',
-                                        help="tibanna step function type ('unicorn' vs 'pony')")
-    subparser['list_sfns'].add_argument("-n", "--numbers",
-                                        help="print out the number of executions along with the step functions",
-                                        action="store_true")
+    add_args('log',
+             [{'flag': ["-e", "--exec-arn"],
+               'help': "execution arn of the specific job to log"},
+              {'flag': ["-j", "--job-id"],
+               'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
+              {'flag': ["-n", "--exec-name"],
+               'help': "execution name of the specific job to log " +
+                       "(alternative to --exec-arn/-e or --job-id/-j"},
+              {'flag': ["-s", "--sfn"],
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+              {'flag': ["-p", "--postrunjson"],
+               'help': "print out postrun json instead", 'action': "store_true"}])
 
-    subparser['test'].add_argument("-F", "--no-flake",
-                                   help="skip flake8 tests", action="store_true")
-    subparser['test'].add_argument("-P", "--ignore-pony",
-                                   help="skip tests for tibanna pony", action="store_true")
-    subparser['test'].add_argument("-W", "--ignore-webdev",
-                                   help="skip tests for 4DN test portal webdev", action="store_true")
-    subparser['test'].add_argument("-w", "--watch",
-                                   help="watch", action="store_true")  # need more detail
-    subparser['test'].add_argument("-f", "--last-failing",
-                                   help="last failing", action="store_true")  # need more detail
-    subparser['test'].add_argument("-i", "--ignore",
-                                   help="ignore")  # need more detail
-    subparser['test'].add_argument("-x", "--extra",
-                                   help="extra")  # need more detail
-    subparser['test'].add_argument("-k", "--k",
-                                   help="k")  # need more detail
+    add_args('add_user',
+             [{'flag': ["-u", "--user"],
+               'help': "user to add to a Tibanna usergroup"},
+              {'flag': ["-g", "--usergroup"],
+               'help': "Tibanna usergroup to add the user to"}])
 
-    subparser['rerun'].add_argument("-e", "--exec-arn",
-                                    help="execution arn of the specific job to rerun")
-    subparser['rerun'].add_argument("-s", "--sfn", default=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                                    help="tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                                         "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    subparser['rerun'].add_argument("-i", "--instance-type",
-                                    help="use a specified instance type for the rerun")
-    subparser['rerun'].add_argument("-d", "--shutdown-min",
-                                    help="use a specified shutdown mininutes for the rerun")
-    subparser['rerun'].add_argument("-b", "--ebs-size",
-                                    help="use a specified ebs size for the rerun (GB)")
-    subparser['rerun'].add_argument("-t", "--ebs-type",
-                                    help="use a specified ebs type for the rerun (gp2 vs io1)")
-    subparser['rerun'].add_argument("-p", "--ebs-iops",
-                                    help="use a specified ebs iops for the rerun (applicable only to io1)")
-    subparser['rerun'].add_argument("-k", "--key-name",
-                                    help="use a specified key name for the rerun")
-    subparser['rerun'].add_argument("-n", "--name",
-                                    help="use a specified run name for the rerun")
-    subparser['rerun'].add_argument("-x", "--overwrite-input-extra",
-                                    help="overwrite input extra file if it already exists (reserved for pony)")
+    add_args('list_sfns',
+             [{'flag': ["-s", "--sfn-type"],
+               'default': 'unicorn',
+               'help': "tibanna step function type ('unicorn' vs 'pony')"},
+              {'flag': ["-n", "--numbers"],
+               'help': "print out the number of executions along with the step functions",
+               'action': "store_true"}])
+
+    add_args('test',
+             [{'flag': ["-F", "--no-flake"],
+               'help': "skip flake8 tests", 'action': "store_true"},
+              {'flag': ["-P", "--ignore-pony"],
+               'help': "skip tests for tibanna pony", 'action': "store_true"},
+              {'flag': ["-W", "--ignore-webdev"],
+               'help': "skip tests for 4DN test portal webdev", 'action': "store_true"},
+              {'flag': ["-w", "--watch"],
+               'help': "watch", 'action': "store_true"},  # need more detail
+              {'flag': ["-f", "--last-failing"],
+               'help': "last failing", 'action': "store_true"},  # need more detail
+              {'flag': ["-i", "--ignore"],
+               'help': "ignore"},  # need more detail
+              {'flag': ["-x", "--extra"],
+               'help': "extra"},  # need more detail
+              {'flag': ["-k", "--k"],
+               'help': "k"}])  # need more detail
+
+    add_args('rerun',
+             [{'flag': ["-e", "--exec-arn"],
+               'help': "execution arn of the specific job to rerun"},
+              {'flag': ["-s", "--sfn"],
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+              {'flag': ["-i", "--instance-type"],
+               'help': "use a specified instance type for the rerun"},
+              {'flag': ["-d", "--shutdown-min"],
+               'help': "use a specified shutdown mininutes for the rerun"},
+              {'flag': ["-b", "--ebs-size"],
+               'help': "use a specified ebs size for the rerun (GB)"},
+              {'flag': ["-t", "--ebs-type"],
+               'help': "use a specified ebs type for the rerun (gp2 vs io1)"},
+              {'flag': ["-p", "--ebs-iops"],
+               'help': "use a specified ebs iops for the rerun"},
+              {'flag': ["-k", "--key-name"],
+               'help': "use a specified key name for the rerun"},
+              {'flag': ["-n", "--name"],
+               'help': "use a specified run name for the rerun"},
+              {'flag': ["-x", "--overwrite-input-extra"],
+               'help': "overwrite input extra file if it already exists (reserved for pony)"}])
+
+    add_args('setup_tibanna_env',
+             [{'flag': ["-b", "--buckets"],
+               'help': "list of buckets to add permission to a tibanna usergroup"},
+              {'flag': ["-g", "--usergroup-tag"],
+               'help': "tibanna usergroup tag you want to use " +
+                       "(e.g. name of a specific tibanna usergroup"},
+              {'flag': ["-R", "--no-randomize"],
+               'help': "do not add random numbers to the usergroup tag to generate usergroup name",
+               'action': "store_true"}])
+
+    add_args('deploy_pony',
+             [{'flag': ["-s", "--suffix"],
+               'help': "suffix to add to the end of tibanna_pony"},
+              {'flag': ["-t", "--tests"],
+               'help': "Perform tests", 'action': "store_true"}])
+
+    add_args('deploy_unicorn',
+             [{'flag': ["-s", "--suffix"],
+               'help': "suffix (e.g. 'dev') to add to the end of the name of" +
+                       "tibanna_unicorn and AWS Lambda functions within the same usergroup"},
+              {'flag': ["-b", "--buckets"],
+               'help': "list of buckets to add permission to a tibanna usergroup"},
+              {'flag': ["-S", "--no-setup"],
+               'help': "do not perform permission setup; just update step functions / lambdas",
+               'action': "store_true"},
+              {'flag': ["-E", "--no-setenv"],
+               'help': "Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME" +
+                       "environmental variable in your .bashrc",
+               'action': "store_true"},
+              {'flag': ["-g", "--usergroup"],
+               'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}])
+
+    add_args('deploy_core',
+             [{'flag': ["-s", "--suffix"],
+               'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
+                       "Lambda function, within the same usergroup"},
+              {'flag': ["-t", "--tests"],
+               'help': "Perform tests", 'action': "store_true"},
+              {'flag': ["-g", "--usergroup"],
+               'help': "Tibanna usergroup for the AWS Lambda function"}])
 
     # two step argument parsing
     # first check for top level -v or -h (i.e. `tibanna -v`)
@@ -203,17 +280,16 @@ def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''
             run('open %s' % resp[_tibanna]['url'])
 
 
-def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
+def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
     """set up usergroup environment on AWS
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
-    _setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=verbose)
+    _setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=False)
 
 
-def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
-                   setup=False, buckets='', setenv=False):
+def deploy_pony(suffix=None, tests=False):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
-    _deploy_tibanna(suffix=suffix, sfn_type=sfn_type, usergroup=usergroup, tests=tests)
+    _deploy_tibanna(suffix=suffix, sfn_type='pony', tests=tests)
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
