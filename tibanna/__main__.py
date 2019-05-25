@@ -42,6 +42,7 @@ subcommand_desc = {
     'list_sfns': 'list all step functions, optionally with a summary (-n)',
     'log': 'print execution log or postrun json for a job',
     'rerun': 'rerun a specific job',
+    'rerun_many': 'rerun all the jobs that failed after a given time point',
     'run_workflow': 'run a workflow',
     'setup_tibanna_env': 'set up usergroup environment on AWS.' +
                          'This function is called automatically by deploy_tibanna or deploy_unicorn.' +
@@ -196,6 +197,31 @@ def main():
                'help': "use a specified run name for the rerun"},
               {'flag': ["-x", "--overwrite-input-extra"],
                'help': "overwrite input extra file if it already exists (reserved for pony)"}])
+
+    add_args('rerun_many',
+             [{'flag': ["-s", "--sfn"],
+               'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+               'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                       "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+              {'flag': ["-D", "--stopdate"],
+               'default': '13Feb2018',
+               'help': "stop (end) date of the executions (e.g. '13Feb2018')"},
+              {'flag': ["-H", "--stophour"],
+               'default': 13,
+               'help': "stop (end) hour of the executions (e.g. 13, for 1pm)"},
+              {'flag': ["-M", "--stopminute"],
+               'default': 0,
+               'help': "stop (end) minute of the executions (e.g. 55)"},
+              {'flag': ["-o", "--offset"],
+               'default': 0,
+               'help': "offset for time zone between local computer and AWS step function"},
+              {'flag': ["-r", "--sleeptime"],
+               'default': 5,
+               'help': "minutes to sleep between runs to avoid drop outs"},
+              {'flag': ["-t", "--status"],
+               'default': 'FAILED',
+               'help': "filter by status (e.g. if set to FAILED, rerun only FAILED jobs); " +
+                       "'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"}])
 
     add_args('setup_tibanna_env',
              [{'flag': ["-b", "--buckets"],
