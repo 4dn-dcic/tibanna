@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # import json
-from tibanna.utils import powerup
+from tibanna.exceptions import exception_coordinator
 from tibanna_4dn.start_run import start_run
 
 
@@ -11,7 +11,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@powerup('start_run_awsem', metadata_only)
+@exception_coordinator('start_run_awsem', metadata_only)
 def handler(event, context):
     if event.get('push_error_to_end', True):
         event['push_error_to_end'] = True  # push error to end by default for pony

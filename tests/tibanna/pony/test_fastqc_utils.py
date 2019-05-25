@@ -1,4 +1,4 @@
-from tibanna import fastqc_utils
+from tibanna_4dn import fastqc_utils
 import pytest
 import os
 

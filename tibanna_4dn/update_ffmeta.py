@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import requests
+import json
+import copy
+import boto3
+from collections import defaultdict
 from dcicutils import ff_utils
 from tibanna_4dn.pony_utils import (
   FormatExtensionMap,
@@ -11,15 +16,11 @@ from tibanna_4dn.pony_utils import (
 )
 from tibanna.utils import (
     printlog,
-    TibannaStartException,
-    send_notification_email
 )
-import boto3
-from collections import defaultdict
-from tibanna.fastqc_utils import parse_qc_table
-import requests
-import json
-import copy
+from tibanna.exceptions import (
+    TibannaStartException,
+)
+from tibanna_4dn.fastqc_utils import parse_qc_table
 
 
 def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):
@@ -646,6 +647,17 @@ def get_postrunjson_url(input_json):
             return ''
         else:
             raise e
+
+
+def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dndcic@gmail.com'):
+    subject = '[Tibanna] job %s : %s' % (status, job_name)
+    msg = 'Job %s (%s) finished with status %s\n' % (jobid, job_name, status) \
+          + 'For more detail, go to %s' % exec_url
+    client = boto3.client('ses')
+    client.send_email(Source=sender,
+                      Destination={'ToAddresses': [sender]},
+                      Message={'Subject': {'Data': subject},
+                               'Body': {'Text': {'Data': msg}}})
 
 
 # Cardinal knowledge of all workflow updaters

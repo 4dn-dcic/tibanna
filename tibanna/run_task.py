@@ -1,9 +1,18 @@
 # -*- coding: utf-8 -*-
-
-from tibanna import ec2_utils
-from tibanna.utils import check_dependency
 import os
 import copy
+import boto3
+from tibanna.ec2_utils import (
+    auto_update_input_json,
+    create_json,
+    launch_instance,
+    create_cloudwatch_dashboard
+)
+from tibanna.exceptions import (
+    DependencyStillRunningException,
+    DependencyFailedException
+)
+from tibanna.vars import AWS_REGION
 
 
 def run_task(input_json):
@@ -77,10 +86,10 @@ def run_task(input_json):
         check_dependency(**args['dependency'])
 
     # update input json to add various other info automatically
-    ec2_utils.auto_update_input_json(args, cfg)
+    auto_update_input_json(args, cfg)
 
     # create json and copy to s3
-    jobid = ec2_utils.create_json(input_json_copy)
+    jobid = create_json(input_json_copy)
 
     # profile
     if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
@@ -91,14 +100,25 @@ def run_task(input_json):
         profile = None
 
     # launch instance and execute workflow
-    launch_instance_log = ec2_utils.launch_instance(cfg, jobid, profile=profile)
+    launch_instance_log = launch_instance(cfg, jobid, profile=profile)
 
     # setup cloudwatch dashboard
     if 'cloudwatch_dashboard' in cfg and cfg['cloudwatch_dashboard']:
         instance_id = launch_instance_log['instance_id']
-        ec2_utils.create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
+        create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
 
     if 'jobid' not in input_json_copy:
         input_json_copy.update({'jobid': jobid})
     input_json_copy.update(launch_instance_log)
     return(input_json_copy)
+
+
+def check_dependency(exec_arn=None):
+    if exec_arn:
+        client = boto3.client('stepfunctions', region_name=AWS_REGION)
+        for arn in exec_arn:
+            res = client.describe_execution(executionArn=arn)
+            if res['status'] == 'RUNNING':
+                raise DependencyStillRunningException("Dependency is still running: %s" % arn)
+            elif res['status'] == 'FAILED':
+                raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)

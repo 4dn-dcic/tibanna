@@ -2,6 +2,9 @@ import json
 import os
 import sys
 import datetime
+from time import sleep
+import boto3
+import gzip
 from uuid import uuid4
 from dcicutils.ff_utils import (
     get_metadata,
@@ -14,14 +17,13 @@ from tibanna.nnested_array import (
     flatten,
     create_dim
 )
+from tibanna.core import run_workflow as _run_workflow
+from tibanna.core import check_output
+from tibanna.utils import (
+    _tibanna_settings,
+    printlog
+)
 from dcicutils.s3_utils import s3Utils
-from tibanna.utils import run_workflow as _run_workflow
-from tibanna.utils import check_output
-from tibanna.utils import _tibanna_settings
-from tibanna.utils import printlog
-from time import sleep
-import boto3
-import gzip
 
 
 ###########################################

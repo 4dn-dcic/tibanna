@@ -7,13 +7,22 @@ import logging
 # from invoke import run
 import botocore.session
 import boto3
-from Benchmark import run as B
-from tibanna.utils import printlog
-from tibanna.utils import AWS_ACCOUNT_NUMBER, AWS_REGION
-from tibanna.utils import create_jobid
-from tibanna.utils import EC2LaunchException
-from tibanna.utils import EC2InstanceLimitException, EC2InstanceLimitWaitException
+from tibanna.utils import (
+    printlog,
+    does_key_exist,
+    create_jobid
+)
+from tibanna.vars import (
+    AWS_REGION,
+    S3_ACCESS_ARN,
+)
+from tibanna.exceptions import (
+    EC2LaunchException,
+    EC2InstanceLimitException,
+    EC2InstanceLimitWaitException
+)
 from tibanna.nnested_array import flatten, run_on_nested_arrays1
+from Benchmark import run as B
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -22,8 +31,6 @@ logger.setLevel(logging.INFO)
 # These utils exclusively live in Tibanna #
 ###########################################
 
-AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
-S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
@@ -511,16 +518,6 @@ def get_file_size(key, bucket, size_in_gb=False):
         if size_in_gb:
             size = size / one_gb
         return size
-
-
-def does_key_exist(bucket, object_name):
-    try:
-        file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object_name)
-    except Exception as e:
-        print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
-        print(str(e))
-        return False
-    return file_metadata
 
 
 def auto_update_input_json(args, cfg):

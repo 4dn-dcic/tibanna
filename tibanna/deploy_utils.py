@@ -1,37 +1,37 @@
 # -*- coding: utf-8 -*-
 import os
-import errno
-import sys
 import time
 import json
 import boto3
 import contextlib
-import shutil
 import importlib
 from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
-from tibanna.ec2_utils import AWS_S3_ROLE_NAME
-from tibanna.utils import AWS_REGION, AWS_ACCOUNT_NUMBER
-from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, STEP_FUNCTION_ARN
-from tibanna.utils import create_stepfunction as _create_stepfunction
-from tibanna.iam_utils import create_tibanna_iam
-from tibanna.iam_utils import get_ec2_role_name, get_lambda_role_name
+from tibanna.vars import (
+    AWS_REGION,
+    AWS_ACCOUNT_NUMBER,
+    AMI_ID_CWL_V1,
+    AMI_ID_CWL_DRAFT3,
+    AMI_ID_WDL,
+    TIBANNA_REPO_NAME,
+    TIBANNA_REPO_BRANCH,
+    TIBANNA_PROFILE_ACCESS_KEY,
+    TIBANNA_PROFILE_SECRET_KEY,
+    AWS_S3_ROLE_NAME
+)
+from tibanna.iam_utils import (
+    create_tibanna_iam,
+    get_stepfunction_role_name,
+    get_ec2_role_name,
+    get_lambda_role_name,
+)
+from tibanna.test_utils import test
 from tibanna import lambdas as unicorn_lambdas
 from tibanna_4dn import lambdas as pony_lambdas
 from contextlib import contextmanager
 import aws_lambda
 
 
-ROOT_DIR = os.path.abspath(os.path.dirname(__file__))
-POSITIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/positive.txt'
-NEGATIVE = 'https://gist.github.com/j1z0/bbed486d85fb4d64825065afbfb2e98f/raw/negative.txt'
-AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'
-AMI_ID_CWL_DRAFT3 = 'ami-0f06a8358d41c4b9c'
-AMI_ID_WDL = 'ami-0f06a8358d41c4b9c'
-TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
-TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
-TIBANNA_PROFILE_ACCESS_KEY = os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', '')
-TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 
 
@@ -125,74 +125,6 @@ def upload(keyname, data, s3bucket, secret=None):
                   SSECustomerAlgorithm='AES256')
 
 
-def copytree(src, dst, symlinks=False, ignore=None):
-    skipfiles = ['.coverage', 'dist', 'htmlcov', '__init__.pyc', 'coverage.xml', 'service.pyc']
-    for item in os.listdir(src):
-        src_file = os.path.join(src, item)
-        dst_file = os.path.join(dst, item)
-        if src_file.split('/')[-1] in skipfiles:
-            print("skipping file %s" % src_file)
-            continue
-        if os.path.isdir(src_file):
-            mkdir(dst_file)
-            shutil.copytree(src_file, dst_file, symlinks, ignore)
-        else:
-            shutil.copy2(src_file, dst_file)
-
-
-def mkdir(path):
-    try:
-        os.makedirs(path)
-    except OSError as exc:
-        if exc.errno == errno.EEXIST and os.path.isdir(path):
-            pass
-        else:
-            raise
-
-
-def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
-         ignore='', ignore_pony=False, ignore_webdev=False):
-    """Run the tests.
-    Note: --watch requires pytest-xdist to be installed.
-    """
-    import pytest
-    if not no_flake:
-        flake()
-    args = ['-rxs', ]
-    if k:
-        args.append('-k %s' % k)
-    args.append(extra)
-    if watch:
-        args.append('-f')
-    else:
-        args.append('--cov-report')
-        args.append('xml')
-        args.append('--cov-report')
-        args.append('html')
-    if last_failing:
-        args.append('--lf')
-    if ignore:
-        args.append('--ignore')
-        args.append(ignore)
-    if ignore_pony:
-        args.append('--ignore')
-        args.append('tests/tibanna/pony')
-    if ignore_webdev:
-        args.append('--ignore')
-        args.append('tests/tibanna/pony/test_webdev.py')
-    retcode = pytest.main(args)
-    if retcode != 0:
-        print("test failed exiting")
-        sys.exit(retcode)
-    return retcode
-
-
-def flake():
-    """Run flake8 on codebase."""
-    run('flake8 .', echo=True)
-    print("flake8 passed!!!")
-
-
 def clean():
     run("rm -rf build")
     run("rm -rf dist")
@@ -251,6 +183,7 @@ def deploy_packaged_lambdas(name, suffix=None, dev=False, usergroup=None):
         names = [name, ]
     for name in names:
         deploy_lambda(name, suffix, dev, usergroup)
+
 
 def deploy_core(name, tests=False, suffix=None, usergroup=None, package='tibanna'):
     """deploy/update lambdas only"""
@@ -390,7 +323,7 @@ def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
     if sfn_type not in ['pony', 'unicorn']:
         raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     # this function will remove existing step function on a conflict
-    step_function_name = _create_stepfunction(suffix, sfn_type, usergroup=usergroup)
+    step_function_name = create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
@@ -483,69 +416,156 @@ def count_status(sfn_arn, client):
         return count
 
 
-def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
-    """print out executions with details (-v)
-    status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
-    """
-    args = {
-        'stateMachineArn': STEP_FUNCTION_ARN(sfn),
-        'maxResults': 100
-    }
-    if status:
-        args['statusFilter'] = status
-    res = dict()
-    client = boto3.client('stepfunctions')
-    if verbose:
-        print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name',
-                                                                  'start_time', 'stop_time',
-                                                                  'instance_id', 'instance_type',
-                                                                  'instance_status', 'ip', 'key',
-                                                                  'password'))
-    else:
-        print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
-    res = client.list_executions(**args)
-    ec2 = boto3.client('ec2')
-    while True:
-        if 'executions' not in res or not res['executions']:
-            break
-        for exc in res['executions']:
-            desc = client.describe_execution(executionArn=exc['executionArn'])
-            jobid = json.loads(desc['input']).get('jobid', 'no jobid')
-            status = exc['status']
-            name = exc['name']
-            start_time = exc['startDate'].strftime("%Y-%m-%d %H:%M")
-            if 'stopDate' in exc:
-                stop_time = exc['stopDate'].strftime("%Y-%m-%d %H:%M")
-            else:
-                stop_time = ''
-            if verbose:
-                # collect instance stats
-                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + jobid]}])
-                if res['Reservations']:
-                    instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
-                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-                    instance_type = res['Reservations'][0]['Instances'][0]['InstanceType']
-                    if instance_status not in ['terminated', 'shutting-down']:
-                        instance_ip = res['Reservations'][0]['Instances'][0].get('PublicIpAddress', '-')
-                        keyname = res['Reservations'][0]['Instances'][0].get('KeyName', '-')
-                        password = json.loads(desc['input'])['config'].get('password', '-')
-                    else:
-                        instance_ip = '-'
-                        keyname = '-'
-                        password = '-'
-                else:
-                    instance_status = '-'
-                    instance_id = '-'
-                    instance_type = '-'
-                    instance_ip = '-'
-                    keyname = '-'
-                    password = '-'
-                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time,
-                                                                          instance_id, instance_type, instance_status,
-                                                                          instance_ip, keyname, password))
-            else:
-                print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))
-        if 'nextToken' in res:
-            res = client.list_executions(nextToken=res['nextToken'], **args)
+def create_stepfunction(dev_suffix=None,
+                        sfn_type='pony',  # vs 'unicorn'
+                        region_name=AWS_REGION,
+                        aws_acc=AWS_ACCOUNT_NUMBER,
+                        usergroup=None):
+    if not aws_acc or not region_name:
+        print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+        exit(1)
+    if usergroup:
+        if dev_suffix:
+            lambda_suffix = '_' + usergroup + '_' + dev_suffix
         else:
-            break
+            lambda_suffix = '_' + usergroup
+    else:
+        if dev_suffix:
+            lambda_suffix = '_' + dev_suffix
+        else:
+            lambda_suffix = ''
+    sfn_name = 'tibanna_' + sfn_type + lambda_suffix
+    lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
+    if sfn_type == 'pony' or not usergroup:  # 4dn
+        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
+    else:
+        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
+            get_stepfunction_role_name('tibanna_' + usergroup)
+    sfn_check_task_retry_conditions = [
+        {
+            "ErrorEquals": ["EC2StartingException"],
+            "IntervalSeconds": 300,
+            "MaxAttempts": 25,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["StillRunningException"],
+            "IntervalSeconds": 300,
+            "MaxAttempts": 100000,
+            "BackoffRate": 1.0
+        }
+    ]
+    sfn_start_run_retry_conditions = [
+        {
+            "ErrorEquals": ["TibannaStartException"],
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["FdnConnectionException"],
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
+            "BackoffRate": 1.0
+        }
+    ]
+    sfn_run_task_retry_conditions = [
+        {
+            "ErrorEquals": ["DependencyStillRunningException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 10000,
+            "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": ["EC2InstanceLimitWaitException"],
+            "IntervalSeconds": 600,
+            "MaxAttempts": 1008,  # 1 wk
+            "BackoffRate": 1.0
+        }
+    ]
+    sfn_update_ff_meta_retry_conditions = [
+        {
+            "ErrorEquals": ["TibannaStartException"],
+            "IntervalSeconds": 30,
+            "MaxAttempts": 5,
+            "BackoffRate": 1.0
+        }
+    ]
+    sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
+    sfn_state_defs = dict()
+    sfn_state_defs['pony'] = {
+        "StartRunAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
+            "Retry": sfn_start_run_retry_conditions,
+            "Next": "RunTaskAwsem"
+        },
+        "RunTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Retry": sfn_run_task_retry_conditions,
+            "Next": "CheckTaskAwsem"
+        },
+        "CheckTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
+            "Retry": sfn_check_task_retry_conditions,
+            "Next": "UpdateFFMetaAwsem"
+        },
+        "UpdateFFMetaAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
+            "Retry": sfn_update_ff_meta_retry_conditions,
+            "End": True
+        }
+    }
+    sfn_state_defs['unicorn'] = {
+        "RunTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
+            "Retry": sfn_run_task_retry_conditions,
+            "Next": "CheckTaskAwsem"
+        },
+        "CheckTaskAwsem": {
+            "Type": "Task",
+            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
+            "Retry": sfn_check_task_retry_conditions,
+            "End": True
+        }
+    }
+    definition = {
+      "Comment": "Start a workflow run on awsem, (later) track it and update our metadata to reflect whats going on",
+      "StartAt": sfn_start_lambda[sfn_type],
+      "States": sfn_state_defs[sfn_type]
+    }
+    # if this encouters an existing step function with the same name, delete
+    sfn = boto3.client('stepfunctions', region_name=region_name)
+    retries = 12  # wait 10 seconds between retries for total of 120s
+    for i in range(retries):
+        try:
+            sfn.create_state_machine(
+                name=sfn_name,
+                definition=json.dumps(definition, indent=4, sort_keys=True),
+                roleArn=sfn_role_arn
+            )
+        except sfn.exceptions.StateMachineAlreadyExists as e:
+            # get ARN from the error and format as necessary
+            exc_str = str(e)
+            if 'State Machine Already Exists:' not in exc_str:
+                print('Cannot delete state machine. Exiting...' % exc_str)
+                raise(e)
+            sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
+            print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
+            try:
+                sfn.update_state_machine(
+                    stateMachineArn=sfn_arn,
+                    definition=json.dumps(definition, indent=4, sort_keys=True),
+                    roleArn=sfn_role_arn
+                )
+            except Exception as e:
+                print('Error updating state machine %s' % str(e))
+                raise(e)
+        except Exception as e:
+            raise(e)
+        break
+    return sfn_name

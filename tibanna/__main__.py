@@ -11,30 +11,34 @@ import json
 from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
 from tibanna.utils import create_jobid
-from tibanna.utils import AWS_REGION
-from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from tibanna.utils import run_workflow as _run_workflow
-from tibanna.utils import _tibanna
-from tibanna.launch_utils import rerun as _rerun
-from tibanna.launch_utils import rerun_many as _rerun_many
-from tibanna.utils import kill as _kill
-from tibanna.utils import log as _log
-from tibanna.utils import kill_all as _kill_all
+from tibanna.vars import (
+    _tibanna,
+    AWS_REGION,
+    TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+)
+from tibanna.core import run_workflow as _run_workflow
+from tibanna.core import kill as _kill
+from tibanna.core import log as _log
+from tibanna.core import kill_all as _kill_all
+from tibanna.core import list_sfns as _list_sfns
+from tibanna.core import stat as _stat
+from tibanna.core import rerun as _rerun
+from tibanna.core import rerun_many as _rerun_many
 from tibanna.deploy_utils import deploy_core as _deploy_core
 from tibanna.deploy_utils import deploy_unicorn as _deploy_unicorn
 from tibanna.deploy_utils import deploy_tibanna as _deploy_tibanna
+from tibanna.deploy_utils import deploy_packaged_lambdas as _deploy_packaged_lambdas
 from tibanna.deploy_utils import users as _users
-from tibanna.deploy_utils import list_sfns as _list_sfns
 from tibanna.deploy_utils import add_user as _add_user
-from tibanna.deploy_utils import stat as _stat
 from tibanna.deploy_utils import setup_tibanna_env as _setup_tibanna_env
-from tibanna.deploy_utils import test as _test
+from tibanna.test_utils import test as _test
 
 
 subcommand_desc = {
     # add more later
     'add_user': 'add an (IAM) user to a Tibanna usergroup',
     'deploy_core': 'deploy/update lambdas only',
+    'deploy_new': 'New method of deploying pacaked lambdas (BETA)',
     'deploy_pony': 'deploy tibanna pony to AWS cloud (pony is for 4DN-DCIC only)',
     'deploy_unicorn': 'deploy tibanna unicorn to AWS cloud (unicorn is for everyone)',
     'kill': 'kill a specific job',
@@ -77,14 +81,7 @@ def main():
     for sc, desc in subcommand_desc.items():
         subparser[sc] = subparsers.add_parser(sc, help=desc, description=desc)
 
-    def add_arg(name, flag, help=None, default=None, action=None):
-        kwargs = dict()
-        if help:
-            kwargs['help'] = help
-        if default:
-            kwargs['default'] = default
-        if action:
-            kwargs['action'] = action
+    def add_arg(name, flag, **kwargs):
         subparser[name].add_argument(flag[0], flag[1], **kwargs)
 
     def add_args(name, argdictlist):
@@ -256,11 +253,25 @@ def main():
                'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}])
 
     add_args('deploy_core',
-             [{'flag': ["-s", "--suffix"],
+             [{'flag': ["-n", "--name"],
+               'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
+              {'flag': ["-s", "--suffix"],
                'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                        "Lambda function, within the same usergroup"},
               {'flag': ["-t", "--tests"],
                'help': "Perform tests", 'action': "store_true"},
+              {'flag': ["-g", "--usergroup"],
+               'help': "Tibanna usergroup for the AWS Lambda function"}])
+
+    add_args('deploy_new',
+             [{'flag': ["-n", "--name"],
+               'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
+              {'flag': ["-s", "--suffix"],
+               'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
+                       "Lambda function, within the same usergroup"},
+              {'flag': ["-d", "--dev"],
+               'help': "This will cause the Python pkg in the current working dir to be installed",
+               'action': 'store_true'},
               {'flag': ["-g", "--usergroup"],
                'help': "Tibanna usergroup for the AWS Lambda function"}])
 
@@ -282,6 +293,14 @@ def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
     """
     _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
           extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
+
+
+def deploy_new(name, suffix=None, dev=False, usergroup=None):
+    """
+    New method of deploying pacaked lambdas (BETA)
+    * Running with --dev will cause the Python pkg in the current working dir to be installed
+    """
+    _deploy_packaged_lambdas(name, suffix, dev, usergroup=usergroup)
 
 
 def deploy_core(name, tests=False, suffix=None, usergroup=None):

@@ -3,7 +3,7 @@ from dcicutils.ff_utils import (
     get_metadata,
     patch_metadata
 )
-from tibanna.utils import run_workflow
+from tibanna.core import run_workflow
 from tibanna_4dn.pony_utils import get_wfr_uuid, post_random_file
 import time
 

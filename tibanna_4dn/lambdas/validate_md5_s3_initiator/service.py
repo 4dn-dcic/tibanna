@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-from tibanna.utils import _tibanna_settings
-# from tibanna.utils import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from tibanna.utils import run_workflow
-from tibanna.utils import serialize_startdate
-from tibanna.utils import TibannaStartException, FdnConnectionException
+from tibanna.utils import _tibanna_settings, printlog
+# from tibanna.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from tibanna.core import run_workflow
+from tibanna.exceptions import TibannaStartException, FdnConnectionException
 from tibanna_4dn.pony_utils import TibannaSettings, FormatExtensionMap
 from tibanna_4dn.pony_utils import parse_formatstr
 from dcicutils.ff_utils import get_metadata
-from tibanna.utils import printlog
 
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = 'tibanna_pony_tmp_md5'
 
@@ -239,3 +237,10 @@ def _make_input(env, bucket, workflow, object_key, uuid, run_name, dependency=No
                                    'env': env,
                                    }))
     return data
+
+
+# fix non json-serializable datetime startDate
+def serialize_startdate(response):
+    tibanna_resp = response.get('_tibanna', {}).get('response')
+    if tibanna_resp and tibanna_resp.get('startDate'):
+        tibanna_resp['startDate'] = str(tibanna_resp['startDate'])

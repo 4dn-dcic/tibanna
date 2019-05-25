@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
-
 import boto3
-from tibanna.utils import (
+from tibanna.exceptions import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
     EC2IdleException,
-    printlog
+)
+from tibanna.utils import (
+    printlog,
+    does_key_exist
 )
 import json
-from tibanna.ec2_utils import does_key_exist
 from tibanna.cw_utils import TibannaResource
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc

@@ -13,7 +13,7 @@ def run_workflow_input():
                   "nthreads_parse_sort": 16
                 },
           "_tibanna": {
-                  "run_type": "hi-c-processing-bam-tibanna_run_workflow_test",
+                  "run_type": "hic-bam-run_workflow_test",
                   "env": "fourfront-webdev"
                 },
           "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
@@ -71,7 +71,7 @@ def run_workflow_input():
 @valid_env
 @pytest.mark.webtest
 def test_run_workflow(run_workflow_input):
-    with mock.patch('tibanna.utils.run_workflow') as mock_run:
+    with mock.patch('tibanna.core.run_workflow') as mock_run:
         res = service.handler(run_workflow_input, '')
         env = run_workflow_input['env_name']
         mock_run.assert_called_once_with(run_workflow_input, env=env)

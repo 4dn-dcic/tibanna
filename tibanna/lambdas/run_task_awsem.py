@@ -1,4 +1,4 @@
-from tibanna.utils import powerup
+from tibanna.exceptions import exception_coordinator
 from tibanna.run_task import run_task
 
 config = {
@@ -20,6 +20,6 @@ def metadata_only(event):
     return event
 
 
-@powerup('run_task_awsem', metadata_only)
+@exception_coordinator('run_task_awsem', metadata_only)
 def handler(event, context):
     return run_task(event)

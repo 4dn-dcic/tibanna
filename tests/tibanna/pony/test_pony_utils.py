@@ -256,7 +256,7 @@ def test_get_extra_file_key(run_awsem_event_data):
     assert extra_file_key == 'hahaha/lalala.bw'
 
 
-def test_powerup_add_awsem_error_to_output(ff_metadata):
+def test_exception_coordinator_add_awsem_error_to_output(ff_metadata):
     res = awsem_error_fun(ff_metadata, None)
     assert ('error' in res)
 

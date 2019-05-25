@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from tibanna.utils import powerup
+from tibanna.exceptions import exception_coordinator
 from tibanna_4dn.update_ffmeta import update_ffmeta
 
 
@@ -18,7 +18,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@powerup('update_ffmeta_awsem', metadata_only)
+@exception_coordinator('update_ffmeta_awsem', metadata_only)
 def handler(event, context):
     return real_handler(event, context)
 

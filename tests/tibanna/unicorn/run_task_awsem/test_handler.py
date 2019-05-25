@@ -1,5 +1,5 @@
 import pytest
-from tibanna.lambdas.run_task_awsem.service import handler
+from tibanna.lambdas.run_task_awsem import handler
 from ..conftest import valid_env
 
 
