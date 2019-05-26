@@ -31,12 +31,12 @@ from tibanna.utils import (
     create_jobid
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
-from tibanna.iam_utils import (
+from .iam_utils import (
     create_tibanna_iam,
-    get_stepfunction_role_name,
     get_ec2_role_name,
     get_lambda_role_name,
 )
+from .stepfunction import StepFunctionUnicorn
 from .test_utils import test
 from . import lambdas as unicorn_lambdas
 from contextlib import contextmanager
@@ -691,7 +691,8 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False, v
 
 
 def deploy_tibanna(suffix=None, usergroup=None, tests=False,
-                   setup=False, buckets='', setenv=False, lambdas_module=unicorn_lambdas):
+                   setup=False, buckets='', setenv=False,
+                   lambdas_module=unicorn_lambdas, StepFunction=StepFunctionUnicorn):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
     if setup:
         if usergroup:
@@ -700,7 +701,7 @@ def deploy_tibanna(suffix=None, usergroup=None, tests=False,
             usergroup = setup_tibanna_env(buckets)  # override usergroup
     print("creating a new step function...")
     # this function will remove existing step function on a conflict
-    step_function_name = create_stepfunction(suffix, sfn_type, usergroup=usergroup)
+    step_function_name = create_stepfunction(suffix, usergroup=usergroup, StepFunction=StepFunction)
     if setenv:
         os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
@@ -749,136 +750,26 @@ def users():
 
 
 def create_stepfunction(dev_suffix=None,
-                        sfn_type='pony',  # vs 'unicorn'
                         region_name=AWS_REGION,
                         aws_acc=AWS_ACCOUNT_NUMBER,
-                        usergroup=None):
+                        usergroup=None,
+                        StepFunction=StepFunctionUnicorn):
     if not aws_acc or not region_name:
         print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
         exit(1)
-    if usergroup:
-        if dev_suffix:
-            lambda_suffix = '_' + usergroup + '_' + dev_suffix
-        else:
-            lambda_suffix = '_' + usergroup
-    else:
-        if dev_suffix:
-            lambda_suffix = '_' + dev_suffix
-        else:
-            lambda_suffix = ''
-    sfn_name = 'tibanna_' + sfn_type + lambda_suffix
-    lambda_arn_prefix = "arn:aws:lambda:" + region_name + ":" + aws_acc + ":function:"
-    if sfn_type == 'pony' or not usergroup:  # 4dn
-        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/service-role/StatesExecutionRole-" + region_name
-    else:
-        sfn_role_arn = "arn:aws:iam::" + aws_acc + ":role/" + \
-            get_stepfunction_role_name('tibanna_' + usergroup)
-    sfn_check_task_retry_conditions = [
-        {
-            "ErrorEquals": ["EC2StartingException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 25,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["StillRunningException"],
-            "IntervalSeconds": 300,
-            "MaxAttempts": 100000,
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_start_run_retry_conditions = [
-        {
-            "ErrorEquals": ["TibannaStartException"],
-            "IntervalSeconds": 30,
-            "MaxAttempts": 5,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["FdnConnectionException"],
-            "IntervalSeconds": 30,
-            "MaxAttempts": 5,
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_run_task_retry_conditions = [
-        {
-            "ErrorEquals": ["DependencyStillRunningException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 10000,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["EC2InstanceLimitWaitException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 1008,  # 1 wk
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_update_ff_meta_retry_conditions = [
-        {
-            "ErrorEquals": ["TibannaStartException"],
-            "IntervalSeconds": 30,
-            "MaxAttempts": 5,
-            "BackoffRate": 1.0
-        }
-    ]
-    sfn_start_lambda = {'pony': 'StartRunAwsem', 'unicorn': 'RunTaskAwsem'}
-    sfn_state_defs = dict()
-    sfn_state_defs['pony'] = {
-        "StartRunAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "start_run_awsem" + lambda_suffix,
-            "Retry": sfn_start_run_retry_conditions,
-            "Next": "RunTaskAwsem"
-        },
-        "RunTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
-            "Retry": sfn_run_task_retry_conditions,
-            "Next": "CheckTaskAwsem"
-        },
-        "CheckTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
-            "Retry": sfn_check_task_retry_conditions,
-            "Next": "UpdateFFMetaAwsem"
-        },
-        "UpdateFFMetaAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "update_ffmeta_awsem" + lambda_suffix,
-            "Retry": sfn_update_ff_meta_retry_conditions,
-            "End": True
-        }
-    }
-    sfn_state_defs['unicorn'] = {
-        "RunTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "run_task_awsem" + lambda_suffix,
-            "Retry": sfn_run_task_retry_conditions,
-            "Next": "CheckTaskAwsem"
-        },
-        "CheckTaskAwsem": {
-            "Type": "Task",
-            "Resource": lambda_arn_prefix + "check_task_awsem" + lambda_suffix,
-            "Retry": sfn_check_task_retry_conditions,
-            "End": True
-        }
-    }
-    definition = {
-      "Comment": "Start a workflow run on awsem, track it and update our metadata to reflect whats going on",
-      "StartAt": sfn_start_lambda[sfn_type],
-      "States": sfn_state_defs[sfn_type]
-    }
+
+    # create a step function definition object
+    sfndef = StepFunction(dev_suffix, region_name, aws_acc, usergroup)
+
     # if this encouters an existing step function with the same name, delete
     sfn = boto3.client('stepfunctions', region_name=region_name)
     retries = 12  # wait 10 seconds between retries for total of 120s
     for i in range(retries):
         try:
             sfn.create_state_machine(
-                name=sfn_name,
-                definition=json.dumps(definition, indent=4, sort_keys=True),
-                roleArn=sfn_role_arn
+                name=sfndef.sfn_name,
+                definition=json.dumps(sfndef.definition, indent=4, sort_keys=True),
+                roleArn=sfndef.sfn_role_arn
             )
         except sfn.exceptions.StateMachineAlreadyExists as e:
             # get ARN from the error and format as necessary
@@ -887,12 +778,13 @@ def create_stepfunction(dev_suffix=None,
                 print('Cannot delete state machine. Exiting...' % exc_str)
                 raise(e)
             sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-            print('Step function with name %s already exists!\nUpdating the state machine...' % sfn_name)
+            print('Step function with name %s already exists!')
+            print('Updating the state machine...' % sfndef.sfn_name)
             try:
                 sfn.update_state_machine(
                     stateMachineArn=sfn_arn,
-                    definition=json.dumps(definition, indent=4, sort_keys=True),
-                    roleArn=sfn_role_arn
+                    definition=json.dumps(sfndef.definition, indent=4, sort_keys=True),
+                    roleArn=sfndef.sfn_role_arn
                 )
             except Exception as e:
                 print('Error updating state machine %s' % str(e))
@@ -900,4 +792,4 @@ def create_stepfunction(dev_suffix=None,
         except Exception as e:
             raise(e)
         break
-    return sfn_name
+    return sfndef.sfn_name
