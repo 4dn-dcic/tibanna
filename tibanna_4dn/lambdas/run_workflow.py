@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from tibanna_4dn.core import run_workflow
-from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION
+from tibanna.core import run_workflow
+from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from tibanna.vars import AWS_REGION
 
 
 config = {

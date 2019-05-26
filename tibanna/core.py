@@ -38,7 +38,7 @@ from tibanna.iam_utils import (
     get_lambda_role_name,
 )
 from .test_utils import test
-from . import lambdas as lambdas_module
+from . import lambdas as unicorn_lambdas
 from contextlib import contextmanager
 import aws_lambda
 
@@ -529,7 +529,7 @@ def clean():
     print("Cleaned up.")
 
 
-def deploy_lambda(name, suffix, dev, usergroup):
+def deploy_lambda(name, suffix, dev, usergroup, lambdas_module=unicorn_lambdas):
     """
     deploy a single lambda using the aws_lambda.deploy_tibanna (BETA)
     """
@@ -563,15 +563,16 @@ def deploy_lambda(name, suffix, dev, usergroup):
     aws_lambda.deploy_tibanna(lambda_fxn_module, suffix, requirements_fpath, extra_config, local_pkg)
 
 
-def deploy_packaged_lambdas(name, suffix=None, dev=False, usergroup=None):
-    if name == 'pony_only':
-        names = get_pony_only_tibanna_lambdas()
+def deploy_packaged_lambdas(name, suffix=None, dev=False, usergroup=None, lambdas_module=unicorn_lambdas):
+    if name == 'all':
+        lambda_files = os.listdir(dir(lambdas_module))
+        names = [filename for filename in lambda_files if filename not in ['requirement.txt', '__init__.py']]
     elif name == 'unicorn':
         names = UNICORN_LAMBDAS
     else:
         names = [name, ]
     for name in names:
-        deploy_lambda(name, suffix, dev, usergroup)
+        deploy_lambda(name, suffix, dev, usergroup, lambdas_module=lambdas_module)
 
 
 def deploy_core(name, tests=False, suffix=None, usergroup=None, package='tibanna'):
@@ -689,8 +690,8 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False, v
     return tibanna_usergroup
 
 
-def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
-                   setup=False, buckets='', setenv=False):
+def deploy_tibanna(suffix=None, usergroup=None, tests=False,
+                   setup=False, buckets='', setenv=False, lambdas_module=unicorn_lambdas):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
     if setup:
         if usergroup:
@@ -698,8 +699,6 @@ def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
         else:
             usergroup = setup_tibanna_env(buckets)  # override usergroup
     print("creating a new step function...")
-    if sfn_type not in ['pony', 'unicorn']:
-        raise Exception("Invalid sfn_type : it must be either pony or unicorn.")
     # this function will remove existing step function on a conflict
     step_function_name = create_stepfunction(suffix, sfn_type, usergroup=usergroup)
     if setenv:
@@ -707,20 +706,15 @@ def deploy_tibanna(suffix=None, sfn_type='pony', usergroup=None, tests=False,
         with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
             outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
     print("deploying lambdas...")
-    if sfn_type == 'pony':
-        deploy_core('pony_only', tests=tests, suffix=suffix, usergroup=usergroup, package='tibanna_4dn')
-        deploy_core('unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
-    else:
-        deploy_core('unicorn', tests=tests, suffix=suffix, usergroup=usergroup)
+    deploy_packaged_lambdas('all', tests=tests, suffix=suffix, usergroup=usergroup, lambdas_module=lambdas_module)
     return step_function_name
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
     """deploy tibanna unicorn to AWS cloud"""
-    deploy_tibanna(suffix=suffix, sfn_type='unicorn',
-                   tests=False, usergroup=usergroup, setup=not no_setup,
-                   buckets=buckets, setenv=not no_setenv)
+    deploy_tibanna(suffix=suffix, tests=False, usergroup=usergroup, setup=not no_setup,
+                   buckets=buckets, setenv=not no_setenv, lambdas_module=unicorn_lambdas)
 
 
 def add_user(user, usergroup):

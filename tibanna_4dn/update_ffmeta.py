@@ -14,7 +14,7 @@ from .pony_utils import (
   create_ffmeta_awsem,
   parse_formatstr
 )
-from .utils import (
+from tibanna.utils import (
     printlog,
 )
 from .exceptions import (

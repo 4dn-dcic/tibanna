@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # import json
 from tibanna_4dn.exceptions import exception_coordinator
-from tibanna_4dn.vars import AWS_REGION
 from tibanna_4dn.start_run import start_run
+from tibanna.vars import AWS_REGION
 
 
 config = {
-    'function_name': 'start_run',
+    'function_name': 'start_run_awsem',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',

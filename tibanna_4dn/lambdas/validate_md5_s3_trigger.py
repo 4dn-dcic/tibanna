@@ -2,8 +2,8 @@
 import boto3
 import json
 import uuid
-from tibanna_4dn.vars import STEP_FUNCTION_ARN, AWS_REGION
-from tibanna_4dn.utils import printlog
+from tibanna.utils import printlog
+from tibanna.vars import STEP_FUNCTION_ARN, AWS_REGION
 
 
 config = {

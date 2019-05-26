@@ -18,8 +18,8 @@ from .nnested_array import (
     flatten,
     create_dim
 )
-from .core import run_workflow as _run_workflow, check_output
-from .utils import (
+from tibanna.core import run_workflow as _run_workflow, check_output
+from tibanna.utils import (
     _tibanna_settings,
     printlog
 )

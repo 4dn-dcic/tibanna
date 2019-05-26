@@ -25,9 +25,7 @@ from .core import (
     stat as _stat,
     rerun as _rerun,
     rerun_many as _rerun_many,
-    deploy_core as _deploy_core,
     deploy_unicorn as _deploy_unicorn,
-    deploy_tibanna as _deploy_tibanna,
     deploy_packaged_lambdas as _deploy_packaged_lambdas,
     users as _users,
     add_user as _add_user,
@@ -40,9 +38,7 @@ PACKAGE_NAME = 'tibanna'
 subcommand_desc = {
     # add more later
     'add_user': 'add an (IAM) user to a Tibanna usergroup',
-    'deploy_core': 'deploy/update lambdas only',
     'deploy_new': 'New method of deploying pacaked lambdas (BETA)',
-    'deploy_pony': 'deploy tibanna pony to AWS cloud (pony is for 4DN-DCIC only)',
     'deploy_unicorn': 'deploy tibanna unicorn to AWS cloud (unicorn is for everyone)',
     'kill': 'kill a specific job',
     'kill_all': 'kill all the running jobs on a step function',
@@ -156,24 +152,6 @@ def main():
                'help': "print out the number of executions along with the step functions",
                'action': "store_true"}])
 
-    add_args('test',
-             [{'flag': ["-F", "--no-flake"],
-               'help': "skip flake8 tests", 'action': "store_true"},
-              {'flag': ["-P", "--ignore-pony"],
-               'help': "skip tests for tibanna pony", 'action': "store_true"},
-              {'flag': ["-W", "--ignore-webdev"],
-               'help': "skip tests for 4DN test portal webdev", 'action': "store_true"},
-              {'flag': ["-w", "--watch"],
-               'help': "watch", 'action': "store_true"},  # need more detail
-              {'flag': ["-f", "--last-failing"],
-               'help': "last failing", 'action': "store_true"},  # need more detail
-              {'flag': ["-i", "--ignore"],
-               'help': "ignore"},  # need more detail
-              {'flag': ["-x", "--extra"],
-               'help': "extra"},  # need more detail
-              {'flag': ["-k", "--k"],
-               'help': "k"}])  # need more detail
-
     add_args('rerun',
              [{'flag': ["-e", "--exec-arn"],
                'help': "execution arn of the specific job to rerun"},
@@ -233,12 +211,6 @@ def main():
                'help': "do not add random numbers to the usergroup tag to generate usergroup name",
                'action': "store_true"}])
 
-    add_args('deploy_pony',
-             [{'flag': ["-s", "--suffix"],
-               'help': "suffix to add to the end of tibanna_pony"},
-              {'flag': ["-t", "--tests"],
-               'help': "Perform tests", 'action': "store_true"}])
-
     add_args('deploy_unicorn',
              [{'flag': ["-s", "--suffix"],
                'help': "suffix (e.g. 'dev') to add to the end of the name of" +
@@ -254,17 +226,6 @@ def main():
                'action': "store_true"},
               {'flag': ["-g", "--usergroup"],
                'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}])
-
-    add_args('deploy_core',
-             [{'flag': ["-n", "--name"],
-               'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
-              {'flag': ["-s", "--suffix"],
-               'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
-                       "Lambda function, within the same usergroup"},
-              {'flag': ["-t", "--tests"],
-               'help': "Perform tests", 'action': "store_true"},
-              {'flag': ["-g", "--usergroup"],
-               'help': "Tibanna usergroup for the AWS Lambda function"}])
 
     add_args('deploy_new',
              [{'flag': ["-n", "--name"],
@@ -306,11 +267,6 @@ def deploy_new(name, suffix=None, dev=False, usergroup=None):
     _deploy_packaged_lambdas(name, suffix, dev, usergroup=usergroup)
 
 
-def deploy_core(name, tests=False, suffix=None, usergroup=None):
-    """deploy/update lambdas only"""
-    _deploy_core(name=name, tests=tests, suffix=suffix, usergroup=usergroup)
-
-
 def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''):
     """run a workflow"""
     if not jobid:
@@ -335,11 +291,6 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
     _setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=False)
 
 
-def deploy_pony(suffix=None, tests=False):
-    """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
-    _deploy_tibanna(suffix=suffix, sfn_type='pony', tests=tests)
-
-
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
     """deploy tibanna unicorn to AWS cloud"""
@@ -357,7 +308,7 @@ def users():
     _users()
 
 
-def list_sfns(numbers=False, sfn_type="unicorn"):
+def list_sfns(numbers=False):
     """list all step functions, optionally with a summary (-n)"""
     _list_sfns(numbers=numbers, sfn_type="unicorn")
 
