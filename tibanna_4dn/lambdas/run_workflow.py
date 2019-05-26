@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .core import run_workflow
+from .core.Run import run_workflow
 from .vars.Vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from .vars.Vars import AWS_REGION
 

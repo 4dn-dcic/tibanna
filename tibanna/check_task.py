@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 import boto3
-from tibanna.exceptions.Exceptions import (
+import json
+import copy
+from .cw_utils import TibannaResource
+from datetime import datetime, timedelta
+from dateutil.tz import tzutc
+from .exceptions.Exceptions import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
     EC2IdleException,
 )
-from tibanna.utils import (
+from .utils import (
     printlog,
-    does_key_exist
+    does_key_exist,
+    read_s3
 )
-import json
-from tibanna.cw_utils import TibannaResource
-from datetime import datetime, timedelta
-from dateutil.tz import tzutc
-from tibanna.utils import read_s3
-import copy
 
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.

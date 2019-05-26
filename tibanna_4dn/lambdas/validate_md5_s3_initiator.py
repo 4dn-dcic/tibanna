@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 from .utils import _tibanna_settings, printlog
 # from .vars.Vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from .core import run_workflow
+from .core.Run import run_workflow
 from .exceptions.Exceptions import TibannaStartException, FdnConnectionException
-from .pony_utils import TibannaSettings, FormatExtensionMap
-from .pony_utils import parse_formatstr
+from .pony_utils import (
+    TibannaSettings,
+    FormatExtensionMap,
+    parse_formatstr
+)
 from dcicutils.ff_utils import get_metadata
 from .vars.Vars import AWS_REGION
 

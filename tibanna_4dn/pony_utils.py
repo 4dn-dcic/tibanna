@@ -13,13 +13,12 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     search_metadata
 )
-from tibanna.nnested_array import (
+from .nnested_array import (
     flatten,
     create_dim
 )
-from tibanna.core import run_workflow as _run_workflow
-from tibanna.core import check_output
-from tibanna.utils import (
+from .core.Run import run_workflow as _run_workflow, check_output
+from .utils import (
     _tibanna_settings,
     printlog
 )

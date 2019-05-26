@@ -16,7 +16,7 @@ from .vars.Vars import (
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 )
-from .core import (
+from .core.Run import (
     run_workflow as _run_workflow,
     kill as _kill,
     log as _log,
@@ -26,7 +26,7 @@ from .core import (
     rerun as _rerun,
     rerun_many as _rerun_many
 )
-from .deploy_utils.Deploy import (
+from .core.Deploy import (
     deploy_core as _deploy_core,
     deploy_unicorn as _deploy_unicorn,
     deploy_tibanna as _deploy_tibanna,
