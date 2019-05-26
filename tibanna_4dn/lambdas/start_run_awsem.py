@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # import json
-from .exceptions.Exceptions import exception_coordinator
-from .vars.Vars import AWS_REGION
-from .start_run import start_run
+from tibanna_4dn.exceptions import exception_coordinator
+from tibanna_4dn.vars import AWS_REGION
+from tibanna_4dn.start_run import start_run
 
 
 config = {

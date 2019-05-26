@@ -13,26 +13,16 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     search_metadata
 )
+from dcicutils.s3_utils import s3Utils
 from .nnested_array import (
     flatten,
     create_dim
 )
-from .core.Run import run_workflow as _run_workflow, check_output
+from .core import run_workflow as _run_workflow, check_output
 from .utils import (
     _tibanna_settings,
     printlog
 )
-from dcicutils.s3_utils import s3Utils
-
-
-###########################################
-# These utils exclusively live in Tibanna #
-###########################################
-
-
-###########################
-# Config
-###########################
 
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,

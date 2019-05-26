@@ -5,19 +5,18 @@ import copy
 from .cw_utils import TibannaResource
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
-from .exceptions.Exceptions import (
-    StillRunningException,
-    EC2StartingException,
-    AWSEMJobErrorException,
-    EC2UnintendedTerminationException,
-    EC2IdleException,
-)
 from .utils import (
     printlog,
     does_key_exist,
     read_s3
 )
-
+from .exceptions import (
+    StillRunningException,
+    EC2StartingException,
+    AWSEMJobErrorException,
+    EC2UnintendedTerminationException,
+    EC2IdleException
+)
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
 

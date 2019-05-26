@@ -12,7 +12,7 @@ from tibanna.utils import (
     does_key_exist,
     create_jobid
 )
-from tibanna.vars.Vars import (
+from tibanna.vars import (
     AWS_REGION,
     S3_ACCESS_ARN,
     TIBANNA_REPO_NAME,
@@ -21,7 +21,7 @@ from tibanna.vars.Vars import (
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3
 )
-from tibanna.exceptions.Exceptions import (
+from tibanna.exceptions import (
     EC2LaunchException,
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException

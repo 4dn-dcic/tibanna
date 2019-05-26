@@ -3,12 +3,7 @@ import string
 import logging
 import boto3
 from uuid import uuid4, UUID
-from .vars.Vars import _tibanna, EXECUTION_ARN
-
-
-###########################################
-# These utils exclusively live in Tibanna #
-###########################################
+from .vars import _tibanna, EXECUTION_ARN
 
 
 LOG = logging.getLogger(__name__)

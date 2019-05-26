@@ -1,8 +1,5 @@
-from tibanna.lambdas.run_task_awsem import handler as _handler, config as _config
+from tibanna.lambdas.run_task_awsem import handler as _handler, config
 from tibanna_4dn.exceptions import exception_coordinator
-
-
-config = _config
 
 
 def metadata_only(event):

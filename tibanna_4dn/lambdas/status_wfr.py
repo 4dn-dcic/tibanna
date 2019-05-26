@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
-from .vars.Vars import AWS_REGION
+from tibanna_4dn.vars import AWS_REGION
 
 
 config = {

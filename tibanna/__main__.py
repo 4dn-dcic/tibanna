@@ -11,12 +11,12 @@ import json
 from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .utils import create_jobid
-from .vars.Vars import (
+from .vars import (
     _tibanna,
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 )
-from .core.Run import (
+from .core import (
     run_workflow as _run_workflow,
     kill as _kill,
     log as _log,
@@ -24,9 +24,7 @@ from .core.Run import (
     list_sfns as _list_sfns,
     stat as _stat,
     rerun as _rerun,
-    rerun_many as _rerun_many
-)
-from .core.Deploy import (
+    rerun_many as _rerun_many,
     deploy_core as _deploy_core,
     deploy_unicorn as _deploy_unicorn,
     deploy_tibanna as _deploy_tibanna,
@@ -37,6 +35,7 @@ from .core.Deploy import (
 )
 from .test_utils import test as _test
 
+PACKAGE_NAME = 'tibanna'
 
 subcommand_desc = {
     # add more later
@@ -67,15 +66,15 @@ def main():
     """
     # raise NotImplementedError
     # the primary parser is used for tibanna -v or -h
-    primary_parser = argparse.ArgumentParser(prog='tibanna', add_help=False)
+    primary_parser = argparse.ArgumentParser(prog=PACKAGE_NAME, add_help=False)
     primary_parser.add_argument('-v', '--version', action='version',
                                 version='%(prog)s ' + __version__)
     # the secondary parser is used for the specific run mode
-    secondary_parser = argparse.ArgumentParser(prog='tibanna', parents=[primary_parser])
+    secondary_parser = argparse.ArgumentParser(prog=PACKAGE_NAME, parents=[primary_parser])
     # the subparsers collect the args used to run the hic2cool mode
     subparsers = secondary_parser.add_subparsers(
-        title='Tibanna subcommands',
-        description='choose one of the following subcommands to run tibanna:',
+        title=PACKAGE_NAME + ' subcommands',
+        description='choose one of the following subcommands to run ' + PACKAGE_NAME,
         dest='subcommand',
         metavar='subcommand: {%s}' % ', '.join(subcommand_desc.keys())
     )

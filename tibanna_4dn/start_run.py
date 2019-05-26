@@ -5,9 +5,9 @@ import json
 import random
 import copy
 from dcicutils import ff_utils
-from tibanna.utils import printlog
-from tibanna.exceptions import TibannaStartException
-from tibanna_4dn.pony_utils import (
+from .utils import printlog
+from .exceptions import TibannaStartException
+from .pony_utils import (
     TibannaSettings,
     merge_source_experiments,
     create_ffmeta_awsem,
@@ -18,7 +18,7 @@ from tibanna_4dn.pony_utils import (
     create_ffmeta_input_files_from_pony_input_file_list,
     parse_formatstr
 )
-from tibanna.nnested_array import (
+from .nnested_array import (
     run_on_nested_arrays2,
     combine_two
 )
