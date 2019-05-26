@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
-from tibanna.exceptions import (
+from tibanna.exceptions.Exceptions import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,

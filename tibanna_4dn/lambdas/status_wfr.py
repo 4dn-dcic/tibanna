@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
-
 import boto3
+from .vars.Vars import AWS_REGION
+
+
+config = {
+    'function_name': 'status_wfr',
+    'function_module': 'service',
+    'function_handler': 'handler',
+    'handler': 'service.handler',
+    'region': AWS_REGION,
+    'runtime': 'python3.6',
+    'role': 'tibanna_lambda_init_role',
+    'description': 'get_wfr_status',
+    'timeout': 300,
+    'memory_size': 256
+}
 
 
 def handler(event, context):

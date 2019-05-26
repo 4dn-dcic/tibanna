@@ -8,11 +8,11 @@ from .ec2_utils import (
     launch_instance,
     create_cloudwatch_dashboard
 )
-from .exceptions import (
+from .exceptions.Exceptions import (
     DependencyStillRunningException,
     DependencyFailedException
 )
-from .vars import AWS_REGION
+from .vars.Vars import AWS_REGION
 
 
 def run_task(input_json):

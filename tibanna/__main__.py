@@ -10,28 +10,32 @@ import shutil
 import json
 from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
-from tibanna.utils import create_jobid
-from tibanna.vars import (
+from .utils import create_jobid
+from .vars.Vars import (
     _tibanna,
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 )
-from tibanna.core import run_workflow as _run_workflow
-from tibanna.core import kill as _kill
-from tibanna.core import log as _log
-from tibanna.core import kill_all as _kill_all
-from tibanna.core import list_sfns as _list_sfns
-from tibanna.core import stat as _stat
-from tibanna.core import rerun as _rerun
-from tibanna.core import rerun_many as _rerun_many
-from tibanna.deploy_utils import deploy_core as _deploy_core
-from tibanna.deploy_utils import deploy_unicorn as _deploy_unicorn
-from tibanna.deploy_utils import deploy_tibanna as _deploy_tibanna
-from tibanna.deploy_utils import deploy_packaged_lambdas as _deploy_packaged_lambdas
-from tibanna.deploy_utils import users as _users
-from tibanna.deploy_utils import add_user as _add_user
-from tibanna.deploy_utils import setup_tibanna_env as _setup_tibanna_env
-from tibanna.test_utils import test as _test
+from .core import (
+    run_workflow as _run_workflow,
+    kill as _kill,
+    log as _log,
+    kill_all as _kill_all,
+    list_sfns as _list_sfns,
+    stat as _stat,
+    rerun as _rerun,
+    rerun_many as _rerun_many
+)
+from .deploy_utils.Deploy import (
+    deploy_core as _deploy_core,
+    deploy_unicorn as _deploy_unicorn,
+    deploy_tibanna as _deploy_tibanna,
+    deploy_packaged_lambdas as _deploy_packaged_lambdas,
+    users as _users,
+    add_user as _add_user,
+    setup_tibanna_env as _setup_tibanna_env
+)
+from .test_utils import test as _test
 
 
 subcommand_desc = {

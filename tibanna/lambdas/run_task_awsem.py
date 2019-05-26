@@ -1,25 +1,20 @@
 from tibanna.run_task import run_task
-from tibanna.exceptions import exception_coordinator
+from tibanna.vars import AWS_REGION
+
 
 config = {
     'function_name': 'run_task_awsem',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
-    'region': 'us-east-1',
+    'region': AWS_REGION,
     'runtime': 'python3.6',
     'role': 'tibanna_lambda_init_role',
-    'description': 'import files to SBG and create workflow object to store state of workflow run',
+    'description': 'launch an ec2 instance',
     'timeout': 300,
     'memory_size': 256
 }
 
 
-def metadata_only(event):
-    event.update({'jobid': 'metadata_only'})
-    return event
-
-
-@exception_coordinator('run_task_awsem', metadata_only)
 def handler(event, context):
     return run_task(event)
