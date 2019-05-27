@@ -1,6 +1,6 @@
 from tibanna.lambdas import check_task_awsem as service
 from tibanna.exceptions import EC2StartingException, StillRunningException
-from ..conftest import valid_env
+from tests.tibanna.unicorn.conftest import valid_env
 import pytest
 import boto3
 import random
@@ -34,22 +34,6 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
         service.handler(check_task_input_modified, '')
 
     assert 'Failed to find jobid' in str(excinfo.value)
-
-
-@valid_env
-@pytest.mark.webtest
-def test_check_task_awsem_fails_if_job_error_found(check_task_input, s3):
-    jobid = 'hahaha'
-    check_task_input_modified = check_task_input
-    check_task_input_modified['jobid'] = jobid
-    job_started = "%s.job_started" % jobid
-    s3.put_object(Body=b'', Key=job_started)
-    job_error = "%s.error" % jobid
-    s3.put_object(Body=b'', Key=job_error)
-    res = service.handler(check_task_input_modified, '')
-    assert ('error' in res)
-    s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
-    s3.delete_objects(Delete={'Objects': [{'Key': job_error}]})
 
 
 @valid_env

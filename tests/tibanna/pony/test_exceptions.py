@@ -1,5 +1,7 @@
-from tibanna.exceptions import (
+from tibanna_4dn.exceptions import (
     exception_coordinator,
+)
+from tibanna.exceptions import (
     StillRunningException,
     AWSEMJobErrorException,
 )

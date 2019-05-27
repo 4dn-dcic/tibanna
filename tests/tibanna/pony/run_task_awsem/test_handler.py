@@ -1,6 +1,6 @@
 import pytest
-from tibanna.lambdas.run_task_awsem import handler
-from ..conftest import valid_env
+from tibanna_4dn.lambdas.run_task_awsem import handler
+from tests.tibanna.pony.conftest import valid_env
 
 
 @valid_env

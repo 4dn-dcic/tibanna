@@ -1,5 +1,5 @@
 import pytest
-from tibanna_4dn.lambdas.start_run_awsem.service import (
+from tibanna_4dn.lambdas.start_run_awsem import (
     handler,
     real_handler
 )

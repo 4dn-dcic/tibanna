@@ -7,12 +7,12 @@ import logging
 # from invoke import run
 import botocore.session
 import boto3
-from tibanna.utils import (
+from .utils import (
     printlog,
     does_key_exist,
     create_jobid
 )
-from tibanna.vars import (
+from .vars import (
     AWS_REGION,
     S3_ACCESS_ARN,
     TIBANNA_REPO_NAME,
@@ -21,12 +21,12 @@ from tibanna.vars import (
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3
 )
-from tibanna.exceptions import (
+from .exceptions import (
     EC2LaunchException,
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException
 )
-from tibanna.nnested_array import flatten, run_on_nested_arrays1
+from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
 
 logger = logging.getLogger()

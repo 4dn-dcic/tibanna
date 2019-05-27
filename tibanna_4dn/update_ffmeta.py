@@ -5,7 +5,7 @@ import copy
 import boto3
 from collections import defaultdict
 from dcicutils import ff_utils
-from tibanna_4dn.pony_utils import (
+from .pony_utils import (
   FormatExtensionMap,
   get_extra_file_key,
   ProcessedFileMetadata,
@@ -17,10 +17,10 @@ from tibanna_4dn.pony_utils import (
 from tibanna.utils import (
     printlog,
 )
-from tibanna.exceptions import (
+from .exceptions import (
     TibannaStartException,
 )
-from tibanna_4dn.fastqc_utils import parse_qc_table
+from .fastqc_utils import parse_qc_table
 
 
 def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):

@@ -1,8 +1,6 @@
 import json
 import os
-import sys
 import datetime
-from time import sleep
 import boto3
 import gzip
 from uuid import uuid4
@@ -13,27 +11,14 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     search_metadata
 )
+from dcicutils.s3_utils import s3Utils
 from tibanna.nnested_array import (
     flatten,
     create_dim
 )
-from tibanna.core import run_workflow as _run_workflow
-from tibanna.core import check_output
 from tibanna.utils import (
-    _tibanna_settings,
     printlog
 )
-from dcicutils.s3_utils import s3Utils
-
-
-###########################################
-# These utils exclusively live in Tibanna #
-###########################################
-
-
-###########################
-# Config
-###########################
 
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
@@ -554,121 +539,6 @@ class Awsem(object):
             if argname == v.argument_name:
                 keys.append(v.key)
         return keys
-
-
-def run_md5(env, accession, uuid):
-    tibanna = TibannaSettings(env=env)
-    meta_data = get_metadata(accession, key=tibanna.ff_keys)
-    file_name = meta_data['upload_key'].split('/')[-1]
-
-    input_json = make_input(env=env, workflow='md5', object_key=file_name, uuid=uuid)
-    return _run_workflow(input_json, accession)
-
-
-def batch_fastqc(env, batch_size=20):
-    '''
-    try to run fastqc on everythign that needs it ran
-    '''
-    files_processed = 0
-    files_skipped = 0
-
-    # handle ctrl-c
-    import signal
-
-    def report(signum, frame):
-        print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
-        sys.exit(-1)
-
-    signal.signal(signal.SIGINT, report)
-
-    tibanna = TibannaSettings(env=env)
-    uploaded_files = search_metadata("search/?type=File&status=uploaded&limit=%s" % batch_size,
-                                     key=tibanna.ff_key, ff_env=tibanna.env)
-
-    # TODO: need to change submit 4dn to not overwrite my limit
-    if len(uploaded_files['@graph']) > batch_size:
-        limited_files = uploaded_files['@graph'][:batch_size]
-    else:
-        limited_files = uploaded_files['@graph']
-
-    for ufile in limited_files:
-        fastqc_run = False
-        for wfrun in ufile.get('workflow_run_inputs', []):
-            if 'fastqc' in wfrun:
-                fastqc_run = True
-        if not fastqc_run:
-            print("running fastqc for %s" % ufile.get('accession'))
-            run_fastqc(env, ufile.get('accession'), ufile.get('uuid'))
-            files_processed += 1
-        else:
-            print("******** fastqc already run for %s skipping" % ufile.get('accession'))
-            files_skipped += 1
-        sleep(5)
-        if files_processed % 10 == 0:
-            sleep(60)
-
-    print("Processed %s files, skipped %s files" % (files_processed, files_skipped))
-
-
-def run_fastqc(env, accession, uuid):
-    if not accession.endswith(".fastq.gz"):
-        accession += ".fastq.gz"
-    input_json = make_input(env=env, workflow='fastqc-0-11-4-1', object_key=accession, uuid=uuid)
-    return _run_workflow(input_json, accession)
-
-
-_workflows = {'md5':
-              {'uuid': 'd3f25cd3-e726-4b3c-a022-48f844474b41',
-               'arg_name': 'input_file'
-               },
-              'fastqc-0-11-4-1':
-              {'uuid': '2324ad76-ff37-4157-8bcc-3ce72b7dace9',
-               'arg_name': 'input_fastq'
-               },
-              }
-
-
-def make_input(env, workflow, object_key, uuid):
-    bucket = "elasticbeanstalk-%s-files" % env
-    output_bucket = "elasticbeanstalk-%s-wfoutput" % env
-    workflow_uuid = _workflows[workflow]['uuid']
-    workflow_arg_name = _workflows[workflow]['arg_name']
-
-    data = {"parameters": {},
-            "app_name": workflow,
-            "workflow_uuid": workflow_uuid,
-            "input_files": [
-                {"workflow_argument_name": workflow_arg_name,
-                 "bucket_name": bucket,
-                 "uuid": uuid,
-                 "object_key": object_key,
-                 }
-             ],
-            "output_bucket": output_bucket,
-            "config": {
-                "ebs_type": "io1",
-                "json_bucket": "4dn-aws-pipeline-run-json",
-                "ebs_iops": 500,
-                "shutdown_min": 30,
-                "password": "thisisnotmypassword",
-                "log_bucket": "tibanna-output",
-                "key_name": ""
-              },
-            }
-    data.update(_tibanna_settings({'run_id': str(object_key),
-                                   'run_type': workflow,
-                                   'env': env,
-                                   }))
-    return data
-
-
-def get_wfr_uuid(exec_arn):
-    '''checking status of an execution first and if it's success, get wfr uuid'''
-    output = check_output(exec_arn)
-    if output:
-        return output['ff_meta']['uuid']
-    else:
-        return None
 
 
 def post_random_file(bucket, ff_key,

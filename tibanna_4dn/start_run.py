@@ -6,8 +6,8 @@ import random
 import copy
 from dcicutils import ff_utils
 from tibanna.utils import printlog
-from tibanna.exceptions import TibannaStartException
-from tibanna_4dn.pony_utils import (
+from .exceptions import TibannaStartException
+from .pony_utils import (
     TibannaSettings,
     merge_source_experiments,
     create_ffmeta_awsem,

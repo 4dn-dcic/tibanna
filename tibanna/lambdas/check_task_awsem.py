@@ -1,12 +1,12 @@
-from tibanna.exceptions import exception_coordinator
 from tibanna.check_task import check_task
+from tibanna.vars import AWS_REGION
 
 config = {
     'function_name': 'check_task_awsem',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
-    'region': 'us-east-1',
+    'region': AWS_REGION,
     'runtime': 'python3.6',
     'role': 'tibanna_lambda_init_role',
     'description': 'check status of AWSEM run by interegating appropriate files on S3 ',
@@ -15,11 +15,5 @@ config = {
 }
 
 
-def metadata_only(event):
-    event.update({'postrunjson': 'metadata_only'})
-    return event
-
-
-@exception_coordinator('check_task_awsem', metadata_only)
 def handler(event, context):
     return check_task(event)

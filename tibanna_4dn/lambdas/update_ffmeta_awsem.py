@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
-from tibanna.exceptions import exception_coordinator
+from tibanna_4dn.exceptions import exception_coordinator
 from tibanna_4dn.update_ffmeta import update_ffmeta
+from tibanna.vars import AWS_REGION
+
+config = {
+    'function_name': 'update_ffmeta_awsem',
+    'function_module': 'service',
+    'function_handler': 'handler',
+    'handler': 'service.handler',
+    'region': AWS_REGION,
+    'runtime': 'python3.6',
+    'role': 'tibanna_lambda_init_role',
+    'description': 'Tibanna pony update_ffmeta_awsem',
+    'timeout': 300,
+    'memory_size': 256
+}
 
 
 def metadata_only(event):

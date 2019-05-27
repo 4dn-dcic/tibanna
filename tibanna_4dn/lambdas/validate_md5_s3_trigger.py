@@ -2,8 +2,23 @@
 import boto3
 import json
 import uuid
-from tibanna.vars import STEP_FUNCTION_ARN, AWS_REGION
 from tibanna.utils import printlog
+from tibanna.vars import STEP_FUNCTION_ARN, AWS_REGION
+
+
+config = {
+    'function_name': 'validate_md5_s3_initiator',
+    'function_module': 'service',
+    'function_handler': 'handler',
+    'handler': 'service.handler',
+    'region': AWS_REGION,
+    'runtime': 'python3.6',
+    'role': 'tibanna_lambda_init_role',
+    'description': 'initiates md5/fastqc runs',
+    'timeout': 300,
+    'memory_size': 256
+}
+
 
 INITIATOR_STEP_FUNCTION_NAME = 'tibanna_initiator'
 

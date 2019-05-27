@@ -11,7 +11,7 @@ from tibanna_4dn.pony_utils import (
 )
 import pytest
 from tests.tibanna.pony.conftest import valid_env
-from ..unicorn.test_utils import awsem_error_fun
+from .test_exceptions import awsem_error_fun
 from tibanna.utils import printlog
 import mock
 

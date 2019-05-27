@@ -1,5 +1,6 @@
 import os
 
+
 # AWS account info
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
@@ -14,7 +15,7 @@ TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
 
 # Tibanna roles
-AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', 'S3_access')  # default works only for 4dn-dcic
+AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
 
 # Profile keys (optional) to use on AWSEM EC2
@@ -22,7 +23,7 @@ TIBANNA_PROFILE_ACCESS_KEY = os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', '')
 TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 
 # default step function name
-TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_pony')
+TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_unicorn')
 
 # dynamo table (optional) for fast searching
 DYNAMODB_TABLE = 'tibanna-master'

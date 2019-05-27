@@ -62,6 +62,7 @@ setup(
     entry_points={
         'console_scripts': [
              'tibanna = tibanna.__main__:main',
+             'tibanna_4dn = tibanna_4dn.__main__:main',
         ]
     }
 )
