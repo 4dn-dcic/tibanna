@@ -6,25 +6,15 @@ CLI for tibanna package
 import argparse
 import inspect
 from ._version import __version__
-import shutil
-import json
-from invoke import run
 # from botocore.errorfactory import ExecutionAlreadyExists
-from .utils import create_jobid
-from .vars import (
-    _tibanna,
-    AWS_REGION,
-    TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-)
 from .core import API
 from .test_utils import test as _test
+from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 PACKAGE_NAME = 'tibanna'
 
 
 class Subcommands(object):
-
-    default_sfn = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
     def __init__(self):
         pass
@@ -58,15 +48,18 @@ class Subcommands(object):
                 [{'flag': ["-i", "--input-json"], 'help': "tibanna input json file"},
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn,
-                  'default': self.default_sfn},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-j", "--jobid"],
-                  'help': "specify a user-defined job id (randomly generated if not specified)"}],
+                  'help': "specify a user-defined job id (randomly generated if not specified)"},
+                 {'flag': ["-S", "--sleep"],
+                  'help': "number of seconds between submission, to avoid drop-out (default 3)",
+                  'default': 3}],
             'stat':
                 [{'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn,
-                  'default': self.default_sfn},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-t", "--status"],
                   'help': "filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
                  {'flag': ["-l", "--long"],
@@ -79,13 +72,13 @@ class Subcommands(object):
                   'help': "job id of the specific job to kill (alternative to --exec-arn/-e)"},
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn,
-                  'default': self.default_sfn}],
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
             'kill_all':
                 [{'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn,
-                  'default': self.default_sfn}],
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
             'log':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to log"},
@@ -96,8 +89,8 @@ class Subcommands(object):
                           "(alternative to --exec-arn/-e or --job-id/-j"},
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn,
-                  'default': self.default_sfn},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-p", "--postrunjson"],
                   'help': "print out postrun json instead", 'action': "store_true"}],
             'add_user':
@@ -116,16 +109,18 @@ class Subcommands(object):
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to rerun"},
                  {'flag': ["-s", "--sfn"],
-                  'default': self.default_sfn,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-a", "--appname_filter"],
+                  'help': "rerun only the ones that match this appname"},
                  {'flag': ["-i", "--instance-type"],
                   'help': "use a specified instance type for the rerun"},
                  {'flag': ["-d", "--shutdown-min"],
                   'help': "use a specified shutdown mininutes for the rerun"},
                  {'flag': ["-b", "--ebs-size"],
                   'help': "use a specified ebs size for the rerun (GB)"},
-                 {'flag': ["-t", "--ebs-type"],
+                 {'flag': ["-T", "--ebs-type"],
                   'help': "use a specified ebs type for the rerun (gp2 vs io1)"},
                  {'flag': ["-p", "--ebs-iops"],
                   'help': "use a specified ebs iops for the rerun"},
@@ -137,9 +132,9 @@ class Subcommands(object):
                   'help': "overwrite input extra file if it already exists (reserved for pony)"}],
             'rerun_many':
                 [{'flag': ["-s", "--sfn"],
-                  'default': self.default_sfn,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % self.default_sfn},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-D", "--stopdate"],
                   'default': '13Feb2018',
                   'help': "stop (end) date of the executions (e.g. '13Feb2018')"},
@@ -158,7 +153,25 @@ class Subcommands(object):
                  {'flag': ["-t", "--status"],
                   'default': 'FAILED',
                   'help': "filter by status (e.g. if set to FAILED, rerun only FAILED jobs); " +
-                          "'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"}],
+                          "'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
+                 {'flag': ["-a", "--appname_filter"],
+                  'help': "rerun only the ones that match this appname"},
+                 {'flag': ["-i", "--instance-type"],
+                  'help': "use a specified instance type for the rerun"},
+                 {'flag': ["-d", "--shutdown-min"],
+                  'help': "use a specified shutdown mininutes for the rerun"},
+                 {'flag': ["-b", "--ebs-size"],
+                  'help': "use a specified ebs size for the rerun (GB)"},
+                 {'flag': ["-T", "--ebs-type"],
+                  'help': "use a specified ebs type for the rerun (gp2 vs io1)"},
+                 {'flag': ["-p", "--ebs-iops"],
+                  'help': "use a specified ebs iops for the rerun"},
+                 {'flag': ["-k", "--key-name"],
+                  'help': "use a specified key name for the rerun"},
+                 {'flag': ["-n", "--name"],
+                  'help': "use a specified run name for the rerun"},
+                 {'flag': ["-x", "--overwrite-input-extra"],
+                  'help': "overwrite input extra file if it already exists (reserved for pony)"}],
             'setup_tibanna_env':
                 [{'flag': ["-b", "--buckets"],
                   'help': "list of buckets to add permission to a tibanna usergroup"},
@@ -178,7 +191,7 @@ class Subcommands(object):
                   'help': "do not perform permission setup; just update step functions / lambdas",
                   'action': "store_true"},
                  {'flag': ["-E", "--no-setenv"],
-                  'help': "Do not overwrite self.default_sfn" +
+                  'help': "Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME" +
                           "environmental variable in your .bashrc",
                   'action': "store_true"},
                  {'flag': ["-g", "--usergroup"],
@@ -231,24 +244,12 @@ def deploy_new(name, tests=False, suffix=None, dev=False, usergroup=None):
     New method of deploying pacaked lambdas (BETA)
     * Running with --dev will cause the Python pkg in the current working dir to be installed
     """
-    API().deploy_packaged_lambdas(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
+    API().deploy_new(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
 
 
-def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''):
+def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):
     """run a workflow"""
-    if not jobid:
-        jobid = create_jobid()
-    with open(input_json) as input_file:
-        data = json.load(input_file)
-        resp = API().run_workflow(data, sfn=sfn, jobid=jobid)
-        print("JOBID %s submitted" % resp['jobid'])
-        print("EXECUTION ARN = %s" % resp[_tibanna]['exec_arn'])
-        if 'cloudwatch_dashboard' in resp['config'] and resp['config']['cloudwatch_dashboard']:
-            cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
-                'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
-            print("Cloudwatch Dashboard = %s" % cw_db_url)
-        if shutil.which('open') is not None:
-            run('open %s' % resp[_tibanna]['url'])
+    API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, verbose=True)
 
 
 def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
@@ -280,30 +281,6 @@ def list_sfns(numbers=False):
     API().list_sfns(numbers=numbers, sfn_type="unicorn")
 
 
-def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
-          overwrite_input_extra=None, key_name=None, name=None):
-    """ rerun a specific job"""
-    override_config = dict()
-    if instance_type:
-        override_config['instance_type'] = instance_type
-    if shutdown_min:
-        override_config['shutdown_min'] = shutdown_min
-    if ebs_size:
-        override_config['ebs_size'] = int(ebs_size)
-    if overwrite_input_extra:
-        override_config['overwrite_input_extra'] = overwrite_input_extra
-    if key_name:
-        override_config['key_name'] = key_name
-    if ebs_type:
-        override_config['ebs_type'] = ebs_type
-        if ebs_type == 'gp2':
-            override_config['ebs_iops'] = ''
-    if ebs_iops:
-        override_config['ebs_iops'] = ebs_iops
-    API().rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
-
-
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     """print execution log or postrun json (-p) for a job"""
     print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson))
@@ -319,8 +296,20 @@ def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     API().kill(exec_arn, job_id, sfn)
 
 
+def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, appname_filter=None,
+          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+          overwrite_input_extra=None, key_name=None, name=None):
+    """ rerun a specific job"""
+    API().rerun(exec_arn, sfn=sfn,
+                appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
+                ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
+
+
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=0, sleeptime=5, status='FAILED'):
+               stopminute=0, offset=0, sleeptime=5, status='FAILED', appname_filter=None,
+               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+               overwrite_input_extra=None, key_name=None, name=None):
     """rerun all the jobs that failed after a given time point
     filtered by the time when the run failed (stopdate, stophour (24-hour format), stopminute)
     By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
@@ -334,7 +323,10 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
     API().rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
-                   stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
+                   stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status,
+                   appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
+                   ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                   overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
 def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):

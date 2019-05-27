@@ -6,6 +6,7 @@ import time
 import copy
 import logging
 import importlib
+import shutil
 from datetime import datetime
 from uuid import uuid4, UUID
 from invoke import run
@@ -53,6 +54,9 @@ UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 class API(object):
 
     lambdas_module = unicorn_lambdas
+    StepFunction = StepFunctionUnicorn
+    default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+    default_env = ''
 
     def __init__(self):
         pass
@@ -76,35 +80,44 @@ class API(object):
             pass
         return run_name
 
-    def run_workflow(self, input_json, accession='', sfn='tibanna_pony',
-                     env='fourfront-webdev', jobid=None, sleep=3):
+    def run_workflow(self, input_json, sfn=None,
+                     env=None, jobid=None, sleep=3, verbose=True):
         '''
+        input_json is either a dict or a file
         accession is unique name that we be part of run id
         '''
-        client = boto3.client('stepfunctions', region_name='us-east-1')
-        base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
-        input_json_copy = copy.deepcopy(input_json)
-        # build from appropriate input json
-        # assume run_type and and run_id
-        if 'run_name' in input_json_copy['config']:
-            if _tibanna not in input_json_copy:
-                input_json_copy[_tibanna] = dict()
-            input_json_copy[_tibanna]['run_name'] = input_json_copy['config']['run_name']
-        input_json_copy = _tibanna_settings(input_json_copy, force_inplace=True, env=env)
-        run_name = self.randomize_run_name(input_json_copy[_tibanna]['run_name'], sfn)
-        input_json_copy[_tibanna]['run_name'] = run_name
-        input_json_copy['config']['run_name'] = run_name
-        # updated arn
-        arn = EXECUTION_ARN(run_name, sfn)
-        input_json_copy[_tibanna]['exec_arn'] = arn
-        # calculate what the url will be
-        url = "%s%s" % (base_url, arn)
-        input_json_copy[_tibanna]['url'] = url
-        # add jobid
         if not jobid:
             jobid = create_jobid()
-        input_json_copy['jobid'] = jobid
-        aws_input = json.dumps(input_json_copy)
+        if isinstance(input_json, dict):
+            data = copy.deepcopy(input_json)
+        elif isinstance(input_json, str) and os.path.exists(input_json):
+            with open(input_json) as input_file:
+                data = json.load(input_file)
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        if not env:
+            env = self.default_env
+        client = boto3.client('stepfunctions', region_name='us-east-1')
+        base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
+        # build from appropriate input json
+        # assume run_type and and run_id
+        if 'run_name' in data['config']:
+            if _tibanna not in data:
+                data[_tibanna] = dict()
+            data[_tibanna]['run_name'] = data['config']['run_name']
+        data = _tibanna_settings(data, force_inplace=True, env=env)
+        run_name = self.randomize_run_name(data[_tibanna]['run_name'], sfn)
+        data[_tibanna]['run_name'] = run_name
+        data['config']['run_name'] = run_name
+        # updated arn
+        arn = EXECUTION_ARN(run_name, sfn)
+        data[_tibanna]['exec_arn'] = arn
+        # calculate what the url will be
+        url = "%s%s" % (base_url, arn)
+        data[_tibanna]['url'] = url
+        # add jobid
+        data['jobid'] = jobid
+        aws_input = json.dumps(data)
         print("about to start run %s" % run_name)
         # trigger the step function to run
         try:
@@ -117,13 +130,22 @@ class API(object):
         except Exception as e:
             raise(e)
         # adding execution info to dynamoDB for fast search by awsem job id
-        self.add_to_dydb(jobid, run_name, sfn, input_json_copy['config']['log_bucket'])
+        self.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'])
         # print some info
         print("response from aws was: \n %s" % response)
         print("url to view status:")
-        print(input_json_copy[_tibanna]['url'])
-        input_json_copy[_tibanna]['response'] = response
-        return input_json_copy
+        print(data[_tibanna]['url'])
+        data[_tibanna]['response'] = response
+        if verbose:
+            print("JOBID %s submitted" % data['jobid'])
+            print("EXECUTION ARN = %s" % data[_tibanna]['exec_arn'])
+            if 'cloudwatch_dashboard' in data['config'] and data['config']['cloudwatch_dashboard']:
+                cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
+                    'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
+                print("Cloudwatch Dashboard = %s" % cw_db_url)
+            if shutil.which('open') is not None:
+                run('open %s' % data[_tibanna]['url'])
+        return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket):
         dydb = boto3.client('dynamodb')
@@ -224,8 +246,10 @@ class API(object):
                 else:
                     break
 
-    def kill_all(self, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    def kill_all(self, sfn=None):
         """killing all the running jobs"""
+        if not sfn:
+            sfn = self.default_stepfunction_name
         client = boto3.client('stepfunctions')
         stateMachineArn = STEP_FUNCTION_ARN(sfn)
         res = client.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
@@ -240,12 +264,13 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None,
-            sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False):
         if postrunjson:
             suffix = '.postrun.json'
         else:
             suffix = '.log'
+        if not sfn:
+            sfn = self.default_stepfunction_name
         sf = boto3.client('stepfunctions')
         if not exec_arn and exec_name:
             exec_arn = EXECUTION_ARN(exec_name, sfn)
@@ -255,7 +280,7 @@ class API(object):
             logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
             if res_s3:
-                return(res_s3['Body'].read())
+                return(res_s3['Body'].read().decode())
         elif job_id:
             stateMachineArn = STEP_FUNCTION_ARN(sfn)
             res = sf.list_executions(stateMachineArn=stateMachineArn)
@@ -268,7 +293,7 @@ class API(object):
                         logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
                         res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         if res_s3:
-                            return(res_s3['Body'].read())
+                            return(res_s3['Body'].read().decode())
                         break
                 if 'nextToken' in res:
                     res = sf.list_executions(nextToken=res['nextToken'],
@@ -277,10 +302,12 @@ class API(object):
                     break
         return None
 
-    def stat(self, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, verbose=False):
+    def stat(self, sfn=None, status=None, verbose=False):
         """print out executions with details (-v)
         status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
         """
+        if not sfn:
+            sfn = self.default_stepfunction_name
         args = {
             'stateMachineArn': STEP_FUNCTION_ARN(sfn),
             'maxResults': 100
@@ -407,14 +434,18 @@ class API(object):
             input_json_template['_tibanna']['run_name'] = input_json_template['_tibanna']['run_name'][:-36]
             input_json_template['config']['run_name'] = input_json_template['_tibanna']['run_name']
 
-    def rerun(self, exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-              override_config=None, app_name_filter=None, name=None):
+    def rerun(self, exec_arn, sfn=None,
+              override_config=None, app_name_filter=None,
+              instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+              overwrite_input_extra=None, key_name=None, name=None):
         """rerun a specific job
         override_config : dictionary for overriding config (keys are the keys inside config)
             e.g. override_config = { 'instance_type': 't2.micro' }
         app_name_filter : app_name (e.g. hi-c-processing-pairs), if specified,
         then rerun only if it matches app_name
         """
+        if not sfn:
+            sfn = self.default_stepfunction_name
         client = boto3.client('stepfunctions')
         res = client.describe_execution(executionArn=exec_arn)
         input_json_template = json.loads(res['input'])
@@ -426,14 +457,34 @@ class API(object):
                 return(None)
         self.clear_input_json_template(input_json_template)
         # override config
+        if not override_config:
+            override_config = dict()
+            if instance_type:
+                override_config['instance_type'] = instance_type
+            if shutdown_min:
+                override_config['shutdown_min'] = shutdown_min
+            if ebs_size:
+                override_config['ebs_size'] = int(ebs_size)
+            if overwrite_input_extra:
+                override_config['overwrite_input_extra'] = overwrite_input_extra
+            if key_name:
+                override_config['key_name'] = key_name
+            if ebs_type:
+                override_config['ebs_type'] = ebs_type
+                if ebs_type == 'gp2':
+                    override_config['ebs_iops'] = ''
+            if ebs_iops:
+                override_config['ebs_iops'] = ebs_iops
         if override_config:
             for k, v in iter(override_config.items()):
                 input_json_template['config'][k] = v
         return(self.run_workflow(input_json_template, sfn=sfn))
 
-    def rerun_many(self, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
+    def rerun_many(self, sfn=None, stopdate='13Feb2018', stophour=13,
                    stopminute=0, offset=0, sleeptime=5, status='FAILED',
-                   override_config=None, app_name_filter=None):
+                   override_config=None, app_name_filter=None,
+                   instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+                   overwrite_input_extra=None, key_name=None, name=None):
         """Reruns step function jobs that failed after a given time point
         (stopdate, stophour (24-hour format), stopminute)
         By default, stophour should be the same as your system time zone.
@@ -445,6 +496,8 @@ class API(object):
         rerun_many('tibanna_pony-dev')
         rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
         """
+        if not sfn:
+            sfn = self.default_stepfunction_name
         stophour = stophour + offset
         stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
         stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M')
@@ -457,7 +510,10 @@ class API(object):
             if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
                 k = k + 1
                 self.rerun(exc['executionArn'], sfn=sfn,
-                           override_config=override_config, app_name_filter=app_name_filter)
+                           override_config=override_config, app_name_filter=app_name_filter,
+                           instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
+                           ebs_type=ebs_type, ebs_iops=ebs_iops,
+                           overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
                 time.sleep(sleeptime)
 
     def get_pony_only_tibanna_lambdas(self):
@@ -471,14 +527,7 @@ class API(object):
 
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
-        secret = os.environ.get("SECRET", '')
         envlist = {
-            'run_workflow': {'SECRET': secret,
-                             'TIBANNA_AWS_REGION': AWS_REGION,
-                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'start_run_awsem': {'SECRET': secret,
-                                'TIBANNA_AWS_REGION': AWS_REGION,
-                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
             'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                                'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                                'AMI_ID_WDL': AMI_ID_WDL,
@@ -487,13 +536,7 @@ class API(object):
                                'TIBANNA_AWS_REGION': AWS_REGION,
                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
             'check_task_awsem': {'TIBANNA_AWS_REGION': AWS_REGION,
-                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'update_ffmeta_awsem': {'SECRET': secret,
-                                    'TIBANNA_AWS_REGION': AWS_REGION,
-                                    'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'validate_md5_s3_initiator': {'SECRET': secret,
-                                          'TIBANNA_AWS_REGION': AWS_REGION,
-                                          'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
             envlist['run_task_awsem'].update({
@@ -534,6 +577,9 @@ class API(object):
         # install the python pkg in the current working directory if --dev is set
         local_pkg = '.' if dev else None
         aws_lambda.deploy_tibanna(lambda_fxn_module, suffix, requirements_fpath, extra_config, local_pkg)
+
+    def deploy_new(self, name, tests=False, suffix=None, dev=False, usergroup=None):
+        self.deploy_packaged_lambdas(name, tests=False, suffix=None, dev=False, usergroup=None)
 
     def deploy_packaged_lambdas(self, name, tests=False, suffix=None, dev=False, usergroup=None):
         """deploy/update lambdas only"""
@@ -667,8 +713,7 @@ class API(object):
         return tibanna_usergroup
 
     def deploy_tibanna(self, suffix=None, usergroup=None, tests=False,
-                       setup=False, buckets='', setenv=False,
-                       StepFunction=StepFunctionUnicorn):
+                       setup=False, buckets='', setenv=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -677,7 +722,7 @@ class API(object):
                 usergroup = self.setup_tibanna_env(buckets)  # override usergroup
         print("creating a new step function...")
         # this function will remove existing step function on a conflict
-        step_function_name = self.create_stepfunction(suffix, usergroup=usergroup, StepFunction=StepFunction)
+        step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         if setenv:
             os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
@@ -724,13 +769,12 @@ class API(object):
     def create_stepfunction(self, dev_suffix=None,
                             region_name=AWS_REGION,
                             aws_acc=AWS_ACCOUNT_NUMBER,
-                            usergroup=None,
-                            StepFunction=StepFunctionUnicorn):
+                            usergroup=None):
         if not aws_acc or not region_name:
             print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
             exit(1)
         # create a step function definition object
-        sfndef = StepFunction(dev_suffix, region_name, aws_acc, usergroup)
+        sfndef = self.StepFunction(dev_suffix, region_name, aws_acc, usergroup)
         # if this encouters an existing step function with the same name, delete
         sfn = boto3.client('stepfunctions', region_name=region_name)
         retries = 12  # wait 10 seconds between retries for total of 120s

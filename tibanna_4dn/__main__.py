@@ -11,24 +11,7 @@ from .vars import (
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 )
 # do not delete imported but unused functions below.
-from tibanna.__main__ import (
-    run_workflow as _run_workflow,
-    deploy_unicorn,
-    kill as _kill,
-    kill_all as _kill_all,
-    list_sfns as _list_sfns,
-    log as _log,
-    stat as _stat,
-    rerun as _rerun,
-    rerun_many as _rerun_many,
-    users,
-    add_user,
-    setup_tibanna_env,
-)
-from .core import (
-    deploy_packaged_lambdas as _deploy_packaged_lambdas,
-    deploy_pony as _deploy_pony
-)
+from .core import API
 from tibanna.test_utils import test as _test
 from tibanna.__main__ import Subcommands as _Subcommands
 
@@ -69,59 +52,80 @@ def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
           extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
 
 
-def deploy_new(name, tests=False, suffix=None, dev=False, usergroup=None):
+def deploy_new(name, tests=True, suffix=None, dev=False, usergroup=None):
     """
     New method of deploying pacaked lambdas (BETA)
     * Running with --dev will cause the Python pkg in the current working dir to be installed
     """
-    _deploy_packaged_lambdas(name, tests, suffix, dev, usergroup=usergroup)
+    API().deploy_new(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
 
 
 def deploy_pony(suffix=None, tests=True):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
-    _deploy_pony(suffix=suffix, tests=tests)
+    API().deploy_pony(suffix=suffix, tests=tests)
 
 
-def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''):
-    _run_workflow(input_json=input_json, sfn=sfn, jobid=jobid)
-
-
-def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
-          overwrite_input_extra=None, key_name=None, name=None):
-    _rerun(exec_arn, sfn, instance_type, shutdown_min, ebs_size, ebs_type, ebs_iops,
-           overwrite_input_extra, key_name, name)
+def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3, verbose=True):
+    API().run_workflow(input_json=input_json, sfn=sfn, jobid=jobid, sleep=sleep, verbose=verbose)
 
 
 def list_sfns(numbers=False, sfn_type="pony"):
     """list all step functions, optionally with a summary (-n)"""
-    _list_sfns(numbers=numbers, sfn_type=sfn_type)
+    API().list_sfns(numbers=numbers, sfn_type=sfn_type)
 
 
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
-    _log(exec_arn, job_id, exec_name, sfn, postrunjson)
+    API().log(exec_arn, job_id, exec_name, sfn, postrunjson)
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """kill all the running jobs on a step function"""
-    _kill_all(sfn)
+    API().kill_all(sfn)
 
 
 def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """kill a specific job"""
-    _kill(exec_arn, job_id, sfn)
+    API().kill(exec_arn, job_id, sfn)
+
+
+def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, appname_filter=None,
+          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+          overwrite_input_extra=None, key_name=None, name=None):
+    """ rerun a specific job"""
+    API().rerun(exec_arn, sfn=sfn,
+                appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
+                ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
-               stopminute=0, offset=0, sleeptime=5, status='FAILED'):
-    _rerun_many(sfn, stopdate, stophour, stopminute, offset, sleeptime, status)
+               stopminute=0, offset=0, sleeptime=5, status='FAILED', appname_filter=None,
+               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+               overwrite_input_extra=None, key_name=None, name=None):
+    """rerun all the jobs that failed after a given time point
+    filtered by the time when the run failed (stopdate, stophour (24-hour format), stopminute)
+    By default, stophour should be the same as your system time zone. This can be changed by setting a different offset.
+    If offset=5, for instance, that means your stoptime=12 would correspond to your system time=17.
+    Sleeptime is sleep time in seconds between rerun submissions.
+    By default, it reruns only 'FAILED' runs, but this can be changed by resetting status.
+
+    Examples
+
+    rerun_many('tibanna_pony-dev')
+    rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
+    """
+    API().rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
+                   stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status,
+                   appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
+                   ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                   overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
 def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):
     """print out executions with details
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
-    _stat(sfn=sfn, status=status, long=long)
+    API().stat(sfn=sfn, status=status, long=long)
 
 
 def main(Subcommands=Subcommands):
