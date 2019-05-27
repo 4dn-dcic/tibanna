@@ -1,4 +1,4 @@
-from tibanna_4dn.lambdas.update_ffmeta_awsem.service import (
+from tibanna_4dn.lambdas.update_ffmeta_awsem import (
     handler,
     real_handler
 )
@@ -13,7 +13,7 @@ from tibanna_4dn.update_ffmeta import (
 from tibanna_4dn.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
 from tibanna_4dn.pony_utils import TibannaSettings
 from tibanna.utils import printlog
-# from tibanna.check_export_sbg.service import get_inputfile_accession
+# from tibanna.check_export_sbg import get_inputfile_accession
 import pytest
 from ..conftest import valid_env
 import json
