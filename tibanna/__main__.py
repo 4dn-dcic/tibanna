@@ -16,21 +16,7 @@ from .vars import (
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 )
-from .core import (
-    run_workflow as _run_workflow,
-    kill as _kill,
-    log as _log,
-    kill_all as _kill_all,
-    list_sfns as _list_sfns,
-    stat as _stat,
-    rerun as _rerun,
-    rerun_many as _rerun_many,
-    deploy_unicorn as _deploy_unicorn,
-    deploy_packaged_lambdas as _deploy_packaged_lambdas,
-    users as _users,
-    add_user as _add_user,
-    setup_tibanna_env as _setup_tibanna_env
-)
+from .core import API
 from .test_utils import test as _test
 
 PACKAGE_NAME = 'tibanna'
@@ -245,7 +231,7 @@ def deploy_new(name, tests=False, suffix=None, dev=False, usergroup=None):
     New method of deploying pacaked lambdas (BETA)
     * Running with --dev will cause the Python pkg in the current working dir to be installed
     """
-    _deploy_packaged_lambdas(name, tests, suffix, dev, usergroup)
+    API().deploy_packaged_lambdas(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
 
 
 def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''):
@@ -254,7 +240,7 @@ def run_workflow(input_json='', sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid=''
         jobid = create_jobid()
     with open(input_json) as input_file:
         data = json.load(input_file)
-        resp = _run_workflow(data, sfn=sfn, jobid=jobid)
+        resp = API().run_workflow(data, sfn=sfn, jobid=jobid)
         print("JOBID %s submitted" % resp['jobid'])
         print("EXECUTION ARN = %s" % resp[_tibanna]['exec_arn'])
         if 'cloudwatch_dashboard' in resp['config'] and resp['config']['cloudwatch_dashboard']:
@@ -269,29 +255,29 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
     """set up usergroup environment on AWS
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
-    _setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=False)
+    API().setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=False)
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
     """deploy tibanna unicorn to AWS cloud"""
-    _deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
-                    usergroup=usergroup)
+    API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
+                       usergroup=usergroup)
 
 
 def add_user(user, usergroup):
     """add a user to a tibanna group"""
-    _add_user(user=user, usergroup=usergroup)
+    API().add_user(user=user, usergroup=usergroup)
 
 
 def users():
     """list all users along with their associated tibanna user groups"""
-    _users()
+    API().users()
 
 
 def list_sfns(numbers=False):
     """list all step functions, optionally with a summary (-n)"""
-    _list_sfns(numbers=numbers, sfn_type="unicorn")
+    API().list_sfns(numbers=numbers, sfn_type="unicorn")
 
 
 def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
@@ -315,22 +301,22 @@ def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
             override_config['ebs_iops'] = ''
     if ebs_iops:
         override_config['ebs_iops'] = ebs_iops
-    _rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
+    API().rerun(exec_arn, sfn=sfn, override_config=override_config, name=name)
 
 
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
     """print execution log or postrun json (-p) for a job"""
-    print(_log(exec_arn, job_id, exec_name, sfn, postrunjson))
+    print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """kill all the running jobs on a step function"""
-    _kill_all(sfn)
+    API().kill_all(sfn)
 
 
 def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """kill a specific job"""
-    _kill(exec_arn, job_id, sfn)
+    API().kill(exec_arn, job_id, sfn)
 
 
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
@@ -347,15 +333,15 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
     rerun_many('tibanna_pony-dev')
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
-    _rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
-                stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
+    API().rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
+                   stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status)
 
 
 def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):
     """print out executions with details
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
-    _stat(sfn=sfn, status=status, verbose=long)
+    API().stat(sfn=sfn, status=status, verbose=long)
 
 
 def main(Subcommands=Subcommands):
