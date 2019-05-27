@@ -23,7 +23,9 @@ class API(_API):
         pass
 
     def env_list(self, name):
-        envlist = super().envlist(name)
+        envlist = super().env_list(name)
+        if envlist:
+            return envlist
         envlist_pony = {
             'run_workflow': {'SECRET': SECRET,
                              'TIBANNA_AWS_REGION': AWS_REGION,
@@ -38,8 +40,7 @@ class API(_API):
                                           'TIBANNA_AWS_REGION': AWS_REGION,
                                           'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
         }
-        envlist.update(envlist_pony)
-        return envlist.get(name, '')
+        return envlist_pony.get(name, '')
 
     def deploy_new(self, name, tests=True, suffix=None, dev=False, usergroup=None):
         """this one has tests=True by default"""
