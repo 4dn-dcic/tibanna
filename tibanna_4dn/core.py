@@ -1,5 +1,4 @@
 from tibanna.core import API as _API
-from . import lambdas as pony_lambdas  # over-write lambdas module
 from .stepfunction import StepFunctionPony
 from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from tibanna.vars import AWS_REGION, AWS_ACCOUNT_NUMBER
@@ -7,10 +6,18 @@ from tibanna.vars import AWS_REGION, AWS_ACCOUNT_NUMBER
 
 class API(_API):
 
-    lambdas_module = pony_lambdas
+    # This one cannot be imported in advance, because it causes circular import.
+    # lambdas run_workflow / validate_md5_s3_initiator needs to import this API
+    # to call run_workflow
+    @property
+    def lambdas_module(self):
+        from . import lambdas as pony_lambdas
+        return pony_lambdas
+
     StepFunction = StepFunctionPony
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
+    sfn_type = 'pony'
 
     def __init__(self):
         pass

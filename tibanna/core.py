@@ -39,7 +39,6 @@ from .iam_utils import (
 )
 from .stepfunction import StepFunctionUnicorn
 from .test_utils import test
-from . import lambdas as unicorn_lambdas
 from contextlib import contextmanager
 import aws_lambda
 
@@ -53,10 +52,19 @@ UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
 
 class API(object):
 
-    lambdas_module = unicorn_lambdas
+    # This one cannot be imported in advance, because it causes circular import.
+    # lambdas run_workflow / validate_md5_s3_initiator needs to import this API
+    # to call run_workflow (this is a pony problem but to be consistent, I add
+    # lambdas_module here for unicorn as well.
+    @property
+    def lambdas_module(self):
+        from . import lambdas as unicorn_lambdas
+        return unicorn_lambdas
+
     StepFunction = StepFunctionUnicorn
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
+    sfn_type = 'unicorn'
 
     def __init__(self):
         pass
@@ -372,7 +380,7 @@ class API(object):
             else:
                 break
 
-    def list_sfns(self, numbers=False, sfn_type="unicorn"):
+    def list_sfns(self, numbers=False):
         """list all step functions, optionally with a summary (-n)"""
         st = boto3.client('stepfunctions')
         res = st.list_state_machines(
@@ -383,7 +391,7 @@ class API(object):
             header = header + "\trunning\tsucceeded\tfailed\taborted\ttimed_out"
         print(header)
         for s in res['stateMachines']:
-            if not s['name'].startswith('tibanna_' + sfn_type):
+            if not s['name'].startswith('tibanna_' + self.sfn_type):
                 continue
             line = "%s\t%s" % (s['name'], str(s['creationDate']))
             if numbers:

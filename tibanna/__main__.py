@@ -263,7 +263,7 @@ def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup=None):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
-                       usergroup=usergroup)
+                         usergroup=usergroup)
 
 
 def add_user(user, usergroup):
@@ -278,7 +278,7 @@ def users():
 
 def list_sfns(numbers=False):
     """list all step functions, optionally with a summary (-n)"""
-    API().list_sfns(numbers=numbers, sfn_type="unicorn")
+    API().list_sfns(numbers=numbers)
 
 
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
@@ -323,10 +323,10 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
     rerun_many('tibanna_pony', stopdate= '14Feb2018', stophour=14, stopminute=20)
     """
     API().rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
-                   stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status,
-                   appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
-                   ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
-                   overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
+                     stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status,
+                     appname_filter=appname_filter, instance_type=instance_type, shutdown_min=shutdown_min,
+                     ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                     overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
 def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):

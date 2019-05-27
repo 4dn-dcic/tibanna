@@ -1,8 +1,6 @@
 import json
 import os
-import sys
 import datetime
-from time import sleep
 import boto3
 import gzip
 from uuid import uuid4
@@ -19,7 +17,6 @@ from tibanna.nnested_array import (
     create_dim
 )
 from tibanna.utils import (
-    _tibanna_settings,
     printlog
 )
 
@@ -542,40 +539,6 @@ class Awsem(object):
             if argname == v.argument_name:
                 keys.append(v.key)
         return keys
-
-
-def make_input(env, workflow, object_key, uuid):
-    bucket = "elasticbeanstalk-%s-files" % env
-    output_bucket = "elasticbeanstalk-%s-wfoutput" % env
-    workflow_uuid = _workflows[workflow]['uuid']
-    workflow_arg_name = _workflows[workflow]['arg_name']
-
-    data = {"parameters": {},
-            "app_name": workflow,
-            "workflow_uuid": workflow_uuid,
-            "input_files": [
-                {"workflow_argument_name": workflow_arg_name,
-                 "bucket_name": bucket,
-                 "uuid": uuid,
-                 "object_key": object_key,
-                 }
-             ],
-            "output_bucket": output_bucket,
-            "config": {
-                "ebs_type": "io1",
-                "json_bucket": "4dn-aws-pipeline-run-json",
-                "ebs_iops": 500,
-                "shutdown_min": 30,
-                "password": "thisisnotmypassword",
-                "log_bucket": "tibanna-output",
-                "key_name": ""
-              },
-            }
-    data.update(_tibanna_settings({'run_id': str(object_key),
-                                   'run_type': workflow,
-                                   'env': env,
-                                   }))
-    return data
 
 
 def post_random_file(bucket, ff_key,
