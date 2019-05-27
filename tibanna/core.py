@@ -563,10 +563,18 @@ def deploy_lambda(name, suffix, dev, usergroup, lambdas_module=unicorn_lambdas):
     aws_lambda.deploy_tibanna(lambda_fxn_module, suffix, requirements_fpath, extra_config, local_pkg)
 
 
-def deploy_packaged_lambdas(name, suffix=None, dev=False, usergroup=None, lambdas_module=unicorn_lambdas):
+def deploy_packaged_lambdas(name, tests=False, suffix=None, dev=False, usergroup=None, lambdas_module=unicorn_lambdas):
+    """deploy/update lambdas only"""
+    print("preparing for deploy...")
+    if tests:
+        print("running tests...")
+        if test() != 0:
+            print("tests need to pass first before deploy")
+            return
+    else:
+        print("skipping tests. execute with --tests flag to run them")
     if name == 'all':
-        lambda_files = os.listdir(dir(lambdas_module))
-        names = [filename for filename in lambda_files if filename not in ['requirement.txt', '__init__.py']]
+        names = dir(lambdas_module)
     elif name == 'unicorn':
         names = UNICORN_LAMBDAS
     else:

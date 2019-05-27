@@ -76,7 +76,7 @@ class StepFunctionUnicorn(object):
 
     @property
     def sfn_start_lambda(self):
-        return 'StartRunAwsem'
+        return 'RunTaskAwsem'
 
     @property
     def sfn_state_defs(self):

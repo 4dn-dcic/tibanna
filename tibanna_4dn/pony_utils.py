@@ -14,7 +14,7 @@ from dcicutils.ff_utils import (
     search_metadata
 )
 from dcicutils.s3_utils import s3Utils
-from .nnested_array import (
+from tibanna.nnested_array import (
     flatten,
     create_dim
 )
