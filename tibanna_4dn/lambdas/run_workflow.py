@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from tibanna.core import run_workflow
+from tibanna_4dn.core import API
 from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from tibanna.vars import AWS_REGION
 
@@ -21,7 +21,7 @@ config = {
 def handler(event, context):
     env_name = event['env_name']
     sfn = event.get('step_function_name', TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    res = run_workflow(event, env=env_name, sfn=sfn)
+    res = API().run_workflow(event, env=env_name, sfn=sfn)
 
     try:
         start = str(res['_tibanna']['response']['startDate'])

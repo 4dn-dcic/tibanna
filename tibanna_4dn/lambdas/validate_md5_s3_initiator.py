@@ -2,7 +2,7 @@
 from dcicutils.ff_utils import get_metadata
 from tibanna.utils import _tibanna_settings, printlog
 # from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from tibanna.core import run_workflow
+from tibanna_4dn.core import API
 from tibanna_4dn.exceptions import TibannaStartException, FdnConnectionException
 from tibanna_4dn.pony_utils import (
     TibannaSettings,
@@ -45,7 +45,7 @@ def handler(event, context):
         if status != 'to be uploaded by workflow':
             if not extra_status or extra_status != 'to be uploaded by workflow':
                 input_json['input_files'][0]['format_if_extra'] = file_format
-                response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+                response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
             else:
                 return {'info': 'status for extra file is to be uploaded by workflow'}
         else:
@@ -54,7 +54,7 @@ def handler(event, context):
         # only run if status is uploading...
         if status == 'uploading' or event.get('force_run'):
             # trigger the step function to run
-            response = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+            response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
         else:
             return {'info': 'status is not uploading'}
 
@@ -62,7 +62,7 @@ def handler(event, context):
     if file_format == 'fastq':
         md5_arn = response['_tibanna']['exec_arn']
         input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn], run_name_prefix='fastqc')
-        response_fastqc = run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
+        response_fastqc = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
         serialize_startdate(response_fastqc)
         response['fastqc'] = response_fastqc
     serialize_startdate(response)
