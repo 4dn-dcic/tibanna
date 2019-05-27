@@ -14,6 +14,11 @@ valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
 
 
 @pytest.fixture(scope='session')
+def run_task_awsem_event_md5_fail():
+    return get_event_file_for('run_task_awsem', event_file='event_fail.json')
+
+
+@pytest.fixture(scope='session')
 def used_env():
     return 'fourfront-webdev'
 
