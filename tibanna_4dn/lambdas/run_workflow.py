@@ -11,7 +11,7 @@ config = {
     'handler': 'service.handler',
     'region': AWS_REGION,
     'runtime': 'python3.6',
-    'role': 'tibanna_lambda_init_role',
+    'role': 'sysadmin',
     'description': 'lambda that calls run_workflow',
     'timeout': 300,
     'memory_size': 256
