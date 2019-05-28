@@ -48,9 +48,6 @@ class API(_API):
         }
         return envlist_pony.get(name, '')
 
-    def deploy_core(self, name, tests=True, suffix=None, usergroup=None):
-        """this one has tests=True by default"""
-        super().deploy_core(name, tests=tests, suffix=suffix, usergroup=usergroup)
 
-    def deploy_pony(self, suffix=None, tests=True):
-        self.deploy_tibanna(suffix=suffix, tests=tests)
+    def deploy_pony(self, suffix=None):
+        self.deploy_tibanna(suffix=suffix)

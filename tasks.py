@@ -1,9 +1,9 @@
 import sys
 import pytest
-from invoke import run
+from invoke import run, task
 
-
-def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
+@task
+def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
          ignore='', ignore_pony=False, ignore_webdev=False):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.

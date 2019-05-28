@@ -36,7 +36,6 @@ class Subcommands(object):
                                  'This function is called automatically by deploy_tibanna or deploy_unicorn.' +
                                  'Use it only when the IAM permissions need to be reset',
             'stat': 'print out executions with details',
-            'test': 'test tibanna code (currently reserved for development at 4dn-dcic)',  # test doesn't work
             'users': 'list all users along with their associated tibanna user groups',
         }
 
@@ -200,49 +199,19 @@ class Subcommands(object):
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
-                 {'flag': ["-t", "--tests"],
-                  'help': "run test before deployment",
-                  'action': 'store_true'},
                  {'flag': ["-s", "--suffix"],
                   'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
                  {'flag': ["-g", "--usergroup"],
-                  'help': "Tibanna usergroup for the AWS Lambda function"}],
-            'test':
-                [{'flag': ["-F", "--no-flake"],
-                  'help': "skip flake8 tests", 'action': "store_true"},
-                 {'flag': ["-P", "--ignore-pony"],
-                  'help': "skip tests for tibanna pony", 'action': "store_true"},
-                 {'flag': ["-W", "--ignore-webdev"],
-                  'help': "skip tests for 4DN test portal webdev", 'action': "store_true"},
-                 {'flag': ["-w", "--watch"],
-                  'help': "watch", 'action': "store_true"},  # need more detail
-                 {'flag': ["-f", "--last-failing"],
-                  'help': "last failing", 'action': "store_true"},  # need more detail
-                 {'flag': ["-i", "--ignore"],
-                  'help': "ignore"},  # need more detail
-                 {'flag': ["-x", "--extra"],
-                  'help': "extra"},  # need more detail
-                 {'flag': ["-k", "--k"],
-                  'help': "k"}]  # need more detail
+                  'help': "Tibanna usergroup for the AWS Lambda function"}]
         }
 
 
-def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
-         ignore='', ignore_pony=False, ignore_webdev=False):
-    """Run the tests.
-    Note: --watch requires pytest-xdist to be installed.
+def deploy_core(name, suffix=None, usergroup=None):
     """
-    from .test_utils import test as _test
-    _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
-          extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
-
-
-def deploy_core(name, tests=False, suffix=None, usergroup=None):
+    New method of deploying packaged lambdas (BETA)
     """
-    New method of deploying pacaked lambdas (BETA)
-    """
-    API().deploy_core(name=name, tests=tests, suffix=suffix, usergroup=usergroup)
+    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):

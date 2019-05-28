@@ -607,17 +607,9 @@ class API(object):
                                    requirements_fpath=requirements_fpath,
                                    extra_config=extra_config)
 
-    def deploy_core(self, name, tests=False, suffix=None, usergroup=None):
+    def deploy_core(self, name, suffix=None, usergroup=None):
         """deploy/update lambdas only"""
         print("preparing for deploy...")
-        if tests:
-            from .test_utils import test
-            print("running tests...")
-            if test() != 0:
-                print("tests need to pass first before deploy")
-                return
-        else:
-            print("skipping tests. execute with --tests flag to run them")
         if name == 'all':
             names = self.lambda_names
         elif name == 'unicorn':
@@ -652,8 +644,8 @@ class API(object):
         print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
         return tibanna_usergroup
 
-    def deploy_tibanna(self, suffix=None, usergroup=None, tests=False,
-                       setup=False, buckets='', setenv=False):
+    def deploy_tibanna(self, suffix=None, usergroup=None, setup=False,
+                       buckets='', setenv=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -668,13 +660,13 @@ class API(object):
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
-        self.deploy_core('all', tests=tests, suffix=suffix, usergroup=usergroup)
+        self.deploy_core('all', suffix=suffix, usergroup=usergroup)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
                        no_setenv=False, usergroup=None):
         """deploy tibanna unicorn to AWS cloud"""
-        self.deploy_tibanna(suffix=suffix, tests=False, usergroup=usergroup, setup=not no_setup,
+        self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv)
 
     def add_user(self, user, usergroup):

@@ -36,32 +36,20 @@ class Subcommands(_Subcommands):
         _args['deploy_pony'] = \
             [{'flag': ["-s", "--suffix"],
               'help': "suffix (e.g. 'dev') to add to the end of the name of" +
-                      "tibanna_pony and AWS Lambda functions within the same usergroup"},
-             {'flag': ["-t", "--tests"],
-              'help': "Perform tests", 'action': "store_true"}]
+                      "tibanna_pony and AWS Lambda functions within the same usergroup"}]
         return _args
 
 
-def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
-         ignore='', ignore_pony=False, ignore_webdev=False):
-    """Run the tests.
-    Note: --watch requires pytest-xdist to be installed.
+def deploy_core(name, suffix=None, usergroup=None):
     """
-    from tibanna.test_utils import test as _test
-    _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
-          extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
-
-
-def deploy_core(name, tests=True, suffix=None, usergroup=None):
+    New method of deploying packaged lambdas (BETA)
     """
-    New method of deploying pacaked lambdas (BETA)
-    """
-    API().deploy_core(name=name, tests=tests, suffix=suffix, usergroup=usergroup)
+    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
 
 
-def deploy_pony(suffix=None, tests=True):
+def deploy_pony(suffix=None):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
-    API().deploy_pony(suffix=suffix, tests=tests)
+    API().deploy_pony(suffix=suffix)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):
