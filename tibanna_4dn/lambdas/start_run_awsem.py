@@ -12,7 +12,7 @@ config = {
     'handler': 'service.handler',
     'region': AWS_REGION,
     'runtime': 'python3.6',
-    'role': 'tibanna_lambda_init_role',
+    'role': 'lambda_full_s3',
     'description': 'Tibanna pony update_ffmeta_awsem',
     'timeout': 300,
     'memory_size': 256

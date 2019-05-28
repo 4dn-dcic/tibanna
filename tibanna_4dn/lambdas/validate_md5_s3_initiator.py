@@ -19,7 +19,7 @@ config = {
     'handler': 'service.handler',
     'region': AWS_REGION,
     'runtime': 'python3.6',
-    'role': 'tibanna_lambda_init_role',
+    'role': 'sysadmin',
     'description': 'initiates md5/fastqc runs',
     'timeout': 300,
     'memory_size': 256

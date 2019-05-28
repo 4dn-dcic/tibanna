@@ -1,4 +1,3 @@
-tibanna=0.8.0-beta2
 dcicutils==0.6.0
 Benchmark-4dn==0.5.2
 boto3==1.7.42
