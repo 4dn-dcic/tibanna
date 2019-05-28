@@ -63,7 +63,9 @@ class Subcommands(object):
                   'help': "filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
                  {'flag': ["-l", "--long"],
                   'help': "more comprehensive information",
-                  'action': "store_true"}],
+                  'action': "store_true"},
+                 {'flag': ["-n", "--nlines"],
+                  'help': "number of lines to print"}],
             'kill':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to kill"},
@@ -325,11 +327,11 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
                      overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
-def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):
+def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines=None):
     """print out executions with details
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
-    API().stat(sfn=sfn, status=status, verbose=long)
+    API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
 
 
 def main(Subcommands=Subcommands):

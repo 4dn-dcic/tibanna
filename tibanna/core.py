@@ -323,7 +323,7 @@ class API(object):
                     break
         return None
 
-    def stat(self, sfn=None, status=None, verbose=False):
+    def stat(self, sfn=None, status=None, verbose=False, n=None):
         """print out executions with details (-v)
         status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
         """
@@ -347,10 +347,16 @@ class API(object):
             print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
         res = client.list_executions(**args)
         ec2 = boto3.client('ec2')
+        k = 0
         while True:
+            if n and k == n:
+                break
             if 'executions' not in res or not res['executions']:
                 break
             for exc in res['executions']:
+                if n and k == n:
+                    break
+                k = k + 1
                 desc = client.describe_execution(executionArn=exc['executionArn'])
                 jobid = json.loads(desc['input']).get('jobid', 'no jobid')
                 status = exc['status']
