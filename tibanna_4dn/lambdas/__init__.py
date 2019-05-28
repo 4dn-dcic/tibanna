@@ -1,3 +1,4 @@
+# flake8: noqa
 from tibanna_4dn.lambdas import (
     check_task_awsem,
     run_task_awsem,

@@ -1,4 +1,4 @@
-from tibanna_4dn.lambdas import check_task_awsem as service
+from tibanna_4dn.lambdas.check_task_awsem import handler
 from tests.tibanna.pony.conftest import valid_env
 import pytest
 import boto3
@@ -28,7 +28,7 @@ def test_check_task_awsem_fails_if_job_error_found(check_task_input, s3):
     s3.put_object(Body=b'', Key=job_started)
     job_error = "%s.error" % jobid
     s3.put_object(Body=b'', Key=job_error)
-    res = service.handler(check_task_input_modified, '')
+    res = handler(check_task_input_modified, '')
     assert ('error' in res)
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_error}]})
