@@ -12,7 +12,6 @@ from .vars import (
 )
 # do not delete imported but unused functions below.
 from .core import API
-from tibanna.test_utils import test as _test
 from tibanna.__main__ import Subcommands as _Subcommands
 
 PACKAGE_NAME = 'tibanna_4dn'
@@ -48,16 +47,16 @@ def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
+    from tibanna.test_utils import test as _test
     _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
           extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
 
 
-def deploy_new(name, tests=True, suffix=None, dev=False, usergroup=None):
+def deploy_core(name, tests=True, suffix=None, usergroup=None):
     """
     New method of deploying pacaked lambdas (BETA)
-    * Running with --dev will cause the Python pkg in the current working dir to be installed
     """
-    API().deploy_new(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
+    API().deploy_core(name=name, tests=tests, suffix=suffix, usergroup=usergroup)
 
 
 def deploy_pony(suffix=None, tests=True):

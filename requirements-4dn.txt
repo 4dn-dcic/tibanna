@@ -1,12 +1,5 @@
-python-lambda-4dn==0.12.0b4
+python-lambda-4dn==0.12.0b5
 dcicutils==0.6.0
 Benchmark-4dn==0.5.2
 # for tasks.py
 invoke==0.18.1
-# syntax checker
-flake8==2.4.1
-# for testing
-pytest==3.0.5
-pytest-cov==2.3.1
-pytest-runner
-mock

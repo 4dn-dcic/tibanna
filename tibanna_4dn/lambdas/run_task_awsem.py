@@ -9,4 +9,4 @@ def metadata_only(event):
 
 @exception_coordinator('run_task_awsem', metadata_only)
 def handler(event, context):
-    return _handler(event)
+    return _handler(event, context)

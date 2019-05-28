@@ -8,7 +8,6 @@ import inspect
 from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .core import API
-from .test_utils import test as _test
 from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 PACKAGE_NAME = 'tibanna'
@@ -24,7 +23,7 @@ class Subcommands(object):
         return {
             # add more later
             'add_user': 'add an (IAM) user to a Tibanna usergroup',
-            'deploy_new': 'New method of deploying pacaked lambdas (BETA)',
+            'deploy_core': 'New method of deploying packaged lambdas (BETA)',
             'deploy_unicorn': 'deploy tibanna unicorn to AWS cloud (unicorn is for everyone)',
             'kill': 'kill a specific job',
             'kill_all': 'kill all the running jobs on a step function',
@@ -196,7 +195,7 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-g", "--usergroup"],
                   'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
-            'deploy_new':
+            'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
                  {'flag': ["-t", "--tests"],
@@ -205,9 +204,6 @@ class Subcommands(object):
                  {'flag': ["-s", "--suffix"],
                   'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
-                 {'flag': ["-d", "--dev"],
-                  'help': "This will cause the Python pkg in the current working dir to be installed",
-                  'action': 'store_true'},
                  {'flag': ["-g", "--usergroup"],
                   'help': "Tibanna usergroup for the AWS Lambda function"}],
             'test':
@@ -235,16 +231,16 @@ def test(watch=False, last_failing=False, no_flake=False, k='',  extra='',
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
+    from .test_utils import test as _test
     _test(watch=watch, last_failing=last_failing, no_flake=no_flake, k=k,
           extra=extra, ignore=ignore, ignore_pony=ignore_pony, ignore_webdev=ignore_webdev)
 
 
-def deploy_new(name, tests=False, suffix=None, dev=False, usergroup=None):
+def deploy_core(name, tests=False, suffix=None, usergroup=None):
     """
     New method of deploying pacaked lambdas (BETA)
-    * Running with --dev will cause the Python pkg in the current working dir to be installed
     """
-    API().deploy_new(name=name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
+    API().deploy_core(name=name, tests=tests, suffix=suffix, usergroup=usergroup)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):

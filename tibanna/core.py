@@ -9,6 +9,7 @@ import importlib
 import shutil
 from datetime import datetime
 from uuid import uuid4, UUID
+from types import ModuleType
 from invoke import run
 from .vars import (
     _tibanna,
@@ -26,7 +27,7 @@ from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
 )
-from tibanna.utils import (
+from .utils import (
     _tibanna_settings,
     printlog,
     create_jobid,
@@ -38,13 +39,13 @@ from .iam_utils import (
     get_lambda_role_name,
 )
 from .stepfunction import StepFunctionUnicorn
-from .test_utils import test
 from contextlib import contextmanager
 import aws_lambda
 
 
 # logger
 LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
@@ -60,6 +61,16 @@ class API(object):
     def lambdas_module(self):
         from . import lambdas as unicorn_lambdas
         return unicorn_lambdas
+
+    @property
+    def lambda_names(self):
+        return [mod for mod in dir(self.lambdas_module)
+                if isinstance(getattr(self.lambdas_module, mod), ModuleType)]
+
+    @property
+    def tibanna_packages(self):
+        import tibanna
+        return [tibanna]
 
     StepFunction = StepFunctionUnicorn
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
@@ -553,9 +564,9 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, dev, usergroup):
+    def deploy_lambda(self, name, suffix, usergroup):
         """
-        deploy a single lambda using the aws_lambda.deploy_tibanna (BETA)
+        deploy a single lambda using the aws_lambda.deploy_function (BETA)
         """
         if name not in dir(self.lambdas_module):
             raise Exception("Could not find lambda function file for %s" % name)
@@ -582,17 +593,17 @@ class API(object):
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
                 print(role_arn)
             extra_config['Role'] = role_arn
-        # install the python pkg in the current working directory if --dev is set
-        local_pkg = '.' if dev else None
-        aws_lambda.deploy_tibanna(lambda_fxn_module, suffix, requirements_fpath, extra_config, local_pkg)
+        aws_lambda.deploy_function(lambda_fxn_module,
+                                   function_name_suffix=suffix,
+                                   package_objects=self.tibanna_packages,
+                                   requirements_fpath=requirements_fpath,
+                                   extra_config=extra_config)
 
-    def deploy_new(self, name, tests=False, suffix=None, dev=False, usergroup=None):
-        self.deploy_packaged_lambdas(name, tests=False, suffix=None, dev=False, usergroup=None)
-
-    def deploy_packaged_lambdas(self, name, tests=False, suffix=None, dev=False, usergroup=None):
+    def deploy_core(self, name, tests=False, suffix=None, usergroup=None):
         """deploy/update lambdas only"""
         print("preparing for deploy...")
         if tests:
+            from .test_utils import test
             print("running tests...")
             if test() != 0:
                 print("tests need to pass first before deploy")
@@ -600,100 +611,13 @@ class API(object):
         else:
             print("skipping tests. execute with --tests flag to run them")
         if name == 'all':
-            names = dir(self.lambdas_module)
+            names = self.lambda_names
         elif name == 'unicorn':
             names = UNICORN_LAMBDAS
         else:
             names = [name, ]
         for name in names:
-            self.deploy_lambda(name, suffix, dev, usergroup)
-
-    def deploy_core(self, name, tests=False, suffix=None, usergroup=None, package='tibanna'):
-        """deploy/update lambdas only"""
-        print("preparing for deploy...")
-        if tests:
-            print("running tests...")
-            if test() != 0:
-                print("tests need to pass first before deploy")
-                return
-        else:
-            print("skipping tests. execute with --tests flag to run them")
-        if name == 'pony_only':
-            names = self.get_pony_only_tibanna_lambdas()
-        elif name == 'unicorn':
-            names = UNICORN_LAMBDAS
-        else:
-            names = [name, ]
-        print('deploying the following lambdas: %s' % names)
-        for name in names:
-            print("=" * 20, "Deploying lambda", name, "=" * 20)
-            with chdir(package + "/lambdas/%s" % (name)):
-                print("clean up previous builds.")
-                # dist directores are the enemy, clean them all
-                clean()
-                print("building lambda package")
-                self.deploy_lambda_package(name, suffix=suffix, usergroup=usergroup, package=package)
-                # need to clean up all dist, otherwise, installing local package takes forever
-                clean()
-
-    def deploy_lambda_package(self, name, suffix=None, usergroup=None, package='tibanna'):
-        # create the temporary local dev lambda directories
-        if usergroup:
-            if suffix:
-                suffix = usergroup + suffix
-            else:
-                suffix = usergroup
-        if suffix:
-            new_name = name + '_' + suffix
-            new_src = '../' + new_name
-            cmd_mkdir = "rm -fr %s; mkdir -p %s" % (new_src, new_src)
-            cmd_copy = "cp -r * %s" % new_src
-            cmd_cd = "cd %s" % new_src
-            cmd_modify_cfg = "sed 's/%s/%s/g' config.yaml > config.yaml#" % (name, new_name)
-            cmd_replace_cfg = "mv config.yaml# config.yaml"
-            cmd = ';'.join([cmd_mkdir, cmd_copy, cmd_cd, cmd_modify_cfg, cmd_replace_cfg])
-            print(cmd)
-            run(cmd)
-        else:
-            new_name = name
-            new_src = '../' + new_name
-        # use the lightweight requirements for the lambdas to simplify deployment
-        # if name in UNICORN_LAMBDAS:
-        #     requirements_file = package + '/lambdas/requirements-lambda-unicorn.txt'
-        # else:
-        #     requirements_file = package + '/lambdas/requirements-lambda-pony.txt'
-        requirements_file = '../requirements.txt'
-        with chdir(new_src):
-            aws_lambda.deploy(os.getcwd(), local_package=package + '/lambdas', requirements=requirements_file)
-        # add environment variables
-        lambda_update_config = {'FunctionName': new_name}
-        envs = self.env_list(name)
-        if envs:
-            lambda_update_config['Environment'] = {'Variables': envs}
-        if name == 'run_task_awsem':
-            if usergroup:
-                lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = get_ec2_role_name('tibanna_' + usergroup)
-            else:
-                lambda_update_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = 'S3_access'  # 4dn-dcic default(temp)
-        # add role
-        print('name=%s' % name)
-        if name in ['run_task_awsem', 'check_task_awsem']:
-            role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
-            if usergroup:
-                role_arn = role_arn_prefix + get_lambda_role_name('tibanna_' + usergroup, name)
-            else:
-                role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-                print(role_arn)
-            lambda_update_config['Role'] = role_arn
-        client = boto3.client('lambda')
-        resp = client.update_function_configuration(**lambda_update_config)
-        print(resp)
-        # delete the temporary local dev lambda directories
-        if suffix:
-            old_src = '../' + name
-            run('cd %s; rm -rf %s' % (old_src, new_src))
+            self.deploy_lambda(name, suffix, usergroup)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
         """set up usergroup environment on AWS
@@ -736,7 +660,7 @@ class API(object):
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
-        self.deploy_packaged_lambdas('all', tests=tests, suffix=suffix, usergroup=usergroup)
+        self.deploy_core('all', tests=tests, suffix=suffix, usergroup=usergroup)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',

@@ -14,6 +14,12 @@ class API(_API):
         from . import lambdas as pony_lambdas
         return pony_lambdas
 
+    @property
+    def tibanna_packages(self):
+        import tibanna
+        import tibanna_4dn
+        return [tibanna, tibanna_4dn]
+
     StepFunction = StepFunctionPony
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
@@ -42,9 +48,9 @@ class API(_API):
         }
         return envlist_pony.get(name, '')
 
-    def deploy_new(self, name, tests=True, suffix=None, dev=False, usergroup=None):
+    def deploy_core(self, name, tests=True, suffix=None, usergroup=None):
         """this one has tests=True by default"""
-        super().deploy_new(name, tests=tests, suffix=suffix, dev=dev, usergroup=usergroup)
+        super().deploy_core(name, tests=tests, suffix=suffix, usergroup=usergroup)
 
     def deploy_pony(self, suffix=None, tests=True):
         self.deploy_tibanna(suffix=suffix, tests=tests)
