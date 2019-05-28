@@ -209,13 +209,13 @@ def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_
     else:
         if datajson_argument:
             datajson_key = awsemfile.runner.get_file_key(datajson_argument)
-            jsondata0 = [json.loads(awsemfile.s3.read_s3(_)) for _ in datajson_key]
+            jsondata0 = [json.loads(awsemfile.s3.read_s3(_).decode('utf-8')) for _ in datajson_key]
             for d in jsondata0:
                 jsondata.update(d)
         filedata = [awsemfile.s3.read_s3(_).decode('utf-8') for _ in datafiles]
         reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8')
         report_html = accession + 'qc_report.html'
-        awsemfile.s3.s3_put(reportdata.encode(), report_html, acl='public-read')
+        awsemfile.s3.s3_put(reportdata.encode('utf-8'), report_html, acl='public-read')
         qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
         files = {report_html: {'data': reportdata, 's3key': qc_url}}
     # schema. do not need to check_queue

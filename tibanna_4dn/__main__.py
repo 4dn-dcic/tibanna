@@ -13,7 +13,10 @@ from .vars import (
 # do not delete imported but unused functions below.
 from .core import API
 from tibanna.__main__ import Subcommands as _Subcommands
-
+from tibanna.__main__ import (
+    users,
+    add_user
+)
 PACKAGE_NAME = 'tibanna_4dn'
 
 
