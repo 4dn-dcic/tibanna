@@ -16,26 +16,27 @@ Tibanna works with the following Python and pip versions.
 
 Install Tibanna on your local machine or server from which you want to send commands to run workflows.
 
+First, create a virtual environment.
+
 ::
 
     # create a virtual environment
     virtualenv -p python3.6 ~/venv/tibanna
     source ~/venv/tibanna/bin/activate
   
+
+Then, install Tibanna.
   
 ::
 
-    # installing tibanna package
-    git clone https://github.com/4dn-dcic/tibanna
-    cd tibanna
-    pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
+    pip install tibanna
 
 
-Alternatively, use ``setup.py``
+Alternatively, use ``git clone`` followed by ``setup.py``
 
 ::
 
-   # installing tibanna package
+   # Alternatively installing tibanna package from github repo
     git clone https://github.com/4dn-dcic/tibanna
     cd tibanna
     python setup.py install
@@ -50,10 +51,14 @@ Deployment requires an admin user credentials. For more details, check out https
 
 To only run workflows using Tibanna, you need a regular user credentials.
 
-Once you have the user credentials, we can add that information to the local machine using ``aws configure``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
+Once you have the user credentials, we can add that information to the local machine using ``awscli`` or by manually creating two files in ``~/.aws``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
 
 ::
 
+    # first install awscli - see below if this fails
+    pip install awscli
+
+    # configure AWS credentials and config through awscli
     aws configure
 
 
@@ -66,6 +71,35 @@ Type in your keys, region and output format ('json') as below.
     Default region name [None]: us-east-1
     Default output format [None]: json
 
+
+Alternatively, (in case you can't install ``awscli`` for any reason (e.g. ``PyYAML`` version conflict)), do the following manually to set up AWS credentials and config.
+
+::
+
+    mkdir ~/.aws
+
+
+Add the following to ``~/.aws/credentials``.
+
+::
+
+    [default]
+    aws_access_key_id = <your_aws_key>
+    aws_secret_access_key = <your_aws_secret_key>
+
+
+Add the following to ``~/.aws/config``.
+
+::
+
+    [default]
+    region = us-east-1
+    output = json
+
+
+
+Tibanna environment variables
+-----------------------------
 
 To use Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
