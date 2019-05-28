@@ -34,7 +34,8 @@ def test_s3_trigger_e2e(s3_trigger_event_data):
 @pytest.mark.webtest
 def test_get_status_for_extra_file(s3_trigger_event_data_pf_extra_status):
     # set a unique name for results, as we will be using same data over and over
-    res = get_status_for_extra_file(s3_trigger_event_data_pf_extra_status, 'bw')
+    meta = {'extra_files': [{'file_format': 'bw', 'status': 'to be uploaded by workflow'}]}
+    res = get_status_for_extra_file(meta, 'bw')
     assert res
     assert res == 'to be uploaded by workflow'
 
