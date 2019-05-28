@@ -15,7 +15,7 @@ General stats
 
 ::
 
-    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-v]
+    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-v]
 
 The output is a table (an example below)
 
@@ -46,11 +46,11 @@ Execution logs
 Log
 ###
 
-Using your job ID, you can also check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress. Checking the log file can be done through the ``invoke log`` command. For example, to view the last 60 lines of the log for job ``lSbkdVIQ6VtX``,
+Using your job ID, you can also check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress. Checking the log file can be done through the ``tibanna log`` command. For example, to view the last 60 lines of the log for job ``lSbkdVIQ6VtX``,
 
 ::
 
-    invoke log --job-id=lSbkdVIQ6VtX | tail  -60
+    tibanna log --job-id=lSbkdVIQ6VtX | tail  -60
 
 
 ::
@@ -127,12 +127,12 @@ To Download the log file manually, the following command also works.
 Postrun.json
 ############
 
-Once the job is finished, you should be able to find the ``<jobid>.postrun.json`` file as well. This file can be viewed likewise using the ``invoke log`` command, but with the ``-p`` option. The postrun json file contains the summary of the run, including the input / output / EC2 configuration and Cloudwatch metrics for memory/CPU/disk space usage.
+Once the job is finished, you should be able to find the ``<jobid>.postrun.json`` file as well. This file can be viewed likewise using the ``tibanna log`` command, but with the ``-p`` option. The postrun json file contains the summary of the run, including the input / output / EC2 configuration and Cloudwatch metrics for memory/CPU/disk space usage.
 
 
 ::
 
-   invoke log -p --job-id=lSbkdVIQ6VtX
+   tibanna log -p --job-id=lSbkdVIQ6VtX
 
 ::
 
@@ -315,7 +315,7 @@ Detailed monitoring through ssh
 +++++++++++++++++++++++++++++++
 
 
-You can also ssh into your running instance to check more details. The IP of the instance can be found using ``invoke stat -v``
+You can also ssh into your running instance to check more details. The IP of the instance can be found using ``tibanna stat -v``
 
 ::
 
@@ -328,7 +328,7 @@ if ``keyname`` was provided in the input execution json,
 
     ssh -i <keyfilename>.pem ubuntu@<ip>
 
-The keyname (and/or password) can also be found using ``invoke stat -v``.
+The keyname (and/or password) can also be found using ``tibanna stat -v``.
 
 Alternatively, the Step Function execution page of AWS Web Console contains details of the ssh options. ``keyname`` and ``password`` can be found inside the input json of the execution. The IP can be found inside the output json of the ``RunTaskAwsem`` step or the input json of the ``CheckTaskAwsem`` step.
 

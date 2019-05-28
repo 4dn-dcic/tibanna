@@ -310,20 +310,20 @@ To run Tibanna,
     ::
     
         cd tibanna
-        invoke run_workflow --input-json=examples/md5/md5_cwl_input.json
+        tibanna run_workflow --input-json=examples/md5/md5_cwl_input.json
     
     or for WDL,
     
     ::
     
         cd tibanna
-        invoke run_workflow --input-json=examples/md5/md5_wdl_input.json
+        tibanna run_workflow --input-json=examples/md5/md5_wdl_input.json
     
 
 6. Check status
 
 ::
 
-    invoke stat
+    tibanna stat
 
 
