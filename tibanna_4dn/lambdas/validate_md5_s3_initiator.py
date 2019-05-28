@@ -37,11 +37,36 @@ def handler(event, context):
     # get file name
     # print(event)
 
-    status = get_status(event)
+    print("is status uploading: %s" % event)
+    upload_key = event['Records'][0]['s3']['object']['key']
+    if upload_key.endswith('html'):
+        return False
+
+    uuid, object_key = upload_key.split('/')
+    accession = object_key.split('.')[0]
+
+    # guess env from bucket name
+    bucket = event['Records'][0]['s3']['bucket']['name']
+    env = '-'.join(bucket.split('-')[1:3])
+
+    try:
+        tibanna = TibannaSettings(env=env)
+    except Exception as e:
+        raise TibannaStartException("%s" % e)
+    try:
+        meta = get_metadata(accession,
+                            key=tibanna.ff_keys,
+                            ff_env=env,
+                            add_on='frame=object',
+                            check_queue=True)
+    except Exception as e:
+        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
+
+    status = get_status(meta)
     input_json = make_input(event)
-    file_format, extra = get_file_format(event)
+    file_format, extra = get_file_format(meta, object_key, tibanna.ff_keys)
     if extra:  # the file is an extra file
-        extra_status = get_status_for_extra_file(event, file_format)
+        extra_status = get_status_for_extra_file(meta, file_format)
         if status != 'to be uploaded by workflow':
             if not extra_status or extra_status != 'to be uploaded by workflow':
                 input_json['input_files'][0]['format_if_extra'] = file_format
@@ -60,6 +85,11 @@ def handler(event, context):
 
     # run fastqc as a dependent of md5
     if file_format == 'fastq':
+        skip_list = ['pacbio', 'pac-bio', 'promethion', 'gridion', 'minion', 'smidgion']
+        sequencer = meta.get('instrument', 'no value').lower()
+        for skip in skip_list:
+            if skip in sequencer:
+                return serialize_startdate(response)
         md5_arn = response['_tibanna']['exec_arn']
         input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn], run_name_prefix='fastqc')
         response_fastqc = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
@@ -69,46 +99,25 @@ def handler(event, context):
     return response
 
 
-def get_fileformats_for_accession(accession, key, env):
-    try:
-        meta = get_metadata(accession,
-                            key=key,
-                            ff_env=env,
-                            add_on='frame=object',
-                            check_queue=True)
-    except Exception as e:
-        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
-    if meta:
-        file_format = parse_formatstr(meta.get('file_format'))
-        extra_formats = [parse_formatstr(v.get('file_format')) for v in meta.get('extra_files', [])]
-        return file_format, extra_formats
-    else:
-        raise Exception("Can't get file format for accession %s" % accession)
+def get_fileformats_for_accession(meta):
+    file_format = parse_formatstr(meta.get('file_format'))
+    extra_formats = [parse_formatstr(v.get('file_format')) for v in meta.get('extra_files', [])]
+    return file_format, extra_formats
 
 
-def get_file_format(event):
+def get_file_format(meta, object_key, ff_keys):
     '''if the file extension matches the regular file format,
     returns (format, None)
     if it matches one of the format of an extra file,
     returns (format (e.g. 'pairs_px2'), 'extra')
     '''
     # guess env from bucket name
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    env = '-'.join(bucket.split('-')[1:3])
-    if env == 'fourfront-webprod':
-        env = 'data'
-    upload_key = event['Records'][0]['s3']['object']['key']
-    uuid, object_key = upload_key.split('/')
     accession = object_key.split('.')[0]
     extension = object_key.replace(accession + '.', '')
 
-    try:
-        tbn = TibannaSettings(env=env)
-    except Exception as e:
-        raise TibannaStartException("%s" % e)
-    file_format, extra_formats = get_fileformats_for_accession(accession, tbn.ff_keys, env)
+    file_format, extra_formats = get_fileformats_for_accession(meta)
     if file_format:
-        fe_map = FormatExtensionMap(tbn.ff_keys)
+        fe_map = FormatExtensionMap(ff_keys)
         printlog(fe_map)
         if extension == fe_map.get_extension(file_format):
             return (file_format, None)
@@ -123,35 +132,10 @@ def get_file_format(event):
         raise Exception("file extension not matching: %s vs %s (%s)" %
                         (extension, fe_map.get_extension(file_format), file_format))
     else:
-        raise Exception("Cannot get input metadata")
+        raise Exception("Cannot get file format from input metadata")
 
 
-def get_status_for_extra_file(event, extra_format):
-    if not extra_format:
-        return None
-    upload_key = event['Records'][0]['s3']['object']['key']
-    if upload_key.endswith('html'):
-        return False
-
-    uuid, object_key = upload_key.split('/')
-    accession = object_key.split('.')[0]
-
-    # guess env from bucket name
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    env = '-'.join(bucket.split('-')[1:3])
-
-    try:
-        tbn = TibannaSettings(env=env)
-    except Exception as e:
-        raise TibannaStartException("%s" % e)
-    try:
-        meta = get_metadata(accession,
-                            key=tbn.ff_keys,
-                            ff_env=env,
-                            add_on='frame=object',
-                            check_queue=True)
-    except Exception as e:
-        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
+def get_status_for_extra_file(meta, extra_format):
     if meta and 'extra_files' in meta:
         for exf in meta['extra_files']:
             if parse_formatstr(exf['file_format']) == extra_format:
@@ -159,31 +143,7 @@ def get_status_for_extra_file(event, extra_format):
     return None
 
 
-def get_status(event):
-    print("is status uploading: %s" % event)
-    upload_key = event['Records'][0]['s3']['object']['key']
-    if upload_key.endswith('html'):
-        return False
-
-    uuid, object_key = upload_key.split('/')
-    accession = object_key.split('.')[0]
-
-    # guess env from bucket name
-    bucket = event['Records'][0]['s3']['bucket']['name']
-    env = '-'.join(bucket.split('-')[1:3])
-
-    try:
-        tbn = TibannaSettings(env=env)
-    except Exception as e:
-        raise TibannaStartException("%s" % e)
-    try:
-        meta = get_metadata(accession,
-                            key=tbn.ff_keys,
-                            ff_env=env,
-                            add_on='frame=object',
-                            check_queue=True)
-    except Exception as e:
-        raise FdnConnectionException("can't get metadata for the accession %s: %s" % (accession, str(e)))
+def get_status(meta):
     if meta:
         return meta.get('status', '')
     else:
