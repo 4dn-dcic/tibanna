@@ -5,11 +5,11 @@ Command-line tools
 Listing all commands
 ++++++++++++++++++++
 
-To list all available commands, use ``invoke -l``
+To list all available commands, use ``tibanna -l``
 
 ::
 
-    invoke -l
+    tibanna -l
 
 
 Basic_commands
@@ -28,7 +28,7 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 ::
 
-    invoke deploy_unicorn [<options>]
+    tibanna deploy_unicorn [<options>]
 
 
 **Options**
@@ -68,7 +68,7 @@ To list users
 
 ::
 
-    invoke users
+    tibanna users
 
 add_user
 --------
@@ -77,7 +77,7 @@ To add users to a tibanna user group
 
 ::
 
-    invoke add_user --user=<user> --group=<usergroup>
+    tibanna add_user --user=<user> --group=<usergroup>
 
 
 
@@ -94,7 +94,7 @@ To run workflow
 
 ::
 
-    invoke run_workflow --input-json=<input_json_file> [<options>]
+    tibanna run_workflow --input-json=<input_json_file> [<options>]
 
 **Options**
 
@@ -116,7 +116,7 @@ To check status of workflows,
 
 ::
 
-    invoke stat [<options>]
+    tibanna stat [<options>]
 
 
 **Options**
@@ -152,7 +152,7 @@ To check the log or postrun json (summary) of a workflow run
 
 ::
 
-    invoke log --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
+    tibanna log --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
 
 
 **Options**
@@ -178,7 +178,7 @@ To rerun a failed job with the same input json
 
 ::
 
-    invoke rerun --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
+    tibanna rerun --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
 
 
 **Options**
@@ -204,7 +204,7 @@ To rerun many jobs that failed after a certain time point
 
 ::
     
-    invoke rerun_many [<options>]
+    tibanna rerun_many [<options>]
     
 
 **Options**
@@ -238,7 +238,7 @@ To rerun many jobs that failed after a certain time point
 
 ::
 
-  invoke rerun_many --stopdate=14Feb2018 --stophour=15
+  tibanna rerun_many --stopdate=14Feb2018 --stophour=15
 
 
 This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
@@ -251,13 +251,13 @@ To kill a specific job through its execution arn or a jobid
 
 ::
 
-    invoke kill --exec-arn=<execution_arn>
+    tibanna kill --exec-arn=<execution_arn>
 
 or
 
 ::
 
-    invoke kill --job-id=<jobid> --sfn=<stepfunctionname>
+    tibanna kill --job-id=<jobid> --sfn=<stepfunctionname>
 
 
 If ``jobid`` is specified but not ``stepfunctionname``, then by default it assumes ``TIBANNA_DEFAULT_STEP_FUNCTION_NAME``. If the job id is not found in the executions on the default or specified step function, then  only the EC2 instance will be terminated and the step function status may still be RUNNING.
@@ -270,7 +270,7 @@ For example, let's say we run the following job by mistake.
 
 ::
 
-    $ invoke run_workflow --input-json=fastqc.json
+    $ tibanna run_workflow --input-json=fastqc.json
 
 The following message is printed out
 
@@ -291,7 +291,7 @@ To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (
 
 ::
 
-    $ invoke kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    $ tibanna kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
 
 
 
@@ -302,7 +302,7 @@ To kill all currently running jobs for a given step function
 
 ::
 
-    invoke kill_all --sfn=<stepfunctionname>
+    tibanna kill_all --sfn=<stepfunctionname>
 
 **Options**
 
@@ -322,7 +322,7 @@ To list all step functions
 
 ::
 
-    invoke list [-n]
+    tibanna list [-n]
 
 **Options**
 
@@ -331,10 +331,6 @@ To list all step functions
     -n      show stats of the number of jobs for per status (using this option could slow down the
             process)
 
-
-
-Advanced_commands
-+++++++++++++++++
 
 
 Admin only
@@ -346,7 +342,7 @@ setup_tibanna_env
 
 - Advanced user only
 
-To set up environment on AWS without deploying tibanna, use `invoke setup_tibanna_env`.
+To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
 
 
 **Options**
@@ -362,75 +358,49 @@ To set up environment on AWS without deploying tibanna, use `invoke setup_tibann
   --buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
                                   Tibanna needs access to through IAM role (input, output, log).
 
+Additional commands for tibanna_4dn
++++++++++++++++++++++++++++++++++++
 
-deploy_tibanna
+
+``tibanna_4dn`` is a 4dn extension of ``tibanna``. All the subcommands of ``tibanna`` can also be used by ``tibanna_4dn``. In addition, ``tibanna_4dn`` supports additional 4dn-specific subcommands.
+
+
+::
+
+    tibanna_4dn <subcommand> <args...>
+
+
+deploy_pony
 --------------
 
-- Advanced user only
 
-This function deploys either Tibanna unicorn or tibanna pony (default pony).
-You need the following environmental variables set on your local machine from which you're deploying Tibanna.
+This function deploys tibanna pony (4dn extension of tibanna).
+You need the following environmental variables set on your local machine from which you're deploying a pony.
 
 ::
 
     export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
     export AWS_ACCOUNT_NUMBER=<aws_account_number>
-
-
-If you're 4DN-DCIC and using Tibanna Pony, you need the additional environmental variables
-
-::
-
     export SECRET=<fourfront_aws_secret_key>
 
 To create an instance of tibanna (step function + lambdas)
 
 ::
 
-    invoke deploy_tibanna [--suffix=<suffixname>] [--sfn_type=<sfn_type>] [--usergroup=<usergroup>] [--tests]
+    tibanna_4dn deploy_pony [--suffix=<suffixname>] [--usergroup=<usergroup>] [--tests]
     # (use suffix for development version)
     # example <suffixname> : dev
-    # <sfn_type> (step function type) is either 'pony' or 'unicorn' (default pony)
-    # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the `invoke setup_tibanna_env` command..
+    # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the `tibanna setup_tibanna_env` command..
 
 
 example
 
 ::
 
-    invoke deploy_tibanna --suffix=dev2
+    tibanna_4dn deploy_pony --suffix=dev2
 
 
 The above command will create a step function named tibanna_pony_dev2 that uses a set of lambdas with suffix _dev2, and deploys these lambdas.
-
-example 2
-
-::
-
-    invoke deploy_tibanna --suffix=dev --sfn_type=unicorn
-
-This example creates a step function named tibanna_unicorn_dev that uses a set of lambdas with suffix _dev, and deploys these lambdas. Using the --tests argument will ensure tests pass befor deploying; currently this is NOT available for users outside of 4DN-DCIC.
-
-
-deploy_core
------------
-
-- Advanced user only
-
-To deploy only lambda functions without deploying the step function (use suffix for development version lambdas)
-
-::
-    
-    # individual lambda functions
-    invoke deploy_core <lambda_name> [--suffix=<suffixname>]
-    # example <lambda_name> : run_task_awsem
-    # example <suffixname> : dev
-    
-    # all lambda functions
-    invoke deploy_core all [--suffix=<suffixname>]
-    # example <suffixname> : dev
-
-
 
 
 test
@@ -442,7 +412,7 @@ Running tests on the current repo
 
 ::
 
-    invoke test [--no-flake] [--ignore-pony] [--ignore-webdev]
+    tibanna_4dn test [--no-flake] [--ignore-pony] [--ignore-webdev]
     
     # --no-flake : skip flake8 test
 
@@ -450,12 +420,11 @@ For Unicorn-only tests,
 
 ::
 
-    invoke test --ignore-pony
+    tibanna_4dn test --ignore-pony
 
 For full test including Pony and Webdev tests (4DN-dcic-only)
 
 ::
 
-    invoke test [--no-flake]
-
+    tibanna_4dn test [--no-flake]
 

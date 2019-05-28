@@ -18,11 +18,11 @@ Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC (
 Example Tibanna setup for 4DN-DCIC
 ----------------------------------
 
-To deploy pony, you could do the following. (already done)
+To deploy pony, you could do the following.
 
 ::
 
-    invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
+    tibanna_4dn deploy_pony
 
 
 
@@ -48,7 +48,7 @@ For full tibanna test (actually running jobs through step function) besides trav
 
 ::
 
-    cat tests/webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_dev --input-json={}"
+    cat tests/webdevtestlist | xargs -I{} sh -c "tibanna_4dn run_workflow --sfn=tibanna_pony_dev --input-json={}"
 
 Example Input Json for Pony
 ---------------------------

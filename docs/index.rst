@@ -51,7 +51,7 @@ Tibanna
 
 ::
 
-    $ invoke run_workflow --input-json=run1.json
+    $ tibanna run_workflow --input-json=run1.json
 
 
 **Python**
