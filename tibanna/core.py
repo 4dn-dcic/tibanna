@@ -112,6 +112,8 @@ class API(object):
         elif isinstance(input_json, str) and os.path.exists(input_json):
             with open(input_json) as input_file:
                 data = json.load(input_file)
+        else:
+            raise Exception("input json must be either a file or a dictionary")
         if not sfn:
             sfn = self.default_stepfunction_name
         if not env:
@@ -724,8 +726,8 @@ class API(object):
                     print('Cannot delete state machine. Exiting...' % exc_str)
                     raise(e)
                 sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-                print('Step function with name %s already exists!')
-                print('Updating the state machine...' % sfndef.sfn_name)
+                print('Step function with name %s already exists!' % sfndef.sfn_name)
+                print('Updating the state machine...')
                 try:
                     sfn.update_state_machine(
                         stateMachineArn=sfn_arn,
