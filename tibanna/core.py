@@ -39,7 +39,6 @@ from .iam_utils import (
     get_lambda_role_name,
 )
 from .stepfunction import StepFunctionUnicorn
-from contextlib import contextmanager
 
 
 # logger
@@ -436,22 +435,6 @@ class API(object):
                     break
             return count
 
-    def prep_input_json_template(self, filename, webprod=False, tag=None):
-        Tibanna_dir = os.path.dirname(os.path.realpath(__file__)).replace('/tibanna', '')
-        template = Tibanna_dir + '/test_json/' + filename
-        with open(template, 'r') as f:
-            input_json_template = json.load(f)
-        # webdev ->webprod
-        if webprod:
-            input_json_template['output_bucket'] = 'elasticbeanstalk-fourfront-webprod-wfoutput'
-            input_json_template['_tibanna']['env'] = 'fourfront-webprod'
-            for inb in input_json_template['input_files']:
-                inb['bucket_name'] = inb['bucket_name'].replace('webdev', 'webprod')
-        if tag:
-            input_json_template['tag'] = tag
-            self.clear_input_json_template(input_json_template)
-        return input_json_template
-
     def clear_input_json_template(self, input_json_template):
         """clear awsem template for reuse"""
         if 'response' in input_json_template['_tibanna']:
@@ -541,15 +524,6 @@ class API(object):
                            ebs_type=ebs_type, ebs_iops=ebs_iops,
                            overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
                 time.sleep(sleeptime)
-
-    def get_pony_only_tibanna_lambdas(self):
-        return [
-            'validate_md5_s3_trigger',
-            'validate_md5_s3_initiator',
-            'start_run_awsem',
-            'update_ffmeta_awsem',
-            'run_workflow',
-        ]
 
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
