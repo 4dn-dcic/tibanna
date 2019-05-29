@@ -163,7 +163,7 @@ class API(object):
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 print("Cloudwatch Dashboard = %s" % cw_db_url)
             if open_browser and shutil.which('open') is not None:
-                subprocess.call('open %s' % data[_tibanna]['url'])
+                subprocess.call(["open", data[_tibanna]['url']])
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket):
