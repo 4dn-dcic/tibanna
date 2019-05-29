@@ -166,9 +166,7 @@ To check status of workflows,
   sfn=<stepfunctionname>         An example step function name may be
                                  'tibanna_unicorn_defaut_3978'. If not specified, default
                                  value is taken from environmental variable
-                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                 variable is not set, it uses name 'tibanna_pony' (4dn
-                                 default, works only for 4dn).
+                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
 
   n=<number_of_lines>            print out only the first n lines
 
@@ -263,9 +261,7 @@ To rerun many jobs that failed after a certain time point
   sfn=<stepfunctionname>         An example step function name may be
                                  'tibanna_unicorn_defaut_3978'. If not specified, default
                                  value is taken from environmental variable
-                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                 variable is not set, it uses name 'tibanna_pony' (4dn
-                                 default, works only for 4dn).
+                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
 
   stopdate=<stopdate>            e.g. '14Feb2018'
 
@@ -379,9 +375,7 @@ To kill all currently running jobs for a given step function
   sfn=<stepfunctionname>         An example step function name may be
                                  'tibanna_unicorn_defaut_3978'. If not specified, default
                                  value is taken from environmental variable
-                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                 variable is not set, it uses name 'tibanna_pony' (4dn
-                                 default, works only for 4dn).
+                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
 
 list_sfns
 ---------
@@ -446,7 +440,11 @@ General Usage
 ::
 
     from tibanna_4dn.core import API
-    APU().method(...)
+    API().method(...)
+
+
+In ``tibanna_4dn``, ``TIBANNA_DEFAULT_STEP_FUNCTION_NAME`` is set to `tibanna_pony` unless specified by the user.
+
 
 
 deploy_pony

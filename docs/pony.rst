@@ -25,8 +25,6 @@ To deploy pony, you could do the following.
     tibanna_4dn deploy_pony
 
 
-
-
 Webdev testing for Pony
 -----------------------
 
