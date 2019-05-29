@@ -4,6 +4,6 @@
 
 ***
 
-### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi-org.ezp-prod1.hul.harvard.edu/10.1093/bioinformatics/btz379). A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
+### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379). A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
 
 #### Python2.7 support is depricated now! Please switch to Python3.6!
