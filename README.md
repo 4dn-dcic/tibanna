@@ -13,6 +13,8 @@ Install Tibanna.
 pip install tibanna
 ```
 
+<br>
+
 Use CLI to set up the cloud component and run workflow.
 ```bash
 # Deploy Unicorn to the Cloud (Unicorn = serverless scheduler/resource allocator).
