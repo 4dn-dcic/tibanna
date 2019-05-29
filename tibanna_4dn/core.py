@@ -44,7 +44,9 @@ class API(_API):
                                     'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
             'validate_md5_s3_initiator': {'SECRET': SECRET,
                                           'TIBANNA_AWS_REGION': AWS_REGION,
-                                          'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+                                          'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
+            'validate_md5_s3_trigger': {'TIBANNA_AWS_REGION': AWS_REGION,
+                                        'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
         }
         return envlist_pony.get(name, '')
 
