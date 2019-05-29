@@ -280,20 +280,20 @@ To run Tibanna,
     ::
     
         cd tibanna
-        invoke run_workflow --input-json=examples/merge_and_cut/merge_and_cut_cwl_input.json
+        tibanna run_workflow --input-json=examples/merge_and_cut/merge_and_cut_cwl_input.json
     
     or for WDL,
     
     ::
     
         cd tibanna
-        invoke run_workflow --input-json=examples/merge_and_cut/merge_and_cut_wdl_input.json
+        tibanna run_workflow --input-json=examples/merge_and_cut/merge_and_cut_wdl_input.json
     
 
 6. Check status
 
 ::
 
-    invoke stat
+    tibanna stat
 
 

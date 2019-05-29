@@ -6,12 +6,30 @@ Publication
 +++++++++++
 
 - **May 15, 2019**  Tibanna paper is out on Bioinformatics now! https://doi-org.ezp-prod1.hul.harvard.edu/10.1093/bioinformatics/btz379
-- **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
+- **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/10.1101/440974v3
 - **Oct 11. 2018**  Tibanna paper preprint is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 
 
 Version updates
 +++++++++++++++
+
+
+  **May 29, 2019** The latest version is now 0.8.0_.
+
+    - Tibanna can now be installed via ``pip install tibanna``! (no need to ``git clone``)
+    - Tibanna now has its own CLI! Instead of ``invoke run_workflow``, one should use ``tibanna run_workflow``.
+    - Tibanna's API now has its own class! Instead of ``from core.utils import run_workflow``, one should use the following.
+
+      ::
+
+      from tibanna.core import API
+      API().run_workflow(...)
+
+    - The API ``run_workflow()`` can now directly take an input json file as well as an input dictionary (both through ```input_json`` parameter).
+    - The ``rerun`` CLI now has ``--appname_filter`` option exposed
+    - The ``rerun_many`` CLI now has ``--appname-filter``, ``--shutdown-min``, ``--ebs-size``, ``--ebs-type``, ``--ebs-iops``, ``--key-name``, ``--name`` options exposed.
+      The API also now has corresponding parameters.
+    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only. The option ``-v`` (``--verbose``) is not replaced by ``-l``(``--long``)
 
 
   **May 15, 2019** The latest version is now 0.7.0_.
@@ -173,6 +191,7 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
+.. _0.8.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.0
 .. _0.7.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.7.0
 .. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1
 .. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0

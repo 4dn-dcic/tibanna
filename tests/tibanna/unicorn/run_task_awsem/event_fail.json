@@ -1,0 +1,39 @@
+{
+  "args": {
+    "secondary_output_target": {},
+    "app_name": "md5",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "output_target": {
+      "report": "some_random_output_file_name"
+    },
+    "cwl_main_filename": "md5.cwl",
+    "cwl_version": "draft3",
+    "secondary_files": {},
+    "output_S3_bucket": "random_nonexisting_outputbucket",
+    "app_version": "0.0.4",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.0.4/cwl_awsem/",
+    "input_files": {
+      "input_file": {
+        "bucket_name": "random_nonexisting_bucket",
+        "object_key": "random_nonexisting_file"
+      }
+    }
+  },
+  "app_name": "md5",
+  "config": {
+    "ebs_size": 0,
+    "ebs_type": "io1",
+    "key_name": "",
+    "EBS_optimized": "",
+    "ebs_iops": 500,
+    "shutdown_min": 30,
+    "instance_type": "",
+    
+    "json_bucket": "some_random_json_bucket",
+    
+    "password": "thisisnotmypassword",
+    "log_bucket": "tibanna-output"
+  },
+  "push_error_to_end": true
+}

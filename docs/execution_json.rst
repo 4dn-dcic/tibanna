@@ -233,7 +233,7 @@ Dependency specification
 
 :dependency:
     - List of other jobs that should finish before the job starts
-    - Currently, only execution arns are accepted. An execution arn of a given run is printed out after running the ``invoke run_workflow`` command. It can also be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
+    - Currently, only execution arns are accepted. An execution arn of a given run is printed out after running the ``tibanna run_workflow`` command. It can also be retrieved from the response of the ``run_workflow`` function (``response['_tibanna']['exec_arn']``).
 
     ::
 

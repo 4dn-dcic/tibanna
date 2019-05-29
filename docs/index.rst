@@ -51,7 +51,7 @@ Tibanna
 
 ::
 
-    $ invoke run_workflow --input-json=run1.json
+    $ tibanna run_workflow --input-json=run1.json
 
 
 **Python**
@@ -59,7 +59,7 @@ Tibanna
 ::
 
     >>> from core.utils import run_workflow
-    >>> run_workflow(input_json=run1)
+    >>> run_workflow(input_json='run1.json')  # input_json is a json file or a dict object
 
 
 

@@ -181,14 +181,14 @@ To run Tibanna,
     ::
     
         cd tibanna
-        invoke run_workflow --input-json=examples/cond_merge/cond_merge_wdl_input.json
-        invoke run_workflow --input-json=examples/cond_merge/cond_merge_wdl_input2.json
+        tibanna run_workflow --input-json=examples/cond_merge/cond_merge_wdl_input.json
+        tibanna run_workflow --input-json=examples/cond_merge/cond_merge_wdl_input2.json
     
 
 6. Check status
 
 ::
 
-    invoke stat
+    tibanna stat
 
 

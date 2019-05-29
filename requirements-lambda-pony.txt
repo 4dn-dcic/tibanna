@@ -1,2 +1,0 @@
-dcicutils==0.6.0
-Benchmark-4dn==0.5.2

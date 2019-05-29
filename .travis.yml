@@ -14,27 +14,23 @@ env:
   - secure: mS3qVg911xvXwC4hD6WisQLWYi5CijB/mGY7XuEH5575KZ8aupQMJzXg/aUVRgTN+zY72A3AHyEFv8Oga/5rbWNsAWxx3hHtL5mn/Qm5LKh1GWd8srOsvDhej1+005n+bAfUiCgF3wncDS6wwu5pNI9igfFyv7S9nAG8UQGnBPeOVWwZWqVssSAIbxtw08ckZU4SXnSVwZdhBSQ2S5KUVTSaaMD5BgypWxPbH/NOc5ym8eXIs4zuuYjYiSvVbVxjfjDDgf5m1AXWC+XIS6gUyQZxgxbkKqOxPoNO5fdprIwGQPFzeFETYpbPr73L1Ig2mFN05U6aU+cXO0ZyKCooW844nKNCFVSrIL6M/cHZqgKU/w1HBCXbUoyJ40k8C8ghtvNGvI3tMwOE4ZcPb61wvGQdqPpAZYBLOr5u5ufYSghi4a1LsNykUCMPTpPVGtUW/BoJNAVUV/tJjjfvzyG8M4DKzRDh/MzH7D7LTGyvFIsXW1kr5dA+O8WgHFJ6UnvbHm+es9Nbm3b7z7CldZ020CLFpz5C5m+X2oLVKGZ7Cip4uuVdNienot33fJos2xRnz7hWErzYNQZiTGFYsBpOt9oNJhH62y0lTHOnWKWzJOU4KtIyEJMp8ZRDY23LaYNqQmrqbjOksRW76aGOOkapxVYXnIhdn3B2Ox0bNMjMD04=
 install:
 - pip install six
-- pip install -U -r requirements.txt
+- python setup.py install
 - pip install -U -r requirements-4dn.txt
+- pip install -U -r requirements-test.txt
 - pip install codacy-coverage
 jobs:
   include:
   - stage: unit tests
-    python: '2.7'
+    python: '3.6'
     script:
     - if [ "$TRAVIS_BRANCH" != "doc" ]; then
-      invoke test --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
-    - ./tests/awsf/test.sh
+      invoke test --no-flake --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
     after_success:
     - echo "finished running tests on repo"
-    - echo " now deploy core lambda pacakges"
-    - if [ "$TRAVIS_BRANCH" = "production" ]; then echo "Test succeeded! PUBLISHING LAMBDAs";
-      invoke deploy_core all; fi
     - python-codacy-coverage -r coverage.xml
-  - stage: version tests
+  - stage: awsf tests
     python: '2.7'
     script:
-    - echo "now ensure setup.py installs without version conflicts"
-    - python setup.py install  # ensure that this works
+    - ./tests/awsf/test.sh
     after_success:
-    - echo "versions do not conflict!"
+    - echo "finished running awsf tests"
