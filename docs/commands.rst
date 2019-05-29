@@ -82,7 +82,7 @@ Deploy/update only a single lambda function
 
 ::
 
-    tibanna deploy_unicorn -n <lambda_name> [<options>]
+    tibanna deploy_core -n <lambda_name> [<options>]
 
 
 where ``<lambda_name>`` would be either ``run_task_awsem`` or `check_task_awsem``.
