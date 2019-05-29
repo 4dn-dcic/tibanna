@@ -40,7 +40,7 @@ tests_requires = [
 setup(
     name='tibanna',
     version=open("tibanna/_version.py").readlines()[-1].split()[-1].strip("\"'"),
-    description='tibanna functionality for lambda',
+    description='Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.'
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=['tibanna', 'tibanna_4dn'],
