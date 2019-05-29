@@ -70,7 +70,8 @@ def handler(event, context):
         if status != 'to be uploaded by workflow':
             if not extra_status or extra_status != 'to be uploaded by workflow':
                 input_json['input_files'][0]['format_if_extra'] = file_format
-                response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+                response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json,
+                                              open_browser=False)
             else:
                 return {'info': 'status for extra file is to be uploaded by workflow'}
         else:
@@ -79,7 +80,8 @@ def handler(event, context):
         # only run if status is uploading...
         if status == 'uploading' or event.get('force_run'):
             # trigger the step function to run
-            response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json)
+            response = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json,
+                                          open_browser=False)
         else:
             return {'info': 'status is not uploading'}
 
@@ -92,7 +94,8 @@ def handler(event, context):
                 return serialize_startdate(response)
         md5_arn = response['_tibanna']['exec_arn']
         input_json_fastqc = make_input(event, 'fastqc-0-11-4-1', dependency=[md5_arn], run_name_prefix='fastqc')
-        response_fastqc = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc)
+        response_fastqc = API().run_workflow(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, input_json=input_json_fastqc,
+                                             open_browser=False)
         serialize_startdate(response_fastqc)
         response['fastqc'] = response_fastqc
     serialize_startdate(response)
