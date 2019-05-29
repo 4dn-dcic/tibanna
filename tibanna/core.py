@@ -301,7 +301,7 @@ class API(object):
             logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
             if res_s3:
-                return(res_s3['Body'].read().decode())
+                return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         elif job_id:
             stateMachineArn = STEP_FUNCTION_ARN(sfn)
             res = sf.list_executions(stateMachineArn=stateMachineArn)
@@ -314,7 +314,7 @@ class API(object):
                         logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
                         res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         if res_s3:
-                            return(res_s3['Body'].read().decode())
+                            return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
                         break
                 if 'nextToken' in res:
                     res = sf.list_executions(nextToken=res['nextToken'],

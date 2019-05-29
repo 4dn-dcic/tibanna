@@ -36,6 +36,7 @@ def parse_qc_table(data_list, qc_schema, url=None):
             qc_json.update({name: number(value.replace(',', ''))})
 
     for data in data_list:
+        print(type(data))
         for line in data.split('\n'):
             items = line.strip().split('\t')
             # flagstat qc handling - e.g. each line could look like "0 + 0 blah blah blah"

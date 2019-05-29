@@ -55,7 +55,8 @@ def exception_coordinator(lambda_name, metadata_only_func):
                     if 'error' in event:
                         error_msg = "error from earlier step: %s" % event["error"]
                     else:
-                        error_msg = "error from update_ffmeta: %s" % str(e)
+                        error_msg = "error from update_ffmeta: %s." % str(e) + \
+                                    "Full traceback: %s" % traceback.format_exc()
                     raise Exception(error_msg)
                 elif not event.get('push_error_to_end', False):
                     raise e

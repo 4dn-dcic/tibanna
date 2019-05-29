@@ -205,17 +205,17 @@ def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_
             printlog(tbn.s3.__dict__)
             raise Exception("%s (key={})\n".format(zipped_report) % e)
         printlog("files : %s" % str(files))
-        filedata = [files[_]['data'] for _ in datafiles]
+        filedata = [files[_]['data'].decode('utf-8', 'backslashreplace') for _ in datafiles]
     else:
         if datajson_argument:
             datajson_key = awsemfile.runner.get_file_key(datajson_argument)
-            jsondata0 = [json.loads(awsemfile.s3.read_s3(_).decode('utf-8')) for _ in datajson_key]
+            jsondata0 = [json.loads(awsemfile.s3.read_s3(_).decode('utf-8', 'backslashreplace')) for _ in datajson_key]
             for d in jsondata0:
                 jsondata.update(d)
-        filedata = [awsemfile.s3.read_s3(_).decode('utf-8') for _ in datafiles]
-        reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8')
+        filedata = [awsemfile.s3.read_s3(_).decode('utf-8', 'backslashreplace') for _ in datafiles]
+        reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8', 'backslashreplace')
         report_html = accession + 'qc_report.html'
-        awsemfile.s3.s3_put(reportdata.encode('utf-8'), report_html, acl='public-read')
+        awsemfile.s3.s3_put(reportdata.encode(), report_html, acl='public-read')
         qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
         files = {report_html: {'data': reportdata, 's3key': qc_url}}
     # schema. do not need to check_queue
@@ -438,7 +438,7 @@ def md5_updater(status, awsemfile, ff_meta, tbn, **kwargs):
                                           add_on='frame=object',
                                           check_queue=True)
     if status.lower() == 'uploaded':  # md5 report file is uploaded
-        md5, content_md5 = parse_md5_report(awsemfile.read().decode('utf-8'))
+        md5, content_md5 = parse_md5_report(awsemfile.read().decode('utf-8', 'backslashreplace'))
         # add file size to input file metadata
         input_file = awsemfile.runner.input_files()[0]
         file_size = boto3.client('s3').head_object(Bucket=input_file.bucket,
