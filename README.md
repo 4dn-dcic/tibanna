@@ -38,11 +38,15 @@ API().deploy_unicorn(usergroup='mygroup')
 API().run_workflow(input_json='myrun.json')
 ```
 
-
-### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379). A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
+<br>
 
 Note: Python2.7 support is deprecated now (`0.7.0` or after)! Please switch to Python3.6!
 
 Note2: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
 * Please switch from `invoke <command>` to `tibanna <command>`! 
 * We also renovated the Python API as an inheritable class to allow development around tibanna.
+
+Nore3: For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest).
+* Also check out our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379).
+* A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
+
