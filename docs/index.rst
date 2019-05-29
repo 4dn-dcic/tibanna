@@ -79,6 +79,7 @@ Contents:
    startaws
    installation
    commands
+   api
    execution_json
    monitoring
    cwl
