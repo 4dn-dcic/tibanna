@@ -30,7 +30,7 @@ To deploy pony, you could do the following.
 Webdev testing for Pony
 -----------------------
 
-For full tibanna test (actually running jobs through step function) besides travis test, the following input json files are used.
+For full tibanna test (actually running jobs through step function) besides travis test, the following input json files in the git repo are used.
 
 ::
 

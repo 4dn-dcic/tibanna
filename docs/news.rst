@@ -29,7 +29,7 @@ Version updates
     - The ``rerun`` CLI now has ``--appname_filter`` option exposed
     - The ``rerun_many`` CLI now has ``--appname-filter``, ``--shutdown-min``, ``--ebs-size``, ``--ebs-type``, ``--ebs-iops``, ``--key-name``, ``--name`` options exposed.
       The API also now has corresponding parameters.
-    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only.
+    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only. The option ``-v`` (``--verbose``) is not replaced by ``-l``(``--long``)
 
 
   **May 15, 2019** The latest version is now 0.7.0_.
