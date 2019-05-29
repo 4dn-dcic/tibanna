@@ -10,7 +10,6 @@ import shutil
 from datetime import datetime
 from uuid import uuid4, UUID
 from types import ModuleType
-from invoke import run
 from .vars import (
     _tibanna,
     AWS_ACCOUNT_NUMBER,
@@ -40,7 +39,6 @@ from .iam_utils import (
 )
 from .stepfunction import StepFunctionUnicorn
 from contextlib import contextmanager
-import aws_lambda
 
 
 # logger
@@ -100,7 +98,7 @@ class API(object):
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
-                     env=None, jobid=None, sleep=3, verbose=True):
+                     env=None, jobid=None, sleep=3, verbose=True, open_browser=True):
         '''
         input_json is either a dict or a file
         accession is unique name that we be part of run id
@@ -164,7 +162,8 @@ class API(object):
                 cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 print("Cloudwatch Dashboard = %s" % cw_db_url)
-            if shutil.which('open') is not None:
+            if open_browser and shutil.which('open') is not None:
+                from invoke import run
                 run('open %s' % data[_tibanna]['url'])
         return data
 
@@ -576,6 +575,7 @@ class API(object):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA)
         """
+        import aws_lambda
         if name not in dir(self.lambdas_module):
             raise Exception("Could not find lambda function file for %s" % name)
         lambda_fxn_module = importlib.import_module('.'.join([self.lambdas_module.__name__,  name]))
@@ -753,6 +753,7 @@ def chdir(self, dirname=None):
 
 
 def clean(self):
+    from invoke import run
     run("rm -rf build")
     run("rm -rf dist")
     print("Cleaned up.")

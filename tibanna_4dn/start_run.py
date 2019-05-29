@@ -46,6 +46,7 @@ def start_run(input_json):
 
     # get incomming data
     input_file_list = input_json_copy.get('input_files')
+    printlog("input file list : " + str(input_file_list))
     for infile in input_file_list:
         if not infile:
             raise("malformed input, check your input_files")

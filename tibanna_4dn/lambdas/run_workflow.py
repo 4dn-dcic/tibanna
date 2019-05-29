@@ -21,7 +21,7 @@ config = {
 def handler(event, context):
     env_name = event['env_name']
     sfn = event.get('step_function_name', TIBANNA_DEFAULT_STEP_FUNCTION_NAME)
-    res = API().run_workflow(event, env=env_name, sfn=sfn)
+    res = API().run_workflow(event, env=env_name, sfn=sfn, open_browser=False)
 
     try:
         start = str(res['_tibanna']['response']['startDate'])
