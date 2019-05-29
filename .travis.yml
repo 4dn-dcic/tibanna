@@ -16,6 +16,7 @@ install:
 - pip install six
 - python setup.py install
 - pip install -U -r requirements-4dn.txt
+- pip install -U -r requirements-test.txt
 - pip install codacy-coverage
 jobs:
   include:
