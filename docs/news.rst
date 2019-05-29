@@ -22,14 +22,15 @@ Version updates
 
       ::
 
-      from tibanna.core import API
-      API().run_workflow(...)
+          from tibanna.core import API
+          API().run_workflow(...)
+
 
     - The API ``run_workflow()`` can now directly take an input json file as well as an input dictionary (both through ```input_json`` parameter).
     - The ``rerun`` CLI now has ``--appname_filter`` option exposed
     - The ``rerun_many`` CLI now has ``--appname-filter``, ``--shutdown-min``, ``--ebs-size``, ``--ebs-type``, ``--ebs-iops``, ``--key-name``, ``--name`` options exposed.
       The API also now has corresponding parameters.
-    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only. The option ``-v`` (``--verbose``) is not replaced by ``-l``(``--long``)
+    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only. The option ``-v`` (``--verbose``) is not replaced by ``-l`` (``--long``)
 
 
   **May 15, 2019** The latest version is now 0.7.0_.

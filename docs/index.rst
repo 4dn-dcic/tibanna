@@ -58,8 +58,8 @@ Tibanna
 
 ::
 
-    >>> from core.utils import run_workflow
-    >>> run_workflow(input_json='run1.json')  # input_json is a json file or a dict object
+    >>> from tibanna.core import API
+    >>> API().run_workflow(input_json='run1.json')  # input_json is a json file or a dict object
 
 
 

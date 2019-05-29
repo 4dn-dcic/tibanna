@@ -3,7 +3,7 @@ Python API
 ==========
 
 
-All the API functions are in the `API` class in `tibanna.core`. Note that the class must be *instantiated* first (``API().run_workflow`` rather than ``API.run_workflow``).
+All the API functions are in the ``API`` class in ``tibanna.core``. Note that the class must be *instantiated* first (``API().run_workflow`` rather than ``API.run_workflow``).
 
 General Usage
 
@@ -104,7 +104,7 @@ To list users
 
 ::
 
-    tibanna users
+    API().users()
 
 
 add_user
@@ -203,7 +203,7 @@ To check the log or postrun json (summary) of a workflow run
                                  Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
                                  An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
-  postrunjson                    The -p option streams out a postrun json file instead of a log file.
+  postrunjson                    The postrunjson option streams out a postrun json file instead of a log file.
                                  A postrun json file is available only after the run finishes.
                                  It contains the summary of the job including input, output, EC2 config and
                                  Cloudwatch metrics on memory/CPU/disk space.
@@ -427,7 +427,7 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
 
   no_randomize                  do not add a random number to generate a usergroup name
                                 (e.g. the usergroup name used will be identical to the one
-                                specified using the ``--usergrou-tag`` option.  By default,
+                                specified using the ``usergrou_tag`` option.  By default,
                                 a random number will be added at the end (e.g. default_2721).
 
   buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which

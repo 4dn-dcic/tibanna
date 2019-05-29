@@ -412,6 +412,11 @@ setup_tibanna_env
 To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
 
 
+::
+
+    tibanna setup_tibanna_env <options>
+
+
 **Options**
 
 ::
@@ -439,7 +444,7 @@ Additional commands for tibanna_4dn
 
 
 deploy_pony
---------------
+-----------
 
 
 This function deploys tibanna pony (4dn extension of tibanna).
@@ -455,7 +460,7 @@ To create an instance of tibanna (step function + lambdas)
 
 ::
 
-    tibanna_4dn deploy_pony [--suffix=<suffixname>] [--usergroup=<usergroup>] [--tests]
+    tibanna_4dn deploy_pony [--suffix=<suffixname>] [--usergroup=<usergroup>]
     # (use suffix for development version)
     # example <suffixname> : dev
     # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the `tibanna setup_tibanna_env` command..
