@@ -50,5 +50,5 @@ class API(_API):
         }
         return envlist_pony.get(name, '')
 
-    def deploy_pony(self, suffix=None):
-        self.deploy_tibanna(suffix=suffix)
+    def deploy_pony(self, suffix=None, usergroup=None):
+        self.deploy_tibanna(suffix=suffix, usergroup=usergroup)
