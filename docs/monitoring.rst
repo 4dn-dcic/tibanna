@@ -15,7 +15,7 @@ General stats
 
 ::
 
-    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-v]
+    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-l] [-n <number_of_lines>]
 
 The output is a table (an example below)
 
@@ -28,7 +28,7 @@ The output is a table (an example below)
     j7hvisheBV27        SUCCEEDED       bwa-mem    2018-08-09 18:44        2018-08-09 18:59
 
 
-To print out more information, use the ``-v`` (verbose) option. The additional information includes the ID, type, status and public ip of the EC2 instance. Keyname and Password information is shown for ssh.
+To print out more information, use the ``-l`` (long) option. The additional information includes the ID, type, status and public ip of the EC2 instance. Keyname and Password information is shown for ssh.
 
 ::
 
@@ -36,6 +36,9 @@ To print out more information, use the ``-v`` (verbose) option. The additional i
     O37462jD9Kf7	RUNNING	bwa-mem	2018-12-14 23:37	2018-12-14 23:40	i-009880382ee22a5b1	t2.large	running 3.25.66.32	4dn-encode      somepassword
     jN4ubJNlNKIi	ABORTED	bwa-mem	2018-12-14 23:33	2018-12-14 23:36	i-0df66d22d485bbc05	c4.4xlarge	shutting-down   -	-       -
     dWBRxy0R8LXi	SUCCEEDED	bwa-mem	2018-12-14 22:44	2018-12-14 22:59	i-00f222fe5e4580007	t3.medium	terminated	-	-       -
+
+
+Using ``-n`` limits the number of lines to be printed. (the most recent ``n`` items will be printed)
 
 
 
