@@ -64,7 +64,8 @@ class Subcommands(object):
                   'help': "more comprehensive information",
                   'action': "store_true"},
                  {'flag': ["-n", "--nlines"],
-                  'help': "number of lines to print"}],
+                  'help': "number of lines to print",
+                  'type': int}],
             'kill':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to kill"},
