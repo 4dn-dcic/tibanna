@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'tibanna'
-copyright = '2017-2018, 4DN DCIC'
+copyright = '2017-2019, 4DN DCIC'
 author = '4DN DCIC'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -68,7 +68,7 @@ def _read(*parts, **kwargs):
 
 
 def get_version():
-    version = open("../core/_version.py").readlines()[-1].split()[-1].strip("\"'")
+    version = open("../tibanna/_version.py").readlines()[-1].split()[-1].strip("\"'")
     return version
 
 
@@ -139,10 +139,10 @@ html_theme = "sphinx_rtd_theme"
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-# html_title = 'tibanna v0.0.1'
+html_title = 'tibanna v0.8.0'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-# html_short_title = None
+html_short_title = 'tibanna'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
