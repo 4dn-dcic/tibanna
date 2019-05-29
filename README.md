@@ -50,3 +50,4 @@ Nore3: For more details, see Tibanna [**Documentation**](http://tibanna.readthed
 * Also check out our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379).
 * A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
 
+Note4:  Tibanna_4dn (extension of Tibanna) is used by the 4DN DCIC (4D Nucleome Data Coordination and Integration Center) to process data.
