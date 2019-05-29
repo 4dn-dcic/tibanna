@@ -167,7 +167,7 @@ class API(object):
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket):
-        dydb = boto3.client('dynamodb')
+        dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
             dydb.describe_table(TableName=DYNAMODB_TABLE)

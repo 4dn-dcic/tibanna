@@ -4,7 +4,6 @@ import sys
 import time
 import os
 import logging
-# from invoke import run
 import botocore.session
 import boto3
 from .utils import (
