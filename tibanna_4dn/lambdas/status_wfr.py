@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
-from tibanna.vars import AWS_REGION
+from tibanna_4dn.vars import AWS_REGION
 
 
 config = {
@@ -19,7 +19,7 @@ config = {
 
 def handler(event, context):
     arn = event['executionArn']
-    client = boto3.client('stepfunctions', region_name='us-east-1')
+    client = boto3.client('stepfunctions', region_name=AWS_REGION)
     run_details = client.describe_execution(
         executionArn=arn
     )

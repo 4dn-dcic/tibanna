@@ -3,7 +3,7 @@ import boto3
 import json
 import uuid
 from tibanna.utils import printlog
-from tibanna.vars import STEP_FUNCTION_ARN, AWS_REGION
+from tibanna_4dn.vars import AWS_REGION, STEP_FUNCTION_ARN
 
 
 config = {
