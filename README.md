@@ -4,6 +4,43 @@
 
 ***
 
+Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.
+
+<br>
+
+Install Tibanna.
+```bash
+pip install tibanna
+```
+
+Use CLI to set up the cloud component and run workflow.
+```bash
+# Deploy Unicorn to the Cloud (Unicorn = serverless scheduler/resource allocator).
+tibanna deploy_unicorn --usergroup=mygroup
+
+# Run CWL/WDL workflow on the Cloud.
+tibanna run_workflow --input-json=myrun.json
+```
+
+<br>
+
+Alternatively, use Python API.
+
+```python
+from tibanna.core import API
+
+# Deploy Unicorn to the Cloud.
+API().deploy_unicorn(usergroup='mygroup')
+
+# Run CWL/WDL workflow on the Cloud.
+API().run_workflow(input_json='myrun.json')
+```
+
+
 ### For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest) or our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379). A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
 
-#### Python2.7 support is deprecated now! Please switch to Python3.6!
+Note: Python2.7 support is deprecated now (`0.7.0` or after)! Please switch to Python3.6!
+
+Note2: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
+* Please switch from `invoke <command>` to `tibanna <command>`! 
+* We also renovated the Python API as an inheritable class to allow development around tibanna.
