@@ -40,6 +40,7 @@ API().run_workflow(input_json='myrun.json')
 
 <br>
 
+---
 Note: Python2.7 support is deprecated now (`0.7.0` or after)! Please switch to Python3.6!
 
 Note2: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
