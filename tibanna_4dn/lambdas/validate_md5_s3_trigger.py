@@ -7,7 +7,7 @@ from tibanna.vars import STEP_FUNCTION_ARN, AWS_REGION
 
 
 config = {
-    'function_name': 'validate_md5_s3_initiator',
+    'function_name': 'validate_md5_s3_trigger',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
