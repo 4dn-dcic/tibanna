@@ -7,6 +7,7 @@ import copy
 import logging
 import importlib
 import shutil
+import subprocess
 from datetime import datetime
 from uuid import uuid4, UUID
 from types import ModuleType
@@ -163,8 +164,7 @@ class API(object):
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 print("Cloudwatch Dashboard = %s" % cw_db_url)
             if open_browser and shutil.which('open') is not None:
-                from invoke import run
-                run('open %s' % data[_tibanna]['url'])
+                subprocess.call('open %s' % data[_tibanna]['url'])
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket):
@@ -739,21 +739,3 @@ class API(object):
                 raise(e)
             break
         return sfndef.sfn_name
-
-
-@contextmanager
-def chdir(self, dirname=None):
-    curdir = os.getcwd()
-    try:
-        if dirname is not None:
-            os.chdir(dirname)
-            yield
-    finally:
-        os.chdir(curdir)
-
-
-def clean(self):
-    from invoke import run
-    run("rm -rf build")
-    run("rm -rf dist")
-    print("Cleaned up.")
