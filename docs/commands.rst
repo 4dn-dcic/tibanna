@@ -5,11 +5,23 @@ Command-line tools
 Listing all commands
 ++++++++++++++++++++
 
-To list all available commands, use ``tibanna -l``
+To list all available commands, use ``tibanna -h``
 
 ::
 
-    tibanna -l
+    tibanna -h
+
+
+Checking Tibanna version
+++++++++++++++++++++++++
+
+To check Tibanna version,
+
+
+::
+
+    tibanna -v
+
 
 
 Basic_commands
@@ -36,21 +48,23 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 ::
 
-  --buckets=<bucket1,bucket2,...>  List of buckets to use for tibanna runs.
-                                   The associated lambda functions, EC2 instances
-                                   and user group will be given permission to these buckets.
+  -b|--buckets=<bucket1,bucket2,...>  List of buckets to use for tibanna runs.
+                                      The associated lambda functions, EC2 instances
+                                      and user group will be given permission to these buckets.
 
-  --no-setup                       Skip setup buckets/permissions and just redeploy tibanna
-                                   step function and lambdas.
-                                   This is useful when upgrading the existing tibanna that's
-                                   already set up.
+  -S|--no-setup                       Skip setup buckets/permissions and just redeploy tibanna
+                                      step function and lambdas.
+                                      This is useful when upgrading the existing tibanna that's
+                                      already set up.
 
-  --no-setenv                      Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-                                   environmental variable in your bashrc.
+  -E|--no-setenv                      Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+                                      environmental variable in your bashrc.
 
-  --suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
-                                   The step function and lambda functions will have the suffix.
+  -s|--suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
+                                      The step function and lambda functions will have the suffix.
 
+  -g|--usergroup=<usergroup>          Tibanna usergroup to share the permission to access
+                                      buckets and run jobs
 
 
 To deploy Tibanna unicorn, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
@@ -59,6 +73,31 @@ To deploy Tibanna unicorn, you need the following environmental variables set on
 
     export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
     export AWS_ACCOUNT_NUMBER=<aws_account_number>
+
+
+deploy_core
+-----------
+
+Deploy/update only a single lambda function
+
+::
+
+    tibanna deploy_unicorn -n <lambda_name> [<options>]
+
+
+where ``<lambda_name>`` would be either ``run_task_awsem`` or `check_task_awsem``.
+
+
+**Options**
+
+
+::
+
+  -s|--suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
+                                      The step function and lambda functions will have the suffix.
+
+  -g|--usergroup=<usergroup>          Tibanna usergroup to share the permission to access
+                                      buckets and run jobs
 
 
 users
@@ -70,6 +109,7 @@ To list users
 
     tibanna users
 
+
 add_user
 --------
 
@@ -77,7 +117,7 @@ To add users to a tibanna user group
 
 ::
 
-    tibanna add_user --user=<user> --group=<usergroup>
+    tibanna add_user -u <user> -g <usergroup>
 
 
 
@@ -100,12 +140,10 @@ To run workflow
 
 ::
 
-  --sfn=<stepfunctionname>         An example step function name may be
-                                   'tibanna_unicorn_defaut_3978'. If not specified, default
-                                   value is taken from environmental variable
-                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                   variable is not set, it uses name 'tibanna_pony' (4dn
-                                   default, works only for 4dn).
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
 
 
 
@@ -123,16 +161,19 @@ To check status of workflows,
 
 ::
 
-  --status=<status>                filter by run status (all runs if not specified).
-                                   Status must be one of the following values:
-                                   RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
+  -t|--status=<status>                filter by run status (all runs if not specified).
+                                      Status must be one of the following values:
+                                      RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
 
-  --sfn=<stepfunctionname>         An example step function name may be
-                                   'tibanna_unicorn_defaut_3978'. If not specified, default
-                                   value is taken from environmental variable
-                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                   variable is not set, it uses name 'tibanna_pony' (4dn
-                                   default, works only for 4dn).
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
+
+  -n|--nlines<number_of_lines>        print out only the first n lines
+
 
 
 The output is a table (an example below)
@@ -159,15 +200,15 @@ To check the log or postrun json (summary) of a workflow run
 
 ::
 
-  --sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                   Not necessary to rerun by ``exec-arn``.
-                                   Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                   An example step function name may be 'tibanna_unicorn_defaut_3978'.
+  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
+                                      Not necessary to rerun by ``exec-arn``.
+                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
+                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
-  -p                               The -p option streams out a postrun json file instead of a log file.
-                                   A postrun json file is available only after the run finishes.
-                                   It contains the summary of the job including input, output, EC2 config and
-                                   Cloudwatch metrics on memory/CPU/disk space.
+  -p|--postrunjson                    The -p option streams out a postrun json file instead of a log file.
+                                      A postrun json file is available only after the run finishes.
+                                      It contains the summary of the job including input, output, EC2 config and
+                                      Cloudwatch metrics on memory/CPU/disk space.
 
 
 rerun
@@ -178,23 +219,33 @@ To rerun a failed job with the same input json
 
 ::
 
-    tibanna rerun --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
+    tibanna rerun --exec-arn=<execution_arn>|--job-id=<jobid>|--exec-name=<execution_name> [<options>]
 
 
 **Options**
 
 ::
 
-  --sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                   Not necessary to rerun by ``exec-arn``.
-                                   Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                   An example step function name may be 'tibanna_unicorn_defaut_3978'.
+  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
+                                      Not necessary to rerun by ``exec-arn``.
+                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
+                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
-  --instance-type=<instance_type>  Override instance type for the rerun
-  --shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
-  --ebs-size=<ebs_size>            Override EBS size for the rerun
-  --key-name=<key_name>            Override keyname for the rerun
+  -i|--instance-type=<instance_type>  Override instance type for the rerun
 
+  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+
+  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
+
+  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
+
+  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
+
+  -k|--key-name=<key_name>            Override key name for the rerun
+
+  -n|--name=<run_name>                Override run name for the rerun
+
+  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
 
 
 rerun_many
@@ -211,27 +262,43 @@ To rerun many jobs that failed after a certain time point
 
 ::
 
-  --sfn=<stepfunctionname>         An example step function name may be
-                                   'tibanna_unicorn_defaut_3978'. If not specified, default
-                                   value is taken from environmental variable
-                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                   variable is not set, it uses name 'tibanna_pony' (4dn
-                                   default, works only for 4dn).
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
 
-  --stopdate=<stopdate>            e.g. '14Feb2018'
+  -D|--stopdate=<stopdate>            e.g. '14Feb2018'
 
-  --stophour=<stophour>            e.g. 14 (24-hour format, same as system time zone by default)
+  -H|--stophour=<stophour>            e.g. 14 (24-hour format, same as system time zone by default)
 
-  --stopminute=<stopminute>        e.g. 30 (default 0)
+  -M|--stopminute=<stopminute>        e.g. 30 (default 0)
 
-  --sleeptime=<sleeptime>          seconds between reruns (eefault 5)
+  -r|--sleeptime=<sleeptime>          seconds between reruns (eefault 5)
 
-  --offset=<offset>                offset between AWS time zone and system time zone (default 0)
-                                   e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
-                                   time zone, offset must be 5.
+  -o|--offset=<offset>                offset between AWS time zone and system time zone (default 0)
+                                      e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
+                                      time zone, offset must be 5.
 
-  --status=<status>                 filter by status. default 'FAILED', i.e. rerun only failed
-                                   jobs
+  -t|--status=<status>                filter by status. default 'FAILED', i.e. rerun only failed
+                                      jobs
+
+  -i|--instance-type=<instance_type>  Override instance type for the rerun
+
+  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+
+  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
+
+  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
+
+  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
+
+  -k|--key-name=<key_name>            Override key name for the rerun
+
+  -n|--name=<run_name>                Override run name for the rerun
+
+  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
 
 
 **Example** 
@@ -302,27 +369,28 @@ To kill all currently running jobs for a given step function
 
 ::
 
-    tibanna kill_all --sfn=<stepfunctionname>
+    tibanna kill_all
+
 
 **Options**
 
 ::
 
-  --sfn=<stepfunctionname>         An example step function name may be
-                                   'tibanna_unicorn_defaut_3978'. If not specified, default
-                                   value is taken from environmental variable
-                                   TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                   variable is not set, it uses name 'tibanna_pony' (4dn
-                                   default, works only for 4dn).
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
 
-list
-----
+list_sfns
+---------
 
 To list all step functions
 
 ::
 
-    tibanna list [-n]
+    tibanna list_sfns [-n]
 
 **Options**
 
@@ -336,7 +404,6 @@ To list all step functions
 Admin only
 ##########
 
-
 setup_tibanna_env
 -----------------
 
@@ -349,14 +416,15 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
 
 ::
 
-  --usergroup-tag=<usergrouptag>  an identifier for a usergroup that shares a tibanna
-                                  step function permission
-  --no-randomize                  do not add a random number to generate a usergroup name
-                                  (e.g. the usergroup name used will be identical to the one
-                                  specified using the ``--usergrou-tag`` option.  By default,
-                                  a random number will be added at the end (e.g. default_2721).
-  --buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
-                                  Tibanna needs access to through IAM role (input, output, log).
+  -g|--usergroup-tag=<usergrouptag>  an identifier for a usergroup that shares a tibanna
+                                     step function permission
+  -R|--no-randomize                  do not add a random number to generate a usergroup name
+                                     (e.g. the usergroup name used will be identical to the one
+                                     specified using the ``--usergrou-tag`` option.  By default,
+                                     a random number will be added at the end (e.g. default_2721).
+  -b|--buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
+                                     Tibanna needs access to through IAM role (input, output, log).
+
 
 Additional commands for tibanna_4dn
 +++++++++++++++++++++++++++++++++++
@@ -401,30 +469,3 @@ example
 
 
 The above command will create a step function named tibanna_pony_dev2 that uses a set of lambdas with suffix _dev2, and deploys these lambdas.
-
-
-test
-----
-
-- Advanced user only
-
-Running tests on the current repo
-
-::
-
-    tibanna_4dn test [--no-flake] [--ignore-pony] [--ignore-webdev]
-    
-    # --no-flake : skip flake8 test
-
-For Unicorn-only tests,
-
-::
-
-    tibanna_4dn test --ignore-pony
-
-For full test including Pony and Webdev tests (4DN-dcic-only)
-
-::
-
-    tibanna_4dn test [--no-flake]
-
