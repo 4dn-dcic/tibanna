@@ -178,9 +178,39 @@ You can run a workflow using Tibanna if you're an admin user or if you are a use
 
 As an example you can try to run a test workflow as below. This one uses only public buckets ``my-tibanna-test-bucket`` and ``my-tibanna-test-input-bucket``. The public has permission to these buckets - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Please use it only for initial testing of Tibanna.
 
+
+First, create the input json file ``my_test_tibanna_input.json`` as below.
+
 ::
 
-    tibanna run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
+    {
+      "args": {
+        "app_name": "md5",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "cwl_main_filename": "md5.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "input_file": {
+            "bucket_name": "my-tibanna-test-input-bucket",
+            "object_key": "somefastqfile.fastq.gz"
+          }
+        },
+        "output_S3_bucket": "my-tibanna-test-bucket",
+        "output_target": {
+          "report": "my_outdir/report"
+        }
+      },
+      "config": {
+        "run_name": "md5-public-test",
+        "log_bucket": "my-tibanna-test-bucket"
+      }
+    }
+
+
+::
+
+    tibanna run_workflow --input-json=my_test_tibanna_input.json
 
 
 Deploying Tibanna with private buckets
