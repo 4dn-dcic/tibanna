@@ -14,7 +14,7 @@ Version updates
 +++++++++++++++
 
 
-  **May 28, 2019** The latest version is now 0.8.0_.
+  **May 29, 2019** The latest version is now 0.8.0_.
 
     - Tibanna can now be installed via ``pip install tibanna``! (no need to ``git clone``)
     - Tibanna now has its own CLI! Instead of ``invoke run_workflow``, one should use ``tibanna run_workflow``.
@@ -29,6 +29,7 @@ Version updates
     - The ``rerun`` CLI now has ``--appname_filter`` option exposed
     - The ``rerun_many`` CLI now has ``--appname-filter``, ``--shutdown-min``, ``--ebs-size``, ``--ebs-type``, ``--ebs-iops``, ``--key-name``, ``--name`` options exposed.
       The API also now has corresponding parameters.
+    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only.
 
 
   **May 15, 2019** The latest version is now 0.7.0_.
@@ -190,6 +191,7 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
+.. _0.8.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.0
 .. _0.7.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.7.0
 .. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1
 .. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0
