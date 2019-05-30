@@ -1,3 +1,1 @@
-python-lambda-4dn==0.12.0
 dcicutils==0.6.0
-Benchmark-4dn==0.5.2

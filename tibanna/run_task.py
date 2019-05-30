@@ -44,14 +44,14 @@ def run_task(input_json):
       secondary_output_target: secondary output files in json format (similar to secondary_files)
     # required for cwl
       cwl_main_filename: main cwl file name
-      cwl_directory_url: the url and subdirectories for the main cwl file
+      cwl_directory_url or cwl_directory_local : the url or local directory in which the cwl files resides
       cwl_version: the version of cwl (either 'draft3' or 'v1')
       cwl_child_filenames (optional): names of the other cwl files used by main cwl file, delimited by comma
       language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
       language: 'wdl'
       wdl_main_filename: main wdl file name
-      wdl_directory_url: the url of the wdl file
+      wdl_directory_url or wdl_directory_local : the url or local directory in which the wdl files resides
       wdl_child_filenames (optional): names of the other wdl files used by main wdl file, delimited by comma
     # optional
       dependency: {'exec_arn': [exec_arns]}
@@ -64,8 +64,8 @@ def run_task(input_json):
     CONFIG_KEYS = ["log_bucket"]
     ARGS_FIELD = "args"
     ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
-    ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
+    ARGS_KEYS_CWL = ["cwl_main_filename"]
+    ARGS_KEYS_WDL = ["wdl_main_filename", "language"]
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
