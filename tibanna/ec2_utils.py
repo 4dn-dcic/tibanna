@@ -561,7 +561,7 @@ def auto_update_input_json(args, cfg):
 def upload_workflow_to_s3(args, cfg, jobid):
     bucket = cfg['log_bucket']
     key_prefix = jobid + '.workflow/'
-    language = args['language']
+    language = args.get('language', '')
     if language == 'wdl':
         main_wf = args['wdl_main_filename']
         wf_files = args['wdl_child_filenames']
