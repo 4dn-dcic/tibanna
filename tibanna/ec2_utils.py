@@ -556,3 +556,24 @@ def auto_update_input_json(args, cfg):
     cfg['language'] = args['language']
     update_config(cfg, args.get('app_name', ''),
                   args['input_files'], args.get('input_parameters', {}))
+
+
+def upload_workflow_to_s3(args, cfg, jobid):
+    bucket = cfg['log_bucket']
+    key_prefix = jobid + '.workflow/'
+    language = args['language']
+    if language == 'wdl':
+        main_wf = args['wdl_main_filename']
+        wf_files = args['wdl_child_filenames']
+        localdir = args['wdl_directory_local']
+    else:
+        main_wf = args['cwl_main_filename']
+        wf_files = args['cwl_child_filenames']
+        localdir = args['cwl_directory_local']
+    wf_files.append(main_wf)
+    localdir = localdir.strip('/')
+    for wf_file in wf_files:
+        source = localdir + '/' + wf_file
+        target = key_prefix + wf_file
+        boto3.client('s3').upload_file(source, bucket, target)
+    return "s3://%s/%s" % (bucket, key_prefix)

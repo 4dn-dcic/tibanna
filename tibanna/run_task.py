@@ -5,6 +5,7 @@ import boto3
 from .ec2_utils import (
     auto_update_input_json,
     create_json,
+    upload_workflow_to_s3,
     launch_instance,
     create_cloudwatch_dashboard
 )
@@ -90,6 +91,14 @@ def run_task(input_json):
 
     # create json and copy to s3
     jobid = create_json(input_json_copy)
+
+    if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
+            ('wdl_directory_local' in args and args['wdl_directory_local']):
+        url = upload_workflow_to_s3(args, cfg, jobid)
+        if args['language'] == 'wdl':
+            args['wdl_directory_url'] = url
+        else:
+            args['cwl_directory_url'] = url
 
     # profile
     if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
