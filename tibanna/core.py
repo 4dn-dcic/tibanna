@@ -142,13 +142,13 @@ class API(object):
         if 'args' in data:  # unicorn-only
             args = data['args']
             cfg = data['config']
-        if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
-                ('wdl_directory_local' in args and args['wdl_directory_local']):
-            url = upload_workflow_to_s3(args, cfg, jobid)
-            if 'language' in args and args['language'] == 'wdl':
-                args['wdl_directory_url'] = url
-            else:
-                args['cwl_directory_url'] = url
+            if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
+                    ('wdl_directory_local' in args and args['wdl_directory_local']):
+                url = upload_workflow_to_s3(args, cfg, jobid)
+                if 'language' in args and args['language'] == 'wdl':
+                    args['wdl_directory_url'] = url
+                else:
+                    args['cwl_directory_url'] = url
         # submit job as an execution
         aws_input = json.dumps(data)
         print("about to start run %s" % run_name)
