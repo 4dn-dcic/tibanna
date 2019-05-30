@@ -65,3 +65,8 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     assert res2
     assert res3
     assert url == 's3://tibanna-output/' + jobid + '.workflow/'
+    # clean up afterwards
+    s3.delete_objects(Bucket=cfg['log_bucket'],
+                      Delete={'Objects': [{'Key': jobid + '.workflow/main.cwl'},
+                                          {'Key': jobid + '.workflow/child1.cwl'},
+                                          {'Key': jobid + '.workflow/child2.cwl'}]})
