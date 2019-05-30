@@ -18,6 +18,7 @@ Version updates
 
     - ``deploy_core`` (and ``deploy_unicorn``) not working in a non-venv environment fixed
     - local CWL/WDL files and CWL/WDL files on S3 are supported.
+    - new issue with opening the browser with ``run_workflow`` fixed
 
 
   **May 29, 2019** The latest version is now 0.8.0_.
