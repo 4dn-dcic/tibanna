@@ -61,7 +61,13 @@ CWL-specific
 :cwl_directory_url:
     - <url_that_contains_cwl_file(s)>
     - (e.g. 'https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem')
-    - The url must be public.
+    - (e.g. 's3://bucketname/dirname/dirname2')
+    - The http url must be public.
+    - For the s3 url, the bucket must have been included during the ``deploy_unicorn`` run (accessible by tibanna)
+
+:cwl_directory_local:
+    - <local_directory_that_contains_cwl_file(s)>
+    - If this is set, ``cwl_directory_url`` can be skipped.
 
 :cwl_main_filename:
     - <main_cwl_file> (e.g. 'pairsam-parse-sort.cwl')
@@ -80,13 +86,20 @@ CWL-specific
     - either ``true`` or ``false``
     - This is an optional field. (default ``false``)
 
+
 WDL-specific
 ++++++++++++
 
 :wdl_directory_url:
     - <url_that_contains_wdl_file(s)>
     - (e.g. 'https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/wdl')
-    - The url must be public.
+    - (e.g. 's3://bucketname/dirname/dirname2')
+    - The http url must be public.
+    - For the s3 url, the bucket must have been included during the ``deploy_unicorn`` run (accessible by tibanna)
+
+:wdl_directory_local:
+    - <local_directory_that_contains_wdl_file(s)>
+    - If this is set, ``wdl_directory_url`` can be skipped.
 
 :wdl_main_filename:
     - <main_wdl_file> (e.g. 'pairsam-parse-sort.wdl')
