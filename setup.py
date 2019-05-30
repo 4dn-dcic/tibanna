@@ -43,7 +43,7 @@ setup(
     description='Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=['tibanna', 'tibanna_4dn', 'tibanna.lambdas', 'tibanna_4dn.lambdas'],
+    packages=['tibanna', 'tibanna_4dn'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu, carl_vitzthum@hms.harvard.edu',
