@@ -149,26 +149,26 @@ def create_env_def_file(env_filename, Dict, language):
     # env variables set before this script started running.
     with open(env_filename, 'w') as f_env:
         if language == 'wdl':
-            f_env.write("WDL_URL={}\n".format(Dict["Job"]["App"]["wdl_url"]))
+            f_env.write("export WDL_URL={}\n".format(Dict["Job"]["App"]["wdl_url"]))
             # main cwl to be run (the other cwl files will be called by this one)
-            f_env.write("MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
+            f_env.write("export MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
             # list of cwl files in an array delimited by a space
-            f_env.write("WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
+            f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
         else:  # cwl
-            f_env.write("CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
+            f_env.write("export CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
             # main cwl to be run (the other cwl files will be called by this one)
-            f_env.write("MAIN_CWL={}\n".format(Dict["Job"]["App"]["main_cwl"]))
+            f_env.write("export MAIN_CWL={}\n".format(Dict["Job"]["App"]["main_cwl"]))
             # list of cwl files in an array delimited by a space
-            f_env.write("CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
+            f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
         # other env variables
-        f_env.write("OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
-        f_env.write("PUBLIC_POSTRUN_JSON={}\n".format('1' if Dict["config"].get('public_postrun_json', False) else '0'))
+        f_env.write("export OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
+        f_env.write("export PUBLIC_POSTRUN_JSON={}\n".format('1' if Dict["config"].get('public_postrun_json', False) else '0'))
         env_preserv_str = ''
         if "Env" in Dict["Job"]["Input"]:
             for ev, val in Dict["Job"]["Input"]["Env"].iteritems():
                 f_env.write("{}={}\n".format(ev, val))
                 env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
-        f_env.write("PRESERVED_ENV_OPTION=\"{}\"\n".format(env_preserv_str))
+        f_env.write("export PRESERVED_ENV_OPTION=\"{}\"\n".format(env_preserv_str))
 
 
 main()

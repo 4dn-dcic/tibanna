@@ -3,5 +3,5 @@ include LICENSE.txt
 include requirements.txt
 include requirements-4dn.txt
 include requirements-test.txt
-include tibanna/lambdas/requirements.txt
-include tibanna_4dn/lambdas/requirements.txt
+include tibanna/lambdas/*
+include tibanna_4dn/lambdas/*

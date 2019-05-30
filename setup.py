@@ -26,8 +26,6 @@ install_requires = [req.strip() for req in set_parsed if 'git+' not in req]
 #     'requests==2.20.0'
 # ]
 
-setup_requires = install_requires + ['pytest-runner']
-
 tests_requires = [
     'flake8',
     'pytest',
@@ -57,7 +55,7 @@ setup(
             ],
     install_requires=install_requires,
     include_package_data=True,
-    setup_requires=setup_requires,
+    setup_requires=install_requires,
     tests_require=tests_requires,
     entry_points={
         'console_scripts': [

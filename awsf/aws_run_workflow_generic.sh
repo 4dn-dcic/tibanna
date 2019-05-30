@@ -118,6 +118,7 @@ fi
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
 exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
+exl wget $SCRIPTS_URL/download_workflow.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
@@ -145,6 +146,10 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
+### download cwl from github or any other url.
+pip install boto3
+exl ./download_workflow.py
+
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
 cwd0=$(pwd)
 cd ~
@@ -157,23 +162,6 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
-
-### download cwl from github or any other url.
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  exl echo "main wdl=$MAIN_WDL"
-  for WDL_FILE in $MAIN_WDL $WDL_FILES
-  do
-   exl wget -O$LOCAL_WFDIR/$WDL_FILE $WDL_URL/$WDL_FILE
-  done
-else
-  exl echo "main cwl=$MAIN_CWL"
-  for CWL_FILE in $MAIN_CWL $CWL_FILES
-  do
-   exl wget -O$LOCAL_WFDIR/$CWL_FILE $CWL_URL/$CWL_FILE
-  done
-fi
-
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
@@ -221,7 +209,6 @@ exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
-pip install boto3
 if [[ $LANGUAGE == 'wdl' ]]
 then
   WDLOPTION=wdl

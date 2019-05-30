@@ -14,6 +14,12 @@ Version updates
 +++++++++++++++
 
 
+  **May 30, 2019** The latest version is now 0.8.1_.
+
+    - ``deploy_core`` (and ``deploy_unicorn``) not working in a non-venv environment fixed
+    - local CWL/WDL files and CWL/WDL files on S3 are supported.
+
+
   **May 29, 2019** The latest version is now 0.8.0_.
 
     - Tibanna can now be installed via ``pip install tibanna``! (no need to ``git clone``)
@@ -192,6 +198,7 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
+.. _0.8.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.1
 .. _0.8.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.0
 .. _0.7.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.7.0
 .. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1

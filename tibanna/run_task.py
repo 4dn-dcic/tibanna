@@ -5,6 +5,7 @@ import boto3
 from .ec2_utils import (
     auto_update_input_json,
     create_json,
+    upload_workflow_to_s3,
     launch_instance,
     create_cloudwatch_dashboard
 )
@@ -43,14 +44,14 @@ def run_task(input_json):
       secondary_output_target: secondary output files in json format (similar to secondary_files)
     # required for cwl
       cwl_main_filename: main cwl file name
-      cwl_directory_url: the url and subdirectories for the main cwl file
+      cwl_directory_url: the url (http:// or s3://) in which the cwl files resides
       cwl_version: the version of cwl (either 'draft3' or 'v1')
       cwl_child_filenames (optional): names of the other cwl files used by main cwl file, delimited by comma
       language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
       language: 'wdl'
       wdl_main_filename: main wdl file name
-      wdl_directory_url: the url of the wdl file
+      wdl_directory_url: the url (http:// or s3://) in which the wdl files resides
       wdl_child_filenames (optional): names of the other wdl files used by main wdl file, delimited by comma
     # optional
       dependency: {'exec_arn': [exec_arns]}

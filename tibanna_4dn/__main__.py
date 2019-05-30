@@ -39,7 +39,9 @@ class Subcommands(_Subcommands):
         _args['deploy_pony'] = \
             [{'flag': ["-s", "--suffix"],
               'help': "suffix (e.g. 'dev') to add to the end of the name of" +
-                      "tibanna_pony and AWS Lambda functions within the same usergroup"}]
+                      "tibanna_pony and AWS Lambda functions within the same usergroup"},
+             {'flag': ["-g", "--usergroup"],
+              'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
         return _args
 
 
@@ -50,9 +52,9 @@ def deploy_core(name, suffix=None, usergroup=None):
     API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
 
 
-def deploy_pony(suffix=None):
+def deploy_pony(suffix=None, usergroup=None):
     """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
-    API().deploy_pony(suffix=suffix)
+    API().deploy_pony(suffix=suffix, usergroup=usergroup)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):
