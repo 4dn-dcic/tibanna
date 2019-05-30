@@ -147,6 +147,7 @@ LOGFILE=$LOGFILE2
 send_log
 
 ### download cwl from github or any other url.
+pip install boto3
 exl ./download_workflow.py
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
@@ -208,7 +209,6 @@ exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
-pip install boto3
 if [[ $LANGUAGE == 'wdl' ]]
 then
   WDLOPTION=wdl
