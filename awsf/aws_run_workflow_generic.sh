@@ -223,11 +223,14 @@ exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
-  WDLOPTION=wdl
+  LANGUAGE_OPTION=wdl
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  LANGUAGE_OPTION=shell
 else
-  WDLOPTION=
+  LANGUAGE_OPTION=
 fi
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $WDLOPTION
+exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  
