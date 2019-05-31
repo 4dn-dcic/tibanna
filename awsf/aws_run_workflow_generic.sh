@@ -63,6 +63,9 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
+else if [[ $LANGUAGE == 'shell' ]]
+then
+  export LOCAL_WFDIR=$DBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
