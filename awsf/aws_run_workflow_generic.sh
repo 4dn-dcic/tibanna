@@ -191,7 +191,12 @@ then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
 else if [[ $LANGUAGE == 'shell' ]]
 then
-  exl $COMMAND
+  if [[ -z $CONTAINER_IMAGE ]]
+  then
+      exl $COMMAND
+  else
+      docker run -v $EBS_DIR $CONTAINER_IMAGE sh -c "$COMMAND"
+  fi
   LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
