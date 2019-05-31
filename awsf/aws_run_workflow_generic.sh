@@ -63,8 +63,7 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
-else if [[ $LANGUAGE == 'shell' ]]
-then
+elif [[ $LANGUAGE == 'shell' ]]
   export LOCAL_WFDIR=$DBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
@@ -189,8 +188,7 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
-else if [[ $LANGUAGE == 'shell' ]]
-then
+elif [[ $LANGUAGE == 'shell' ]]
   if [[ -z $CONTAINER_IMAGE ]]
   then
       exl $COMMAND
