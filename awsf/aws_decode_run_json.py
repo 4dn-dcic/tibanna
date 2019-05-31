@@ -154,6 +154,8 @@ def create_env_def_file(env_filename, Dict, language):
             f_env.write("export MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
             # list of cwl files in an array delimited by a space
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
+        elif language == 'shell':
+            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"]))
         else:  # cwl
             f_env.write("export CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
             # main cwl to be run (the other cwl files will be called by this one)

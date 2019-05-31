@@ -10,6 +10,13 @@ python awsf/aws_decode_run_json.py tests/awsf/qD9zkkqAWjnE.run.json  # double-ne
 python awsf/aws_decode_run_json.py tests/awsf/wdl/pzn3Us98y21I.run.json   # nested
 python awsf/aws_decode_run_json.py tests/awsf/wdl/uGeIte1giKxt.run.json  # double-nested
 
+# shell
+python awsf/aws_decode_run_json.py tests/awsf/bqLd8oa7Tdzr.run.json
+if [[ $(grep COMMAND env_command_list.txt | wc -l) != "1" ]]
+then
+    exit 1
+fi
+
 
 ## testing output upload / postrun json creation
 # test for cwl
