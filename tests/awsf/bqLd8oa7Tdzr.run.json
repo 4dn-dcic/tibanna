@@ -4,7 +4,7 @@
             "App_name": "repliseq-parta", 
             "App_version": null, 
             "language": "shell",
-            "command": "touch haha"
+            "command": "touch tests/awsf/haha"
         }, 
         "Input": {
             "Input_files_data": {
@@ -42,8 +42,10 @@
         "Output": {
             "output_bucket_directory": "soos-4dn-bucket",
             "output_target": {
-                "file:///data1/output/haha"
-            }
+                "file://tests/awsf/haha": "shelltest-haha"
+            },
+            "secondary_output_target": {},
+            "alt_cond_output_argnames": {}
         }, 
         "start_time": "20180430-18:50:18-UTC"
     }, 

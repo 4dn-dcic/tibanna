@@ -58,6 +58,8 @@ if language == 'wdl':
         for argname, outfile in wdl_output['outputs'].iteritems():
             if outfile:
                 old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+elif language == 'shell':
+    old_dict['Job']['Output'].update({'Output files': {}})
 else:
     # read cwl output json file
     with open(execution_metadata, 'r') as json_out_f:
@@ -90,6 +92,8 @@ for of, ofv in output_meta.iteritems():
 # conditional alternative names only occur in WDL which does not support secondary files
 replace_list = []
 for k in output_target:
+    if k.startswith('file://'):
+        continue
     if k not in output_meta:
         if k in alt_output_argnames:
             key_exists = False  # initialize

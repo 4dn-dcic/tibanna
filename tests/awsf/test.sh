@@ -16,7 +16,7 @@ python awsf/aws_decode_run_json.py tests/awsf/wdl/uGeIte1giKxt.run.json  # doubl
 python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzq.run.json tests/awsf/bqLd8oa7Tdzq.log.json tests/awsf/bqLd8oa7Tdzq.LOG tests/awsf/bqLd8oa7Tdzq.md5sum.txt tests/awsf/bqLd8oa7Tdzq.postrun.json.out
 
 # test for shell
-python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzr.run.json - - - tests/awsf/bqLd8oa7Tdzq.postrun.json.out
+python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzr.run.json - tests/awsf/bqLd8oa7Tdzr.log tests/awsf/bqLd8oa7Tdzq.md5sum.txt tests/awsf/bqLd8oa7Tdzq.postrun.json.out shell
 
 # test for wdl
 # commented out since they will produce 'file not found error'. They work only if the files to upload exist.
