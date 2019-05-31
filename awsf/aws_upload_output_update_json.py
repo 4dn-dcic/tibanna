@@ -105,8 +105,22 @@ for k, k_alt in replace_list:
     output_target[k_alt] = output_target[k]
     del output_target[k]
 
-# upload output file
+
 s3 = boto3.client('s3')
+
+# 'file://' output targets 
+for k in output_target:
+    if k.startswith('file://'):
+        source = k.replace('file://', '')
+        target = output_target[k]
+        try:
+            print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
+            s3.upload_file(source, output_bucket, target)
+        except Exception as e:
+            raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
+
+
+# legitimate CWL/WDL output targets
 for k in output_meta:
     source = output_meta[k].get('path')
     source_name = source.replace(source_directory, '')
