@@ -186,6 +186,10 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+else if [[ $LANGUAGE == 'shell' ]]
+then
+  exl $COMMAND
+  LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
