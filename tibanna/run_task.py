@@ -66,6 +66,7 @@ def run_task(input_json):
     ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
     ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
+    ARGS_KEYS_SHELL = ["command"]
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
@@ -78,6 +79,9 @@ def run_task(input_json):
         assert k in args, "%s not in args field" % k
     if 'language' in args and args['language'] == 'wdl':
         for k in ARGS_KEYS_WDL:
+            assert k in args, "%s not in args field" % k
+    elif 'language' in args and args['language'] == 'shell':
+        for k in ARGS_KEYS_SHELL:
             assert k in args, "%s not in args field" % k
     else:
         for k in ARGS_KEYS_CWL:
