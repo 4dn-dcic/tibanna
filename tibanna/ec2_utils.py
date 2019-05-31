@@ -137,7 +137,8 @@ def create_json_dict(input_dict):
                                  'wdl_url': a.get('wdl_directory_url', ''),
                                  'main_wdl': a.get('wdl_main_filename', ''),
                                  'other_wdl_files': ','.join(a.get('wdl_child_filenames', [])),
-                                 'command': a.get('command', '')
+                                 'command': a.get('command', ''),
+                                 'container_image': a.get('container_image', '')
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)

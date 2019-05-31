@@ -66,7 +66,7 @@ def run_task(input_json):
     ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
     ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
-    ARGS_KEYS_SHELL = ["command"]
+    ARGS_KEYS_SHELL = ["command", "container_image"]
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
