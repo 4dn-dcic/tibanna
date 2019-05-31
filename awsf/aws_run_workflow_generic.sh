@@ -64,6 +64,7 @@ if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
 elif [[ $LANGUAGE == 'shell' ]]
+then
   export LOCAL_WFDIR=$DBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
@@ -189,6 +190,7 @@ if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
 elif [[ $LANGUAGE == 'shell' ]]
+then
   if [[ -z $CONTAINER_IMAGE ]]
   then
       exl $COMMAND
