@@ -6,6 +6,8 @@ import boto3
 
 def main():
     language = os.environ.get('LANGUAGE')
+    if language == 'shell':
+        return
     local_wfdir = os.environ.get('LOCAL_WFDIR')
     subprocess.call(['mkdir', '-p', local_wfdir])
     
