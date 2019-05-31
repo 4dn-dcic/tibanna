@@ -9,6 +9,7 @@ AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
 AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'
 AMI_ID_CWL_DRAFT3 = 'ami-0f06a8358d41c4b9c'
 AMI_ID_WDL = 'ami-0f06a8358d41c4b9c'
+AMI_ID_SHELL = 'ami-0f06a8358d41c4b9c'
 
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')

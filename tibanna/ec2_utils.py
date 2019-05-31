@@ -17,6 +17,7 @@ from .vars import (
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
     AMI_ID_WDL,
+    AMI_ID_SHELL,
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3
 )
@@ -136,6 +137,7 @@ def create_json_dict(input_dict):
                                  'wdl_url': a.get('wdl_directory_url', ''),
                                  'main_wdl': a.get('wdl_main_filename', ''),
                                  'other_wdl_files': ','.join(a.get('wdl_child_filenames', [])),
+                                 'command': a.get('command', '')
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
@@ -541,6 +543,8 @@ def auto_update_input_json(args, cfg):
     # AMI and script directory according to cwl version
     if 'language' in args and args['language'] == 'wdl':
         cfg['ami_id'] = AMI_ID_WDL
+    elif 'language' in args and args['language'] == 'shell':
+        cfg['ami_id'] = AMI_ID_SHELL
     else:
         if args['cwl_version'] == 'v1':
             cfg['ami_id'] = AMI_ID_CWL_V1
