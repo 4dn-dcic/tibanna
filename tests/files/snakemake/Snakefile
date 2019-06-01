@@ -1,0 +1,10 @@
+rule all:
+    input:
+        /data1/input/haha
+    output:
+        /data1/out/lala
+    shell:
+        """
+        cat /data1/input/haha data1/input/haha > /data1/out/lala
+        """
+
