@@ -575,15 +575,15 @@ def upload_workflow_to_s3(args, cfg, jobid):
     language = args.get('language', '')
     if language == 'wdl':
         main_wf = args['wdl_main_filename']
-        wf_files = args['wdl_child_filenames']
+        wf_files = args.get('wdl_child_filenames', [])
         localdir = args['wdl_directory_local']
     elif language == 'snakemake':
         main_wf = args['snakemake_main_filename']
-        wf_files = args['snakemake_child_filenames']
+        wf_files = args.get('snakemake_child_filenames', [])
         localdir = args['snakemake_directory_local']
     else:
         main_wf = args['cwl_main_filename']
-        wf_files = args['cwl_child_filenames']
+        wf_files = args.get('cwl_child_filenames', [])
         localdir = args['cwl_directory_local']
     wf_files.append(main_wf)
     localdir = localdir.strip('/')

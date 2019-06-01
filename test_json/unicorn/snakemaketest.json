@@ -4,7 +4,8 @@
     "input_parameters": {},
     "language": "snakemake",
     "command": "snakemake",
-    "snakemake_directory_local": "tests/files/snakemake/Snakefile",
+    "snakemake_main_filename": "Snakefile",
+    "snakemake_directory_local": "tests/files/snakemake/",
     "container_image": "quay.io/snakemake/snakemake",
     "output_target": {
       "file:///data1/out/shell-test-output": "shell-test-output"
