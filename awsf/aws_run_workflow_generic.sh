@@ -192,7 +192,7 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
-if [[ $LANGUAGE == 'snakemake' ]]
+elif [[ $LANGUAGE == 'snakemake' ]]
 then
   exl docker run -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND"
 elif [[ $LANGUAGE == 'shell' ]]
