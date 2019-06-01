@@ -8,7 +8,7 @@
     "snakemake_directory_local": "tests/files/snakemake/",
     "container_image": "quay.io/snakemake/snakemake",
     "output_target": {
-      "file:///data1/out/shell-test-output": "shell-test-output"
+      "file:///data1/out/lala": "snakemake-test-output-lala"
     },
     "secondary_output_target": {},
     "secondary_files": {},
