@@ -15,7 +15,7 @@ printHelpAndExit() {
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
-    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1' or 'wdl') (default cwl_draft3)"
+    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-u SCRIPTS_URL : Tibanna repo url (default: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
@@ -63,6 +63,9 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/snakemake
 elif [[ $LANGUAGE == 'shell' ]]
 then
   export LOCAL_WFDIR=$DBS_DIR/shell
@@ -189,6 +192,9 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+if [[ $LANGUAGE == 'snakemake' ]]
+then
+  exl docker run -v $EBS_DIR $CONTAINER_IMAGE sh -c "$COMMAND"
 elif [[ $LANGUAGE == 'shell' ]]
 then
   if [[ -z $CONTAINER_IMAGE ]]
@@ -224,6 +230,9 @@ exl ls -lhtr $LOCAL_OUTDIR/
 if [[ $LANGUAGE == 'wdl' ]]
 then
   LANGUAGE_OPTION=wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  LANGUAGE_OPTION=snakemake
 elif [[ $LANGUAGE == 'shell' ]]
 then
   LANGUAGE_OPTION=shell

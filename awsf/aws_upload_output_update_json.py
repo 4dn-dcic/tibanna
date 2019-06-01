@@ -58,6 +58,8 @@ if language == 'wdl':
         for argname, outfile in wdl_output['outputs'].iteritems():
             if outfile:
                 old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+elif language == 'snakemake':
+    old_dict['Job']['Output'].update({'Output files': {}})
 elif language == 'shell':
     old_dict['Job']['Output'].update({'Output files': {}})
 else:

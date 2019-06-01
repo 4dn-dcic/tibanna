@@ -15,6 +15,10 @@ def main():
         main_wf = os.environ.get('MAIN_WDL', '')
         wf_files = os.environ.get('WDL_FILES', '')
         wf_url = os.environ.get('WDL_URL')
+    elif language == 'snakemake':
+        main_wf = os.environ.get('MAIN_SNAKEMAKE', '')
+        wf_files = os.environ.get('SNAKEMAKE_FILES', '')
+        wf_url = os.environ.get('SNAKEMAKE_URL')
     else:
         main_wf = os.environ.get('MAIN_CWL', '')
         wf_files = os.environ.get('CWL_FILES', '')

@@ -22,6 +22,7 @@ from .vars import (
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3,
     AMI_ID_WDL,
+    AMI_ID_SNAKEMAKE,
     AMI_ID_SHELL,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
@@ -144,10 +145,13 @@ class API(object):
             args = data['args']
             cfg = data['config']
             if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
-                    ('wdl_directory_local' in args and args['wdl_directory_local']):
+                    ('wdl_directory_local' in args and args['wdl_directory_local']) or \
+                    ('snakemake_directory_local' in args and args['snakemake_directory_local']):
                 url = upload_workflow_to_s3(args, cfg, jobid)
                 if 'language' in args and args['language'] == 'wdl':
                     args['wdl_directory_url'] = url
+                elif 'language' in args and args['language'] == 'snakemake':
+                    args['snakemake_directory_url'] = url
                 else:
                     args['cwl_directory_url'] = url
         # submit job as an execution
@@ -546,6 +550,8 @@ class API(object):
             'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                                'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                                'AMI_ID_WDL': AMI_ID_WDL,
+                               'AMI_ID_SNAKEMAKE': AMI_ID_SNAKEMAKE,
+                               'AMI_ID_SHELL': AMI_ID_SHELL,
                                'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
                                'TIBANNA_AWS_REGION': AWS_REGION,

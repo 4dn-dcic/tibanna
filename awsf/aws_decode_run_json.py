@@ -19,6 +19,8 @@ def main():
     # create an input yml file to be used on awsem
     if language == 'wdl':  # wdl
         create_input_for_wdl(input_yml_filename, Dict_input)
+    elif language == 'snakemake':  # wdl
+        create_input_for_snakemake(input_yml_filename, Dict_input)
     else:  # cwl
         create_input_for_cwl(input_yml_filename, Dict_input)
     # create a file that defines environmental variables
@@ -142,6 +144,10 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
+def create_input_for_snakemake(input_yml_filename, Dict_input):
+    pass  # for now assume no input yml
+
+
 # create a file that defines environmental variables
 def create_env_def_file(env_filename, Dict, language):
     # I have to use these variables after this script finishes running.
@@ -154,6 +160,12 @@ def create_env_def_file(env_filename, Dict, language):
             f_env.write("export MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
             # list of cwl files in an array delimited by a space
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
+        elif language == 'snakemake':
+            f_env.write("export SNAKEMAKE_URL={}\n".format(Dict["Job"]["App"]["snakemake_url"]))
+            # main cwl to be run (the other cwl files will be called by this one)
+            f_env.write("export MAIN_SNAKEMAKE={}\n".format(Dict["Job"]["App"]["main_snakemake"]))
+            # list of cwl files in an array delimited by a space
+            f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_snakemake_files"].split(','))))
         elif language == 'shell':
             f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"]))
         else:  # cwl
