@@ -8,6 +8,6 @@ rule all:
         "/data1/out/lala"
     shell:
         """
-        cat /data1/input/haha data1/input/haha > /data1/out/lala
+        cat /data1/input/haha /data1/input/haha > /data1/out/lala
         """
 
