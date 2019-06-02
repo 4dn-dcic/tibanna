@@ -194,9 +194,13 @@ then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  exl echo "docker run -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
   exl docker run -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND"
 elif [[ $LANGUAGE == 'shell' ]]
 then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  exl echo "docker run -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
   exl docker run -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND"
   LOGJSONFILE='-'  # no file
 else
