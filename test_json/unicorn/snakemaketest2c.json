@@ -3,7 +3,7 @@
     "app_name": "snakemake-test",
     "input_parameters": {},
     "language": "snakemake",
-    "command": "snakemake step2,step3",
+    "command": "snakemake step2 step3",
     "snakemake_main_filename": "Snakefile",
     "snakemake_directory_local": "tests/files/snakemake2b/",
     "container_image": "quay.io/snakemake/snakemake",
