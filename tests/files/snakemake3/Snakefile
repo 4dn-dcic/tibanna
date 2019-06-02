@@ -1,6 +1,10 @@
 # vim: syntax=python
 #
 
+rule all:
+    input:
+        "lalalala"
+
 rule step1:
     input:
         "haha"
