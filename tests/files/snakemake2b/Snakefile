@@ -1,0 +1,33 @@
+# vim: syntax=python
+#
+
+rule step1:
+    input:
+        "/data1/input/haha"
+    output:
+        "/data1/out/lala"
+    shell:
+        """
+        cat /data1/input/haha /data1/input/haha > /data1/out/lala
+        """
+
+rule step2:
+    input:
+        "/data1/input/lala"
+    output:
+        "lalala"
+    shell:
+        """
+        cat /data1/input/lala /data1/input/lala > lalala
+        """
+
+rule step3:
+    input:
+        "lalala"
+    output:
+        "lalalala"
+    shell:
+        """
+        cat lalala lalala > lalalala
+        """
+
