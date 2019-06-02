@@ -4,11 +4,12 @@
             "App_name": "repliseq-parta", 
             "App_version": null, 
             "language": "shell",
-            "command": "touch tests/awsf/haha"
+            "command": "touch tests/awsf/haha",
+            "container_image": "ubuntu:16.04"
         }, 
         "Input": {
             "Input_files_data": {
-                "bwaIndex": {
+                "file:///data1/shell/hahaha.bwaIndex.tgz": {
                     "class": "File", 
                     "dir": "elasticbeanstalk-fourfront-webdev-files", 
                     "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz",

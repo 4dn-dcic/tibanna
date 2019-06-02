@@ -37,21 +37,25 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
 def create_download_command_list(downloadlist_filename, Dict_input, language):
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
-            keys = Dict_input[category].keys()
-            for i in range(0, len(Dict_input[category])):
-                if keys[i].startswith('file://'):
+            for inkey, v in Dict_input[category].iteritems():
+                if inkey.startswith('file://'):
                     if language not in ['shell', 'snakemake']:
                         raise Exception('input file has to be defined with argument name for CWL and WDL')
-                    target = keys[i].replace('file://', '')
+                    target = inkey.replace('file://', '')
                     if not target.startswith('/data1/'):
                         raise Exception('input target directory must be in /data1/')
+                    if not target.startswith('/data1/' + language) and \
+                        not target.startswith('/data1/input') and \
+                        not target.startswith('/data1/out'):
+                            raise Exception('input target directory must be in /data1/input, /data1/out or /data1/%s' % language)
                 else:
+                    target = ''
                     target_template = INPUT_DIR + "/%s"
-                DATA_BUCKET = Dict_input[category][keys[i]]["dir"]
-                PROFILE = Dict_input[category][keys[i]].get("profile", '')
-                PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
-                path1 = Dict_input[category][keys[i]]["path"]
-                rename1 = Dict_input[category][keys[i]].get("rename", None)
+                data_bucket = v["dir"]
+                profile = v.get("profile", '')
+                profile_flag = "--profile " + profile if profile else ''
+                path1 = v["path"]
+                rename1 = v.get("rename", None)
                 if not rename1:
                     rename1 = path1
                 if isinstance(path1, list):
@@ -74,7 +78,7 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                     data_file = path1
                     if not target:
                         target = target_template % rename1
-                add_download_cmd(DATA_BUCKET, data_file, target, PROFILE_FLAG, f)
+                add_download_cmd(data_bucket, data_file, target, profile_flag, f)
 
 
 def file2cwlfile(filename, dir):
