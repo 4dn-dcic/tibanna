@@ -1,0 +1,35 @@
+# vim: syntax=python
+#
+
+rule all:
+    input:
+        "lalalala"
+
+rule step1:
+    output:
+        "lala"
+    shell:
+        """
+        echo "haha" > lala
+        """
+
+rule step2:
+    input:
+        "lala"
+    output:
+        "lalala"
+    shell:
+        """
+        cat lala lala > lalala
+        """
+
+rule step3:
+    input:
+        "lalala"
+    output:
+        "lalalala"
+    shell:
+        """
+        cat lalala lalala > lalalala
+        """
+
