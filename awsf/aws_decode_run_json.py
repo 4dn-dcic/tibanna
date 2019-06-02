@@ -15,7 +15,7 @@ def main():
         Dict_input = Dict["Job"]["Input"]
         language = Dict["Job"]["App"]["language"]
     # create a download command list file from the information in json
-    create_download_command_list(downloadlist_filename, Dict_input)
+    create_download_command_list(downloadlist_filename, Dict_input, language)
     # create an input yml file to be used on awsem
     if language == 'wdl':  # wdl
         create_input_for_wdl(input_yml_filename, Dict_input)
@@ -27,18 +27,26 @@ def main():
     create_env_def_file(env_filename, Dict, language)
 
 
-def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, rename, f):
+def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
     if data_file:
-        cmd = "aws s3 cp s3://{0}/{1} {2}/{4} {3}\n"
-        f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag, rename))
+        cmd = "aws s3 cp s3://{0}/{1} {2} {3}\n"
+        f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
 # create a download command list file from the information in json
-def create_download_command_list(downloadlist_filename, Dict_input):
+def create_download_command_list(downloadlist_filename, Dict_input, language):
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
             keys = Dict_input[category].keys()
             for i in range(0, len(Dict_input[category])):
+                if keys[i].startswith('file://'):
+                    if language not in ['shell', 'snakemake']:
+                        raise Exception('input file has to be defined with argument name for CWL and WDL')
+                    target = keys[i].replace('file://', '')
+                    if not target.startswith('/data1/'):
+                        raise Exception('input target directory must be in /data1/')
+                else:
+                    target_template = INPUT_DIR + "/%s"
                 DATA_BUCKET = Dict_input[category][keys[i]]["dir"]
                 PROFILE = Dict_input[category][keys[i]].get("profile", '')
                 PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
@@ -52,16 +60,21 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                             for path3, rename3 in zip(path2, rename2):
                                 if isinstance(path3, list):
                                     for data_file, rename4 in zip(path3, rename3):
-                                        add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename4, f)
+                                        if not target:
+                                            target = target_template % rename4
                                 else:
                                     data_file = path3
-                                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename3, f)
+                                    if not target:
+                                        target = target_template % rename3
                         else:
                             data_file = path2
-                            add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename2, f)
+                            if not target:
+                                target = target_template % rename2
                 else:
                     data_file = path1
-                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename1, f)
+                    if not target:
+                        target = target_template % rename1
+                add_download_cmd(DATA_BUCKET, data_file, target, PROFILE_FLAG, f)
 
 
 def file2cwlfile(filename, dir):
