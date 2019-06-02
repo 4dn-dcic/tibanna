@@ -3,7 +3,7 @@
     "app_name": "shell-test",
     "input_parameters": {},
     "language": "shell",
-    "command": "touch /data1/out/shell-test-output",
+    "command": "echo \"haha\" > /data1/out/shell-test-output",
     "container_image": "ubuntu:16.04",
     "output_target": {
       "file:///data1/out/shell-test-output": "shell-test-output"

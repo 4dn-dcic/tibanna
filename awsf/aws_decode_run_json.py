@@ -162,10 +162,10 @@ def create_env_def_file(env_filename, Dict, language):
             f_env.write("export SNAKEMAKE_URL={}\n".format(Dict["Job"]["App"]["snakemake_url"]))
             f_env.write("export MAIN_SNAKEMAKE={}\n".format(Dict["Job"]["App"]["main_snakemake"]))
             f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_snakemake_files"].split(','))))
-            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"","\\\""))
+            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"", "\\\"")))
             f_env.write("export CONTAINER_IMAGE={}\n".format(Dict["Job"]["App"]["container_image"]))
         elif language == 'shell':
-            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"","\\\"")))
+            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"", "\\\"")))
             f_env.write("export CONTAINER_IMAGE={}\n".format(Dict["Job"]["App"]["container_image"]))
         else:  # cwl
             f_env.write("export CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
