@@ -6,6 +6,8 @@ import boto3
 
 def main():
     language = os.environ.get('LANGUAGE')
+    if language == 'shell':
+        return
     local_wfdir = os.environ.get('LOCAL_WFDIR')
     subprocess.call(['mkdir', '-p', local_wfdir])
     
@@ -13,6 +15,10 @@ def main():
         main_wf = os.environ.get('MAIN_WDL', '')
         wf_files = os.environ.get('WDL_FILES', '')
         wf_url = os.environ.get('WDL_URL')
+    elif language == 'snakemake':
+        main_wf = os.environ.get('MAIN_SNAKEMAKE', '')
+        wf_files = os.environ.get('SNAKEMAKE_FILES', '')
+        wf_url = os.environ.get('SNAKEMAKE_URL')
     else:
         main_wf = os.environ.get('MAIN_CWL', '')
         wf_files = os.environ.get('CWL_FILES', '')
@@ -25,7 +31,7 @@ def main():
     else:
         wf_files = [wf_files]
     wf_files.append(main_wf)
-    wf_url = wf_url.strip('/')
+    wf_url = wf_url.rstrip('/')
     
     print("main workflow file: %s" % main_wf)
     print("workflow files: " + str(wf_files))

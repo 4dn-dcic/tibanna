@@ -5,7 +5,6 @@ import boto3
 from .ec2_utils import (
     auto_update_input_json,
     create_json,
-    upload_workflow_to_s3,
     launch_instance,
     create_cloudwatch_dashboard
 )
@@ -53,6 +52,11 @@ def run_task(input_json):
       wdl_main_filename: main wdl file name
       wdl_directory_url: the url (http:// or s3://) in which the wdl files resides
       wdl_child_filenames (optional): names of the other wdl files used by main wdl file, delimited by comma
+    # required for snakemake
+      language: 'snakemake'
+      snakemake_main_filename: main snakemake file name
+      snakemake_directory_url: the url (http:// or s3://) in which the snakemake files resides
+      snakemake_child_filenames (optional): names of the other snakemake files, delimited by comma
     # optional
       dependency: {'exec_arn': [exec_arns]}
       spot_duration: 60  # block minutes 60-360 if requesting spot instance
@@ -66,6 +70,9 @@ def run_task(input_json):
     ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
     ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
     ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
+    ARGS_KEYS_SHELL = ["command", "container_image", "language"]
+    ARGS_KEYS_SNAKEMAKE = ["snakemake_main_filename", "snakemake_directory_url", "language",
+                           "command", "container_image"]
 
     # args: parameters needed by the instance to run a workflow
     # cfg: parameters needed to launch an instance
@@ -79,12 +86,22 @@ def run_task(input_json):
     if 'language' in args and args['language'] == 'wdl':
         for k in ARGS_KEYS_WDL:
             assert k in args, "%s not in args field" % k
+    elif 'language' in args and args['language'] == 'shell':
+        for k in ARGS_KEYS_SHELL:
+            assert k in args, "%s not in args field" % k
+    elif 'language' in args and args['language'] == 'snakemake':
+        for k in ARGS_KEYS_SNAKEMAKE:
+            assert k in args, "%s not in args field" % k
     else:
         for k in ARGS_KEYS_CWL:
             assert k in args, "%s not in args field" % k
 
     if 'dependency' in args:
         check_dependency(**args['dependency'])
+    elif 'dependency' in cfg:
+        check_dependency(**cfg['dependency'])
+    elif 'dependency' in input_json_copy:
+        check_dependency(**input_json_copy['dependency'])
 
     # update input json to add various other info automatically
     auto_update_input_json(args, cfg)

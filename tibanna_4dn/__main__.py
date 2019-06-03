@@ -41,7 +41,7 @@ class Subcommands(_Subcommands):
               'help': "suffix (e.g. 'dev') to add to the end of the name of" +
                       "tibanna_pony and AWS Lambda functions within the same usergroup"},
              {'flag': ["-g", "--usergroup"],
-              'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
+              'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}]
         return _args
 
 

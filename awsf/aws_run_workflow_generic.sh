@@ -15,7 +15,7 @@ printHelpAndExit() {
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
-    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1' or 'wdl') (default cwl_draft3)"
+    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-u SCRIPTS_URL : Tibanna repo url (default: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
@@ -63,6 +63,12 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  export LOCAL_WFDIR=$DBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
@@ -186,6 +192,20 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  exl echo "docker run --detach -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
+  docker run --detach -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
+  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  LOGJSONFILE='-'  # no file
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  exl echo "docker run --detach -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
+  docker run --detach -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
+  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
@@ -211,11 +231,17 @@ exl ls -lhtr $LOCAL_OUTDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
-  WDLOPTION=wdl
+  LANGUAGE_OPTION=wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  LANGUAGE_OPTION=snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  LANGUAGE_OPTION=shell
 else
-  WDLOPTION=
+  LANGUAGE_OPTION=
 fi
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $WDLOPTION
+exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  

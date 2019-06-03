@@ -17,6 +17,8 @@ from .vars import (
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
     AMI_ID_WDL,
+    AMI_ID_SHELL,
+    AMI_ID_SNAKEMAKE,
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3
 )
@@ -136,6 +138,11 @@ def create_json_dict(input_dict):
                                  'wdl_url': a.get('wdl_directory_url', ''),
                                  'main_wdl': a.get('wdl_main_filename', ''),
                                  'other_wdl_files': ','.join(a.get('wdl_child_filenames', [])),
+                                 'snakemake_url': a.get('snakemake_directory_url', ''),
+                                 'main_snakemake': a.get('snakemake_main_filename', ''),
+                                 'other_snakemake_files': ','.join(a.get('snakemake_child_filenames', [])),
+                                 'command': a.get('command', ''),
+                                 'container_image': a.get('container_image', '')
                         },
                         'Input': {
                                  'Input_files_data': {},    # fill in later (below)
@@ -541,6 +548,10 @@ def auto_update_input_json(args, cfg):
     # AMI and script directory according to cwl version
     if 'language' in args and args['language'] == 'wdl':
         cfg['ami_id'] = AMI_ID_WDL
+    elif 'language' in args and args['language'] == 'shell':
+        cfg['ami_id'] = AMI_ID_SHELL
+    elif 'language' in args and args['language'] == 'snakemake':
+        cfg['ami_id'] = AMI_ID_SNAKEMAKE
     else:
         if args['cwl_version'] == 'v1':
             cfg['ami_id'] = AMI_ID_CWL_V1
@@ -564,14 +575,18 @@ def upload_workflow_to_s3(args, cfg, jobid):
     language = args.get('language', '')
     if language == 'wdl':
         main_wf = args['wdl_main_filename']
-        wf_files = args['wdl_child_filenames']
+        wf_files = args.get('wdl_child_filenames', [])
         localdir = args['wdl_directory_local']
+    elif language == 'snakemake':
+        main_wf = args['snakemake_main_filename']
+        wf_files = args.get('snakemake_child_filenames', [])
+        localdir = args['snakemake_directory_local']
     else:
         main_wf = args['cwl_main_filename']
-        wf_files = args['cwl_child_filenames']
+        wf_files = args.get('cwl_child_filenames', [])
         localdir = args['cwl_directory_local']
     wf_files.append(main_wf)
-    localdir = localdir.strip('/')
+    localdir = localdir.rstrip('/')
     for wf_file in wf_files:
         source = localdir + '/' + wf_file
         target = key_prefix + wf_file

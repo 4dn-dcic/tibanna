@@ -15,33 +15,47 @@ def main():
         Dict_input = Dict["Job"]["Input"]
         language = Dict["Job"]["App"]["language"]
     # create a download command list file from the information in json
-    create_download_command_list(downloadlist_filename, Dict_input)
+    create_download_command_list(downloadlist_filename, Dict_input, language)
     # create an input yml file to be used on awsem
     if language == 'wdl':  # wdl
         create_input_for_wdl(input_yml_filename, Dict_input)
+    elif language == 'snakemake':  # wdl
+        create_input_for_snakemake(input_yml_filename, Dict_input)
     else:  # cwl
         create_input_for_cwl(input_yml_filename, Dict_input)
     # create a file that defines environmental variables
     create_env_def_file(env_filename, Dict, language)
 
 
-def add_download_cmd(data_bucket, data_file, input_dir, profile_flag, rename, f):
+def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
     if data_file:
-        cmd = "aws s3 cp s3://{0}/{1} {2}/{4} {3}\n"
-        f.write(cmd.format(data_bucket, data_file, input_dir, profile_flag, rename))
+        cmd = "aws s3 cp s3://{0}/{1} {2} {3}\n"
+        f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
 # create a download command list file from the information in json
-def create_download_command_list(downloadlist_filename, Dict_input):
+def create_download_command_list(downloadlist_filename, Dict_input, language):
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
-            keys = Dict_input[category].keys()
-            for i in range(0, len(Dict_input[category])):
-                DATA_BUCKET = Dict_input[category][keys[i]]["dir"]
-                PROFILE = Dict_input[category][keys[i]].get("profile", '')
-                PROFILE_FLAG = "--profile " + PROFILE if PROFILE else ''
-                path1 = Dict_input[category][keys[i]]["path"]
-                rename1 = Dict_input[category][keys[i]].get("rename", None)
+            for inkey, v in Dict_input[category].iteritems():
+                if inkey.startswith('file://'):
+                    if language not in ['shell', 'snakemake']:
+                        raise Exception('input file has to be defined with argument name for CWL and WDL')
+                    target = inkey.replace('file://', '')
+                    if not target.startswith('/data1/'):
+                        raise Exception('input target directory must be in /data1/')
+                    if not target.startswith('/data1/' + language) and \
+                        not target.startswith('/data1/input') and \
+                        not target.startswith('/data1/out'):
+                            raise Exception('input target directory must be in /data1/input, /data1/out or /data1/%s' % language)
+                else:
+                    target = ''
+                    target_template = INPUT_DIR + "/%s"
+                data_bucket = v["dir"]
+                profile = v.get("profile", '')
+                profile_flag = "--profile " + profile if profile else ''
+                path1 = v["path"]
+                rename1 = v.get("rename", None)
                 if not rename1:
                     rename1 = path1
                 if isinstance(path1, list):
@@ -50,16 +64,21 @@ def create_download_command_list(downloadlist_filename, Dict_input):
                             for path3, rename3 in zip(path2, rename2):
                                 if isinstance(path3, list):
                                     for data_file, rename4 in zip(path3, rename3):
-                                        add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename4, f)
+                                        if not target:
+                                            target = target_template % rename4
                                 else:
                                     data_file = path3
-                                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename3, f)
+                                    if not target:
+                                        target = target_template % rename3
                         else:
                             data_file = path2
-                            add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename2, f)
+                            if not target:
+                                target = target_template % rename2
                 else:
                     data_file = path1
-                    add_download_cmd(DATA_BUCKET, data_file, INPUT_DIR, PROFILE_FLAG, rename1, f)
+                    if not target:
+                        target = target_template % rename1
+                add_download_cmd(data_bucket, data_file, target, profile_flag, f)
 
 
 def file2cwlfile(filename, dir):
@@ -142,6 +161,10 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
+def create_input_for_snakemake(input_yml_filename, Dict_input):
+    pass  # for now assume no input yml
+
+
 # create a file that defines environmental variables
 def create_env_def_file(env_filename, Dict, language):
     # I have to use these variables after this script finishes running.
@@ -150,15 +173,20 @@ def create_env_def_file(env_filename, Dict, language):
     with open(env_filename, 'w') as f_env:
         if language == 'wdl':
             f_env.write("export WDL_URL={}\n".format(Dict["Job"]["App"]["wdl_url"]))
-            # main cwl to be run (the other cwl files will be called by this one)
             f_env.write("export MAIN_WDL={}\n".format(Dict["Job"]["App"]["main_wdl"]))
-            # list of cwl files in an array delimited by a space
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_wdl_files"].split(','))))
+        elif language == 'snakemake':
+            f_env.write("export SNAKEMAKE_URL={}\n".format(Dict["Job"]["App"]["snakemake_url"]))
+            f_env.write("export MAIN_SNAKEMAKE={}\n".format(Dict["Job"]["App"]["main_snakemake"]))
+            f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_snakemake_files"].split(','))))
+            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"", "\\\"")))
+            f_env.write("export CONTAINER_IMAGE={}\n".format(Dict["Job"]["App"]["container_image"]))
+        elif language == 'shell':
+            f_env.write("export COMMAND=\"{}\"\n".format(Dict["Job"]["App"]["command"].replace("\"", "\\\"")))
+            f_env.write("export CONTAINER_IMAGE={}\n".format(Dict["Job"]["App"]["container_image"]))
         else:  # cwl
             f_env.write("export CWL_URL={}\n".format(Dict["Job"]["App"]["cwl_url"]))
-            # main cwl to be run (the other cwl files will be called by this one)
             f_env.write("export MAIN_CWL={}\n".format(Dict["Job"]["App"]["main_cwl"]))
-            # list of cwl files in an array delimited by a space
             f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(Dict["Job"]["App"]["other_cwl_files"].split(','))))
         # other env variables
         f_env.write("export OUTBUCKET={}\n".format(Dict["Job"]["Output"]["output_bucket_directory"]))
