@@ -4,7 +4,7 @@
 
 ***
 
-Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.
+Tibanna runs portable pipelines (in CWL/WDL/Snakemake/shell) on the AWS Cloud.
 
 <br>
 
