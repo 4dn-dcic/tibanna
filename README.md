@@ -41,15 +41,17 @@ API().run_workflow(input_json='myrun.json')
 <br>
 
 ---
-Note: Python2.7 support is deprecated now (`0.7.0` or after)! Please switch to Python3.6!
+Note: Starting `0.8.2`, Tibanna supports local CWL/WDL files as well as shell commands and Snakemake workflows.
 
-Note2: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
+Note2: Python2.7 support is deprecated now (`0.7.0` or after)! Please switch to Python3.6!
+
+Note3: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
 * Please switch from `invoke <command>` to `tibanna <command>`! 
 * We also renovated the Python API as an inheritable class to allow development around tibanna.
 
-Note3:  Tibanna_4dn (extension of Tibanna) is used by the 4DN DCIC (4D Nucleome Data Coordination and Integration Center) to process data.
+Note4:  Tibanna_4dn (extension of Tibanna) is used by the 4DN DCIC (4D Nucleome Data Coordination and Integration Center) to process data.
 
-Nore4: For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest).
+Nore5: For more details, see Tibanna [**Documentation**](http://tibanna.readthedocs.io/en/latest).
 * Also check out our [**paper in _Bioinformatics_**](https://doi.org/10.1093/bioinformatics/btz379).
 * A preprint can also be found on [**biorxiv**](https://www.biorxiv.org/content/10.1101/440974v3).
 
