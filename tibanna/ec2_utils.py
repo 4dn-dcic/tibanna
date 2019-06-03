@@ -586,7 +586,7 @@ def upload_workflow_to_s3(args, cfg, jobid):
         wf_files = args.get('cwl_child_filenames', [])
         localdir = args['cwl_directory_local']
     wf_files.append(main_wf)
-    localdir = localdir.strip('/')
+    localdir = localdir.rstrip('/')
     for wf_file in wf_files:
         source = localdir + '/' + wf_file
         target = key_prefix + wf_file

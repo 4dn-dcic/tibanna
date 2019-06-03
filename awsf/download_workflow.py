@@ -31,7 +31,7 @@ def main():
     else:
         wf_files = [wf_files]
     wf_files.append(main_wf)
-    wf_url = wf_url.strip('/')
+    wf_url = wf_url.rstrip('/')
     
     print("main workflow file: %s" % main_wf)
     print("workflow files: " + str(wf_files))
