@@ -5,7 +5,6 @@ import boto3
 from .ec2_utils import (
     auto_update_input_json,
     create_json,
-    upload_workflow_to_s3,
     launch_instance,
     create_cloudwatch_dashboard
 )
@@ -57,7 +56,7 @@ def run_task(input_json):
       language: 'snakemake'
       snakemake_main_filename: main snakemake file name
       snakemake_directory_url: the url (http:// or s3://) in which the snakemake files resides
-      snakemake_child_filenames (optional): names of the other snakemake files used by main snakemake file, delimited by comma
+      snakemake_child_filenames (optional): names of the other snakemake files, delimited by comma
     # optional
       dependency: {'exec_arn': [exec_arns]}
       spot_duration: 60  # block minutes 60-360 if requesting spot instance
@@ -99,6 +98,10 @@ def run_task(input_json):
 
     if 'dependency' in args:
         check_dependency(**args['dependency'])
+    elif 'dependency' in cfg:
+        check_dependency(**cfg['dependency'])
+    elif 'dependency' in input_json_copy:
+        check_dependency(**input_json_copy['dependency'])
 
     # update input json to add various other info automatically
     auto_update_input_json(args, cfg)
