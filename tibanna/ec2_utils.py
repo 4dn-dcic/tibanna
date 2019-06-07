@@ -1,11 +1,10 @@
 #!/usr/bin/python
 import json
-import sys
 import time
 import os
 import logging
-import botocore.session
 import boto3
+import copy
 from .utils import (
     printlog,
     does_key_exist,
@@ -23,7 +22,7 @@ from .vars import (
     AMI_ID_CWL_DRAFT3
 )
 from .exceptions import (
-    MissingFieldInInputJsonException
+    MissingFieldInInputJsonException,
     EC2LaunchException,
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException,
@@ -32,154 +31,11 @@ from .exceptions import (
 )
 from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
+from Benchmark.classes import get_instance_types
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
-
-
-class Args(object):
-    def __init__(self, **kwargs):
-        for k, v kwargs.items():
-            setattr(self, k, v)
-
-    def update(self, **kwargs):
-        for k, v kwargs.items():
-            setattr(self, k, v)
-
-    def fill_default(self):
-        # if language and cwl_version is not specified,
-        # by default it is cwl_draft3
-        if not hasattr(self, 'language'):
-            if not hasattr(self, 'cwl_version'):
-                self.cwl_version = 'draft3'
-                self.language = 'cwl_draft3'
-            elif self.cwl_version == 'v1':
-                self.language = 'cwl_v1'
-            elif self.cwl_version == 'draft3':
-                self.language = 'cwl_draft3'
-            if not hasattr(self, 'singularity'):
-                self.singularity = False
-        if not hasattr(self, 'app_name'):
-            self.app_name = ''
-        # check workflow info is there and fill in default
-        errmsg_template = "field %s is required in args for language %s"
-        if self.language == 'wdl':
-            if not hasattr(self, 'wdl_main_filename'):
-                raise MissingFieldInInputJsonException(errmsg_template % ('wdl_main_filename', language))
-            if not hasattr(self, 'wdl_child_filenames'):
-                self.wdl_child_filenames = []
-            if not hasattr(self, 'wdl_directory_local'):
-                self.wdl_directory_local = ''
-            if not hasattr(self, 'wdl_directory_url'):
-                self.wdl_directory_url = ''
-            if not self.wdl_directory_local and not self.wdl_directory_url:
-                errmsg = "either %s or %s must be provided in args" % ('wdl_directory_url', 'wdl_directory_local')
-                raise MissingFieldInInputJsonException(errmsg)
-        elif self.language == 'snakemake':
-            if not hasattr(self, 'snakemake_main_filename'):
-                raise MissingFieldInInputJsonException(errmsg_template % ('snakemake_main_filename', language))
-            if not hasattr(self, 'snakemake_child_filenames'):
-                self.snakemake_child_filenames = []
-            if not hasattr(self, 'snakemake_directory_local'):
-                self.snakemake_directory_local = ''
-            if not hasattr(self, 'snakemake_directory_url'):
-                self.snakemake_directory_url = ''
-            if not self.snakemake_directory_local and not self.snakemake_directory_url:
-                errmsg = "either %s or %s must be provided in args" % ('snakemake_directory_url', 'snakemake_directory_local')
-                raise MissingFieldInInputJsonException(errmsg)
-            for field in ['container_image', 'command']:
-                if not hasattr(self, field):
-                    aise MissingFieldInInputJsonException(errmsg_template % (field, language))
-        elif self.language == 'shell':
-            for field in ['container_image', 'command']:
-                if not hasattr(self, field):
-                    aise MissingFieldInInputJsonException(errmsg_template % (field, language))
-        else:
-            if not hasattr(self, 'cwl_main_filename'):
-                raise MissingFieldInInputJsonException(errmsg_template % ('cwl_main_filename', language))
-            if not hasattr(self, 'cwl_child_filenames'):
-                self.cwl_child_filenames = []
-            if not hasattr(self, 'cwl_directory_local'):
-                self.cwl_directory_local = ''
-            if not hasattr(self, 'cwl_directory_url'):
-                self.cwl_directory_url = ''
-            if not self.cwl_directory_local and not self.cwl_directory_url:
-                errmsg = "either %s or %s must be provided in args" % ('cwl_directory_url', 'cwl_directory_local')
-                raise MissingFieldInInputJsonException(errmsg)
-
-    def as_dict(self):
-        return self.__dict__
-
-
-class Config(object):
-    def __init__(self, **kwargs):
-        for k, v kwargs.items():
-            setattr(self, k, v)
-        for field in ['log_bucket']:
-            if not hasattr(self, field):
-                raise MissingFieldInInputJsonException("field %s is required in config" % field)
-
-    def update(self, **kwargs):
-        for k, v kwargs.items():
-            setattr(self, k, v)
-
-    def fill_default(self):
-        # fill in default
-        if not hasattr(self, "instance_type"):
-            cfg.instance_type = ''  # unspecified by default
-        if not hasattr(self, "EBS_optimized"):
-            cfg.EBS_optimized = ''  # unspecified by default
-        if not hasattr(self, "mem"):
-            cfg.mem = 0  # unspecified by default
-        if not hasattr(self, "cpu"):
-            cfg.cpu = ''  # unspecified by default
-        if not hasattr(self, "ebs_size"):
-            cfg.ebs_size = 0  # unspecified by default
-        if not hasattr(self, "ebs_type"):
-            cfg.ebs_type = 'gp2'
-        if not hasattr(self, "ebs_iops"):
-            cfg.ebs_iops = ''
-        if not hasattr(self, "shutdown_min"):
-            cfg.shutdown_min = 'now'
-        if not hasattr(self, 'password'):
-            cfg.password = ''
-        if not hasattr(self, 'key_name'):
-            cfg.key_name = ''
-        # postrun json should be made public?
-        if not hasattr(self, 'public_postrun_json'):
-            cfg.public_postrun_json = False
-            # 4dn will use 'true' --> this will automatically be added by start_run_awsem
-
-    def fill_internal(self):
-        # fill internally-used fields (users cannot specify these fields)
-        # script url
-        cfg.script_url = 'https://raw.githubusercontent.com/' + \
-            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/awsf/'
-        cfg.json_bucket = cfg.log_bucket
-
-    def fill_language_options(self, language='cwl_draft3', singularity=False):
-        """fill in ami_id and language fields (these are also internal)"""
-        if lanauge == 'wdl':
-            cfg.ami_id = AMI_ID_WDL
-        elif language == 'shell':
-            cfg.ami_id = AMI_ID_SHELL
-        elif language == 'snakemake':
-            cfg.ami_id = AMI_ID_SNAKEMAKE
-        else:  # cwl
-            if language in ['cwl', 'cwl_v1']:  # 'cwl' means 'cwl_v1'
-                cfg.ami_id = AMI_ID_CWL_V1
-            else:
-                cfg.ami_id = AMI_ID_CWL_DRAFT3
-            if singularity:  # applied to only cwl though it is pretty useless
-                cfg.singularity = True
-        cfg.language = language
-
-    def fill_other_fields(self, app_name=''):
-        cfg.job_tag = app_name
-
-    def as_dict(self):
-        return self.__dict__
 
 
 class UnicornInput(object):
@@ -195,7 +51,7 @@ class UnicornInput(object):
             if field not in ['jobid', 'args', 'config']:
                 setattr(self, field)
         # fill the default values and internally used fields
-        auto_fill(self.args, self.cfg)
+        self.auto_fill()
 
     def as_dict(self):
         d = self.__dict__
@@ -203,11 +59,12 @@ class UnicornInput(object):
         d['config'] = self.cfg.as_dict()
         return d
 
-    @static
-    def auto_fill(args, cfg):
+    def auto_fill(self):
         """This function can be called right after initiation (construction)
         of args and cfg objects
         """
+        args = self.args
+        cfg = self.cfg
         args.fill_default()
         cfg.fill_default()
         cfg.fill_internal()
@@ -243,6 +100,151 @@ class UnicornInput(object):
             self.dependency = args.dependency = cfg.dependency = copy.deepcopy(dependency)
 
 
+class Args(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def update(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def fill_default(self):
+        # if language and cwl_version is not specified,
+        # by default it is cwl_draft3
+        if not hasattr(self, 'language'):
+            if not hasattr(self, 'cwl_version'):
+                self.cwl_version = 'draft3'
+                self.language = 'cwl_draft3'
+            elif self.cwl_version == 'v1':
+                self.language = 'cwl_v1'
+            elif self.cwl_version == 'draft3':
+                self.language = 'cwl_draft3'
+            if not hasattr(self, 'singularity'):
+                self.singularity = False
+        if not hasattr(self, 'app_name'):
+            self.app_name = ''
+        # check workflow info is there and fill in default
+        errmsg_template = "field %s is required in args for language %s"
+        if self.language == 'wdl':
+            if not hasattr(self, 'wdl_main_filename'):
+                raise MissingFieldInInputJsonException(errmsg_template % ('wdl_main_filename', self.language))
+            if not hasattr(self, 'wdl_child_filenames'):
+                self.wdl_child_filenames = []
+            if not hasattr(self, 'wdl_directory_local'):
+                self.wdl_directory_local = ''
+            if not hasattr(self, 'wdl_directory_url'):
+                self.wdl_directory_url = ''
+            if not self.wdl_directory_local and not self.wdl_directory_url:
+                errmsg = "either %s or %s must be provided in args" % ('wdl_directory_url', 'wdl_directory_local')
+                raise MissingFieldInInputJsonException(errmsg)
+        elif self.language == 'snakemake':
+            if not hasattr(self, 'snakemake_main_filename'):
+                raise MissingFieldInInputJsonException(errmsg_template % ('snakemake_main_filename', self.language))
+            if not hasattr(self, 'snakemake_child_filenames'):
+                self.snakemake_child_filenames = []
+            if not hasattr(self, 'snakemake_directory_local'):
+                self.snakemake_directory_local = ''
+            if not hasattr(self, 'snakemake_directory_url'):
+                self.snakemake_directory_url = ''
+            if not self.snakemake_directory_local and not self.snakemake_directory_url:
+                errmsg = "either %s or %s must be provided in args" % ('snakemake_directory_url',
+                                                                       'snakemake_directory_local')
+                raise MissingFieldInInputJsonException(errmsg)
+            for field in ['container_image', 'command']:
+                if not hasattr(self, field):
+                    raise MissingFieldInInputJsonException(errmsg_template % (field, self.language))
+        elif self.language == 'shell':
+            for field in ['container_image', 'command']:
+                if not hasattr(self, field):
+                    raise MissingFieldInInputJsonException(errmsg_template % (field, self.language))
+        else:
+            if not hasattr(self, 'cwl_main_filename'):
+                raise MissingFieldInInputJsonException(errmsg_template % ('cwl_main_filename', self.language))
+            if not hasattr(self, 'cwl_child_filenames'):
+                self.cwl_child_filenames = []
+            if not hasattr(self, 'cwl_directory_local'):
+                self.cwl_directory_local = ''
+            if not hasattr(self, 'cwl_directory_url'):
+                self.cwl_directory_url = ''
+            if not self.cwl_directory_local and not self.cwl_directory_url:
+                errmsg = "either %s or %s must be provided in args" % ('cwl_directory_url', 'cwl_directory_local')
+                raise MissingFieldInInputJsonException(errmsg)
+
+    def as_dict(self):
+        return self.__dict__
+
+
+class Config(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        for field in ['log_bucket']:
+            if not hasattr(self, field):
+                raise MissingFieldInInputJsonException("field %s is required in config" % field)
+
+    def update(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def fill_default(self):
+        # fill in default
+        if not hasattr(self, "instance_type"):
+            self.instance_type = ''  # unspecified by default
+        if not hasattr(self, "EBS_optimized"):
+            self.EBS_optimized = ''  # unspecified by default
+        if not hasattr(self, "mem"):
+            self.mem = 0  # unspecified by default
+        if not hasattr(self, "cpu"):
+            self.cpu = ''  # unspecified by default
+        if not hasattr(self, "ebs_size"):
+            self.ebs_size = 0  # unspecified by default
+        if not hasattr(self, "ebs_type"):
+            self.ebs_type = 'gp2'
+        if not hasattr(self, "ebs_iops"):
+            self.ebs_iops = ''
+        if not hasattr(self, "shutdown_min"):
+            self.shutdown_min = 'now'
+        if not hasattr(self, 'password'):
+            self.password = ''
+        if not hasattr(self, 'key_name'):
+            self.key_name = ''
+        # postrun json should be made public?
+        if not hasattr(self, 'public_postrun_json'):
+            self.public_postrun_json = False
+            # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+
+    def fill_internal(self):
+        # fill internally-used fields (users cannot specify these fields)
+        # script url
+        self.script_url = 'https://raw.githubusercontent.com/' + \
+            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/awsf/'
+        self.json_bucket = self.log_bucket
+
+    def fill_language_options(self, language='cwl_draft3', singularity=False):
+        """fill in ami_id and language fields (these are also internal)"""
+        if language == 'wdl':
+            self.ami_id = AMI_ID_WDL
+        elif language == 'shell':
+            self.ami_id = AMI_ID_SHELL
+        elif language == 'snakemake':
+            self.ami_id = AMI_ID_SNAKEMAKE
+        else:  # cwl
+            if language in ['cwl', 'cwl_v1']:  # 'cwl' means 'cwl_v1'
+                self.ami_id = AMI_ID_CWL_V1
+            else:
+                self.ami_id = AMI_ID_CWL_DRAFT3
+            if singularity:  # applied to only cwl though it is pretty useless
+                self.singularity = True
+        self.language = language
+
+    def fill_other_fields(self, app_name=''):
+        self.job_tag = app_name
+
+    def as_dict(self):
+        return self.__dict__
+
+
 class Execution(object):
 
     def __init__(self, input_dict):
@@ -250,13 +252,13 @@ class Execution(object):
         self.jobid = self.unicorn_input.jobid
         self.args = self.unicorn_input.args
         self.cfg = self.unicorn_input.cfg
-        # store user-specified values for instance type, EBS_optimized and ebs_size 
+        # store user-specified values for instance type, EBS_optimized and ebs_size
         # separately, since the values in cfg will change.
         self.user_specified_instance_type = self.cfg.instance_type
         self.user_specified_EBS_optimized = self.cfg.EBS_optimized
         self.user_specified_ebs_size = self.cfg.ebs_size
         # get benchmark if available
-        self.benchmark = get_benchmarking()
+        self.benchmark = self.get_benchmarking()
         self.init_instance_type_list()
         self.update_config_instance_type()
 
@@ -265,18 +267,18 @@ class Execution(object):
         return self.unicorn_input.as_dict()
 
     def prelaunch(self, profile=None):
-        check_dependency(**self.args.dependency)
-        runjson = create_run_json_dict(self.args, self.cfg, self.jobid)
-        upload_run_json(runjson, self.jobid, self.cfg.json_bucket)
-        self.userdata = create_userdata(self.jobid, self.cfg, profile=profile)
+        self.check_dependency(**self.dependency)
+        runjson = self.create_run_json_dict()
+        self.upload_run_json(runjson)
+        self.userdata = self.create_userdata(profile=profile)
 
     def launch(self):
         self.instance_id = self.launch_and_get_instance_id()
-        self.cfg.update(get_instance_info(self.instance_id))
+        self.cfg.update(self.get_instance_info())
 
     def postlaunch(self):
         if self.cfg.cloudwatch_dashboard:
-            create_cloudwatch_dashboard(self.instance_id, 'awsem-' + self.jobid)
+            self.create_cloudwatch_dashboard('awsem-' + self.jobid)
 
     def init_instance_type_list(self):
         instance_type = self.user_specified_instance_type
@@ -353,12 +355,11 @@ class Execution(object):
             instance_type = res['aws']['recommended_instance_type']
             ebs_size = 10 if res['total_size_in_GB'] < 10 else int(res['total_size_in_GB']) + 1
             ebs_opt = res['aws']['EBS_optimized']
-            return {'instance_type: instance_type, 'EBS_optimized': ebs_opt, 'ebs_size': ebs_size}
+            return {'instance_type': instance_type, 'EBS_optimized': ebs_opt, 'ebs_size': ebs_size}
         else:
-            return {'instance_type: '', 'EBS_optimized': '', 'ebs_size': 0}
+            return {'instance_type': '', 'EBS_optimized': '', 'ebs_size': 0}
 
-    @static
-    def get_start_time():
+    def get_start_time(self):
         return time.strftime("%Y%m%d-%H:%M:%S-%Z")
 
     def launch_and_get_instance_id(self):
@@ -410,11 +411,12 @@ class Execution(object):
             raise Exception("failed to retrieve instance ID for job {jobid}".format(jobid=self.jobid))
         return instance_id
 
-    @static
-    def create_run_json_dict(args, cfg, jobid):
-        # create jobid here
+    def create_run_json_dict(self):
+        args = self.args
+        cfg = self.cfg
+        jobid = self.jobid
         # start time
-        start_time = get_start_time()
+        start_time = self.get_start_time()
         # pre is a dictionary to be printed as a pre-run json file.
         pre = {'config': cfg.as_dict()}  # copy only config since arg is redundant with 'Job'
         pre.update({'Job': {'JOBID': jobid,
@@ -471,32 +473,30 @@ class Execution(object):
             del(pre['config']['key_name'])
         return pre
 
-    @static
-    def upload_run_json(runjson, jobid, json_bucket):
+    def upload_run_json(self, runjson):
         jsonbody = json.dumps(runjson, indent=4, sort_keys=True)
-        jsonkey = jobid + '.run.json'
+        jsonkey = self.jobid + '.run.json'
         # Keep log of the final json
         logger.info("jsonbody=\n" + jsonbody)
         # copy the json file to the s3 bucket
-        logger.info("json_bucket = " + json_bucket)
-        if json_bucket:
-            try:
-                s3 = boto3.client('s3')
-            except Exception as e:
-                raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
-            try:
-                res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=json_bucket, Key=jsonkey)
-            except Exception:
-                raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
+        logger.info("json_bucket = " + self.cfg.json_bucket)
+        try:
+            s3 = boto3.client('s3')
+        except Exception as e:
+            raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
+        try:
+            res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
+        except Exception:
+            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
 
-    @static
-    def create_userdata(jobid, cfg, profile=None):
+    def create_userdata(self, profile=None):
         """Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
         profile is a dictionary { access_key: , secret_key: }
         """
+        cfg = self.cfg
         str = ''
         str += "#!/bin/bash\n"
-        str += "JOBID={}\n".format(jobid)
+        str += "JOBID={}\n".format(self.jobid)
         str += "RUN_SCRIPT=aws_run_workflow_generic.sh\n"
         str += "SHUTDOWN_MIN={}\n".format(cfg.shutdown_min)
         str += "JSON_BUCKET_NAME={}\n".format(cfg.json_bucket)
@@ -559,8 +559,7 @@ class Execution(object):
                                                     'SpotOptions': spot_options}})
         return largs
 
-    @static
-    def get_instance_info(instance_id):
+    def get_instance_info(self):
         # get public IP for the instance (This may not happen immediately)
         try:
             ec2 = boto3.client('ec2')
@@ -570,15 +569,14 @@ class Execution(object):
             time.sleep(1)  # wait for one second before trying again.
             try:
                 # sometimes you don't get a description immediately
-                instance_desc_log = ec2.describe_instances(InstanceIds=[instance_id])
+                instance_desc_log = ec2.describe_instances(InstanceIds=[self.instance_id])
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
                 break
             except:
                 continue
-        return({'instance_id': instance_id, 'instance_ip': instance_ip, 'start_time': get_start_time()})
+        return({'instance_id': self.instance_id, 'instance_ip': instance_ip, 'start_time': self.get_start_time()})
 
-    @static
-    def check_dependency(exec_arn=None):
+    def check_dependency(self, exec_arn=None):
         if exec_arn:
             client = boto3.client('stepfunctions', region_name=AWS_REGION)
             for arn in exec_arn:
@@ -588,8 +586,8 @@ class Execution(object):
                 elif res['status'] == 'FAILED':
                     raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
 
-    @static
-    def create_cloudwatch_dashboard(instance_id, dashboard_name):
+    def create_cloudwatch_dashboard(self, dashboard_name):
+        instance_id = self.instance_id
         body = {
            "widgets": [
               {

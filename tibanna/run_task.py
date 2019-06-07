@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-import os
-import copy
-import boto3
 from .ec2_utils import Execution
 from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY
 )
+
 
 def run_task(input_json):
     '''

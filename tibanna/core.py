@@ -35,6 +35,7 @@ from .utils import (
     create_jobid,
 )
 from .ec2_utils import (
+    UnicornInput,
     upload_workflow_to_s3
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
@@ -146,7 +147,7 @@ class API(object):
             args = unicorn_input.args
             if args.cwl_directory_local or args.wdl_directory_local or args.snakemake_directory_local:
                 upload_workflow_to_s3(unicorn_input)
-                data['args'] = args.as_dict()  ## update args
+                data['args'] = args.as_dict()  # update args
         # submit job as an execution
         aws_input = json.dumps(data)
         print("about to start run %s" % run_name)
