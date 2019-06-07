@@ -142,18 +142,11 @@ class API(object):
         # add jobid
         data['jobid'] = jobid
         if 'args' in data:  # unicorn-only
-            args = data['args']
-            cfg = data['config']
-            if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
-                    ('wdl_directory_local' in args and args['wdl_directory_local']) or \
-                    ('snakemake_directory_local' in args and args['snakemake_directory_local']):
-                url = upload_workflow_to_s3(args, cfg, jobid)
-                if 'language' in args and args['language'] == 'wdl':
-                    args['wdl_directory_url'] = url
-                elif 'language' in args and args['language'] == 'snakemake':
-                    args['snakemake_directory_url'] = url
-                else:
-                    args['cwl_directory_url'] = url
+            unicorn_input = UnicornInput(data)
+            args = unicorn_input.args
+            if args.cwl_directory_local or args.wdl_directory_local or args.snakemake_directory_local:
+                upload_workflow_to_s3(unicorn_input)
+                data['args'] = args.as_dict()  ## update args
         # submit job as an execution
         aws_input = json.dumps(data)
         print("about to start run %s" % run_name)

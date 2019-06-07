@@ -2,18 +2,11 @@
 import os
 import copy
 import boto3
-from .ec2_utils import (
-    auto_update_input_json,
-    create_json,
-    launch_instance,
-    create_cloudwatch_dashboard
+from .ec2_utils import Execution
+from .vars import (
+    TIBANNA_PROFILE_ACCESS_KEY,
+    TIBANNA_PROFILE_SECRET_KEY
 )
-from .exceptions import (
-    DependencyStillRunningException,
-    DependencyFailedException
-)
-from .vars import AWS_REGION
-
 
 def run_task(input_json):
     '''
@@ -61,85 +54,15 @@ def run_task(input_json):
       dependency: {'exec_arn': [exec_arns]}
       spot_duration: 60  # block minutes 60-360 if requesting spot instance
     '''
-    input_json_copy = copy.deepcopy(input_json)
-
-    # read default variables in config
-    CONFIG_FIELD = "config"
-    CONFIG_KEYS = ["log_bucket"]
-    ARGS_FIELD = "args"
-    ARGS_KEYS = ["input_files", "output_S3_bucket", "output_target"]
-    ARGS_KEYS_CWL = ["cwl_main_filename", "cwl_directory_url"]
-    ARGS_KEYS_WDL = ["wdl_main_filename", "wdl_directory_url", "language"]
-    ARGS_KEYS_SHELL = ["command", "container_image", "language"]
-    ARGS_KEYS_SNAKEMAKE = ["snakemake_main_filename", "snakemake_directory_url", "language",
-                           "command", "container_image"]
-
-    # args: parameters needed by the instance to run a workflow
-    # cfg: parameters needed to launch an instance
-    cfg = input_json_copy.get(CONFIG_FIELD)
-    for k in CONFIG_KEYS:
-        assert k in cfg, "%s not in config_field" % k
-
-    if 'instance_type' in cfg and ('mem' in cfg and 'cpu' in cfg):
-        raise Exception("Use either instance_type or mem & cpu but not both")
-
-    args = input_json_copy.get(ARGS_FIELD)
-    for k in ARGS_KEYS:
-        assert k in args, "%s not in args field" % k
-    if 'language' in args and args['language'] == 'wdl':
-        for k in ARGS_KEYS_WDL:
-            assert k in args, "%s not in args field" % k
-    elif 'language' in args and args['language'] == 'shell':
-        for k in ARGS_KEYS_SHELL:
-            assert k in args, "%s not in args field" % k
-    elif 'language' in args and args['language'] == 'snakemake':
-        for k in ARGS_KEYS_SNAKEMAKE:
-            assert k in args, "%s not in args field" % k
-    else:
-        for k in ARGS_KEYS_CWL:
-            assert k in args, "%s not in args field" % k
-
-    if 'dependency' in args:
-        check_dependency(**args['dependency'])
-    elif 'dependency' in cfg:
-        check_dependency(**cfg['dependency'])
-    elif 'dependency' in input_json_copy:
-        check_dependency(**input_json_copy['dependency'])
-
-    # update input json to add various other info automatically
-    auto_update_input_json(args, cfg)
-
-    # create json and copy to s3
-    jobid = create_json(input_json_copy)
-
     # profile
-    if os.environ.get('TIBANNA_PROFILE_ACCESS_KEY', None) and \
-            os.environ.get('TIBANNA_PROFILE_SECRET_KEY', None):
-        profile = {'access_key': os.environ.get('TIBANNA_PROFILE_ACCESS_KEY'),
-                   'secret_key': os.environ.get('TIBANNA_PROFILE_SECRET_KEY')}
+    if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
+        profile = {'access_key': TIBANNA_PROFILE_ACCESS_KEY,
+                   'secret_key': TIBANNA_PROFILE_SECRET_KEY}
     else:
         profile = None
 
-    # launch instance and execute workflow
-    launch_instance_log = launch_instance(cfg, jobid, profile=profile)
-
-    # setup cloudwatch dashboard
-    if 'cloudwatch_dashboard' in cfg and cfg['cloudwatch_dashboard']:
-        instance_id = launch_instance_log['instance_id']
-        create_cloudwatch_dashboard(instance_id, 'awsem-' + jobid)
-
-    if 'jobid' not in input_json_copy:
-        input_json_copy.update({'jobid': jobid})
-    input_json_copy.update(launch_instance_log)
-    return(input_json_copy)
-
-
-def check_dependency(exec_arn=None):
-    if exec_arn:
-        client = boto3.client('stepfunctions', region_name=AWS_REGION)
-        for arn in exec_arn:
-            res = client.describe_execution(executionArn=arn)
-            if res['status'] == 'RUNNING':
-                raise DependencyStillRunningException("Dependency is still running: %s" % arn)
-            elif res['status'] == 'FAILED':
-                raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
+    exec = Execution(input_json)
+    exec.prelaunch(profile=profile)
+    exec.launch()
+    exec.postlaunch()
+    return(exec.input_dict)
