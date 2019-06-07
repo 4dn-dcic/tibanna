@@ -31,7 +31,7 @@ from .exceptions import (
 )
 from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
-from Benchmark.classes import get_instance_types
+from Benchmark.classes import get_instance_types, instance_list
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
@@ -44,8 +44,8 @@ class UnicornInput(object):
             self.jobid = input_dict.get('jobid')
         else:
             self.jobid = create_jobid()
-        self.args = Args(input_dict['args'])  # args is a required field
-        self.cfg = Config(input_dict['config'])  # config is a required field
+        self.args = Args(**input_dict['args'])  # args is a required field
+        self.cfg = Config(**input_dict['config'])  # config is a required field
         # add other fields too
         for field in input_dict:
             if field not in ['jobid', 'args', 'config']:
@@ -54,7 +54,7 @@ class UnicornInput(object):
         self.auto_fill()
 
     def as_dict(self):
-        d = self.__dict__
+        d = copy.deepcopy(self.__dict__)
         d['args'] = self.args.as_dict()
         d['config'] = self.cfg.as_dict()
         return d
@@ -68,7 +68,7 @@ class UnicornInput(object):
         args.fill_default()
         cfg.fill_default()
         cfg.fill_internal()
-        cfg.fill_language_options(args.language, args.singularity)
+        cfg.fill_language_options(args.language, getattr(args, 'singularity', False))
         cfg.fill_other_fields(args.app_name)
         # sanity check
         if args.app_name and args.app_name in B.app_name_function_map:
@@ -84,7 +84,8 @@ class UnicornInput(object):
                 pass
             else:
                 err_msg = "Not enough fields: app_name must be provided in args to use Benchmarking. " + \
-                          "Without app_name, either mem and cpu or instance_type must be" + \
+                          "Without app_name (or app_name with no benchmarking function defined for it)," + \
+                          "either mem and cpu or instance_type must be" + \
                           "in the config field of the execution json, " + \
                           "preferably along with ebs_size (default 10(GB)) and EBS_optimized (default False)."
                 raise MissingFieldInInputJsonException(err_msg)
@@ -104,12 +105,24 @@ class Args(object):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
+        for field in ['output_S3_bucket']:
+            if not hasattr(self, field):
+                raise MissingFieldInInputJsonException("field %s is required in args" % field)
+            
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
     def fill_default(self):
+        for field in ['input_files', 'input_parameters', 'input_env',
+                      'secondary_files', 'output_target',
+                      'secondary_output_target', 'alt_cond_output_argnames']:
+            if not hasattr(self, field):
+                setattr(self, field, {})
+        for field in ['app_version']:
+            if not hasattr(self, field):
+                setattr(self, field, '')
         # if language and cwl_version is not specified,
         # by default it is cwl_draft3
         if not hasattr(self, 'language'):
@@ -288,7 +301,7 @@ class Execution(object):
             instance_type_dlist.append(instance_type)
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
-            list0 = get_instance_types(self.cfg.mem, self.cfg.cpu, exclude_t=False)
+            list0 = get_instance_types(self.cfg.mem, self.cfg.cpu, instance_list(exclude_t=False))
             nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
             instance_type_dlist.extend(nonredundant_list)
         # user specifically wanted EBS_optimized instances
@@ -343,7 +356,7 @@ class Execution(object):
         print({"input_size_in_bytes": input_size_in_bytes})
         try:
             res = B.benchmark(self.args.app_name, {'input_size_in_bytes': input_size_in_bytes,
-                                                   'parameters': self.args.parameters})
+                                                   'parameters': self.args.input_parameters})
         except:
             try:
                 res
@@ -419,23 +432,38 @@ class Execution(object):
         start_time = self.get_start_time()
         # pre is a dictionary to be printed as a pre-run json file.
         pre = {'config': cfg.as_dict()}  # copy only config since arg is redundant with 'Job'
+        app = {
+            'App_name': args.app_name,
+            'App_version': args.app_version,
+            'language': args.language
+        }
+        if args.language == 'wdl':
+            app.update({
+                'main_wdl': args.wdl_main_filename,
+                'other_wdl_files': ','.join(args.wdl_child_filenames),
+                'wdl_url': args.wdl_directory_url,
+            })
+        elif args.language == 'snakemake':
+            app.update({
+                'main_snakemake': args.snakemake_main_filename,
+                'other_snakemake_files': ','.join(args.snakemake_child_filenames),
+                'snakemake_url': args.snakemake_directory_url,
+                'command': args.command,
+                'container_image': args.container_image
+            })
+        elif args.language == 'shell':
+            app.update({
+                'command': args.command,
+                'container_image': args.container_image
+            })
+        else:
+            app.update({
+                'main_cwl': args.cwl_main_filename,
+                'other_cwl_files': ','.join(args.cwl_child_filenames),
+                'cwl_url': args.cwl_directory_url,
+            })
         pre.update({'Job': {'JOBID': jobid,
-                            'App': {
-                                     'App_name': args.app_name,
-                                     'App_version': args.app_version,
-                                     'language': args.language,
-                                     'cwl_url': args.cwl_directory_url,
-                                     'main_cwl': args.cwl_main_filename,
-                                     'other_cwl_files': ','.join(args.cwl_child_filenames),
-                                     'wdl_url': args.wdl_directory_url,
-                                     'main_wdl': args.wdl_main_filename,
-                                     'other_wdl_files': ','.join(args.wdl_child_filenames),
-                                     'snakemake_url': args.snakemake_directory_url,
-                                     'main_snakemake': args.snakemake_main_filename,
-                                     'other_snakemake_files': ','.join(args.snakemake_child_filenames),
-                                     'command': args.command,
-                                     'container_image': args.container_image
-                            },
+                            'App': app,
                             'Input': {
                                      'Input_files_data': {},    # fill in later (below)
                                      'Secondary_files_data': {},   # fill in later (below)
