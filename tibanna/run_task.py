@@ -80,6 +80,9 @@ def run_task(input_json):
     for k in CONFIG_KEYS:
         assert k in cfg, "%s not in config_field" % k
 
+    if 'instance_type' in cfg and ('mem' in cfg and 'cpu' in cfg):
+        raise Exception("Use either instance_type or mem & cpu but not both")
+
     args = input_json_copy.get(ARGS_FIELD)
     for k in ARGS_KEYS:
         assert k in args, "%s not in args field" % k
