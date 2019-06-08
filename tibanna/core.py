@@ -145,7 +145,9 @@ class API(object):
         if 'args' in data:  # unicorn-only
             unicorn_input = UnicornInput(data)
             args = unicorn_input.args
-            if args.cwl_directory_local or args.wdl_directory_local or args.snakemake_directory_local:
+            if args.language.startswith('cwl') and args.cwl_directory_local or \
+               args.language == 'wdl' and args.wdl_directory_local or \
+               args.language == 'snakemake' and args.snakemake_directory_local:
                 upload_workflow_to_s3(unicorn_input)
                 data['args'] = args.as_dict()  # update args
         # submit job as an execution
