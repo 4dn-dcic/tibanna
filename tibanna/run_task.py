@@ -59,8 +59,8 @@ def run_task(input_json):
     else:
         profile = None
 
-    exec = Execution(input_json)
-    exec.prelaunch(profile=profile)
-    exec.launch()
-    exec.postlaunch()
-    return(exec.input_dict)
+    execution = Execution(input_json)
+    execution.prelaunch(profile=profile)
+    execution.launch()
+    execution.postlaunch()
+    return(execution.input_dict)

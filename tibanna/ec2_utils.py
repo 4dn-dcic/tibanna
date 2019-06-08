@@ -97,8 +97,7 @@ class UnicornInput(object):
             dependency = args.dependency
         elif hasattr(cfg, 'dependency') and cfg.dependency:
             dependency = cfg.dependency
-        if dependency:
-            self.dependency = args.dependency = cfg.dependency = copy.deepcopy(dependency)
+        self.dependency = args.dependency = cfg.dependency = copy.deepcopy(dependency)
 
 
 class Args(object):
@@ -109,8 +108,8 @@ class Args(object):
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
 
-    def update(self, **kwargs):
-        for k, v in kwargs.items():
+    def update(self, d):
+        for k, v in d.items():
             setattr(self, k, v)
 
     def fill_default(self):
@@ -184,7 +183,7 @@ class Args(object):
                 raise MissingFieldInInputJsonException(errmsg)
 
     def as_dict(self):
-        return self.__dict__
+        return copy.deepcopy(self.__dict__)
 
 
 class Config(object):
@@ -195,8 +194,8 @@ class Config(object):
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in config" % field)
 
-    def update(self, **kwargs):
-        for k, v in kwargs.items():
+    def update(self, d):
+        for k, v in d.items():
             setattr(self, k, v)
 
     def fill_default(self):
@@ -250,7 +249,7 @@ class Config(object):
         self.job_tag = app_name
 
     def as_dict(self):
-        return self.__dict__
+        return copy.deepcopy(self.__dict__)
 
 
 class Execution(object):
@@ -276,7 +275,7 @@ class Execution(object):
         return self.unicorn_input.as_dict()
 
     def prelaunch(self, profile=None):
-        self.check_dependency(**self.dependency)
+        self.check_dependency(**self.args.dependency)
         runjson = self.create_run_json_dict()
         self.upload_run_json(runjson)
         self.userdata = self.create_userdata(profile=profile)
@@ -395,9 +394,8 @@ class Execution(object):
 
     def ec2_exception_coordinator(self, func):
         def inner(*args, **kwargs):
-            res = ''
             try:
-                res = func(*args, **kwargs)
+                return func(*args, **kwargs)
             except Exception as e:
                 if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
                     behavior = self.cfg.behavior_on_capacity_limit
@@ -426,11 +424,10 @@ class Execution(object):
                             # change behavior as well,
                             # to avoid 'retry_without_spot works only with spot' error in the next round
                             self.cfg.behavior_on_capacity_limit = 'fail'
-                            printlog("trying without spot : %s" % str(res))
+                            printlog("trying without spot...")
                             return 'continue'
                 else:
-                    raise Exception("failed to launch instance for job {jobid}: {log}. %s"
-                                    .format(jobid=self.jobid, log=res) % e)
+                    raise Exception("failed to launch instance for job %s: %s" % (self.jobid, str(e)))
         return inner
 
     def run_instances(self, ec2):
