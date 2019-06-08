@@ -55,6 +55,7 @@ class UnicornInput(object):
 
     def as_dict(self):
         d = copy.deepcopy(self.__dict__)
+        del(d['cfg'])
         d['args'] = self.args.as_dict()
         d['config'] = self.cfg.as_dict()
         return d
@@ -97,7 +98,7 @@ class UnicornInput(object):
             dependency = args.dependency
         elif hasattr(cfg, 'dependency') and cfg.dependency:
             dependency = cfg.dependency
-        self.dependency = args.dependency = cfg.dependency = copy.deepcopy(dependency)
+        args.dependency = copy.deepcopy(dependency)
 
 
 class Args(object):
