@@ -434,9 +434,6 @@ class Execution(object):
     def run_instances(self, ec2):
         return ec2.run_instances(**self.launch_args)
 
-    def donothing(self):
-        return ''
-
     def create_run_json_dict(self):
         args = self.args
         cfg = self.cfg
