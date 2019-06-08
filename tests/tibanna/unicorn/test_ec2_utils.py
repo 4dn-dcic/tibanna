@@ -3,15 +3,20 @@ from tibanna.ec2_utils import (
     Args,
     Config,
     Execution,
-    upload_workflow_to_s3
+    upload_workflow_to_s3,
 )
 from tibanna.utils import create_jobid
 from tibanna.exceptions import (
-    MissingFieldInInputJsonException
+    MissingFieldInInputJsonException,
+    EC2InstanceLimitException,
+    EC2InstanceLimitWaitException
 )
 import boto3
 import pytest
+import mock
 
+def fun():
+    raise Exception("InstanceLimitExceeded")
 
 def test_args():
     input_dict = {'args': {'input_files': {}, 'output_S3_bucket': 'somebucket', 'app_name': 'someapp'}}
@@ -79,7 +84,7 @@ def test_execution_mem_cpu():
                   'config': {'log_bucket': 'tibanna-output', 'mem': 1, 'cpu': 1}}
     execution = Execution(input_dict)
     unicorn_dict = execution.input_dict
-    print(execution.instance_type_list)
+    assert len(execution.instance_type_list) == 10
     assert 'args' in unicorn_dict
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
@@ -236,6 +241,198 @@ def test_upload_run_json():
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,
                       Delete={'Objects': [{'Key': jobid + '.run.json'}]})
+
+def test_launch_args():
+    """test creating launch arguments - also test spot_instance"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
+                             'spot_instance': True},
+                  'jobid': jobid}
+    somejson = {'haha': 'lala'}
+    execution = Execution(input_dict)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    launch_args = execution.launch_args
+    print(launch_args)
+    assert launch_args
+    assert 't3.micro' in str(launch_args)
+    assert 'InstanceMarketOptions' in str(launch_args)
+
+def test_launch_and_get_instance_id():
+    """test dryrun of ec2 launch"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
+                             'spot_instance': True},
+                  'jobid': jobid}
+    somejson = {'haha': 'lala'}
+    execution = Execution(input_dict, dryrun=True)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    with pytest.raises(Exception) as ex:
+        instance_id = execution.launch_and_get_instance_id()
+    assert 'Request would have succeeded, but DryRun flag is set' in str(ex.value)
+
+def test_ec2_exception_coordinator():
+    """mock test of ec2 exceptions"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 'c5.4xlarge',
+                             'spot_instance': True},
+                  'jobid': jobid}
+    somejson = {'haha': 'lala'}
+    execution = Execution(input_dict, dryrun=True)
+    execution.userdata = execution.create_userdata()
+    with mock.patch('tibanna.ec2_utils.Execution.donothing', new=mock.Mock(err=Exception("InstanceLimitExceeded"))):
+        res = execution.donothing()
+    print(res)
+    assert res == 'haha'
+
+def test_ec2_exception_coordinator():
+    """ec2 limit exceptions with 'fail'"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 'c5.4xlarge',
+                             'spot_instance': True},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    execution.userdata = execution.create_userdata()
+    with pytest.raises(EC2InstanceLimitException) as exec_info:
+        execution.ec2_exception_coordinator(fun)()
+    assert exec_info
+
+def test_ec2_exception_coordinator2():
+    """ec2 exceptions with 'wait_and_retry'"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 'c5.4xlarge',
+                             'spot_instance': True,
+                             'behavior_on_capacity_limit': 'wait_and_retry'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    execution.userdata = execution.create_userdata()
+    with pytest.raises(EC2InstanceLimitWaitException) as exec_info:
+        execution.ec2_exception_coordinator(fun)()
+    assert exec_info
+
+def test_ec2_exception_coordinator3():
+    """ec2 exceptions with 'other_instance_types'"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
+                             'spot_instance': True,
+                             'behavior_on_capacity_limit': 'other_instance_types'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    assert execution.cfg.instance_type == 't3.micro'
+    execution.userdata = execution.create_userdata()
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't2.micro'
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't3.small'
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't2.small'
+   
+def test_ec2_exception_coordinator4():
+    """ec2 exceptions with 'other_instance_types' but had only one option"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't2.micro',
+                             'spot_instance': True,
+                             'behavior_on_capacity_limit': 'other_instance_types'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    assert execution.cfg.instance_type == 't2.micro'
+    execution.userdata = execution.create_userdata()
+    with pytest.raises(EC2InstanceLimitException) as exec_info:
+        res = execution.ec2_exception_coordinator(fun)()
+    assert 'No more instance type available' in str(exec_info.value)
+ 
+def test_ec2_exception_coordinator5():
+    """ec2 exceptions with 'retry_without_spot'"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't2.micro',
+                             'spot_instance': True,
+                             'behavior_on_capacity_limit': 'retry_without_spot'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    execution.userdata = execution.create_userdata()
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.spot_instance == False  # changed to non-spot 
+    assert execution.cfg.behavior_on_capacity_limit == 'fail'  # changed to non-spot
+    with pytest.raises(EC2InstanceLimitException) as exec_info:
+        res = execution.ec2_exception_coordinator(fun)()  # this time, it fails
+    assert exec_info
+
+def test_ec2_exception_coordinator6():
+    """ec2 exceptions with 'retry_without_spot' without spot instance"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't2.micro',
+                             'behavior_on_capacity_limit': 'retry_without_spot'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    assert execution.cfg.spot_instance == False
+    execution.userdata = execution.create_userdata()
+    with pytest.raises(Exception) as exec_info:
+        res = execution.ec2_exception_coordinator(fun)()
+    assert "'retry_without_spot' works only with 'spot_instance'" in str(exec_info.value)
+
+def test_ec2_exception_coordinator7():
+    """ec2 exceptions with 'other_instance_types' with both instance_type and mem/cpu
+    specified"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't2.micro',
+                             'mem': 1, 'cpu': 1,
+                             'behavior_on_capacity_limit': 'other_instance_types'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    assert execution.cfg.instance_type == 't2.micro'
+    execution.userdata = execution.create_userdata()
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't3.micro'
+    execution.userdata = execution.create_userdata()
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't3.small'  # skill t2.micro since it was already tried
 
 def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     jobid = create_jobid()

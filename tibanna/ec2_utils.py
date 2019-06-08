@@ -108,7 +108,6 @@ class Args(object):
         for field in ['output_S3_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
-            
 
     def update(self, **kwargs):
         for k, v in kwargs.items():
@@ -202,26 +201,22 @@ class Config(object):
 
     def fill_default(self):
         # fill in default
-        if not hasattr(self, "instance_type"):
-            self.instance_type = ''  # unspecified by default
-        if not hasattr(self, "EBS_optimized"):
-            self.EBS_optimized = ''  # unspecified by default
+        for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
+                      'spot_duration']:
+            if not hasattr(self, field):
+                setattr(self, field, '')
         if not hasattr(self, "mem"):
             self.mem = 0  # unspecified by default
-        if not hasattr(self, "cpu"):
-            self.cpu = ''  # unspecified by default
         if not hasattr(self, "ebs_size"):
             self.ebs_size = 0  # unspecified by default
         if not hasattr(self, "ebs_type"):
             self.ebs_type = 'gp2'
-        if not hasattr(self, "ebs_iops"):
-            self.ebs_iops = ''
         if not hasattr(self, "shutdown_min"):
             self.shutdown_min = 'now'
-        if not hasattr(self, 'password'):
-            self.password = ''
-        if not hasattr(self, 'key_name'):
-            self.key_name = ''
+        if not hasattr(self, "spot_instance"):
+            self.spot_instance = False
+        if not hasattr(self, "behavior_on_capacity_limit"):
+            self.behavior_on_capacity_limit = 'fail'
         # postrun json should be made public?
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
@@ -260,7 +255,8 @@ class Config(object):
 
 class Execution(object):
 
-    def __init__(self, input_dict):
+    def __init__(self, input_dict, dryrun=False):
+        self.dryrun = dryrun  # for testing purpose
         self.unicorn_input = UnicornInput(input_dict)
         self.jobid = self.unicorn_input.jobid
         self.args = self.unicorn_input.args
@@ -298,7 +294,12 @@ class Execution(object):
         instance_type_dlist = []
         # user directly specified instance type
         if instance_type:
-            instance_type_dlist.append(instance_type)
+            if self.user_specified_EBS_optimized:
+                instance_type_dlist.append({'instance_type': instance_type,
+                                            'EBS_optimized': self.user_specified_EBS_optimized})
+            else:
+                instance_type_dlist.append({'instance_type': instance_type,
+                                            'EBS_optimized': False})
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
             list0 = get_instance_types(self.cfg.mem, self.cfg.cpu, instance_list(exclude_t=False))
@@ -382,16 +383,28 @@ class Execution(object):
         except Exception as e:
             raise Exception("Failed to create a client for EC2")
         while(True):
+            res = self.ec2_exception_coordinator(self.run_instances)(ec2)
+            if res == 'continue':
+                continue
+            break
+        try:
+            instance_id = res['Instances'][0]['InstanceId']
+        except Exception as e:
+            raise Exception("failed to retrieve instance ID for job %s: %s" % (self.jobid, str(e)))
+        return instance_id
+
+    def ec2_exception_coordinator(self, func):
+        def inner(*args, **kwargs):
+            res = ''
             try:
-                res = 0
-                res = ec2.run_instances(**self.launch_args)
-                break
+                res = func(*args, **kwargs)
             except Exception as e:
                 if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
-                        errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option"
-                        errmsg += "to change the behavior to wait_and_retry, or retry_without_spot. %s" % str(e)
+                        errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
+                                 "to change the behavior to wait_and_retry, other_instance_types," + \
+                                 "or retry_without_spot. %s" % str(e)
                         raise EC2InstanceLimitException(errmsg)
                     elif behavior == 'wait_and_retry':
                         errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
@@ -402,27 +415,29 @@ class Execution(object):
                         except Exception as e2:
                             raise EC2InstanceLimitException(str(e2))
                         self.update_config_instance_type()
-                        continue
+                        return 'continue'
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
-                            errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with"
-                            errmsg += "'spot_instance' : true. %s" % str(e)
+                            errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
+                                     "'spot_instance' : true. %s" % str(e)
                             raise Exception(errmsg)
-                        try:
+                        else:
                             self.cfg.spot_instance = False
+                            # change behavior as well,
+                            # to avoid 'retry_without_spot works only with spot' error in the next round
+                            self.cfg.behavior_on_capacity_limit = 'fail'
                             printlog("trying without spot : %s" % str(res))
-                            continue
-                        except Exception as e2:
-                            errmsg = "Instance limit exception without spot instance %s" % str(e2)
-                            raise EC2InstanceLimitException(errmsg)
+                            return 'continue'
                 else:
                     raise Exception("failed to launch instance for job {jobid}: {log}. %s"
                                     .format(jobid=self.jobid, log=res) % e)
-        try:
-            instance_id = res['Instances'][0]['InstanceId']
-        except Exception as e:
-            raise Exception("failed to retrieve instance ID for job {jobid}".format(jobid=self.jobid))
-        return instance_id
+        return inner
+
+    def run_instances(self, ec2):
+        return ec2.run_instances(**self.launch_args)
+
+    def donothing(self):
+        return ''
 
     def create_run_json_dict(self):
         args = self.args
@@ -585,6 +600,8 @@ class Execution(object):
                 spot_options['BlockDurationMinutes'] = self.cfg.spot_duration
             largs.update({'InstanceMarketOptions': {'MarketType': 'spot',
                                                     'SpotOptions': spot_options}})
+        if self.dryrun:
+            largs.update({'DryRun': True})
         return largs
 
     def get_instance_info(self):
