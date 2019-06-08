@@ -15,8 +15,10 @@ import boto3
 import pytest
 import mock
 
+
 def fun():
     raise Exception("InstanceLimitExceeded")
+
 
 def test_args():
     input_dict = {'args': {'input_files': {}, 'output_S3_bucket': 'somebucket', 'app_name': 'someapp'}}
@@ -26,12 +28,14 @@ def test_args():
     assert 'app_name' in args_dict
     assert args_dict['app_name'] == 'someapp'
 
+
 def test_args_missing_field():
     input_dict = {'args': {'input_files': {}, 'app_name': 'someapp'}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        args = Args(**input_dict['args'])
+        Args(**input_dict['args'])
     assert ex
     assert 'output_S3_bucket' in str(ex.value)
+
 
 def test_config():
     input_dict = {'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
@@ -40,6 +44,7 @@ def test_config():
     assert 'log_bucket' in cfg_dict
     assert 'shutdown_min' in cfg_dict
     assert cfg_dict['shutdown_min'] == 30
+
 
 def test_unicorn_input():
     input_dict = {'args': {'input_files': {}, 'app_name': 'bwa-mem',
@@ -53,6 +58,7 @@ def test_unicorn_input():
     assert 'args' in unicorn_dict
     assert 'config' in unicorn_dict
     assert 'jobid' in unicorn_dict  # should be created
+
 
 def test_unicorn_input2():
     """instance_type is provided but not app_name, which should be fine.
@@ -73,6 +79,7 @@ def test_unicorn_input2():
     assert 'ebs_size' in unicorn_dict['config']
     assert unicorn_dict['config']['ebs_size'] == 10
 
+
 def test_execution_mem_cpu():
     """mem and cpu are provided but not app_name or instance_type,
     which should be fine.
@@ -91,6 +98,7 @@ def test_execution_mem_cpu():
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
     assert unicorn_dict['config']['instance_type'] == 't3.micro'
+
 
 def test_execution_benchmark():
     """mem and cpu are provided but not app_name or instance_type,
@@ -111,6 +119,7 @@ def test_execution_benchmark():
     assert 'instance_type' in unicorn_dict['config']
     assert unicorn_dict['config']['instance_type'] == 't3.micro'
 
+
 def test_unicorn_input_missing_field():
     """app_name that doesn't exist in benchmark, without instance type, mem, cpu info"""
     input_dict = {'args': {'input_files': {}, 'app_name': 'app_name_not_in_benchmark',
@@ -119,9 +128,10 @@ def test_unicorn_input_missing_field():
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        unicorn_input = UnicornInput(input_dict)
+        UnicornInput(input_dict)
     assert ex
     assert 'app_name' in str(ex.value)
+
 
 def test_unicorn_input_missing_field2():
     "no app_name without instance type, mem, cpu info"""
@@ -131,9 +141,10 @@ def test_unicorn_input_missing_field2():
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        unicorn_input = UnicornInput(input_dict)
+        UnicornInput(input_dict)
     assert ex
     assert 'app_name' in str(ex.value)
+
 
 def test_unicorn_input_missing_field3():
     """cwl_main_filename missing for cwl workflow
@@ -144,9 +155,10 @@ def test_unicorn_input_missing_field3():
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        unicorn_input = UnicornInput(input_dict)
+        UnicornInput(input_dict)
     assert ex
     assert 'cwl_main_filename' in str(ex.value)
+
 
 def test_unicorn_input_missing_field4():
     """neither cwl_directory_url nor cwl_directory_local is provided"""
@@ -155,9 +167,10 @@ def test_unicorn_input_missing_field4():
                            'cwl_main_filename': 'main.cwl'},
                   'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        unicorn_input = UnicornInput(input_dict)
+        UnicornInput(input_dict)
     assert ex
     assert 'cwl_directory_url' in str(ex.value)
+
 
 def test_execution_missing_field5():
     """language is snakemake but command is missing"""
@@ -168,9 +181,10 @@ def test_execution_missing_field5():
                            'container_image': 'quay.io/snakemake/snakemake'},
                   'config': {'log_bucket': 'tibanna-output', 'mem': 1, 'cpu': 1}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        execution = Execution(input_dict)
+        Execution(input_dict)
     assert ex
     assert 'command' in str(ex.value)
+
 
 def test_execution_missing_field6():
     """language is shell but container_image is missing"""
@@ -179,9 +193,10 @@ def test_execution_missing_field6():
                            'command': 'some command'},
                   'config': {'log_bucket': 'tibanna-output', 'mem': 1, 'cpu': 1}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
-        execution = Execution(input_dict)
+        Execution(input_dict)
     assert ex
     assert 'container_image' in str(ex.value)
+
 
 def test_create_run_json_dict():
     input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
@@ -194,6 +209,7 @@ def test_create_run_json_dict():
     execution = Execution(input_dict)
     runjson = execution.create_run_json_dict()
     assert runjson
+
 
 def test_create_userdata():
     input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
@@ -209,6 +225,7 @@ def test_create_userdata():
     print(userdata)
     assert userdata
     assert 'JOBID=myjobid' in userdata
+
 
 def test_create_userdata_w_profile():
     input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
@@ -226,6 +243,7 @@ def test_create_userdata_w_profile():
     assert userdata
     assert '-a haha -s lala' in userdata
 
+
 def test_upload_run_json():
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -234,7 +252,7 @@ def test_upload_run_json():
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1},
                   'jobid': jobid}
-    somejson = {'haha': 'lala'}  
+    somejson = {'haha': 'lala'}
     execution = Execution(input_dict)
     execution.upload_run_json(somejson)
     s3 = boto3.client('s3')
@@ -243,6 +261,7 @@ def test_upload_run_json():
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,
                       Delete={'Objects': [{'Key': jobid + '.run.json'}]})
+
 
 def test_launch_args():
     """test creating launch arguments - also test spot_instance"""
@@ -254,7 +273,6 @@ def test_launch_args():
                   'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
                              'spot_instance': True},
                   'jobid': jobid}
-    somejson = {'haha': 'lala'}
     execution = Execution(input_dict)
     # userdata is required before launch_args is created
     execution.userdata = execution.create_userdata()
@@ -263,6 +281,7 @@ def test_launch_args():
     assert launch_args
     assert 't3.micro' in str(launch_args)
     assert 'InstanceMarketOptions' in str(launch_args)
+
 
 def test_launch_and_get_instance_id():
     """test dryrun of ec2 launch"""
@@ -274,13 +293,13 @@ def test_launch_and_get_instance_id():
                   'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
                              'spot_instance': True},
                   'jobid': jobid}
-    somejson = {'haha': 'lala'}
     execution = Execution(input_dict, dryrun=True)
     # userdata is required before launch_args is created
     execution.userdata = execution.create_userdata()
     with pytest.raises(Exception) as ex:
-        instance_id = execution.launch_and_get_instance_id()
+        execution.launch_and_get_instance_id()
     assert 'Request would have succeeded, but DryRun flag is set' in str(ex.value)
+
 
 def test_ec2_exception_coordinator():
     """mock test of ec2 exceptions"""
@@ -292,7 +311,6 @@ def test_ec2_exception_coordinator():
                   'config': {'log_bucket': log_bucket, 'instance_type': 'c5.4xlarge',
                              'spot_instance': True},
                   'jobid': jobid}
-    somejson = {'haha': 'lala'}
     execution = Execution(input_dict, dryrun=True)
     execution.userdata = execution.create_userdata()
     with mock.patch('tibanna.ec2_utils.Execution.donothing', new=mock.Mock(err=Exception("InstanceLimitExceeded"))):
@@ -300,7 +318,8 @@ def test_ec2_exception_coordinator():
     print(res)
     assert res == 'haha'
 
-def test_ec2_exception_coordinator():
+
+def test_ec2_exception_coordinator2():
     """ec2 limit exceptions with 'fail'"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -316,7 +335,8 @@ def test_ec2_exception_coordinator():
         execution.ec2_exception_coordinator(fun)()
     assert exec_info
 
-def test_ec2_exception_coordinator2():
+
+def test_ec2_exception_coordinator3():
     """ec2 exceptions with 'wait_and_retry'"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -333,7 +353,8 @@ def test_ec2_exception_coordinator2():
         execution.ec2_exception_coordinator(fun)()
     assert exec_info
 
-def test_ec2_exception_coordinator3():
+
+def test_ec2_exception_coordinator4():
     """ec2 exceptions with 'other_instance_types'"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -356,8 +377,9 @@ def test_ec2_exception_coordinator3():
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
     assert execution.cfg.instance_type == 't2.small'
-   
-def test_ec2_exception_coordinator4():
+
+
+def test_ec2_exception_coordinator5():
     """ec2 exceptions with 'other_instance_types' but had only one option"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -372,10 +394,11 @@ def test_ec2_exception_coordinator4():
     assert execution.cfg.instance_type == 't2.micro'
     execution.userdata = execution.create_userdata()
     with pytest.raises(EC2InstanceLimitException) as exec_info:
-        res = execution.ec2_exception_coordinator(fun)()
+        execution.ec2_exception_coordinator(fun)()
     assert 'No more instance type available' in str(exec_info.value)
- 
-def test_ec2_exception_coordinator5():
+
+
+def test_ec2_exception_coordinator6():
     """ec2 exceptions with 'retry_without_spot'"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -390,13 +413,14 @@ def test_ec2_exception_coordinator5():
     execution.userdata = execution.create_userdata()
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
-    assert execution.cfg.spot_instance == False  # changed to non-spot 
+    assert execution.cfg.spot_instance is False  # changed to non-spot
     assert execution.cfg.behavior_on_capacity_limit == 'fail'  # changed to non-spot
     with pytest.raises(EC2InstanceLimitException) as exec_info:
         res = execution.ec2_exception_coordinator(fun)()  # this time, it fails
     assert exec_info
 
-def test_ec2_exception_coordinator6():
+
+def test_ec2_exception_coordinator7():
     """ec2 exceptions with 'retry_without_spot' without spot instance"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -407,13 +431,14 @@ def test_ec2_exception_coordinator6():
                              'behavior_on_capacity_limit': 'retry_without_spot'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
-    assert execution.cfg.spot_instance == False
+    assert execution.cfg.spot_instance is False
     execution.userdata = execution.create_userdata()
     with pytest.raises(Exception) as exec_info:
-        res = execution.ec2_exception_coordinator(fun)()
+        execution.ec2_exception_coordinator(fun)()
     assert "'retry_without_spot' works only with 'spot_instance'" in str(exec_info.value)
 
-def test_ec2_exception_coordinator7():
+
+def test_ec2_exception_coordinator8():
     """ec2 exceptions with 'other_instance_types' with both instance_type and mem/cpu
     specified"""
     jobid = create_jobid()
@@ -435,6 +460,7 @@ def test_ec2_exception_coordinator7():
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
     assert execution.cfg.instance_type == 't3.small'  # skill t2.micro since it was already tried
+
 
 def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     jobid = create_jobid()
