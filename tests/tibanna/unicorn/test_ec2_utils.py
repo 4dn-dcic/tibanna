@@ -13,7 +13,6 @@ from tibanna.exceptions import (
 )
 import boto3
 import pytest
-import mock
 
 
 def fun():
@@ -299,24 +298,6 @@ def test_launch_and_get_instance_id():
     with pytest.raises(Exception) as ex:
         execution.launch_and_get_instance_id()
     assert 'Request would have succeeded, but DryRun flag is set' in str(ex.value)
-
-
-def test_ec2_exception_coordinator():
-    """mock test of ec2 exceptions"""
-    jobid = create_jobid()
-    log_bucket = 'tibanna-output'
-    input_dict = {'args': {'output_S3_bucket': 'somebucket',
-                           'cwl_main_filename': 'md5.cwl',
-                           'cwl_directory_url': 'someurl'},
-                  'config': {'log_bucket': log_bucket, 'instance_type': 'c5.4xlarge',
-                             'spot_instance': True},
-                  'jobid': jobid}
-    execution = Execution(input_dict, dryrun=True)
-    execution.userdata = execution.create_userdata()
-    with mock.patch('tibanna.ec2_utils.Execution.donothing', new=mock.Mock(err=Exception("InstanceLimitExceeded"))):
-        res = execution.donothing()
-    print(res)
-    assert res == 'haha'
 
 
 def test_ec2_exception_coordinator2():
