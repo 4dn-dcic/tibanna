@@ -57,12 +57,14 @@ def test_unicorn_input():
 def test_unicorn_input2():
     """instance_type is provided but not app_name, which should be fine.
     ebs_size is not provided (no benchmarking) so default value (10) is entered
+    also testing non-conventional fields
     language is wdl this time"""
     input_dict = {'args': {'input_files': {}, 'language': 'wdl',
                            'output_S3_bucket': 'somebucket',
                            'wdl_main_filename': 'main.wdl',
                            'wdl_directory_url': 'someurl'},
-                  'config': {'log_bucket': 'tibanna-output', 'instance_type': 't2.nano'}}
+                  'config': {'log_bucket': 'tibanna-output', 'instance_type': 't2.nano'},
+                  '_tibanna': {}}
     unicorn_input = UnicornInput(input_dict)
     unicorn_dict = unicorn_input.as_dict()
     print(unicorn_dict)

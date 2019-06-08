@@ -47,9 +47,9 @@ class UnicornInput(object):
         self.args = Args(**input_dict['args'])  # args is a required field
         self.cfg = Config(**input_dict['config'])  # config is a required field
         # add other fields too
-        for field in input_dict:
+        for field, v in input_dict.items():
             if field not in ['jobid', 'args', 'config']:
-                setattr(self, field)
+                setattr(self, field, v)
         # fill the default values and internally used fields
         self.auto_fill()
 
