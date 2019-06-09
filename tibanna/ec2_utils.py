@@ -32,6 +32,7 @@ from .exceptions import (
 from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
+from Benchmark.byteformat import B2GB
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
@@ -267,9 +268,11 @@ class Execution(object):
         self.user_specified_EBS_optimized = self.cfg.EBS_optimized
         self.user_specified_ebs_size = self.cfg.ebs_size
         # get benchmark if available
-        self.benchmark = self.get_benchmarking()
+        self.input_size_in_bytes = self.get_input_size_in_bytes()
+        self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
         self.init_instance_type_list()
         self.update_config_instance_type()
+        self.update_config_ebs_size()
 
     @property
     def input_dict(self):
@@ -340,7 +343,29 @@ class Execution(object):
         if not self.user_specified_EBS_optimized:
             self.cfg.EBS_optimized = self.current_EBS_optimized
 
-    def get_benchmarking(self):
+    @property
+    def total_input_size_in_gb(self):
+        if not hasattr(self, 'input_size_in_bytes'):
+            raise Exception("Cannot calculate total input size " +
+                            "- run get_input_size_in_bytes() first")
+        return B2GB(sum([sum(flatten([v])) for s, v in self.input_size_in_bytes.items()]))
+
+    def auto_calculate_ebs_size(self):
+        """if ebs_size is in the format of e.g. '3x', it updates the size
+        to be total input size times three. If the value is lower than 10GB,
+        keep 10GB"""
+        if isinstance(self.cfg.ebs_size, str) and self.cfg.ebs_size.endswith('x'):
+            multiplier = float(self.cfg.ebs_size.rstrip('x'))
+            self.cfg.ebs_size = multiplier * self.total_input_size_in_gb
+            if self.cfg.ebs_size < 10:
+                self.cfg.ebs_size = 10
+
+    def update_config_ebs_size(self):
+        self.auto_calculate_ebs_size()  # if in the format of '3x'
+        if not self.user_specified_ebs_size:  # use benchmark only if not set by user
+            self.cfg.ebs_size = self.benchmark['ebs_size']
+
+    def get_input_size_in_bytes(self):
         """add instance_type, ebs_size, EBS_optimized info based on benchmarking.
         user-specified values overwrite the benchmarking.
         """
@@ -355,6 +380,9 @@ class Execution(object):
                 size = get_file_size(f['object_key'], bucket)
             input_size_in_bytes.update({str(argname): size})
         print({"input_size_in_bytes": input_size_in_bytes})
+        return input_size_in_bytes
+
+    def get_benchmarking(self, input_size_in_bytes):
         try:
             res = B.benchmark(self.args.app_name, {'input_size_in_bytes': input_size_in_bytes,
                                                    'parameters': self.args.input_parameters})
@@ -799,3 +827,4 @@ def get_file_size(key, bucket, size_in_gb=False):
     if size_in_gb:
         size = size / one_gb
     return size
+

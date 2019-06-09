@@ -4,6 +4,7 @@ from tibanna.ec2_utils import (
     Config,
     Execution,
     upload_workflow_to_s3,
+    get_file_size
 )
 from tibanna.utils import create_jobid
 from tibanna.exceptions import (
@@ -100,11 +101,12 @@ def test_execution_mem_cpu():
 
 
 def test_execution_benchmark():
-    """mem and cpu are provided but not app_name or instance_type,
-    which should be fine.
-    language is snakemake this time"""
-    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
-                                                          'object_key': 'haha'}},
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
                            'output_S3_bucket': 'somebucket',
                            'app_name': 'md5',
                            'cwl_main_filename': 'md5.cwl',
@@ -117,7 +119,84 @@ def test_execution_benchmark():
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
     assert unicorn_dict['config']['instance_type'] == 't3.micro'
+    assert unicorn_dict['config']['ebs_size'] == 10
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
 
+def test_get_file_size():
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    size = get_file_size(randomstr, 'tibanna-output')
+    assert size == 4
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
+
+def test_get_input_size_in_bytes():
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
+                           'output_S3_bucket': 'somebucket',
+                           'app_name': 'md5',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': 'tibanna-output'}}
+    execution = Execution(input_dict)
+    execution.input_size_in_bytes = execution.get_input_size_in_bytes()
+    assert execution.total_input_size_in_gb > 3E-9
+    assert execution.total_input_size_in_gb < 4E-9
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
+
+def test_update_config_ebs_size():
+    """ebs_size is given as the 'x' format. The total estimated ebs_size is smaller than 10"""
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
+                           'output_S3_bucket': 'somebucket',
+                           'app_name': 'md5',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': 'tibanna-output', 'ebs_size': '5.5x'}}
+    execution = Execution(input_dict)
+    execution.input_size_in_bytes = execution.get_input_size_in_bytes()
+    execution.update_config_ebs_size()
+    assert execution.cfg.ebs_size == 10
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
+
+def test_update_config_ebs_size2():
+    """ebs_size is given as the 'x' format. The total estimated ebs_size is larger than 10"""
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
+                           'output_S3_bucket': 'somebucket',
+                           'app_name': 'md5',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': 'tibanna-output', 'ebs_size': '5000000000x'}}
+    execution = Execution(input_dict)
+    execution.input_size_in_bytes = execution.get_input_size_in_bytes()
+    execution.update_config_ebs_size()
+    assert execution.cfg.ebs_size > 18
+    assert execution.cfg.ebs_size < 19
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
 
 def test_unicorn_input_missing_field():
     """app_name that doesn't exist in benchmark, without instance type, mem, cpu info"""
@@ -133,7 +212,7 @@ def test_unicorn_input_missing_field():
 
 
 def test_unicorn_input_missing_field2():
-    "no app_name without instance type, mem, cpu info"""
+    """no app_name without instance type, mem, cpu info"""
     input_dict = {'args': {'input_files': {},
                            'output_S3_bucket': 'somebucket',
                            'cwl_main_filename': 'main.cwl',
@@ -198,8 +277,12 @@ def test_execution_missing_field6():
 
 
 def test_create_run_json_dict():
-    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
-                                                          'object_key': 'haha'}},
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
                            'output_S3_bucket': 'somebucket',
                            'app_name': 'md5',
                            'cwl_main_filename': 'md5.cwl',
@@ -208,11 +291,18 @@ def test_create_run_json_dict():
     execution = Execution(input_dict)
     runjson = execution.create_run_json_dict()
     assert runjson
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
 
 
 def test_create_userdata():
-    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
-                                                          'object_key': 'haha'}},
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
                            'output_S3_bucket': 'somebucket',
                            'app_name': 'md5',
                            'cwl_main_filename': 'md5.cwl',
@@ -224,11 +314,18 @@ def test_create_userdata():
     print(userdata)
     assert userdata
     assert 'JOBID=myjobid' in userdata
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
 
 
 def test_create_userdata_w_profile():
-    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'soos-4dn-bucket',
-                                                          'object_key': 'haha'}},
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
                            'output_S3_bucket': 'somebucket',
                            'app_name': 'md5',
                            'cwl_main_filename': 'md5.cwl',
@@ -241,6 +338,9 @@ def test_create_userdata_w_profile():
     print(userdata)
     assert userdata
     assert '-a haha -s lala' in userdata
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}]})
 
 
 def test_upload_run_json():
