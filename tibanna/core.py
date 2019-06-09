@@ -592,8 +592,28 @@ class API(object):
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
                 print(role_arn)
             extra_config['Role'] = role_arn
+        if usergroup and suffix:
+            function_name_suffix = suffix + '_' + usergroup
+        elif suffix:
+            function_name_suffix = suffix
+        elif usergroup:
+            function_name_suffix = usergroup
+        else:
+            function_name_suffix = ''
+        # first delete the existing function to avoid the weird AWS KMS lambda error
+        if function_name_suffix:
+            full_function_name = name + '_' + function_name_suffix
+        else:
+            full_function_name = name
+        try:
+            boto3.client('lambda').get_function(FunctionName=full_function_name)
+            print("deleting existing lambda")
+            boto3.client('lambda').delete_function(FunctionName=full_function_name)
+        except Exception as e:
+            if 'Function not found' in str(e):
+                pass
         aws_lambda.deploy_function(lambda_fxn_module,
-                                   function_name_suffix=suffix,
+                                   function_name_suffix=function_name_suffix,
                                    package_objects=self.tibanna_packages,
                                    requirements_fpath=requirements_fpath,
                                    extra_config=extra_config)

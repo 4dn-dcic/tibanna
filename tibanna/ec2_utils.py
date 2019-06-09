@@ -218,6 +218,8 @@ class Config(object):
             self.spot_instance = False
         if not hasattr(self, "behavior_on_capacity_limit"):
             self.behavior_on_capacity_limit = 'fail'
+        if not hasattr(self, 'cloudwatch_dashboard'):
+            self.cloudwatch_dashboard = False
         # postrun json should be made public?
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
