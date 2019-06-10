@@ -125,6 +125,12 @@ Shell command-specific
 
 :command:
     - <shell command to be executed inside the Docker container> 
+    - a pair of nested double quotes are allowed
+    - (e.g.
+
+    ::
+
+        "command": "echo \"haha\" > outfile"
 
 
 Snakemake-specific
@@ -137,6 +143,23 @@ Snakemake-specific
     - This is a required field.
     - It is highly recommended to use the official Snakemake Docker image
       (``quay.io/snakemake/snakemake``)
+
+:command:
+    - This is a required field.
+    - Most likely it will be ``snakemake`` but it can be run with other ``snakemake`` otions.
+    - (e.g.
+
+    ::
+
+        "command": "snakemake <target> --use-conda"
+
+    - a pair of nested double quotes are allowed
+    - (e.g.
+
+    ::
+
+        "command": "snakemake <target> --config=region=\"22:30000000-40000000\"
+
 
 :snakemake_main_filename:
     - This is a required field.
