@@ -119,8 +119,8 @@ You can find your aws account number from the AWS Web Console.
 .. |console_account_number| image:: images/console_account_number.png
 
 
-Deploying Tibanna to AWS
-------------------------
+Deploying Tibanna Unicorn to AWS
+--------------------------------
 
 If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
 
@@ -213,8 +213,8 @@ First, create the input json file ``my_test_tibanna_input.json`` as below.
     tibanna run_workflow --input-json=my_test_tibanna_input.json
 
 
-Deploying Tibanna with private buckets
---------------------------------------
+Deploying Tibanna Unicorn with private buckets
+----------------------------------------------
 
 Creating a bucket
 +++++++++++++++++

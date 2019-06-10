@@ -90,6 +90,9 @@ CWL-specific
 WDL-specific
 ++++++++++++
 
+:language:
+    - This field must be set to ``wdl`` to run a WDL pipeline.
+
 :wdl_directory_url:
     - <url_that_contains_wdl_file(s)>
     - (e.g. 'https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/wdl')
@@ -111,6 +114,48 @@ WDL-specific
     - An array of all the other wdl files that are called by the main wdl file. This could happen if there are the main WDL file is using another WDL file as a subworkflow.
 
 
+Shell command-specific
+++++++++++++++++++++++
+
+:language:
+    - This field must be set to ``shell`` to run a shell command without CWL/WDL.
+
+:container_image:
+    - <Docker image name>
+
+:command:
+    - <shell command to be executed inside the Docker container> 
+
+
+Snakemake-specific
+++++++++++++++++++
+
+:language:
+    - This field must be set to ``snakemake`` to run a Snakemake pipeline.
+
+:container_image:
+    - This is a required field.
+    - It is highly recommended to use the official Snakemake Docker image
+      (``quay.io/snakemake/snakemake``)
+
+:snakemake_main_filename:
+    - This is a required field.
+    - Most likely it will be ``Snakefile`` (do not include directory name).
+
+:snakemake_child_filenames:
+    - This is an optional field.
+    - This may include other workflow-related files including ``env.yml``, ``config.json``, etc.
+      (Do not include directory name).
+
+:snakemake_directory_local:
+    - The location (directory path) of the `snakemake_main_filename` and ``snake_child_filenames``.
+    - Use this if the workflow files are local.
+
+:snakemake_directory_url:
+    - The url (directory only) of the `snakemake_main_filename` and ``snake_child_filenames``.
+    - Use this if the worlfow files are accessible through a url (either ``http://`` or ``s3://``.
+
+
 Other pipeline-related fields
 +++++++++++++++++++++++++++++
 
@@ -119,7 +164,8 @@ Other pipeline-related fields
     - A alphanumeric string that can identify the pipeline/app. May contain '-' or '_'.
     - This field is optional and is used only by ``Benchmark`` which auto-termines instance type
       and EBS size based on input size and parameters. If the workflow doesn't have an associated
-      Benchmark function, this field can be omitted, but ``instance_type``, ``ebs_size``, ``EBS_optimized``
+      Benchmark function, this field can be omitted, but ``instance_type`` (or ``mem`` and ``cpu``),
+      ``ebs_size`` (unless using default 10GB), ``EBS_optimized`` (unless using default ``False``)
       must be specified in ``config``.
 
 :app_version:
@@ -162,8 +208,29 @@ Input data specification
 
     )
 
+    - key can be a target file path (to be used inside container run environment) starting with
+      ``file://`` instead of CWL/WDL argument name.
+
+      - Input data can only be downloaded to ``/data1/input`` or ``/data1/<language_name>`` where
+        ``<language_name`` is ``cwl|wdl|shell|snakemake``.  The latter ``/data1/<language_name>``
+        is the working directory for ``snakemake`` and ``shell``.
+      - It is highly recommended to stick to using only argument names for CWL/WDL for pipeline
+        reproducibility, since they are already clearly defined in CWL/WDL (especially for CWL).
+      - (e.g.
+
+      ::
+
+          {
+              "file:///data1/shell/mysample1.bam": {
+                  "bucket_name": "montys-data-bucket",
+                  "object_key": "dataset1/sample1.bam"
+              }
+          }
+
+
 :secondary_files:
-    - A dictionary of the same format as `input_file` but contains secondary files. The keys must match the input argument name of the CWL/WDL where the secondary file belongs.
+    - A dictionary of the same format as `input_file` but contains secondary files.
+    - The keys must match the input argument name of the CWL/WDL where the secondary file belongs.
     - (e.g.
 
     ::
@@ -209,6 +276,21 @@ Output target specification
         }
 
     )
+
+    - key can be a source file path (to be used inside container run environment) starting with
+      ``file://`` instead of CWL/WDL argument name.
+
+      - It is highly recommended to stick to using only argument names for CWL/WDL for pipeline
+        reproducibility, since they are already clearly defined in CWL/WDL (especially for CWL).
+
+    - (e.g.
+
+    ::
+
+        {
+          "file:///data1/out/some_random_output.txt": "output/some_random_output.txt"
+        }
+
 
 :secondary_output_target:
     - Similar to ``output_target`` but for secondary files.
@@ -267,11 +349,26 @@ The ``config`` field describes execution configuration.
 
 :instance_type:
     - <instance_type>
-    - required if Benchmark is not available for a given workflow.
+    - This or ``mem`` and ``cpu`` are required if Benchmark is not available for a given workflow.
+    - If both ``instance_type`` and ``mem`` & ``cpu`` are specified, then ``instance_type`` is the first choice.
+
+:mem:
+    - <memory_in_gb>
+    - required is Benchmark is not available for a given workflow and if ``instance_type`` is not specified.
+    - ``mem`` specifies memory requirement - instance_type is auto-determined based on ``mem`` and ``cpu``.
+
+:cpu:
+    - <number_of_cores>
+    - required is Benchmark is not available for a given workflow and if ``instance_type`` is not specified.
+    - ``cpu`` specifies number of cores required to run a given workflow  - instance_type is auto-determined
+      based on ``mem`` and ``cpu``.
 
 :ebs_size:
     - <ebs_size_in_gb>
-    - required if Benchmark is not available for a given workflow.
+    - 10 is minimum acceptable value.
+    - set as 10 if not specified and if Benchmark is not available for a given workflow.
+    - It can be provided in the format of ``<s>x`` (e.g. ``3x``, ``5.5x``) to request ``<s>`` times total input size.
+      (or 10 is smaller than 10)
 
 :EBS_optimized:
     - <ebs_optimized> ``true``, ``false`` or '' (blank)
@@ -317,4 +414,15 @@ The ``config`` field describes execution configuration.
 :spot_duration:
     - Max duration of spot instance in min (no default). If set, request a fixed-duration spot instance instead of a regular spot instance. ``spot_instance`` must be set ``true``.
     - optional (no default)
+
+:behavior_on_capacity_limit:
+    - behavior when a requested instance type (or spot instance) is not available due to instance limit or unavailability.
+    - available options :
+
+      - ``fail`` (default)
+      - ``wait_and_retry`` (wait and retry with the same instance type again),
+      - ``other_instance_types``: top 10 cost-effective instance types will be tried in the order
+                                  (``mem`` and ``cpu`` must be set in order for this to work),
+      - ``retry_without_spot`` (try with the same instance type but not a spot instance) : this option is applicable only when
+        ``spot_instance`` is set to ```True``
 

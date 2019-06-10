@@ -24,12 +24,12 @@ Pipeline
 
 - Your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/).
 - The commands to run your pipeline must be written in either Common Workflow Language. (https://www.commonwl.org/) (recommended) or Workflow Description Language (https://software.broadinstitute.org/wdl/) (only basic support).
-
+- Tibanna now supports simple shell commands to run inside a specified Docker container and Snakemake pipelines as well as local CWL/WDL files (not just public urls)
 
 Data
 ++++
 
-- Your data must be in an AWS S3 bucket.
+- Your data must be in AWS S3 buckets.
 
 
 AWS cloud account

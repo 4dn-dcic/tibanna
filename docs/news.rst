@@ -16,10 +16,10 @@ Version updates
 
   **Jun 10, 2019** The latest version is now 0.8.3_.
 
-    - A newly introduced issue of ``--usergroup`` not working properly with `deploy_unicorn`/`deploy_core` is now fixed.
-    - Now one can specify `mem` (in GB) and `cpu` instead of `instance_type`. The most cost-effective instance type will be auto-determined.
-    - Now one can set `behavior_on_capacity_limit` to `other_instance_types`, in which case tibanna will try the top 10 instance types in the order of decreasing hourly cost.
-    - EBS size can be specified in the format of `3x`, `5.5x`, etc. to make it 3 (or 5.5) times the total input size.
+    - A newly introduced issue of ``--usergroup`` not working properly with ``deploy_unicorn``/``deploy_core`` is now fixed.
+    - Now one can specify ``mem`` (in GB) and ``cpu`` instead of ``instance_type``. The most cost-effective instance type will be auto-determined.
+    - Now one can set ``behavior_on_capacity_limit`` to ``other_instance_types``, in which case tibanna will try the top 10 instance types in the order of decreasing hourly cost.
+    - EBS size can be specified in the format of ``3x``, ``5.5x``, etc. to make it 3 (or 5.5) times the total input size.
 
 
   **Jun 3, 2019** The latest version is now 0.8.2_.
