@@ -787,17 +787,17 @@ def upload_workflow_to_s3(unicorn_input):
     key_prefix = jobid + '.workflow/'
     if args.language == 'wdl':
         main_wf = args.wdl_main_filename
-        wf_files = args.wdl_child_filenames
+        wf_files = args.wdl_child_filenames.copy()
         localdir = args.wdl_directory_local
     elif args.language == 'snakemake':
         main_wf = args.snakemake_main_filename
-        wf_files = args.snakemake_child_filenames
+        wf_files = args.snakemake_child_filenames.copy()
         localdir = args.snakemake_directory_local
     elif args.language == 'shell':
         pass
     else:
         main_wf = args.cwl_main_filename
-        wf_files = args.cwl_child_filenames
+        wf_files = args.cwl_child_filenames.copy()
         localdir = args.cwl_directory_local
     wf_files.append(main_wf)
     localdir = localdir.rstrip('/')
@@ -829,4 +829,3 @@ def get_file_size(key, bucket, size_in_gb=False):
     if size_in_gb:
         size = size / one_gb
     return size
-
