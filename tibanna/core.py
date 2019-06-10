@@ -35,6 +35,7 @@ from .utils import (
     create_jobid,
 )
 from .ec2_utils import (
+    UnicornInput,
     upload_workflow_to_s3
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
@@ -142,18 +143,13 @@ class API(object):
         # add jobid
         data['jobid'] = jobid
         if 'args' in data:  # unicorn-only
-            args = data['args']
-            cfg = data['config']
-            if ('cwl_directory_local' in args and args['cwl_directory_local']) or \
-                    ('wdl_directory_local' in args and args['wdl_directory_local']) or \
-                    ('snakemake_directory_local' in args and args['snakemake_directory_local']):
-                url = upload_workflow_to_s3(args, cfg, jobid)
-                if 'language' in args and args['language'] == 'wdl':
-                    args['wdl_directory_url'] = url
-                elif 'language' in args and args['language'] == 'snakemake':
-                    args['snakemake_directory_url'] = url
-                else:
-                    args['cwl_directory_url'] = url
+            unicorn_input = UnicornInput(data)
+            args = unicorn_input.args
+            if args.language.startswith('cwl') and args.cwl_directory_local or \
+               args.language == 'wdl' and args.wdl_directory_local or \
+               args.language == 'snakemake' and args.snakemake_directory_local:
+                upload_workflow_to_s3(unicorn_input)
+                data['args'] = args.as_dict()  # update args
         # submit job as an execution
         aws_input = json.dumps(data)
         print("about to start run %s" % run_name)
@@ -596,8 +592,28 @@ class API(object):
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
                 print(role_arn)
             extra_config['Role'] = role_arn
+        if usergroup and suffix:
+            function_name_suffix = suffix + '_' + usergroup
+        elif suffix:
+            function_name_suffix = suffix
+        elif usergroup:
+            function_name_suffix = usergroup
+        else:
+            function_name_suffix = ''
+        # first delete the existing function to avoid the weird AWS KMS lambda error
+        if function_name_suffix:
+            full_function_name = name + '_' + function_name_suffix
+        else:
+            full_function_name = name
+        try:
+            boto3.client('lambda').get_function(FunctionName=full_function_name)
+            print("deleting existing lambda")
+            boto3.client('lambda').delete_function(FunctionName=full_function_name)
+        except Exception as e:
+            if 'Function not found' in str(e):
+                pass
         aws_lambda.deploy_function(lambda_fxn_module,
-                                   function_name_suffix=suffix,
+                                   function_name_suffix=function_name_suffix,
                                    package_objects=self.tibanna_packages,
                                    requirements_fpath=requirements_fpath,
                                    extra_config=extra_config)

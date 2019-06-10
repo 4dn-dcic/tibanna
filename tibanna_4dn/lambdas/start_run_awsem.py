@@ -13,7 +13,7 @@ config = {
     'region': AWS_REGION,
     'runtime': 'python3.6',
     'role': 'lambda_full_s3',
-    'description': 'Tibanna pony update_ffmeta_awsem',
+    'description': 'Tibanna pony start_run_awsem',
     'timeout': 300,
     'memory_size': 256
 }

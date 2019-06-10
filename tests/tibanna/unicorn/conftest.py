@@ -8,10 +8,6 @@ def pytest_runtest_setup(item):
     print("Running lambda tests for: ", item)
 
 
-valid_env = pytest.mark.skipif(not os.environ.get("SECRET", False),
-                               reason='Required environment not setup to run test')
-
-
 @pytest.fixture(scope='session')
 def run_task_awsem_event_data():
     return get_event_file_for('run_task_awsem')

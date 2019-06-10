@@ -1,6 +1,5 @@
 from tibanna.lambdas import check_task_awsem as service
 from tibanna.exceptions import EC2StartingException, StillRunningException
-from tests.tibanna.unicorn.conftest import valid_env
 import pytest
 import boto3
 import random
@@ -21,7 +20,6 @@ def s3(check_task_input):
     return boto3.resource('s3').Bucket(bucket_name)
 
 
-@valid_env
 @pytest.mark.webtest
 def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     # ensure there is no job started
@@ -36,7 +34,6 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     assert 'Failed to find jobid' in str(excinfo.value)
 
 
-@valid_env
 @pytest.mark.webtest
 def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
     with pytest.raises(StillRunningException) as excinfo:
@@ -46,7 +43,6 @@ def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
     assert 'error' not in check_task_input
 
 
-@valid_env
 @pytest.mark.webtest
 def test_check_task_awsem(check_task_input, s3):
     jobid = 'lalala'
@@ -68,7 +64,6 @@ def test_check_task_awsem(check_task_input, s3):
     assert retval == check_task_input_modified
 
 
-@valid_env
 @pytest.mark.webtest
 def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
     jobid = 'some_uniq_jobid'

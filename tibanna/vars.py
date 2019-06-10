@@ -17,7 +17,7 @@ TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
 
 # Tibanna roles
-AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', '')
+AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', 'S3_access')
 S3_ACCESS_ARN = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':instance-profile/' + AWS_S3_ROLE_NAME
 
 # Profile keys (optional) to use on AWSEM EC2

@@ -40,3 +40,7 @@ class EC2InstanceLimitException(Exception):
 
 class EC2InstanceLimitWaitException(Exception):
     pass
+
+
+class MissingFieldInInputJsonException(Exception):
+    pass
