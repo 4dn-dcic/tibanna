@@ -68,7 +68,7 @@ then
   export LOCAL_WFDIR=$EBS_DIR/snakemake
 elif [[ $LANGUAGE == 'shell' ]]
 then
-  export LOCAL_WFDIR=$DBS_DIR/shell
+  export LOCAL_WFDIR=$EBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
