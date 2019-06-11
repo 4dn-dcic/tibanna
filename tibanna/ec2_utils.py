@@ -359,6 +359,10 @@ class Execution(object):
         if isinstance(self.cfg.ebs_size, str) and self.cfg.ebs_size.endswith('x'):
             multiplier = float(self.cfg.ebs_size.rstrip('x'))
             self.cfg.ebs_size = multiplier * self.total_input_size_in_gb
+            if round(self.cfg.ebs_size) < self.cfg.ebs_size:
+                self.cfg.ebs_size = round(self.cfg.ebs_size) + 1
+            else:
+                self.cfg.ebs_size = round(self.cfg.ebs_size)
             if self.cfg.ebs_size < 10:
                 self.cfg.ebs_size = 10
 
