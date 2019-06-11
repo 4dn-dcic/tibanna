@@ -5,6 +5,7 @@ import os
 import logging
 import boto3
 import copy
+import re
 from .utils import (
     printlog,
     does_key_exist,
@@ -23,6 +24,7 @@ from .vars import (
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
+    MalFormattedInputJsonException,
     EC2LaunchException,
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException,
@@ -137,6 +139,8 @@ class Args(object):
                 self.singularity = False
         if not hasattr(self, 'app_name'):
             self.app_name = ''
+        # input file format check and parsing
+        self.parse_input_files()
         # check workflow info is there and fill in default
         errmsg_template = "field %s is required in args for language %s"
         if self.language == 'wdl':
@@ -183,6 +187,43 @@ class Args(object):
             if not self.cwl_directory_local and not self.cwl_directory_url:
                 errmsg = "either %s or %s must be provided in args" % ('cwl_directory_url', 'cwl_directory_local')
                 raise MissingFieldInInputJsonException(errmsg)
+
+    def parse_input_files(self):
+        """checking format for input files and converting s3:// style string into
+        bucket_name and object_key"""
+        if hasattr(self, 'input_files'):
+            if not isinstance(self.input_files, dict):
+                errmsg = "'input_files' must be provided as a dictionary (key-value pairs)"
+                raise MalFormattedInputJsonException(errmsg)
+            for ip, v in self.input_files.items():
+                if isinstance(v, str):
+                    bucket_name, object_key = self.parse_s3_url(v)
+                    self.input_files[ip] = {'bucket_name': bucket_name, 'object_key': object_key}
+                elif isinstance(v, list):
+                    buckets = flatten(run_on_nested_arrays1(v, self.parse_s3_url, **{'bucket_only': True}))
+                    if len(set(buckets)) != 1:
+                        errmsg = "All the input files corresponding to a single input file argument " + \
+                                 "must be from the same bucket."
+                        raise MalFormattedInputJsonException(errmsg)
+                    object_keys = run_on_nested_arrays1(v, self.parse_s3_url, **{'key_only': True})
+                    self.input_files[ip] = {'bucket_name': buckets[0], 'object_key': object_keys}
+                elif isinstance(v, dict) and 'bucket_name' in v and 'object_key' in v:
+                    pass
+                else:
+                    errmsg = "Each input_file value must be either a string starting with 's3://'" + \
+                             " or a dictionary with 'bucket_name' and 'object_key' as keys"
+                    raise MalFormattedInputJsonException(errmsg)
+
+    def parse_s3_url(self, url, bucket_only=False, key_only=False):
+        if not url.startswith('s3://'):
+            raise MalFormattedInputJsonException("S3 url must begin with 's3://'")
+        bucket_name = re.sub('^s3://', '', url).split('/')[0]
+        object_key = re.sub('^s3://' + bucket_name + '/', '', url)
+        if bucket_only:
+            return bucket_name
+        if key_only:
+            return object_key
+        return bucket_name, object_key
 
     def as_dict(self):
         return copy.deepcopy(self.__dict__)

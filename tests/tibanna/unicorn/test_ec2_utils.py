@@ -9,6 +9,7 @@ from tibanna.ec2_utils import (
 from tibanna.utils import create_jobid
 from tibanna.exceptions import (
     MissingFieldInInputJsonException,
+    MalFormattedInputJsonException,
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException
 )
@@ -36,6 +37,94 @@ def test_args_missing_field():
     assert ex
     assert 'output_S3_bucket' in str(ex.value)
 
+
+def test_args_parse_input_files():
+    input_dict = {'args': {'input_files': {"file1": "s3://somebucket/somekey"},
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    args.fill_default()
+    assert hasattr(args, 'input_files')
+    assert 'file1' in args.input_files
+    assert 'bucket_name' in args.input_files['file1']
+    assert 'object_key' in args.input_files['file1']
+    assert args.input_files['file1']['bucket_name'] == 'somebucket'
+    assert args.input_files['file1']['object_key'] == 'somekey'
+
+
+def test_args_parse_input_files2():
+    input_dict = {'args': {'input_files': {"file1": [["s3://somebucket/somekey1",
+                                                      "s3://somebucket/somekey2"],
+                                                     ["s3://somebucket/somekey3",
+                                                      "s3://somebucket/somekey4"]]},
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    args.fill_default()
+    assert hasattr(args, 'input_files')
+    assert 'file1' in args.input_files
+    assert 'bucket_name' in args.input_files['file1']
+    assert 'object_key' in args.input_files['file1']
+    assert args.input_files['file1']['bucket_name'] == 'somebucket'
+    assert isinstance(args.input_files['file1']['object_key'], list)
+    assert len(args.input_files['file1']['object_key']) == 2
+    assert isinstance(args.input_files['file1']['object_key'][0], list)
+    assert len(args.input_files['file1']['object_key'][0]) == 2
+    assert isinstance(args.input_files['file1']['object_key'][1], list)
+    assert len(args.input_files['file1']['object_key'][1]) == 2
+    assert args.input_files['file1']['object_key'][0][0] == 'somekey1'
+    assert args.input_files['file1']['object_key'][0][1] == 'somekey2'
+    assert args.input_files['file1']['object_key'][1][0] == 'somekey3'
+    assert args.input_files['file1']['object_key'][1][1] == 'somekey4'
+
+
+def test_args_parse_input_files2():
+    input_dict = {'args': {'input_files': {"file1": ["s3://somebucket/somekey1",
+                                                     "s3://somebucket/somekey2"]},
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    args.fill_default()
+    assert hasattr(args, 'input_files')
+    assert 'file1' in args.input_files
+    assert 'bucket_name' in args.input_files['file1']
+    assert 'object_key' in args.input_files['file1']
+    assert args.input_files['file1']['bucket_name'] == 'somebucket'
+    assert isinstance(args.input_files['file1']['object_key'], list)
+    assert len(args.input_files['file1']['object_key']) == 2
+    assert args.input_files['file1']['object_key'][0] == 'somekey1'
+    assert args.input_files['file1']['object_key'][1] == 'somekey2'
+
+def test_args_parse_input_files_format_error():
+    input_dict = {'args': {'input_files': {"file1": "somerandomstr"},
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    with pytest.raises(MalFormattedInputJsonException) as ex:
+        args.fill_default()
+    assert ex
+    assert 'S3 url must begin with' in str(ex.value)
+
+def test_args_parse_input_files_format_error2():
+    input_dict = {'args': {'input_files': {"file1": ["s3://somebucket/somekey1",
+                                                     "s3://otherbucket/somekey2"]},
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    with pytest.raises(MalFormattedInputJsonException) as ex:
+        args.fill_default()
+    assert ex
+    assert 'bucket' in str(ex.value)
 
 def test_config():
     input_dict = {'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
@@ -192,8 +281,7 @@ def test_update_config_ebs_size2():
     execution = Execution(input_dict)
     execution.input_size_in_bytes = execution.get_input_size_in_bytes()
     execution.update_config_ebs_size()
-    assert execution.cfg.ebs_size > 18
-    assert execution.cfg.ebs_size < 19
+    assert execution.cfg.ebs_size == 19
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})

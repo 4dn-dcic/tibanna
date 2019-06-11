@@ -44,3 +44,7 @@ class EC2InstanceLimitWaitException(Exception):
 
 class MissingFieldInInputJsonException(Exception):
     pass
+
+
+class MalFormattedInputJsonException(Exception):
+    pass
