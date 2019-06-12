@@ -226,6 +226,7 @@ mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
+exl ls -lhtrR $EBS_DIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
