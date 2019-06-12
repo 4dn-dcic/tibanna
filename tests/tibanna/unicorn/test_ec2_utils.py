@@ -82,7 +82,7 @@ def test_args_parse_input_files2():
     assert args.input_files['file1']['object_key'][1][1] == 'somekey4'
 
 
-def test_args_parse_input_files2():
+def test_args_parse_input_files3():
     input_dict = {'args': {'input_files': {"file1": ["s3://somebucket/somekey1",
                                                      "s3://somebucket/somekey2"]},
                            'output_S3_bucket': 'somebucket',
@@ -101,6 +101,7 @@ def test_args_parse_input_files2():
     assert args.input_files['file1']['object_key'][0] == 'somekey1'
     assert args.input_files['file1']['object_key'][1] == 'somekey2'
 
+
 def test_args_parse_input_files_format_error():
     input_dict = {'args': {'input_files': {"file1": "somerandomstr"},
                            'output_S3_bucket': 'somebucket',
@@ -112,6 +113,7 @@ def test_args_parse_input_files_format_error():
         args.fill_default()
     assert ex
     assert 'S3 url must begin with' in str(ex.value)
+
 
 def test_args_parse_input_files_format_error2():
     input_dict = {'args': {'input_files': {"file1": ["s3://somebucket/somekey1",
@@ -125,6 +127,18 @@ def test_args_parse_input_files_format_error2():
         args.fill_default()
     assert ex
     assert 'bucket' in str(ex.value)
+
+
+def test_parse_command():
+    input_dict = {'args': {'command': ['command1', 'command2', 'command3'],
+                           'output_S3_bucket': 'somebucket',
+                           'language': 'shell',
+                           'container_image': 'someimage',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    args.fill_default()
+    assert args.command == 'command1; command2; command3'
+
 
 def test_config():
     input_dict = {'config': {'log_bucket': 'tibanna-output', 'shutdown_min': 30}}
@@ -213,6 +227,7 @@ def test_execution_benchmark():
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
 
+
 def test_get_file_size():
     randomstr = 'test-' + create_jobid()
     s3 = boto3.client('s3')
@@ -223,6 +238,7 @@ def test_get_file_size():
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
+
 
 def test_get_input_size_in_bytes():
     randomstr = 'test-' + create_jobid()
@@ -243,6 +259,7 @@ def test_get_input_size_in_bytes():
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
+
 
 def test_update_config_ebs_size():
     """ebs_size is given as the 'x' format. The total estimated ebs_size is smaller than 10"""
@@ -265,6 +282,7 @@ def test_update_config_ebs_size():
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
 
+
 def test_update_config_ebs_size2():
     """ebs_size is given as the 'x' format. The total estimated ebs_size is larger than 10"""
     randomstr = 'test-' + create_jobid()
@@ -285,6 +303,7 @@ def test_update_config_ebs_size2():
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
+
 
 def test_unicorn_input_missing_field():
     """app_name that doesn't exist in benchmark, without instance type, mem, cpu info"""

@@ -187,6 +187,16 @@ class Args(object):
             if not self.cwl_directory_local and not self.cwl_directory_url:
                 errmsg = "either %s or %s must be provided in args" % ('cwl_directory_url', 'cwl_directory_local')
                 raise MissingFieldInInputJsonException(errmsg)
+        # reformat command
+        self.parse_command()
+
+    def parse_command(self):
+        """if command is a list, conert it to a string"""
+        if hasattr(self, 'command'):
+            if isinstance(self.command, list):
+                self.command = '; '.join(self.command)
+            elif not isinstance(self.command, str):
+                raise MalFormattedInputJsonException("command must be either a string or a list")
 
     def parse_input_files(self):
         """checking format for input files and converting s3:// style string into
