@@ -64,18 +64,15 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                             for path3, rename3 in zip(path2, rename2):
                                 if isinstance(path3, list):
                                     for data_file, rename4 in zip(path3, rename3):
-                                        if not target:
-                                            target = target_template % rename4
+                                        target = target_template % rename4
                                         add_download_cmd(data_bucket, data_file, target, profile_flag, f)
                                 else:
                                     data_file = path3
-                                    if not target:
-                                        target = target_template % rename3
+                                    target = target_template % rename3
                                     add_download_cmd(data_bucket, data_file, target, profile_flag, f)
                         else:
                             data_file = path2
-                            if not target:
-                                target = target_template % rename2
+                            target = target_template % rename2
                             add_download_cmd(data_bucket, data_file, target, profile_flag, f)
                 else:
                     data_file = path1
