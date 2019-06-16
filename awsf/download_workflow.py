@@ -2,7 +2,7 @@
 import os
 import subprocess
 import boto3
-
+import re
 
 def main():
     language = os.environ.get('LANGUAGE')
@@ -51,6 +51,9 @@ def main():
             else:
                 key = wf_file
             print("downloading key %s from bucket %s to target %s" % (key, bucket_name, target))
+            if '/' in target:
+                targetdir = re.sub('[^/]+$', '', target)
+                subprocess.call(["mkdir", "-p", targetdir])
             s3.download_file(Bucket=bucket_name, Key=key, Filename=target)
 
 
