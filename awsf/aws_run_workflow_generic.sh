@@ -195,14 +195,12 @@ then
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
-  exl echo "docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
   docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
   if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
   LOGJSONFILE='-'  # no file
 elif [[ $LANGUAGE == 'shell' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
-  exl echo "docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c \"$COMMAND\""
   docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
   if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
   LOGJSONFILE='-'  # no file
@@ -228,6 +226,7 @@ mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
+exl ls -lhtrR $EBS_DIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
