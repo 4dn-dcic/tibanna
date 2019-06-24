@@ -78,7 +78,7 @@ def create_jobid():
 def read_s3(bucket, object_name):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
     printlog(str(response))
-    return response['Body'].read()
+    return response['Body'].read().decode('utf-8', 'backslashreplace')
 
 
 def does_key_exist(bucket, object_name):

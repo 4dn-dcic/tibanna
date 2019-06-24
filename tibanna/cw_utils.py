@@ -16,8 +16,11 @@ class TibannaResource(object):
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name='us-east-1')
         # get resource metrics
-        # nTimeChunks = endtime - starttime / timedelta(days=1)  # This crap doesn't work for python2
-        nTimeChunks = 10
+        nTimeChunks = (endtime - starttime) / timedelta(days=1)
+        if round(nTimeChunks) < nTimeChunks:
+            nTimeChunks = round(nTimeChunks) + 1
+        else:
+            nTimeChunks = round(nTimeChunks)
         print("Spliting run time into %s chunks" % str(nTimeChunks))
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
@@ -124,13 +127,13 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60*20,
-            Statistics=['Average'],
+            Period=60*5,
+            Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
             Unit='Percent'
         )
-        x = [r['Average'] for r in res['Datapoints']]
+        x = [r['Maximum'] for r in res['Datapoints']]
         return(max(x) if x else '')
 
     def max_disk_space_utilization(self):
