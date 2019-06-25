@@ -319,7 +319,10 @@ class API(object):
                 res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
             except Exception as e:
                 if 'NoSuchKey' in str(e):
-                    raise Exception("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                    printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                    return ''
+                else:
+                    raise e
             if res_s3:
                 return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         elif job_id:
@@ -332,7 +335,14 @@ class API(object):
                     desc = sf.describe_execution(executionArn=exc['executionArn'])
                     if job_id == str(json.loads(desc['input'])['jobid']):
                         logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                        res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+                        try:
+                            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+                        except Exception as e:
+                            if 'NoSuchKey' in str(e):
+                                printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                                return ''
+                            else:
+                                raise e
                         if res_s3:
                             return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
                         break
