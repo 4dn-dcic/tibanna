@@ -558,7 +558,9 @@ def update_ffmeta(input_json):
                 printlog("Cannot send email: %s" % e)
         raise Exception(input_json_copy.get('error'))
 
-    metadata_only = input_json_copy['config'].get('runmode', {}).get('metadata_only', False)
+    metadata_only = input_json_copy.get('metadata_only', False)
+    if not metadata_only:
+        metadata_only = input_json_copy['config'].get('runmode', {}).get('metadata_only', False)
 
     pf_meta = [ProcessedFileMetadata(**pf) for pf in input_json_copy.get('pf_meta')]
     custom_qc_fields = input_json_copy.get('custom_qc_fields', None)
