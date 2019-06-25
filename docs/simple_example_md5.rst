@@ -151,7 +151,6 @@ WDL
     
     ::
     
-        ---
         workflow md5 {
             call md5_step
         }
