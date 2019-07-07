@@ -80,6 +80,7 @@ class API(object):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
     sfn_type = 'unicorn'
+    do_not_delete = []  # list of lambda names that should not be deleted before updating
 
     def __init__(self):
         pass
@@ -339,7 +340,8 @@ class API(object):
                             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         except Exception as e:
                             if 'NoSuchKey' in str(e):
-                                printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                                printlog("log/postrunjson file is not ready yet." +
+                                         "Wait a few seconds/minutes and try again.")
                                 return ''
                             else:
                                 raise e
@@ -622,13 +624,14 @@ class API(object):
             full_function_name = name + '_' + function_name_suffix
         else:
             full_function_name = name
-        try:
-            boto3.client('lambda').get_function(FunctionName=full_function_name)
-            print("deleting existing lambda")
-            boto3.client('lambda').delete_function(FunctionName=full_function_name)
-        except Exception as e:
-            if 'Function not found' in str(e):
-                pass
+        if name not in self.do_not_delete:
+            try:
+                boto3.client('lambda').get_function(FunctionName=full_function_name)
+                print("deleting existing lambda")
+                boto3.client('lambda').delete_function(FunctionName=full_function_name)
+            except Exception as e:
+                if 'Function not found' in str(e):
+                    pass
         aws_lambda.deploy_function(lambda_fxn_module,
                                    function_name_suffix=function_name_suffix,
                                    package_objects=self.tibanna_packages,

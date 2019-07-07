@@ -45,7 +45,8 @@ def check_task(input_json):
     # check to see if job has error, report if so
     if does_key_exist(bucket_name, job_error):
         handle_postrun_json(bucket_name, jobid, input_json_copy, False, public_read=public_postrun_json)
-        raise AWSEMJobErrorException("Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid)
+        errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
+        raise AWSEMJobErrorException(errmsg)
 
     # check to see if job has completed
     if does_key_exist(bucket_name, job_success):
