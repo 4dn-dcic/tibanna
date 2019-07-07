@@ -187,7 +187,7 @@ class API(object):
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
-            dydb.describe_table(TableName=DYNAMODB_TABLE)
+            res = dydb.describe_table(TableName=DYNAMODB_TABLE)
         except Exception as e:
             if verbose:
                 printlog("Not adding to dynamo table: %s" % e)
