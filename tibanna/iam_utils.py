@@ -14,6 +14,20 @@ def generate_policy_prefix(user_group_name, no_randomize=False):
     return tibanna_policy_prefix
 
 
+def generate_policy_terminate_instances():
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "ec2:TerminateInstances",
+                "Resource": "*"
+            }
+        ]
+    }
+    return policy
+
+
 def generate_policy_list_instanceprofiles():
     policy_list_instanceprofiles = {
         "Version": "2012-10-17",
@@ -371,8 +385,7 @@ def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
         print(response)
 
 
-def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
-                      dynamodb_policy_name,
+def create_user_group(iam, group_name, custom_policy_names,
                       account_id, verbose=False):
     client = iam.meta.client
     try:
@@ -413,7 +426,7 @@ def create_user_group(iam, group_name, bucket_policy_name, ec2_desc_policy_name,
     )
     if verbose:
         print(response)
-    for pn in [bucket_policy_name, ec2_desc_policy_name, dynamodb_policy_name]:
+    for pn in custom_policy_names:
         response = group.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
         )
@@ -471,6 +484,10 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     bucket_policy_name = tibanna_policy_prefix + '_bucket_access'
     policy_ba = generate_policy_bucket_access(bucket_names)
     create_policy_robust(client, bucket_policy_name, json.dumps(policy_ba), account_id, verbose)
+    # EC2 termination policy
+    termination_policy_name = tibanna_policy_prefix + '_ec2_termination'
+    create_policy_robust(client, termination_policy_name,
+                         json.dumps(generate_policy_terminate_instances()), account_id, verbose)
     # lambda policies
     # list_instanceprofiles : by default not user-dependent,
     # but create per user group to allow future modification per user-group
@@ -559,6 +576,9 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
             except Exception as e2:
                 raise Exception("Can't add role %s: %s" % (instance_profile_name, str(e2)))
     # create IAM group for users who share permission
-    create_user_group(iam, tibanna_policy_prefix, bucket_policy_name, ec2_desc_policy_name,
-                      dynamodb_policy_name, account_id)
+    custom_policy_names = [bucket_policy_name,
+                           ec2_desc_policy_name,
+                           dynamodb_policy_name,
+                           termination_policy_name]
+    create_user_group(iam, tibanna_policy_prefix, custom_policy_names, account_id)
     return tibanna_policy_prefix
