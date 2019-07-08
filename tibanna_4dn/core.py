@@ -24,6 +24,7 @@ class API(_API):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
     sfn_type = 'pony'
+    do_not_delete = ['validate_md5_s3_trigger']
 
     def __init__(self):
         pass
