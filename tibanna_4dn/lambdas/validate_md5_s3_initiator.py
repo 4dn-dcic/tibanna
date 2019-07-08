@@ -48,6 +48,8 @@ def handler(event, context):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
+    if 'prod' in env:
+        env = data
 
     try:
         tibanna = TibannaSettings(env=env)
