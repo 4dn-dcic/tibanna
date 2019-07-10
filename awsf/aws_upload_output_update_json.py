@@ -140,7 +140,7 @@ for k in output_target:
         try:
             print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
             # s3.upload_file(source, output_bucket, target)
-            upload_to_s3(source, output_bucket, target)
+            upload_to_s3(s3, source, output_bucket, target)
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
 
@@ -156,7 +156,7 @@ for k in output_meta:
     try:
         print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
         # s3.upload_file(source, output_bucket, target)
-        upload_to_s3(source, output_bucket, target)
+        upload_to_s3(s3, source, output_bucket, target)
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
