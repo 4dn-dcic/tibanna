@@ -39,6 +39,23 @@ def parse_command(logfile):
     return(command_list)
 
 
+def upload_to_s3(s3, source, bucket, target):
+    if os.isdir(source):
+        source = source.rstrip('/')
+        for root, dirs, files in os.walk(source)
+            for f in files:
+                source_f = os.path.join(root, f)
+                target_subdir = re.sub(source + '/', '', root)
+                target_f = os.path.join(target_subdir, f)
+                s3.upload_file(source_f, output_bucket, target_f)
+            #for d in dirs:
+            #    source_d = os.path.join(root, d)
+            #    target_d = os.path.join(target, re.sub(source + '/', '', root), d)
+            #    upload_to_s3(s3, source_d, output_bucket, target_d)
+    else:
+        s3.upload_file(source, output_bucket, target)
+
+
 # read old json file
 with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
@@ -121,7 +138,8 @@ for k in output_target:
         target = output_target[k]
         try:
             print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-            s3.upload_file(source, output_bucket, target)
+            # s3.upload_file(source, output_bucket, target)
+            upload_to_s3(source, output_bucket, target)
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
 
@@ -136,7 +154,8 @@ for k in output_meta:
         target = source_name  # do not change file name
     try:
         print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-        s3.upload_file(source, output_bucket, target)
+        # s3.upload_file(source, output_bucket, target)
+        upload_to_s3(source, output_bucket, target)
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
