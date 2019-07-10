@@ -3,6 +3,7 @@ import json
 import sys
 import boto3
 import os
+import re
 json_old = sys.argv[1]
 execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
@@ -42,16 +43,16 @@ def parse_command(logfile):
 def upload_to_s3(s3, source, bucket, target):
     if os.isdir(source):
         source = source.rstrip('/')
-        for root, dirs, files in os.walk(source)
+        for root, dirs, files in os.walk(source):
             for f in files:
                 source_f = os.path.join(root, f)
                 target_subdir = re.sub(source + '/', '', root)
                 target_f = os.path.join(target_subdir, f)
                 s3.upload_file(source_f, output_bucket, target_f)
-            #for d in dirs:
-            #    source_d = os.path.join(root, d)
-            #    target_d = os.path.join(target, re.sub(source + '/', '', root), d)
-            #    upload_to_s3(s3, source_d, output_bucket, target_d)
+            # for d in dirs:
+            #     source_d = os.path.join(root, d)
+            #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
+            #     upload_to_s3(s3, source_d, output_bucket, target_d)
     else:
         s3.upload_file(source, output_bucket, target)
 
@@ -131,7 +132,7 @@ for k, k_alt in replace_list:
 
 s3 = boto3.client('s3')
 
-# 'file://' output targets 
+# 'file://' output targets
 for k in output_target:
     if k.startswith('file://'):
         source = k.replace('file://', '')
