@@ -42,6 +42,7 @@ def parse_command(logfile):
 
 def upload_to_s3(s3, source, bucket, target):
     if os.path.isdir(source):
+        print("source " + source + " is a directory")
         source = source.rstrip('/')
         for root, dirs, files in os.walk(source):
             for f in files:
@@ -57,6 +58,7 @@ def upload_to_s3(s3, source, bucket, target):
             #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
             #     upload_to_s3(s3, source_d, output_bucket, target_d)
     else:
+        print("source " + source + " is a not a directory")
         s3.upload_file(source, output_bucket, target)
 
 
