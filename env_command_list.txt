@@ -1,0 +1,6 @@
+export COMMAND="touch tests/awsf/haha"
+export CONTAINER_IMAGE=ubuntu:16.04
+export OUTBUCKET=soos-4dn-bucket
+export PUBLIC_POSTRUN_JSON=0
+TEST_ENV_TO_PASS=1234
+export PRESERVED_ENV_OPTION="--preserve-environment TEST_ENV_TO_PASS "

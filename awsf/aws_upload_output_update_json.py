@@ -47,11 +47,13 @@ def upload_to_s3(s3, source, bucket, target):
         for root, dirs, files in os.walk(source):
             for f in files:
                 source_f = os.path.join(root, f)
-                target_subdir = re.sub(source + '/', '', root)
-                target_f = os.path.join(target_subdir, f)
+                if root == source:
+                    target_f = os.path.join(target, f)
+                else:
+                    target_subdir = re.sub('^' + source + '/', '', root)
+                    target_f = os.path.join(target, target_subdir, f)
                 print("source_f=" + source_f)
-                print("target_subdir=" + target_subdir)
-                print("target_f" + target_f)
+                print("target_f=" + target_f)
                 s3.upload_file(source_f, output_bucket, target_f)
             # for d in dirs:
             #     source_d = os.path.join(root, d)
