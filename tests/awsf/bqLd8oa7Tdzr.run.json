@@ -43,7 +43,8 @@
         "Output": {
             "output_bucket_directory": "soos-4dn-bucket",
             "output_target": {
-                "file://tests/awsf/haha": "shelltest-haha"
+                "file://tests/awsf/haha": "shelltest-haha",
+                "file://tests/awsf/mydir": "shelltest-haha"
             },
             "secondary_output_target": {},
             "alt_cond_output_argnames": {}
