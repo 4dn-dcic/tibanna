@@ -3,6 +3,7 @@ import json
 import sys
 import boto3
 import os
+import re
 json_old = sys.argv[1]
 execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
@@ -37,6 +38,30 @@ def parse_command(logfile):
                     command_list.append(command)
                     command = []
     return(command_list)
+
+
+def upload_to_s3(s3, source, bucket, target):
+    if os.path.isdir(source):
+        print("source " + source + " is a directory")
+        source = source.rstrip('/')
+        for root, dirs, files in os.walk(source):
+            for f in files:
+                source_f = os.path.join(root, f)
+                if root == source:
+                    target_f = os.path.join(target, f)
+                else:
+                    target_subdir = re.sub('^' + source + '/', '', root)
+                    target_f = os.path.join(target, target_subdir, f)
+                print("source_f=" + source_f)
+                print("target_f=" + target_f)
+                s3.upload_file(source_f, output_bucket, target_f)
+            # for d in dirs:
+            #     source_d = os.path.join(root, d)
+            #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
+            #     upload_to_s3(s3, source_d, output_bucket, target_d)
+    else:
+        print("source " + source + " is a not a directory")
+        s3.upload_file(source, output_bucket, target)
 
 
 # read old json file
@@ -114,14 +139,15 @@ for k, k_alt in replace_list:
 
 s3 = boto3.client('s3')
 
-# 'file://' output targets 
+# 'file://' output targets
 for k in output_target:
     if k.startswith('file://'):
         source = k.replace('file://', '')
         target = output_target[k]
         try:
             print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-            s3.upload_file(source, output_bucket, target)
+            # s3.upload_file(source, output_bucket, target)
+            upload_to_s3(s3, source, output_bucket, target)
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
 
@@ -136,7 +162,8 @@ for k in output_meta:
         target = source_name  # do not change file name
     try:
         print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-        s3.upload_file(source, output_bucket, target)
+        # s3.upload_file(source, output_bucket, target)
+        upload_to_s3(s3, source, output_bucket, target)
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
