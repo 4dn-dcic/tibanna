@@ -173,6 +173,12 @@ def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
+    elif ff_meta.awsem_app_name == 'MARGI':
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
+                           quality_metric='quality_metric_margi',
+                           file_argument='final_pairs',
+                           datafiles=['qc_report.txt'],
+                           other_fields=other_fields)
 
 
 def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_fastqc',
