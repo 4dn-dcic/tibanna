@@ -102,6 +102,8 @@ class API(object):
                 run_name += '-' + str(uuid4())
         except Exception:
             pass
+        if len(run_name) > 80:
+            run_name = run_name[:79]
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
