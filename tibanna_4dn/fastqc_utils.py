@@ -1,4 +1,5 @@
 import uuid
+from tibanna.utils import printlog
 
 ###########################################
 # These utils exclusively live in Tibanna #
@@ -29,11 +30,13 @@ def parse_qc_table(data_list, qc_schema, url=None):
 
     def parse_item(name, value):
         """Add item to qc_json if it's in the schema"""
+        printlog("qc item : %s = %s" % (name, str(value)))
         qc_type = qc_schema.get(name, {}).get('type', None)
         if qc_type == 'string':
             qc_json.update({name: str(value)})
         elif qc_type == 'number':
             qc_json.update({name: number(value.replace(',', ''))})
+        printlog("qc json : %s" % str(qc_json))
 
     for data in data_list:
         print(type(data))

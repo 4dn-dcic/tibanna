@@ -97,6 +97,7 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
 
 
 def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
+    printlog("Inside qc_updater...")
     if ff_meta.awsem_app_name == 'fastqc-0-11-4-1':
         return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_fastqc',
@@ -185,6 +186,7 @@ def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
 def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_fastqc',
                 file_argument='input_fastq', report_html=None,
                 datafiles=None, zipped=True, datajson_argument=None, other_fields=None):
+    printlog("Inside _qc_updater...")
     if datajson_argument == awsemfile.argument_name:
         return
     # avoid using [] as default argument
@@ -204,6 +206,7 @@ def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_
         files_to_parse.append(report_html)
     printlog("accession is %s" % accession)
     jsondata = dict()
+    files = []
     if zipped:
         try:
             files = awsemfile.s3.unzip_s3_to_s3(zipped_report, accession, files_to_parse,
@@ -220,11 +223,12 @@ def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_
             for d in jsondata0:
                 jsondata.update(d)
         filedata = [awsemfile.s3.read_s3(_).decode('utf-8', 'backslashreplace') for _ in datafiles]
-        reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8', 'backslashreplace')
-        report_html = accession + 'qc_report.html'
-        awsemfile.s3.s3_put(reportdata.encode(), report_html, acl='public-read')
-        qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
-        files = {report_html: {'data': reportdata, 's3key': qc_url}}
+        if report_html:
+            reportdata = awsemfile.s3.read_s3(report_html).decode('utf-8', 'backslashreplace')
+            report_html = accession + 'qc_report.html'
+            awsemfile.s3.s3_put(reportdata.encode(), report_html, acl='public-read')
+            qc_url = 'https://s3.amazonaws.com/' + awsemfile.bucket + '/' + report_html
+            files = {report_html: {'data': reportdata, 's3key': qc_url}}
     # schema. do not need to check_queue
     qc_schema = ff_utils.get_metadata("profiles/" + quality_metric + ".json",
                                       key=ff_key,
@@ -237,6 +241,8 @@ def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_
     meta = parse_qc_table(filedata,
                           qc_schema=qc_schema.get('properties'),
                           url=qc_url)
+    printlog(str(filedata))
+    printlog(str(meta))
     if jsondata:
         meta.update(jsondata)
     # custom fields
@@ -502,6 +508,7 @@ def update_ffmeta_from_awsemfile(awsemfile, ff_meta, tbn, custom_qc_fields=None)
     patch_meta = False
     upload_key = awsemfile.key
     status = awsemfile.status
+    printlog("upload_key : %s" % upload_key if upload_key else '')
     printlog("awsemfile res is %s" % status)
     if status == 'COMPLETED':
         patch_meta = OUTFILE_UPDATERS[awsemfile.argument_type]('uploaded',
