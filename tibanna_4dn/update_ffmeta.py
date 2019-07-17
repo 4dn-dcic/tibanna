@@ -176,7 +176,7 @@ def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
     elif ff_meta.awsem_app_name == 'MARGI':
         return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_margi',
-                           file_argument='final_pairs',
+                           file_argument='out_pairs',
                            datafiles=['qc_report.txt'],
                            other_fields=other_fields)
 
