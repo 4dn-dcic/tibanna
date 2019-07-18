@@ -154,10 +154,18 @@ for k in output_target:
 
 # legitimate CWL/WDL output targets
 for k in output_meta:
-    source = output_meta[k].get('path')
+    if isinstance(output_meta[k], list):
+        for kk in output_meta[k]:
+            handle_cwl_wdl_output(kk, k)
+    else:
+        handle_cwl_wdl_output(output_meta[k], k)
+
+
+def handle_cwl_wdl_output(output_meta_item, argname):
+    source = output_meta_item.get('path')
     source_name = source.replace(source_directory, '')
-    if k in output_target:
-        target = output_target[k]  # change file name to what's specified in output_target
+    if argname in output_target:
+        target = output_target[argname]  # change file name to what's specified in output_target
     else:
         target = source_name  # do not change file name
     try:
@@ -167,22 +175,22 @@ for k in output_meta:
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
     try:
-        output_meta[k]['target'] = target
+        output_meta_item['target'] = target
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
 
-    if 'secondaryFiles' in output_meta[k]:
+    if 'secondaryFiles' in output_meta_item:
         n_assigned = 0
         n_target = sum([len(v) for u, v in secondary_output_target.items()])
-        for i, sf in enumerate(output_meta[k]['secondaryFiles']):
+        for i, sf in enumerate(output_meta_item['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
-            if k in secondary_output_target:
-                if len(secondary_output_target[k]) == 1:  # one extra file
-                    target = secondary_output_target[k][i]
+            if argname in secondary_output_target:
+                if len(secondary_output_target[argname]) == 1:  # one extra file
+                    target = secondary_output_target[argname][i]
                     n_assigned = n_assigned + 1
                 else:
-                    for targ in secondary_output_target[k]:
+                    for targ in secondary_output_target[argname]:
                         if targ[-3:] == source_name[-3:]:  # matching the last three letters
                             target = targ
                             n_assigned = n_assigned + 1
