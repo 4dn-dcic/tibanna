@@ -178,8 +178,9 @@ def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
         return _qc_updater(status, awsemfile, ff_meta, tbn,
                            quality_metric='quality_metric_margi',
                            file_argument='out_pairs',
+                           datajson_argument='out_qc',
                            zipped=False,
-                           datafiles=[awsemfile.key],
+                           datafiles=[],
                            other_fields=other_fields)
 
 
