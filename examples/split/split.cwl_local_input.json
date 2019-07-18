@@ -1,0 +1,7 @@
+{ 
+  "inputfile": {
+     "path": "somefile",
+     "class": "File"
+  },
+  "lines": 3 
+}
