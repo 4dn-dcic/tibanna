@@ -54,14 +54,14 @@ def upload_to_s3(s3, source, bucket, target):
                     target_f = os.path.join(target, target_subdir, f)
                 print("source_f=" + source_f)
                 print("target_f=" + target_f)
-                s3.upload_file(source_f, output_bucket, target_f)
+                s3.upload_file(source_f, bucket, target_f)
             # for d in dirs:
             #     source_d = os.path.join(root, d)
             #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
-            #     upload_to_s3(s3, source_d, output_bucket, target_d)
+            #     upload_to_s3(s3, source_d, bucket, target_d)
     else:
         print("source " + source + " is a not a directory")
-        s3.upload_file(source, output_bucket, target)
+        s3.upload_file(source, bucket, target)
 
 
 # read old json file
@@ -170,8 +170,8 @@ for k in output_meta:
             target = re.sub('^' + bucket + '/', '', output_path)
     else:
         target = source_name  # do not change file name
+    print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
     try:
-        print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
         # s3.upload_file(source, bucket, target)
         upload_to_s3(s3, source, bucket, target)
     except Exception as e:
