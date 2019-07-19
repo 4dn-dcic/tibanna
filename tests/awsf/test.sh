@@ -25,6 +25,9 @@ python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzq.run.json te
 # test for shell
 python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzr.run.json - tests/awsf/bqLd8oa7Tdzr.log tests/awsf/bqLd8oa7Tdzq.md5sum.txt tests/awsf/bqLd8oa7Tdzr.postrun.json.out shell
 
+# test for shell w/ multiple output
+python awsf/aws_upload_output_update_json.py tests/awsf/bqLd8oa7Tdzs.run.json - tests/awsf/bqLd8oa7Tdzs.log tests/awsf/bqLd8oa7Tdzs.md5sum.txt tests/awsf/bqLd8oa7Tdzs.postrun.json.out shell
+
 # test for wdl
 # commented out since they will produce 'file not found error'. They work only if the files to upload exist.
 #python awsf/aws_upload_output_update_json.py tests/awsf/wdl/a3T0RlZ09WuR.run.json tests/awsf/wdl/a3T0RlZ09WuR.log.json tests/awsf/wdl/a3T0RlZ09WuR.log tests/awsf/wdl/a3T0RlZ09WuR.md5sum.txt tests/awsf/wdl/a3T0RlZ09WuR.postrun.json.out wdl
