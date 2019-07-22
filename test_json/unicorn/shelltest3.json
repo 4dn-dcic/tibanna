@@ -1,0 +1,30 @@
+{
+  "args": {
+    "app_name": "shell-test",
+    "input_parameters": {},
+    "language": "shell",
+    "command": ["cp -r lalala hahaha", "gunzip lalala2.gz"],
+    "container_image": "4dndcic/ubuntu16.04plus:v1",
+    "output_target": {
+      "file:///data1/shell/hahaha/out_full.chr1:1-10000000.g.vcf.gz": "shell-test-output/hahaha/out_full.chr1:1-10000000.g.vcf.gz",
+      "file:///data1/shell/lalala2": "shell-test-output/lalala2"
+    },
+    "secondary_output_target": {},
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "5",
+    "input_files": {
+      "file:///data1/shell/lalala": "s3://soos-4dn-bucket/cgaptest/test8/out_gvcfs_30x_4regions",
+      "file:///data1/shell/lalala2.gz": "s3://soos-4dn-bucket/cgaptest/test8/out_gvcfs_30x_4regions/out_full.chr1:1-10000000.g.vcf.gz"
+    }
+  },
+  "config": {
+    "ebs_size": 10,
+    "EBS_optimized": false,
+    "shutdown_min": 30,
+    "instance_type": "t3.micro",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "cloudwatch_dashboard": false
+  }
+}
