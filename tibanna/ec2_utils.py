@@ -869,17 +869,17 @@ def upload_workflow_to_s3(unicorn_input):
 
 
 def get_all_objects_in_prefix(bucketname, prefix):
-    lastkey = ''
+    token = ''
     while True:
-        response = boto3.client('s3').list_objects(
+        response = boto3.client('s3').list_objects_v2(
             Bucket=bucketname,
             Prefix=prefix,
-            Marker=lastkey,
+            ContinuationToken=token,
             MaxKeys=1000
         )
         if not response.get('Contents'):
             break
-        lastkey = [item['Key'] for item in response['Contents']][-1]
+        token = response.get('NextContinuationToken', '')
         for item in response['Contents']:
             yield item
 
