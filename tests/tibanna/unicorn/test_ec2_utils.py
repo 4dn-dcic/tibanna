@@ -240,6 +240,21 @@ def test_get_file_size():
                       Delete={'Objects': [{'Key': randomstr}]})
 
 
+def test_get_file_size2():
+    randomstr = 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr + '/1')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr + '/2')
+    size = get_file_size(randomstr, 'tibanna-output')
+    assert size == 8
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr + '/1'},
+                                          {'Key': randomstr + '/2'}]})
+
+
 def test_get_input_size_in_bytes():
     randomstr = 'test-' + create_jobid()
     s3 = boto3.client('s3')
