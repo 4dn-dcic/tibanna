@@ -870,13 +870,11 @@ def upload_workflow_to_s3(unicorn_input):
 
 def get_all_objects_in_prefix(bucketname, prefix):
     token = ''
+    args = {'Bucket': bucketname, 'Prefix': prefix, 'MaxKeys': 1000}
     while True:
-        response = boto3.client('s3').list_objects_v2(
-            Bucket=bucketname,
-            Prefix=prefix,
-            ContinuationToken=token,
-            MaxKeys=1000
-        )
+        if token:
+            args.update({'ContinuationToken': token})
+        response = boto3.client('s3').list_objects_v2(**args)
         if not response.get('Contents'):
             break
         token = response.get('NextContinuationToken', '')
