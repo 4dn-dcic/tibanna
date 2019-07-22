@@ -29,7 +29,7 @@ def main():
 
 def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
     if data_file:
-        cmd = "aws s3 cp s3://{0}/{1} {2} {3}\n"
+        cmd = "aws s3 cp --recursive s3://{0}/{1} {2} {3}\n"
         f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
