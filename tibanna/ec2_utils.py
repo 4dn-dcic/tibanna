@@ -423,9 +423,6 @@ class Execution(object):
             self.cfg.ebs_size = self.benchmark['ebs_size']
 
     def get_input_size_in_bytes(self):
-        """add instance_type, ebs_size, EBS_optimized info based on benchmarking.
-        user-specified values overwrite the benchmarking.
-        """
         input_size_in_bytes = dict()
         for argname, f in iter(self.args.input_files.items()):
             bucket = f['bucket_name']
@@ -871,16 +868,40 @@ def upload_workflow_to_s3(unicorn_input):
         args.cwl_directory_url = url
 
 
+def get_all_objects_in_prefix(bucketname, prefix):
+    lastkey = ''
+    while True:
+        response = boto3.client('s3').list_objects(
+            Bucket=bucketname,
+            Prefix=prefix,
+            Marker=lastkey,
+            MaxKeys=1000
+        )
+        if not response.get('Contents'):
+            break
+        lastkey = [item['Key'] for item in response['Contents']][-1]
+        for item in response['Contents']:
+            yield item
+
+
 def get_file_size(key, bucket, size_in_gb=False):
     '''
     default returns file size in bytes,
     unless size_in_gb = True
     '''
+    printlog("getting file or subfoler size")
     meta = does_key_exist(bucket, key)
     if not meta:
-        raise Exception("key not found: Can't get input file size : %s" % key)
+        try:
+            size = 0
+            printlog("trying to get total size of the prefix")
+            for item in get_all_objects_in_prefix(bucket, key):
+                size += item['Size']
+        except Exception as e:
+            raise Exception("key not found: Can't get input file size : %s\n%s" % (key, str(e)))
+    else:
+        size = meta['ContentLength']
     one_gb = 1073741824
-    size = meta['ContentLength']
     if size_in_gb:
         size = size / one_gb
     return size
