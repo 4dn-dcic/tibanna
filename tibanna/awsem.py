@@ -2,59 +2,53 @@ import copy
 from .exceptions import MalFormattedPostrunJsonException
 from .ec2_utils import Config
 
-class AwsemRunJson(object):
-    pass
 
-
-class AwsemPostRunJson(AwsemRunJson):
-    def __init__(self, Job, config):
-        self.Job = AwsemPostRunJsonJob(Job)
-        self.config = Config(config)
+class SerializableObject(object):
+    def __init__(self):
+        pass
 
     def as_dict(self):
+        # use deepcopy so that changing this dictionary later won't affect the SerializableObject
         d = copy.deepcopy(self.__dict__)
         for k in list(d.keys()):
             if d[k] is None:
                 del d[k]
-        for k, v in d['Job'].items():
-                d['Job'][k] = v.as_dict()
-        return d 
-
-
-class AwsemPostRunJsonJob(object):
-    def __init__(self, App, Input, Output, Log, JOBID,
-                 start_time, end_time, status,
-                 filesystem, instance_id,
-                 total_input_size, total_output_size, total_tmp_size,
-                 Metrics=None):
-        self.App = AwsemPostRunJsonApp(**App)
-        self.Input = AwsemPostRunJsonInput(**Input)
-        self.Output = AwsemPostRunJsonOutput(**Output)
-        self.Log = Log
-        self.JOBID = JOBID
-        self.start_time = start_time
-        self.end_time = end_time
-        self.status = status
-        self.filesystem = filesystem
-        self.instance_id = instance_id
-        self.total_input_size = total_input_size
-        self.total_output_size = total_output_size
-        self.total_tmp_size = total_tmp_size
-        self.Metrics = Metrics
-
-    def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
-        # recursive conversion
-        for attr in ['App', 'Input', 'Output']:
-            d[attr] = d[attr].as_dict()
+        # recursive serialization
+        for k, v in d.items():
+            if isinstance(v, object) and hasattr(v, 'as_dict'):
+                d[k] = copy.deepcopy(v.as_dict())
+            if isinstance(v, list):
+                for i, e in enumerate(v):
+                    if isinstance(e, object) and hasattr(e, 'as_dict'):
+                        d[k][i] = copy.deepcopy(e.as_dict())
+            if isinstance(v, dict):
+                for l, w in v.items():
+                    if isinstance(w, object) and hasattr(w, 'as_dict'):
+                        d[k][l] = copy.deepcopy(w.as_dict())
         return d
 
 
-class AwsemPostRunJsonApp(object):
+class AwsemRunJson(SerializableObject):
+    def __init__(self, Job, config):
+        self.create_Job(Job)
+        self.config = Config(**config)
+
+    def create_Job(self, Job):
+        self.Job = AwsemRunJsonJob(**Job)
+
+
+class AwsemRunJsonJob(SerializableObject):
+    def __init__(self, App, Input, Output, Log, JOBID, start_time):
+        self.App = AwsemRunJsonApp(**App)
+        self.Input = AwsemRunJsonInput(**Input)
+        self.create_Output(Output)
+        self.start_time = start_time
+
+    def create_Output(self, Output):
+        self.Output = AwsemPostRunJsonOutput(**Output)
+
+
+class AwsemRunJsonApp(SerializableObject):
     def __init__(self, App_name, App_version, language,
                  cwl_url=None, main_cwl=None, other_cwl_files=None,
                  wdl_url=None, main_wdl=None, other_wdl_files=None):
@@ -68,36 +62,16 @@ class AwsemPostRunJsonApp(object):
         self.main_wdl = main_wdl
         self.other_wdl_files = other_wdl_files
 
-    def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
-        return d
 
-
-class AwsemPostRunJsonInput(object):
+class AwsemRunJsonInput(SerializableObject):
     def __init__(self, Input_files_data, Input_parameters, Secondary_files_data, Env):
-        self.Input_files_data = {k: AwsemPostRunJsonInputFile(**v) for k, v in Input_files_data.items()}
-        self.Secondary_files_data = {k: AwsemPostRunJsonInputFile(**v) for k, v in Secondary_files_data.items()}
+        self.Input_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_data.items()}
+        self.Secondary_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Secondary_files_data.items()}
         self.Input_parameters = Input_parameters
         self.Env = Env
 
-    def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
-        # recursive conversion
-        for attr in ['Input_files_data', 'Secondary_files_data']:
-            for k, v in d[attr].items():
-                d[attr][k] = v.as_dict()
-        return d
 
-
-class AwsemPostRunJsonInputFile(object):
+class AwsemRunJsonInputFile(SerializableObject):
     def __init__(self, path, profile, rename, **kwargs):  # kwargs includes 'dir' and 'class'
         self.path = path
         self.profile = profile
@@ -107,11 +81,7 @@ class AwsemPostRunJsonInputFile(object):
         self.dir_ = kwargs.get('dir', None)
 
     def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
+        d = super().as_dict()
         # handling reserved name key
         for rk in ['class', 'dir']:
             rk_alt = rk + '_'
@@ -121,14 +91,51 @@ class AwsemPostRunJsonInputFile(object):
         return d
 
 
-class AwsemPostRunJsonOutput(object):
+class AwsemRunJsonOutput(SerializableObject):
     def __init__(self, output_bucket_directory=None, output_target=None,
-                 secondary_output_target=None, alt_cond_output_argnames=None,
-                 **kwargs):  # kwargs includes 'Output files'
+                 secondary_output_target=None, alt_cond_output_argnames=None):
         self.output_bucket_directory = output_bucket_directory
         self.output_target = output_target
         self.secondary_output_target = secondary_output_target
         self.alt_cond_output_argnames = alt_cond_output_argnames
+
+        
+class AwsemPostRunJson(AwsemRunJson):
+    def __init__(self, Job, config):
+        super().__init__(Job, config)
+
+    def create_Job(self, Job):
+        self.Job = AwsemPostRunJsonJob(**Job)
+
+
+class AwsemPostRunJsonJob(AwsemRunJsonJob):
+    def __init__(self, App, Input, Output, Log, JOBID,
+                 start_time, end_time, status,
+                 filesystem, instance_id,
+                 total_input_size, total_output_size, total_tmp_size,
+                 Metrics=None):
+        super().__init__(App, Input, Output, Log, JOBID, start_time)
+        self.end_time = end_time
+        self.status = status
+        self.filesystem = filesystem
+        self.instance_id = instance_id
+        self.total_input_size = total_input_size
+        self.total_output_size = total_output_size
+        self.total_tmp_size = total_tmp_size
+        self.Metrics = Metrics
+
+    def create_Output(self, Output):
+        self.Output = AwsemPostRunJsonOutput(**Output)
+
+
+class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
+    def __init__(self, output_bucket_directory=None, output_target=None,
+                 secondary_output_target=None, alt_cond_output_argnames=None,
+                 **kwargs):  # kwargs includes 'Output files'
+        """This class has an additional 'Output files' field which
+        stores the output from CWL/WDL runs"""
+        super().__init__(output_bucket_directory, output_target,
+                         secondary_output_target, alt_cond_output_argnames)
         if 'Output files' in kwargs:
             self.Output_files_ = {k: AwsemPostRunJsonOutputFile(**v) for k, v in kwargs['Output files'].items()}
 
@@ -137,22 +144,15 @@ class AwsemPostRunJsonOutput(object):
         return self.Output_files_
    
     def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
+        d = super().as_dict()
         # handling reserved name key
         if 'Output_files_' in d:
             d['Output files'] = d['Output_files_']
             del(d['Output_files_'])
-        # recursive conversion
-        for k, v in d['Output files'].items():
-            d['Output files'][k] = v.as_dict()
         return d
 
 
-class AwsemPostRunJsonOutputFile(object):
+class AwsemPostRunJsonOutputFile(SerializableObject):
     def __init__(self, path, target, basename=None, checksum=None,
                  location=None, md5sum=None, size=None, secondaryFiles=None,
                  **kwargs):  # kwargs includes 'class'
@@ -176,17 +176,9 @@ class AwsemPostRunJsonOutputFile(object):
         self.class_ = kwargs.get('class', None)
 
     def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the object
-        d = copy.deepcopy(self.__dict__)
-        if self.secondaryFiles:
-            for i, sf in enumerate(d['secondaryFiles']):
-                d['secondaryFiles'][i] = copy.deepcopy(sf.as_dict())
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
+        d = super().as_dict()
         # handling reserved name key
         if 'class_' in d:
             d['class'] = d['class_']
             del(d['class_'])
         return d
-
