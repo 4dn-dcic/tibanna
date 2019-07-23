@@ -48,3 +48,8 @@ class MissingFieldInInputJsonException(Exception):
 
 class MalFormattedInputJsonException(Exception):
     pass
+
+
+class MalFormattedPostrunJsonException(Exception):
+    pass
+
