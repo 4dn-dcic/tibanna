@@ -1,31 +1,6 @@
-import copy
+from .base import SerializableObject
+from .unicorn import Config
 from .exceptions import MalFormattedPostrunJsonException
-from .ec2_utils import Config
-
-
-class SerializableObject(object):
-    def __init__(self):
-        pass
-
-    def as_dict(self):
-        # use deepcopy so that changing this dictionary later won't affect the SerializableObject
-        d = copy.deepcopy(self.__dict__)
-        for k in list(d.keys()):
-            if d[k] is None:
-                del d[k]
-        # recursive serialization
-        for k, v in d.items():
-            if isinstance(v, object) and hasattr(v, 'as_dict'):
-                d[k] = copy.deepcopy(v.as_dict())
-            if isinstance(v, list):
-                for i, e in enumerate(v):
-                    if isinstance(e, object) and hasattr(e, 'as_dict'):
-                        d[k][i] = copy.deepcopy(e.as_dict())
-            if isinstance(v, dict):
-                for l, w in v.items():
-                    if isinstance(w, object) and hasattr(w, 'as_dict'):
-                        d[k][l] = copy.deepcopy(w.as_dict())
-        return d
 
 
 class AwsemRunJson(SerializableObject):

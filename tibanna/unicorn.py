@@ -31,6 +31,7 @@ from .exceptions import (
     DependencyStillRunningException,
     DependencyFailedException
 )
+from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
@@ -41,7 +42,7 @@ NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavio
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
 
-class UnicornInput(object):
+class UnicornInput(SerializableObject):
     def __init__(self, input_dict):
         if 'jobid' in input_dict and input_dict.get('jobid'):
             self.jobid = input_dict.get('jobid')
@@ -57,10 +58,9 @@ class UnicornInput(object):
         self.auto_fill()
 
     def as_dict(self):
-        d = copy.deepcopy(self.__dict__)
+        d = super().as_dict()
+        d['config'] = copy.deepcopy(d['cfg'])
         del(d['cfg'])
-        d['args'] = self.args.as_dict()
-        d['config'] = self.cfg.as_dict()
         return d
 
     def auto_fill(self):
@@ -104,7 +104,7 @@ class UnicornInput(object):
         args.dependency = copy.deepcopy(dependency)
 
 
-class Args(object):
+class Args(SerializableObject):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -235,11 +235,8 @@ class Args(object):
             return object_key
         return bucket_name, object_key
 
-    def as_dict(self):
-        return copy.deepcopy(self.__dict__)
 
-
-class Config(object):
+class Config(SerializableObject):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -302,9 +299,6 @@ class Config(object):
 
     def fill_other_fields(self, app_name=''):
         self.job_tag = app_name
-
-    def as_dict(self):
-        return copy.deepcopy(self.__dict__)
 
 
 class Execution(object):

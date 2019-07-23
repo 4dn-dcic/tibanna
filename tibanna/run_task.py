@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .ec2_utils import Execution
+from .unicorn import Execution
 from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY
