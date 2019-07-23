@@ -22,14 +22,14 @@ class AwsemPostRunJson(AwsemRunJson):
 
 
 class AwsemPostRunJsonJob(object):
-    def __init(self, App, Input, Output, Log, JOBID,
-               start_time, end_time, status,
-               filesystem, instance_id,
-               total_input_size, total_output_size, total_tmp_size,
-               Metrics=None):
-        self.App = AwsemPostRunJsonApp(App)
-        self.Input = AwsemPostRunJsonInput(Input)
-        self.Output = AwsemPostRunJsonOutput(Output)
+    def __init__(self, App, Input, Output, Log, JOBID,
+                 start_time, end_time, status,
+                 filesystem, instance_id,
+                 total_input_size, total_output_size, total_tmp_size,
+                 Metrics=None):
+        self.App = AwsemPostRunJsonApp(**App)
+        self.Input = AwsemPostRunJsonInput(**Input)
+        self.Output = AwsemPostRunJsonOutput(**Output)
         self.Log = Log
         self.JOBID = JOBID
         self.start_time = start_time
@@ -50,8 +50,7 @@ class AwsemPostRunJsonJob(object):
                 del d[k]
         # recursive conversion
         for attr in ['App', 'Input', 'Output']:
-            for k, v in d[attr].items():
-                d[attr][k] = v.as_dict()
+            d[attr] = d[attr].as_dict()
         return d
 
 
