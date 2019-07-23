@@ -26,7 +26,9 @@ class AwsemRunJsonJob(SerializableObject):
 class AwsemRunJsonApp(SerializableObject):
     def __init__(self, App_name, App_version, language,
                  cwl_url=None, main_cwl=None, other_cwl_files=None,
-                 wdl_url=None, main_wdl=None, other_wdl_files=None):
+                 wdl_url=None, main_wdl=None, other_wdl_files=None,
+                 container_image=None, command=None,
+                 snakemake_url=None, main_snakemake=None, other_snakemake_files=None):
         self.App_name = App_name
         self.App_version = App_version
         self.language = language
