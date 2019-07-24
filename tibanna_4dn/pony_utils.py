@@ -442,7 +442,7 @@ class PonyFinal(SerializableObject):
         self.postrunjson = AwsemPostRunJson(**postrunjson)
 
     @property
-    def output_s3(self):
+    def outbucket(self):
         return self.postrunjson.Job.Output.output_bucket_directory
 
     @property
@@ -533,6 +533,32 @@ class PonyFinal(SerializableObject):
                     accession = file_name.split('.')[0].strip('/')
                     accessions.append(accession)
         return accessions
+
+    def bucket(self, argname):
+        if argname in self.awsem_output_files:
+            return self.outbucket
+        elif argname in self.awsem_input_files:
+            return self.awsem_input_files[argname].dir_
+
+    def s3(self, argname):
+        return s3Utils(self.bucket(argname), self.bucket(argname), self.bucket(argname))
+
+    def status(self, argname):
+        exists = self.s3(argname).does_key_exist(self.file_key(argname), self.bucket(argname))
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+    def read(self, argname):
+        return self.s3(argname).read_s3(self.file_key(argname)).strip()
+
+    def format_if_extras(self, argname):
+        format_if_extras = []
+        for v in self.ff_input_files:
+            if argname == v['workflow_argument_name']:
+                format_if_extras.append(v['format_if_extra'])
+        return format_if_extras
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
