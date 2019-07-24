@@ -19,7 +19,12 @@ from tibanna.nnested_array import (
 from tibanna.utils import (
     printlog
 )
-
+from tibanna.base import (
+    SerializableObject
+)
+from tibanna.awsem import (
+    AwsemPostRunJson
+)
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
@@ -45,7 +50,7 @@ def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
             title = title + ' ' + tag
         title = title + " run " + str(datetime.datetime.now())
 
-    return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
+    return WorkflowRunMetadata(workflow=workflow, awsem_app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,
                                lab=lab, run_platform=run_platform, run_url=run_url,
                                title=title, output_files=output_files, run_status=run_status,
@@ -58,7 +63,7 @@ class WorkflowRunMetadata(object):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, app_name, input_files=[],
+    def __init__(self, workflow, awsem_app_name, input_files=[],
                  parameters=[], uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='AWSEM', title=None, output_files=None,
@@ -70,7 +75,7 @@ class WorkflowRunMetadata(object):
         Workflow_run uuid is auto-generated when the object is created.
         """
         if run_platform == 'AWSEM':
-            self.awsem_app_name = app_name
+            self.awsem_app_name = awsem_app_name
             # self.app_name = app_name
             if awsem_job_id is None:
                 self.awsem_job_id = ''
@@ -429,6 +434,69 @@ class AwsemFile(object):
 
     def read(self):
         return self.s3.read_s3(self.key).strip()
+
+
+class PonyFinal(SerializableObject):
+    def __init__(self, postrunjson, ff_meta, **kwargs):
+        self.ff_meta = WorkflowRunMetadata(**ff_meta)
+        self.postrunjson = AwsemPostRunJson(**postrunjson)
+
+    @property
+    def output_s3(self):
+        return self.postrunjson.Job.Output.output_bucket_directory
+
+    @property
+    def app_name(self):
+        return self.postrunjson.Job.App.App_name
+
+    @property
+    def awsem_output_files(self):
+        """this used to be called output_info"""
+        return self.postrunjson.Job.Output.output_files
+
+    @property
+    def ff_output_files(self):
+        """this used to be called output_files_meta"""
+        return self.ff_meta.output_files
+
+    def output_type(self, argname):
+        for x in self.ff_output_files:
+            if x['workflow_argument_name'] == argname:
+                return x['type']
+        return None
+
+    def md5sum(self, argname, secondary_key=None):
+        if secondary_key:
+            for sf in self.awsem_output_files[argname].secondaryFiles:
+                if sf.target == secondary_key:
+                    return sf.md5sum
+            return None
+        return self.awsem_output_files[argname].md5sum
+
+    def filesize(self, argname, secondary_key=None):
+        if secondary_key:
+            for sf in self.awsem_output_files[argname].secondaryFiles:
+                if sf.target == secondary_key:
+                    return sf.size
+            return None
+        return self.awsem_output_files[argname].size
+
+    def file_format(self, argname, secondary_key=None):
+        for pf in self.ff_output_files:
+            if pf['workflow_argument_name'] == argname:
+                if secondary_key:
+                    if 'extra_files' in pf:
+                        for pfextra in pf['extra_files']:
+                            if pfextra['upload_key'] == secondary_key:
+                                return parse_formatstr(pfextra['file_format'])
+                        printlog("No extra file matching key %s" % secondary_key)
+                        return None
+                    printlog("No extra file")
+                    return None
+                else:
+                    return pf['format']
+        printlog("No workflow run output file matching argname")
+        return None
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
