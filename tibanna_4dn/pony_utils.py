@@ -551,12 +551,12 @@ class PonyFinal(SerializableObject):
             return "FAILED"
 
     def read(self, argname):
-        return self.s3(argname).read_s3(self.file_key(argname)).strip()
+        return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
 
     def format_if_extras(self, argname):
         format_if_extras = []
         for v in self.ff_input_files:
-            if argname == v['workflow_argument_name']:
+            if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
                 format_if_extras.append(v['format_if_extra'])
         return format_if_extras
 
