@@ -455,9 +455,29 @@ class PonyFinal(SerializableObject):
         return self.postrunjson.Job.Output.output_files
 
     @property
+    def awsem_input_files(self):
+        return self.postrunjson.Job.Input.Input_files_data
+
+    @property
     def ff_output_files(self):
         """this used to be called output_files_meta"""
         return self.ff_meta.output_files
+
+    @property
+    def ff_input_files(self):
+        return self.ff_meta.input_files
+
+    @property
+    def ff_files(self):
+        return self.ff_input_files + self.ff_output_files
+
+    @property
+    def input_argnames(self):
+        return list(self.awsem_input_files.keys())
+
+    @property
+    def output_argnames(self):
+        return list(self.awsem_output_files.keys())
 
     def output_type(self, argname):
         for x in self.ff_output_files:
@@ -491,12 +511,28 @@ class PonyFinal(SerializableObject):
                                 return parse_formatstr(pfextra['file_format'])
                         printlog("No extra file matching key %s" % secondary_key)
                         return None
-                    printlog("No extra file")
+                    printlog("No extra file for argname %s" % argname)
                     return None
                 else:
                     return pf['format']
-        printlog("No workflow run output file matching argname")
+        printlog("No workflow run output file matching argname %s" % argname)
         return None
+
+    def file_key(self, argname):
+        if argname in self.awsem_output_files:
+            return self.awsem_output_files[argname].target
+        elif argname in self.awsem_input_files:
+            return self.awsem_input_files[argname].path
+
+    def accessions(self, argname):
+        accessions = []
+        for v in self.ff_files:
+            if argname == v['workflow_argument_name']:
+                if v['type'] in ['Output processed file', 'Input file']:
+                    file_name = v['upload_key'].split('/')[-1]
+                    accession = file_name.split('.')[0].strip('/')
+                    accessions.append(accession)
+        return accessions
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
