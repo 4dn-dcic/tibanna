@@ -579,14 +579,14 @@ class Execution(object):
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
                                                              'rename': value.get('rename'),
-                                                             'profile': value.get('profile', '')
+                                                             'profile': value.get('profile', ''),
                                                              'unzip': value.get('unzip', '')}
         for item, value in iter(args.secondary_files.items()):
             pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                                  'dir': value.get('bucket_name'),
                                                                  'path': value.get('object_key'),
                                                                  'rename': value.get('rename'),
-                                                                 'profile': value.get('profile', '')
+                                                                 'profile': value.get('profile', ''),
                                                                  'unzip': value.get('unzip', '')}
         # remove the password and keyname info
         if 'password' in pre['config']:
