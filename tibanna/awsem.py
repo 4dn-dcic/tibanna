@@ -1,5 +1,5 @@
 from .base import SerializableObject
-from .unicorn import Config
+from .ec2_utils import Config
 from .exceptions import MalFormattedPostrunJsonException
 
 

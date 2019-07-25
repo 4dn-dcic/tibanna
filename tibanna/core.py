@@ -34,7 +34,7 @@ from .utils import (
     printlog,
     create_jobid,
 )
-from .unicorn import (
+from .ec2_utils import (
     UnicornInput,
     upload_workflow_to_s3
 )
