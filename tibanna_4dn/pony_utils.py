@@ -25,6 +25,9 @@ from tibanna.base import (
 from tibanna.awsem import (
     AwsemPostRunJson
 )
+from .config import (
+    higlass_config
+)
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
@@ -437,9 +440,19 @@ class AwsemFile(object):
 
 
 class PonyFinal(SerializableObject):
-    def __init__(self, postrunjson, ff_meta, **kwargs):
+    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, **kwargs):
         self.ff_meta = WorkflowRunMetadata(**ff_meta)
         self.postrunjson = AwsemPostRunJson(**postrunjson)
+        if pf_meta:
+            self.pf_output_files = {pf['uuid']: ProcessedFileMetadata(**pf) for pf in pf_meta}
+        # if _tibanna is not set, still proceed with the other functionalities of the class
+        self.tibanna_settings = None
+        if _tibanna and 'env' in _tibanna:
+            try:
+                self.tibanna_settings = TibannaSettings(_tibanna['env'], settings=_tibanna)
+            except Exception as e:
+                raise TibannaStartException("%s" % e)
+        self.pf_patch = dict()  # patch json for pfs
 
     @property
     def outbucket(self):
@@ -485,7 +498,13 @@ class PonyFinal(SerializableObject):
                 return x['type']
         return None
 
-    def md5sum(self, argname, secondary_key=None):
+    def md5sum(self, argname=None, pf_uuid=None, secondary_key=None):
+        if argname:
+            pass
+        elif pf_uuid:
+            argname = self.pf2argname(pf_uuid)
+        else:
+            raise Exception("At least argname or pf_uuid must be provided to get md5sum")
         if secondary_key:
             for sf in self.awsem_output_files[argname].secondaryFiles:
                 if sf.target == secondary_key:
@@ -493,7 +512,13 @@ class PonyFinal(SerializableObject):
             return None
         return self.awsem_output_files[argname].md5sum
 
-    def filesize(self, argname, secondary_key=None):
+    def filesize(self, argname=None, pf_uuid=None, secondary_key=None):
+        if argname:
+            pass
+        elif pf_uuid:
+            argname = self.pf2argname(pf_uuid)
+        else:
+            raise Exception("At least argname or pf_uuid must be provided to get filesize")
         if secondary_key:
             for sf in self.awsem_output_files[argname].secondaryFiles:
                 if sf.target == secondary_key:
@@ -518,11 +543,18 @@ class PonyFinal(SerializableObject):
         printlog("No workflow run output file matching argname %s" % argname)
         return None
 
-    def file_key(self, argname):
-        if argname in self.awsem_output_files:
-            return self.awsem_output_files[argname].target
-        elif argname in self.awsem_input_files:
-            return self.awsem_input_files[argname].path
+    def file_key(self, argname=None, pf_uuid=None):
+        if argname:
+            if argname in self.awsem_output_files:
+                return self.awsem_output_files[argname].target
+            elif argname in self.awsem_input_files:
+                return self.awsem_input_files[argname].path
+        elif pf_uuid:
+            for of in self.ff_output_files:
+                if of['type'] == 'Output processed file' and of['value'] == pf_uuid:
+                    return of['upload_key']
+        else:
+            raise Exception("Either argname or pf must be provided to get a file_key")
 
     def accessions(self, argname):
         accessions = []
@@ -543,22 +575,95 @@ class PonyFinal(SerializableObject):
     def s3(self, argname):
         return s3Utils(self.bucket(argname), self.bucket(argname), self.bucket(argname))
 
-    def status(self, argname):
-        exists = self.s3(argname).does_key_exist(self.file_key(argname), self.bucket(argname))
-        if exists:
-            return "COMPLETED"
+    def status(self, argname=None, pf_uuid=None):
+        """check file existence as status either per argname or per pf object"""
+        if argname:
+            key = self.file_key(argname)
+        elif pf_uuid:
+            key = self.file_key(pf_uuid=pf_uuid)
+            argname = self.pf2argname(pf_uuid)
         else:
-            return "FAILED"
+            raise Exception("Either argname or pf_uuid must be provided to get status.")
+        if not isinstance(key, list):
+            key = [key]
+        for k in key:
+            try:
+                exists = self.s3(argname).does_key_exist(key, self.bucket(argname))
+                if not exists:
+                    return "FAILED"
+            except:
+                return "FAILED" 
+        return "COMPLETED"
+
+    def pf2argname(self, pf_uuid):
+        for argname in self.output_argnames:
+            if pf_uuid in self.pf_uuids(argname):
+                return argname
+        return None
+
+    def pf_uuids(self, argname):
+        uuids = []
+        for of in self.ff_output_files:
+            if argname == of['workflow_argument_name']:
+                if of['type'] == 'Output processed file':
+                    uuids.append(of['value'])
+        return uuids
 
     def read(self, argname):
+        """This function is useful for reading md5 report of qc report"""
         return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
 
     def format_if_extras(self, argname):
         format_if_extras = []
-        for v in self.ff_input_files:
+        for v in self.ff_files:
             if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
                 format_if_extras.append(v['format_if_extra'])
         return format_if_extras
+       
+    def pf(self, pf_uuid):
+        return self.pf_output_files.get(pf_uuid, None)
+ 
+    def update_pf(self, pf_uuid):
+        if self.status(pf_uuid=pf_uuid) == 'COMPLETED':
+            self.add_md5_filesize_to_pf(pf_uuid)
+            self.add_higlass_to_pf(pf_uuid)
+            self.add_md5_filesize_to_pf_extra(pf_uuid)
+
+    def add_md5_filesize_to_pf(self, pf_uuid):
+        self.pf(pf_uuid).md5sum = self.md5sum(pf_uuid=pf_uuid)
+        self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
+        self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size'])
+
+    def ff_output_file(self, argname):
+        for v in self.ff_output_files:
+            if argname == v['workflow_argument_name']:
+                return v
+        return None
+
+    def pf_extra_file(self, pf_uuid, file_format):
+        for extra in self.pf(pf_uuid).extra_files:
+            if extra['file_format'] == file_format:
+                return extra
+
+    def add_md5_filesize_to_pf_extra(self, pf_uuid):
+        argname = self.pf2argname(pf_uuid)
+        ffout = self.ff_output_file(argname)
+        if 'extra_files' in ffout:
+            for extra in ffout['extra_files']:
+               md5 = self.md5sum(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
+               size = self.filesize(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
+               pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
+               pf_extra.md5sum = md5
+               pf_extra.file_size = size
+        self.add_to_pf_patch(pf_uuid, 'extra_files')
+
+    def add_to_pf_patch(self, pf_uuid, fields):
+        if not isinstance(fields, list):
+            fields = [fields]
+        for f in fields:
+            if pf_uuid not in self.pf_patch:
+                self.pf_patch = {pf_uuid: {}}
+            self.pf_patch[pf_uuid].update({f: self.pf(pf_uuid).getattr(f)})
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
@@ -716,3 +821,21 @@ def post_random_file(bucket, ff_key,
     response = post_metadata(newfile, schema, key=ff_key)
     print(response)
     return newfile
+
+
+def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
+    if not genome_assembly:
+        return None
+    payload = {"filepath": bucket + "/" + key,
+               "filetype": filetype, "datatype": datatype,
+               "coordSystem": genome_assembly}
+    higlass_keys = tbn.s3.get_higlass_key()
+    if not isinstance(higlass_keys, dict):
+        raise Exception("Bad higlass keys found: %s" % higlass_keys)
+    auth = (higlass_keys['key'], higlass_keys['secret'])
+    headers = {'Content-Type': 'application/json',
+               'Accept': 'application/json'}
+    res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
+                        data=json.dumps(payload), auth=auth, headers=headers)
+    printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
+    return res.json()['uuid']

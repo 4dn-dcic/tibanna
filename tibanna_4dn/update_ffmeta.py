@@ -12,7 +12,8 @@ from .pony_utils import (
   Awsem,
   TibannaSettings,
   create_ffmeta_awsem,
-  parse_formatstr
+  parse_formatstr,
+  register_to_higlass
 )
 from tibanna.utils import (
     printlog,
@@ -27,49 +28,22 @@ def donothing(status, sbg, ff_meta, ff_key=None, **kwargs):
     return None
 
 
-def register_to_higlass(tbn, awsemfile_bucket, awsemfile_key, filetype, datatype):
-    payload = {"filepath": awsemfile_bucket + "/" + awsemfile_key,
-               "filetype": filetype, "datatype": datatype}
-    higlass_keys = tbn.s3.get_higlass_key()
-    if not isinstance(higlass_keys, dict):
-        raise Exception("Bad higlass keys found: %s" % higlass_keys)
-    auth = (higlass_keys['key'], higlass_keys['secret'])
-    headers = {'Content-Type': 'application/json',
-               'Accept': 'application/json'}
-    res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
-                        data=json.dumps(payload), auth=auth, headers=headers)
-    printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
-    return res.json()['uuid']
-
-
 def add_higlass_to_pf(pf, tbn, awsemfile):
     def register_to_higlass_bucket(key, file_format, file_type):
         return register_to_higlass(tbn, awsemfile.bucket, key, file_format, file_type)
 
     if awsemfile.bucket in ff_utils.HIGLASS_BUCKETS:
         higlass_uid = None
-        # register mcool/bigwig with fourfront-higlass
-        if pf.file_format == "mcool":
-            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'cooler', 'matrix')
-        elif pf.file_format == "bw" or pf.file_format == "bigbed":
-            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'bigwig', 'vector')
-        elif pf.file_format == "beddb":
-            higlass_uid = register_to_higlass_bucket(awsemfile.key, 'beddb', 'bedlike')
-        # bedgraph: register extra bigwig file to higlass (if such extra file exists)
-        elif pf.file_format == 'bg':
-            if hasattr(pf, 'extra_files'):
-                for pfextra in pf.extra_files:
-                    if pfextra.get('file_format') == 'bw':
+        for hgcf in higlass_config:
+            if pf.file_format == hgcf['file_format']:
+                if not hgcf['extra']:
+                    higlass_uid = register_to_higlass_bucket(awsemfile.key, hgcf['file_type'], hgcf['data_type'])
+                else:
+                    for pfextra in pf.extra_files:
+                    if pfextra.get('file_format') == hgcf['extra']:
                         fe_map = FormatExtensionMap(tbn.ff_keys)
                         extra_file_key = get_extra_file_key('bg', awsemfile.key, 'bw', fe_map)
-                        higlass_uid = register_to_higlass_bucket(extra_file_key, 'bigwig', 'vector')
-        elif pf.file_format == 'bed':
-            if hasattr(pf, 'extra_files'):
-                for pfextra in pf.extra_files:
-                    if pfextra.get('file_format') == 'beddb':
-                        fe_map = FormatExtensionMap(tbn.ff_keys)
-                        extra_file_key = get_extra_file_key('bed', awsemfile.key, 'beddb', fe_map)
-                        higlass_uid = register_to_higlass_bucket(extra_file_key, 'beddb', 'bedlike')
+                        higlass_uid = register_to_higlass_bucket(extra_file_key, hgcf['file_type'], hgcf['data_type'])
         pf.add_higlass_uid(higlass_uid)
 
 
