@@ -19,7 +19,12 @@ from tibanna.nnested_array import (
 from tibanna.utils import (
     printlog
 )
-
+from tibanna.base import (
+    SerializableObject
+)
+from tibanna.awsem import (
+    AwsemPostRunJson
+)
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
@@ -45,7 +50,7 @@ def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
             title = title + ' ' + tag
         title = title + " run " + str(datetime.datetime.now())
 
-    return WorkflowRunMetadata(workflow=workflow, app_name=app_name, input_files=input_files,
+    return WorkflowRunMetadata(workflow=workflow, awsem_app_name=app_name, input_files=input_files,
                                parameters=parameters, uuid=uuid, award=award,
                                lab=lab, run_platform=run_platform, run_url=run_url,
                                title=title, output_files=output_files, run_status=run_status,
@@ -58,7 +63,7 @@ class WorkflowRunMetadata(object):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, app_name, input_files=[],
+    def __init__(self, workflow, awsem_app_name, input_files=[],
                  parameters=[], uuid=None,
                  award='1U01CA200059-01', lab='4dn-dcic-lab',
                  run_platform='AWSEM', title=None, output_files=None,
@@ -70,7 +75,7 @@ class WorkflowRunMetadata(object):
         Workflow_run uuid is auto-generated when the object is created.
         """
         if run_platform == 'AWSEM':
-            self.awsem_app_name = app_name
+            self.awsem_app_name = awsem_app_name
             # self.app_name = app_name
             if awsem_job_id is None:
                 self.awsem_job_id = ''
@@ -429,6 +434,131 @@ class AwsemFile(object):
 
     def read(self):
         return self.s3.read_s3(self.key).strip()
+
+
+class PonyFinal(SerializableObject):
+    def __init__(self, postrunjson, ff_meta, **kwargs):
+        self.ff_meta = WorkflowRunMetadata(**ff_meta)
+        self.postrunjson = AwsemPostRunJson(**postrunjson)
+
+    @property
+    def outbucket(self):
+        return self.postrunjson.Job.Output.output_bucket_directory
+
+    @property
+    def app_name(self):
+        return self.postrunjson.Job.App.App_name
+
+    @property
+    def awsem_output_files(self):
+        """this used to be called output_info"""
+        return self.postrunjson.Job.Output.output_files
+
+    @property
+    def awsem_input_files(self):
+        return self.postrunjson.Job.Input.Input_files_data
+
+    @property
+    def ff_output_files(self):
+        """this used to be called output_files_meta"""
+        return self.ff_meta.output_files
+
+    @property
+    def ff_input_files(self):
+        return self.ff_meta.input_files
+
+    @property
+    def ff_files(self):
+        return self.ff_input_files + self.ff_output_files
+
+    @property
+    def input_argnames(self):
+        return list(self.awsem_input_files.keys())
+
+    @property
+    def output_argnames(self):
+        return list(self.awsem_output_files.keys())
+
+    def output_type(self, argname):
+        for x in self.ff_output_files:
+            if x['workflow_argument_name'] == argname:
+                return x['type']
+        return None
+
+    def md5sum(self, argname, secondary_key=None):
+        if secondary_key:
+            for sf in self.awsem_output_files[argname].secondaryFiles:
+                if sf.target == secondary_key:
+                    return sf.md5sum
+            return None
+        return self.awsem_output_files[argname].md5sum
+
+    def filesize(self, argname, secondary_key=None):
+        if secondary_key:
+            for sf in self.awsem_output_files[argname].secondaryFiles:
+                if sf.target == secondary_key:
+                    return sf.size
+            return None
+        return self.awsem_output_files[argname].size
+
+    def file_format(self, argname, secondary_key=None):
+        for pf in self.ff_output_files:
+            if pf['workflow_argument_name'] == argname:
+                if secondary_key:
+                    if 'extra_files' in pf:
+                        for pfextra in pf['extra_files']:
+                            if pfextra['upload_key'] == secondary_key:
+                                return parse_formatstr(pfextra['file_format'])
+                        printlog("No extra file matching key %s" % secondary_key)
+                        return None
+                    printlog("No extra file for argname %s" % argname)
+                    return None
+                else:
+                    return pf['format']
+        printlog("No workflow run output file matching argname %s" % argname)
+        return None
+
+    def file_key(self, argname):
+        if argname in self.awsem_output_files:
+            return self.awsem_output_files[argname].target
+        elif argname in self.awsem_input_files:
+            return self.awsem_input_files[argname].path
+
+    def accessions(self, argname):
+        accessions = []
+        for v in self.ff_files:
+            if argname == v['workflow_argument_name']:
+                if v['type'] in ['Output processed file', 'Input file']:
+                    file_name = v['upload_key'].split('/')[-1]
+                    accession = file_name.split('.')[0].strip('/')
+                    accessions.append(accession)
+        return accessions
+
+    def bucket(self, argname):
+        if argname in self.awsem_output_files:
+            return self.outbucket
+        elif argname in self.awsem_input_files:
+            return self.awsem_input_files[argname].dir_
+
+    def s3(self, argname):
+        return s3Utils(self.bucket(argname), self.bucket(argname), self.bucket(argname))
+
+    def status(self, argname):
+        exists = self.s3(argname).does_key_exist(self.file_key(argname), self.bucket(argname))
+        if exists:
+            return "COMPLETED"
+        else:
+            return "FAILED"
+
+    def read(self, argname):
+        return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
+
+    def format_if_extras(self, argname):
+        format_if_extras = []
+        for v in self.ff_input_files:
+            if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
+                format_if_extras.append(v['format_if_extra'])
+        return format_if_extras
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner

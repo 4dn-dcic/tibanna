@@ -78,8 +78,10 @@ class AwsemRunJsonOutput(SerializableObject):
 
         
 class AwsemPostRunJson(AwsemRunJson):
-    def __init__(self, Job, config):
+    def __init__(self, Job, config, commands=None):
         super().__init__(Job, config)
+        if commands:
+            self.commands = commands
 
     def create_Job(self, Job):
         self.Job = AwsemPostRunJsonJob(**Job)
