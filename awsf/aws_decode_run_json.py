@@ -27,12 +27,19 @@ def main():
     create_env_def_file(env_filename, Dict, language)
 
 
-def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
+def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip=''):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
-        cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
-        f.write(cmd.format(data_bucket, data_file, target, profile_flag))
+        if not unzip:
+            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
+        elif unzip == 'gz':
+            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; gunzip {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n"
+	elif unzip == 'bz2':
+            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; bzip2 -d {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n"
+	else:
+            raise Exception('unzip value must be gz or bz2')
+	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
 # create a download command list file from the information in json
@@ -58,6 +65,7 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                 profile_flag = "--profile " + profile if profile else ''
                 path1 = v["path"]
                 rename1 = v.get("rename", None)
+                unzip = v["unzip"]
                 if not rename1:
                     rename1 = path1
                 if isinstance(path1, list):
@@ -67,20 +75,20 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                                 if isinstance(path3, list):
                                     for data_file, rename4 in zip(path3, rename3):
                                         target = target_template % rename4
-                                        add_download_cmd(data_bucket, data_file, target, profile_flag, f)
+                                        add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
                                 else:
                                     data_file = path3
                                     target = target_template % rename3
-                                    add_download_cmd(data_bucket, data_file, target, profile_flag, f)
+                                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
                         else:
                             data_file = path2
                             target = target_template % rename2
-                            add_download_cmd(data_bucket, data_file, target, profile_flag, f)
+                            add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
                 else:
                     data_file = path1
                     if not target:
                         target = target_template % rename1
-                    add_download_cmd(data_bucket, data_file, target, profile_flag, f)
+                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
 
 
 def file2cwlfile(filename, dir):
