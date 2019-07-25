@@ -65,7 +65,7 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                 profile_flag = "--profile " + profile if profile else ''
                 path1 = v["path"]
                 rename1 = v.get("rename", None)
-                unzip = v["unzip"]
+                unzip = v.get("unzip", None)
                 if not rename1:
                     rename1 = path1
                 if isinstance(path1, list):
