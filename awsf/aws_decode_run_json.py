@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import json
 import sys
+import re
 
 downloadlist_filename = "download_command_list.txt"
 input_yml_filename = "inputs.yml"
@@ -91,13 +92,13 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
 
 def file2cwlfile(filename, dir, unzip):
     if unzip:
-        filename = filename.split('.{0}'.format(unzip))[0]
+        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
     return {"class": 'File', "path": dir + '/' + filename}
 
 
 def file2wdlfile(filename, dir, unzip):
     if unzip:
-        filename = filename.split('.{0}'.format(unzip))[0]
+        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
     return dir + '/' + filename
 
 
@@ -144,7 +145,7 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     yml[item] = v
                 else:
                     if unzip:
-                        v['path'] = v['path'].split('.{0}'.format(unzip))[0]
+                        v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
                     v['path'] = INPUT_DIR + '/' + v['path']
                     yml[item] = v.copy()
         json.dump(yml, f_yml, indent=4, sort_keys=True)
@@ -186,7 +187,7 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                             yml[item].append(file2wdlfile(pi, INPUT_DIR, unzip))
                 else:
                     if unzip:
-                        v['path'] = v['path'].split('.{0}'.format(unzip))[0]
+                        v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
                     yml[item] = INPUT_DIR + '/' + v['path']
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
