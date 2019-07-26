@@ -651,16 +651,19 @@ class PonyFinal(SerializableObject):
     # update functions
     def update_pf(self, pf_uuid):
         if self.status(pf_uuid=pf_uuid) == 'COMPLETED':
-            self.add_md5_filesize_to_pf(pf_uuid)
+            self.add_updates_to_pf(pf_uuid)
+            self.add_updates_to_pf_extra(pf_uuid)
             self.add_higlass_to_pf(pf_uuid)
-            self.add_md5_filesize_to_pf_extra(pf_uuid)
 
-    def add_md5_filesize_to_pf(self, pf_uuid):
+    def add_updates_to_pf(self, pf_uuid):
+        """update md5sum, file_size, status for pf itself"""
         self.pf(pf_uuid).md5sum = self.md5sum(pf_uuid=pf_uuid)
         self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
-        self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size'])
+        self.pf(pf_uuid).status = 'uploaded'
+        self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size', 'status'])
 
-    def add_md5_filesize_to_pf_extra(self, pf_uuid):
+    def add_updates_to_pf_extra(self, pf_uuid):
+        """update md5sum, file_size, status for extra file"""
         argname = self.pf2argname(pf_uuid)
         ffout = self.ff_output_file(argname)
         if 'extra_files' in ffout:
@@ -670,6 +673,7 @@ class PonyFinal(SerializableObject):
                pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
                pf_extra.md5sum = md5
                pf_extra.file_size = size
+               pf_extra.status = 'uploaded'
             self.add_to_pf_patch(pf_uuid, 'extra_files')
 
     def add_to_pf_patch(self, pf_uuid, fields):
