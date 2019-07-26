@@ -458,7 +458,7 @@ class PonyFinal(SerializableObject):
                 self.tibanna_settings = TibannaSettings(_tibanna['env'], settings=_tibanna)
             except Exception as e:
                 raise TibannaStartException("%s" % e)
-        self.pf_patch = dict()  # patch json for pfs
+        self.patch_items = dict()  # a collection of patch jsons (key = uuid)
 
     @property
     def app_name(self):
@@ -543,6 +543,19 @@ class PonyFinal(SerializableObject):
             if cmp_fileformat(extra['file_format'], file_format):
                 return extra
         return None
+
+    # metadata object-related basic functionalities
+    def file_items(self, argname):
+        """get the actual metadata file items for a specific argname"""
+        items_list = []
+        for acc in self.accessions(argname):
+            res = ff_utils.get_metadata(acc,
+                                        key=self.tibanna_settings.ff_keys,
+                                        ff_env=self.tibanna_settings.env,
+                                        add_on='frame=object',
+                                        check_queue=True)
+            items_list = append(res)
+        return items_list
 
     # s3-related functionalities
     @property
@@ -634,12 +647,20 @@ class PonyFinal(SerializableObject):
 
     def accessions(self, argname):
         accessions = []
-        for v in self.ff_files:
-            if argname == v['workflow_argument_name']:
-                if v['type'] in ['Output processed file', 'Input file']:
+        # argname is output
+        v = self.ff_output_file(argname)
+        if v and v['type'] == 'Output processed file':
+            file_name = v['upload_key'].split('/')[-1]
+            accession = file_name.split('.')[0].strip('/')
+            accessions.append(accession)
+        # argname is input
+        else:
+            for v in self.ff_input_files:
+                if argname == v['workflow_argument_name']:
                     file_name = v['upload_key'].split('/')[-1]
                     accession = file_name.split('.')[0].strip('/')
                     accessions.append(accession)
+                    # do not break - there may be multiple entries for the same argname
         return accessions
 
     def format_if_extras(self, argname):
@@ -686,16 +707,16 @@ class PonyFinal(SerializableObject):
             self.add_updates_to_pf_extra(pf_uuid)
             self.add_higlass_to_pf(pf_uuid)
 
-    def add_to_pf_patch(self, pf_uuid, fields):
-        """add entries from pf object to pf_patch for a later pf patch"""
+    def add_to_patch_items(self, pf_uuid, fields):
+        """add entries from pf object to patch_items for a later pf patch"""
         if not isinstance(fields, list):
-            if pf_uuid not in self.pf_patch:
-                self.pf_patch = {pf_uuid: {}}
+            if pf_uuid not in self.patch_items:
+                self.patch_items = {pf_uuid: {}}
             field_val = self.pf(pf_uuid).__getattribute__(fields)
-            self.pf_patch[pf_uuid].update({fields: field_val})
+            self.patch_items[pf_uuid].update({fields: field_val})
         else:
             for f in fields:
-                self.add_to_pf_patch(pf_uuid, f)
+                self.add_to_patch_items(pf_uuid, f)
 
     def add_updates_to_pf(self, pf_uuid):
         """update md5sum, file_size, status for pf itself"""
@@ -704,7 +725,7 @@ class PonyFinal(SerializableObject):
         self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
         self.pf(pf_uuid).status = 'uploaded'
         # prepare for fourfront patch
-        self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size', 'status'])
+        self.add_to_patch_items(pf_uuid, ['md5sum', 'file_size', 'status'])
 
     def add_updates_to_pf_extra(self, pf_uuid):
         """update md5sum, file_size, status for extra file"""
@@ -720,7 +741,7 @@ class PonyFinal(SerializableObject):
                 pf_extra['file_size'] = size
                 pf_extra['status'] = 'uploaded'
             # prepare for fourfront patch
-            self.add_to_pf_patch(pf_uuid, 'extra_files')
+            self.add_to_patch_items(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
         if self.bucket(pf_uuid) not in ff_utils.HIGLASS_BUCKETS:
@@ -750,7 +771,7 @@ class PonyFinal(SerializableObject):
             # update the class object
             self.pf(pf_uuid).higlass_uid = higlass_uid
             # prepare for fourfront patch
-            self.add_to_pf_patch(pf_uuid, 'higlass_uid')
+            self.add_to_patch_items(pf_uuid, 'higlass_uid')
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
