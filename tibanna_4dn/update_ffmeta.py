@@ -175,6 +175,12 @@ def qc_updater(status, awsemfile, ff_meta, tbn, other_fields=None):
                            datajson_argument='atac.qc_json',
                            report_html=awsemfile.key,
                            datafiles=[], zipped=False, other_fields=other_fields)
+    elif ff_meta.awsem_app_name == 'MARGI':
+        return _qc_updater(status, awsemfile, ff_meta, tbn,
+                           quality_metric='quality_metric_margi',
+                           file_argument='final_pairs',
+                           datafiles=['qc_report.txt'],
+                           other_fields=other_fields)
 
 
 def _qc_updater(status, awsemfile, ff_meta, tbn, quality_metric='quality_metric_fastqc',
@@ -560,7 +566,9 @@ def update_ffmeta(input_json):
                 printlog("Cannot send email: %s" % e)
         raise Exception(input_json_copy.get('error'))
 
-    metadata_only = input_json_copy['config'].get('runmode', {}).get('metadata_only', False)
+    metadata_only = input_json_copy.get('metadata_only', False)
+    if not metadata_only:
+        metadata_only = input_json_copy['config'].get('runmode', {}).get('metadata_only', False)
 
     pf_meta = [ProcessedFileMetadata(**pf) for pf in input_json_copy.get('pf_meta')]
     custom_qc_fields = input_json_copy.get('custom_qc_fields', None)

@@ -1,5 +1,5 @@
-python-lambda-4dn==0.12.0
-Benchmark-4dn==0.5.3
+python-lambda-4dn==0.12.1
+Benchmark-4dn==0.5.4
 botocore==1.10.42
 boto3==1.7.42
 urllib3==1.23

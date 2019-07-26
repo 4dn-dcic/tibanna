@@ -18,7 +18,7 @@ Example
 ::
 
     from tibanna.core import API
-    API().run_workflow(input_json='myrun.json')
+    API().run_workflow(input_json='myrun.json')  # json file or dictionary object
 
 
 Basic_commands
@@ -131,7 +131,7 @@ To run workflow
 
 ::
 
-    API().run_workflow(input_json=<input_json_file>, ...)
+    API().run_workflow(input_json=<input_json_file|input_dict>, ...)
 
 
 **Options**
@@ -332,7 +332,6 @@ For example, let's say we run the following job by mistake.
 ::
 
     API().run_workflow(input_json='fastqc.json')
-
 
 
 The following message is printed out

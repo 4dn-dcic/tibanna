@@ -36,18 +36,21 @@ def check_task(input_json):
     job_success = "%s.success" % jobid
     job_error = "%s.error" % jobid
 
+    public_postrun_json = input_json_copy['config'].get('public_postrun_json', False)
+
     # check to see ensure this job has started else fail
     if not does_key_exist(bucket_name, job_started):
         raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
 
     # check to see if job has error, report if so
     if does_key_exist(bucket_name, job_error):
-        handle_postrun_json(bucket_name, jobid, input_json_copy, False)
-        raise AWSEMJobErrorException("Job encountered an error check log using invoke log --job-id=%s" % jobid)
+        handle_postrun_json(bucket_name, jobid, input_json_copy, False, public_read=public_postrun_json)
+        errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
+        raise AWSEMJobErrorException(errmsg)
 
     # check to see if job has completed
     if does_key_exist(bucket_name, job_success):
-        handle_postrun_json(bucket_name, jobid, input_json_copy)
+        handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
         print("completed successfully")
         return input_json_copy
 
@@ -93,7 +96,7 @@ def check_task(input_json):
     raise StillRunningException("job %s still running" % jobid)
 
 
-def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesystem=None):
+def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesystem=None, public_read=False):
     postrunjson = "%s.postrun.json" % jobid
     if not does_key_exist(bucket_name, postrunjson):
         if raise_error:
@@ -101,12 +104,14 @@ def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesy
             raise Exception("Postrun json not found at %s" % postrunjson_location)
         return None
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
-    if 'instance_id' in input_json:
-        update_postrun_json(postrunjsoncontent, input_json['instance_id'], filesystem)
+    if 'instance_id' in input_json['config']:
+        update_postrun_json(postrunjsoncontent, input_json['config']['instance_id'], filesystem)
     printlog("inside funtion handle_postrun_json")
-    # printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
+    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
+    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
+    acl = 'public-read' if public_read else 'private'
     try:
-        boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson,
+        boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
                                       Body=json.dumps(postrunjsoncontent, indent=4).encode())
     except Exception as e:
         raise "error in updating postrunjson %s" % str(e)
@@ -138,3 +143,5 @@ def update_postrun_json(postrunjsoncontent, instance_id, filesystem=None):
             return None
         job['instance_id'] = instance_id
         job['Metrics'] = TibannaResource(instance_id, filesystem, starttime, endtime).as_dict()
+    else:
+        raise Exception("Job not found in postrunjson")

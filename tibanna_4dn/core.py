@@ -24,6 +24,7 @@ class API(_API):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
     sfn_type = 'pony'
+    do_not_delete = ['validate_md5_s3_trigger']
 
     def __init__(self):
         pass
@@ -33,8 +34,7 @@ class API(_API):
         if envlist:
             return envlist
         envlist_pony = {
-            'run_workflow': {'SECRET': SECRET,
-                             'TIBANNA_AWS_REGION': AWS_REGION,
+            'run_workflow': {'TIBANNA_AWS_REGION': AWS_REGION,
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
             'start_run_awsem': {'SECRET': SECRET,
                                 'TIBANNA_AWS_REGION': AWS_REGION,

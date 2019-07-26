@@ -80,6 +80,7 @@ class API(object):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
     sfn_type = 'unicorn'
+    do_not_delete = []  # list of lambda names that should not be deleted before updating
 
     def __init__(self):
         pass
@@ -101,6 +102,8 @@ class API(object):
                 run_name += '-' + str(uuid4())
         except Exception:
             pass
+        if len(run_name) > 80:
+            run_name = run_name[:79]
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
@@ -152,7 +155,8 @@ class API(object):
                 data['args'] = args.as_dict()  # update args
         # submit job as an execution
         aws_input = json.dumps(data)
-        print("about to start run %s" % run_name)
+        if verbose:
+            print("about to start run %s" % run_name)
         # trigger the step function to run
         try:
             response = client.start_execution(
@@ -164,13 +168,13 @@ class API(object):
         except Exception as e:
             raise(e)
         # adding execution info to dynamoDB for fast search by awsem job id
-        self.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'])
-        # print some info
-        print("response from aws was: \n %s" % response)
-        print("url to view status:")
-        print(data[_tibanna]['url'])
+        self.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
         data[_tibanna]['response'] = response
         if verbose:
+            # print some info
+            print("response from aws was: \n %s" % response)
+            print("url to view status:")
+            print(data[_tibanna]['url'])
             print("JOBID %s submitted" % data['jobid'])
             print("EXECUTION ARN = %s" % data[_tibanna]['exec_arn'])
             if 'cloudwatch_dashboard' in data['config'] and data['config']['cloudwatch_dashboard']:
@@ -181,13 +185,14 @@ class API(object):
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
 
-    def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket):
+    def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
-            dydb.describe_table(TableName=DYNAMODB_TABLE)
+            res = dydb.describe_table(TableName=DYNAMODB_TABLE)
         except Exception as e:
-            printlog("Not adding to dynamo table: %s" % e)
+            if verbose:
+                printlog("Not adding to dynamo table: %s" % e)
             return
         try:
             response = dydb.put_item(
@@ -207,7 +212,8 @@ class API(object):
                     },
                 }
             )
-            printlog(response)
+            if verbose:
+                printlog(response)
         except Exception as e:
             raise(e)
 
@@ -312,7 +318,14 @@ class API(object):
             desc = sf.describe_execution(executionArn=exec_arn)
             jobid = str(json.loads(desc['input'])['jobid'])
             logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
+            try:
+                res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
+            except Exception as e:
+                if 'NoSuchKey' in str(e):
+                    printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                    return ''
+                else:
+                    raise e
             if res_s3:
                 return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         elif job_id:
@@ -325,7 +338,15 @@ class API(object):
                     desc = sf.describe_execution(executionArn=exc['executionArn'])
                     if job_id == str(json.loads(desc['input'])['jobid']):
                         logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                        res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+                        try:
+                            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+                        except Exception as e:
+                            if 'NoSuchKey' in str(e):
+                                printlog("log/postrunjson file is not ready yet." +
+                                         "Wait a few seconds/minutes and try again.")
+                                return ''
+                            else:
+                                raise e
                         if res_s3:
                             return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
                         break
@@ -605,13 +626,14 @@ class API(object):
             full_function_name = name + '_' + function_name_suffix
         else:
             full_function_name = name
-        try:
-            boto3.client('lambda').get_function(FunctionName=full_function_name)
-            print("deleting existing lambda")
-            boto3.client('lambda').delete_function(FunctionName=full_function_name)
-        except Exception as e:
-            if 'Function not found' in str(e):
-                pass
+        if name not in self.do_not_delete:
+            try:
+                boto3.client('lambda').get_function(FunctionName=full_function_name)
+                print("deleting existing lambda")
+                boto3.client('lambda').delete_function(FunctionName=full_function_name)
+            except Exception as e:
+                if 'Function not found' in str(e):
+                    pass
         aws_lambda.deploy_function(lambda_fxn_module,
                                    function_name_suffix=function_name_suffix,
                                    package_objects=self.tibanna_packages,
