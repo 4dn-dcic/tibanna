@@ -485,7 +485,13 @@ class PonyFinal(SerializableObject):
     def ff_files(self):
         return self.ff_input_files + self.ff_output_files
 
-    def ff_output_file(self, argname):
+    def ff_output_file(self, argname=None, pf_uuid=None):
+        if argname:
+            pass
+        elif pf_uuid:
+            argname = self.pf2argname(pf_uuid)
+        else:
+            raise Exception("Either argname or pf_uuid must be provided")
         for v in self.ff_output_files:
             if argname == v['workflow_argument_name']:
                 return v
@@ -533,6 +539,7 @@ class PonyFinal(SerializableObject):
         for extra in self.pf(pf_uuid).extra_files:
             if extra['file_format'] == file_format:
                 return extra
+        return None
 
     # s3-related functionalities
     @property
@@ -598,15 +605,26 @@ class PonyFinal(SerializableObject):
         printlog("No workflow run output file matching argname %s" % argname)
         return None
 
-    def file_key(self, argname=None, pf_uuid=None):
+    def file_key(self, argname=None, pf_uuid=None, secondary_format=None):
+        """returns file object_key on the bucket, either through argname or
+        processed file uuid (pf_uuid). To get the file key of a secondary file,
+        use secondary_format - this option is valid only with pf_uuid.
+        Getting a file key through argname is mainly for getting non-processed files
+        like md5 or qc reports"""
         if argname:
             if argname in self.awsem_output_files:
                 return self.awsem_output_files[argname].target
             elif argname in self.awsem_input_files:
                 return self.awsem_input_files[argname].path
         elif pf_uuid:
-            for of in self.ff_output_files:
-                if of['type'] == 'Output processed file' and of['value'] == pf_uuid:
+            of = self.ff_output_file(pf_uuid=pf_uuid)
+            if of:
+                if secondary_format:
+                    for extra in of['extra_files']:
+                        if extra['file_format'] == secondary_format:
+                            return extra['upload_key']
+                    raise Exception("no extra file with format %s" % secondary_format)
+                else:
                     return of['upload_key']
         else:
             raise Exception("Either argname or pf must be provided to get a file_key")
@@ -648,12 +666,25 @@ class PonyFinal(SerializableObject):
                 return "FAILED" 
         return "COMPLETED"
 
-    # update functions
+    # update functions for PF
+    def update_all_pfs(self):
+        for pf_uuid in self.pf_output_files:
+            self.update_pf(pf_uuid)
+
     def update_pf(self, pf_uuid):
         if self.status(pf_uuid=pf_uuid) == 'COMPLETED':
             self.add_updates_to_pf(pf_uuid)
             self.add_updates_to_pf_extra(pf_uuid)
             self.add_higlass_to_pf(pf_uuid)
+
+    def add_to_pf_patch(self, pf_uuid, fields):
+        """add a field (or fields) to the list of fields to be updated for a pf"""
+        if not isinstance(fields, list):
+            fields = [fields]
+        for f in fields:
+            if pf_uuid not in self.pf_patch:
+                self.pf_patch = {pf_uuid: {}}
+            self.pf_patch[pf_uuid].update({f: self.pf(pf_uuid).getattr(f)})
 
     def add_updates_to_pf(self, pf_uuid):
         """update md5sum, file_size, status for pf itself"""
@@ -676,13 +707,31 @@ class PonyFinal(SerializableObject):
                pf_extra.status = 'uploaded'
             self.add_to_pf_patch(pf_uuid, 'extra_files')
 
-    def add_to_pf_patch(self, pf_uuid, fields):
-        if not isinstance(fields, list):
-            fields = [fields]
-        for f in fields:
-            if pf_uuid not in self.pf_patch:
-                self.pf_patch = {pf_uuid: {}}
-            self.pf_patch[pf_uuid].update({f: self.pf(pf_uuid).getattr(f)})
+    def add_higlass_to_pf(self, pf_uuid):
+        if self.bucket(pf_uuid) not in ff_utils.HIGLASS_BUCKETS:
+            return None
+        higlass_uid = None
+        for hgcf in higlass_config:
+            if pf.file_format == hgcf['file_format']:
+                if hgcf['extra']:
+                    extra_file_key = self.file_key(argname, secondary_format=hgcf['extra'])
+                    if extra_file_key:
+                        higlass_uid = register_to_higlass(self.tibanna_settings,
+                                                          self.bucket(argname),
+                                                          extra_file_key,
+                                                          hgcf['file_type'],
+                                                          hgcf['data_type'])
+                        break
+                else:
+                    higlass_uid = register_to_higlass(self.tibanna_settings,
+                                                      self.bucket(argname),
+                                                      self.file_key(pf_uuid=pf_uuid),
+                                                      hgcf['file_type'],
+                                                      hgcf['data_type'])
+                    break
+        if higlass_uid:
+            self.pf(pf_uuid).higlass_uid = higlass_uid
+            self.add_to_pf_patch(pf_uuid, 'higlass_uid')
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
