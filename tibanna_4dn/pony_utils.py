@@ -3,6 +3,7 @@ import os
 import datetime
 import boto3
 import gzip
+import copy
 from uuid import uuid4
 from dcicutils.ff_utils import (
     get_metadata,
@@ -549,12 +550,12 @@ class PonyFinal(SerializableObject):
         """get the actual metadata file items for a specific argname"""
         items_list = []
         for acc in self.accessions(argname):
-            res = ff_utils.get_metadata(acc,
-                                        key=self.tibanna_settings.ff_keys,
-                                        ff_env=self.tibanna_settings.env,
-                                        add_on='frame=object',
-                                        check_queue=True)
-            items_list = append(res)
+            res = get_metadata(acc,
+                               key=self.tibanna_settings.ff_keys,
+                               ff_env=self.tibanna_settings.env,
+                               add_on='frame=object',
+                               check_queue=True)
+            items_list.append(res)
         return items_list
 
     # s3-related functionalities
@@ -655,12 +656,14 @@ class PonyFinal(SerializableObject):
             accessions.append(accession)
         # argname is input
         else:
-            for v in self.ff_input_files:
-                if argname == v['workflow_argument_name']:
-                    file_name = v['upload_key'].split('/')[-1]
-                    accession = file_name.split('.')[0].strip('/')
-                    accessions.append(accession)
-                    # do not break - there may be multiple entries for the same argname
+            paths = copy.deepcopy(self.awsem_input_files[argname].path)
+            if not isinstance(paths, list):
+                paths = [paths]
+            for path in paths:
+                file_name = path.split('/')[-1]
+                accession = file_name.split('.')[0].strip('/')
+                accessions.append(accession)
+                # do not break - there may be multiple entries for the same argname
         return accessions
 
     def format_if_extras(self, argname):
@@ -772,6 +775,39 @@ class PonyFinal(SerializableObject):
             self.pf(pf_uuid).higlass_uid = higlass_uid
             # prepare for fourfront patch
             self.add_to_patch_items(pf_uuid, 'higlass_uid')
+
+    def update_input_extra(self, extra_output_argname):
+        file_format = self.file_format(extra_output_argname)
+        ip_uuids = self.input_uuids(file_format)
+        # for now we allow only a single input file matching the extra format
+        if len(ip_uuids) > 1:
+            raise Exception("ambiguous input for input extra update")
+        if len(ip_uuids[ip_uuids.keys()[0]]) > 1:
+            raise Exception("ambiguous input for input extra update")
+        ip_uuid = ip_uuids[ip_uuids.keys()[0]]
+        update_dict = dict()
+        update_dict['md5sum'] = self.md5sum(extra_output_argname)
+        update_dict['filesize'] = self.filesize(extra_output_argname)
+        update_dict['status'] = 'uploaded'
+        self.patch_items.update({ip_uuid: update_dict})
+
+    def input_uuids(self, extra_file_format=None):
+        ip_uuids = dict()
+        for ip_arg in self.input_argnames:
+            ip_items = self.file_items(ip_arg)
+            for ip in ip_items:
+                if extra_file_format:
+                    if 'extra_files' in ip:
+                        for extra in ip['extra_files']:
+                            if cmp_fileformat(extra['file_format'], extra_file_format):
+                                if ip_arg not in ip_uuids:
+                                    ip_uuids = {ip_arg: []}
+                                ip_uuids[ip_arg].append(ip['uuid'])
+                else:
+                    if ip_arg not in ip_uuids:
+                        ip_uuids = {ip_arg: []}
+                    ip_uuids[ip_arg].append(ip['uuid'])
+        return ip_uuids
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
