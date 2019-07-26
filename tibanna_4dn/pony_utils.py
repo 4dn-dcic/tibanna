@@ -440,6 +440,9 @@ class AwsemFile(object):
 
 
 class PonyFinal(SerializableObject):
+    """This class integrates three different sources of information:
+    postrunjson, workflowrun, processed_files,
+    and does the final updates necessary"""
     def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, **kwargs):
         self.ff_meta = WorkflowRunMetadata(**ff_meta)
         self.postrunjson = AwsemPostRunJson(**postrunjson)
@@ -455,13 +458,10 @@ class PonyFinal(SerializableObject):
         self.pf_patch = dict()  # patch json for pfs
 
     @property
-    def outbucket(self):
-        return self.postrunjson.Job.Output.output_bucket_directory
-
-    @property
     def app_name(self):
         return self.postrunjson.Job.App.App_name
 
+    # postrunjson-related basic functionalities
     @property
     def awsem_output_files(self):
         """this used to be called output_info"""
@@ -471,6 +471,7 @@ class PonyFinal(SerializableObject):
     def awsem_input_files(self):
         return self.postrunjson.Job.Input.Input_files_data
 
+    # workflowrun-ralated basic functionalities
     @property
     def ff_output_files(self):
         """this used to be called output_files_meta"""
@@ -483,6 +484,18 @@ class PonyFinal(SerializableObject):
     @property
     def ff_files(self):
         return self.ff_input_files + self.ff_output_files
+
+    def ff_output_file(self, argname):
+        for v in self.ff_output_files:
+            if argname == v['workflow_argument_name']:
+                return v
+        return None
+
+    def ff_file(self, argname):
+        for v in self.ff_files:
+            if argname == v['workflow_argument_name']:
+                return v
+        return None
 
     @property
     def input_argnames(self):
@@ -498,6 +511,48 @@ class PonyFinal(SerializableObject):
                 return x['type']
         return None
 
+    # processed file-ralated basic functionalities
+    def pf(self, pf_uuid):
+        return self.pf_output_files.get(pf_uuid, None)
+ 
+    def pf2argname(self, pf_uuid):
+        for argname in self.output_argnames:
+            if pf_uuid in self.pf_uuids(argname):
+                return argname
+        return None
+
+    def pf_uuids(self, argname):
+        uuids = []
+        for of in self.ff_output_files:
+            if argname == of['workflow_argument_name']:
+                if of['type'] == 'Output processed file':
+                    uuids.append(of['value'])
+        return uuids
+
+    def pf_extra_file(self, pf_uuid, file_format):
+        for extra in self.pf(pf_uuid).extra_files:
+            if extra['file_format'] == file_format:
+                return extra
+
+    # s3-related functionalities
+    @property
+    def outbucket(self):
+        return self.postrunjson.Job.Output.output_bucket_directory
+
+    def bucket(self, argname):
+        if argname in self.awsem_output_files:
+            return self.outbucket
+        elif argname in self.awsem_input_files:
+            return self.awsem_input_files[argname].dir_
+
+    def s3(self, argname):
+        return s3Utils(self.bucket(argname), self.bucket(argname), self.bucket(argname))
+
+    def read(self, argname):
+        """This function is useful for reading md5 report of qc report"""
+        return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
+
+    # get file features
     def md5sum(self, argname=None, pf_uuid=None, secondary_key=None):
         if argname:
             pass
@@ -566,15 +621,13 @@ class PonyFinal(SerializableObject):
                     accessions.append(accession)
         return accessions
 
-    def bucket(self, argname):
-        if argname in self.awsem_output_files:
-            return self.outbucket
-        elif argname in self.awsem_input_files:
-            return self.awsem_input_files[argname].dir_
-
-    def s3(self, argname):
-        return s3Utils(self.bucket(argname), self.bucket(argname), self.bucket(argname))
-
+    def format_if_extras(self, argname):
+        format_if_extras = []
+        for v in self.ff_files:
+            if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
+                format_if_extras.append(v['format_if_extra'])
+        return format_if_extras
+       
     def status(self, argname=None, pf_uuid=None):
         """check file existence as status either per argname or per pf object"""
         if argname:
@@ -595,34 +648,7 @@ class PonyFinal(SerializableObject):
                 return "FAILED" 
         return "COMPLETED"
 
-    def pf2argname(self, pf_uuid):
-        for argname in self.output_argnames:
-            if pf_uuid in self.pf_uuids(argname):
-                return argname
-        return None
-
-    def pf_uuids(self, argname):
-        uuids = []
-        for of in self.ff_output_files:
-            if argname == of['workflow_argument_name']:
-                if of['type'] == 'Output processed file':
-                    uuids.append(of['value'])
-        return uuids
-
-    def read(self, argname):
-        """This function is useful for reading md5 report of qc report"""
-        return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
-
-    def format_if_extras(self, argname):
-        format_if_extras = []
-        for v in self.ff_files:
-            if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
-                format_if_extras.append(v['format_if_extra'])
-        return format_if_extras
-       
-    def pf(self, pf_uuid):
-        return self.pf_output_files.get(pf_uuid, None)
- 
+    # update functions
     def update_pf(self, pf_uuid):
         if self.status(pf_uuid=pf_uuid) == 'COMPLETED':
             self.add_md5_filesize_to_pf(pf_uuid)
@@ -634,17 +660,6 @@ class PonyFinal(SerializableObject):
         self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
         self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size'])
 
-    def ff_output_file(self, argname):
-        for v in self.ff_output_files:
-            if argname == v['workflow_argument_name']:
-                return v
-        return None
-
-    def pf_extra_file(self, pf_uuid, file_format):
-        for extra in self.pf(pf_uuid).extra_files:
-            if extra['file_format'] == file_format:
-                return extra
-
     def add_md5_filesize_to_pf_extra(self, pf_uuid):
         argname = self.pf2argname(pf_uuid)
         ffout = self.ff_output_file(argname)
@@ -655,7 +670,7 @@ class PonyFinal(SerializableObject):
                pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
                pf_extra.md5sum = md5
                pf_extra.file_size = size
-        self.add_to_pf_patch(pf_uuid, 'extra_files')
+            self.add_to_pf_patch(pf_uuid, 'extra_files')
 
     def add_to_pf_patch(self, pf_uuid, fields):
         if not isinstance(fields, list):
