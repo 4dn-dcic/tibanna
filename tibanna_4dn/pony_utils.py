@@ -666,6 +666,12 @@ class PonyFinal(SerializableObject):
                 return "FAILED" 
         return "COMPLETED"
 
+    def genome_assembly(self, pf_uuid):
+        if hasattr('genome_assembly', self.pf(pf_uuid)):
+            return self.pf(pf_uuid).genome_assembly
+        else:
+            return None
+
     # update functions for PF
     def update_all_pfs(self):
         for pf_uuid in self.pf_output_files:
@@ -688,9 +694,11 @@ class PonyFinal(SerializableObject):
 
     def add_updates_to_pf(self, pf_uuid):
         """update md5sum, file_size, status for pf itself"""
+        # update the class object
         self.pf(pf_uuid).md5sum = self.md5sum(pf_uuid=pf_uuid)
         self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
         self.pf(pf_uuid).status = 'uploaded'
+        # prepare for fourfront patch
         self.add_to_pf_patch(pf_uuid, ['md5sum', 'file_size', 'status'])
 
     def add_updates_to_pf_extra(self, pf_uuid):
@@ -699,12 +707,14 @@ class PonyFinal(SerializableObject):
         ffout = self.ff_output_file(argname)
         if 'extra_files' in ffout:
             for extra in ffout['extra_files']:
-               md5 = self.md5sum(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
-               size = self.filesize(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
-               pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
-               pf_extra.md5sum = md5
-               pf_extra.file_size = size
-               pf_extra.status = 'uploaded'
+                md5 = self.md5sum(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
+                size = self.filesize(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
+                pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
+                # update the class object
+                pf_extra.md5sum = md5
+                pf_extra.file_size = size
+                pf_extra.status = 'uploaded'
+            # prepare for fourfront patch
             self.add_to_pf_patch(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
@@ -712,25 +722,29 @@ class PonyFinal(SerializableObject):
             return None
         higlass_uid = None
         for hgcf in higlass_config:
-            if pf.file_format == hgcf['file_format']:
+            if self.pf(pf_uuid).file_format == hgcf['file_format']:
                 if hgcf['extra']:
-                    extra_file_key = self.file_key(argname, secondary_format=hgcf['extra'])
+                    extra_file_key = self.file_key(pf_uuid=pf_uuid, secondary_format=hgcf['extra'])
                     if extra_file_key:
                         higlass_uid = register_to_higlass(self.tibanna_settings,
                                                           self.bucket(argname),
                                                           extra_file_key,
                                                           hgcf['file_type'],
-                                                          hgcf['data_type'])
+                                                          hgcf['data_type'],
+                                                          self.genome_assembly(pf_uuid))
                         break
                 else:
                     higlass_uid = register_to_higlass(self.tibanna_settings,
                                                       self.bucket(argname),
                                                       self.file_key(pf_uuid=pf_uuid),
                                                       hgcf['file_type'],
-                                                      hgcf['data_type'])
+                                                      hgcf['data_type'],
+                                                      self.genome_assembly(pf_uuid))
                     break
         if higlass_uid:
+            # update the class object
             self.pf(pf_uuid).higlass_uid = higlass_uid
+            # prepare for fourfront patch
             self.add_to_pf_patch(pf_uuid, 'higlass_uid')
 
 
