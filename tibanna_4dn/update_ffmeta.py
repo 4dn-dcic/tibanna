@@ -67,6 +67,8 @@ def add_md5_filesize_to_pf_extra(pf, awsemfile):
                     pfextra['md5sum'] = awsemfile.md5
                 if awsemfile.filesize:
                     pfextra['file_size'] = awsemfile.filesize
+                # switch the status to uploaded
+                pfextra['status'] = 'uploaded'
         printlog("add_md5_filesize_to_pf_extra: %s" % pf.extra_files)
 
 
