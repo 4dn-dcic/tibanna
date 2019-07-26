@@ -31,6 +31,7 @@ from .config import (
 )
 from .exceptions import (
     TibannaStartException,
+    FdnConnectionException
 )
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
@@ -550,11 +551,14 @@ class PonyFinal(SerializableObject):
         """get the actual metadata file items for a specific argname"""
         items_list = []
         for acc in self.accessions(argname):
-            res = get_metadata(acc,
-                               key=self.tibanna_settings.ff_keys,
-                               ff_env=self.tibanna_settings.env,
-                               add_on='frame=object',
-                               check_queue=True)
+            try:
+                res = get_metadata(acc,
+                                   key=self.tibanna_settings.ff_keys,
+                                   ff_env=self.tibanna_settings.env,
+                                   add_on='frame=object',
+                                   check_queue=True)
+            except Exception as e:
+                raise FdnConnectionException("Can't get metadata for accession %s: %s" % (acc, str(e))
             items_list.append(res)
         return items_list
 
@@ -656,6 +660,8 @@ class PonyFinal(SerializableObject):
             accessions.append(accession)
         # argname is input
         else:
+            if argname not in self.awsem_input_files:
+                return []
             paths = copy.deepcopy(self.awsem_input_files[argname].path)
             if not isinstance(paths, list):
                 paths = [paths]
@@ -747,11 +753,11 @@ class PonyFinal(SerializableObject):
             self.add_to_patch_items(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
-        if self.bucket(pf_uuid) not in ff_utils.HIGLASS_BUCKETS:
+        if self.bucket(pf_uuid=pf_uuid) not in ff_utils.HIGLASS_BUCKETS:
             return None
         higlass_uid = None
         for hgcf in higlass_config:
-            if cmp_fileformat(self.pf(pf_uuid).file_forma, hgcf['file_format']):
+            if cmp_fileformat(self.pf(pf_uuid).file_format, hgcf['file_format']):
                 if hgcf['extra']:
                     extra_file_key = self.file_key(pf_uuid=pf_uuid, secondary_format=hgcf['extra'])
                     if extra_file_key:
@@ -776,10 +782,18 @@ class PonyFinal(SerializableObject):
             # prepare for fourfront patch
             self.add_to_patch_items(pf_uuid, 'higlass_uid')
 
+    # update functions for input extra
+    def update_all_input_extra(self):
+        for op in self.ff_output_files:
+            if op['type'] == 'Output to-be-extra-input file':
+                self.update_input_extra(op['workflow_argument_name'])
+
     def update_input_extra(self, extra_output_argname):
         file_format = self.file_format(extra_output_argname)
         ip_uuids = self.input_uuids(file_format)
         # for now we allow only a single input file matching the extra format
+        if not ip_uuids:
+            raise Exception("inconsistency - extra file metadata deleted during workflow run?")
         if len(ip_uuids) > 1:
             raise Exception("ambiguous input for input extra update")
         if len(ip_uuids[ip_uuids.keys()[0]]) > 1:
@@ -791,23 +805,33 @@ class PonyFinal(SerializableObject):
         update_dict['status'] = 'uploaded'
         self.patch_items.update({ip_uuid: update_dict})
 
-    def input_uuids(self, extra_file_format=None):
-        ip_uuids = dict()
-        for ip_arg in self.input_argnames:
-            ip_items = self.file_items(ip_arg)
+    def input_uuids(self, argname=None, secondary_format=None):
+        """Get all input uuids that contains an extra file with
+        given extra_file_format. Or if extra_file_format is not
+        given, return all input uuids.
+        This one involves connecting to ff"""
+        if argname:
+            ip_uuids_per_arg = []
+            ip_items = self.file_items(argname)
             for ip in ip_items:
-                if extra_file_format:
+                if secondary_format:
                     if 'extra_files' in ip:
                         for extra in ip['extra_files']:
-                            if cmp_fileformat(extra['file_format'], extra_file_format):
-                                if ip_arg not in ip_uuids:
-                                    ip_uuids = {ip_arg: []}
-                                ip_uuids[ip_arg].append(ip['uuid'])
+                            if cmp_fileformat(extra['file_format'], secondary_format):
+                                ip_uuids_per_arg.append(ip['uuid'])
                 else:
-                    if ip_arg not in ip_uuids:
-                        ip_uuids = {ip_arg: []}
-                    ip_uuids[ip_arg].append(ip['uuid'])
-        return ip_uuids
+                    ip_uuids_per_arg.append(ip['uuid'])
+            if ip_uuids_per_arg:
+                return {argname: ip_uuids_per_arg}
+            else:
+                return {}
+        else:
+            ip_uuids = dict()
+            for ip_arg in self.input_argnames:
+                uuids_per_arg = self.input_uuids(ip_arg, secondary_format)
+                if uuids_per_arg:
+                    ip_uuids.update(uuids_per_arg)
+            return ip_uuids
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
