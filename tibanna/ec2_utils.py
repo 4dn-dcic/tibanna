@@ -575,6 +575,8 @@ class Execution(object):
                             }})
         # fill in input_files (restructured)
         for item, value in iter(args.input_files.items()):
+            if value.get('unzip', '') not in ['gz', 'bz2', '']:
+                raise Exception("unzip field must be gz, bz2 or ''")
             pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
@@ -582,6 +584,8 @@ class Execution(object):
                                                              'profile': value.get('profile', ''),
                                                              'unzip': value.get('unzip', '')}
         for item, value in iter(args.secondary_files.items()):
+            if value.get('unzip', '') not in ['gz', 'bz2', '']:
+                raise Exception("unzip field must be gz, bz2 or ''")
             pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                                  'dir': value.get('bucket_name'),
                                                                  'path': value.get('object_key'),
