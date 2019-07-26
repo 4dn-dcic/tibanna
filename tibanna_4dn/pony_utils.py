@@ -687,13 +687,15 @@ class PonyFinal(SerializableObject):
             self.add_higlass_to_pf(pf_uuid)
 
     def add_to_pf_patch(self, pf_uuid, fields):
-        """add a field (or fields) to the list of fields to be patched for a pf"""
+        """add entries from pf object to pf_patch for a later pf patch"""
         if not isinstance(fields, list):
-            fields = [fields]
-        for f in fields:
             if pf_uuid not in self.pf_patch:
                 self.pf_patch = {pf_uuid: {}}
-            self.pf_patch[pf_uuid].update({f: self.pf(pf_uuid).getattr(f)})
+            field_val = self.pf(pf_uuid).__getattribute__(fields)
+            self.pf_patch[pf_uuid].update({fields: field_val})
+        else:
+            for f in fields:
+                self.add_to_pf_patch(pf_uuid, f)
 
     def add_updates_to_pf(self, pf_uuid):
         """update md5sum, file_size, status for pf itself"""
@@ -714,9 +716,9 @@ class PonyFinal(SerializableObject):
                 size = self.filesize(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
                 pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
                 # update the class object
-                pf_extra.md5sum = md5
-                pf_extra.file_size = size
-                pf_extra.status = 'uploaded'
+                pf_extra['md5sum'] = md5
+                pf_extra['file_size'] = size
+                pf_extra['status'] = 'uploaded'
             # prepare for fourfront patch
             self.add_to_pf_patch(pf_uuid, 'extra_files')
 

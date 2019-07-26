@@ -24,7 +24,7 @@ class AwsemRunJsonJob(SerializableObject):
 
 
 class AwsemRunJsonApp(SerializableObject):
-    def __init__(self, App_name, App_version, language,
+    def __init__(self, App_name=None, App_version=None, language=None,
                  cwl_url=None, main_cwl=None, other_cwl_files=None,
                  wdl_url=None, main_wdl=None, other_wdl_files=None,
                  container_image=None, command=None,
@@ -41,15 +41,21 @@ class AwsemRunJsonApp(SerializableObject):
 
 
 class AwsemRunJsonInput(SerializableObject):
-    def __init__(self, Input_files_data, Input_parameters, Secondary_files_data, Env):
+    def __init__(self, Input_files_data, Input_parameters, Secondary_files_data,
+                 # Input_files_reference is for older postrunjson
+                 # Env is missing in older postrunjson
+                 Input_files_reference=None, Env=None):
         self.Input_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_data.items()}
         self.Secondary_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Secondary_files_data.items()}
         self.Input_parameters = Input_parameters
         self.Env = Env
+        if Input_files_reference:
+            self.Input_files_reference = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_reference.items()}
 
 
 class AwsemRunJsonInputFile(SerializableObject):
-    def __init__(self, path, profile, rename, **kwargs):  # kwargs includes 'dir' and 'class'
+    def __init__(self, path, profile=None, rename=None, **kwargs):  # kwargs includes 'dir' and 'class'
+        # profile and rename are missing in the old postrunjson
         self.path = path
         self.profile = profile
         self.rename = rename
@@ -90,8 +96,9 @@ class AwsemPostRunJson(AwsemRunJson):
 class AwsemPostRunJsonJob(AwsemRunJsonJob):
     def __init__(self, App, Input, Output, Log, JOBID,
                  start_time, end_time, status,
-                 filesystem, instance_id,
                  total_input_size, total_output_size, total_tmp_size,
+                 # older postrunjsons don't have these fields
+                 filesystem=None, instance_id=None,
                  Metrics=None):
         super().__init__(App, Input, Output, Log, JOBID, start_time)
         self.end_time = end_time
