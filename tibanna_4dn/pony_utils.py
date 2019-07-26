@@ -753,29 +753,24 @@ class PonyFinal(SerializableObject):
             self.add_to_patch_items(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
-        if self.bucket(pf_uuid=pf_uuid) not in ff_utils.HIGLASS_BUCKETS:
-            return None
-        higlass_uid = None
-        for hgcf in higlass_config:
-            if cmp_fileformat(self.pf(pf_uuid).file_format, hgcf['file_format']):
-                if hgcf['extra']:
-                    extra_file_key = self.file_key(pf_uuid=pf_uuid, secondary_format=hgcf['extra'])
-                    if extra_file_key:
-                        higlass_uid = register_to_higlass(self.tibanna_settings,
-                                                          self.bucket(argname),
-                                                          extra_file_key,
-                                                          hgcf['file_type'],
-                                                          hgcf['data_type'],
-                                                          self.genome_assembly(pf_uuid))
-                        break
-                else:
-                    higlass_uid = register_to_higlass(self.tibanna_settings,
-                                                      self.bucket(argname),
-                                                      self.file_key(pf_uuid=pf_uuid),
-                                                      hgcf['file_type'],
-                                                      hgcf['data_type'],
-                                                      self.genome_assembly(pf_uuid))
-                    break
+        hgcf = None
+        key = None
+        for extra in self.ff_output_file(pf_uuid=pf_uuid).get('extra_files', []):
+            extra_format = extra['file_format']
+            hgcf = match_higlass_config(self.pf(pf_uuid).file_format, extra_format)
+            if hgcf:
+                key = self.file_key(pf_uuid=pf_uuid, secondary_format=extra_format)
+            break
+        if not hgcf:
+            hgcf = match_higlass_config(self.pf(pf_uuid).file_format, None)
+            key = self.file_key(pf_uuid=pf_uuid)
+        if hgcf:
+            higlass_uid = register_to_higlass(self.tibanna_settings,
+                                              self.bucket(pf_uuid=pf_uuid),
+                                              key,
+                                              hgcf['file_type'],
+                                              hgcf['data_type'],
+                                              self.genome_assembly(pf_uuid))
         if higlass_uid:
             # update the class object
             self.pf(pf_uuid).higlass_uid = higlass_uid
@@ -992,6 +987,10 @@ def post_random_file(bucket, ff_key,
 
 
 def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
+    if bucket not in ff_utils.HIGLASS_BUCKETS:
+        return None
+    if not key:
+        return None
     if not genome_assembly:
         return None
     payload = {"filepath": bucket + "/" + key,
@@ -1003,11 +1002,26 @@ def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=No
     auth = (higlass_keys['key'], higlass_keys['secret'])
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
-                        data=json.dumps(payload), auth=auth, headers=headers)
+    try:
+        res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
+                            data=json.dumps(payload), auth=auth, headers=headers)
+    except:
+        # do not raise error (do not fail the wrf) - will be taken care of by foursight later
+        return None
     printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
 
 
 def cmp_fileformat(format1, format2):
     return parse_formatstr(format1) == parse_formatstr(format2)
+
+ 
+def match_higlass_config(file_format, extra_format):
+    for hc in higlass_config:
+        if cmp_fileformat(hc['file_format'], file_format):
+            if hc['extra']:
+               if cmp_fileformat(hc['extra'], extra_format):
+                    return hc
+            elif not extra_format:
+               return hc
+    return None
