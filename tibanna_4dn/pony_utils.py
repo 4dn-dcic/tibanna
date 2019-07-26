@@ -28,6 +28,9 @@ from tibanna.awsem import (
 from .config import (
     higlass_config
 )
+from .exceptions import (
+    TibannaStartException,
+)
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
