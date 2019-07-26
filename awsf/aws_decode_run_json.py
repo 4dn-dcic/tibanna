@@ -27,7 +27,7 @@ def main():
     create_env_def_file(env_filename, Dict, language)
 
 
-def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip=''):
+def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
@@ -37,8 +37,6 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip=''):
             cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; gunzip {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n"
 	elif unzip == 'bz2':
             cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; bzip2 -d {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n"
-	else:
-            raise Exception('unzip value must be gz or bz2')
 	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
@@ -91,7 +89,9 @@ def create_download_command_list(downloadlist_filename, Dict_input, language):
                     add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
 
 
-def file2cwlfile(filename, dir):
+def file2cwlfile(filename, dir, unzip):
+    if unzip:
+        filename = filename.split('.{0}'.format(unzip))[0]
     return {"class": 'File', "path": dir + '/' + filename}
 
 
@@ -116,6 +116,11 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                     else:
                         v['path'] = v['rename']
                     del v['rename']
+                if 'unzip' in v:
+                    unzip = v['unzip']
+                    del v['unzip']
+                else:
+                    unzip = ''
                 if isinstance(v['path'], list):
                     v2 = []
                     for pi in v['path']:
@@ -123,15 +128,17 @@ def create_input_for_cwl(input_yml_filename, Dict_input):
                             nested = []
                             for ppi in pi:
                                 if isinstance(ppi, list):
-                                    nested.append([file2cwlfile(pppi, INPUT_DIR) for pppi in ppi])
+                                    nested.append([file2cwlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
                                 else:
-                                    nested.append(file2cwlfile(ppi, INPUT_DIR))
+                                    nested.append(file2cwlfile(ppi, INPUT_DIR, unzip))
                             v2.append(nested)
                         else:
-                            v2.append(file2cwlfile(pi, INPUT_DIR))
+                            v2.append(file2cwlfile(pi, INPUT_DIR, unzip))
                     v = v2
                     yml[item] = v
                 else:
+                    if unzip:
+                        v['path'] = v['path'].split('.{0}'.format(unzip))[0]
                     v['path'] = INPUT_DIR + '/' + v['path']
                     yml[item] = v.copy()
         json.dump(yml, f_yml, indent=4, sort_keys=True)
@@ -153,6 +160,11 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                     else:
                         v['path'] = v['rename']
                     del v['rename']
+                if 'unzip' in v:
+                    unzip = v['unzip']
+                    del v['unzip']
+                else:
+                    unzip = ''
                 if isinstance(v['path'], list):
                     yml[item] = []
                     for pi in v['path']:
@@ -160,13 +172,15 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                             nested = []
                             for ppi in pi:
                                 if isinstance(ppi, list):
-                                    nested.append([INPUT_DIR + '/' + pppi for pppi in ppi])
+                                    nested.append([INPUT_DIR + '/' + pppi.split('.{0}'.format(unzip))[0] for pppi in ppi])
                                 else:
-                                    nested.append(INPUT_DIR + '/' + ppi)
+                                    nested.append(INPUT_DIR + '/' + ppi.split('.{0}'.format(unzip))[0])
                             yml[item].append(nested)
                         else:
-                            yml[item].append(INPUT_DIR + '/' + pi)
+                            yml[item].append(INPUT_DIR + '/' + pi.split('.{0}'.format(unzip))[0])
                 else:
+                    if unzip:
+                        v['path'] = v['path'].split('.{0}'.format(unzip))[0]
                     yml[item] = INPUT_DIR + '/' + v['path']
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
