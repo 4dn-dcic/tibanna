@@ -95,6 +95,12 @@ def file2cwlfile(filename, dir, unzip):
     return {"class": 'File', "path": dir + '/' + filename}
 
 
+def file2wdlfile(filename, dir, unzip):
+    if unzip:
+        filename = filename.split('.{0}'.format(unzip))[0]
+    return dir + '/' + filename
+
+
 # create an input yml file for cwl-runner
 def create_input_for_cwl(input_yml_filename, Dict_input):
     with open(input_yml_filename, 'w') as f_yml:
@@ -172,12 +178,12 @@ def create_input_for_wdl(input_yml_filename, Dict_input):
                             nested = []
                             for ppi in pi:
                                 if isinstance(ppi, list):
-                                    nested.append([INPUT_DIR + '/' + pppi.split('.{0}'.format(unzip))[0] for pppi in ppi])
+                                    nested.append([file2wdlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
                                 else:
-                                    nested.append(INPUT_DIR + '/' + ppi.split('.{0}'.format(unzip))[0])
+                                    nested.append(file2wdlfile(ppi, INPUT_DIR, unzip))
                             yml[item].append(nested)
                         else:
-                            yml[item].append(INPUT_DIR + '/' + pi.split('.{0}'.format(unzip))[0])
+                            yml[item].append(file2wdlfile(pi, INPUT_DIR, unzip))
                 else:
                     if unzip:
                         v['path'] = v['path'].split('.{0}'.format(unzip))[0]
