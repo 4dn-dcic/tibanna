@@ -678,7 +678,7 @@ class PonyFinal(SerializableObject):
             self.add_higlass_to_pf(pf_uuid)
 
     def add_to_pf_patch(self, pf_uuid, fields):
-        """add a field (or fields) to the list of fields to be updated for a pf"""
+        """add a field (or fields) to the list of fields to be patched for a pf"""
         if not isinstance(fields, list):
             fields = [fields]
         for f in fields:
