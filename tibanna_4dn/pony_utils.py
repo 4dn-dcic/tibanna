@@ -540,7 +540,7 @@ class PonyFinal(SerializableObject):
 
     def pf_extra_file(self, pf_uuid, file_format):
         for extra in self.pf(pf_uuid).extra_files:
-            if extra['file_format'] == file_format:
+            if cmp_fileformat(extra['file_format'], file_format):
                 return extra
         return None
 
@@ -624,7 +624,7 @@ class PonyFinal(SerializableObject):
             if of:
                 if secondary_format:
                     for extra in of['extra_files']:
-                        if extra['file_format'] == secondary_format:
+                        if cmp_fileformat(extra['file_format'], secondary_format):
                             return extra['upload_key']
                     raise Exception("no extra file with format %s" % secondary_format)
                 else:
@@ -725,7 +725,7 @@ class PonyFinal(SerializableObject):
             return None
         higlass_uid = None
         for hgcf in higlass_config:
-            if self.pf(pf_uuid).file_format == hgcf['file_format']:
+            if cmp_fileformat(self.pf(pf_uuid).file_forma, hgcf['file_format']):
                 if hgcf['extra']:
                     extra_file_key = self.file_key(pf_uuid=pf_uuid, secondary_format=hgcf['extra'])
                     if extra_file_key:
@@ -924,3 +924,7 @@ def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=No
                         data=json.dumps(payload), auth=auth, headers=headers)
     printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
     return res.json()['uuid']
+
+
+def cmp_fileformat(format1, format2):
+    return parse_formatstr(format1) == parse_formatstr(format2)
