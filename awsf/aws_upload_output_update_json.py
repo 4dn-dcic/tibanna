@@ -54,14 +54,14 @@ def upload_to_s3(s3, source, bucket, target):
                     target_f = os.path.join(target, target_subdir, f)
                 print("source_f=" + source_f)
                 print("target_f=" + target_f)
-                s3.upload_file(source_f, output_bucket, target_f)
+                s3.upload_file(source_f, bucket, target_f)
             # for d in dirs:
             #     source_d = os.path.join(root, d)
             #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
-            #     upload_to_s3(s3, source_d, output_bucket, target_d)
+            #     upload_to_s3(s3, source_d, bucket, target_d)
     else:
         print("source " + source + " is a not a directory")
-        s3.upload_file(source, output_bucket, target)
+        s3.upload_file(source, bucket, target)
 
 
 # read old json file
@@ -144,28 +144,38 @@ for k in output_target:
     if k.startswith('file://'):
         source = k.replace('file://', '')
         target = output_target[k]
+        bucket = output_bucket  # default
+        if target.startswith('s3://'):  # this allows using different output buckets
+            output_path = re.sub('^s3://', '', target)
+            bucket = output_path.split('/')[0]
+            target = re.sub('^' + bucket + '/', '', output_path)
         try:
-            print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-            # s3.upload_file(source, output_bucket, target)
-            upload_to_s3(s3, source, output_bucket, target)
+            print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
+            # s3.upload_file(source, bucket, target)
+            upload_to_s3(s3, source, bucket, target)
         except Exception as e:
-            raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
+            raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
 
 
 # legitimate CWL/WDL output targets
 for k in output_meta:
     source = output_meta[k].get('path')
     source_name = source.replace(source_directory, '')
+    bucket = output_bucket  # default
     if k in output_target:
         target = output_target[k]  # change file name to what's specified in output_target
+        if target.startswith('s3://'):  # this allows using different output buckets
+            output_path = re.sub('^s3://', '', target)
+            bucket = output_path.split('/')[0]
+            target = re.sub('^' + bucket + '/', '', output_path)
     else:
         target = source_name  # do not change file name
+    print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
     try:
-        print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-        # s3.upload_file(source, output_bucket, target)
-        upload_to_s3(s3, source, output_bucket, target)
+        # s3.upload_file(source, bucket, target)
+        upload_to_s3(s3, source, bucket, target)
     except Exception as e:
-        raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
+        raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
     try:
         output_meta[k]['target'] = target
     except Exception as e:
@@ -177,6 +187,7 @@ for k in output_meta:
         for i, sf in enumerate(output_meta[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
+            bucket = output_bucket  # default
             if k in secondary_output_target:
                 if len(secondary_output_target[k]) == 1:  # one extra file
                     target = secondary_output_target[k][i]
@@ -187,14 +198,18 @@ for k in output_meta:
                             target = targ
                             n_assigned = n_assigned + 1
                             break
+                if target.startswith('s3://'):  # this allows using different output buckets
+                    output_path = re.sub('^s3://', '', target)
+                    bucket = output_path.split('/')[0]
+                    target = re.sub('^' + bucket + '/', '', output_path)
             else:
                 target = source_name  # do not change file name
             try:
-                print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-                s3.upload_file(source, output_bucket, target)
+                print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
+                s3.upload_file(source, bucket, target)
             except Exception as e:
                 raise Exception("output file {} upload to {} failed. %s".format(
-                    source, output_bucket + '/' + target) % e)
+                    source, bucket + '/' + target) % e)
             try:
                 sf['target'] = target
             except Exception as e:
