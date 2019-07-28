@@ -190,9 +190,13 @@ class API(object):
         try:
             # first check the table exists
             res = dydb.describe_table(TableName=DYNAMODB_TABLE)
-        except Exception as e:
+        except ResourceNotFoundException:
             if verbose:
-                printlog("Not adding to dynamo table: %s" % e)
+                printlog("Not adding to dynamo table")
+            return
+        except Exception:
+            if verbose:
+                printlog("Error accessing dynamo table: %s" % e)
             return
         try:
             response = dydb.put_item(
