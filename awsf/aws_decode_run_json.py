@@ -29,7 +29,9 @@ def main():
 
 def add_download_cmd(data_bucket, data_file, target, profile_flag, f):
     if data_file:
-        cmd = "aws s3 cp s3://{0}/{1} {2} {3}\n"
+        if data_file.endswith('/'):
+            data_file = data_file.rstrip('/')
+        cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
         f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
