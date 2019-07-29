@@ -626,6 +626,24 @@ class PonyFinal(SerializableObject):
         printlog("No workflow run output file matching argname %s" % argname)
         return None
 
+    def all_extra_formats(self, argname=None, pf_uuid=None):
+        """get a list of file formats of all extra files of given argname or pf"""
+        outfile = self.ff_output_file(argname=argname, pf_uuid=pf_uuid)
+        return [ef.get('file_format', '') for ef in outfile.get('extra_files', [])]
+
+    def all_extra_files(self, argname=None, pf_uuid=None):
+        """returns extra_files field of workflowrun given argname of pp_uuid
+        the return value is a list of dictionaries.
+        """
+        if argname:
+            pass
+        elif pf_uuid:
+            argname = self.pf2argname(pf_uuid)
+        else:
+            raise Exeption("Either argname or pf_uuid must be provided")
+        ffout = self.ff_output_file(argname)
+        return ffout.get('extra_files', [])
+
     def file_key(self, argname=None, pf_uuid=None, secondary_format=None):
         """returns file object_key on the bucket, either through argname or
         processed file uuid (pf_uuid). To get the file key of a secondary file,
@@ -738,32 +756,23 @@ class PonyFinal(SerializableObject):
 
     def add_updates_to_pf_extra(self, pf_uuid):
         """update md5sum, file_size, status for extra file"""
-        argname = self.pf2argname(pf_uuid)
-        ffout = self.ff_output_file(argname)
-        if 'extra_files' in ffout:
-            for extra in ffout['extra_files']:
-                md5 = self.md5sum(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
-                size = self.filesize(pf_uuid=pf_uuid, secondary_key=extra['upload_key'])
-                pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
-                # update the class object
-                pf_extra['md5sum'] = md5
-                pf_extra['file_size'] = size
-                pf_extra['status'] = 'uploaded'
-            # prepare for fourfront patch
-            self.add_to_patch_items(pf_uuid, 'extra_files')
+        for extra in self.all_extra_files(pf_uuid=pf_uuid):
+            pf_extra = self.pf_extra_file(pf_uuid, extra['file_format'])
+            extra_key = extra['upload_key']
+            # update the class object
+            pf_extra['md5sum'] = self.md5sum(pf_uuid=pf_uuid, secondary_key=extra_key)
+            pf_extra['file_size'] = self.filesize(pf_uuid=pf_uuid, secondary_key=extra_key)
+            pf_extra['status'] = 'uploaded'
+        # prepare for fourfront patch
+        self.add_to_patch_items(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
-        hgcf = None
         key = None
-        for extra in self.ff_output_file(pf_uuid=pf_uuid).get('extra_files', []):
-            extra_format = extra['file_format']
+        for extra_format in self.all_extra_formats(pf_uuid=pf_uuid) + [None]:
             hgcf = match_higlass_config(self.pf(pf_uuid).file_format, extra_format)
             if hgcf:
                 key = self.file_key(pf_uuid=pf_uuid, secondary_format=extra_format)
-            break
-        if not hgcf:
-            hgcf = match_higlass_config(self.pf(pf_uuid).file_format, None)
-            key = self.file_key(pf_uuid=pf_uuid)
+                break
         if hgcf:
             higlass_uid = register_to_higlass(self.tibanna_settings,
                                               self.bucket(pf_uuid=pf_uuid),
@@ -783,9 +792,14 @@ class PonyFinal(SerializableObject):
             if op['type'] == 'Output to-be-extra-input file':
                 self.update_input_extra(op['workflow_argument_name'])
 
-    def update_input_extra(self, extra_output_argname):
-        file_format = self.file_format(extra_output_argname)
-        ip_uuids = self.input_uuids(file_format)
+    def update_input_extra(self, output_argname):
+        """output_argname is the argname for the output which
+        should be attached to an input file as an extra file
+        input file is found by matching an existing extra_format
+        in the metadata you get from the portal.
+        """
+        extra_format = self.file_format(output_argname)
+        ip_uuids = self.input_uuids(secondary_format=extra_format)
         # for now we allow only a single input file matching the extra format
         if not ip_uuids:
             raise Exception("inconsistency - extra file metadata deleted during workflow run?")
@@ -795,16 +809,20 @@ class PonyFinal(SerializableObject):
             raise Exception("ambiguous input for input extra update")
         ip_uuid = ip_uuids[ip_uuids.keys()[0]]
         update_dict = dict()
-        update_dict['md5sum'] = self.md5sum(extra_output_argname)
-        update_dict['filesize'] = self.filesize(extra_output_argname)
+        update_dict['md5sum'] = self.md5sum(output_argname)
+        update_dict['filesize'] = self.filesize(output_argname)
         update_dict['status'] = 'uploaded'
+        # prepare for fourfront patch along with other patch items like processed files
         self.patch_items.update({ip_uuid: update_dict})
 
     def input_uuids(self, argname=None, secondary_format=None):
         """Get all input uuids that contains an extra file with
         given extra_file_format. Or if extra_file_format is not
         given, return all input uuids.
-        This one involves connecting to ff"""
+        This one involves connecting to ff.
+        Returned value is a dictionary with argname as key and 
+        a list of uuids as value
+        """
         if argname:
             ip_uuids_per_arg = []
             ip_items = self.file_items(argname)
