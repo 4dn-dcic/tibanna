@@ -5,12 +5,14 @@ import boto3
 import gzip
 import copy
 from uuid import uuid4
+import requests
 from dcicutils.ff_utils import (
     get_metadata,
     post_metadata,
     patch_metadata,
     generate_rand_accession,
-    search_metadata
+    search_metadata,
+    HIGLASS_BUCKETS
 )
 from dcicutils.s3_utils import s3Utils
 from tibanna.nnested_array import (
@@ -33,6 +35,7 @@ from .exceptions import (
     TibannaStartException,
     FdnConnectionException
 )
+
 
 def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                         parameters=None, title=None, uuid=None,
@@ -525,7 +528,7 @@ class PonyFinal(SerializableObject):
     # processed file-ralated basic functionalities
     def pf(self, pf_uuid):
         return self.pf_output_files.get(pf_uuid, None)
- 
+
     def pf2argname(self, pf_uuid):
         for argname in self.output_argnames:
             if pf_uuid in self.pf_uuids(argname):
@@ -558,7 +561,7 @@ class PonyFinal(SerializableObject):
                                    add_on='frame=object',
                                    check_queue=True)
             except Exception as e:
-                raise FdnConnectionException("Can't get metadata for accession %s: %s" % (acc, str(e))
+                raise FdnConnectionException("Can't get metadata for accession %s: %s" % (acc, str(e)))
             items_list.append(res)
         return items_list
 
@@ -640,7 +643,7 @@ class PonyFinal(SerializableObject):
         elif pf_uuid:
             argname = self.pf2argname(pf_uuid)
         else:
-            raise Exeption("Either argname or pf_uuid must be provided")
+            raise Exception("Either argname or pf_uuid must be provided")
         ffout = self.ff_output_file(argname)
         return ffout.get('extra_files', [])
 
@@ -696,7 +699,7 @@ class PonyFinal(SerializableObject):
             if argname == v['workflow_argument_name'] and 'format_if_extra' in v:
                 format_if_extras.append(v['format_if_extra'])
         return format_if_extras
-       
+
     def status(self, argname=None, pf_uuid=None):
         """check file existence as status either per argname or per pf object"""
         if argname:
@@ -714,7 +717,7 @@ class PonyFinal(SerializableObject):
                 if not exists:
                     return "FAILED"
             except:
-                return "FAILED" 
+                return "FAILED"
         return "COMPLETED"
 
     def genome_assembly(self, pf_uuid):
@@ -793,9 +796,8 @@ class PonyFinal(SerializableObject):
                 self.update_input_extra(op['workflow_argument_name'])
 
     def update_input_extra(self, output_argname):
-        """output_argname is the argname for the output which
-        should be attached to an input file as an extra file
-        input file is found by matching an existing extra_format
+        """output_argname is the argname for the output which should be attached to an
+        input file as an extra file input file is found by matching an existing extra_format
         in the metadata you get from the portal.
         """
         extra_format = self.file_format(output_argname)
@@ -816,12 +818,10 @@ class PonyFinal(SerializableObject):
         self.patch_items.update({ip_uuid: update_dict})
 
     def input_uuids(self, argname=None, secondary_format=None):
-        """Get all input uuids that contains an extra file with
-        given extra_file_format. Or if extra_file_format is not
-        given, return all input uuids.
-        This one involves connecting to ff.
-        Returned value is a dictionary with argname as key and 
-        a list of uuids as value
+        """Get all input uuids that contains an extra file with given extra_file_format.
+        Or if extra_file_format is not given, return all input uuids. This one involves
+        connecting to ff. Returned value is a dictionary with argname as key and a list
+        of uuids as value.
         """
         if argname:
             ip_uuids_per_arg = []
@@ -1005,7 +1005,7 @@ def post_random_file(bucket, ff_key,
 
 
 def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
-    if bucket not in ff_utils.HIGLASS_BUCKETS:
+    if bucket not in HIGLASS_BUCKETS:
         return None
     if not key:
         return None
@@ -1033,13 +1033,13 @@ def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=No
 def cmp_fileformat(format1, format2):
     return parse_formatstr(format1) == parse_formatstr(format2)
 
- 
+
 def match_higlass_config(file_format, extra_format):
     for hc in higlass_config:
         if cmp_fileformat(hc['file_format'], file_format):
             if hc['extra']:
-               if cmp_fileformat(hc['extra'], extra_format):
+                if cmp_fileformat(hc['extra'], extra_format):
                     return hc
             elif not extra_format:
-               return hc
+                return hc
     return None
