@@ -856,7 +856,7 @@ class PonyFinal(SerializableObject):
             # prepare for fourfront patch
             self.add_to_patch_items(pf_uuid, 'higlass_uid')
 
-    # update functions for all nput extras
+    # update functions for all input extras
     def update_input_extras(self):
         """go through all input arguments that have an extra file to be attached
         and for each create a patch_item and add to patch_items.
@@ -867,7 +867,7 @@ class PonyFinal(SerializableObject):
             # ie_arg is the input arg to attach the extra file
             # ie_list is a list of InputExtraARgumentInfo class objects
             ip_items = self.file_items(ie_arg)
-            if len(ip_items) > 1:
+            if len(ip_items) > 1:  # do not allow input array in this case
                 raise Exception("ambiguous input for input extra update")
             ip = ip_items[0]
             if 'extra_files' not in ip:
