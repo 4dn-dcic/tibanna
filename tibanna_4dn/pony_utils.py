@@ -895,9 +895,10 @@ class PonyFinal(SerializableObject):
                 # higlass registration
                 hgcf = match_higlass_config(ip['file_format'], output_extra_format)
                 if hgcf:
+                    # register extra file not the original input file
                     higlass_uid = register_to_higlass(self.tibanna_settings,
-                                                      self.bucket(ie_arg),
-                                                      self.file_key(ie_arg),
+                                                      self.bucket(ie.workflow_argument_name),
+                                                      self.file_key(ie.workflow_argument_name),
                                                       hgcf['file_type'],
                                                       hgcf['data_type'],
                                                       ip.get('genome_assembly', None))
