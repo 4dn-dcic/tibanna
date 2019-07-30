@@ -447,6 +447,31 @@ class AwsemFile(object):
         return self.s3.read_s3(self.key).strip()
 
 
+class QCArgumentInfo(SerializableObject):
+    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to, qc_type,
+                 qc_zipped=False, qc_html=False, qc_json=False, qc_table=False,
+                 qc_zipped_html=None, qc_zipped_tables=None):
+        if argument_type != 'Output QC file':
+            raise Exception("QCArgument it not Output QC file: %s" % argument_type)
+        self.workflow_argument_name = workflow_argument_name
+        self.argument_to_be_attached_to = argument_to_be_attached_to
+        self.qc_type = qc_type
+        self.qc_zipped = qc_zipped
+        self.qc_html = qc_html
+        self.qc_json = qc_json
+        self.qc_table = qc_table
+        self.qc_zipped_html = qc_zipped_html
+        self.qc_zipped_tables = qc_zipped_tables
+
+
+class InputExtraArgumentInfo(SerializableObject):
+    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to):
+        if argument_type != 'Output to-be-extra-input file':
+            raise Exception("InputExtraArgumentInfo is not Output to-be-extra-input file: %s" % argument_type)
+        self.workflow_argument_name = workflow_argument_name
+        self.argument_to_be_attached_to = argument_to_be_attached_to
+
+
 class PonyFinal(SerializableObject):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
@@ -564,6 +589,48 @@ class PonyFinal(SerializableObject):
                 raise FdnConnectionException("Can't get metadata for accession %s: %s" % (acc, str(e)))
             items_list.append(res)
         return items_list
+
+    @property
+    def workflow(self):
+        try:
+            res = get_metadata(self.ff_meta.workflow,
+                               key=self.tibanna_settings.ff_keys,
+                               ff_env=self.tibanna_settings.env,
+                               add_on='frame=object',
+                               check_queue=True))
+        except Exception as e:
+            raise FdnConnectionException("Can't get metadata for workflow %s: %s" % (acc, str(e)))
+        return res
+
+    def workflow_arguments(self, argument_types=None):
+        if argument_types:
+            res = []
+            for arg in self.workflow['arguments']:
+                if arg["argument_type"] in argument_types:
+                    res.append(arg)
+            return res
+        else:
+            return self.workflow['arguments']
+
+    @property
+    def workflow_qc_arguments(self):
+        qc_args = [QCArgumentInfo(**qc) for qc in self.workflow_arguments('Output QC file')]
+        qc_args_per_attach = dict()
+        for qcarg in qc_args:
+            if qcarg.argument_to_be_attached_to not in qc_args_per_attach:
+                qc_args_per_attach[qcarg.argument_to_be_attached_to]=[]
+            qc_args_per_attach[qcarg.argument_to_be_attached_to].append(qcarg)
+        return qc_args_per_attach
+
+    @property
+    def workflow_input_extra_arguments(self):
+        ie_args = [InputExtraArgumentInfo(**ie) for ie in self.workflow_arguments('Output to-be-extra-input file')]
+        ie_args_per_attach = dict()
+        for iearg in ie_args: 
+            if iearg.argument_to_be_attached_to not in ie_args_per_attach:
+                ie_args_per_attach[iearg.argument_to_be_attached_to]=[]
+            ie_args_per_attach[iearg.argument_to_be_attached_to].append(iearg)
+        return ie_args_per_attach
 
     # s3-related functionalities
     @property
