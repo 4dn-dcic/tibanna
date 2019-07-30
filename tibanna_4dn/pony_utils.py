@@ -632,6 +632,22 @@ class PonyFinal(SerializableObject):
             ie_args_per_attach[iearg.argument_to_be_attached_to].append(iearg)
         return ie_args_per_attach
 
+    # patch-related functionalities
+    def update_patch_items(self, uuid, item):
+        if uuid in self.patch_items:
+            self.patch_items[uuid].update(item)
+        else:
+            self.patch_item.update(uuid: item)
+
+    def add_to_pf_patch_items(self, pf_uuid, fields):
+        """add entries from pf object to patch_items for a later pf patch"""
+        if not isinstance(fields, list):
+            field_val = self.pf(pf_uuid).__getattribute__(fields)
+            self.update_patch_items(pf_uuid, {fields: field_val})
+        else:
+            for f in fields:
+                self.add_to_pf_patch_items(pf_uuid, f)
+
     # s3-related functionalities
     @property
     def outbucket(self):
@@ -804,17 +820,6 @@ class PonyFinal(SerializableObject):
             self.add_updates_to_pf_extra(pf_uuid)
             self.add_higlass_to_pf(pf_uuid)
 
-    def add_to_patch_items(self, pf_uuid, fields):
-        """add entries from pf object to patch_items for a later pf patch"""
-        if not isinstance(fields, list):
-            if pf_uuid not in self.patch_items:
-                self.patch_items = {pf_uuid: {}}
-            field_val = self.pf(pf_uuid).__getattribute__(fields)
-            self.patch_items[pf_uuid].update({fields: field_val})
-        else:
-            for f in fields:
-                self.add_to_patch_items(pf_uuid, f)
-
     def add_updates_to_pf(self, pf_uuid):
         """update md5sum, file_size, status for pf itself"""
         # update the class object
@@ -822,7 +827,7 @@ class PonyFinal(SerializableObject):
         self.pf(pf_uuid).file_size = self.filesize(pf_uuid=pf_uuid)
         self.pf(pf_uuid).status = 'uploaded'
         # prepare for fourfront patch
-        self.add_to_patch_items(pf_uuid, ['md5sum', 'file_size', 'status'])
+        self.add_to_pf_patch_items(pf_uuid, ['md5sum', 'file_size', 'status'])
 
     def add_updates_to_pf_extra(self, pf_uuid):
         """update md5sum, file_size, status for extra file"""
@@ -834,7 +839,7 @@ class PonyFinal(SerializableObject):
             pf_extra['file_size'] = self.filesize(pf_uuid=pf_uuid, secondary_key=extra_key)
             pf_extra['status'] = 'uploaded'
         # prepare for fourfront patch
-        self.add_to_patch_items(pf_uuid, 'extra_files')
+        self.add_to_pf_patch_items(pf_uuid, 'extra_files')
 
     def add_higlass_to_pf(self, pf_uuid):
         key = None
@@ -854,7 +859,7 @@ class PonyFinal(SerializableObject):
             # update the class object
             self.pf(pf_uuid).higlass_uid = higlass_uid
             # prepare for fourfront patch
-            self.add_to_patch_items(pf_uuid, 'higlass_uid')
+            self.add_to_pf_patch_items(pf_uuid, 'higlass_uid')
 
     # update functions for all input extras
     def update_input_extras(self):
@@ -896,8 +901,9 @@ class PonyFinal(SerializableObject):
                                                       hgcf['file_type'],
                                                       hgcf['data_type'],
                                                       ip.get('genome_assembly', None))
-            self.patch_items.update({ip['uuid']: {'extra_files': ip['extra_files'],
-                                                  'higlass_uid': higlass_uid}})
+                if higlass_uid:
+                    self.update_patch_item(ip['uuid'], {'higlass_uid': higlass_uid})
+            self.update_patch_items(ip['uuid'], {'extra_files': ip['extra_files']})
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
