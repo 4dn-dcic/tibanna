@@ -424,7 +424,10 @@ class Execution(object):
 
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
-        for argname, f in iter(self.args.input_files.items()):
+        input_plus_secondary_files = copy.deepcopy(self.args.input_files)
+        if self.args.secondary_files:
+            input_plus_secondary_files.update(self.args.secondary_file)
+        for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
                 size = flatten(run_on_nested_arrays1(f['object_key'],
