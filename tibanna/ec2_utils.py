@@ -426,7 +426,7 @@ class Execution(object):
         input_size_in_bytes = dict()
         input_plus_secondary_files = copy.deepcopy(self.args.input_files)
         if self.args.secondary_files:
-            input_plus_secondary_files.update(self.args.secondary_files)
+            input_plus_secondary_files.update({k+'_secondary': v for k, v in self.args.secondary_files.items()})
         for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
