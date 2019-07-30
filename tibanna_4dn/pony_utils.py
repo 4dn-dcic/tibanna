@@ -597,9 +597,9 @@ class PonyFinal(SerializableObject):
                                key=self.tibanna_settings.ff_keys,
                                ff_env=self.tibanna_settings.env,
                                add_on='frame=object',
-                               check_queue=True))
+                               check_queue=True)
         except Exception as e:
-            raise FdnConnectionException("Can't get metadata for workflow %s: %s" % (acc, str(e)))
+            raise FdnConnectionException("Can't get metadata for workflow %s: %s" % (self.ff_meta.workflow, str(e)))
         return res
 
     def workflow_arguments(self, argument_types=None):
@@ -618,7 +618,7 @@ class PonyFinal(SerializableObject):
         qc_args_per_attach = dict()
         for qcarg in qc_args:
             if qcarg.argument_to_be_attached_to not in qc_args_per_attach:
-                qc_args_per_attach[qcarg.argument_to_be_attached_to]=[]
+                qc_args_per_attach[qcarg.argument_to_be_attached_to] = []
             qc_args_per_attach[qcarg.argument_to_be_attached_to].append(qcarg)
         return qc_args_per_attach
 
@@ -626,9 +626,9 @@ class PonyFinal(SerializableObject):
     def workflow_input_extra_arguments(self):
         ie_args = [InputExtraArgumentInfo(**ie) for ie in self.workflow_arguments('Output to-be-extra-input file')]
         ie_args_per_attach = dict()
-        for iearg in ie_args: 
+        for iearg in ie_args:
             if iearg.argument_to_be_attached_to not in ie_args_per_attach:
-                ie_args_per_attach[iearg.argument_to_be_attached_to]=[]
+                ie_args_per_attach[iearg.argument_to_be_attached_to] = []
             ie_args_per_attach[iearg.argument_to_be_attached_to].append(iearg)
         return ie_args_per_attach
 
@@ -897,7 +897,7 @@ class PonyFinal(SerializableObject):
                                                       hgcf['data_type'],
                                                       ip.get('genome_assembly', None))
             self.patch_items.update({ip['uuid']: {'extra_files': ip['extra_files'],
-                                                 'higlass_uid': higlass_uid})
+                                                  'higlass_uid': higlass_uid}})
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
