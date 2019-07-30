@@ -856,62 +856,48 @@ class PonyFinal(SerializableObject):
             # prepare for fourfront patch
             self.add_to_patch_items(pf_uuid, 'higlass_uid')
 
-    # update functions for input extra
-    def update_all_input_extra(self):
-        for op in self.ff_output_files:
-            if op['type'] == 'Output to-be-extra-input file':
-                self.update_input_extra(op['workflow_argument_name'])
-
-    def update_input_extra(self, output_argname):
-        """output_argname is the argname for the output which should be attached to an
-        input file as an extra file input file is found by matching an existing extra_format
-        in the metadata you get from the portal.
+    # update functions for all nput extras
+    def update_input_extras(self):
+        """go through all input arguments that have an extra file to be attached
+        and for each create a patch_item and add to patch_items.
+        This allows multiple extra output files corresponding to different input
+        arguments, or same input argument with different formats
         """
-        extra_format = self.file_format(output_argname)
-        ip_uuids = self.input_uuids(secondary_format=extra_format)
-        # for now we allow only a single input file matching the extra format
-        if not ip_uuids:
-            raise Exception("inconsistency - extra file metadata deleted during workflow run?")
-        if len(ip_uuids) > 1:
-            raise Exception("ambiguous input for input extra update")
-        if len(ip_uuids[ip_uuids.keys()[0]]) > 1:
-            raise Exception("ambiguous input for input extra update")
-        ip_uuid = ip_uuids[ip_uuids.keys()[0]]
-        update_dict = dict()
-        update_dict['md5sum'] = self.md5sum(output_argname)
-        update_dict['filesize'] = self.filesize(output_argname)
-        update_dict['status'] = 'uploaded'
-        # prepare for fourfront patch along with other patch items like processed files
-        self.patch_items.update({ip_uuid: update_dict})
-
-    def input_uuids(self, argname=None, secondary_format=None):
-        """Get all input uuids that contains an extra file with given extra_file_format.
-        Or if extra_file_format is not given, return all input uuids. This one involves
-        connecting to ff. Returned value is a dictionary with argname as key and a list
-        of uuids as value.
-        """
-        if argname:
-            ip_uuids_per_arg = []
-            ip_items = self.file_items(argname)
-            for ip in ip_items:
-                if secondary_format:
-                    if 'extra_files' in ip:
-                        for extra in ip['extra_files']:
-                            if cmp_fileformat(extra['file_format'], secondary_format):
-                                ip_uuids_per_arg.append(ip['uuid'])
+        for ie_arg, ie_list in self.workflow_input_extra_arguments.items():
+            # ie_arg is the input arg to attach the extra file
+            # ie_list is a list of InputExtraARgumentInfo class objects
+            ip_items = self.file_items(ie_arg)
+            if len(ip_items) > 1:
+                raise Exception("ambiguous input for input extra update")
+            ip = ip_items[0]
+            if 'extra_files' not in ip:
+                raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+            for ie in ie_list:
+                matching_extra = None
+                output_extra_format = self.file_format(ie.workflow_argument_name)
+                for extra in ip['extra_files']:
+                    if cmp_fileformat(extra['file_format'], output_extra_format):
+                        matching_extra = extra
+                        break
+                if not matching_extra:
+                    raise Exception("inconsistency - extra file metadata deleted during workflow run?")
+                if self.status(ie.workflow_argument_name) == 'COMPLETED':
+                    matching_extra['md5sum'] = self.md5sum(ie.workflow_argument_name)
+                    matching_extra['filesize'] = self.filesize(ie.workflow_argument_name)
+                    matching_extra['status'] = 'uploaded'
                 else:
-                    ip_uuids_per_arg.append(ip['uuid'])
-            if ip_uuids_per_arg:
-                return {argname: ip_uuids_per_arg}
-            else:
-                return {}
-        else:
-            ip_uuids = dict()
-            for ip_arg in self.input_argnames:
-                uuids_per_arg = self.input_uuids(ip_arg, secondary_format)
-                if uuids_per_arg:
-                    ip_uuids.update(uuids_per_arg)
-            return ip_uuids
+                    matching_extra['status'] = "upload failed"
+                # higlass registration
+                hgcf = match_higlass_config(ip['file_format'], output_extra_format)
+                if hgcf:
+                    higlass_uid = register_to_higlass(self.tibanna_settings,
+                                                      self.bucket(ie_arg),
+                                                      self.file_key(ie_arg),
+                                                      hgcf['file_type'],
+                                                      hgcf['data_type'],
+                                                      ip.get('genome_assembly', None))
+            self.patch_items.update({ip['uuid']: {'extra_files': ip['extra_files'],
+                                                 'higlass_uid': higlass_uid})
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
