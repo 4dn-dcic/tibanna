@@ -195,6 +195,7 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'rename': input_file.get('rename', ''),
+                                'unzip': input_file.get('unzip', ''),
                                 'object_key': object_key}})
     if input_file.get('format_if_extra', ''):
         args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
