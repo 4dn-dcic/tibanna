@@ -641,7 +641,7 @@ class PonyFinal(SerializableObject):
         if uuid in self.patch_items:
             self.patch_items[uuid].update(item)
         else:
-            self.patch_item.update(uuid: item)
+            self.patch_item.update({uuid: item})
 
     def add_to_pf_patch_items(self, pf_uuid, fields):
         """add entries from pf object to patch_items for a later pf patch"""
