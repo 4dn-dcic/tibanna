@@ -1,0 +1,77 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "repliseq-parta", 
+            "App_version": null, 
+            "command": "touch tests/awsf/haha", 
+            "container_image": "ubuntu:16.04", 
+            "language": "shell"
+        }, 
+        "Input": {
+            "Env": {
+                "TEST_ENV_TO_PASS": 1234
+            }, 
+            "Input_files_data": {
+                "chromsizes": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+                }, 
+                "fastq": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "a6ffb820-c600-4c32-9d99-249ed8029022/4DNFI2ZDNVFL.fastq.gz", 
+                    "profile": "user1"
+                }, 
+                "file:///data1/shell/hahaha.bwaIndex.tgz": {
+                    "class": "File", 
+                    "dir": "elasticbeanstalk-fourfront-webdev-files", 
+                    "path": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz", 
+                    "rename": "hahaha.bwaIndex.tgz"
+                }
+            }, 
+            "Input_parameters": {
+                "memperthread": "2G", 
+                "nthreads": 4
+            }, 
+            "Secondary_files_data": {}
+        }, 
+        "JOBID": "bqLd8oa7Tdzr", 
+        "Log": {
+            "log_bucket_directory": "tibanna-output"
+        }, 
+        "Output": {
+            "Output files": {}, 
+            "alt_cond_output_argnames": {}, 
+            "output_bucket_directory": "soos-4dn-bucket", 
+            "output_target": {
+                "file://tests/awsf/haha": "shelltest-haha", 
+                "file://tests/awsf/mydir": "s3://tibanna-output/shelltest-mydir"
+            }, 
+            "secondary_output_target": {}
+        }, 
+        "filesystem": "", 
+        "start_time": "20180430-18:50:18-UTC"
+    }, 
+    "commands": [], 
+    "config": {
+        "EBS_optimized": false, 
+        "ami_id": "ami-cfb14bb5", 
+        "copy_to_s3": true, 
+        "ebs_iops": 500, 
+        "ebs_size": 20, 
+        "ebs_type": "io1", 
+        "instance_type": "t2.xlarge", 
+        "job_tag": "repliseq-parta", 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "json_dir": "/tmp/json", 
+        "key_name": "", 
+        "launch_instance": true, 
+        "log_bucket": "tibanna-output", 
+        "password": "dragonfly", 
+        "s3_access_arn": "arn:aws:iam::643366669028:instance-profile/S3_access", 
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/", 
+        "shutdown_min": 120, 
+        "userdata_dir": "/tmp/userdata"
+    }
+}

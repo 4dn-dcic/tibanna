@@ -418,7 +418,10 @@ class Execution(object):
 
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
-        for argname, f in iter(self.args.input_files.items()):
+        input_plus_secondary_files = copy.deepcopy(self.args.input_files)
+        if self.args.secondary_files:
+            input_plus_secondary_files.update({k+'_secondary': v for k, v in self.args.secondary_files.items()})
+        for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
                 size = flatten(run_on_nested_arrays1(f['object_key'],
@@ -569,17 +572,23 @@ class Execution(object):
                             }})
         # fill in input_files (restructured)
         for item, value in iter(args.input_files.items()):
+            if value.get('unzip', '') not in ['gz', 'bz2', '']:
+                raise MalFormattedInputJsonException("unzip field must be gz, bz2 or ''")
             pre['Job']['Input']['Input_files_data'][item] = {'class': 'File',
                                                              'dir': value.get('bucket_name'),
                                                              'path': value.get('object_key'),
                                                              'rename': value.get('rename'),
-                                                             'profile': value.get('profile', '')}
+                                                             'profile': value.get('profile', ''),
+                                                             'unzip': value.get('unzip', '')}
         for item, value in iter(args.secondary_files.items()):
+            if value.get('unzip', '') not in ['gz', 'bz2', '']:
+                raise MalFormattedInputJsonException("unzip field must be gz, bz2 or ''")
             pre['Job']['Input']['Secondary_files_data'][item] = {'class': 'File',
                                                                  'dir': value.get('bucket_name'),
                                                                  'path': value.get('object_key'),
                                                                  'rename': value.get('rename'),
-                                                                 'profile': value.get('profile', '')}
+                                                                 'profile': value.get('profile', ''),
+                                                                 'unzip': value.get('unzip', '')}
         # remove the password and keyname info
         if 'password' in pre['config']:
             del(pre['config']['password'])
