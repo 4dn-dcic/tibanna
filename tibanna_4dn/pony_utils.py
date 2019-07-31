@@ -614,6 +614,8 @@ class PonyFinal(SerializableObject):
 
     @property
     def workflow_qc_arguments(self):
+        """dictionary of QCArgumentInfo object list as value and 
+        argument_to_be_attached_to as key"""
         qc_args = [QCArgumentInfo(**qc) for qc in self.workflow_arguments('Output QC file')]
         qc_args_per_attach = dict()
         for qcarg in qc_args:
@@ -624,6 +626,8 @@ class PonyFinal(SerializableObject):
 
     @property
     def workflow_input_extra_arguments(self):
+        """dictionary of InputExtraArgumentInfo object list as value and 
+        argument_to_be_attached_to as key"""
         ie_args = [InputExtraArgumentInfo(**ie) for ie in self.workflow_arguments('Output to-be-extra-input file')]
         ie_args_per_attach = dict()
         for iearg in ie_args:
