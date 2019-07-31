@@ -276,6 +276,32 @@ def test_get_input_size_in_bytes():
                       Delete={'Objects': [{'Key': randomstr}]})
 
 
+def test_get_input_size_in_bytes_with_secondary_files():
+    randomstr, randomstr_1, randomstr_2 = 'test-' + create_jobid(), 'test-' + create_jobid(), 'test-' + create_jobid()
+    s3 = boto3.client('s3')
+    s3.put_object(Body='haha'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr)
+    s3.put_object(Body='fooooooo'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr_1)
+    s3.put_object(Body='pippo'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=randomstr_2)
+    input_dict = {'args': {'input_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                          'object_key': randomstr}},
+                           'secondary_files': {'input_file': {'bucket_name': 'tibanna-output',
+                                                              'object_key': [randomstr_1, randomstr_2]}},
+                           'output_S3_bucket': 'somebucket',
+                           'app_name': 'md5',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': 'tibanna-output'}}
+    execution = Execution(input_dict)
+    execution.input_size_in_bytes = execution.get_input_size_in_bytes()
+    assert execution.total_input_size_in_gb == 1.5832483768463135E-8
+    # cleanup afterwards
+    s3.delete_objects(Bucket='tibanna-output',
+                      Delete={'Objects': [{'Key': randomstr}, {'Key': randomstr_1}, {'Key': randomstr_2}]})
+
+
 def test_update_config_ebs_size():
     """ebs_size is given as the 'x' format. The total estimated ebs_size is smaller than 10"""
     randomstr = 'test-' + create_jobid()
