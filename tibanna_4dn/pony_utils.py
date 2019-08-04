@@ -476,12 +476,13 @@ class PonyFinal(SerializableObject):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
-    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, **kwargs):
+    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields, **kwargs):
         self.ff_meta = WorkflowRunMetadata(**ff_meta)
         self.postrunjson = AwsemPostRunJson(**postrunjson)
         if pf_meta:
             self.pf_output_files = {pf['uuid']: ProcessedFileMetadata(**pf) for pf in pf_meta}
         # if _tibanna is not set, still proceed with the other functionalities of the class
+        self.custom_qc_fields = custom_qc_fields
         self.tibanna_settings = None
         if _tibanna and 'env' in _tibanna:
             try:
@@ -909,6 +910,116 @@ class PonyFinal(SerializableObject):
                 if higlass_uid:
                     self.update_patch_item(ip['uuid'], {'higlass_uid': higlass_uid})
             self.update_patch_items(ip['uuid'], {'extra_files': ip['extra_files']})
+
+    def update_qc(self):
+        for qc_arg, qc_list in self.workflow_qc_arguments.items():
+            # qc_arg is the argument (either input or output) to attach the qc file
+            # qc_list is a list of QCArgumentInfo class objects
+            qc_target_accessions = self.accessions(qc_arg)
+            if len(qc_target_accessions) > 1:  # do not allow array in this case
+                raise Exception("ambiguous target for QC")
+            if not qc_target_accessions:
+                raise Exception("QC target %s does not exist" % qc_arg)
+            qc_target_accession = qc_target_accessions[0]
+            qc_object = self.create_qc_template()
+            qc_schema = self.qc_schema(qc_list[0].qc_type)  # assume same qc_schema per qc_arg
+            for qc in qc_list:
+                qc_bucket = self.bucket(qc.workflow_argument_name)
+                qc_key = self.file_key(qc.workflow_argument_name)
+                # if there is an html, add qc_url for the html
+                if qc.qc_zipped_html or qc.qc_html:
+                    target_html = qc_target_accession + 'qc_report.html'
+                    qc_url = 'https://s3.amazonaws.com/' + qc_bucket + '/' + target_html
+                else:
+                    qc_url = None
+                if qc.qc_zipped:
+                    unzipped_qc_data = self.unzip_qc_data(qc, qc_key, qc_target_accession)
+                    if qc.qc_zipped_tables:
+                        qcz_datafiles = []
+                        for qcz in qc.qc_zipped_tables:
+                            qcz_datafiles.extend(filter(lambda x: x.endswith(qcz), unzipped_qc_data))
+                        if qcz_datafiles:
+                            data_to_parse = [unzipped_qc_data[df]['data'] for df in qcz_datafiles]
+                            qc_meta_from_zip = self.parse_qc_table(data_to_parse, qc_schema)
+                            qc_object.update(qc_meta_from_zip)
+                else:
+                   data = self.read(qc.workflow_argument_name)
+                   if qc.qc_html:
+                       self.s3(qc.workflow_argument_name).s3_put(data.encode(),
+                                                                 target_html,
+                                                                 acl='public-read')
+                   elif qc.qc_json:
+                       qc_object.update(self.parse_qc_json([data]))
+                   elif qc.qc_table:
+                       qc_object.update(self.parse_qc_table([data], qc_schema))
+                if qc_url:
+                   qc_object.update('url': qc_url)
+                if self.custom_qc_fields:
+                   qc_object.update(self.custom_qc_fields)
+            self.update_post_item(qc_object['uuid'], qc_object)
+            self.update_patch_item(qc_target_accession, {'quality_metric': qc_object['uuid']})
+
+    def qc_schema(self, qc_schema_name):
+        try:
+            # schema. do not need to check_queue
+            return ff_utils.get_metadata("profiles/" + qc_schema_name + ".json",
+                                         key=self.tibanna_settings.ff_key,
+                                         ff_env=self.tibanna_settings.env)
+        except Exception as e:
+            err_msg = "Can't get profile for qc schema %s: %s" % (qc_schema_name, str(e))
+            raise FdnConnectionException(err_msg)
+        return res
+
+    def parse_qc_table(self, data_list, qc_schema):
+        qc_json = dict()
+
+        def parse_item(name, value):
+            """Add item to qc_json if it's in the schema"""
+            qc_type = qc_schema.get(name, {}).get('type', None)
+            if qc_type == 'string':
+                qc_json.update({name: str(value)})
+            elif qc_type == 'number':
+                qc_json.update({name: number(value.replace(',', ''))})
+
+        for data in data_list:
+            for line in data.split('\n'):
+                items = line.strip().split('\t')
+                # flagstat qc handling - e.g. each line could look like "0 + 0 blah blah blah"
+                space_del = line.strip().split(' ')
+                flagstat_items = [' '.join(space_del[0:3]), ' '.join(space_del[3:])]
+                try:
+                    parse_item(items[0], items[1])
+                    parse_item(items[1], items[0])
+                    parse_item(flagstat_items[1], flagstat_items[0])
+                except IndexError:  # pragma: no cover
+                    # maybe a blank line or something
+                    pass
+            qc_json.update(j)
+        return qc_json
+
+    def parse_qc_json(self, data_list):
+        qc_json = dict()
+        for data in data_list:
+            qc_json.update(json.loads(data))
+        return qc_json
+
+    def create_qc_template(self):
+        return {'uuid': str(uuid.uuid4()),
+                "award": "1U01CA200059-01",
+                "lab": "4dn-dcic-lab"}
+
+    def unzip_qc_data(self, qc, qc_key, target_accession):
+        """qc is a QCArgumentInfo object.
+        if qc is zipped, unzip it, put the files to destination s3,
+        and store the content and target s3 key to a dictionary and return.
+        """
+        if qc.qc_zipped:
+            unzipped_data = self.s3(qc.workflow_argument_name).unzip_s3_to_s3(qc_key,
+                                                                              target_accession,
+                                                                              acl='public-read')
+            return unzipped_data
+        else:
+            return None
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
