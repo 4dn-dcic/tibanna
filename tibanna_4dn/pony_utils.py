@@ -492,6 +492,19 @@ class PonyFinal(SerializableObject):
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
 
+    def post_all(self):
+        for schema, v in self.post_items.items():
+            for item in v:
+                post_metadata(item, schema,
+                              key=self.tibanna_settings.ff_keys,
+                              ff_env=self.tibanna_settings.env)
+
+    def patch_all(self):
+        for id, item in self.patch_items.items():
+            patch_metadata(item, id,
+                           key=self.tibanna_settings.ff_keys,
+                           ff_env=self.tibanna_settings.env)
+
     @property
     def app_name(self):
         return self.postrunjson.Job.App.App_name
@@ -654,11 +667,13 @@ class PonyFinal(SerializableObject):
             for f in fields:
                 self.add_to_pf_patch_items(pf_uuid, f)
 
-    def update_post_items(self, uuid, item):
-        if uuid in self.post_items:
-            self.post_items[uuid].update(item)
+    def update_post_items(self, uuid, item, schema):
+        if schema not in self.post_items:
+            self.post_items[schema] = dict()
+        if uuid in self.post_items[schema]:
+            self.post_items[schema][uuid].update(item)
         else:
-            self.post_item.update({uuid: item})
+            self.post_item[schema].update({uuid: item})
 
     # s3-related functionalities
     @property
@@ -968,7 +983,7 @@ class PonyFinal(SerializableObject):
                    qc_object.update('url': qc_url)
                 if self.custom_qc_fields:
                    qc_object.update(self.custom_qc_fields)
-            self.update_post_item(qc_object['uuid'], qc_object)
+            self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
             self.update_patch_item(qc_target_accession, {'quality_metric': qc_object['uuid']})
 
     def qc_schema(self, qc_schema_name):
@@ -1039,6 +1054,7 @@ class PonyFinal(SerializableObject):
         if self.ff_output_file(md5_report_arg)['type'] != 'Output report file':
             return
         if self.status(md5_report_arg) != 'COMPLETE'`:
+            self.ff_meta.run_status = 'error'
             self.update_patch_items(self.ff_meta.uuid, {'run_status': 'error'})
             return
         md5, content_md5 = self.parse_md5_report(self.read(md5_report_arg))
@@ -1099,6 +1115,14 @@ class PonyFinal(SerializableObject):
     def check_md5_mismatch(self, md5a, md5b):
         return md5a and md5b and md5a != md5b
 
+    # update all,high-level function
+    def update_metadata(self):
+        self.update_all_pfs()
+        self.update_md5()
+        self.update_qc()
+        self.update_input_extras()
+        self.post_all()
+        self.patch_all()
 
 # TODO: refactor this to inherit from an abstrat class called Runner
 # then implement for SBG as well
