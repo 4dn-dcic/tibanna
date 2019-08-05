@@ -922,6 +922,7 @@ class PonyFinal(SerializableObject):
                     self.update_patch_item(ip['uuid'], {'higlass_uid': higlass_uid})
             self.update_patch_items(ip['uuid'], {'extra_files': ip['extra_files']})
 
+    # update functions for QC
     def update_qc(self):
         for qc_arg, qc_list in self.workflow_qc_arguments.items():
             # qc_arg is the argument (either input or output) to attach the qc file
@@ -1035,6 +1036,8 @@ class PonyFinal(SerializableObject):
     # md5 report
     def update_md5(self):
         md5_report_arg = self.output_argnames[0]  # assume one output arg
+        if self.ff_output_file(md5_report_arg)['type'] != 'Output report file':
+            return
         if self.status(md5_report_arg) != 'COMPLETE'`:
             self.update_patch_items(self.ff_meta.uuid, {'run_status': 'error'})
             return
