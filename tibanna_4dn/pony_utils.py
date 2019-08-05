@@ -490,6 +490,7 @@ class PonyFinal(SerializableObject):
             except Exception as e:
                 raise TibannaStartException("%s" % e)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
+        self.post_items = dict()  # a collection of patch jsons (key = uuid)
 
     @property
     def app_name(self):
@@ -653,6 +654,12 @@ class PonyFinal(SerializableObject):
             for f in fields:
                 self.add_to_pf_patch_items(pf_uuid, f)
 
+    def update_post_items(self, uuid, item):
+        if uuid in self.post_items:
+            self.post_items[uuid].update(item)
+        else:
+            self.post_item.update({uuid: item})
+
     # s3-related functionalities
     @property
     def outbucket(self):
@@ -670,6 +677,10 @@ class PonyFinal(SerializableObject):
     def read(self, argname):
         """This function is useful for reading md5 report of qc report"""
         return self.s3(argname).read_s3(self.file_key(argname)).decode('utf-8', 'backslashreplace')
+
+    def s3_file_size(self, argname, secondary_format=None):
+        return self.s3(argname).get_file_size(self.file_key(argname, secondary_format=secondary_format),
+                                              self.bucket(argname))
 
     # get file features
     def md5sum(self, argname=None, pf_uuid=None, secondary_key=None):
@@ -1020,6 +1031,70 @@ class PonyFinal(SerializableObject):
             return unzipped_data
         else:
             return None
+
+    # md5 report
+    def update_md5(self):
+        md5_report_arg = self.output_argnames[0]  # assume one output arg
+        if self.status(md5_report_arg) != 'COMPLETE'`:
+            self.update_patch_items(self.ff_meta.uuid, {'run_status': 'error'})
+            return
+        md5, content_md5 = self.parse_md5_report(self.read(md5_report_arg))
+        input_arg = self.input_argnames[0]  # assume one input arg
+        input_meta = self.file_items(input_arg)[0]  # assume one input file
+
+        def process(meta):
+            md5_patch = dict()
+            md5_old, content_md5_old = self.get_existing_md5(meta)
+
+            def compare_and_update_md5(new, old, fieldname):
+                if new:
+                    if old:
+                        if new != old:
+                            raise Exception("%s not matching the original one" % fieldname)
+                    else:
+                        return {fieldname: new}
+                return {}
+
+            md5_patch.update(compare_and_update_md5(md5, md5_old, 'md5'))
+            md5_patch.update(compare_and_update_md5(content_md5, content_md5_old, 'content_md5'))
+            return md5_patch
+
+        matching_extra = None
+        for extra_format in self.format_if_extra(input_arg):
+            for extra in input_meta['extra_files']:
+                if cmp_fileformat(extra['file_format'], extra_format):
+                    matching_extra = extra
+                    break
+        if matching_extra:
+            patch_content = input_meta['extra_files']
+            patch_content.update(process(matching_extra))
+            secondary_format = matching_extra['file_format']
+            patch_content['file_size'] = self.s3_file_size(input_arg, secondary_format=secondary_format)
+            patch_content['status'] = 'uploaded'
+            self.update_patch_items(input_meta['uuid'], {'extra_files': patch_content})
+        else:
+            patch_content = process(input_meta)
+            patch_content['file_size'] = self.s3_file_size(input_arg)
+            patch_content['status'] = 'uploaded'
+            self.update_patch_items(input_meta['uuid'], patch_content)
+
+    def parse_md5_report(read):
+        """parses md5 report file content and returns md5, content_md5"""
+        md5_array = read.split('\n')
+        if not md5_array:
+            raise Exception("md5 report has no content")
+        if len(md5_array) == 1:
+            return None, md5_array[0]
+        elif len(md5_array) > 1:
+            return md5_array[0], md5_array[1]
+
+    def get_existing_md5(self, file_meta):
+        md5 = file_meta.get('md5sum', None)
+        content_md5 = file_meta.get('content_md5sum', None)
+        return md5, content_md5
+
+    def check_md5_mismatch(self, md5a, md5b):
+        return md5a and md5b and md5a != md5b
 
 
 # TODO: refactor this to inherit from an abstrat class called Runner
