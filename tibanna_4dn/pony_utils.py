@@ -476,7 +476,8 @@ class PonyFinal(SerializableObject):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
-    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields, **kwargs):
+    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields=None,
+                 config=None, jobid=None, metadata_only=None, **kwargs):
         self.ff_meta = WorkflowRunMetadata(**ff_meta)
         self.postrunjson = AwsemPostRunJson(**postrunjson)
         if pf_meta:
@@ -489,21 +490,9 @@ class PonyFinal(SerializableObject):
                 self.tibanna_settings = TibannaSettings(_tibanna['env'], settings=_tibanna)
             except Exception as e:
                 raise TibannaStartException("%s" % e)
+        self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
-
-    def post_all(self):
-        for schema, v in self.post_items.items():
-            for item in v:
-                post_metadata(item, schema,
-                              key=self.tibanna_settings.ff_keys,
-                              ff_env=self.tibanna_settings.env)
-
-    def patch_all(self):
-        for id, item in self.patch_items.items():
-            patch_metadata(item, id,
-                           key=self.tibanna_settings.ff_keys,
-                           ff_env=self.tibanna_settings.env)
 
     @property
     def app_name(self):
@@ -651,12 +640,39 @@ class PonyFinal(SerializableObject):
             ie_args_per_attach[iearg.argument_to_be_attached_to].append(iearg)
         return ie_args_per_attach
 
-    # patch-related functionalities
+    # patch/post-related functionalities
+    def post_all(self):
+        for schema, v in self.post_items.items():
+            for item in v:
+                post_metadata(item, schema,
+                              key=self.tibanna_settings.ff_keys,
+                              ff_env=self.tibanna_settings.env)
+
+    def patch_all(self):
+        for id, item in self.patch_items.items():
+            patch_metadata(item, id,
+                           key=self.tibanna_settings.ff_keys,
+                           ff_env=self.tibanna_settings.env)
+
+    def patch_ffmeta(self):
+        try:
+            self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
+        except Exception as e:
+            raise Exception("Failed to update run_status %s" % str(e))
+
     def update_patch_items(self, uuid, item):
         if uuid in self.patch_items:
             self.patch_items[uuid].update(item)
         else:
             self.patch_item.update({uuid: item})
+
+    def update_post_items(self, uuid, item, schema):
+        if schema not in self.post_items:
+            self.post_items[schema] = dict()
+        if uuid in self.post_items[schema]:
+            self.post_items[schema][uuid].update(item)
+        else:
+            self.post_item[schema].update({uuid: item})
 
     def add_to_pf_patch_items(self, pf_uuid, fields):
         """add entries from pf object to patch_items for a later pf patch"""
@@ -666,14 +682,6 @@ class PonyFinal(SerializableObject):
         else:
             for f in fields:
                 self.add_to_pf_patch_items(pf_uuid, f)
-
-    def update_post_items(self, uuid, item, schema):
-        if schema not in self.post_items:
-            self.post_items[schema] = dict()
-        if uuid in self.post_items[schema]:
-            self.post_items[schema][uuid].update(item)
-        else:
-            self.post_item[schema].update({uuid: item})
 
     # s3-related functionalities
     @property
@@ -1055,7 +1063,6 @@ class PonyFinal(SerializableObject):
             return
         if self.status(md5_report_arg) != 'COMPLETE'`:
             self.ff_meta.run_status = 'error'
-            self.update_patch_items(self.ff_meta.uuid, {'run_status': 'error'})
             return
         md5, content_md5 = self.parse_md5_report(self.read(md5_report_arg))
         input_arg = self.input_argnames[0]  # assume one input arg
@@ -1117,12 +1124,28 @@ class PonyFinal(SerializableObject):
 
     # update all,high-level function
     def update_metadata(self):
+        for arg in self.output_argnames:
+            if self.status(arg) != 'COMPLETED':
+                self.ff_meta.run_status = 'error'
         self.update_all_pfs()
         self.update_md5()
         self.update_qc()
         self.update_input_extras()
         self.post_all()
         self.patch_all()
+        self.ff_meta.run_status = 'complete'
+        self.patch_ffmeta()
+
+    def get_postrunjson_url(self, config, jobid, metadata_only):
+        try:
+            return 'https://s3.amazonaws.com/' + config['log_bucket'] + '/' + jobid + '.postrun.json'
+        except Exception as e:
+            # we don't need this for pseudo runs so just ignore
+            if metadata_only:
+                return ''
+            else:
+                raise e
+
 
 # TODO: refactor this to inherit from an abstrat class called Runner
 # then implement for SBG as well
