@@ -402,51 +402,6 @@ def is_prod():
     return current_env().lower() == 'prod'
 
 
-class AwsemFile(object):
-    '''Class for input, output, extra files that are embedded in the Awsem class.
-    Its use for input files is mostly on getting input file accession
-    to attach qc/report type output
-    '''
-
-    def __init__(self, bucket, key, runner, argument_type=None,
-                 filesize=None, md5=None, format_if_extra=None, is_extra=False,
-                 argument_name=None):
-        self.bucket = bucket
-        self.key = key
-        self.s3 = s3Utils(self.bucket, self.bucket, self.bucket)
-        self.runner = runner
-        self.argument_type = argument_type
-        self.filesize = filesize
-        self.md5 = md5
-        self.format_if_extra = format_if_extra
-        self.argument_name = argument_name
-        if self.format_if_extra or is_extra:
-            self.is_extra = True
-        else:
-            self.is_extra = False
-
-    @property
-    def accession(self):
-        '''if argument type is either 'Output processed file or 'Input file',
-        returns accession. If not, returns None.'''
-        if self.argument_type in ['Output processed file', 'Input file']:
-            file_name = self.key.split('/')[-1]
-            return file_name.split('.')[0].strip('/')
-        else:
-            return None
-
-    @property
-    def status(self):
-        exists = self.s3.does_key_exist(self.key, self.bucket)
-        if exists:
-            return "COMPLETED"
-        else:
-            return "FAILED"
-
-    def read(self):
-        return self.s3.read_s3(self.key).strip()
-
-
 class QCArgumentInfo(SerializableObject):
     def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to, qc_type,
                  qc_zipped=False, qc_html=False, qc_json=False, qc_table=False,
@@ -472,12 +427,14 @@ class InputExtraArgumentInfo(SerializableObject):
         self.argument_to_be_attached_to = argument_to_be_attached_to
 
 
-class PonyFinal(SerializableObject):
+class FourfrontUpdater(SerializableObject):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
     def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields=None,
-                 config=None, jobid=None, metadata_only=None, **kwargs):
+                 config=None, jobid=None, metadata_only=False, **kwargs):
+        self.jobid = jobid
+        self.config = Config(**config)
         self.ff_meta = WorkflowRunMetadata(**ff_meta)
         self.postrunjson = AwsemPostRunJson(**postrunjson)
         if pf_meta:
@@ -493,6 +450,31 @@ class PonyFinal(SerializableObject):
         self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
+
+    def handle_success(self):
+        # update run status in metadata first
+        self.ff_meta.run_status = 'complete'
+        self.patch_ffmeta()
+        # send a notification email
+        if config.email:
+            send_notification_email(self.tibanna_settings.settings['run_name'],
+                                    self.jobid,
+                                    self.ff_meta.run_status,
+                                    updater.tibanna_settings.settings['url'])
+
+    def handle_error(self, err_msg=''):
+        # update run status in metadata first
+        self.ff_meta.run_status = 'error'
+        self.ff_meta.description = err_msg
+        self.patch_ffmeta()
+        # send a notification email before throwing error
+        if config.email:
+            send_notification_email(self.tibanna_settings.settings['run_name'],
+                                    self.jobid,
+                                    self.ff_meta.run_status,
+                                    self.tibanna_settings.settings['url'])
+        # raise error
+        raise Exception(err_msg)
 
     @property
     def app_name(self):
@@ -656,7 +638,7 @@ class PonyFinal(SerializableObject):
 
     def patch_ffmeta(self):
         try:
-            self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
+            return self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
         except Exception as e:
             raise Exception("Failed to update run_status %s" % str(e))
 
@@ -1147,116 +1129,6 @@ class PonyFinal(SerializableObject):
                 raise e
 
 
-# TODO: refactor this to inherit from an abstrat class called Runner
-# then implement for SBG as well
-class Awsem(object):
-    '''class that collects Awsem output and metadata information'''
-    def __init__(self, json):
-        self.args = json['args']
-        self.config = json['config']
-        self.output_s3 = self.args['output_S3_bucket']
-        self.app_name = self.args['app_name']
-        self.output_files_meta = json['ff_meta']['output_files']
-        self.output_info = None
-        if isinstance(json.get('postrunjson'), dict):
-            self.output_info = json['postrunjson']['Job']['Output']['Output files']
-
-    def output_type(self, wf_arg_name):
-        for x in self.output_files_meta:
-            if x['workflow_argument_name'] == wf_arg_name:
-                return x['type']
-        return None
-
-    def get_md5_filesize_from_output_info(self, argname):
-        if self.output_info:
-            md5 = self.output_info[argname].get('md5sum', None)
-            filesize = self.output_info[argname].get('size', None)
-            return (md5, filesize)
-        return (None, None)
-
-    def output_files(self):
-        files = []
-        for argname, key in iter(self.args.get('output_target').items()):
-            md5, filesize = self.get_md5_filesize_from_output_info(argname)
-            wff = AwsemFile(self.output_s3, key, self,
-                            argument_type=self.output_type(argname),
-                            filesize=filesize, md5=md5, argument_name=argname)
-            files.append(wff)
-        return files
-
-    def get_md5_filesize_from_secondary_file_output_info(self, argname, key):
-        if self.output_info and 'secondaryFiles' in self.output_info[argname]:
-            for sf in self.output_info[argname]['secondaryFiles']:
-                if sf.get('target', '') == key:
-                    md5 = sf.get('md5sum', None)
-                    filesize = sf.get('size', None)
-                    return (md5, filesize)
-        return (None, None)
-
-    def get_secondary_file_format_from_ff_meta(self, argname, key):
-        for pf in self.output_files_meta:
-            if pf['workflow_argument_name'] == argname and 'extra_files' in pf:
-                for pfextra in pf['extra_files']:
-                    if pfextra['upload_key'] == key:
-                        return parse_formatstr(pfextra['file_format'])
-        return None
-
-    def secondary_output_files(self):
-        files = []
-        for argname, keylist in iter(self.args.get('secondary_output_target').items()):
-            if not isinstance(keylist, list):
-                keylist = [keylist]
-            for key in keylist:
-                md5, filesize = self.get_md5_filesize_from_secondary_file_output_info(argname, key)
-                file_format = self.get_secondary_file_format_from_ff_meta(argname, key)
-                wff = AwsemFile(self.output_s3, key, self,
-                                argument_type=self.output_type(argname),
-                                filesize=filesize, md5=md5,
-                                format_if_extra=file_format,
-                                argument_name=argname)
-                files.append(wff)
-        return files
-
-    def input_files(self):
-        files = []
-        for arg_name, item in iter(self.args.get('input_files').items()):
-            wff = AwsemFile(item.get('bucket_name'),
-                            item.get('object_key'),
-                            self,
-                            argument_type="Input file",
-                            format_if_extra=item.get('format_if_extra', ''),
-                            argument_name=arg_name)
-            files.append(wff)
-        return files
-
-    def all_files(self):
-        files = []
-        files.extend(self.input_files())
-        files.extend(self.output_files())
-        return files
-
-    def get_format_if_extras(self, argname):
-        format_if_extras = []
-        for v in self.input_files():
-            if argname == v.argument_name:
-                format_if_extras.append(v.format_if_extra)
-        return format_if_extras
-
-    def get_file_accessions(self, argname):
-        accessions = []
-        for v in self.all_files():
-            if argname == v.argument_name:
-                accessions.append(v.accession)
-        return accessions
-
-    def get_file_key(self, argname):
-        keys = []
-        for v in self.all_files():
-            if argname == v.argument_name:
-                keys.append(v.key)
-        return keys
-
-
 def post_random_file(bucket, ff_key,
                      file_format='pairs', extra_file_format='pairs_px2',
                      file_extension='pairs.gz', extra_file_extension='pairs.gz.px2',
@@ -1343,3 +1215,16 @@ def match_higlass_config(file_format, extra_format):
             elif not extra_format:
                 return hc
     return None
+
+def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dndcic@gmail.com'):
+    subject = '[Tibanna] job %s : %s' % (status, job_name)
+    msg = 'Job %s (%s) finished with status %s\n' % (jobid, job_name, status) \
+          + 'For more detail, go to %s' % exec_url
+    client = boto3.client('ses')
+    try:
+        client.send_email(Source=sender,
+                          Destination={'ToAddresses': [sender]},
+                          Message={'Subject': {'Data': subject},
+                                   'Body': {'Text': {'Data': msg}}})
+    except Exception as e:
+        printlog("Cannot send email: %s" % e)
