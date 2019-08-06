@@ -178,6 +178,8 @@ def start_run(input_json):
         config['ebs_size'] = 0
     if 'public_postrun_json' not in config:
         config['public_postrun_json'] = True
+    if 'email' not in config:
+        config['email'] = False
 
     input_json_copy.update({"ff_meta": ff_meta.as_dict(),
                             'pf_meta': [meta.as_dict() for meta in pf_meta],
