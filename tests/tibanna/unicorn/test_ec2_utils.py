@@ -149,6 +149,27 @@ def test_config():
     assert cfg_dict['shutdown_min'] == 30
 
 
+def test_config2():
+    input_dict = {'config': {'log_bucket': 'tibanna-output'}}
+    cfg = Config(**input_dict['config'])
+    cfg.fill_default()
+    cfg_dict = cfg.as_dict()
+    assert 'log_bucket' in cfg_dict
+    assert 'shutdown_min' in cfg_dict
+    assert 'root_ebs_size' in cfg_dict
+    assert cfg_dict['shutdown_min'] == 'now'
+    assert cfg_dict['root_ebs_size'] == 8
+
+
+def test_config_root_ebs_size():
+    input_dict = {'config': {'log_bucket': 'tibanna-output', 'root_ebs_size': 20}}
+    cfg = Config(**input_dict['config'])
+    cfg.fill_default()
+    cfg_dict = cfg.as_dict()
+    assert 'log_bucket' in cfg_dict
+    assert cfg_dict['root_ebs_size'] == 20
+
+
 def test_unicorn_input():
     input_dict = {'args': {'input_files': {}, 'app_name': 'bwa-mem',
                            'output_S3_bucket': 'somebucket',
