@@ -76,3 +76,22 @@ def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
     assert 'url' in updater.post_items['quality_metric_fastqc'][uuid]
     assert 'Per base sequence content' in updater.post_items['quality_metric_fastqc'][uuid]
 
+@valid_env
+def test_FourfrontUpdater3(update_ffmeta_event_data_bamcheck):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_bamcheck)
+    assert updater.workflow
+    assert 'arguments' in updater.workflow
+    assert updater.workflow_qc_arguments
+    assert 'output' in updater.workflow_qc_arguments
+    assert updater.workflow_qc_arguments['output'][0].qc_type == 'quality_metric_bamcheck'
+    updater.update_qc()
+    qc = updater.workflow_qc_arguments['output'][0]
+    target_accession = updater.accessions('output')[0]
+    assert qc.workflow_argument_name == 'output-check'
+    assert qc.qc_table 
+    assert target_accession == '4DNFIWT3X5RU'
+    assert updater.post_items
+    assert len(updater.post_items['quality_metric_bamcheck']) == 1
+    uuid = list(updater.post_items['quality_metric_bamcheck'].keys())[0]
+    assert 'quickcheck' in updater.post_items['quality_metric_bamcheck'][uuid]
+

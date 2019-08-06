@@ -1,0 +1,359 @@
+{
+  "jobid": "oCaMRPzfYHMm",
+  "args": {
+    "app_name": "workflow_bwa-mem_no_unzip-check",
+    "app_version": "v8",
+    "cwl_directory_url": "https://raw.githubusercontent.com/dbmi-bgm/cgap-pipeline/master/cwl",
+    "cwl_main_filename": "workflow_bwa-mem-to-bam_no_unzip_plus_integrity-check.cwl",
+    "cwl_child_filenames": [
+      "bwa-mem-to-bam_no_unzip.cwl",
+      "integrity-check.cwl"
+    ],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": [],
+    "cwl_version": "draft3",
+    "input_files": {
+      "fastq_R1": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "object_key": "7aa65ed7-9a07-4cc7-b58f-86895cab1b2c/4DNFIF2Z7ITH.fastq.gz"
+      },
+      "fastq_R2": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "object_key": "f9f55bef-dac7-4cf3-b861-6d3938c5720e/4DNFIR73A1NT.fastq.gz"
+      },
+      "reference": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "object_key": "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.bwt"
+      }
+    },
+    "secondary_files": {
+      "reference": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "object_key": [
+          "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.ann",
+          "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.amb",
+          "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.sa",
+          "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.pac"
+        ]
+      }
+    },
+    "input_parameters": {},
+    "output_target": {
+      "output": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
+      "output-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
+    },
+    "secondary_output_target": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "input_env": {},
+    "alt_cond_output_argnames": {},
+    "language": "cwl_draft3",
+    "singularity": false,
+    "cwl_directory_local": "",
+    "dependency": {}
+  },
+  "parameters": {},
+  "workflow_uuid": "9e094699-561b-4396-8d6a-ffc45f98c5e1",
+  "input_files": [
+    {
+      "object_key": "4DNFIF2Z7ITH.fastq.gz",
+      "workflow_argument_name": "fastq_R1",
+      "uuid": "7aa65ed7-9a07-4cc7-b58f-86895cab1b2c",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+    },
+    {
+      "object_key": "4DNFIR73A1NT.fastq.gz",
+      "workflow_argument_name": "fastq_R2",
+      "uuid": "f9f55bef-dac7-4cf3-b861-6d3938c5720e",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+    },
+    {
+      "object_key": "4DNFIYU3FC57.bwt",
+      "workflow_argument_name": "reference",
+      "uuid": "b24ed5ed-a037-48a0-a938-3fecfb90d0cf",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+    }
+  ],
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "run_id": "cd135718-b037-4c48-a787-3634b3347e36",
+      "env": "fourfront-webdev",
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:run_workflow_bwa-mem_no_unzip-check",
+      "run_type": "workflow_bwa-mem_no_unzip-check",
+      "run_name": "run_workflow_bwa-mem_no_unzip-check",
+      "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:run_workflow_bwa-mem_no_unzip-check"
+    }
+  },
+  "app_name": "workflow_bwa-mem_no_unzip-check",
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "push_error_to_end": true,
+  "ff_meta": {
+    "awsem_app_name": "workflow_bwa-mem_no_unzip-check",
+    "awsem_job_id": "oCaMRPzfYHMm",
+    "run_status": "started",
+    "uuid": "5780e217-29c2-4aa3-9f4c-71efb8bd0931",
+    "workflow": "9e094699-561b-4396-8d6a-ffc45f98c5e1",
+    "run_platform": "AWSEM",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony:run_workflow_bwa-mem_no_unzip-check",
+    "title": "workflow_bwa-mem_no_unzip-check v8 run 2019-08-06 20:36:23.423459",
+    "input_files": [
+      {
+        "workflow_argument_name": "fastq_R1",
+        "value": "7aa65ed7-9a07-4cc7-b58f-86895cab1b2c",
+        "ordinal": 1,
+        "dimension": "0"
+      },
+      {
+        "workflow_argument_name": "fastq_R2",
+        "value": "f9f55bef-dac7-4cf3-b861-6d3938c5720e",
+        "ordinal": 1,
+        "dimension": "0"
+      },
+      {
+        "workflow_argument_name": "reference",
+        "value": "b24ed5ed-a037-48a0-a938-3fecfb90d0cf",
+        "ordinal": 1,
+        "dimension": "0"
+      }
+    ],
+    "output_files": [
+      {
+        "workflow_argument_name": "output",
+        "type": "Output processed file",
+        "format": "/file-formats/bam/",
+        "value": "41178912-4bf1-402e-9b75-cf28ded2912b",
+        "upload_key": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam"
+      },
+      {
+        "workflow_argument_name": "output-check",
+        "type": "Output QC file"
+      }
+    ],
+    "parameters": [],
+    "award": "1U01CA200059-01",
+    "lab": "4dn-dcic-lab"
+  },
+  "pf_meta": [
+    {
+      "uuid": "41178912-4bf1-402e-9b75-cf28ded2912b",
+      "accession": "4DNFIWT3X5RU",
+      "status": "to be uploaded by workflow",
+      "lab": "4dn-dcic-lab",
+      "award": "1U01CA200059-01",
+      "file_format": "bam",
+      "source_experiments": [
+        "a7891ddf-2c1b-4092-81a7-c6aac318a70b"
+      ]
+    }
+  ],
+  "config": {
+    "instance_type": "c5n.18xlarge",
+    "ebs_size": 66,
+    "EBS_optimized": true,
+    "spot_instance": true,
+    "log_bucket": "tibanna-output",
+    "run_name": "run_workflow_bwa-mem_no_unzip-check",
+    "behavior_on_capacity_limit": "wait_and_retry",
+    "public_postrun_json": true,
+    "cpu": "",
+    "ebs_iops": "",
+    "password": "",
+    "key_name": "",
+    "spot_duration": "",
+    "mem": 0,
+    "ebs_type": "gp2",
+    "shutdown_min": "now",
+    "cloudwatch_dashboard": false,
+    "root_ebs_size": 8,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "json_bucket": "tibanna-output",
+    "ami_id": "ami-0f06a8358d41c4b9c",
+    "language": "cwl_draft3",
+    "job_tag": "workflow_bwa-mem_no_unzip-check",
+    "instance_id": "i-00a1716161a60ccb0",
+    "instance_ip": "52.3.236.71",
+    "start_time": "20190806-20:36:29-UTC"
+  },
+  "postrunjson": {
+    "Job": {
+      "App": {
+        "App_name": "workflow_bwa-mem_no_unzip-check",
+        "App_version": "v8",
+        "cwl_url": "https://raw.githubusercontent.com/dbmi-bgm/cgap-pipeline/master/cwl",
+        "language": "cwl_draft3",
+        "main_cwl": "workflow_bwa-mem-to-bam_no_unzip_plus_integrity-check.cwl",
+        "other_cwl_files": "bwa-mem-to-bam_no_unzip.cwl,integrity-check.cwl"
+      },
+      "Input": {
+        "Env": {},
+        "Input_files_data": {
+          "fastq_R1": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files",
+            "path": "7aa65ed7-9a07-4cc7-b58f-86895cab1b2c/4DNFIF2Z7ITH.fastq.gz",
+            "profile": "",
+            "rename": "",
+            "unzip": ""
+          },
+          "fastq_R2": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files",
+            "path": "f9f55bef-dac7-4cf3-b861-6d3938c5720e/4DNFIR73A1NT.fastq.gz",
+            "profile": "",
+            "rename": "",
+            "unzip": ""
+          },
+          "reference": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files",
+            "path": "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.bwt",
+            "profile": "",
+            "rename": "",
+            "unzip": ""
+          }
+        },
+        "Input_parameters": {},
+        "Secondary_files_data": {
+          "reference": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files",
+            "path": [
+              "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.ann",
+              "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.amb",
+              "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.sa",
+              "b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.pac"
+            ],
+            "profile": "",
+            "rename": "",
+            "unzip": ""
+          }
+        }
+      },
+      "JOBID": "oCaMRPzfYHMm",
+      "Log": {
+        "log_bucket_directory": "tibanna-output"
+      },
+      "Output": {
+        "Output files": {
+          "output": {
+            "basename": "raw.bam",
+            "checksum": "sha1$49bb6d993c1ad4ebf672e71f01e6821096fe019f",
+            "class": "File",
+            "location": "file:///data1/out/raw.bam",
+            "md5sum": "20d2fc5b12792a8faa8e1895e3faa546",
+            "path": "/data1/out/raw.bam",
+            "size": 7575726131,
+            "target": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam"
+          },
+          "output-check": {
+            "basename": "integrity_check",
+            "checksum": "sha1$8296f8ccff8a4fad99be5d3d71175134d84e2621",
+            "class": "File",
+            "location": "file:///data1/out/integrity_check",
+            "md5sum": "475bff046ae43cc36f4edb68f5a35350",
+            "path": "/data1/out/integrity_check",
+            "size": 14,
+            "target": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
+          }
+        },
+        "alt_cond_output_argnames": {},
+        "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "output_target": {
+          "output": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
+          "output-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
+        },
+        "secondary_output_target": {}
+      },
+      "end_time": "20190806-21:03:54-UTC",
+      "filesystem": "/dev/nvme1n1",
+      "instance_id": "i-00a1716161a60ccb0",
+      "start_time": "20190806-20:36:26-UTC",
+      "status": "0",
+      "total_input_size": "11G",
+      "total_output_size": "7.1G",
+      "total_tmp_size": "4.0K",
+      "Metrics": {
+        "max_mem_used_MB": 19565.1484375,
+        "min_mem_available_MB": 169596.30078125,
+        "total_mem_MB": 189161.44921875,
+        "max_mem_utilization_percent": 10.343095021900831,
+        "max_cpu_utilization_percent": 83,
+        "max_disk_space_utilization_percent": 26.9955297516671,
+        "max_disk_space_used_GB": 17.5037460327148
+      }
+    },
+    "commands": [
+      [
+        "[job bwa-mem-to-bam_no_unzip] /data1/tmp8gXpDr$ docker ",
+        "    run ",
+        "    -i ",
+        "    --volume=/data1/tmp8gXpDr:/var/spool/cwl:rw ",
+        "    --volume=/data1/tmpSd9KYW:/tmp:rw ",
+        "    --volume=/data1/input/f9f55bef-dac7-4cf3-b861-6d3938c5720e/4DNFIR73A1NT.fastq.gz:/var/lib/cwl/stgcd244cb3-8422-454e-a5fa-04dc589fb69c/4DNFIR73A1NT.fastq.gz:ro ",
+        "    --volume=/data1/input/b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.pac:/var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57.pac:ro ",
+        "    --volume=/data1/input/b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.ann:/var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57.ann:ro ",
+        "    --volume=/data1/input/7aa65ed7-9a07-4cc7-b58f-86895cab1b2c/4DNFIF2Z7ITH.fastq.gz:/var/lib/cwl/stg97e9c44a-dc5c-4f5e-8f65-4a8a0053a5b4/4DNFIF2Z7ITH.fastq.gz:ro ",
+        "    --volume=/data1/input/b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.bwt:/var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57.bwt:ro ",
+        "    --volume=/data1/input/b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.amb:/var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57.amb:ro ",
+        "    --volume=/data1/input/b24ed5ed-a037-48a0-a938-3fecfb90d0cf/4DNFIYU3FC57.sa:/var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57.sa:ro ",
+        "    --workdir=/var/spool/cwl ",
+        "    --log-driver=none ",
+        "    --rm ",
+        "    --env=TMPDIR=/tmp ",
+        "    --env=HOME=/var/spool/cwl ",
+        "    cgap/cgap:v8 ",
+        "    bwa-mem-to-bam_no_unzip.sh ",
+        "    /var/lib/cwl/stg97e9c44a-dc5c-4f5e-8f65-4a8a0053a5b4/4DNFIF2Z7ITH.fastq.gz ",
+        "    /var/lib/cwl/stgcd244cb3-8422-454e-a5fa-04dc589fb69c/4DNFIR73A1NT.fastq.gz ",
+        "    /var/lib/cwl/stgd5d86d59-4819-4900-9b40-6740e676a8db/4DNFIYU3FC57 ",
+        "    . ",
+        "    raw ",
+        "    72 > /data1/tmp8gXpDr/raw.bam"
+      ],
+      [
+        "[job integrity-check] /data1/tmp8AYlHo$ docker ",
+        "    run ",
+        "    -i ",
+        "    --volume=/data1/tmp8AYlHo:/var/spool/cwl:rw ",
+        "    --volume=/data1/tmp2a8J9X:/tmp:rw ",
+        "    --volume=/data1/tmp8gXpDr/raw.bam:/var/lib/cwl/stg28dcb4e6-0cf4-447b-8716-9146931c28f3/raw.bam:ro ",
+        "    --workdir=/var/spool/cwl ",
+        "    --rm ",
+        "    --env=TMPDIR=/tmp ",
+        "    --env=HOME=/var/spool/cwl ",
+        "    cgap/cgap:v8 ",
+        "    integrity-check.sh ",
+        "    /var/lib/cwl/stg28dcb4e6-0cf4-447b-8716-9146931c28f3/raw.bam ",
+        "    0"
+      ]
+    ],
+    "config": {
+      "EBS_optimized": true,
+      "ami_id": "ami-0f06a8358d41c4b9c",
+      "behavior_on_capacity_limit": "wait_and_retry",
+      "cloudwatch_dashboard": false,
+      "cpu": "",
+      "ebs_iops": "",
+      "ebs_size": 66,
+      "ebs_type": "gp2",
+      "instance_type": "c5n.18xlarge",
+      "job_tag": "workflow_bwa-mem_no_unzip-check",
+      "json_bucket": "tibanna-output",
+      "language": "cwl_draft3",
+      "log_bucket": "tibanna-output",
+      "mem": 0,
+      "public_postrun_json": true,
+      "root_ebs_size": 8,
+      "run_name": "run_workflow_bwa-mem_no_unzip-check",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "shutdown_min": "now",
+      "spot_duration": "",
+      "spot_instance": true
+    }
+  }
+}
