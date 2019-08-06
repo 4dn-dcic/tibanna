@@ -18,6 +18,8 @@ class AwsemRunJsonJob(SerializableObject):
         self.Input = AwsemRunJsonInput(**Input)
         self.create_Output(Output)
         self.start_time = start_time
+        self.Log = Log
+        self.JOBID = JOBID
 
     def create_Output(self, Output):
         self.Output = AwsemPostRunJsonOutput(**Output)

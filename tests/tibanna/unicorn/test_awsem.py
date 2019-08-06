@@ -1,5 +1,7 @@
 import pytest
+import copy
 from tibanna import awsem
+
 
 @pytest.fixture
 def run_json_inputfile():
@@ -39,7 +41,7 @@ def run_json_input():
             },
         },
         "Secondary_files_data": {},
-        "Input_parameters": {}
+        "Input_parameters": {'n': 2}
     }
 
 @pytest.fixture
@@ -49,6 +51,121 @@ def run_json_app():
         "App_version": "v1.0"
     }
 
+@pytest.fixture
+def run_json_output():
+    return {
+        "output_bucket_directory": "somebucket",
+        "output_target": {
+            "file://tests/awsf/haha": "shelltest-haha",
+            "file://tests/awsf/mydir": "shelltest-mydir"
+        },
+        "secondary_output_target": {},
+        "alt_cond_output_argnames": {}
+    }
+
+@pytest.fixture
+def run_json_job(run_json_app, run_json_input, run_json_output):
+    return {
+        'App': run_json_app,
+        'Input': run_json_input,
+        'Log': {"log_bucket_directory": "tibanna-output"},
+        'JOBID': "J55BCqwHx6N5",
+        'Output': run_json_output,
+        'start_time': "20180430-18:50:18-UTC"
+    }
+
+@pytest.fixture
+def run_json_config():
+    return {
+        'log_bucket': 'somelogbucket'
+    }
+
+@pytest.fixture
+def run_json(run_json_job, run_json_config):
+    return {
+        'Job': run_json_job,
+        'config': run_json_config
+    }
+
+@pytest.fixture
+def postrun_json_output(run_json_output, postrun_json_outputfile):
+    json = copy.deepcopy(run_json_output)
+    json.update({'Output files': {'pairs': postrun_json_outputfile}})
+    return json
+
+@pytest.fixture
+def postrun_json_outputfile():
+    return {
+        "basename": "out.pairs.gz",
+        "checksum": "sha1$7625d7b5cc4269408e6c08e691c9e9401668ee13",
+        "class": "File",
+        "location": "file:///data1/out/out.pairs.gz",
+        "md5sum": "1a892518a073aa8e2b9205cf160594f4",
+        "path": "/data1/out/out.pairs.gz",
+        "secondaryFiles": [
+          {
+            "basename": "out.pairs.gz.px2",
+            "checksum": "sha1$4b1384e757ddcb1b216e0bc3c778d5657c94ed5c",
+            "class": "File",
+            "location": "file:///data1/out/out.pairs.gz.px2",
+            "md5sum": "494fae3d6567c1f7ed5fd2e16238d95f",
+            "path": "/data1/out/out.pairs.gz.px2",
+            "size": 12931458,
+            "target": "somepairs.pairs.gz.px2"
+          }
+        ],
+        "size": 2282418874,
+        "target": "somepairs.pairs.gz"
+    }
+
+def test_PostRunJsonOutput(postrun_json_output):
+    r = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
+    assert len(r.Output_files_) == 1
+    assert r.Output_files_['pairs'].path == '/data1/out/out.pairs.gz'
+    assert r.Output_files_['pairs'].secondaryFiles[0].size == 12931458
+    r_dict = r.as_dict()
+    assert r_dict['Output files']['pairs']['class'] == 'File'
+    assert r_dict['Output files']['pairs']['size'] == 2282418874
+    assert r_dict['Output files']['pairs']['secondaryFiles'][0]['basename'] == "out.pairs.gz.px2"
+    assert r_dict['output_bucket_directory'] == "somebucket"  # inherited from runjson
+
+def test_PostRunJsonOutputFile(postrun_json_outputfile):
+    r = awsem.AwsemPostRunJsonOutputFile(**postrun_json_outputfile)
+    assert r.basename == "out.pairs.gz"
+    assert r.class_ == 'File'
+    assert r.target == 'somepairs.pairs.gz'
+    assert r.secondaryFiles[0].target == 'somepairs.pairs.gz.px2'
+
+def test_RunJson(run_json):
+    r = awsem.AwsemRunJson(**run_json)
+    assert r.Job.start_time == "20180430-18:50:18-UTC"
+    assert r.config.log_bucket == 'somelogbucket'
+    r_dict = r.as_dict()
+    assert 'Job' in r_dict
+    assert r_dict['Job']['Input']['Input_files_data']['chromsize']['path'] == 'path1'
+    r_dict['Job']['Input']['Input_files_data']['chromsize']['path'] = 'someotherpath'
+    assert r.Job.Input.Input_files_data['chromsize'].path == 'path1'  # changing r_dict shouldn't affect r
+
+def test_RunJsonJob(run_json_job):
+    r = awsem.AwsemRunJsonJob(**run_json_job)
+    r_dict = r.as_dict()
+    r_dict['App']['App_name'] = 'someotherapp'
+    assert r_dict['App']['App_name'] == 'someotherapp'
+    assert r_dict['Input']['Input_files_data']['restrict_frags']['path'] == 'path3'
+    assert r.App.App_name == 'someapp'  # changing r_dict shoudn't affect r
+    assert r.Input.Input_parameters['n'] == 2
+    assert r.Output.output_bucket_directory == 'somebucket'
+    assert r.Log['log_bucket_directory'] == 'tibanna-output'
+    assert r.JOBID == "J55BCqwHx6N5"
+
+def test_RunJsonOutput(run_json_output):
+    r = awsem.AwsemRunJsonOutput(**run_json_output)
+    assert r.output_bucket_directory == 'somebucket'
+    assert len(r.output_target) == 2
+    r_dict = r.as_dict()
+    assert r_dict['output_target']["file://tests/awsf/haha"] == "shelltest-haha"
+    r_dict['output_target'] = {}
+    assert len(r.output_target) == 2  # changing r_dict shouldn't affect r
 
 def test_RunJsonInputFile(run_json_inputfile):
     r = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
