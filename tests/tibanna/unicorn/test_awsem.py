@@ -77,7 +77,8 @@ def run_json_job(run_json_app, run_json_input, run_json_output):
 @pytest.fixture
 def run_json_config():
     return {
-        'log_bucket': 'somelogbucket'
+        'log_bucket': 'somelogbucket',
+        'instance_type': 't3.medium'
     }
 
 @pytest.fixture
@@ -117,6 +118,59 @@ def postrun_json_outputfile():
         "size": 2282418874,
         "target": "somepairs.pairs.gz"
     }
+
+@pytest.fixture
+def postrun_json_job(run_json_job):
+    json = copy.deepcopy(run_json_job)
+    json.update({
+        "end_time": "20190531-04:24:55-UTC",
+        "filesystem": "/dev/nvme1n1",
+        "instance_id": "i-08d1c54ed1f74ab36",
+        "status": "0",
+        "total_input_size": "2.2G",
+        "total_output_size": "4.2G",
+        "total_tmp_size": "7.4G",
+        "Metrics": {
+            "max_mem_used_MB": 13250.1,
+            "min_mem_available_MB": 18547.51953125,
+            "total_mem_MB": 31797.67578125,
+            "max_mem_utilization_percent": 41.67020363737768,
+            "max_cpu_utilization_percent": 99.4,
+            "max_disk_space_utilization_percent": 40.5262269248086,
+            "max_disk_space_used_GB": 15
+        }
+    })
+    return json
+
+@pytest.fixture
+def postrun_json(postrun_json_job, run_json_config):
+    return {
+        'Job': postrun_json_job,
+        'config': run_json_config,
+        'commands': ['command1', 'command2']
+    }
+
+def test_PostRunJson(postrun_json):
+    r = awsem.AwsemPostRunJson(**postrun_json)
+    assert r.Job.filesystem == "/dev/nvme1n1"
+    assert r.config.instance_type == 't3.medium'
+    assert len(r.commands) == 2
+    r_dict = r.as_dict()
+    r_dict['Job']['Metrics']['max_disk_space_used_GB'] == 30
+    assert r_dict['commands'][1] == 'command2'
+    assert r_dict['Job']['total_output_size'] == '4.2G'
+    assert r.Job.Metrics['max_disk_space_used_GB'] == 15
+
+def test_PostRunJsonJob(postrun_json_job):
+    r = awsem.AwsemPostRunJsonJob(**postrun_json_job)
+    assert r.end_time == "20190531-04:24:55-UTC"
+    assert r.Metrics['max_cpu_utilization_percent'] == 99.4
+    assert r.status == '0'
+    r_dict = r.as_dict()
+    r_dict['total_input_size'] = '20G'
+    assert r.total_input_size == '2.2G'  # changing r_dict shouldn't affect r
+    assert r_dict['total_tmp_size'] == '7.4G'
+    assert r_dict['Metrics']['max_mem_used_MB'] == 13250.1
 
 def test_PostRunJsonOutput(postrun_json_output):
     r = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
