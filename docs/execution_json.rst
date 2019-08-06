@@ -414,7 +414,12 @@ The ``config`` field describes execution configuration.
       recommended to use a directory under ``/data1`` as a temp directory when running in the ``shell`` mode, which
       is mounted from data EBS.
     - This field is supported in version ``0.8.9`` or higher. If an older version has been used, redeploy
-      ``run_task_awsem`` to enable this feature, after installing ``0.8.9``.
+      ``run_task_awsem`` to enable this feature, after installing ``0.8.9`` as below.
+    
+      ::
+
+          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
+
 
 :shutdown_min:
     - either number of minutes or string 'now'
