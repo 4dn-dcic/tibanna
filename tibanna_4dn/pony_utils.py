@@ -25,6 +25,9 @@ from tibanna.utils import (
 from tibanna.base import (
     SerializableObject
 )
+from tibanna.ec2_utils import (
+    Config
+)
 from tibanna.awsem import (
     AwsemPostRunJson
 )
@@ -456,11 +459,11 @@ class FourfrontUpdater(SerializableObject):
         self.ff_meta.run_status = 'complete'
         self.patch_ffmeta()
         # send a notification email
-        if config.email:
+        if self.config.email:
             send_notification_email(self.tibanna_settings.settings['run_name'],
                                     self.jobid,
                                     self.ff_meta.run_status,
-                                    updater.tibanna_settings.settings['url'])
+                                    self.tibanna_settings.settings['url'])
 
     def handle_error(self, err_msg=''):
         # update run status in metadata first
@@ -468,7 +471,7 @@ class FourfrontUpdater(SerializableObject):
         self.ff_meta.description = err_msg
         self.patch_ffmeta()
         # send a notification email before throwing error
-        if config.email:
+        if self.config.email:
             send_notification_email(self.tibanna_settings.settings['run_name'],
                                     self.jobid,
                                     self.ff_meta.run_status,
@@ -600,7 +603,7 @@ class FourfrontUpdater(SerializableObject):
 
     @property
     def workflow_qc_arguments(self):
-        """dictionary of QCArgumentInfo object list as value and 
+        """dictionary of QCArgumentInfo object list as value and
         argument_to_be_attached_to as key"""
         qc_args = [QCArgumentInfo(**qc) for qc in self.workflow_arguments('Output QC file')]
         qc_args_per_attach = dict()
@@ -612,7 +615,7 @@ class FourfrontUpdater(SerializableObject):
 
     @property
     def workflow_input_extra_arguments(self):
-        """dictionary of InputExtraArgumentInfo object list as value and 
+        """dictionary of InputExtraArgumentInfo object list as value and
         argument_to_be_attached_to as key"""
         ie_args = [InputExtraArgumentInfo(**ie) for ie in self.workflow_arguments('Output to-be-extra-input file')]
         ie_args_per_attach = dict()
@@ -960,32 +963,31 @@ class FourfrontUpdater(SerializableObject):
                             qc_meta_from_zip = self.parse_qc_table(data_to_parse, qc_schema)
                             qc_object.update(qc_meta_from_zip)
                 else:
-                   data = self.read(qc.workflow_argument_name)
-                   if qc.qc_html:
-                       self.s3(qc.workflow_argument_name).s3_put(data.encode(),
-                                                                 target_html,
-                                                                 acl='public-read')
-                   elif qc.qc_json:
-                       qc_object.update(self.parse_qc_json([data]))
-                   elif qc.qc_table:
-                       qc_object.update(self.parse_qc_table([data], qc_schema))
+                    data = self.read(qc.workflow_argument_name)
+                    if qc.qc_html:
+                        self.s3(qc.workflow_argument_name).s3_put(data.encode(),
+                                                                  target_html,
+                                                                  acl='public-read')
+                    elif qc.qc_json:
+                        qc_object.update(self.parse_qc_json([data]))
+                    elif qc.qc_table:
+                        qc_object.update(self.parse_qc_table([data], qc_schema))
                 if qc_url:
-                   qc_object.update('url': qc_url)
+                    qc_object.update({'url': qc_url})
                 if self.custom_qc_fields:
-                   qc_object.update(self.custom_qc_fields)
+                    qc_object.update(self.custom_qc_fields)
             self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
             self.update_patch_item(qc_target_accession, {'quality_metric': qc_object['uuid']})
 
     def qc_schema(self, qc_schema_name):
         try:
             # schema. do not need to check_queue
-            return ff_utils.get_metadata("profiles/" + qc_schema_name + ".json",
-                                         key=self.tibanna_settings.ff_key,
-                                         ff_env=self.tibanna_settings.env)
+            return get_metadata("profiles/" + qc_schema_name + ".json",
+                                key=self.tibanna_settings.ff_key,
+                                ff_env=self.tibanna_settings.env)
         except Exception as e:
             err_msg = "Can't get profile for qc schema %s: %s" % (qc_schema_name, str(e))
             raise FdnConnectionException(err_msg)
-        return res
 
     def parse_qc_table(self, data_list, qc_schema):
         qc_json = dict()
@@ -1011,7 +1013,6 @@ class FourfrontUpdater(SerializableObject):
                 except IndexError:  # pragma: no cover
                     # maybe a blank line or something
                     pass
-            qc_json.update(j)
         return qc_json
 
     def parse_qc_json(self, data_list):
@@ -1021,7 +1022,7 @@ class FourfrontUpdater(SerializableObject):
         return qc_json
 
     def create_qc_template(self):
-        return {'uuid': str(uuid.uuid4()),
+        return {'uuid': str(uuid4()),
                 "award": "1U01CA200059-01",
                 "lab": "4dn-dcic-lab"}
 
@@ -1043,7 +1044,7 @@ class FourfrontUpdater(SerializableObject):
         md5_report_arg = self.output_argnames[0]  # assume one output arg
         if self.ff_output_file(md5_report_arg)['type'] != 'Output report file':
             return
-        if self.status(md5_report_arg) != 'COMPLETE'`:
+        if self.status(md5_report_arg) != 'COMPLETE':
             self.ff_meta.run_status = 'error'
             return
         md5, content_md5 = self.parse_md5_report(self.read(md5_report_arg))
@@ -1216,6 +1217,7 @@ def match_higlass_config(file_format, extra_format):
                 return hc
     return None
 
+
 def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dndcic@gmail.com'):
     subject = '[Tibanna] job %s : %s' % (status, job_name)
     msg = 'Job %s (%s) finished with status %s\n' % (jobid, job_name, status) \
@@ -1228,3 +1230,16 @@ def send_notification_email(job_name, jobid, status, exec_url=None, sender='4dnd
                                    'Body': {'Text': {'Data': msg}}})
     except Exception as e:
         printlog("Cannot send email: %s" % e)
+
+
+def number(astring):
+    """Convert a string into a float or integer
+    Returns original string if it can't convert it.
+    """
+    try:
+        num = float(astring)
+        if num % 1 == 0:
+            num = int(num)
+        return num
+    except ValueError:
+        return astring
