@@ -275,6 +275,8 @@ class Config(object):
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+        if not hasattr(self, 'root_ebs_size'):
+            self.root_ebs_size = 8
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
@@ -672,7 +674,7 @@ class Execution(object):
                                                        'VolumeType': self.cfg.ebs_type}},
                                               {'DeviceName': '/dev/sda1',
                                                'Ebs': {'DeleteOnTermination': True,
-                                                       'VolumeSize': 8,
+                                                       'VolumeSize': self.cfg.root_ebs_size,
                                                        'VolumeType': 'gp2'}}]})
         if self.cfg.ebs_iops:    # io1 type, specify iops
             largs["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops

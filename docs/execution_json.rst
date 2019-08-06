@@ -389,6 +389,9 @@ The ``config`` field describes execution configuration.
 
 :ebs_size:
     - <ebs_size_in_gb>
+    - The EBS volume size used for data (input, output, or any intermediary files). This volume is mounted as
+      ``/data1`` on the EC2 instance and as ``/data1`` inside Docker image when running in the ``shell`` or 
+      ``snakemake`` mode.
     - 10 is minimum acceptable value.
     - set as 10 if not specified and if Benchmark is not available for a given workflow.
     - It can be provided in the format of ``<s>x`` (e.g. ``3x``, ``5.5x``) to request ``<s>`` times total input size.
@@ -397,7 +400,21 @@ The ``config`` field describes execution configuration.
 :EBS_optimized:
     - <ebs_optimized> ``true``, ``false`` or '' (blank)
     - required if Benchmark is not available for a given workflow.
-    - Whether the specific instance type should be EBS_optimized. It can be True only for an instance type that can be EBS optimized. If instance type is unspecified, leave this as blank.
+    - Whether the specific instance type should be EBS_optimized. It can be True only for an instance type that
+      can be EBS optimized. If instance type is unspecified, leave this as blank.
+
+:root_ebs_size:
+    - <root_ebs_size_in_gb>
+    - default 8
+    - Tibanna uses two separate EBS volumes, one for docker image, another for data. Most of the times, the 8GB
+      root EBS that is used for docker images has enough space. However, if the docker image is larger than 5GB
+      or if multiple large docker images are used together, one may consider increasing root ebs size. Any directory
+      that is used inside a docker image (e.g. ``/tmp`` when running in the ``shell`` mode) that is not mounted
+      from the data EBS could also cause a ``no space left in device`` error on the root EBS volume. It is
+      recommended to use a directory under ``/data1`` as a temp directory when running in the ``shell`` mode, which
+      is mounted from data EBS.
+    - This field is supported in version ``0.8.9`` or higher. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.8.9``.
 
 :shutdown_min:
     - either number of minutes or string 'now'
