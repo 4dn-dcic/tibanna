@@ -430,7 +430,7 @@ class InputExtraArgumentInfo(SerializableObject):
         self.argument_to_be_attached_to = argument_to_be_attached_to
 
 
-class FourfrontUpdater(SerializableObject):
+class FourfrontUpdater(object):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
@@ -649,7 +649,7 @@ class FourfrontUpdater(SerializableObject):
         if uuid in self.patch_items:
             self.patch_items[uuid].update(item)
         else:
-            self.patch_item.update({uuid: item})
+            self.patch_items.update({uuid: item})
 
     def update_post_items(self, uuid, item, schema):
         if schema not in self.post_items:
@@ -657,7 +657,7 @@ class FourfrontUpdater(SerializableObject):
         if uuid in self.post_items[schema]:
             self.post_items[schema][uuid].update(item)
         else:
-            self.post_item[schema].update({uuid: item})
+            self.post_items[schema].update({uuid: item})
 
     def add_to_pf_patch_items(self, pf_uuid, fields):
         """add entries from pf object to patch_items for a later pf patch"""
@@ -977,14 +977,15 @@ class FourfrontUpdater(SerializableObject):
                 if self.custom_qc_fields:
                     qc_object.update(self.custom_qc_fields)
             self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
-            self.update_patch_item(qc_target_accession, {'quality_metric': qc_object['uuid']})
+            self.update_patch_items(qc_target_accession, {'quality_metric': qc_object['uuid']})
 
     def qc_schema(self, qc_schema_name):
         try:
             # schema. do not need to check_queue
-            return get_metadata("profiles/" + qc_schema_name + ".json",
-                                key=self.tibanna_settings.ff_key,
+            res =  get_metadata("profiles/" + qc_schema_name + ".json",
+                                key=self.tibanna_settings.ff_keys,
                                 ff_env=self.tibanna_settings.env)
+            return res.get('properties')
         except Exception as e:
             err_msg = "Can't get profile for qc schema %s: %s" % (qc_schema_name, str(e))
             raise FdnConnectionException(err_msg)
@@ -1035,7 +1036,10 @@ class FourfrontUpdater(SerializableObject):
             unzipped_data = self.s3(qc.workflow_argument_name).unzip_s3_to_s3(qc_key,
                                                                               target_accession,
                                                                               acl='public-read')
+            for k, v in unzipped_data.items():
+                v['data'] = v['data'].decode('utf-8', 'backslashreplace')
             return unzipped_data
+
         else:
             return None
 
