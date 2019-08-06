@@ -54,11 +54,12 @@ class AwsemRunJsonInput(SerializableObject):
 
 
 class AwsemRunJsonInputFile(SerializableObject):
-    def __init__(self, path, profile=None, rename=None, **kwargs):  # kwargs includes 'dir' and 'class'
+    def __init__(self, path, profile='', rename='', unzip='', **kwargs):  # kwargs includes 'dir' and 'class'
         # profile and rename are missing in the old postrunjson
         self.path = path
         self.profile = profile
         self.rename = rename
+        self.unzip = unzip
         # handling reserved name key
         self.class_ = kwargs.get('class', None)
         self.dir_ = kwargs.get('dir', None)
