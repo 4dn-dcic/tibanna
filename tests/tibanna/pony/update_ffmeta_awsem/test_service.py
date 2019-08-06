@@ -10,7 +10,7 @@ from tibanna_4dn.update_ffmeta import (
     add_md5_filesize_to_pf_extra,
     _input_extra_updater,
 )
-from tibanna_4dn.pony_utils import Awsem, AwsemFile, ProcessedFileMetadata
+from tibanna_4dn.pony_utils import ProcessedFileMetadata
 from tibanna_4dn.pony_utils import TibannaSettings
 from tibanna.utils import printlog
 # from tibanna.check_export_sbg import get_inputfile_accession
@@ -225,60 +225,6 @@ def test__md5_updater_file_size():
     assert 'status' not in new_file
     assert 'file_size' in new_file
     assert new_file['file_size'] == 6789
-
-
-def test_add_md5_filesize_to_pf_extra():
-    wff = AwsemFile(bucket='somebucket', key='somekey.pairs.gz.px2', runner=None,
-                    md5='somemd5', filesize=1234,
-                    argument_type='Output processed file', format_if_extra='pairs_px2')
-    pf = ProcessedFileMetadata(extra_files=[{'file_format': 'lalala'}, {'file_format': 'pairs_px2'}])
-    add_md5_filesize_to_pf_extra(pf, wff)
-    assert 'md5sum' in pf.extra_files[1]
-    assert 'file_size' in pf.extra_files[1]
-    assert pf.extra_files[1]['md5sum'] == 'somemd5'
-    assert pf.extra_files[1]['file_size'] == 1234
-
-
-def test_add_md5_filesize_to_pf_extra2():
-    wff = AwsemFile(bucket='somebucket', key='somekey.pairs.gz.px2', runner=None,
-                    md5='somemd5', filesize=1234,
-                    argument_type='Output processed file', format_if_extra='pairs_px2')
-    wff2 = AwsemFile(bucket='somebucket', key='somekey.lalala', runner=None,
-                     md5='someothermd5', filesize=5678,
-                     argument_type='Output processed file', format_if_extra='lalala')
-    pf = ProcessedFileMetadata(extra_files=[{'file_format': 'lalala'}, {'file_format': 'pairs_px2'}])
-    add_md5_filesize_to_pf_extra(pf, wff)
-    add_md5_filesize_to_pf_extra(pf, wff2)
-    assert 'md5sum' in pf.extra_files[1]
-    assert 'file_size' in pf.extra_files[1]
-    assert pf.extra_files[1]['md5sum'] == 'somemd5'
-    assert pf.extra_files[1]['file_size'] == 1234
-    assert 'md5sum' in pf.extra_files[0]
-    assert 'file_size' in pf.extra_files[0]
-    assert pf.extra_files[0]['md5sum'] == 'someothermd5'
-    assert pf.extra_files[0]['file_size'] == 5678
-
-
-@valid_env
-@pytest.mark.webtest
-def test_md5_updater_oldmd5(update_ffmeta_event_data):
-    event = update_ffmeta_event_data
-    tibanna_settings = event.get('_tibanna', {})
-    tbn = TibannaSettings(**tibanna_settings)
-    awsem = Awsem(update_ffmeta_event_data)
-    ouf = awsem.output_files()[0]
-    md5_updater('uploaded', ouf, None, tbn)
-
-
-@valid_env
-@pytest.mark.webtest
-def test_md5_updater_newmd5(update_ffmeta_event_data_newmd5):
-    event = update_ffmeta_event_data_newmd5
-    tibanna_settings = event.get('_tibanna', {})
-    tbn = TibannaSettings(**tibanna_settings)
-    awsem = Awsem(update_ffmeta_event_data_newmd5)
-    ouf = awsem.output_files()[0]
-    md5_updater('uploaded', ouf, None, tbn)
 
 
 @valid_env
