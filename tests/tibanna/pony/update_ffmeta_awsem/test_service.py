@@ -2,14 +2,6 @@ from tibanna_4dn.lambdas.update_ffmeta_awsem import (
     handler,
     real_handler
 )
-from tibanna_4dn.update_ffmeta import (
-    get_postrunjson_url,
-    register_to_higlass,
-    md5_updater,
-    _md5_updater,
-    add_md5_filesize_to_pf_extra,
-    _input_extra_updater,
-)
 from tibanna_4dn.pony_utils import ProcessedFileMetadata
 from tibanna_4dn.pony_utils import TibannaSettings
 from tibanna.utils import printlog
