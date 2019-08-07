@@ -85,6 +85,10 @@ def test_md5(update_ffmeta_event_data_newmd5):
                   Bucket='tibanna-output', Key=report_key)
     updater.update_md5()
     assert 'f4864029-a8ad-4bb8-93e7-5108f462ccaa' in updater.patch_items
+    assert 'md5sum' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
+    assert 'file_size' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
+    assert 'status' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
+
 
 @valid_env
 def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
