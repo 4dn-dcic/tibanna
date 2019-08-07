@@ -1,5 +1,6 @@
 import copy
 import uuid
+import boto3
 from dcicutils import ff_utils
 from tibanna_4dn.pony_utils import (
     FourfrontUpdater,
@@ -69,7 +70,24 @@ def test_post_patch(update_ffmeta_event_data_fastqc2):
     res = ff_utils.get_metadata(item_uuid, key=updater.tibanna_settings.ff_keys)
     assert res['status'] == 'deleted'
 
-def test_md5(update_ffmeta_event_data_extra_md5):
+@valid_env
+def test_md5(update_ffmeta_event_data_newmd5):
+    report_key = 'lalala/md5_report'
+    s3 = boto3.client('s3')
+    s3.put_object(Body='1234\n5678'.encode('utf-8'),
+                  Bucket='tibanna-output', Key=report_key)
+    updater = FourfrontUpdater(**update_ffmeta_event_data_newmd5)
+    with pytest.raises(Exception) as exec_info:
+        updater.update_md5()
+    assert 'md5 not matching the original one' in str(exec_info)
+    real_md5_content = 'bc75002f8a473bc6854d562789525a90\n6bb2dfa5b435ed03105cb59c32442d23'
+    s3.put_object(Body=real_md5_content.encode('utf-8'),
+                  Bucket='tibanna-output', Key=report_key)
+    updater.update_md5()
+    assert 'f4864029-a8ad-4bb8-93e7-5108f462ccaa' in updater.patch_items
+
+@valid_env
+def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
     updater = FourfrontUpdater(**update_ffmeta_event_data_extra_md5)
     assert updater.input_argnames[0] == 'input_file'
     assert 'format_if_extra' in updater.ff_file('input_file')

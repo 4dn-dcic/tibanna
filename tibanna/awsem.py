@@ -13,13 +13,13 @@ class AwsemRunJson(SerializableObject):
 
 
 class AwsemRunJsonJob(SerializableObject):
-    def __init__(self, App, Input, Output, Log, JOBID, start_time):
+    def __init__(self, App, Input, Output, JOBID, start_time, Log):
         self.App = AwsemRunJsonApp(**App)
         self.Input = AwsemRunJsonInput(**Input)
         self.create_Output(Output)
         self.start_time = start_time
-        self.Log = Log
         self.JOBID = JOBID
+        self.Log = Log
 
     def create_Output(self, Output):
         self.Output = AwsemPostRunJsonOutput(**Output)
@@ -97,13 +97,13 @@ class AwsemPostRunJson(AwsemRunJson):
 
 
 class AwsemPostRunJsonJob(AwsemRunJsonJob):
-    def __init__(self, App, Input, Output, Log, JOBID,
-                 start_time, end_time, status,
-                 total_input_size, total_output_size, total_tmp_size,
+    def __init__(self, App, Input, Output, JOBID,
+                 start_time, end_time, status, Log=None,
+                 total_input_size=None, total_output_size=None, total_tmp_size=None,
                  # older postrunjsons don't have these fields
                  filesystem=None, instance_id=None,
                  Metrics=None):
-        super().__init__(App, Input, Output, Log, JOBID, start_time)
+        super().__init__(App, Input, Output, JOBID, start_time, Log)
         self.end_time = end_time
         self.status = status
         self.filesystem = filesystem
