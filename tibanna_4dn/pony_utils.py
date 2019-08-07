@@ -662,7 +662,8 @@ class FourfrontUpdater(object):
         """add entries from pf object to patch_items for a later pf patch"""
         if not isinstance(fields, list):
             field_val = self.pf(pf_uuid).__getattribute__(fields)
-            self.update_patch_items(pf_uuid, {fields: field_val})
+            if field_val:
+                self.update_patch_items(pf_uuid, {fields: field_val})
         else:
             for f in fields:
                 self.add_to_pf_patch_items(pf_uuid, f)
