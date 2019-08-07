@@ -629,13 +629,16 @@ class FourfrontUpdater(object):
     def post_all(self):
         for schema, v in self.post_items.items():
             for item in v:
-                post_metadata(item, schema,
-                              key=self.tibanna_settings.ff_keys,
-                              ff_env=self.tibanna_settings.env)
+                try:
+                    post_metadata(v[item], schema,
+                                  key=self.tibanna_settings.ff_keys,
+                                  ff_env=self.tibanna_settings.env)
+                except Exception as e:
+                    raise e
 
     def patch_all(self):
-        for id, item in self.patch_items.items():
-            patch_metadata(item, id,
+        for item_id, item in self.patch_items.items():
+            patch_metadata(item, item_id,
                            key=self.tibanna_settings.ff_keys,
                            ff_env=self.tibanna_settings.env)
 
@@ -658,6 +661,9 @@ class FourfrontUpdater(object):
             self.post_items[schema][uuid].update(item)
         else:
             self.post_items[schema].update({uuid: item})
+            if 'uuid' not in self.post_items[schema][uuid]:
+                # add uuid to post item itself
+                self.post_items[schema][uuid]['uuid'] = uuid
 
     def add_to_pf_patch_items(self, pf_uuid, fields):
         """add entries from pf object to patch_items for a later pf patch"""

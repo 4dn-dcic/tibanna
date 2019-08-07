@@ -1,4 +1,6 @@
 import copy
+import uuid
+from dcicutils import ff_utils
 from tibanna_4dn.pony_utils import (
     FourfrontUpdater,
     TibannaSettings,
@@ -48,6 +50,24 @@ def test_FourfrontUpdater(update_ffmeta_event_data_fastqc2):
     assert updater.ff_meta
     assert updater.postrunjson
     assert updater.ff_output_files
+
+@valid_env
+def test_post_patch(update_ffmeta_event_data_fastqc2):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_fastqc2)
+    item = updater.create_qc_template()
+    item_uuid = item['uuid']
+    updater.update_post_items(item_uuid, item, 'quality_metric_fastqc')
+    assert 'uuid' in updater.post_items['quality_metric_fastqc'][item_uuid]
+    assert updater.post_items['quality_metric_fastqc'][item_uuid]['uuid'] == item_uuid
+    updater.post_all()
+    updater.update_patch_items(item_uuid, {'Per base sequence content': 'PASS'})
+    updater.patch_all()
+    res = ff_utils.get_metadata(item_uuid, key=updater.tibanna_settings.ff_keys)
+    assert res['Per base sequence content'] == 'PASS'
+    updater.update_patch_items(item_uuid, {'status': 'deleted'})
+    updater.patch_all()
+    res = ff_utils.get_metadata(item_uuid, key=updater.tibanna_settings.ff_keys)
+    assert res['status'] == 'deleted'
 
 @valid_env
 def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
