@@ -1,7 +1,88 @@
 {
+  "parameters": {
+    "enzyme": "6",
+    "sample_name": "4DNFI1ZLO9D7",
+    "max_distance": 8.2
+  },
+  "config": {
+    "ebs_type": "io1",
+    "ebs_iops": 500,
+    "json_bucket": "tibanna-output",
+    "password": "dragonfly",
+    "shutdown_min": 30,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "run_name": "pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+    "instance_type": "t3.micro",
+    "EBS_optimized": true,
+    "ebs_size": 10,
+    "public_postrun_json": true,
+    "job_tag": "pairsqc-single",
+    "userdata_dir": "/tmp/userdata",
+    "json_dir": "/tmp/json",
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "ami_id": "ami-0f06a8358d41c4b9c",
+    "language": "cwl_v1"
+  },
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "run_id": "46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+      "env": "fourfront-webdev",
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+      "run_type": "pairsqc-single",
+      "run_name": "pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+      "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d"
+    }
+  },
+  "workflow_uuid": "b8c533e0-f8c0-4510-b4a1-ac35158e27c3",
+  "input_files": [
+    {
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+      "workflow_argument_name": "input_pairs",
+      "uuid": "817f3faa-0573-45c0-8230-02ec19de6544",
+      "object_key": "4DNFI1ZLO9D7.pairs.gz"
+    },
+    {
+      "object_key": "4DNFI823LSII.chrom.sizes",
+      "workflow_argument_name": "chromsizes",
+      "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-files"
+    }
+  ],
+  "app_name": "pairsqc-single",
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "jobid": "ec0ljAQgA17Y",
+  "push_error_to_end": true,
   "ff_meta": {
+    "awsem_app_name": "pairsqc-single",
+    "awsem_job_id": "ec0ljAQgA17Y",
+    "run_status": "started",
+    "uuid": "52fce49e-80e7-440c-9d67-8c5a27767495",
+    "workflow": "b8c533e0-f8c0-4510-b4a1-ac35158e27c3",
     "run_platform": "AWSEM",
-    "uuid": "3d71f45f-6a77-47b4-9839-eb02204c6dae",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+    "title": "pairsqc-single 0.2.6 run 2019-05-29 01:06:10.891961",
+    "input_files": [
+      {
+        "workflow_argument_name": "input_pairs",
+        "value": "817f3faa-0573-45c0-8230-02ec19de6544",
+        "ordinal": 1,
+        "dimension": "0"
+      },
+      {
+        "workflow_argument_name": "chromsizes",
+        "value": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9",
+        "ordinal": 1,
+        "dimension": "0"
+      }
+    ],
+    "output_files": [
+      {
+        "workflow_argument_name": "report",
+        "type": "Output QC file"
+      }
+    ],
     "parameters": [
       {
         "workflow_argument_name": "enzyme",
@@ -10,121 +91,189 @@
       {
         "workflow_argument_name": "sample_name",
         "value": "4DNFI1ZLO9D7"
-      }
-    ],
-    "workflow": "ae3a87cb-3fa2-469e-97c7-540fc2d0a117",
-    "title": "pairsqc-single run 2018-01-16 23:08:25.250148",
-    "award": "1U01CA200059-01",
-    "awsem_job_id": "",
-    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_new_pony-dev:pairsqc-single_649e1149-68b5-43b3-bc92-65ca077dc983",
-    "awsem_app_name": "pairsqc-single",
-    "lab": "4dn-dcic-lab",
-    "run_status": "started",
-    "output_files": [
-      {
-        "type": "Output QC file",
-        "workflow_argument_name": "report"
-      }
-    ],
-    "input_files": [
-      {
-        "ordinal": 1,
-        "workflow_argument_name": "input_pairs",
-        "value": "817f3faa-0573-45c0-8230-02ec19de6544"
       },
       {
-        "ordinal": 1,
-        "workflow_argument_name": "chromsizes",
-        "value": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9"
+        "workflow_argument_name": "max_distance",
+        "value": "8.2"
       }
-    ]
+    ],
+    "award": "1U01CA200059-01",
+    "lab": "4dn-dcic-lab"
   },
-  "instance_ip": "52.87.161.131",
-  "app_name": "pairsqc-single",
-  "_tibanna": {
-    "env": "fourfront-webdev",
-    "settings": {
-      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:run_awsem_new_pony-dev:pairsqc-single_649e1149-68b5-43b3-bc92-65ca077dc983",
-      "run_type": "pairsqc-single",
-      "run_id": "649e1149-68b5-43b3-bc92-65ca077dc983",
-      "env": "fourfront-webdev",
-      "run_name": "pairsqc-single_649e1149-68b5-43b3-bc92-65ca077dc983"
-    }
-  },
-  "start_time": "20180116-23:08:32-UTC",
+  "pf_meta": [],
   "args": {
-    "secondary_output_target": {},
     "app_name": "pairsqc-single",
-    "input_parameters": {
-      "enzyme": "6",
-      "sample_name": "4DNFI1ZLO9D7"
-    },
-    "cwl_child_filenames": [],
-    "output_target": {
-      "report": "3d71f45f-6a77-47b4-9839-eb02204c6dae/report"
-    },
+    "app_version": "0.2.6",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
     "cwl_main_filename": "pairsqc-single.cwl",
+    "cwl_child_filenames": [],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": [],
+    "cwl_version": "v1",
+    "input_files": {
+      "input_pairs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "rename": "",
+        "object_key": "817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz"
+      },
+      "chromsizes": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
+      }
+    },
     "secondary_files": {
       "input_pairs": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "rename": "",
         "object_key": "817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz.px2"
       }
     },
-    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-    "app_version": "dev",
-    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/dev/cwl_awsem/",
-    "input_files": {
-      "chromsizes": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-        "object_key": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes"
-      },
-      "input_pairs": {
-        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-        "object_key": "817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz"
-      }
-    }
-  },
-  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
-  "jobid": "11Jz5nf2xJGt",
-  "instance_id": "i-0901c30deadd480e4",
-  "pf_meta": [],
-  "parameters": {
-    "enzyme": "6",
-    "sample_name": "4DNFI1ZLO9D7"
-  },
-  "config": {
-    "cwl_version": "draft3",
-    "ebs_size": 13,
-    "password": "dragonfly",
-    "ebs_type": "io1",
-    "json_bucket": "4dn-aws-pipeline-run-json",
-    "json_dir": "/tmp/json",
-    "EBS_optimized": false,
-    "ebs_iops": 500,
-    "userdata_dir": "/tmp/userdata",
-    "shutdown_min": 120,
-    "instance_type": "t2.micro",
-    "job_tag": "pairsqc-single",
-    
-
-    "key_name": "4dn-encode",
-    
-
-    "log_bucket": "tibanna-output"
-  },
-  "workflow_uuid": "ae3a87cb-3fa2-469e-97c7-540fc2d0a117",
-  "input_files": [
-    {
-      "workflow_argument_name": "input_pairs",
-      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
-      "uuid": "817f3faa-0573-45c0-8230-02ec19de6544",
-      "object_key": "4DNFI1ZLO9D7.pairs.gz"
+    "input_parameters": {
+      "enzyme": "6",
+      "sample_name": "4DNFI1ZLO9D7",
+      "max_distance": 8.2
     },
-    {
-      "object_key": "4DNFI823LSII.chrom.sizes",
-      "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
-      "workflow_argument_name": "chromsizes",
-      "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9"
+    "output_target": {
+      "report": "52fce49e-80e7-440c-9d67-8c5a27767495/report731212271667"
+    },
+    "secondary_output_target": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "language": "cwl_v1"
+  },
+  "instance_id": "i-02d7e7320b314b084",
+  "instance_ip": "54.90.105.241",
+  "start_time": "20190529-01:06:14-UTC",
+  "postrunjson": {
+    "Job": {
+      "App": {
+        "App_name": "pairsqc-single",
+        "App_version": "0.2.6",
+        "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "language": "cwl_v1",
+        "main_cwl": "pairsqc-single.cwl",
+        "main_wdl": "",
+        "other_cwl_files": "",
+        "other_wdl_files": "",
+        "wdl_url": ""
+      },
+      "Input": {
+        "Env": {},
+        "Input_files_data": {
+          "chromsizes": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-files",
+            "path": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes",
+            "profile": "",
+            "rename": ""
+          },
+          "input_pairs": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-wfoutput",
+            "path": "817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz",
+            "profile": "",
+            "rename": ""
+          }
+        },
+        "Input_parameters": {
+          "enzyme": "6",
+          "max_distance": 8.2,
+          "sample_name": "4DNFI1ZLO9D7"
+        },
+        "Secondary_files_data": {
+          "input_pairs": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-wfoutput",
+            "path": "817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz.px2",
+            "profile": "",
+            "rename": ""
+          }
+        }
+      },
+      "JOBID": "ec0ljAQgA17Y",
+      "Log": {
+        "log_bucket_directory": "tibanna-output"
+      },
+      "Output": {
+        "Output files": {
+          "report": {
+            "basename": "4DNFI1ZLO9D7_report.zip",
+            "checksum": "sha1$13fe03c8df72bcca04545cf9c58e38fc348c2389",
+            "class": "File",
+            "location": "file:///data1/out/4DNFI1ZLO9D7_report.zip",
+            "md5sum": "c86e13a487f62e63f3c5e70af284b3b4",
+            "path": "/data1/out/4DNFI1ZLO9D7_report.zip",
+            "size": 827576,
+            "target": "52fce49e-80e7-440c-9d67-8c5a27767495/report731212271667"
+          }
+        },
+        "alt_cond_output_argnames": [],
+        "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "output_target": {
+          "report": "52fce49e-80e7-440c-9d67-8c5a27767495/report731212271667"
+        },
+        "secondary_output_target": {}
+      },
+      "end_time": "20190529-01:09:22-UTC",
+      "filesystem": "/dev/nvme1n1",
+      "instance_id": "i-02d7e7320b314b084",
+      "start_time": "20190529-01:06:11-UTC",
+      "status": "0",
+      "total_input_size": "14M",
+      "total_output_size": "844K",
+      "total_tmp_size": "1.9M",
+      "Metrics": {
+        "max_mem_used_MB": 348.9453125,
+        "min_mem_available_MB": 615.51171875,
+        "total_mem_MB": 964.45703125,
+        "max_mem_utilization_percent": 36.18049339613854,
+        "max_cpu_utilization_percent": 49,
+        "max_disk_space_utilization_percent": 0.387512001802527,
+        "max_disk_space_used_GB": 0.03765869140625
+      }
+    },
+    "commands": [
+      [
+        "[job pairsqc-single.cwl] /data1/tmp5YI3ao$ docker ",
+        "    run ",
+        "    -i ",
+        "    --volume=/data1/tmp5YI3ao:/var/spool/cwl:rw ",
+        "    --volume=/data1/tmpiemwT3:/tmp:rw ",
+        "    --volume=/data1/input/4a6d10ee-2edb-4402-a98f-0edb1d58f5e9/4DNFI823LSII.chrom.sizes:/var/lib/cwl/stg068f356f-3615-4b3e-af3b-d990fbb9e2a4/4DNFI823LSII.chrom.sizes:ro ",
+        "    --volume=/data1/input/817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz.px2:/var/lib/cwl/stg5fc6ea13-5cc7-494d-a573-774ddde1755e/4DNFI1ZLO9D7.pairs.gz.px2:ro ",
+        "    --volume=/data1/input/817f3faa-0573-45c0-8230-02ec19de6544/4DNFI1ZLO9D7.pairs.gz:/var/lib/cwl/stg5fc6ea13-5cc7-494d-a573-774ddde1755e/4DNFI1ZLO9D7.pairs.gz:ro ",
+        "    --workdir=/var/spool/cwl ",
+        "    --rm ",
+        "    --env=TMPDIR=/tmp ",
+        "    --env=HOME=/var/spool/cwl ",
+        "    duplexa/4dn-hic:v42.2 ",
+        "    run-pairsqc-single.sh ",
+        "    /var/lib/cwl/stg5fc6ea13-5cc7-494d-a573-774ddde1755e/4DNFI1ZLO9D7.pairs.gz ",
+        "    /var/lib/cwl/stg068f356f-3615-4b3e-af3b-d990fbb9e2a4/4DNFI823LSII.chrom.sizes ",
+        "    4DNFI1ZLO9D7 ",
+        "    6 ",
+        "    . ",
+        "    8.2"
+      ]
+    ],
+    "config": {
+      "EBS_optimized": true,
+      "ami_id": "ami-0f06a8358d41c4b9c",
+      "ebs_iops": 500,
+      "ebs_size": 10,
+      "ebs_type": "io1",
+      "instance_type": "t3.micro",
+      "job_tag": "pairsqc-single",
+      "json_bucket": "tibanna-output",
+      "json_dir": "/tmp/json",
+      "language": "cwl_v1",
+      "log_bucket": "tibanna-output",
+      "public_postrun_json": true,
+      "run_name": "pairsqc-single_46c330d5-e8e5-4c76-9fa6-8a8cfe450f6d",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "shutdown_min": 30,
+      "userdata_dir": "/tmp/userdata"
     }
-  ]
+  }
 }

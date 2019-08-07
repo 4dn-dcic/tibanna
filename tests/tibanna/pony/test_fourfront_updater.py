@@ -142,7 +142,7 @@ def test_pf(update_ffmeta_hicbam):
     assert outpairs_patch['extra_files'][0]['status'] == 'uploaded'
 
 @valid_env
-def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
+def test_fastqc(update_ffmeta_event_data_fastqc2):
     updater = FourfrontUpdater(**update_ffmeta_event_data_fastqc2)
     assert updater.workflow
     assert 'arguments' in updater.workflow
@@ -169,7 +169,7 @@ def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
     assert 'Per base sequence content' in updater.post_items['quality_metric_fastqc'][uuid]
 
 @valid_env
-def test_FourfrontUpdater3(update_ffmeta_event_data_bamcheck):
+def test_bamcheck(update_ffmeta_event_data_bamcheck):
     updater = FourfrontUpdater(**update_ffmeta_event_data_bamcheck)
     assert updater.workflow
     assert 'arguments' in updater.workflow
@@ -187,3 +187,15 @@ def test_FourfrontUpdater3(update_ffmeta_event_data_bamcheck):
     uuid = list(updater.post_items['quality_metric_bamcheck'].keys())[0]
     assert 'quickcheck' in updater.post_items['quality_metric_bamcheck'][uuid]
 
+@valid_env
+def test_pairsqc(update_ffmeta_event_data_pairsqc):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_pairsqc)
+    updater.update_qc()
+    qc = updater.workflow_qc_arguments['input_pairs'][0]
+    assert qc.workflow_argument_name == 'report'
+    target_accession = updater.accessions('input_pairs')[0]
+    assert target_accession == '4DNFI1ZLO9D7'
+    assert updater.post_items
+    assert len(updater.post_items['quality_metric_pairsqc']) == 1
+    uuid = list(updater.post_items['quality_metric_pairsqc'].keys())[0]
+    assert 'Cis/Trans ratio' in updater.post_items['quality_metric_pairsqc'][uuid]
