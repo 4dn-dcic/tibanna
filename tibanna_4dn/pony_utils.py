@@ -423,7 +423,7 @@ class QCArgumentInfo(SerializableObject):
 
 
 class InputExtraArgumentInfo(SerializableObject):
-    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to):
+    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to, **kwargs):
         if argument_type != 'Output to-be-extra-input file':
             raise Exception("InputExtraArgumentInfo is not Output to-be-extra-input file: %s" % argument_type)
         self.workflow_argument_name = workflow_argument_name

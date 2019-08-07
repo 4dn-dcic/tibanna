@@ -84,11 +84,14 @@ def test_md5(update_ffmeta_event_data_newmd5):
     s3.put_object(Body=real_md5_content.encode('utf-8'),
                   Bucket='tibanna-output', Key=report_key)
     updater.update_md5()
+    md5, content_md5 = updater.parse_md5_report(updater.read('report'))
+    assert md5 == 'bc75002f8a473bc6854d562789525a90'
+    assert content_md5 == '6bb2dfa5b435ed03105cb59c32442d23'
     assert 'f4864029-a8ad-4bb8-93e7-5108f462ccaa' in updater.patch_items
-    assert 'md5sum' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
+    assert 'md5sum' not in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa'] # already in
     assert 'file_size' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
     assert 'status' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
-
+    
 
 @valid_env
 def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
@@ -103,6 +106,21 @@ def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
     assert updater.file_key('report') == 'f1340bec-a842-402c-bbac-6e239df96682/report822085265412'
     assert updater.status('report') == 'COMPLETED'
     assert '12005967-f060-40dd-a63c-c7204dcf46a7' in updater.patch_items
+
+@valid_env
+def test_input_extra(update_ffmeta_event_data_bed2multivec):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_bed2multivec)
+    assert 'bedfile' in updater.workflow_input_extra_arguments
+    assert len(updater.workflow_input_extra_arguments['bedfile']) == 1
+    ie = updater.workflow_input_extra_arguments['bedfile'][0]
+    assert ie.workflow_argument_name == 'multivec_file'
+    updater.update_input_extras()
+    assert 'ff6df769-40f3-486f-a46a-872de0828905' in updater.patch_items
+    assert 'extra_files' in updater.patch_items['ff6df769-40f3-486f-a46a-872de0828905']
+    extra = updater.patch_items['ff6df769-40f3-486f-a46a-872de0828905']['extra_files'][0]
+    assert extra['md5sum'] == '076ea000a803357f2a88f725ffeff435'
+    assert extra['file_size'] == 8688344
+    assert extra['status'] == 'uploaded'
 
 @valid_env
 def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
