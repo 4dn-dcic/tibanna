@@ -127,6 +127,19 @@ def test_pf(update_ffmeta_hicbam):
     updater = FourfrontUpdater(**update_ffmeta_hicbam)
     updater.update_all_pfs()
     assert updater.patch_items
+    assert 'eacc2a43-9fe8-41a7-89f4-7093619fde31' in updater.patch_items
+    assert '5bded0bb-e429-48a2-bb85-e558111924e7' in updater.patch_items
+    assert 'md5sum' in updater.patch_items['eacc2a43-9fe8-41a7-89f4-7093619fde31']
+    assert 'file_size' in updater.patch_items['eacc2a43-9fe8-41a7-89f4-7093619fde31']
+    assert 'status' in updater.patch_items['eacc2a43-9fe8-41a7-89f4-7093619fde31']
+    outbam_patch = updater.patch_items['eacc2a43-9fe8-41a7-89f4-7093619fde31']
+    assert outbam_patch['md5sum'] == 'eeff1f1bad00c0b386a3ce5f5751e1cc'
+    assert outbam_patch['file_size'] == 313108291
+    assert outbam_patch['status'] == 'uploaded'
+    outpairs_patch = updater.patch_items['5bded0bb-e429-48a2-bb85-e558111924e7']
+    assert outpairs_patch['extra_files'][0]['md5sum'] == '82ae753a21a52886d1e303c525208332'
+    assert outpairs_patch['extra_files'][0]['file_size'] == 3300298
+    assert outpairs_patch['extra_files'][0]['status'] == 'uploaded'
 
 @valid_env
 def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
