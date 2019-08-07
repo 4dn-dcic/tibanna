@@ -123,6 +123,12 @@ def test_input_extra(update_ffmeta_event_data_bed2multivec):
     assert extra['status'] == 'uploaded'
 
 @valid_env
+def test_pf(update_ffmeta_hicbam):
+    updater = FourfrontUpdater(**update_ffmeta_hicbam)
+    updater.update_all_pfs()
+    assert updater.patch_items
+
+@valid_env
 def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
     updater = FourfrontUpdater(**update_ffmeta_event_data_fastqc2)
     assert updater.workflow

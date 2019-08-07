@@ -146,7 +146,7 @@ class WorkflowRunMetadata(object):
         return patch_metadata(self.as_dict(), key=key)
 
 
-class ProcessedFileMetadata(object):
+class ProcessedFileMetadata(SerializableObject):
     def __init__(self, uuid=None, accession=None, file_format='', lab='4dn-dcic-lab',
                  extra_files=None, source_experiments=None,
                  award='1U01CA200059-01', status='to be uploaded by workflow',
@@ -157,20 +157,13 @@ class ProcessedFileMetadata(object):
         self.lab = lab
         self.award = award
         self.file_format = parse_formatstr(file_format)
-        if extra_files:
-            self.extra_files = extra_files
-        if source_experiments:
-            self.source_experiments = source_experiments
-        if md5sum:
-            self.md5sum = md5sum
-        if file_size:
-            self.file_size = file_size
+        self.extra_files = extra_files
+        self.source_experiments = source_experiments
+        self.md5sum = md5sum
+        self.file_size = file_size
         if other_fields:
             for field in other_fields:
                 setattr(self, field, other_fields[field])
-
-    def as_dict(self):
-        return self.__dict__
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -745,7 +738,10 @@ class FourfrontUpdater(object):
     def all_extra_formats(self, argname=None, pf_uuid=None):
         """get a list of file formats of all extra files of given argname or pf"""
         outfile = self.ff_output_file(argname=argname, pf_uuid=pf_uuid)
-        return [ef.get('file_format', '') for ef in outfile.get('extra_files', [])]
+        extra_files = outfile.get('extra_files', [])
+        if not extra_files:
+            extra_files = []  # make it iterable
+        return [ef.get('file_format', '') for ef in extra_files]
 
     def all_extra_files(self, argname=None, pf_uuid=None):
         """returns extra_files field of workflowrun given argname of pp_uuid
@@ -758,7 +754,8 @@ class FourfrontUpdater(object):
         else:
             raise Exception("Either argname or pf_uuid must be provided")
         ffout = self.ff_output_file(argname)
-        return ffout.get('extra_files', [])
+        extrafiles = ffout.get('extra_files', [])
+        return extrafiles if extrafiles else []
 
     def file_key(self, argname=None, pf_uuid=None, secondary_format=None):
         """returns file object_key on the bucket, either through argname or
@@ -873,6 +870,7 @@ class FourfrontUpdater(object):
 
     def add_higlass_to_pf(self, pf_uuid):
         key = None
+        higlass_uid = None
         for extra_format in self.all_extra_formats(pf_uuid=pf_uuid) + [None]:
             hgcf = match_higlass_config(self.pf(pf_uuid).file_format, extra_format)
             if hgcf:
