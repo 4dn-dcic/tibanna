@@ -15,6 +15,7 @@ from tests.tibanna.pony.conftest import (
 )
 from tibanna.utils import printlog
 
+
 @pytest.fixture
 def qcarginfo_fastqc():
     return {
@@ -30,12 +31,14 @@ def qcarginfo_fastqc():
         "qc_type": "quality_metric_fastqc"
     }
 
+
 def test_QCArgumentInfo(qcarginfo_fastqc):
     qc = QCArgumentInfo(**qcarginfo_fastqc)
     assert qc.qc_zipped
     assert qc.qc_html
     assert qc.qc_table
     assert qc.qc_type == "quality_metric_fastqc"
+
 
 def test_wrong_QCArgumentInfo(qcarginfo_fastqc):
     qcarginfo = copy.deepcopy(qcarginfo_fastqc)
@@ -45,12 +48,19 @@ def test_wrong_QCArgumentInfo(qcarginfo_fastqc):
     assert exec_info
     assert 'QCArgument it not Output QC file' in str(exec_info)
 
+
 def test_FourfrontUpdater(update_ffmeta_event_data_fastqc2):
     updater = FourfrontUpdater(**update_ffmeta_event_data_fastqc2)
     assert updater
     assert updater.ff_meta
     assert updater.postrunjson
     assert updater.ff_output_files
+
+
+def test_postrunjson_link(update_ffmeta_event_data_repliseq):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_repliseq)
+    assert updater.ff_meta.awsem_postrun_json == 'https://s3.amazonaws.com/tibanna-output/Gkx8WiCOHJPq.postrun.json'
+
 
 @valid_env
 def test_post_patch(update_ffmeta_event_data_fastqc2):
@@ -69,6 +79,7 @@ def test_post_patch(update_ffmeta_event_data_fastqc2):
     updater.patch_all()
     res = ff_utils.get_metadata(item_uuid, key=updater.tibanna_settings.ff_keys)
     assert res['status'] == 'deleted'
+
 
 @valid_env
 def test_md5(update_ffmeta_event_data_newmd5):
@@ -107,6 +118,7 @@ def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
     assert updater.status('report') == 'COMPLETED'
     assert '12005967-f060-40dd-a63c-c7204dcf46a7' in updater.patch_items
 
+
 @valid_env
 def test_input_extra(update_ffmeta_event_data_bed2multivec):
     updater = FourfrontUpdater(**update_ffmeta_event_data_bed2multivec)
@@ -121,6 +133,7 @@ def test_input_extra(update_ffmeta_event_data_bed2multivec):
     assert extra['md5sum'] == '076ea000a803357f2a88f725ffeff435'
     assert extra['file_size'] == 8688344
     assert extra['status'] == 'uploaded'
+
 
 @valid_env
 def test_pf(update_ffmeta_hicbam):
@@ -140,6 +153,7 @@ def test_pf(update_ffmeta_hicbam):
     assert outpairs_patch['extra_files'][0]['md5sum'] == '82ae753a21a52886d1e303c525208332'
     assert outpairs_patch['extra_files'][0]['file_size'] == 3300298
     assert outpairs_patch['extra_files'][0]['status'] == 'uploaded'
+
 
 @valid_env
 def test_fastqc(update_ffmeta_event_data_fastqc2):
@@ -168,6 +182,7 @@ def test_fastqc(update_ffmeta_event_data_fastqc2):
     assert 'url' in updater.post_items['quality_metric_fastqc'][uuid]
     assert 'Per base sequence content' in updater.post_items['quality_metric_fastqc'][uuid]
 
+
 @valid_env
 def test_bamcheck(update_ffmeta_event_data_bamcheck):
     updater = FourfrontUpdater(**update_ffmeta_event_data_bamcheck)
@@ -187,6 +202,7 @@ def test_bamcheck(update_ffmeta_event_data_bamcheck):
     uuid = list(updater.post_items['quality_metric_bamcheck'].keys())[0]
     assert 'quickcheck' in updater.post_items['quality_metric_bamcheck'][uuid]
 
+
 @valid_env
 def test_pairsqc(update_ffmeta_event_data_pairsqc):
     updater = FourfrontUpdater(**update_ffmeta_event_data_pairsqc)
@@ -199,6 +215,7 @@ def test_pairsqc(update_ffmeta_event_data_pairsqc):
     assert len(updater.post_items['quality_metric_pairsqc']) == 1
     uuid = list(updater.post_items['quality_metric_pairsqc'].keys())[0]
     assert 'Cis/Trans ratio' in updater.post_items['quality_metric_pairsqc'][uuid]
+
 
 @valid_env
 def test_repliseq(update_ffmeta_event_data_repliseq):
