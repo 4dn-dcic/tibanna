@@ -673,7 +673,13 @@ class FourfrontUpdater(object):
     def outbucket(self):
         return self.postrunjson.Job.Output.output_bucket_directory
 
-    def bucket(self, argname):
+    def bucket(self, argname=None, pf_uuid=None):
+        if argname:
+            pass
+        elif pf_uuid:
+            argname = self.pf2argname(pf_uuid)
+        else:
+            raise Exception("At least argname or pf_uuid must be provided to get md5sum")
         if argname in self.awsem_output_files:
             return self.outbucket
         elif argname in self.awsem_input_files:
@@ -832,7 +838,7 @@ class FourfrontUpdater(object):
         return "COMPLETED"
 
     def genome_assembly(self, pf_uuid):
-        if hasattr('genome_assembly', self.pf(pf_uuid)):
+        if hasattr(self.pf(pf_uuid), 'genome_assembly'):
             return self.pf(pf_uuid).genome_assembly
         else:
             return None

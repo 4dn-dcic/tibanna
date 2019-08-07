@@ -199,3 +199,38 @@ def test_pairsqc(update_ffmeta_event_data_pairsqc):
     assert len(updater.post_items['quality_metric_pairsqc']) == 1
     uuid = list(updater.post_items['quality_metric_pairsqc'].keys())[0]
     assert 'Cis/Trans ratio' in updater.post_items['quality_metric_pairsqc'][uuid]
+
+@valid_env
+def test_repliseq(update_ffmeta_event_data_repliseq):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_repliseq)
+    updater.update_all_pfs()
+    updater.update_qc()
+    qc = updater.workflow_qc_arguments['filtered_sorted_deduped_bam'][0]
+    target_accession = updater.accessions('filtered_sorted_deduped_bam')[0]
+    assert target_accession == '4DNFIP2T7ANW'
+    assert updater.post_items
+    assert len(updater.post_items['quality_metric_dedupqc_repliseq']) == 1
+    uuid = list(updater.post_items['quality_metric_dedupqc_repliseq'].keys())[0]
+    assert 'Proportion of removed duplicates' in updater.post_items['quality_metric_dedupqc_repliseq'][uuid]
+    assert updater.patch_items
+    assert '050c9382-61d7-49e8-8598-1a6734dda5d2' in updater.patch_items
+    bam_patch = updater.patch_items['050c9382-61d7-49e8-8598-1a6734dda5d2']  # filtered bam
+    assert 'md5sum' in bam_patch
+    assert 'file_size' in bam_patch
+    assert 'status' in bam_patch
+    assert bam_patch['md5sum'] == '908488c3d8bea2875551c67c9fd1b3dc'
+    assert bam_patch['file_size'] == 11061946
+    assert bam_patch['status'] == 'uploaded'
+    assert 'quality_metric' in updater.patch_items['4DNFIP2T7ANW'] # qc_metric is patched by accession
+    assert '4127ad92-16cf-4716-ab68-dc9b352658eb' in updater.patch_items
+    bg_patch = updater.patch_items['4127ad92-16cf-4716-ab68-dc9b352658eb']  # count_bg
+    assert 'extra_files' in bg_patch
+    assert len(bg_patch['extra_files']) == 2
+    assert bg_patch['extra_files'][1]['file_format'] == 'bw'
+    assert bg_patch['extra_files'][1]['md5sum'] == 'f08575a366c14dbc949d35e415151cfd'
+    assert bg_patch['extra_files'][1]['file_size'] == 3120059
+    assert bg_patch['extra_files'][1]['status'] == 'uploaded'
+    assert bg_patch['extra_files'][0]['file_format'] == 'bg_px2'
+    assert bg_patch['extra_files'][0]['md5sum'] == 'aa8e2848e1f022b197fe31c804de08bf'
+    assert bg_patch['extra_files'][0]['file_size'] == 991610
+    assert bg_patch['extra_files'][0]['status'] == 'uploaded'
