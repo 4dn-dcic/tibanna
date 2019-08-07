@@ -205,6 +205,7 @@ then
   if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
   LOGJSONFILE='-'  # no file
 else
+  pip install cwltool
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
     # older version of cwltoolthat works with draft3
