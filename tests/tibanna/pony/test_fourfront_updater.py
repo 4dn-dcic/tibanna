@@ -69,6 +69,19 @@ def test_post_patch(update_ffmeta_event_data_fastqc2):
     res = ff_utils.get_metadata(item_uuid, key=updater.tibanna_settings.ff_keys)
     assert res['status'] == 'deleted'
 
+def test_md5(update_ffmeta_event_data_extra_md5):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_extra_md5)
+    assert updater.input_argnames[0] == 'input_file'
+    assert 'format_if_extra' in updater.ff_file('input_file')
+    format_if_extras = updater.format_if_extras(updater.input_argnames[0])
+    assert len(format_if_extras) == 1
+    assert format_if_extras[0] == 'pairs_px2'
+    updater.update_md5()
+    assert updater.bucket('report') == 'elasticbeanstalk-fourfront-webdev-wfoutput'
+    assert updater.file_key('report') == 'f1340bec-a842-402c-bbac-6e239df96682/report822085265412'
+    assert updater.status('report') == 'COMPLETED'
+    assert '12005967-f060-40dd-a63c-c7204dcf46a7' in updater.patch_items
+
 @valid_env
 def test_FourfrontUpdater2(update_ffmeta_event_data_fastqc2):
     updater = FourfrontUpdater(**update_ffmeta_event_data_fastqc2)

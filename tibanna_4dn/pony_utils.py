@@ -826,7 +826,7 @@ class FourfrontUpdater(object):
             key = [key]
         for k in key:
             try:
-                exists = self.s3(argname).does_key_exist(key, self.bucket(argname))
+                exists = self.s3(argname).does_key_exist(k, self.bucket(argname))
                 if not exists:
                     return "FAILED"
             except:
@@ -1054,7 +1054,7 @@ class FourfrontUpdater(object):
         md5_report_arg = self.output_argnames[0]  # assume one output arg
         if self.ff_output_file(md5_report_arg)['type'] != 'Output report file':
             return
-        if self.status(md5_report_arg) != 'COMPLETE':
+        if self.status(md5_report_arg) == 'FAILED':
             self.ff_meta.run_status = 'error'
             return
         md5, content_md5 = self.parse_md5_report(self.read(md5_report_arg))
@@ -1079,17 +1079,20 @@ class FourfrontUpdater(object):
             return md5_patch
 
         matching_extra = None
-        for extra_format in self.format_if_extra(input_arg):
-            for extra in input_meta['extra_files']:
+        for extra_format in self.format_if_extras(input_arg):
+            for ind, extra in enumerate(input_meta['extra_files']):
                 if cmp_fileformat(extra['file_format'], extra_format):
                     matching_extra = extra
+                    matching_extra_ind = ind
                     break
+            if matching_extra:
+                break
         if matching_extra:
             patch_content = input_meta['extra_files']
-            patch_content.update(process(matching_extra))
+            patch_content[matching_extra_ind].update(process(matching_extra))
             secondary_format = matching_extra['file_format']
-            patch_content['file_size'] = self.s3_file_size(input_arg, secondary_format=secondary_format)
-            patch_content['status'] = 'uploaded'
+            patch_content[matching_extra_ind]['file_size'] = self.s3_file_size(input_arg, secondary_format=secondary_format)
+            patch_content[matching_extra_ind]['status'] = 'uploaded'
             self.update_patch_items(input_meta['uuid'], {'extra_files': patch_content})
         else:
             patch_content = process(input_meta)
@@ -1097,7 +1100,7 @@ class FourfrontUpdater(object):
             patch_content['status'] = 'uploaded'
             self.update_patch_items(input_meta['uuid'], patch_content)
 
-    def parse_md5_report(read):
+    def parse_md5_report(self, read):
         """parses md5 report file content and returns md5, content_md5"""
         md5_array = read.split('\n')
         if not md5_array:
