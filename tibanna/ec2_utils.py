@@ -418,11 +418,25 @@ class Execution(object):
         if not self.user_specified_ebs_size:  # use benchmark only if not set by user
             self.cfg.ebs_size = self.benchmark['ebs_size']
 
+
+    def is_not_empty(x):
+        if not isinstance(x, list):
+            if x:
+                return True
+            else:
+                return False
+        else:
+            if filter(lambda x: x, flatten(x)):
+                return True
+            else:
+                return False
+
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
         input_plus_secondary_files = copy.deepcopy(self.args.input_files)
         if self.args.secondary_files:
-            input_plus_secondary_files.update({k+'_secondary': v for k, v in self.args.secondary_files.items()})
+            secondary_files_as_input = {k+'_secondary': v for k, v in self.args.secondary_files.items() if is_not_empty(v['object_key'])}
+            input_plus_secondary_files.update(secondary_files_as_input)
         for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
