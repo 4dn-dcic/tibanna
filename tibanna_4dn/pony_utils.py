@@ -435,6 +435,8 @@ class FourfrontUpdater(object):
         self.postrunjson = AwsemPostRunJson(**postrunjson)
         if pf_meta:
             self.pf_output_files = {pf['uuid']: ProcessedFileMetadata(**pf) for pf in pf_meta}
+        else:
+            self.pf_output_files = []
         # if _tibanna is not set, still proceed with the other functionalities of the class
         self.custom_qc_fields = custom_qc_fields
         self.tibanna_settings = None
@@ -847,8 +849,9 @@ class FourfrontUpdater(object):
 
     # update functions for PF
     def update_all_pfs(self):
-        for pf_uuid in self.pf_output_files:
-            self.update_pf(pf_uuid)
+        if self.pf_output_files:
+            for pf_uuid in self.pf_output_files:
+                self.update_pf(pf_uuid)
 
     def update_pf(self, pf_uuid):
         if self.status(pf_uuid=pf_uuid) == 'COMPLETED':

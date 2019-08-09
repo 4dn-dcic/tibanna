@@ -44,14 +44,14 @@
     },
     "input_parameters": {},
     "output_target": {
-      "output": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
-      "output-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
+      "raw_bam": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
+      "raw_bam-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
     },
     "secondary_output_target": {},
     "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
     "input_env": {},
     "alt_cond_output_argnames": {},
-    "language": "cwl_draft3",
+    "language": "cwl_v1",
     "singularity": false,
     "cwl_directory_local": "",
     "dependency": {}
@@ -123,14 +123,14 @@
     ],
     "output_files": [
       {
-        "workflow_argument_name": "output",
+        "workflow_argument_name": "raw_bam",
         "type": "Output processed file",
         "format": "/file-formats/bam/",
         "value": "41178912-4bf1-402e-9b75-cf28ded2912b",
         "upload_key": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam"
       },
       {
-        "workflow_argument_name": "output-check",
+        "workflow_argument_name": "raw_bam-check",
         "type": "Output QC file"
       }
     ],
@@ -240,7 +240,7 @@
       },
       "Output": {
         "Output files": {
-          "output": {
+          "raw_bam": {
             "basename": "raw.bam",
             "checksum": "sha1$49bb6d993c1ad4ebf672e71f01e6821096fe019f",
             "class": "File",
@@ -250,7 +250,7 @@
             "size": 7575726131,
             "target": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam"
           },
-          "output-check": {
+          "raw_bam-check": {
             "basename": "integrity_check",
             "checksum": "sha1$8296f8ccff8a4fad99be5d3d71175134d84e2621",
             "class": "File",
@@ -264,8 +264,8 @@
         "alt_cond_output_argnames": {},
         "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
         "output_target": {
-          "output": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
-          "output-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
+          "raw_bam": "41178912-4bf1-402e-9b75-cf28ded2912b/4DNFIWT3X5RU.bam",
+          "raw_bam-check": "5780e217-29c2-4aa3-9f4c-71efb8bd0931/output-check503886565321"
         },
         "secondary_output_target": {}
       },

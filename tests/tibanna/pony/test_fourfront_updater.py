@@ -189,12 +189,12 @@ def test_bamcheck(update_ffmeta_event_data_bamcheck):
     assert updater.workflow
     assert 'arguments' in updater.workflow
     assert updater.workflow_qc_arguments
-    assert 'output' in updater.workflow_qc_arguments
-    assert updater.workflow_qc_arguments['output'][0].qc_type == 'quality_metric_bamcheck'
+    assert 'raw_bam' in updater.workflow_qc_arguments
+    assert updater.workflow_qc_arguments['raw_bam'][0].qc_type == 'quality_metric_bamcheck'
     updater.update_qc()
-    qc = updater.workflow_qc_arguments['output'][0]
-    target_accession = updater.accessions('output')[0]
-    assert qc.workflow_argument_name == 'output-check'
+    qc = updater.workflow_qc_arguments['raw_bam'][0]
+    target_accession = updater.accessions('raw_bam')[0]
+    assert qc.workflow_argument_name == 'raw_bam-check'
     assert qc.qc_table 
     assert target_accession == '4DNFIWT3X5RU'
     assert updater.post_items
