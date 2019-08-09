@@ -625,7 +625,8 @@ class FourfrontUpdater(object):
                 try:
                     post_metadata(v[item], schema,
                                   key=self.tibanna_settings.ff_keys,
-                                  ff_env=self.tibanna_settings.env)
+                                  ff_env=self.tibanna_settings.env,
+                                  add_on='force_md5')
                 except Exception as e:
                     raise e
 
@@ -633,7 +634,8 @@ class FourfrontUpdater(object):
         for item_id, item in self.patch_items.items():
             patch_metadata(item, item_id,
                            key=self.tibanna_settings.ff_keys,
-                           ff_env=self.tibanna_settings.env)
+                           ff_env=self.tibanna_settings.env,
+                           add_on='force_md5')
 
     def patch_ffmeta(self):
         try:
