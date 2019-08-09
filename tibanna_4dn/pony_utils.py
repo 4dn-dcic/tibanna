@@ -436,7 +436,7 @@ class FourfrontUpdater(object):
         if pf_meta:
             self.pf_output_files = {pf['uuid']: ProcessedFileMetadata(**pf) for pf in pf_meta}
         else:
-            self.pf_output_files = []
+            self.pf_output_files = {}
         # if _tibanna is not set, still proceed with the other functionalities of the class
         self.custom_qc_fields = custom_qc_fields
         self.tibanna_settings = None
