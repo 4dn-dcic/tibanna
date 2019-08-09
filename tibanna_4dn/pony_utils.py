@@ -934,6 +934,7 @@ class FourfrontUpdater(object):
                     matching_extra['status'] = "upload failed"
                 # higlass registration
                 hgcf = match_higlass_config(ip['file_format'], output_extra_format)
+                higlass_uid = None
                 if hgcf:
                     # register extra file not the original input file
                     higlass_uid = register_to_higlass(self.tibanna_settings,
