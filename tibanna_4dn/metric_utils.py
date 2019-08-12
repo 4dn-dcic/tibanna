@@ -5,6 +5,93 @@ from collections import OrderedDict
 from dcicutils import ff_utils
 
 
+class FourfrontFile(object):
+    def __init__(self, uuid, size=None):
+        self.uuid = uuid
+        self.size = size
+
+
+class FourfrontWorkflowRunTracing(object):
+    def __init__(self, final_pf_uuid, key):
+        self.key = key
+        self.final_pf = FourfrontFile(final_pf_uuid)
+        self.steps = []
+        self.trace(final_pf_uuid)
+
+    def trace_wfr_forward(self, pf_uuid):
+        res = ff_utils.get_metadata(pf_uuid, key=self.key)
+        wfr = res['workflow_run_inputs'][0]['uuid']
+        return wfr
+        
+    def trace_wfr_backward(self, pf_uuid):
+        res = ff_utils.get_metadata(pf_uuid, key=self.key)
+        if 'workflow_run_outputs' not in res or not res['workflow_run_outputs']:
+            return None, None
+        wfr_uuid = res['workflow_run_outputs'][0]['uuid']
+        input_files = []
+        for ip in res['workflow_run_outputs'][0]['input_files']:
+            if ip['value']['@type'][0] != 'FileReference':
+                input_files.append(self.fourfront_file(ip['value']['uuid']))
+        return (wfr_uuid, input_files)
+
+    def trace(self, final_pf_uuid, reverse_step_id=0):
+        wfr_uuid, input_files = self.trace_wfr_backward(final_pf_uuid)
+        if wfr_uuid:
+            if not self.wfr_exists(wfr_uuid):
+                self.steps.append(Step(reverse_step_id, wfr_uuid, input_files, final_pf_uuid, key=self.key))
+                for ip in input_files:
+                    self.trace(ip.uuid, reverse_step_id + 1)
+
+    def fourfront_file(self, file_uuid):
+        return FourfrontFile(file_uuid, self.file_size(file_uuid))
+
+    def file_size(self, file_uuid):
+        return ff_utils.get_metadata(file_uuid, key=self.key)['file_size']
+
+    def wfr_exists(self, wfr_uuid):
+        for s in self.steps:
+            if s.wfr.uuid == wfr_uuid:
+                return True
+        return False
+
+    @property
+    def cost(self):
+        sumcost = 0
+        for s in self.steps:
+            sumcost += s.wfr.metrics['cost']
+        return sumcost
+
+    @property
+    def runtime_min(self):
+        total_runtime = 0
+        for s in self.steps:
+            total_runtime += s.wfr.metrics['runtime_MIN']
+        return total_runtime
+
+    @property
+    def runtime_hr(self):
+        return self.runtime_min / 60
+
+
+class Step(object):
+    def __init__(self, reverse_step_id, wfr, input_files, output_file, key):
+        self.reverse_step_id = reverse_step_id
+        self.wfr = WorkflowRun(wfr, key=key)
+        self.input_files = input_files
+        self.output_file = output_file
+
+
+class WorkflowRun(object):
+    def __init__(self, wfr_uuid, key):
+        wfr_meta = ff_utils.get_metadata(wfr_uuid, key=key)
+        self.uuid = wfr_uuid
+        self.workflow = wfr_meta['workflow']['title']
+        s = wfr_meta['awsem_postrun_json']
+        awsem_job_id = postrun_json_url_to_job_id(s)
+        self.metrics = get_metrics(job_id=awsem_job_id, key=key, wf_category=None)
+
+
+
 def postrun_json_url_to_job_id(s):
     return str(s.split('/')[-1].split('.')[0])
 
@@ -25,41 +112,10 @@ def get_metrics(exec_arn=None, job_id=None, logbucket='tibanna-output', key=None
     r = s3.get_object(Bucket=logbucket, Key='%s.postrun.json' % job_id)
     d = json.loads(r['Body'].read())
     metrics = d['Job']['Metrics']
-    instance_type = d['config']['instance_type']
-    ebs_size = d['config']['ebs_size']
-    input_size = dict()
-    output_size = dict()
-    for argname, argdict in d['Job']['Input']['Input_files_data'].iteritems():
-        input_size[argname] = get_file_size(argdict)
-    additional_param = dict()
-    for argname, argdict in d['Job']['Output']['Output files'].iteritems():
-        output_size[argname] = get_file_size(argdict)
-    param = d['Job']['Input']['Input_parameters']
     runtime = run_time(d)
     cost = get_cost(d)
-    additional_param = add_additional_parameters(d, category=wf_category, key=key)
-    run = OrderedDict()
-    run['app_name'] = d['Job']['App'].get('App_name', '')
-    run['app_version'] = d['Job']['App'].get('App_version', '')
-    run['data_size_input'] = input_size
-    run['data_size_output'] = output_size
-    run['parameters'] = param
-    run['additional_parameters'] = additional_param
-    metrics.update({"runtime_MIN": runtime})
-    run_environment = OrderedDict()
-    run_environment['platform'] = "AWS"
-    run_environment['executor'] = "tibanna"
-    run_environment['instance_type'] = instance_type
-    run_environment['ebs_size_GB'] = ebs_size
-    job_identification = {"job_id": job_id}
-    cost = {"cost_USD": cost}
-    final = OrderedDict()
-    final['run'] = run
-    final['run_environment'] = run_environment
-    final['metrics'] = metrics
-    final['cost'] = cost
-    final['job_identification'] = job_identification
-    return final
+    metrics.update({"runtime_MIN": runtime, "cost": cost})
+    return metrics
 
 
 def add_additional_parameters(d, category='repliseq_parta', key=None):
