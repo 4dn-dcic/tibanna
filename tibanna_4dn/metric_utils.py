@@ -14,9 +14,9 @@ class FourfrontFile(object):
 class FourfrontWorkflowRunTracing(object):
     def __init__(self, final_pf_uuid, key):
         self.key = key
-        self.final_pf = FourfrontFile(final_pf_uuid)
+        self.final_pf = self.fourfront_file(final_pf_uuid)
         self.steps = []
-        self.trace(final_pf_uuid)
+        self.trace(self.final_pf)
 
     def trace_wfr_forward(self, pf_uuid):
         res = ff_utils.get_metadata(pf_uuid, key=self.key)
@@ -34,13 +34,13 @@ class FourfrontWorkflowRunTracing(object):
                 input_files.append(self.fourfront_file(ip['value']['uuid']))
         return (wfr_uuid, input_files)
 
-    def trace(self, final_pf_uuid, reverse_step_id=0):
-        wfr_uuid, input_files = self.trace_wfr_backward(final_pf_uuid)
+    def trace(self, final_pf, reverse_step_id=0):
+        wfr_uuid, input_files = self.trace_wfr_backward(final_pf.uuid)
         if wfr_uuid:
             if not self.wfr_exists(wfr_uuid):
-                self.steps.append(Step(reverse_step_id, wfr_uuid, input_files, final_pf_uuid, key=self.key))
+                self.steps.append(Step(reverse_step_id, wfr_uuid, input_files, final_pf, key=self.key))
                 for ip in input_files:
-                    self.trace(ip.uuid, reverse_step_id + 1)
+                    self.trace(ip, reverse_step_id + 1)
 
     def fourfront_file(self, file_uuid):
         return FourfrontFile(file_uuid, self.file_size(file_uuid))
@@ -71,6 +71,25 @@ class FourfrontWorkflowRunTracing(object):
     @property
     def runtime_hr(self):
         return self.runtime_min / 60
+
+    @property
+    def step_cost(self):
+        stepcost = dict()
+        for s in self.steps:
+            if s.wfr.workflow not in stepcost:
+                stepcost[s.wfr.workflow] = 0
+            stepcost[s.wfr.workflow] += s.wfr.metrics['cost']
+        return stepcost
+
+    @property
+    def step_runtime_hr(self):
+        stepruntime = dict()
+        for s in self.steps:
+            if s.wfr.workflow not in stepruntime:
+                stepruntime[s.wfr.workflow] = 0
+            stepruntime[s.wfr.workflow] += s.wfr.metrics['runtime_MIN'] / 60
+        return stepruntime
+        
 
 
 class Step(object):
