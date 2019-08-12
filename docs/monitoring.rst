@@ -15,7 +15,7 @@ General stats
 
 ::
 
-    invoke stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-v]
+    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-l] [-n <number_of_lines>]
 
 The output is a table (an example below)
 
@@ -28,7 +28,7 @@ The output is a table (an example below)
     j7hvisheBV27        SUCCEEDED       bwa-mem    2018-08-09 18:44        2018-08-09 18:59
 
 
-To print out more information, use the ``-v`` (verbose) option. The additional information includes the ID, type, status and public ip of the EC2 instance. Keyname and Password information is shown for ssh.
+To print out more information, use the ``-l`` (long) option. The additional information includes the ID, type, status and public ip of the EC2 instance. Keyname and Password information is shown for ssh.
 
 ::
 
@@ -36,6 +36,9 @@ To print out more information, use the ``-v`` (verbose) option. The additional i
     O37462jD9Kf7	RUNNING	bwa-mem	2018-12-14 23:37	2018-12-14 23:40	i-009880382ee22a5b1	t2.large	running 3.25.66.32	4dn-encode      somepassword
     jN4ubJNlNKIi	ABORTED	bwa-mem	2018-12-14 23:33	2018-12-14 23:36	i-0df66d22d485bbc05	c4.4xlarge	shutting-down   -	-       -
     dWBRxy0R8LXi	SUCCEEDED	bwa-mem	2018-12-14 22:44	2018-12-14 22:59	i-00f222fe5e4580007	t3.medium	terminated	-	-       -
+
+
+Using ``-n`` limits the number of lines to be printed. (the most recent ``n`` items will be printed)
 
 
 
@@ -46,11 +49,11 @@ Execution logs
 Log
 ###
 
-Using your job ID, you can also check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress. Checking the log file can be done through the ``invoke log`` command. For example, to view the last 60 lines of the log for job ``lSbkdVIQ6VtX``,
+Using your job ID, you can also check your S3 bucket to see if you can find a file named <jobid>.log. This will happen 5~10min after you start the process, because it takes time for an instance to be ready and send the log file to S3. The log file gets updated, so you can re-download this file and check the progress. Checking the log file can be done through the ``tibanna log`` command. For example, to view the last 60 lines of the log for job ``lSbkdVIQ6VtX``,
 
 ::
 
-    invoke log --job-id=lSbkdVIQ6VtX | tail  -60
+    tibanna log --job-id=lSbkdVIQ6VtX | tail  -60
 
 
 ::
@@ -127,12 +130,12 @@ To Download the log file manually, the following command also works.
 Postrun.json
 ############
 
-Once the job is finished, you should be able to find the ``<jobid>.postrun.json`` file as well. This file can be viewed likewise using the ``invoke log`` command, but with the ``-p`` option. The postrun json file contains the summary of the run, including the input / output / EC2 configuration and Cloudwatch metrics for memory/CPU/disk space usage.
+Once the job is finished, you should be able to find the ``<jobid>.postrun.json`` file as well. This file can be viewed likewise using the ``tibanna log`` command, but with the ``-p`` option. The postrun json file contains the summary of the run, including the input / output / EC2 configuration and Cloudwatch metrics for memory/CPU/disk space usage.
 
 
 ::
 
-   invoke log -p --job-id=lSbkdVIQ6VtX
+   tibanna log -p --job-id=lSbkdVIQ6VtX
 
 ::
 
@@ -315,7 +318,7 @@ Detailed monitoring through ssh
 +++++++++++++++++++++++++++++++
 
 
-You can also ssh into your running instance to check more details. The IP of the instance can be found using ``invoke stat -v``
+You can also ssh into your running instance to check more details. The IP of the instance can be found using ``tibanna stat -v``
 
 ::
 
@@ -328,7 +331,7 @@ if ``keyname`` was provided in the input execution json,
 
     ssh -i <keyfilename>.pem ubuntu@<ip>
 
-The keyname (and/or password) can also be found using ``invoke stat -v``.
+The keyname (and/or password) can also be found using ``tibanna stat -v``.
 
 Alternatively, the Step Function execution page of AWS Web Console contains details of the ssh options. ``keyname`` and ``password`` can be found inside the input json of the execution. The IP can be found inside the output json of the ``RunTaskAwsem`` step or the input json of the ``CheckTaskAwsem`` step.
 

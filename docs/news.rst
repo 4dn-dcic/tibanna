@@ -5,16 +5,71 @@ News and updates
 Publication
 +++++++++++
 
-- **Oct 11. 2018**  Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
+- **May 15, 2019**  Tibanna paper is out on Bioinformatics now! https://doi-org.ezp-prod1.hul.harvard.edu/10.1093/bioinformatics/btz379
+- **Apr 18. 2019**  A newer version of the Tibanna paper is out on Biorxiv! https://www.biorxiv.org/content/10.1101/440974v3
+- **Oct 11. 2018**  Tibanna paper preprint is out on Biorxiv! https://www.biorxiv.org/content/early/2018/10/11/440974
 
 
 Version updates
 +++++++++++++++
 
 
+  **Jun 10, 2019** The latest version is now 0.8.3_.
+
+    - A newly introduced issue of ``--usergroup`` not working properly with ``deploy_unicorn``/``deploy_core`` is now fixed.
+    - Now one can specify ``mem`` (in GB) and ``cpu`` instead of ``instance_type``. The most cost-effective instance type will be auto-determined.
+    - Now one can set ``behavior_on_capacity_limit`` to ``other_instance_types``, in which case tibanna will try the top 10 instance types in the order of decreasing hourly cost.
+    - EBS size can be specified in the format of ``3x``, ``5.5x``, etc. to make it 3 (or 5.5) times the total input size.
+
+
+  **Jun 3, 2019** The latest version is now 0.8.2_.
+
+    - One can now directly send in a command and a container image without any CWL/WDL (language = ``shell``).
+    - One can now send a local/remote(http or s3) Snakemake workflow file to awsem and run it (either the whole thing, a step or multiple steps in it). (language = ``snakemake``)
+    - Output target and input file dictionary keys can now be a file name instead of an argument name (must start with ``file://``)
+      - input file dictionary keys must be ``/data1/input``, ``/data1/out`` or either ``/data1/shell`` or ``/data1/snakemake`` (depending on the language option).
+    - With shell / snakemake option, one can also ``exec`` into the running docker container after sshing into the EC2 instance.
+    - The ``dependency`` field can be in args, config or outside both in the input json.
+
+
+  **May 30, 2019** The latest version is now 0.8.1_.
+
+    - ``deploy_core`` (and ``deploy_unicorn``) not working in a non-venv environment fixed
+    - local CWL/WDL files and CWL/WDL files on S3 are supported.
+    - new issue with opening the browser with ``run_workflow`` fixed
+
+
+  **May 29, 2019** The latest version is now 0.8.0_.
+
+    - Tibanna can now be installed via ``pip install tibanna``! (no need to ``git clone``)
+    - Tibanna now has its own CLI! Instead of ``invoke run_workflow``, one should use ``tibanna run_workflow``.
+    - Tibanna's API now has its own class! Instead of ``from core.utils import run_workflow``, one should use the following.
+
+      ::
+
+          from tibanna.core import API
+          API().run_workflow(...)
+
+
+    - The API ``run_workflow()`` can now directly take an input json file as well as an input dictionary (both through ```input_json`` parameter).
+    - The ``rerun`` CLI now has ``--appname_filter`` option exposed
+    - The ``rerun_many`` CLI now has ``--appname-filter``, ``--shutdown-min``, ``--ebs-size``, ``--ebs-type``, ``--ebs-iops``, ``--key-name``, ``--name`` options exposed.
+      The API also now has corresponding parameters.
+    - The ``stat`` CLI now has API and both has a new parameter `n` (`-n`) that prints out the first n lines only. The option ``-v`` (``--verbose``) is not replaced by ``-l`` (``--long``)
+
+
+  **May 15, 2019** The latest version is now 0.7.0_.
+
+    - Now works with **Python3.6** (2.7 is deprecated!)
+    - newly introduced issue with non-list secondary output target handling fixed
+    - fixed the issue with top command reporting from ec2 not working any more
+    - now the `run_workflow` function does not later the original input dictionary
+    - auto-terminates instance when CPU utilization is zero (inactivity) for an hour (mostly due to aws-related issue but could be others).
+    - The `rerun` function with a run name that contains a uuid at the end(to differentiate identical run names) now removes it from run_name before adding another uuid.
+
   **Mar 7, 2019** The latest version is now 0.6.1_.
 
-    - Default **public bucket access is depricated** now, since it also allows access to all buckets in one's own account.
+    - Default **public bucket access is deprecated** now, since it also allows access to all buckets in one's own account.
       The users must specify buckets at deployment, even for public buckets.
       If the user doesn't specify any bucket, the deployed Tibanna will only have access to the public tibanna test buckets of the 4dn AWS account.
     - A newly introduced issue of ``rerun`` with no ``run_name`` in ``config`` fixed.
@@ -162,7 +217,11 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
-
+.. _0.8.3: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.3
+.. _0.8.2: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.2
+.. _0.8.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.1
+.. _0.8.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.0
+.. _0.7.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.7.0
 .. _0.6.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.1
 .. _0.6.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.6.0
 .. _0.5.9: https://github.com/4dn-dcic/tibanna/releases/tag/v0.5.9

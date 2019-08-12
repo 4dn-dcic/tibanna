@@ -3,6 +3,7 @@ import json
 import sys
 import boto3
 import os
+import re
 json_old = sys.argv[1]
 execution_metadata = sys.argv[2]
 logfile = sys.argv[3]
@@ -39,6 +40,30 @@ def parse_command(logfile):
     return(command_list)
 
 
+def upload_to_s3(s3, source, bucket, target):
+    if os.path.isdir(source):
+        print("source " + source + " is a directory")
+        source = source.rstrip('/')
+        for root, dirs, files in os.walk(source):
+            for f in files:
+                source_f = os.path.join(root, f)
+                if root == source:
+                    target_f = os.path.join(target, f)
+                else:
+                    target_subdir = re.sub('^' + source + '/', '', root)
+                    target_f = os.path.join(target, target_subdir, f)
+                print("source_f=" + source_f)
+                print("target_f=" + target_f)
+                s3.upload_file(source_f, bucket, target_f)
+            # for d in dirs:
+            #     source_d = os.path.join(root, d)
+            #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
+            #     upload_to_s3(s3, source_d, bucket, target_d)
+    else:
+        print("source " + source + " is a not a directory")
+        s3.upload_file(source, bucket, target)
+
+
 # read old json file
 with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
@@ -58,6 +83,10 @@ if language == 'wdl':
         for argname, outfile in wdl_output['outputs'].iteritems():
             if outfile:
                 old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
+elif language == 'snakemake':
+    old_dict['Job']['Output'].update({'Output files': {}})
+elif language == 'shell':
+    old_dict['Job']['Output'].update({'Output files': {}})
 else:
     # read cwl output json file
     with open(execution_metadata, 'r') as json_out_f:
@@ -90,6 +119,8 @@ for of, ofv in output_meta.iteritems():
 # conditional alternative names only occur in WDL which does not support secondary files
 replace_list = []
 for k in output_target:
+    if k.startswith('file://'):
+        continue
     if k not in output_meta:
         if k in alt_output_argnames:
             key_exists = False  # initialize
@@ -105,20 +136,46 @@ for k, k_alt in replace_list:
     output_target[k_alt] = output_target[k]
     del output_target[k]
 
-# upload output file
+
 s3 = boto3.client('s3')
+
+# 'file://' output targets
+for k in output_target:
+    if k.startswith('file://'):
+        source = k.replace('file://', '')
+        target = output_target[k]
+        bucket = output_bucket  # default
+        if target.startswith('s3://'):  # this allows using different output buckets
+            output_path = re.sub('^s3://', '', target)
+            bucket = output_path.split('/')[0]
+            target = re.sub('^' + bucket + '/', '', output_path)
+        try:
+            print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
+            # s3.upload_file(source, bucket, target)
+            upload_to_s3(s3, source, bucket, target)
+        except Exception as e:
+            raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
+
+
+# legitimate CWL/WDL output targets
 for k in output_meta:
     source = output_meta[k].get('path')
     source_name = source.replace(source_directory, '')
+    bucket = output_bucket  # default
     if k in output_target:
         target = output_target[k]  # change file name to what's specified in output_target
+        if target.startswith('s3://'):  # this allows using different output buckets
+            output_path = re.sub('^s3://', '', target)
+            bucket = output_path.split('/')[0]
+            target = re.sub('^' + bucket + '/', '', output_path)
     else:
         target = source_name  # do not change file name
+    print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
     try:
-        print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-        s3.upload_file(source, output_bucket, target)
+        # s3.upload_file(source, bucket, target)
+        upload_to_s3(s3, source, bucket, target)
     except Exception as e:
-        raise Exception("output file {} upload to {} failed. %s".format(source, output_bucket + '/' + target) % e)
+        raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
     try:
         output_meta[k]['target'] = target
     except Exception as e:
@@ -130,6 +187,7 @@ for k in output_meta:
         for i, sf in enumerate(output_meta[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
+            bucket = output_bucket  # default
             if k in secondary_output_target:
                 if len(secondary_output_target[k]) == 1:  # one extra file
                     target = secondary_output_target[k][i]
@@ -140,14 +198,18 @@ for k in output_meta:
                             target = targ
                             n_assigned = n_assigned + 1
                             break
+                if target.startswith('s3://'):  # this allows using different output buckets
+                    output_path = re.sub('^s3://', '', target)
+                    bucket = output_path.split('/')[0]
+                    target = re.sub('^' + bucket + '/', '', output_path)
             else:
                 target = source_name  # do not change file name
             try:
-                print("uploading output file {} upload to {}".format(source, output_bucket + '/' + target))
-                s3.upload_file(source, output_bucket, target)
+                print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
+                s3.upload_file(source, bucket, target)
             except Exception as e:
                 raise Exception("output file {} upload to {} failed. %s".format(
-                    source, output_bucket + '/' + target) % e)
+                    source, bucket + '/' + target) % e)
             try:
                 sf['target'] = target
             except Exception as e:

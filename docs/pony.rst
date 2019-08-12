@@ -18,19 +18,17 @@ Tibanna Pony is an extension of Tibanna Unicorn used specifically for 4DN-DCIC (
 Example Tibanna setup for 4DN-DCIC
 ----------------------------------
 
-To deploy pony, you could do the following. (already done)
+To deploy pony, you could do the following.
 
 ::
 
-    invoke setup_tibanna_env --buckets=elasticbeanstalk-fourfront-webdev-files,elasticbeanstalk-fourfront-webdev-wfoutput,tibanna-output,4dn-aws-pipeline-run-json
-
-
+    tibanna_4dn deploy_pony
 
 
 Webdev testing for Pony
 -----------------------
 
-For full tibanna test (actually running jobs through step function) besides travis test, the following input json files are used.
+For full tibanna test (actually running jobs through step function) besides travis test, the following input json files in the git repo are used.
 
 ::
 
@@ -48,7 +46,7 @@ For full tibanna test (actually running jobs through step function) besides trav
 
 ::
 
-    cat tests/webdevtestlist | xargs -I{} sh -c "invoke run_workflow --workflow=tibanna_pony_dev --input-json={}"
+    cat tests/webdevtestlist | xargs -I{} sh -c "tibanna_4dn run_workflow --sfn=tibanna_pony_dev --input-json={}"
 
 Example Input Json for Pony
 ---------------------------
@@ -91,7 +89,10 @@ Example Input Json for Pony
         "launch_instance": true,
         "password": "dragonfly",
         "log_bucket": "tibanna-output",
-        "key_name": ""
+        "key_name": "",
+        "spot_instance": true,
+        "spot_duration": 360,
+        "behavior_on_capacity_limit": "wait_and_retry"
       },
       "custom_pf_fields": {
         "out_bam": {
@@ -100,6 +101,10 @@ Example Input Json for Pony
       },
       "wfr_meta": {
         "notes": "a nice workflow run"
+      },
+      "custom_qc_fields": {
+        "award": "/awards/5UM1HL128773-04/",
+        "lab": "/labs/bing-ren-lab/"
       },
       "push_error_to_end": true
       "dependency": {
@@ -110,8 +115,6 @@ Example Input Json for Pony
       },
       "overwrite_input_extra": false,
       "cloudwatch_dashboard", false,
-      "spot_instance": true,
-      "spot_duration": 360,
       "email": true
     }
 
@@ -127,6 +130,7 @@ Example Input Json for Pony
 - The ``config`` field is directly passed on to the second step, where instance_type, ebs_size, EBS_optimized are auto-filled, if not given.
 - The ``custom_pf_fields`` field (optional) contains a dictionary that can be directly passed to the processed file metadata. The key may be either ``ALL`` (applies to all processed files) or the argument name for a specific processed file (or both).
 - The ``wfr_meta`` field (optional) contains a dictionary that can be directly passed to the workflow run metadata.
+- The ``custom_qc_fields`` field (optional) contains a dictionary that can be directly passed to an associated Quality Metric object.
 - The ``push_error_to_end`` field (optional), if set true, passes any error to the last step so that the metadata can be updated with proper error status. (default true)
 - The ``dependency`` field (optional) sets dependent jobs. The job will not start until the dependencies successfully finish. If dependency fails, the current job will also fail. The ``exec_arn`` is the list of step function execution arns. The job will wait at the run_task_awsem step, not at the start_task_awsem step (for consistenty with unicorn). This field will be passed to run_task_awsem as ``dependency`` inside the ``args`` field.
 - The ``overwrite_input_extra`` (optional) allows overwriting on an existing extra file, if the workflow hasan output of type ``Output to-be-extra-input file`` (i.e., creating an extra file of an input rather than creating a new processed file object). Default ``false``.
@@ -134,4 +138,5 @@ Example Input Json for Pony
 - The ``spot_instance`` field (optional), if set ``true``, requests a spot instance instead of an on-demand instance.
 - The ``spot_duration`` field (optional), if set, requests a fixed-duration spot instance instead of a regular spot instance. The value is the duration in minutes. This field has no effect if ``spot_instance`` is either ``false`` or not set.
 - The ``email`` field (optional), if set ``true``, sends a notification email to ``4dndcic@gmail.com`` when a workflow run finishes.
+- The ``behavior_on_capacity_limit`` field (optional) sets the behavior of Tibanna in case AWS instance Limit or Spot instance capacity limit is encountered. Default value is ``fail``. If set to ``wait_and_retry``, Tibanna will wait until the instance becomes available and rerun (10 min interval, for 1 week). If ``spot_instance`` is ``true`` and ``behavior_on_capacity_limit`` is set to ``retry_without_spot``, when the spot instance is not available, it will automatically switch to a regular instance of the same type (applicable only when ``spot_instance`` is ``true``).
 

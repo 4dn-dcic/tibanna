@@ -15,7 +15,7 @@ printHelpAndExit() {
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
-    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1' or 'wdl') (default cwl_draft3)"
+    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-u SCRIPTS_URL : Tibanna repo url (default: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/)"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
@@ -63,6 +63,12 @@ export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
 if [[ $LANGUAGE == 'wdl' ]]
 then
   export LOCAL_WFDIR=$EBS_DIR/wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/shell
 else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
@@ -118,6 +124,7 @@ fi
 exl wget $SCRIPTS_URL/aws_decode_run_json.py
 exl wget $SCRIPTS_URL/aws_update_run_json.py
 exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
+exl wget $SCRIPTS_URL/download_workflow.py
 
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
@@ -145,6 +152,10 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
+### download cwl from github or any other url.
+pip install boto3
+exl ./download_workflow.py
+
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
 cwd0=$(pwd)
 cd ~
@@ -157,23 +168,6 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
-
-### download cwl from github or any other url.
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  exl echo "main wdl=$MAIN_WDL"
-  for WDL_FILE in $MAIN_WDL $WDL_FILES
-  do
-   exl wget -O$LOCAL_WFDIR/$WDL_FILE $WDL_URL/$WDL_FILE
-  done
-else
-  exl echo "main cwl=$MAIN_CWL"
-  for CWL_FILE in $MAIN_CWL $CWL_FILES
-  do
-   exl wget -O$LOCAL_WFDIR/$CWL_FILE $CWL_URL/$CWL_FILE
-  done
-fi
-
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
@@ -198,6 +192,18 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
+  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  LOGJSONFILE='-'  # no file
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
+  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
+  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
@@ -209,7 +215,7 @@ else
     python setup.py install
     cd $LOCAL_WFDIR
   fi
-  exlj cwltool --non-strict --copy-outputs --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
 fi
 cd $cwd0
 send_log 
@@ -220,15 +226,21 @@ mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
 exl ls -lhtr $LOCAL_OUTDIR/
+exl ls -lhtrR $EBS_DIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
-pip install boto3
 if [[ $LANGUAGE == 'wdl' ]]
 then
-  WDLOPTION=wdl
+  LANGUAGE_OPTION=wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  LANGUAGE_OPTION=snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  LANGUAGE_OPTION=shell
 else
-  WDLOPTION=
+  LANGUAGE_OPTION=
 fi
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $WDLOPTION
+exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  

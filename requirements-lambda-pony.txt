@@ -1,2 +1,0 @@
-dcicutils==0.6.0
--e git+https://github.com/SooLee/Benchmark.git#egg=Benchmark

@@ -24,12 +24,12 @@ Pipeline
 
 - Your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/).
 - The commands to run your pipeline must be written in either Common Workflow Language. (https://www.commonwl.org/) (recommended) or Workflow Description Language (https://software.broadinstitute.org/wdl/) (only basic support).
-
+- Tibanna now supports simple shell commands to run inside a specified Docker container and Snakemake pipelines as well as local CWL/WDL files (not just public urls)
 
 Data
 ++++
 
-- Your data must be in an AWS S3 bucket.
+- Your data must be in AWS S3 buckets.
 
 
 AWS cloud account
@@ -51,15 +51,15 @@ Tibanna
 
 ::
 
-    $ invoke run_workflow --input-json=run1.json
+    $ tibanna run_workflow --input-json=run1.json
 
 
 **Python**
 
 ::
 
-    >>> from core.utils import run_workflow
-    >>> run_workflow(input_json=run1)
+    >>> from tibanna.core import API
+    >>> API().run_workflow(input_json='run1.json')  # input_json is a json file or a dict object
 
 
 
@@ -79,6 +79,7 @@ Contents:
    startaws
    installation
    commands
+   api
    execution_json
    monitoring
    cwl

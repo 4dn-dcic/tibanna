@@ -10,33 +10,33 @@ Installing Tibanna package
 
 Tibanna works with the following Python and pip versions.
 
-- Python 2.7
-- Pip 9, 10 or 18
+- Python 3.6
+- Pip 9, 10, 18 or 19
 
 
 Install Tibanna on your local machine or server from which you want to send commands to run workflows.
 
+First, create a virtual environment.
+
 ::
 
-    # create a virtual environment with pip 9.0.3 (or 10 or 18)
-    virtualenv -p python2.7 ~/venv/tibanna
+    # create a virtual environment
+    virtualenv -p python3.6 ~/venv/tibanna
     source ~/venv/tibanna/bin/activate
-    python -m pip install pip==9.0.3  # or curl https://bootstrap.pypa.io/get-pip.py | python - 'pip==9.0.3'
   
+
+Then, install Tibanna.
   
 ::
 
-    # installing tibanna package
-    git clone https://github.com/4dn-dcic/tibanna
-    cd tibanna
-    pip install -r requirements.txt  # if you're 4dn-dcic, use requirements-4dn.txt instead
+    pip install tibanna
 
 
-Alternatively, use ``setup.py``
+Alternatively, use ``git clone`` followed by ``setup.py``
 
 ::
 
-   # installing tibanna package
+   # Alternatively installing tibanna package from github repo
     git clone https://github.com/4dn-dcic/tibanna
     cd tibanna
     python setup.py install
@@ -51,10 +51,14 @@ Deployment requires an admin user credentials. For more details, check out https
 
 To only run workflows using Tibanna, you need a regular user credentials.
 
-Once you have the user credentials, we can add that information to the local machine using ``aws configure``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
+Once you have the user credentials, we can add that information to the local machine using ``awscli`` or by manually creating two files in ``~/.aws``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
 
 ::
 
+    # first install awscli - see below if this fails
+    pip install awscli
+
+    # configure AWS credentials and config through awscli
     aws configure
 
 
@@ -67,6 +71,35 @@ Type in your keys, region and output format ('json') as below.
     Default region name [None]: us-east-1
     Default output format [None]: json
 
+
+Alternatively, (in case you can't install ``awscli`` for any reason (e.g. ``PyYAML`` version conflict)), do the following manually to set up AWS credentials and config.
+
+::
+
+    mkdir ~/.aws
+
+
+Add the following to ``~/.aws/credentials``.
+
+::
+
+    [default]
+    aws_access_key_id = <your_aws_key>
+    aws_secret_access_key = <your_aws_secret_key>
+
+
+Add the following to ``~/.aws/config``.
+
+::
+
+    [default]
+    region = us-east-1
+    output = json
+
+
+
+Tibanna environment variables
+-----------------------------
 
 To use Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
 
@@ -86,8 +119,8 @@ You can find your aws account number from the AWS Web Console.
 .. |console_account_number| image:: images/console_account_number.png
 
 
-Deploying Tibanna to AWS
-------------------------
+Deploying Tibanna Unicorn to AWS
+--------------------------------
 
 If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
 
@@ -107,7 +140,7 @@ Here, we're naming it ``hahaha`` - come up with a better name if you want to.
 
 ::
 
-    invoke deploy_unicorn --usergroup=hahaha
+    tibanna deploy_unicorn --usergroup=hahaha
     # This will give permission to only public tibanna test buckets.
     # To add permission to other private or public buckets, use --buckets option.
 
@@ -140,18 +173,48 @@ You can run a workflow using Tibanna if you're an admin user or if you are a use
 
 ::
 
-    invoke run_workflow --input-json=<input_json_for_a_workflow_run>
+    tibanna run_workflow --input-json=<input_json_for_a_workflow_run>
 
 
 As an example you can try to run a test workflow as below. This one uses only public buckets ``my-tibanna-test-bucket`` and ``my-tibanna-test-input-bucket``. The public has permission to these buckets - the objects will expire in 1 day and others may have access to the same bucket and read/overwrite/delete your objects. Please use it only for initial testing of Tibanna.
 
+
+First, create the input json file ``my_test_tibanna_input.json`` as below.
+
 ::
 
-    invoke run_workflow --input-json=test_json/unicorn/my_test_tibanna_bucket.json
+    {
+      "args": {
+        "app_name": "md5",
+        "app_version": "0.2.6",
+        "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+        "cwl_main_filename": "md5.cwl",
+        "cwl_version": "v1",
+        "input_files": {
+          "input_file": {
+            "bucket_name": "my-tibanna-test-input-bucket",
+            "object_key": "somefastqfile.fastq.gz"
+          }
+        },
+        "output_S3_bucket": "my-tibanna-test-bucket",
+        "output_target": {
+          "report": "my_outdir/report"
+        }
+      },
+      "config": {
+        "run_name": "md5-public-test",
+        "log_bucket": "my-tibanna-test-bucket"
+      }
+    }
 
 
-Deploying Tibanna with private buckets
---------------------------------------
+::
+
+    tibanna run_workflow --input-json=my_test_tibanna_input.json
+
+
+Deploying Tibanna Unicorn with private buckets
+----------------------------------------------
 
 Creating a bucket
 +++++++++++++++++
@@ -200,7 +263,7 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
 
 ::
 
-    invoke deploy_unicorn --buckets=<bucket1>,<bucket2>,... --usergroup=lalala
+    tibanna deploy_unicorn --buckets=<bucket1>,<bucket2>,... --usergroup=lalala
 
 
 **Example**
@@ -208,7 +271,7 @@ Again, you can name this new copy of Tibanna by specifying a new user group (e.g
 
 ::
 
-    invoke deploy_unicorn --buckets=montys-data-bucket,montys-tibanna-log-bucket \
+    tibanna deploy_unicorn --buckets=montys-data-bucket,montys-tibanna-log-bucket \
                           --usergroup=lalala
 
     # no space between bucket names!
@@ -227,25 +290,25 @@ Then, run workflow.
 
 ::
 
-    invoke run_workflow --input-json=<input_json>
+    tibanna run_workflow --input-json=<input_json>
 
 
 Now we have two different copies of deployed Tibanna. According to your `~/.bashrc`, the latest deployed copy is your default copy. However, if you want to run a workflow on a different copy of Tibanna, use ``--sfn`` option. For example, now your default copy is ``lalala`` (the latest one), but you want to run our workflow on ``hahaha``. Then, do the following.
 
 ::
 
-    invoke run_workflow --input-json=<input_json> --sfn=tibanna_unicorn_hahaha
+    tibanna run_workflow --input-json=<input_json> --sfn=tibanna_unicorn_hahaha
 
 
 User permission
 ---------------
 
 To deploy Tibanna, one must be an admin for an AWS account.
-To run a workflow, the user must be either an admin or in the IAM group ``tibanna_<usergroup>``. To add a user to a user group, you have to be an admin. To do this, use the ``invoke`` command.
+To run a workflow, the user must be either an admin or in the IAM group ``tibanna_<usergroup>``. To add a user to a user group, you have to be an admin. To do this, use the ``tibanna`` command.
 
 ::
  
-    invoke users
+    tibanna users
 
 
 You will see the list of users.
@@ -263,21 +326,21 @@ This command will print out the list of users.
 
 ::
 
-    invoke add_users --user=<user> --group=<usergroup>
+    tibanna add_users --user=<user> --group=<usergroup>
 
 
-For example, if you have a user named ``monty`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``invoke deploy_unicorn --buckets=<b1>,<b2>,...``
+For example, if you have a user named ``monty`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``tibanna deploy_unicorn --buckets=<b1>,<b2>,...``
 
 ::
 
-    invoke add_uesrs --user=monty --group=lalala
+    tibanna add_uesrs --user=monty --group=lalala
 
 
 Check users again.
 
 ::
 
-    invoke users
+    tibanna users
 
 
 ::
