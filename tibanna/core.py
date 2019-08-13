@@ -570,11 +570,8 @@ class API(object):
                                'AMI_ID_SNAKEMAKE': AMI_ID_SNAKEMAKE,
                                'AMI_ID_SHELL': AMI_ID_SHELL,
                                'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
-                               'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
-                               'TIBANNA_AWS_REGION': AWS_REGION,
-                               'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'check_task_awsem': {'TIBANNA_AWS_REGION': AWS_REGION,
-                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+                               'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
+            'check_task_awsem': {}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
             envlist['run_task_awsem'].update({

@@ -222,6 +222,22 @@ def generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix):
     return policy
 
 
+def generate_lambda_access_policy(account_id, region, tibanna_policy_prefix):
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "lambda:GetFunction",
+                ],
+                "Resource": "arn:aws:lambda:" + region + ":" + account_id + ":function:*" 
+            }
+        ]
+    }
+    return policy
+
+
 def generate_assume_role_policy_document(service):
     '''service: 'ec2', 'lambda' or 'states' '''
     AssumeRolePolicyDocument = {
@@ -323,6 +339,7 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    desc_stepfunction_policy_name,
                                    cw_dashboard_policy_name,
                                    dynamodb_policy_name,
+                                   lambda_access_policy_name,
                                    verbose=False):
     client = iam.meta.client
     lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, 'run_task_awsem')
@@ -331,7 +348,7 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
     role_lambda_run = iam.Role(lambda_run_role_name)
     for pn in [list_policy_name, cloudwatch_policy_name, passrole_policy_name,
                bucket_policy_name, dynamodb_policy_name, desc_stepfunction_policy_name,
-               cw_dashboard_policy_name]:
+               cw_dashboard_policy_name, lambda_access_policy_name]:
         response = role_lambda_run.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
         )
@@ -347,27 +364,20 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
 def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
                                      cloudwatch_metric_policy_name,
+                                     lambda_access_policy_name,
                                      verbose=False):
     client = iam.meta.client
     lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, 'check_task_awsem')
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_metric_policy_name
-    )
-    if verbose:
-        print(response)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_policy_name
-    )
-    if verbose:
-        print(response)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
-    )
-    if verbose:
-        print(response)
+    for pn in [cloudwatch_metric_policy_name, cloudwatch_policy_name, bucket_policy_name,
+               lambda_access_policy_name]:
+        response = role_lambda_run.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
+        )
+        if verbose:
+            print(response)
 
 
 def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
@@ -528,6 +538,11 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     ec2_desc_policy_name = tibanna_policy_prefix + '_ec2_desc'
     policy_ec2_desc = generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix)
     create_policy_robust(client, ec2_desc_policy_name, json.dumps(policy_ec2_desc), account_id, verbose)
+    # lambda access policy for invoke stat -v (user)
+    lambda_access_policy_name = tibanna_policy_prefix + '_lambda_access'
+    policy_lambda_access = generate_lambda_access_policy(account_id, region, tibanna_policy_prefix)
+    create_policy_robust(client, lambda_access_policy_name, json.dumps(policy_lambda_access), account_id, verbose)
+
     # roles
     # role for bucket
     create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
@@ -537,10 +552,12 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
                                    cloudwatch_policy_name, bucket_policy_name,
                                    list_policy_name, passrole_policy_name,
                                    desc_stepfunction_policy_name,
-                                   cw_dashboard_policy_name, dynamodb_policy_name)
+                                   cw_dashboard_policy_name, dynamodb_policy_name,
+                                   lambda_access_policy_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
-                                     cloudwatch_metric_policy_name)
+                                     cloudwatch_metric_policy_name,
+                                     lambda_access_policy_name)
     create_empty_role_for_lambda(iam)
     # role for step function
     create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)

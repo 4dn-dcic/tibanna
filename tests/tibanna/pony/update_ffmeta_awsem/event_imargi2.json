@@ -1,0 +1,362 @@
+{
+  "jobid": "7rJbgntaSW6Y",
+  "args": {
+    "app_name": "imargi-processing-pairs",
+    "app_version": "dev",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/iMARGI-Docker/v1.1.1_dcic/src/cwl/",
+    "cwl_main_filename": "imargi-processing-pairs.cwl",
+    "cwl_child_filenames": [
+      "merge-pairs.cwl",
+      "imargi_convert.cwl"
+    ],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": [],
+    "cwl_version": "v1",
+    "input_files": {
+      "input_pairs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "rename": "",
+        "object_key": [
+          "bbfe0761-4a03-4900-8599-f937b973d38e/4DNFIQD4QMPW.pairs.gz",
+          "1f6f1b27-e012-4ad8-8d68-bea902614d8a/4DNFIMRCWU6Q.pairs.gz"
+        ]
+      }
+    },
+    "secondary_files": {
+      "input_pairs": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "rename": "",
+        "object_key": [
+          null,
+          null
+        ]
+      }
+    },
+    "input_parameters": {},
+    "output_target": {
+      "merged_pairs": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz",
+      "out_mcool": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3/4DNFI6O5T8QD.mcool"
+    },
+    "secondary_output_target": {
+      "merged_pairs": [
+        "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz.px2"
+      ]
+    },
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "input_env": {},
+    "alt_cond_output_argnames": {},
+    "language": "cwl_v1",
+    "singularity": false,
+    "cwl_directory_local": "",
+    "dependency": {}
+  },
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "settings": {
+      "run_id": "0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+      "env": "fourfront-webdev",
+      "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_default_luisa:imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+      "run_type": "imargi-processing-pairs",
+      "run_name": "imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+      "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_default_luisa:imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134"
+    }
+  },
+  "app_name": "imargi-processing-pairs",
+  "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+  "workflow_uuid": "d3e33c23-7442-4f43-8601-337d2f04980a",
+  "parameters": {},
+  "input_files": [
+    {
+      "workflow_argument_name": "input_pairs",
+      "object_key": [
+        "4DNFIQD4QMPW.pairs.gz",
+        "4DNFIMRCWU6Q.pairs.gz"
+      ],
+      "uuid": [
+        "bbfe0761-4a03-4900-8599-f937b973d38e",
+        "1f6f1b27-e012-4ad8-8d68-bea902614d8a"
+      ],
+      "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput"
+    }
+  ],
+  "overwrite_input_extra": true,
+  "push_error_to_end": true,
+  "ff_meta": {
+    "awsem_app_name": "imargi-processing-pairs",
+    "awsem_job_id": "7rJbgntaSW6Y",
+    "run_status": "started",
+    "uuid": "0f747ac4-48c9-41e6-b1c2-40fb555fb215",
+    "workflow": "d3e33c23-7442-4f43-8601-337d2f04980a",
+    "run_platform": "AWSEM",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_default_luisa:imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+    "title": "imargi-processing-pairs dev run 2019-07-18 15:39:53.656866",
+    "input_files": [
+      {
+        "workflow_argument_name": "input_pairs",
+        "value": "bbfe0761-4a03-4900-8599-f937b973d38e",
+        "ordinal": 1,
+        "dimension": "0"
+      },
+      {
+        "workflow_argument_name": "input_pairs",
+        "value": "1f6f1b27-e012-4ad8-8d68-bea902614d8a",
+        "ordinal": 2,
+        "dimension": "1"
+      }
+    ],
+    "output_files": [
+      {
+        "workflow_argument_name": "merged_pairs",
+        "type": "Output processed file",
+        "format": "/file-formats/pairs/",
+        "extra_files": [
+          {
+            "status": "uploading",
+            "file_format": "/file-formats/pairs_px2/",
+            "upload_key": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz.px2",
+            "accession": "4DNFIGODLJ4H",
+            "uuid": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22",
+            "href": "/861e6c71-16ef-48f0-b1de-c60ecc3a1d22/@@download/4DNFIGODLJ4H.pairs.gz.px2",
+            "filename": "4DNFIGODLJ4H"
+          }
+        ],
+        "secondary_file_formats": [
+          "/file-formats/pairs_px2/"
+        ],
+        "value": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22",
+        "upload_key": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz"
+      },
+      {
+        "workflow_argument_name": "out_mcool",
+        "type": "Output processed file",
+        "format": "/file-formats/mcool/",
+        "value": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3",
+        "upload_key": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3/4DNFI6O5T8QD.mcool"
+      }
+    ],
+    "parameters": [],
+    "award": "1U01CA200059-01",
+    "lab": "4dn-dcic-lab"
+  },
+  "pf_meta": [
+    {
+      "uuid": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22",
+      "accession": "4DNFIGODLJ4H",
+      "status": "to be uploaded by workflow",
+      "lab": "4dn-dcic-lab",
+      "award": "1U01CA200059-01",
+      "file_format": "pairs",
+      "extra_files": [
+        {
+          "file_format": "pairs_px2"
+        }
+      ]
+    },
+    {
+      "uuid": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3",
+      "accession": "4DNFI6O5T8QD",
+      "status": "to be uploaded by workflow",
+      "lab": "4dn-dcic-lab",
+      "award": "1U01CA200059-01",
+      "file_format": "mcool"
+    }
+  ],
+  "config": {
+    "instance_type": "t2.large",
+    "EBS_optimized": false,
+    "ebs_size": 40,
+    "ebs_type": "gp2",
+    "json_bucket": "tibanna-output",
+    "ebs_iops": "",
+    "shutdown_min": 30,
+    "password": "dragonfly",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "run_name": "imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+    "public_postrun_json": true,
+    "cpu": "",
+    "spot_duration": "",
+    "mem": 0,
+    "spot_instance": false,
+    "behavior_on_capacity_limit": "fail",
+    "cloudwatch_dashboard": false,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "ami_id": "ami-0f06a8358d41c4b9c",
+    "language": "cwl_v1",
+    "job_tag": "imargi-processing-pairs",
+    "instance_id": "i-06210f10471a0ca01",
+    "instance_ip": "3.80.147.220",
+    "start_time": "20190718-15:39:57-UTC"
+  },
+  "postrunjson": {
+    "Job": {
+      "App": {
+        "App_name": "imargi-processing-pairs",
+        "App_version": "dev",
+        "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/iMARGI-Docker/v1.1.1_dcic/src/cwl/",
+        "language": "cwl_v1",
+        "main_cwl": "imargi-processing-pairs.cwl",
+        "other_cwl_files": "merge-pairs.cwl,imargi_convert.cwl"
+      },
+      "Input": {
+        "Env": {},
+        "Input_files_data": {
+          "input_pairs": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-wfoutput",
+            "path": [
+              "bbfe0761-4a03-4900-8599-f937b973d38e/4DNFIQD4QMPW.pairs.gz",
+              "1f6f1b27-e012-4ad8-8d68-bea902614d8a/4DNFIMRCWU6Q.pairs.gz"
+            ],
+            "profile": "",
+            "rename": ""
+          }
+        },
+        "Input_parameters": {},
+        "Secondary_files_data": {
+          "input_pairs": {
+            "class": "File",
+            "dir": "elasticbeanstalk-fourfront-webdev-wfoutput",
+            "path": [
+              null,
+              null
+            ],
+            "profile": "",
+            "rename": ""
+          }
+        }
+      },
+      "JOBID": "7rJbgntaSW6Y",
+      "Log": {
+        "log_bucket_directory": "tibanna-output"
+      },
+      "Output": {
+        "Output files": {
+          "merged_pairs": {
+            "basename": "out.pairs.gz",
+            "checksum": "sha1$0e78ebf759d1046be0274dcf03a49290faf4c2e2",
+            "class": "File",
+            "location": "file:///data1/out/out.pairs.gz",
+            "md5sum": "e8124f87ad04303aab58a2da96ab7413",
+            "path": "/data1/out/out.pairs.gz",
+            "secondaryFiles": [
+              {
+                "basename": "out.pairs.gz.px2",
+                "checksum": "sha1$a76a211abf3083d9aed36782288ac6e707879ac0",
+                "class": "File",
+                "location": "file:///data1/out/out.pairs.gz.px2",
+                "md5sum": "d9e4c65915bd9c78108ab1bb77bdda6a",
+                "path": "/data1/out/out.pairs.gz.px2",
+                "size": 2752532,
+                "target": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz.px2"
+              }
+            ],
+            "size": 21603767,
+            "target": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz"
+          },
+          "out_mcool": {
+            "basename": "out.mcool",
+            "checksum": "sha1$eb92fc872e3402cc95285107f2942ea449eaaef6",
+            "class": "File",
+            "location": "file:///data1/out/out.mcool",
+            "md5sum": "5403edc3ff2bedf3601af6fa8cf3d0bb",
+            "path": "/data1/out/out.mcool",
+            "size": 17047181,
+            "target": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3/4DNFI6O5T8QD.mcool"
+          }
+        },
+        "alt_cond_output_argnames": {},
+        "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
+        "output_target": {
+          "merged_pairs": "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz",
+          "out_mcool": "66d37add-7cae-4dd3-9ef3-fd1fec424fe3/4DNFI6O5T8QD.mcool"
+        },
+        "secondary_output_target": {
+          "merged_pairs": [
+            "861e6c71-16ef-48f0-b1de-c60ecc3a1d22/4DNFIGODLJ4H.pairs.gz.px2"
+          ]
+        }
+      },
+      "end_time": "20190718-15:42:52-UTC",
+      "filesystem": "/dev/xvdb",
+      "instance_id": "i-06210f10471a0ca01",
+      "start_time": "20190718-15:39:54-UTC",
+      "status": "0",
+      "total_input_size": "24M",
+      "total_output_size": "40M",
+      "total_tmp_size": "44M",
+      "Metrics": {
+        "max_mem_used_MB": 1129.53515625,
+        "min_mem_available_MB": 6852.69921875,
+        "total_mem_MB": 7982.234375,
+        "max_mem_utilization_percent": 14.150613765334347,
+        "max_cpu_utilization_percent": "",
+        "max_disk_space_utilization_percent": 0.383516917588476,
+        "max_disk_space_used_GB": 0.150520324707031
+      }
+    },
+    "commands": [
+      [
+        "[job merge-pairs] /data1/tmpuq1v_O$ docker ",
+        "    run ",
+        "    -i ",
+        "    --volume=/data1/tmpuq1v_O:/var/spool/cwl:rw ",
+        "    --volume=/data1/tmp_WT2kF:/tmp:rw ",
+        "    --volume=/data1/input/bbfe0761-4a03-4900-8599-f937b973d38e/4DNFIQD4QMPW.pairs.gz:/var/lib/cwl/stg82e84fa1-9c1e-42e1-9d38-05ec1b519fd6/4DNFIQD4QMPW.pairs.gz:ro ",
+        "    --volume=/data1/input/1f6f1b27-e012-4ad8-8d68-bea902614d8a/4DNFIMRCWU6Q.pairs.gz:/var/lib/cwl/stg7e4afa39-03e6-4885-a54e-a03de17e5922/4DNFIMRCWU6Q.pairs.gz:ro ",
+        "    --workdir=/var/spool/cwl ",
+        "    --rm ",
+        "    --env=TMPDIR=/tmp ",
+        "    --env=HOME=/var/spool/cwl ",
+        "    duplexa/4dn-hic:v43 ",
+        "    run-merge-pairs.sh ",
+        "    out ",
+        "    '/var/lib/cwl/stg82e84fa1-9c1e-42e1-9d38-05ec1b519fd6/4DNFIQD4QMPW.pairs.gz /var/lib/cwl/stg7e4afa39-03e6-4885-a54e-a03de17e5922/4DNFIMRCWU6Q.pairs.gz'"
+      ],
+      [
+        "[job imargi-convert] /data1/tmpDk0Pdg$ docker ",
+        "    run ",
+        "    -i ",
+        "    --volume=/data1/tmpDk0Pdg:/var/spool/cwl:rw ",
+        "    --volume=/data1/tmpt6ugwn:/tmp:rw ",
+        "    --volume=/data1/tmpuq1v_O/out.pairs.gz:/var/lib/cwl/stgb1d11932-4df9-40ea-94ab-c6487bdf71c0/out.pairs.gz:ro ",
+        "    --volume=/data1/tmpuq1v_O/out.pairs.gz.px2:/var/lib/cwl/stgb1d11932-4df9-40ea-94ab-c6487bdf71c0/out.pairs.gz.px2:ro ",
+        "    --workdir=/var/spool/cwl ",
+        "    --rm ",
+        "    --env=TMPDIR=/tmp ",
+        "    --env=HOME=/var/spool/cwl ",
+        "    4dndcic/imargi:v1.1.1_dcic ",
+        "    imargi_convert.sh ",
+        "    -f ",
+        "    cool ",
+        "    -i ",
+        "    /var/lib/cwl/stgb1d11932-4df9-40ea-94ab-c6487bdf71c0/out.pairs.gz ",
+        "    -o ",
+        "    out.cool"
+      ]
+    ],
+    "config": {
+      "EBS_optimized": false,
+      "ami_id": "ami-0f06a8358d41c4b9c",
+      "behavior_on_capacity_limit": "fail",
+      "cloudwatch_dashboard": false,
+      "cpu": "",
+      "ebs_iops": "",
+      "ebs_size": 40,
+      "ebs_type": "gp2",
+      "instance_type": "t2.large",
+      "job_tag": "imargi-processing-pairs",
+      "json_bucket": "tibanna-output",
+      "language": "cwl_v1",
+      "log_bucket": "tibanna-output",
+      "mem": 0,
+      "public_postrun_json": true,
+      "run_name": "imargi-processing-pairs_0a323b7f-fc1e-44d0-8a4b-9d7a9fc47134",
+      "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+      "shutdown_min": 30,
+      "spot_duration": "",
+      "spot_instance": false
+    }
+  }
+}
