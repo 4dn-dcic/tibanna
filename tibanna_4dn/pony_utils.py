@@ -72,7 +72,7 @@ def create_ffmeta_awsem(workflow, app_name, app_version=None, input_files=None,
                                submitted_by=submitted_by, extra_meta=extra_meta, awsem_job_id=jobid)
 
 
-class WorkflowRunMetadata(object):
+class WorkflowRunMetadata(SerializableObject):
     '''
     fourfront metadata
     '''
@@ -127,9 +127,6 @@ class WorkflowRunMetadata(object):
 
     def append_outputfile(self, outjson):
         self.output_files.append(outjson)
-
-    def as_dict(self):
-        return self.__dict__
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)

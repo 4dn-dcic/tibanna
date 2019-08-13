@@ -317,7 +317,7 @@ def create_wfr_output_files_and_processed_files(wf_meta, tbn, pf_source_experime
                 pf, resp = user_supplied_proc_file(user_supplied_output_files,
                                                    arg.get('workflow_argument_name'),
                                                    tbn)
-                printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
+                printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.as_dict()), str(resp)))
             else:
                 if arg.get('argument_type', '') == 'Output processed file':
                     argname = arg.get('workflow_argument_name')

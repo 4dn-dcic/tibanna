@@ -84,7 +84,7 @@ def test_user_supplied_proc_file(run_awsem_event_data_processed_files, proc_file
     with mock.patch('tibanna_4dn.pony_utils.get_metadata', return_value=file_with_type):
         pf, _ = user_supplied_proc_file(of, 'output_file1', tbn)
         assert type(pf) == ProcessedFileMetadata
-        assert pf.__dict__ == proc_file_in_webdev
+        assert pf.as_dict() == proc_file_in_webdev
 
 
 @pytest.mark.webtest
@@ -170,7 +170,7 @@ def test_handle_processed_files(run_awsem_event_data_secondary_files):
     assert(pf_meta)
     assert len(pf_meta) == 3
     for pf in pf_meta:
-        pdict = pf.__dict__
+        pdict = pf.as_dict()
         if pdict['file_format'] == 'pairs':
             assert pdict['extra_files'] == [{'file_format': 'pairs_px2'}]
         else:
@@ -196,7 +196,7 @@ def test_handle_processed_files2(run_awsem_event_data_processed_files2):
     assert(pf_meta)
     assert(output_files)
     for pf in pf_meta:
-        pdict = pf.__dict__
+        pdict = pf.as_dict()
         assert 'genome_assembly' in pdict
         assert pdict['genome_assembly'] == 'GRCh38'
 
