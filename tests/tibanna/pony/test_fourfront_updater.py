@@ -263,7 +263,7 @@ def test_imargi(update_ffmeta_event_data_imargi):
     assert updater.post_items
     assert len(updater.post_items['quality_metric_margi']) == 1
     uuid = list(updater.post_items['quality_metric_margi'].keys())[0]
-    assert 'somerandomfield' in updater.post_items['quality_metric_margi'][uuid]
+    assert 'total_read_pairs' in updater.post_items['quality_metric_margi'][uuid]
     assert updater.patch_items
     assert 'aca7c203-f476-410f-b3bb-4965c9f5e411' in updater.patch_items
     pairs_patch = updater.patch_items['aca7c203-f476-410f-b3bb-4965c9f5e411']
@@ -274,5 +274,3 @@ def test_imargi(update_ffmeta_event_data_imargi):
     assert pairs_patch['file_size'] == 22199565
     assert pairs_patch['status'] == 'uploaded'
     assert 'quality_metric' in updater.patch_items[target_accession]
-    
-
