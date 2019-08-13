@@ -153,7 +153,7 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
     with mock.patch('tibanna_4dn.pony_utils.get_metadata', return_value=file_with_type) as ff:
         pf = ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
-        assert pf.__dict__ == proc_file_in_webdev
+        assert pf.as_dict() == proc_file_in_webdev
         assert type(pf) is ProcessedFileMetadata
         ff.was_called_once()
 
