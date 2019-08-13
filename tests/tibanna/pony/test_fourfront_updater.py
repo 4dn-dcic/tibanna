@@ -274,3 +274,25 @@ def test_imargi(update_ffmeta_event_data_imargi):
     assert pairs_patch['file_size'] == 22199565
     assert pairs_patch['status'] == 'uploaded'
     assert 'quality_metric' in updater.patch_items[target_accession]
+
+@valid_env
+def test_chipseq(update_ffmeta_event_data_chipseq):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_chipseq)
+    updater.update_all_pfs()
+    updater.update_qc()
+    qcs = updater.workflow_qc_arguments['chip.first_ta_ctl']
+    assert len(qcs) == 2
+    qc = qcs[0]
+    qc2 = qcs[1]
+    target_accession = updater.accessions('chip.first_ta_ctl')[0]
+    assert target_accession == '4DNFI8B19NWU'
+    assert updater.post_items
+    assert len(updater.post_items['quality_metric_chipseq']) == 1
+    uuid = list(updater.post_items['quality_metric_chipseq'].keys())[0]
+    assert 'ctl_dup_qc' in updater.post_items['quality_metric_chipseq'][uuid]
+    assert updater.patch_items
+    assert 'd3caa9c8-9e67-4d64-81d1-8039569dc6ce' in updater.patch_items
+    bed_patch = updater.patch_items['d3caa9c8-9e67-4d64-81d1-8039569dc6ce']
+    assert 'status' in bed_patch
+    assert bed_patch['status'] == 'uploaded'
+    assert 'quality_metric' in updater.patch_items[target_accession]
