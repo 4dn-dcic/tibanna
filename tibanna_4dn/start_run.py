@@ -128,7 +128,7 @@ def start_run(input_json):
         extra_meta=input_json_copy.get('wfr_meta'), jobid=jobid
     )
 
-    printlog("ff_meta is %s" % ff_meta.__dict__)
+    printlog("ff_meta is %s" % ff_meta.as_dict())
 
     # store metadata so we know the run has started
     ff_meta.post(key=tbn.ff_keys)
