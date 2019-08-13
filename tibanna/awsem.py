@@ -85,7 +85,7 @@ class AwsemRunJsonOutput(SerializableObject):
         self.secondary_output_target = secondary_output_target
         self.alt_cond_output_argnames = alt_cond_output_argnames
 
-        
+
 class AwsemPostRunJson(AwsemRunJson):
     def __init__(self, Job, config, commands=None):
         super().__init__(Job, config)
@@ -128,10 +128,10 @@ class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
         if 'Output files' in kwargs:
             self.Output_files_ = {k: AwsemPostRunJsonOutputFile(**v) for k, v in kwargs['Output files'].items()}
 
-    @property        
+    @property
     def output_files(self):
         return self.Output_files_
-   
+
     def as_dict(self):
         d = super().as_dict()
         # handling reserved name key

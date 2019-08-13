@@ -13,6 +13,7 @@ def run_json_inputfile():
             "rename": ""
     }
 
+
 @pytest.fixture
 def run_json_input():
     return {
@@ -44,12 +45,14 @@ def run_json_input():
         "Input_parameters": {'n': 2}
     }
 
+
 @pytest.fixture
 def run_json_app():
     return {
         "App_name": "someapp",
         "App_version": "v1.0"
     }
+
 
 @pytest.fixture
 def run_json_output():
@@ -63,6 +66,7 @@ def run_json_output():
         "alt_cond_output_argnames": {}
     }
 
+
 @pytest.fixture
 def run_json_job(run_json_app, run_json_input, run_json_output):
     return {
@@ -74,12 +78,14 @@ def run_json_job(run_json_app, run_json_input, run_json_output):
         'start_time': "20180430-18:50:18-UTC"
     }
 
+
 @pytest.fixture
 def run_json_config():
     return {
         'log_bucket': 'somelogbucket',
         'instance_type': 't3.medium'
     }
+
 
 @pytest.fixture
 def run_json(run_json_job, run_json_config):
@@ -88,11 +94,13 @@ def run_json(run_json_job, run_json_config):
         'config': run_json_config
     }
 
+
 @pytest.fixture
 def postrun_json_output(run_json_output, postrun_json_outputfile):
     json = copy.deepcopy(run_json_output)
     json.update({'Output files': {'pairs': postrun_json_outputfile}})
     return json
+
 
 @pytest.fixture
 def postrun_json_outputfile():
@@ -119,6 +127,7 @@ def postrun_json_outputfile():
         "target": "somepairs.pairs.gz"
     }
 
+
 @pytest.fixture
 def postrun_json_job(run_json_job):
     json = copy.deepcopy(run_json_job)
@@ -142,6 +151,7 @@ def postrun_json_job(run_json_job):
     })
     return json
 
+
 @pytest.fixture
 def postrun_json(postrun_json_job, run_json_config):
     return {
@@ -149,6 +159,7 @@ def postrun_json(postrun_json_job, run_json_config):
         'config': run_json_config,
         'commands': ['command1', 'command2']
     }
+
 
 def test_PostRunJson(postrun_json):
     r = awsem.AwsemPostRunJson(**postrun_json)
@@ -161,6 +172,7 @@ def test_PostRunJson(postrun_json):
     assert r_dict['Job']['total_output_size'] == '4.2G'
     assert r.Job.Metrics['max_disk_space_used_GB'] == 15
 
+
 def test_PostRunJsonJob(postrun_json_job):
     r = awsem.AwsemPostRunJsonJob(**postrun_json_job)
     assert r.end_time == "20190531-04:24:55-UTC"
@@ -171,6 +183,7 @@ def test_PostRunJsonJob(postrun_json_job):
     assert r.total_input_size == '2.2G'  # changing r_dict shouldn't affect r
     assert r_dict['total_tmp_size'] == '7.4G'
     assert r_dict['Metrics']['max_mem_used_MB'] == 13250.1
+
 
 def test_PostRunJsonOutput(postrun_json_output):
     r = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
@@ -183,12 +196,14 @@ def test_PostRunJsonOutput(postrun_json_output):
     assert r_dict['Output files']['pairs']['secondaryFiles'][0]['basename'] == "out.pairs.gz.px2"
     assert r_dict['output_bucket_directory'] == "somebucket"  # inherited from runjson
 
+
 def test_PostRunJsonOutputFile(postrun_json_outputfile):
     r = awsem.AwsemPostRunJsonOutputFile(**postrun_json_outputfile)
     assert r.basename == "out.pairs.gz"
     assert r.class_ == 'File'
     assert r.target == 'somepairs.pairs.gz'
     assert r.secondaryFiles[0].target == 'somepairs.pairs.gz.px2'
+
 
 def test_RunJson(run_json):
     r = awsem.AwsemRunJson(**run_json)
@@ -199,6 +214,7 @@ def test_RunJson(run_json):
     assert r_dict['Job']['Input']['Input_files_data']['chromsize']['path'] == 'path1'
     r_dict['Job']['Input']['Input_files_data']['chromsize']['path'] = 'someotherpath'
     assert r.Job.Input.Input_files_data['chromsize'].path == 'path1'  # changing r_dict shouldn't affect r
+
 
 def test_RunJsonJob(run_json_job):
     r = awsem.AwsemRunJsonJob(**run_json_job)
@@ -212,6 +228,7 @@ def test_RunJsonJob(run_json_job):
     assert r.Log['log_bucket_directory'] == 'tibanna-output'
     assert r.JOBID == "J55BCqwHx6N5"
 
+
 def test_RunJsonOutput(run_json_output):
     r = awsem.AwsemRunJsonOutput(**run_json_output)
     assert r.output_bucket_directory == 'somebucket'
@@ -220,6 +237,7 @@ def test_RunJsonOutput(run_json_output):
     assert r_dict['output_target']["file://tests/awsf/haha"] == "shelltest-haha"
     r_dict['output_target'] = {}
     assert len(r.output_target) == 2  # changing r_dict shouldn't affect r
+
 
 def test_RunJsonInputFile(run_json_inputfile):
     r = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
@@ -248,11 +266,13 @@ def test_RunJsonInputFile(run_json_inputfile):
     assert r_dict['rename'] == ''
     assert r_dict['unzip'] == ''
 
+
 def test_RunJsonInput(run_json_input):
     r = awsem.AwsemRunJsonInput(**run_json_input)
     assert len(r.Input_files_data) == 3
     assert r.Input_files_data['input_bam'].dir_ == 'dir2'
     assert r.Env == {}
+
 
 def test_RunJsonApp(run_json_app):
     r = awsem.AwsemRunJsonApp(**run_json_app)
@@ -262,4 +282,3 @@ def test_RunJsonApp(run_json_app):
     assert r_dict['App_name'] == 'someapp'
     r_dict['App_version'] = 'lalala'
     assert r.App_version == 'v1.0'  # changing r_dict shouldn't affect r
-

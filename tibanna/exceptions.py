@@ -52,4 +52,3 @@ class MalFormattedInputJsonException(Exception):
 
 class MalFormattedPostrunJsonException(Exception):
     pass
-

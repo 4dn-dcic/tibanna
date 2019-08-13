@@ -1,7 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionPony
 from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
 
 
 class API(_API):

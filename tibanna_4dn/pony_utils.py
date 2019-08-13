@@ -999,9 +999,9 @@ class FourfrontUpdater(object):
     def qc_schema(self, qc_schema_name):
         try:
             # schema. do not need to check_queue
-            res =  get_metadata("profiles/" + qc_schema_name + ".json",
-                                key=self.tibanna_settings.ff_keys,
-                                ff_env=self.tibanna_settings.env)
+            res = get_metadata("profiles/" + qc_schema_name + ".json",
+                               key=self.tibanna_settings.ff_keys,
+                               ff_env=self.tibanna_settings.env)
             return res.get('properties')
         except Exception as e:
             err_msg = "Can't get profile for qc schema %s: %s" % (qc_schema_name, str(e))
@@ -1102,7 +1102,8 @@ class FourfrontUpdater(object):
             patch_content = input_meta['extra_files']
             patch_content[matching_extra_ind].update(process(matching_extra))
             secondary_format = matching_extra['file_format']
-            patch_content[matching_extra_ind]['file_size'] = self.s3_file_size(input_arg, secondary_format=secondary_format)
+            patch_content[matching_extra_ind]['file_size'] = \
+                self.s3_file_size(input_arg, secondary_format=secondary_format)
             patch_content[matching_extra_ind]['status'] = 'uploaded'
             self.update_patch_items(input_meta['uuid'], {'extra_files': patch_content})
         else:

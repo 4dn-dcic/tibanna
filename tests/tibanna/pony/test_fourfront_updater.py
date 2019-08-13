@@ -1,19 +1,14 @@
 import copy
-import uuid
 import boto3
 from dcicutils import ff_utils
 from tibanna_4dn.pony_utils import (
     FourfrontUpdater,
-    TibannaSettings,
     QCArgumentInfo,
-    InputExtraArgumentInfo
 )
 import pytest
 from tests.tibanna.pony.conftest import (
     valid_env,
-    update_ffmeta_event_data_fastqc2
 )
-from tibanna.utils import printlog
 
 
 @pytest.fixture
@@ -44,7 +39,7 @@ def test_wrong_QCArgumentInfo(qcarginfo_fastqc):
     qcarginfo = copy.deepcopy(qcarginfo_fastqc)
     qcarginfo['argument_type'] = 'Output processed file'
     with pytest.raises(Exception) as exec_info:
-        qc = QCArgumentInfo(**qcarginfo)
+        QCArgumentInfo(**qcarginfo)
     assert exec_info
     assert 'QCArgument it not Output QC file' in str(exec_info)
 
@@ -99,10 +94,10 @@ def test_md5(update_ffmeta_event_data_newmd5):
     assert md5 == 'bc75002f8a473bc6854d562789525a90'
     assert content_md5 == '6bb2dfa5b435ed03105cb59c32442d23'
     assert 'f4864029-a8ad-4bb8-93e7-5108f462ccaa' in updater.patch_items
-    assert 'md5sum' not in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa'] # already in
+    assert 'md5sum' not in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']  # already in
     assert 'file_size' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
     assert 'status' in updater.patch_items['f4864029-a8ad-4bb8-93e7-5108f462ccaa']
-    
+
 
 @valid_env
 def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
@@ -195,7 +190,7 @@ def test_bamcheck(update_ffmeta_event_data_bamcheck):
     qc = updater.workflow_qc_arguments['raw_bam'][0]
     target_accession = updater.accessions('raw_bam')[0]
     assert qc.workflow_argument_name == 'raw_bam-check'
-    assert qc.qc_table 
+    assert qc.qc_table
     assert target_accession == '4DNFIWT3X5RU'
     assert updater.post_items
     assert len(updater.post_items['quality_metric_bamcheck']) == 1
@@ -223,6 +218,7 @@ def test_repliseq(update_ffmeta_event_data_repliseq):
     updater.update_all_pfs()
     updater.update_qc()
     qc = updater.workflow_qc_arguments['filtered_sorted_deduped_bam'][0]
+    assert qc.workflow_argument_name == 'dedup_qc_report'
     target_accession = updater.accessions('filtered_sorted_deduped_bam')[0]
     assert target_accession == '4DNFIP2T7ANW'
     assert updater.post_items
@@ -238,7 +234,7 @@ def test_repliseq(update_ffmeta_event_data_repliseq):
     assert bam_patch['md5sum'] == '908488c3d8bea2875551c67c9fd1b3dc'
     assert bam_patch['file_size'] == 11061946
     assert bam_patch['status'] == 'uploaded'
-    assert 'quality_metric' in updater.patch_items['4DNFIP2T7ANW'] # qc_metric is patched by accession
+    assert 'quality_metric' in updater.patch_items['4DNFIP2T7ANW']  # qc_metric is patched by accession
     assert '4127ad92-16cf-4716-ab68-dc9b352658eb' in updater.patch_items
     bg_patch = updater.patch_items['4127ad92-16cf-4716-ab68-dc9b352658eb']  # count_bg
     assert 'extra_files' in bg_patch
@@ -252,12 +248,14 @@ def test_repliseq(update_ffmeta_event_data_repliseq):
     assert bg_patch['extra_files'][0]['file_size'] == 991610
     assert bg_patch['extra_files'][0]['status'] == 'uploaded'
 
+
 @valid_env
 def test_imargi(update_ffmeta_event_data_imargi):
     updater = FourfrontUpdater(**update_ffmeta_event_data_imargi)
     updater.update_all_pfs()
     updater.update_qc()
     qc = updater.workflow_qc_arguments['out_pairs'][0]
+    assert qc.workflow_argument_name == 'out_qc'
     target_accession = updater.accessions('out_pairs')[0]
     assert target_accession == '4DNFI2H7T6NP'
     assert updater.post_items
@@ -275,6 +273,7 @@ def test_imargi(update_ffmeta_event_data_imargi):
     assert pairs_patch['status'] == 'uploaded'
     assert 'quality_metric' in updater.patch_items[target_accession]
 
+
 @valid_env
 def test_chipseq(update_ffmeta_event_data_chipseq):
     updater = FourfrontUpdater(**update_ffmeta_event_data_chipseq)
@@ -283,7 +282,9 @@ def test_chipseq(update_ffmeta_event_data_chipseq):
     qcs = updater.workflow_qc_arguments['chip.first_ta_ctl']
     assert len(qcs) == 2
     qc = qcs[0]
+    assert qc.workflow_argument_name == 'chip.report'
     qc2 = qcs[1]
+    assert qc2.workflow_argument_name == 'chip.qc_json'
     target_accession = updater.accessions('chip.first_ta_ctl')[0]
     assert target_accession == '4DNFI8B19NWU'
     assert updater.post_items
