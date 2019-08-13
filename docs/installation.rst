@@ -101,22 +101,7 @@ Add the following to ``~/.aws/config``.
 Tibanna environment variables
 -----------------------------
 
-To use Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
-
-::
-
-    export AWS_ACCOUNT_NUMBER=<your_12_digit_aws_account_number>
-    export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
-
-
-You can find your aws account number from the AWS Web Console.
-
-=================  ========================
-|console_account|  |console_account_number|
-=================  ========================
-
-.. |console_account| image:: images/console_account.png
-.. |console_account_number| image:: images/console_account_number.png
+Note: starting ``0.8.9``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 
 
 Deploying Tibanna Unicorn to AWS
