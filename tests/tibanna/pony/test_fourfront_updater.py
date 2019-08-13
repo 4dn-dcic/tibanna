@@ -251,3 +251,28 @@ def test_repliseq(update_ffmeta_event_data_repliseq):
     assert bg_patch['extra_files'][0]['md5sum'] == 'aa8e2848e1f022b197fe31c804de08bf'
     assert bg_patch['extra_files'][0]['file_size'] == 991610
     assert bg_patch['extra_files'][0]['status'] == 'uploaded'
+
+@valid_env
+def test_imargi(update_ffmeta_event_data_imargi):
+    updater = FourfrontUpdater(**update_ffmeta_event_data_imargi)
+    updater.update_all_pfs()
+    updater.update_qc()
+    qc = updater.workflow_qc_arguments['out_pairs'][0]
+    target_accession = updater.accessions('out_pairs')[0]
+    assert target_accession == '4DNFI2H7T6NP'
+    assert updater.post_items
+    assert len(updater.post_items['quality_metric_margi']) == 1
+    uuid = list(updater.post_items['quality_metric_margi'].keys())[0]
+    assert 'somerandomfield' in updater.post_items['quality_metric_margi'][uuid]
+    assert updater.patch_items
+    assert 'aca7c203-f476-410f-b3bb-4965c9f5e411' in updater.patch_items
+    pairs_patch = updater.patch_items['aca7c203-f476-410f-b3bb-4965c9f5e411']
+    assert 'md5sum' in pairs_patch
+    assert 'file_size' in pairs_patch
+    assert 'status' in pairs_patch
+    assert pairs_patch['md5sum'] == 'ec98b56a98249b85ee6a99a7f43f2884'
+    assert pairs_patch['file_size'] == 22199565
+    assert pairs_patch['status'] == 'uploaded'
+    assert 'quality_metric' in updater.patch_items[target_accession]
+    
+
