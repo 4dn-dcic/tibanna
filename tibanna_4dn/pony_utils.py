@@ -1084,8 +1084,8 @@ class FourfrontUpdater(object):
                         return {fieldname: new}
                 return {}
 
-            md5_patch.update(compare_and_update_md5(md5, md5_old, 'md5'))
-            md5_patch.update(compare_and_update_md5(content_md5, content_md5_old, 'content_md5'))
+            md5_patch.update(compare_and_update_md5(md5, md5_old, 'md5sum'))
+            md5_patch.update(compare_and_update_md5(content_md5, content_md5_old, 'content_md5sum'))
             return md5_patch
 
         matching_extra = None
