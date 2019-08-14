@@ -941,7 +941,7 @@ class FourfrontUpdater(object):
                                                       hgcf['data_type'],
                                                       ip.get('genome_assembly', None))
                 if higlass_uid:
-                    self.update_patch_item(ip['uuid'], {'higlass_uid': higlass_uid})
+                    self.update_patch_items(ip['uuid'], {'higlass_uid': higlass_uid})
             self.update_patch_items(ip['uuid'], {'extra_files': ip['extra_files']})
 
     # update functions for QC
