@@ -85,7 +85,7 @@ def test_md5(update_ffmeta_event_data_newmd5):
     updater = FourfrontUpdater(**update_ffmeta_event_data_newmd5)
     with pytest.raises(Exception) as exec_info:
         updater.update_md5()
-    assert 'md5 not matching the original one' in str(exec_info)
+    assert 'md5sum not matching the original one' in str(exec_info)
     real_md5_content = 'bc75002f8a473bc6854d562789525a90\n6bb2dfa5b435ed03105cb59c32442d23'
     s3.put_object(Body=real_md5_content.encode('utf-8'),
                   Bucket='tibanna-output', Key=report_key)
@@ -112,6 +112,9 @@ def test_md5_for_extra(update_ffmeta_event_data_extra_md5):
     assert updater.file_key('report') == 'f1340bec-a842-402c-bbac-6e239df96682/report822085265412'
     assert updater.status('report') == 'COMPLETED'
     assert '12005967-f060-40dd-a63c-c7204dcf46a7' in updater.patch_items
+    assert 'md5sum' in updater.patch_items['12005967-f060-40dd-a63c-c7204dcf46a7']['extra_files'][0]
+    assert 'content_md5sum' in updater.patch_items['12005967-f060-40dd-a63c-c7204dcf46a7']['extra_files'][0]
+    assert 'file_size' in updater.patch_items['12005967-f060-40dd-a63c-c7204dcf46a7']['extra_files'][0]
 
 
 @valid_env
