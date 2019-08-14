@@ -1,0 +1,80 @@
+{
+    "push_error_to_end": true, 
+    "app_name": "encode-chipseq-aln-ctl", 
+    "_tibanna": {
+        "run_type": "chipseq-test-aln-ctl", 
+        "run_id": "32a4e08e-220b-4174-bf3f-8e5fd3b40851", 
+        "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:chipseq-test-aln-ctl_32a4e08e-220b-4174-bf3f-8e5fd3b40851", 
+        "run_name": "chipseq-test-aln-ctl_32a4e08e-220b-4174-bf3f-8e5fd3b40851", 
+        "env": "fourfront-webdev", 
+        "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:chipseq-test-aln-ctl_32a4e08e-220b-4174-bf3f-8e5fd3b40851"
+    }, 
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+    "jobid": "GQYgRy5uNoF3", 
+    "parameters": {
+        "chip.merge_fastq_ctl.cpu": 8, 
+        "chip.paired_end": false, 
+        "chip.align_only": true, 
+        "chip.bwa_ctl.cpu": 8, 
+        "chip.bam2ta_ctl.cpu": 8, 
+        "chip.bam2ta_ctl.regex_grep_v_ta": "chr[MUE]|random|alt", 
+        "chip.choose_ctl.always_use_pooled_ctl": true, 
+        "chip.filter_ctl.cpu": 8, 
+        "chip.gensz": "hs", 
+        "chip.pipeline_type": "histone"
+    }, 
+    "config": {
+        "ebs_size": 0, 
+        "cloudwatch_dashboard": true, 
+        "ebs_type": "gp2", 
+        "ebs_iops": "", 
+        "EBS_optimized": "", 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "shutdown_min": "now", 
+        "instance_type": "", 
+        "key_name": "", 
+        "password": "dragonfly", 
+        "email": true, 
+        "log_bucket": "tibanna-output"
+    }, 
+    "workflow_uuid": "1dfb78e8-9844-48c6-804e-d05e7257e179", 
+    "input_files": [
+        {
+            "uuid": [
+                [
+                    [
+                        "35a1b573-9690-41b3-b0c0-0da8af5c55e8"
+                    ]
+                ]
+            ], 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "workflow_argument_name": "chip.ctl_fastqs", 
+            "object_key": [
+                [
+                    [
+                        "4DNFI5JD6GGN.fastq.gz"
+                    ]
+                ]
+            ]
+        }, 
+        {
+            "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar", 
+            "uuid": "38077b98-3862-45cd-b4be-8e28e9494549", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "workflow_argument_name": "chip.bwa_idx_tar", 
+            "object_key": "4DNFIZQB369V.bwaIndex.tar"
+        }, 
+        {
+            "uuid": "9562ffbd-9f7a-4bd7-9c10-c335137d8966", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "workflow_argument_name": "chip.blacklist", 
+            "object_key": "4DNFIZ1TGJZR.bed.gz"
+        }, 
+        {
+            "uuid": "9866d158-da3c-4d9b-96a9-1d59632eabeb", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "workflow_argument_name": "chip.chrsz", 
+            "object_key": "4DNFIZJB62D1.chrom.sizes"
+        }
+    ]
+}

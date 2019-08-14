@@ -1,9 +1,25 @@
 import os
-
+import boto3
 
 # AWS account info
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
+if not AWS_ACCOUNT_NUMBER:
+    try:
+        AWS_ACCOUNT_NUMBER = boto3.client('sts').get_caller_identity().get('Account')
+    except Exception as e:
+        raise Exception("Cannot find AWS_ACCOUNT_NUMBER: %s" % e)
+
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
+if not AWS_REGION:
+    # I'm a lambda
+    AWS_REGION = os.environ.get('AWS_REGION', '')  # reserved variable in lambda
+    # I'm a user
+    if not AWS_REGION:
+        try:
+            AWS_REGION = boto3.session.Session().region_name  # for a user
+        except Exception as e:
+            raise Exception("Cannot find AWS_REGION: %s" % e)
+
 
 # Tibanna AMI info
 AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'

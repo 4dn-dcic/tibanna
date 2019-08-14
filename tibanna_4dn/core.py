@@ -1,7 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionPony
 from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
 
 
 class API(_API):
@@ -34,19 +33,11 @@ class API(_API):
         if envlist:
             return envlist
         envlist_pony = {
-            'run_workflow': {'TIBANNA_AWS_REGION': AWS_REGION,
-                             'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'start_run_awsem': {'SECRET': SECRET,
-                                'TIBANNA_AWS_REGION': AWS_REGION,
-                                'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'update_ffmeta_awsem': {'SECRET': SECRET,
-                                    'TIBANNA_AWS_REGION': AWS_REGION,
-                                    'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'validate_md5_s3_initiator': {'SECRET': SECRET,
-                                          'TIBANNA_AWS_REGION': AWS_REGION,
-                                          'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'validate_md5_s3_trigger': {'TIBANNA_AWS_REGION': AWS_REGION,
-                                        'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER}
+            'run_workflow': {},
+            'start_run_awsem': {'SECRET': SECRET},
+            'update_ffmeta_awsem': {'SECRET': SECRET},
+            'validate_md5_s3_initiator': {'SECRET': SECRET},
+            'validate_md5_s3_trigger': {}
         }
         return envlist_pony.get(name, '')
 

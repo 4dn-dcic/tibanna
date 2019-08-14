@@ -67,12 +67,7 @@ To create an instance of tibanna unicorn (step function + lambdas)
                                       buckets and run jobs
 
 
-To deploy Tibanna unicorn, you need the following environmental variables set on your local machine from which you're deploying Tibanna.
-
-::
-
-    export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
-    export AWS_ACCOUNT_NUMBER=<aws_account_number>
+Note: starting ``0.8.9``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 
 
 deploy_core
@@ -452,8 +447,6 @@ You need the following environmental variables set on your local machine from wh
 
 ::
 
-    export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
-    export AWS_ACCOUNT_NUMBER=<aws_account_number>
     export SECRET=<fourfront_aws_secret_key>
 
 To create an instance of tibanna (step function + lambdas)

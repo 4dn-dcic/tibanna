@@ -2,7 +2,6 @@ from tibanna_4dn.pony_utils import (
     TibannaSettings,
     WorkflowRunMetadata,
     ensure_list,
-    Awsem,
     merge_source_experiments,
     ProcessedFileMetadata,
     FormatExtensionMap,
@@ -130,50 +129,6 @@ def test_ensure_list():
     assert ensure_list({'a': 'b'}) == [{'a': 'b'}]
 
 
-def test_create_awsem(update_ffmeta_event_data, tibanna_env):
-    update_ffmeta_event_data.update(tibanna_env)
-    awsem = Awsem(update_ffmeta_event_data)
-    assert awsem.args
-    assert awsem.config
-    assert awsem.app_name
-    assert awsem.output_s3
-    assert awsem.output_files_meta
-
-
-def test_get_output_files(update_ffmeta_event_data, tibanna_env):
-    update_ffmeta_event_data.update(tibanna_env)
-    awsem = Awsem(update_ffmeta_event_data)
-    of = awsem.output_files()
-    assert 1 == len(of)
-    assert of[0].runner == awsem
-    assert of[0].bucket == awsem.output_s3
-    assert of[0].key == 'lalala/md5_report'
-    assert of[0].argument_type == 'Output report file'
-
-
-def test_get_input_files(update_ffmeta_event_data, tibanna_env):
-    update_ffmeta_event_data.update(tibanna_env)
-    awsem = Awsem(update_ffmeta_event_data)
-    infiles = awsem.input_files()
-    assert 1 == len(infiles)
-    assert infiles[0].runner == awsem
-    assert infiles[0].bucket == 'elasticbeanstalk-fourfront-webdev-files'
-    assert infiles[0].key == 'f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz'
-    assert infiles[0].accession == '4DNFIRSRJH45'
-
-
-def test_get_inputfile_accession(update_ffmeta_event_data, tibanna_env):
-    update_ffmeta_event_data.update(tibanna_env)
-    awsem = Awsem(update_ffmeta_event_data)
-    assert awsem.get_file_accessions('input_file')[0] == '4DNFIRSRJH45'
-
-
-def test_get_inputfile_format_if_extra(update_ffmeta_event_data_extra_md5, tibanna_env):
-    update_ffmeta_event_data_extra_md5.update(tibanna_env)
-    for wf_file in Awsem(update_ffmeta_event_data_extra_md5).output_files():
-        assert wf_file.runner.get_format_if_extras('input_file')[0] == 'pairs_px2'
-
-
 @pytest.fixture()
 def proc_file_in_webdev():
     return {'status': 'released',
@@ -198,7 +153,7 @@ def test_create_ProcessedFileMetadata_from_get(ff_keys, proc_file_in_webdev):
     file_with_type['@type'] = ['FileProcessed', 'Item', 'whatever']
     with mock.patch('tibanna_4dn.pony_utils.get_metadata', return_value=file_with_type) as ff:
         pf = ProcessedFileMetadata.get(proc_file_in_webdev['accession'], ff_keys)
-        assert pf.__dict__ == proc_file_in_webdev
+        assert pf.as_dict() == proc_file_in_webdev
         assert type(pf) is ProcessedFileMetadata
         ff.was_called_once()
 
