@@ -64,7 +64,7 @@ To create an instance of tibanna unicorn (step function + lambdas)
                                       buckets and run jobs
 
 
-Note: starting ``0.8.9``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
+Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 
 
 deploy_core

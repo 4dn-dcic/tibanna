@@ -413,8 +413,8 @@ The ``config`` field describes execution configuration.
       from the data EBS could also cause a ``no space left in device`` error on the root EBS volume. It is
       recommended to use a directory under ``/data1`` as a temp directory when running in the ``shell`` mode, which
       is mounted from data EBS.
-    - This field is supported in version ``0.8.9`` or higher. If an older version has been used, redeploy
-      ``run_task_awsem`` to enable this feature, after installing ``0.8.9`` as below.
+    - This field is supported in version ``0.9.0`` or higher. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
     
       ::
 
