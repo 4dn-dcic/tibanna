@@ -176,6 +176,8 @@ def test_fastqc(update_ffmeta_event_data_fastqc2):
     uuid = list(updater.post_items['quality_metric_fastqc'].keys())[0]
     assert 'url' in updater.post_items['quality_metric_fastqc'][uuid]
     assert 'Per base sequence content' in updater.post_items['quality_metric_fastqc'][uuid]
+    assert 'value_qc' in updater.ff_output_file('report_zip')
+    assert updater.ff_output_file('report_zip')['value_qc'] == uuid
 
 
 @valid_env
