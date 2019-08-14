@@ -425,6 +425,7 @@ class Execution(object):
             secondary_files_as_input = {k+'_secondary': v for k, v in self.args.secondary_files.items()
                                         if is_not_empty(v['object_key'])}
             input_plus_secondary_files.update(secondary_files_as_input)
+        printlog("secondary_files_as_input=" + str(secondary_files_as_input))
         for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
@@ -921,7 +922,7 @@ def is_not_empty(x):
         else:
             return False
     else:
-        if filter(lambda x: x, flatten(x)):
+        if list(filter(lambda x: x, flatten(x))):
             return True
         else:
             return False
