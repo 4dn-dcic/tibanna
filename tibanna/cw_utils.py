@@ -3,6 +3,7 @@ from tibanna.utils import printlog
 # import pandas as pd
 # from datetime import datetime
 # from datetime import timezone
+from datetime import datetime
 from datetime import timedelta
 import matplotlib.pyplot as plt
 
@@ -12,12 +13,13 @@ import matplotlib.pyplot as plt
 
 
 class TibannaResource(object):
-    def __init__(self, instance_id, filesystem, starttime, endtime):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now(), directory='.'):
         self.instance_id = instance_id
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name='us-east-1')
         # get resource metrics
         nTimeChunks = (endtime - starttime) / timedelta(days=1)
+        self.total_minutes = (endtime - starttime) / timedelta(minutes=1)
         if round(nTimeChunks) < nTimeChunks:
             nTimeChunks = round(nTimeChunks) + 1
         else:
@@ -25,6 +27,7 @@ class TibannaResource(object):
         print("Spliting run time into %s chunks" % str(nTimeChunks))
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
+        self.directory = directory
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -74,13 +77,22 @@ class TibannaResource(object):
         self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
         self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
 
-        # plots
-        self.plot_single(max_mem_used_MB_chunks_all_pts, 'Memory used in Mb')
-        self.plot_single(min_mem_available_MB_chunks_all_pts, 'Memory available in Mb')
-        self.plot_single(max_disk_space_used_GB_chunks_all_pts, 'Disk space used in Gb')
+        # plots and html
+        self.plot_single(max_mem_used_MB_chunks_all_pts, 'Memory used [Mb]', 'Memory Usage')
+        self.plot_single(min_mem_available_MB_chunks_all_pts, 'Memory available [Mb]', 'Memory Available')
+        self.plot_single(max_disk_space_used_GB_chunks_all_pts, 'Disk space used [Gb]', 'Disk Usage (/data1)')
         self.plot_percent(max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts)
         self.create_html()
 
+        # write values as tsv
+        input_dict ={
+            'max_mem_used_MB': (max_mem_used_MB_chunks_all_pts, 1),
+            'min_mem_available_MB': (min_mem_available_MB_chunks_all_pts, 1),
+            'max_disk_space_used_GB': (max_disk_space_used_GB_chunks_all_pts, 1),
+            'max_mem_utilization_percent': (max_mem_utilization_percent_chunks_all_pts, 1),
+            'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
+            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5),
+        }
 
     def choose_max(self, x):
         M = -1
@@ -116,13 +128,15 @@ class TibannaResource(object):
         del(d['endtime'])
         del(d['filesystem'])
         del(d['instance_id'])
+        del(d['directory'])
+        del(d['total_minutes'])
         return(d)
 
     # def as_table(self):
     #    d = self.as_dict()
     #    return(pd.DataFrame(d.items(), columns=['metric', 'value']))
 
-    # functions that returns onnly max or min (backward compatible)
+    # functions that returns only max or min (backward compatible)
     def max_memory_utilization(self):
         return(self.get_max(self.max_memory_utilization_all_pts()))
 
@@ -243,95 +257,183 @@ class TibannaResource(object):
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     # functions to plot
-    def plot_single(self, chuncks_all_pts, ylabel):
-        plt.ioff() #rendering off
+    def plot_single(self, chuncks_all_pts, ylabel, title):
+        plt.ioff() # rendering off
+        plt.figure(figsize=(40,10))
 
+        # prepare and plot data
         y = []
         [y.extend(chunck_all_pts) for chunck_all_pts in chuncks_all_pts]
-        plt.figure(figsize=(40,20))
         plt.plot(list(range(len(y))), y, '-o', linewidth=3, markersize=1.5)
-        plt.xlabel('Time [min]', fontsize=32, labelpad=35)
-        plt.ylabel(ylabel, fontsize=32, labelpad=35)
-        plt.xticks(fontsize=27)
-        plt.yticks(fontsize=27)
+
+        # format labels, axis and title
+        plt.xlabel('Time [min]', fontsize=22, labelpad=30)
+        plt.ylabel(ylabel, fontsize=22, labelpad=30)
+        plt.xticks(fontsize=22)
+        plt.yticks(fontsize=22)
         plt.ylim(ymin=0)
+        plt.xlim(xmin=-3 , xmax=self.total_minutes)
+        plt.title(title, fontsize=30, pad=60, fontweight="bold")
+
+        # format grid
+        plt.minorticks_on()
+        plt.grid(b=True, which='major', color='#666666', linestyle='-')
+        plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
 
         # saving the plot
-        plt.savefig('_'.join(ylabel.split()).lower() + '.png')
+        plt.savefig(self.directory + '/' + '_'.join(ylabel.replace('[', '').replace(']', '').split()).lower() + '.png')
 
         # clearing plt
         plt.clf()
 
-    def plot_percent(self, mem_chuncks_all_pts, disk_chuncks_all_pts, cpu_chuncks_all_pts):
-        plt.ioff() #rendering off
+    def plot_percent(self, mem_chuncks_all_pts, disk_chuncks_all_pts, cpu_chuncks_all_pts, title='Resources Utilization'):
+        plt.ioff() # rendering off
+        plt.figure(figsize=(40,12))
 
+        # prepare and plot data
         y_mem, y_disk, y_cpu = [], [], []
         [y_mem.extend(chunck_all_pts) for chunck_all_pts in mem_chuncks_all_pts]
         [y_disk.extend(chunck_all_pts) for chunck_all_pts in disk_chuncks_all_pts]
         [y_cpu.extend(chunck_all_pts) for chunck_all_pts in cpu_chuncks_all_pts]
 
-        plt.figure(figsize=(40,20))
         plt.plot(list(range(len(y_mem))), y_mem, '-o', linewidth=3, markersize=1.5, color='blue', label='Memory Utilization')
         plt.plot(list(range(len(y_disk))), y_disk, '-o', linewidth=3, markersize=1.5, color='purple', label='Disk Utilization')
         x_cpu = list(range(len(y_cpu)))
         plt.plot([x*5 for x in x_cpu], y_cpu, '-o', linewidth=3, markersize=1.5, color='green', label='CPU Utilization') #goes by 5
 
-        plt.xlabel('Time [min]', fontsize=32, labelpad=35)
-        plt.ylabel('Percentage', fontsize=32, labelpad=35)
-        plt.xticks(fontsize=27)
-        plt.yticks(fontsize=27)
-        plt.ylim(ymin=0)
-        #plt.legend(fontsize=20)
-        plt.legend(fontsize=25, loc='upper center', bbox_to_anchor=(0.5, 1.10), ncol=3, fancybox=True)
+        # format labels, axis and title
+        plt.xlabel('Time [min]', fontsize=22, labelpad=30)
+        plt.ylabel('Percentage', fontsize=22, labelpad=30)
+        plt.xticks(fontsize=22)
+        plt.yticks(fontsize=22)
+        plt.ylim(ymin=0, ymax=100)
+        plt.xlim(xmin=-3, xmax=self.total_minutes)
+        plt.title(title, fontsize=30, pad=60, fontweight="bold")
+        plt.legend(fontsize=22, loc='upper center', bbox_to_anchor=(0.81, -0.055), ncol=3)
+
+        # format grid
+        plt.minorticks_on()
+        plt.grid(b=True, which='major', color='#666666', linestyle='-')
+        plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
 
         # saving the plot
-        plt.savefig('utilization_mem_disk_cpu.png')
+        plt.savefig(self.directory + '/' + 'utilization_mem_disk_cpu.png')
 
         # clearing plt
         plt.clf()
 
     def create_html(self):
-        with open('metrics.html', 'w') as fo:
-            html = '''
+        with open(self.directory + '/' + 'metrics.html', 'w') as fo:
+            html = """\
                 <!doctype html>
 
                 <html lang="en">
                 <head>
                   <meta charset="utf-8">
-
                   <title>Tibanna Metrics</title>
-
                   <link rel="stylesheet" href="css/styles.css?v=1.0">
-
                   <style>
-                  #responsive-image {
-                    width: 80%;
-                    height: auto;
-                  }
-
-                  img {
-                  display: block;
-                  margin-left: 9%;
-                  width: 40%;
-                  }
+                    h2 {
+                      text-align: center;
+                      font-family: arial, sans-serif;
+                      font-size: 17.5px;
+                    }
+                    #responsive-image {
+                        width: 80%%;
+                        height: auto;
+                    }
+                    img {
+                      display: block;
+                      margin-left: auto;
+                      margin-right: auto;
+                    }
+                    table {
+                      font-family: arial, sans-serif;
+                      width: 60%%;
+                    }
+                    td, th {
+                      border: 1px solid #dddddd;
+                      text-align: left;
+                      padding: 8px;
+                      font-size: 13px;
+                    }
+                    tr:nth-child(even) {
+                      background-color: #dddddd;
+                    }
                   </style>
                 </head>
-
                 <body>
                   </br>
-                  <h2 align="center">Resources Utilization</h1>
+                  <div style="overflow-x:auto;padding-left:30px;">
+                    <h2>Summary Metrics</h2>
+                    <table align="center">
+                      <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                      </tr>
+                      <tr>
+                        <td>Max Memory Used [Mb]</td>
+                        <td>%d</td>
+                      </tr>
+                      <tr>
+                        <td>Min Memory Available [Mb]</td>
+                        <td>%d</td>
+                      </tr>
+                      <tr>
+                        <td>Max Disk Used [Gb]</td>
+                        <td>%d</td>
+                      </tr>
+                      <tr>
+                        <td>Max Memory Utilization [%%]</td>
+                        <td>%d</td>
+                      </tr>
+                      <tr>
+                        <td>Max CPU Utilization [%%]</td>
+                        <td>%d</td>
+                      </tr>
+                      <tr>
+                        <td>Max Disk Utilization [%%]</td>
+                        <td>%d</td>
+                      </tr>
+                    </table>
+                  </div>
+                  </br></br></br></br>
                   <img alt="Resources Utilization" src="utilization_mem_disk_cpu.png" id="responsive-image">
-                  </br></br></br>
-                  <h2 align="center">Memory Usage</h1>
-                  <img alt="Memory used in Mb" src="memory_used_in_mb.png" id="responsive-image">
-                  </br></br></br>
-                  <h2 align="center">Memory Available</h1>
-                  <img alt="Memory available in Mb" src="memory_available_in_mb.png" id="responsive-image">
-                  </br></br></br>
-                  <h2 align="center">Disk Usage</h1>
-                  <img alt="Disk space used in Gb" src="disk_space_used_in_gb.png" id="responsive-image">
+                  </br></br></br></br>
+                  <img alt="Memory used in Mb" src="memory_used_mb.png" id="responsive-image">
+                  </br></br></br></br>
+                  <img alt="Memory available in Mb" src="memory_available_mb.png" id="responsive-image">
+                  </br></br></br></br>
+                  <img alt="Disk space used in Gb" src="disk_space_used_gb.png" id="responsive-image">
                 </body>
                 </html>
-                '''
+                """
 
-            fo.write(html)
+            fo.write(html % (self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB, self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent))
+
+    def write_tsv(self, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
+        with open(self.directory + '/' + 'metrics.tsv', 'w') as fo:
+            # prepare data and write header
+            data_unpacked = []
+            for i, (key, (arg, int)) in enumerate(kwargs.items()):
+                if i == 0:
+                    fo.write('#' + key)
+                else:
+                    fo.write('\t' + key)
+                tmp = []
+                if int == 1:
+                    [tmp.extend(a) for a in arg]
+                    data_unpacked.append(tmp[:])
+                else: # interval is 5
+                    [tmp.extend(a) for a in arg]
+                    tmp_ext = []
+                    [tmp_ext.extend([t, '-', '-', '-', '-']) for t in tmp]
+                    data_unpacked.append(tmp_ext[:])
+            fo.write('\n')
+
+            # write table
+            for i in range(len(data_unpacked[0])):
+                fo.write(i + 1)
+                for data in data_unpacked:
+                    fo.write('\t' + data[i])
+                fo.write('\n')
