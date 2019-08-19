@@ -79,6 +79,7 @@ class TibannaResource(object):
         self.plot_single(min_mem_available_MB_chunks_all_pts, 'Memory available in Mb')
         self.plot_single(max_disk_space_used_GB_chunks_all_pts, 'Disk space used in Gb')
         self.plot_percent(max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts)
+        self.create_html()
 
 
     def choose_max(self, x):
@@ -154,7 +155,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Percent'
         )
-        return([r['Maximum'] for r in res['Datapoints']])
+        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_memory_used_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -169,7 +171,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Megabytes'
         )
-        return([r['Maximum'] for r in res['Datapoints']])
+        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def min_memory_available_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -184,7 +187,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Megabytes'
         )
-        return([r['Minimum'] for r in res['Datapoints']])
+        pts = [(r['Minimum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_cpu_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -199,7 +203,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Percent'
         )
-        return([r['Maximum'] for r in res['Datapoints']])
+        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_disk_space_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -216,7 +221,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Percent'
         )
-        return([r['Maximum'] for r in res['Datapoints']])
+        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_disk_space_used_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -233,7 +239,8 @@ class TibannaResource(object):
             EndTime=self.endtime,
             Unit='Gigabytes'
         )
-        return([r['Maximum'] for r in res['Datapoints']])
+        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     # functions to plot
     def plot_single(self, chuncks_all_pts, ylabel):
@@ -242,7 +249,7 @@ class TibannaResource(object):
         y = []
         [y.extend(chunck_all_pts) for chunck_all_pts in chuncks_all_pts]
         plt.figure(figsize=(40,20))
-        plt.plot(list(range(len(y))), sorted(y), '-o', linewidth=1.5, markersize=1)
+        plt.plot(list(range(len(y))), y, '-o', linewidth=3, markersize=1.5)
         plt.xlabel('Time [min]', fontsize=32, labelpad=35)
         plt.ylabel(ylabel, fontsize=32, labelpad=35)
         plt.xticks(fontsize=27)
@@ -264,10 +271,10 @@ class TibannaResource(object):
         [y_cpu.extend(chunck_all_pts) for chunck_all_pts in cpu_chuncks_all_pts]
 
         plt.figure(figsize=(40,20))
-        plt.plot(list(range(len(y_mem))), y_mem, '-o', linewidth=1.5, markersize=1, color='blue', label='Memory Utilization')
-        plt.plot(list(range(len(y_disk))), y_disk, '-o', linewidth=1.5, markersize=1, color='purple', label='Disk Utilization')
+        plt.plot(list(range(len(y_mem))), y_mem, '-o', linewidth=3, markersize=1.5, color='blue', label='Memory Utilization')
+        plt.plot(list(range(len(y_disk))), y_disk, '-o', linewidth=3, markersize=1.5, color='purple', label='Disk Utilization')
         x_cpu = list(range(len(y_cpu)))
-        plt.plot([x*5 for x in x_cpu], y_cpu, '-o', linewidth=1.5, markersize=1, color='green', label='CPU Utilization') #goes by 5
+        plt.plot([x*5 for x in x_cpu], y_cpu, '-o', linewidth=3, markersize=1.5, color='green', label='CPU Utilization') #goes by 5
 
         plt.xlabel('Time [min]', fontsize=32, labelpad=35)
         plt.ylabel('Percentage', fontsize=32, labelpad=35)
@@ -282,3 +289,49 @@ class TibannaResource(object):
 
         # clearing plt
         plt.clf()
+
+    def create_html(self):
+        with open('metrics.html', 'w') as fo:
+            html = '''
+                <!doctype html>
+
+                <html lang="en">
+                <head>
+                  <meta charset="utf-8">
+
+                  <title>Tibanna Metrics</title>
+
+                  <link rel="stylesheet" href="css/styles.css?v=1.0">
+
+                  <style>
+                  #responsive-image {
+                    width: 80%;
+                    height: auto;
+                  }
+
+                  img {
+                  display: block;
+                  margin-left: 9%;
+                  width: 40%;
+                  }
+                  </style>
+                </head>
+
+                <body>
+                  </br>
+                  <h2 align="center">Resources Utilization</h1>
+                  <img alt="Resources Utilization" src="utilization_mem_disk_cpu.png" id="responsive-image">
+                  </br></br></br>
+                  <h2 align="center">Memory Usage</h1>
+                  <img alt="Memory used in Mb" src="memory_used_in_mb.png" id="responsive-image">
+                  </br></br></br>
+                  <h2 align="center">Memory Available</h1>
+                  <img alt="Memory available in Mb" src="memory_available_in_mb.png" id="responsive-image">
+                  </br></br></br>
+                  <h2 align="center">Disk Usage</h1>
+                  <img alt="Disk space used in Gb" src="disk_space_used_in_gb.png" id="responsive-image">
+                </body>
+                </html>
+                '''
+
+            fo.write(html)
