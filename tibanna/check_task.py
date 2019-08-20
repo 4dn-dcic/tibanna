@@ -137,10 +137,14 @@ def add_postrun_json(prj, input_json, limit):
 
 
 def handle_metrics(prj):
-    resources = TibannaResource(prj.Job.instance_id,
-                                prj.Job.filesystem,
-                                prj.Job.start_time_as_str,
-                                prj.Job.end_time_as_str or datetime.now())
+    try:
+        resources = TibannaResource(prj.Job.instance_id,
+                                    prj.Job.filesystem,
+                                    prj.Job.start_time_as_str,
+                                    prj.Job.end_time_as_str or datetime.now())
+    except Exception as e:
+        printlog("error getting metrics: %s" % str(e))
+        return
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(directory='/tmp/tibanna_metrics/')
     s3_loc = '%s/%s.metrics' % (prj.config.log_bucket, prj.JOBID)

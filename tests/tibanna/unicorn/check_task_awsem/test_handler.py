@@ -65,7 +65,7 @@ def test_check_task_awsem(check_task_input, s3):
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
     s3.delete_objects(Delete={'Objects': [{'Key': postrunjson}]})
     assert 'postrunjson' in retval
-    assert retval['postrunjson'] == {"test": "test"}
+    assert retval['postrunjson'] == jsondict
     del retval['postrunjson']
     assert retval == check_task_input_modified
 
