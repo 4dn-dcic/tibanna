@@ -4,7 +4,8 @@ import pytest
 import boto3
 import random
 import string
-
+import json
+from datetime import datetime
 
 @pytest.fixture()
 def check_task_input():
@@ -53,7 +54,12 @@ def test_check_task_awsem(check_task_input, s3):
     job_success = "%s.success" % jobid
     s3.put_object(Body=b'', Key=job_success)
     postrunjson = "%s.postrun.json" % jobid
-    s3.put_object(Body=b'{"test":"test"}', Key=postrunjson)
+    jsondict = {"config": {"log_bucket": "somelogbucket"},
+                "Job": {"JOBID": jobid, "start_time": '20190814-21:01:07-UTC',
+                        "App": {}, "Output": {},
+                        "Input": {'Input_files_data': {}, 'Input_parameters': {}, 'Secondary_files_data': {}}}}
+    jsoncontent = json.dumps(jsondict)
+    s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
     retval = service.handler(check_task_input_modified, '')
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
@@ -75,7 +81,12 @@ def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
     s3.put_object(Body=b'', Key=job_success)
     postrunjson = "%s.postrun.json" % jobid
     verylongstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(50000))
-    jsoncontent = '{"test": "' + verylongstring + '", "Job": {"Output": {}}}'
+    jsondict = {"config": {"log_bucket": "somelogbucket"},
+                "Job": {"JOBID": jobid, "start_time": '20190814-21:01:07-UTC',
+                        "App": {}, "Output": {},
+                        "Input": {'Input_files_data': {}, 'Input_parameters': {}, 'Secondary_files_data': {}}},
+                "commands": verylongstring}
+    jsoncontent = json.dumps(jsondict)
     s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
     retval = service.handler(check_task_input_modified, '')
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})

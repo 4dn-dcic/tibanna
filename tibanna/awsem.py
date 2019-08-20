@@ -1,3 +1,4 @@
+from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
 from .exceptions import MalFormattedPostrunJsonException
@@ -27,7 +28,11 @@ class AwsemRunJsonJob(SerializableObject):
     def update(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
-        
+
+    @property
+    def start_time_as_str(self):
+        return datetime.strptime(self.start_time, '%Y%m%d-%H:%M:%S-UTC')    
+
 
 class AwsemRunJsonApp(SerializableObject):
     def __init__(self, App_name=None, App_version=None, language=None,
@@ -120,6 +125,12 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
     def create_Output(self, Output):
         self.Output = AwsemPostRunJsonOutput(**Output)
 
+    @property
+    def end_time_as_str(self):
+        try:
+            return datetime.strptime(self.end_time, '%Y%m%d-%H:%M:%S-UTC')   
+        except:
+            return None
 
 class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
     def __init__(self, output_bucket_directory=None, output_target=None,

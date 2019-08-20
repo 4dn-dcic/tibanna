@@ -10,6 +10,9 @@ from .utils import (
     does_key_exist,
     read_s3
 )
+from .awsem import (
+    AwsemPostRunJson
+)
 from .exceptions import (
     StillRunningException,
     EC2StartingException,
@@ -104,7 +107,7 @@ def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesy
             raise Exception("Postrun json not found at %s" % postrunjson_location)
         return None
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
-    prj = postrunjson_as_object(**postrunjsoncontent)
+    prj = AwsemPostRunJson(**postrunjsoncontent)
     prj.Job.update(instance_id=input_json['config'].get('instance_id', None), filesystem=filesystem)
     handle_metrics(prj)
     printlog("inside funtion handle_postrun_json")
@@ -136,8 +139,8 @@ def add_postrun_json(prj, input_json, limit):
 def handle_metrics(prj):
     resources = TibannaResource(prj.Job.instance_id,
                                 prj.Job.filesystem,
-                                prj.Job.start_time,
-                                prj.Job.end_time or datetime.now())
+                                prj.Job.start_time_as_str,
+                                prj.Job.end_time_as_str or datetime.now())
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(directory='/tmp/tibanna_metrics/')
     s3_loc = '%s/%s.metrics' % (prj.config.log_bucket, prj.JOBID)
