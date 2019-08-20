@@ -104,44 +104,41 @@ def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesy
             raise Exception("Postrun json not found at %s" % postrunjson_location)
         return None
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
-    if 'instance_id' in input_json['config']:
-        update_postrun_json(postrunjsoncontent, input_json['config']['instance_id'], filesystem)
+    prj = postrunjson_as_object(**postrunjsoncontent)
+    prj.Job.update(instance_id=input_json['config'].get('instance_id', None), filesystem=filesystem)
+    handle_metrics(prj)
     printlog("inside funtion handle_postrun_json")
-    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
-    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
+    printlog("content=\n" + json.dumps(prj.as_dict(), indent=4))
+    # upload postrun json file back to s3
     acl = 'public-read' if public_read else 'private'
     try:
         boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
                                       Body=json.dumps(postrunjsoncontent, indent=4).encode())
     except Exception as e:
         raise "error in updating postrunjson %s" % str(e)
-    add_postrun_json(postrunjsoncontent, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
+    # add postrun json to the input json
+    add_postrun_json(prj, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
 
 
-def add_postrun_json(postrunjsoncontent, input_json, limit):
-    if len(str(postrunjsoncontent)) + len(str(input_json)) < limit:
-        input_json['postrunjson'] = postrunjsoncontent
+def add_postrun_json(prj, input_json, limit):
+    prjd = prj.as_dict()
+    if len(str(prjd) + len(str(input_json)) < limit:
+        input_json['postrunjson'] = prjd
     else:
-        input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit',
-                                     'Job': {'Output':  postrunjsoncontent['Job']['Output']}}
+        del prjd['commands']
+        if len(str(prjd) + len(str(input_json)) < limit:
+            prjd['log'] = 'postrun json not included due to data size limit'
+            input_json['postrunjson'] = prjd
+        else:
+            input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit'}
 
 
-def update_postrun_json(postrunjsoncontent, instance_id, filesystem=None):
-    job = postrunjsoncontent.get('Job', '')
-    if job:
-        if 'start_time' in job:
-            starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
-        else:
-            return None
-        if 'end_time' in job:
-            endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
-        else:
-            endtime = datetime.now()
-        if 'filesystem' in job:
-            filesystem = job['filesystem']
-        elif not filesystem:
-            return None
-        job['instance_id'] = instance_id
-        job['Metrics'] = TibannaResource(instance_id, filesystem, starttime, endtime).as_dict()
-    else:
-        raise Exception("Job not found in postrunjson")
+def handle_metrics(prj):
+    resources = TibannaResource(prj.Job.instance_id,
+                                prj.Job.filesystem,
+                                prj.Job.start_time,
+                                prj.Job.end_time or datetime.now())
+    prj.Job.update(Metrics=resources.as_dict())
+    resources.plot_metrics(directory='/tmp/tibanna_metrics/')
+    s3_loc = '%s/%s.metrics' % (prj.config.log_bucket, prj.JOBID)
+    resources.upload_plots(s3_target=s3_loc)
