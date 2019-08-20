@@ -35,7 +35,13 @@ def s3_utils(used_env):
 
 @pytest.fixture(scope='session')
 def ff_keys(s3_utils):
-    return s3_utils.get_access_keys()
+    # transition code
+    try:
+        keys = s3_utils.get_access_keys(name='illnevertell_tibanna',
+                                        secret="S3_ENCRYPT_KEY")
+    except:
+        keys = s3_utils.get_access_keys()
+    return keys
 
 
 @pytest.fixture(scope='session')

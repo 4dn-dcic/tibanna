@@ -350,7 +350,11 @@ class TibannaSettings(object):
         self.s3 = s3Utils(env=env)
 
         if not ff_keys:
-            ff_keys = self.s3.get_access_keys()
+            try:
+                ff_keys = self.s3.get_access_keys(name='illnevertell_tibanna',
+                                                  secret="S3_ENCRYPT_KEY")
+            except:
+                ff_keys = self.s3.get_access_keys()
         self.ff_keys = ff_keys
 
         if not settings:
