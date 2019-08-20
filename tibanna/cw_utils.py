@@ -28,6 +28,8 @@ class TibannaResource(object):
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
         self.directory = directory
+        self.start = starttime # initial starttime for the window requested
+        self.end = endtime # initial endtime for the window requested
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -93,6 +95,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5),
         }
+        self.write_tsv(**input_dict)
 
     def choose_max(self, x):
         M = -1
@@ -130,6 +133,8 @@ class TibannaResource(object):
         del(d['instance_id'])
         del(d['directory'])
         del(d['total_minutes'])
+        del(d['start'])
+        del(d['end'])
         return(d)
 
     # def as_table(self):
@@ -351,65 +356,84 @@ class TibannaResource(object):
                       font-family: arial, sans-serif;
                       width: 60%%;
                     }
-                    td, th {
+                    td {
                       border: 1px solid #dddddd;
                       text-align: left;
                       padding: 8px;
                       font-size: 13px;
                     }
+                    th {
+                      border: 1px solid #dddddd;
+                      text-align: left;
+                      padding: 8px;
+                      font-size: 15px;
+                    }
                     tr:nth-child(even) {
-                      background-color: #dddddd;
+                      background-color: #e6f2ff;
                     }
                   </style>
                 </head>
                 <body>
                   </br>
                   <div style="overflow-x:auto;padding-left:30px;">
-                    <h2>Summary Metrics</h2>
+                    <h2>Summary and Time Window</h2>
                     <table align="center">
                       <tr>
                         <th>Metric</th>
                         <th>Value</th>
                       </tr>
                       <tr>
-                        <td>Max Memory Used [Mb]</td>
+                        <td>Maximum Memory Used [Mb]</td>
                         <td>%d</td>
                       </tr>
                       <tr>
-                        <td>Min Memory Available [Mb]</td>
+                        <td>Minimum Memory Available [Mb]</td>
                         <td>%d</td>
                       </tr>
                       <tr>
-                        <td>Max Disk Used [Gb]</td>
+                        <td>Maximum Disk Used [Gb]</td>
                         <td>%d</td>
                       </tr>
                       <tr>
-                        <td>Max Memory Utilization [%%]</td>
+                        <td>Maximum Memory Utilization [%%]</td>
                         <td>%d</td>
                       </tr>
                       <tr>
-                        <td>Max CPU Utilization [%%]</td>
+                        <td>Maximum CPU Utilization [%%]</td>
                         <td>%d</td>
                       </tr>
                       <tr>
-                        <td>Max Disk Utilization [%%]</td>
+                        <td>Maximum Disk Utilization [%%]</td>
                         <td>%d</td>
+                      </tr>
+                      <tr height = 25px></tr>
+                      <tr>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                      </tr>
+                      <tr>
+                        <td>%s</td>
+                        <td>%s</td>
                       </tr>
                     </table>
                   </div>
-                  </br></br></br></br>
+                  </br></br>
                   <img alt="Resources Utilization" src="utilization_mem_disk_cpu.png" id="responsive-image">
-                  </br></br></br></br>
+                  </br></br>
                   <img alt="Memory used in Mb" src="memory_used_mb.png" id="responsive-image">
-                  </br></br></br></br>
+                  </br></br>
                   <img alt="Memory available in Mb" src="memory_available_mb.png" id="responsive-image">
-                  </br></br></br></br>
+                  </br></br>
                   <img alt="Disk space used in Gb" src="disk_space_used_gb.png" id="responsive-image">
                 </body>
-                </html>
+                </html>\
                 """
 
-            fo.write(html % (self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB, self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent))
+            fo.write(html % (self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB,
+                             self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent,
+                             str(self.start), str(self.end)
+                            )
+                    )
 
     def write_tsv(self, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
         with open(self.directory + '/' + 'metrics.tsv', 'w') as fo:
@@ -417,7 +441,7 @@ class TibannaResource(object):
             data_unpacked = []
             for i, (key, (arg, int)) in enumerate(kwargs.items()):
                 if i == 0:
-                    fo.write('#' + key)
+                    fo.write('#interval\t' + key)
                 else:
                     fo.write('\t' + key)
                 tmp = []
@@ -433,7 +457,7 @@ class TibannaResource(object):
 
             # write table
             for i in range(len(data_unpacked[0])):
-                fo.write(i + 1)
+                fo.write(str(i + 1))
                 for data in data_unpacked:
-                    fo.write('\t' + data[i])
+                    fo.write('\t' + str(data[i]))
                 fo.write('\n')
