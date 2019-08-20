@@ -45,7 +45,7 @@ from .iam_utils import (
     get_lambda_role_name,
 )
 from .stepfunction import StepFunctionUnicorn
-
+from .cw_utils import TibannaResource
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -769,3 +769,30 @@ class API(object):
                 raise(e)
             break
         return sfndef.sfn_name
+
+    def plot_metrics(self, job_id, directory='.', open_browser=True):
+        ''' retrieve instance_id and plots metrics '''
+        postrunjson = json.loads(self.log(job_id=job_id, postrunjson=True))
+        job = postrunjson.get('Job', '')
+        if job:
+            if 'start_time' in job:
+                starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
+            else:
+                return None
+            if 'end_time' in job:
+                endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
+            else:
+                endtime = datetime.now()
+            if 'filesystem' in job:
+                filesystem = job['filesystem']
+            elif not filesystem:
+                return None
+            job['instance_id'] = instance_id
+            M = TibannaResource(instance_id, filesystem, starttime, endtime)
+            M.plot_metrics(self, directory)
+        else:
+            raise Exception("Job not found in postrunjson")
+        # open metrics html in browser
+        if open_browser:
+            for filename in M.list_files:
+                if filename.endswith('.html'): subprocess.call(["open", filename])
