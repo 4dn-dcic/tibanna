@@ -122,11 +122,11 @@ def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesy
 
 def add_postrun_json(prj, input_json, limit):
     prjd = prj.as_dict()
-    if len(str(prjd) + len(str(input_json)) < limit:
+    if len(str(prjd)) + len(str(input_json)) < limit:
         input_json['postrunjson'] = prjd
     else:
         del prjd['commands']
-        if len(str(prjd) + len(str(input_json)) < limit:
+        if len(str(prjd)) + len(str(input_json)) < limit:
             prjd['log'] = 'postrun json not included due to data size limit'
             input_json['postrunjson'] = prjd
         else:
