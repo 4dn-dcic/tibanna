@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 class TibannaResource(object):
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now(), directory='.'):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now()):
         self.instance_id = instance_id
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name='us-east-1')
@@ -27,9 +27,10 @@ class TibannaResource(object):
         print("Spliting run time into %s chunks" % str(nTimeChunks))
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
-        self.directory = directory
-        self.start = starttime # initial starttime for the window requested
-        self.end = endtime # initial endtime for the window requested
+        self.start = starttime.replace(microsecond=0) # initial starttime for the window requested
+        self.end = endtime.replace(microsecond=0) # initial endtime for the window requested
+        self.nTimeChunks = nTimeChunks
+        self.list_files = []
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -38,38 +39,19 @@ class TibannaResource(object):
         which corresponds to 24 hours at 1min interval,
         so we have to split them into chunks.
         """
-        max_mem_utilization_percent_chunks, max_mem_utilization_percent_chunks_all_pts = [], []
-        max_mem_used_MB_chunks, max_mem_used_MB_chunks_all_pts = [], []
-        min_mem_available_MB_chunks, min_mem_available_MB_chunks_all_pts = [], []
-        max_cpu_utilization_percent_chunks, max_cpu_utilization_percent_chunks_all_pts = [], []
-        max_disk_space_utilization_percent_chunks, max_disk_space_utilization_percent_chunks_all_pts = [], []
-        max_disk_space_used_GB_chunks, max_disk_space_used_GB_chunks_all_pts = [], []
+        max_mem_used_MB_chunks = []
+        min_mem_available_MB_chunks = []
+        max_cpu_utilization_percent_chunks = []
+        max_disk_space_utilization_percent_chunks = []
+        max_disk_space_used_GB_chunks = []
         for i in range(0, nTimeChunks):
             self.starttime = self.starttimes[i]
             self.endtime = self.endtimes[i]
-            # getting all points for the chunck
-            max_mem_utilization_percent_all_pts_tmp = self.max_memory_utilization_all_pts()
-            max_mem_used_MB_all_pts_tmp = self.max_memory_used_all_pts()
-            min_mem_available_MB_all_pts_tmp = self.min_memory_available_all_pts()
-            max_cpu_utilization_percent_all_pts_tmp = self.max_cpu_utilization_all_pts()
-            max_disk_space_utilization_percent_all_pts_tmp = self.max_disk_space_utilization_all_pts()
-            max_disk_space_used_GB_all_pts_tmp = self.max_disk_space_used_all_pts()
-
-            # saving all points for the chunck
-            max_mem_utilization_percent_chunks_all_pts.append(max_mem_utilization_percent_all_pts_tmp)
-            max_mem_used_MB_chunks_all_pts.append(max_mem_used_MB_all_pts_tmp)
-            min_mem_available_MB_chunks_all_pts.append(min_mem_available_MB_all_pts_tmp)
-            max_cpu_utilization_percent_chunks_all_pts.append(max_cpu_utilization_percent_all_pts_tmp)
-            max_disk_space_utilization_percent_chunks_all_pts.append(max_disk_space_utilization_percent_all_pts_tmp)
-            max_disk_space_used_GB_chunks_all_pts.append(max_disk_space_used_GB_all_pts_tmp)
-
-            # saving only the max or min for the chunck
-            max_mem_utilization_percent_chunks.append(self.get_max(max_mem_utilization_percent_all_pts_tmp))
-            max_mem_used_MB_chunks.append(self.get_max(max_mem_used_MB_all_pts_tmp))
-            min_mem_available_MB_chunks.append(self.get_min(min_mem_available_MB_all_pts_tmp))
-            max_cpu_utilization_percent_chunks.append(self.get_max(max_cpu_utilization_percent_all_pts_tmp))
-            max_disk_space_utilization_percent_chunks.append(self.get_max(max_disk_space_utilization_percent_all_pts_tmp))
-            max_disk_space_used_GB_chunks.append(self.get_max(max_disk_space_used_GB_all_pts_tmp))
+            max_mem_used_MB_chunks.append(self.max_memory_used())
+            min_mem_available_MB_chunks.append(self.min_memory_available())
+            max_cpu_utilization_percent_chunks.append(self.max_cpu_utilization())
+            max_disk_space_utilization_percent_chunks.append(self.max_disk_space_utilization())
+            max_disk_space_used_GB_chunks.append(self.max_disk_space_used())
         self.max_mem_used_MB = self.choose_max(max_mem_used_MB_chunks)
         self.min_mem_available_MB = self.choose_min(min_mem_available_MB_chunks)
         if self.max_mem_used_MB:
@@ -79,14 +61,35 @@ class TibannaResource(object):
         self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
         self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
 
+    def plot_metrics(self, directory='.'):
+        """plot full metrics across all time chunks.
+        AWS allows only 1440 data points at a time
+        which corresponds to 24 hours at 1min interval,
+        so we have to split them into chunks.
+        """
+        max_mem_utilization_percent_chunks_all_pts = []
+        max_mem_used_MB_chunks_all_pts = []
+        min_mem_available_MB_chunks_all_pts = []
+        max_cpu_utilization_percent_chunks_all_pts = []
+        max_disk_space_utilization_percent_chunks_all_pts = []
+        max_disk_space_used_GB_chunks_all_pts = []
+        for i in range(0, self.nTimeChunks):
+            self.starttime = self.starttimes[i]
+            self.endtime = self.endtimes[i]
+            # saving all points for the chunck
+            max_mem_utilization_percent_chunks_all_pts.append(self.max_memory_utilization_all_pts())
+            max_mem_used_MB_chunks_all_pts.append(self.max_memory_used_all_pts())
+            min_mem_available_MB_chunks_all_pts.append(self.min_memory_available_all_pts())
+            max_cpu_utilization_percent_chunks_all_pts.append(self.max_cpu_utilization_all_pts())
+            max_disk_space_utilization_percent_chunks_all_pts.append(self.max_disk_space_utilization_all_pts())
+            max_disk_space_used_GB_chunks_all_pts.append(self.max_disk_space_used_all_pts())
         # plots and html
-        self.plot_single(max_mem_used_MB_chunks_all_pts, 'Memory used [Mb]', 'Memory Usage')
-        self.plot_single(min_mem_available_MB_chunks_all_pts, 'Memory available [Mb]', 'Memory Available')
-        self.plot_single(max_disk_space_used_GB_chunks_all_pts, 'Disk space used [Gb]', 'Disk Usage (/data1)')
-        self.plot_percent(max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts)
-        self.create_html()
-
-        # write values as tsv
+        self.list_files.append(self.plot_single(directory, max_mem_used_MB_chunks_all_pts, 'Memory used [Mb]', 'Memory Usage'))
+        self.list_files.append(self.plot_single(directory, min_mem_available_MB_chunks_all_pts, 'Memory available [Mb]', 'Memory Available'))
+        self.list_files.append(self.plot_single(directory, max_disk_space_used_GB_chunks_all_pts, 'Disk space used [Gb]', 'Disk Usage (/data1)'))
+        self.list_files.append(self.plot_percent(directory, max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts))
+        self.list_files.append(self.create_html(directory))
+        # writing values as tsv
         input_dict ={
             'max_mem_used_MB': (max_mem_used_MB_chunks_all_pts, 1),
             'min_mem_available_MB': (min_mem_available_MB_chunks_all_pts, 1),
@@ -95,7 +98,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5),
         }
-        self.write_tsv(**input_dict)
+        self.list_files.append(self.write_tsv(directory, **input_dict))
 
     def choose_max(self, x):
         M = -1
@@ -131,10 +134,11 @@ class TibannaResource(object):
         del(d['endtime'])
         del(d['filesystem'])
         del(d['instance_id'])
-        del(d['directory'])
         del(d['total_minutes'])
         del(d['start'])
         del(d['end'])
+        del(d['nTimeChunks'])
+        del(d['list_files'])
         return(d)
 
     # def as_table(self):
@@ -262,16 +266,14 @@ class TibannaResource(object):
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     # functions to plot
-    def plot_single(self, chuncks_all_pts, ylabel, title):
+    def plot_single(self, directory, chuncks_all_pts, ylabel, title):
         plt.ioff() # rendering off
         plt.figure(figsize=(40,10))
-
-        # prepare and plot data
+        # preparing and plotting data
         y = []
         [y.extend(chunck_all_pts) for chunck_all_pts in chuncks_all_pts]
         plt.plot(list(range(len(y))), y, '-o', linewidth=3, markersize=1.5)
-
-        # format labels, axis and title
+        # formatting labels, axis and title
         plt.xlabel('Time [min]', fontsize=22, labelpad=30)
         plt.ylabel(ylabel, fontsize=22, labelpad=30)
         plt.xticks(fontsize=22)
@@ -279,34 +281,30 @@ class TibannaResource(object):
         plt.ylim(ymin=0)
         plt.xlim(xmin=-3 , xmax=self.total_minutes)
         plt.title(title, fontsize=30, pad=60, fontweight="bold")
-
-        # format grid
+        # formatting grid
         plt.minorticks_on()
         plt.grid(b=True, which='major', color='#666666', linestyle='-')
         plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
-
         # saving the plot
-        plt.savefig(self.directory + '/' + '_'.join(ylabel.replace('[', '').replace(']', '').split()).lower() + '.png')
-
+        filename = directory + '/' + '_'.join(ylabel.replace('[', '').replace(']', '').split()).lower() + '.png'
+        plt.savefig(filename)
         # clearing plt
         plt.clf()
+        return(filename)
 
-    def plot_percent(self, mem_chuncks_all_pts, disk_chuncks_all_pts, cpu_chuncks_all_pts, title='Resources Utilization'):
+    def plot_percent(self, directory, mem_chuncks_all_pts, disk_chuncks_all_pts, cpu_chuncks_all_pts, title='Resources Utilization'):
         plt.ioff() # rendering off
         plt.figure(figsize=(40,12))
-
-        # prepare and plot data
+        # preparing and plotting data
         y_mem, y_disk, y_cpu = [], [], []
         [y_mem.extend(chunck_all_pts) for chunck_all_pts in mem_chuncks_all_pts]
         [y_disk.extend(chunck_all_pts) for chunck_all_pts in disk_chuncks_all_pts]
         [y_cpu.extend(chunck_all_pts) for chunck_all_pts in cpu_chuncks_all_pts]
-
         plt.plot(list(range(len(y_mem))), y_mem, '-o', linewidth=3, markersize=1.5, color='blue', label='Memory Utilization')
         plt.plot(list(range(len(y_disk))), y_disk, '-o', linewidth=3, markersize=1.5, color='purple', label='Disk Utilization')
         x_cpu = list(range(len(y_cpu)))
         plt.plot([x*5 for x in x_cpu], y_cpu, '-o', linewidth=3, markersize=1.5, color='green', label='CPU Utilization') #goes by 5
-
-        # format labels, axis and title
+        # formatting labels, axis and title
         plt.xlabel('Time [min]', fontsize=22, labelpad=30)
         plt.ylabel('Percentage', fontsize=22, labelpad=30)
         plt.xticks(fontsize=22)
@@ -315,20 +313,20 @@ class TibannaResource(object):
         plt.xlim(xmin=-3, xmax=self.total_minutes)
         plt.title(title, fontsize=30, pad=60, fontweight="bold")
         plt.legend(fontsize=22, loc='upper center', bbox_to_anchor=(0.81, -0.055), ncol=3)
-
-        # format grid
+        # formatting grid
         plt.minorticks_on()
         plt.grid(b=True, which='major', color='#666666', linestyle='-')
         plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
-
         # saving the plot
-        plt.savefig(self.directory + '/' + 'utilization_mem_disk_cpu.png')
-
+        filename = directory + '/' + 'utilization_mem_disk_cpu.png'
+        plt.savefig(filename)
         # clearing plt
         plt.clf()
+        return(filename)
 
-    def create_html(self):
-        with open(self.directory + '/' + 'metrics.html', 'w') as fo:
+    def create_html(self, directory):
+        filename = directory + '/' + 'metrics.html'
+        with open(filename, 'w') as fo:
             html = """\
                 <!doctype html>
 
@@ -376,7 +374,7 @@ class TibannaResource(object):
                 <body>
                   </br>
                   <div style="overflow-x:auto;padding-left:30px;">
-                    <h2>Summary and Time Window</h2>
+                    <h2>Summary Metrics and Time</h2>
                     <table align="center">
                       <tr>
                         <th>Metric</th>
@@ -406,12 +404,16 @@ class TibannaResource(object):
                         <td>Maximum Disk Utilization [%%]</td>
                         <td>%d</td>
                       </tr>
-                      <tr height = 25px></tr>
+                    </table>
+                    </br></br>
+                    <table align="center">
                       <tr>
                         <th>Start Time</th>
                         <th>End Time</th>
+                        <th>Total Time</th>
                       </tr>
                       <tr>
+                        <td>%s</td>
                         <td>%s</td>
                         <td>%s</td>
                       </tr>
@@ -431,13 +433,15 @@ class TibannaResource(object):
 
             fo.write(html % (self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB,
                              self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent,
-                             str(self.start), str(self.end)
+                             str(self.start), str(self.end), str(self.end - self.start)
                             )
                     )
+        return(filename)
 
-    def write_tsv(self, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
-        with open(self.directory + '/' + 'metrics.tsv', 'w') as fo:
-            # prepare data and write header
+    def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
+        filename = directory + '/' + 'metrics.tsv'
+        with open(filename, 'w') as fo:
+            # preparing data and writing header
             data_unpacked = []
             for i, (key, (arg, int)) in enumerate(kwargs.items()):
                 if i == 0:
@@ -454,10 +458,10 @@ class TibannaResource(object):
                     [tmp_ext.extend([t, '-', '-', '-', '-']) for t in tmp]
                     data_unpacked.append(tmp_ext[:])
             fo.write('\n')
-
-            # write table
+            # writing table
             for i in range(len(data_unpacked[0])):
                 fo.write(str(i + 1))
                 for data in data_unpacked:
                     fo.write('\t' + str(data[i]))
                 fo.write('\n')
+        return(filename)
