@@ -8,7 +8,7 @@ import logging
 import importlib
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4, UUID
 from types import ModuleType
 from .vars import (
@@ -304,9 +304,11 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False):
         if postrunjson:
             suffix = '.postrun.json'
+        elif runjson:
+            suffix = '.run.json'
         else:
             suffix = '.log'
         if not sfn:
@@ -342,7 +344,7 @@ class API(object):
                             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         except Exception as e:
                             if 'NoSuchKey' in str(e):
-                                printlog("log/postrunjson file is not ready yet." +
+                                printlog("log/postrunjson file is not ready yet. " +
                                          "Wait a few seconds/minutes and try again.")
                                 return ''
                             else:
@@ -770,10 +772,16 @@ class API(object):
             break
         return sfndef.sfn_name
 
-    def plot_metrics(self, job_id, directory='.', open_browser=True):
+    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, filesystem='/dev/nvme1n1'):
         ''' retrieve instance_id and plots metrics '''
-        postrunjson = json.loads(self.log(job_id=job_id, postrunjson=True))
-        job = postrunjson.get('Job', '')
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        try:
+            runjson = json.loads(self.log(job_id=job_id, sfn=sfn, postrunjson=True))
+        except: # still running
+            runjson = json.loads(self.log(job_id=job_id, sfn=sfn, runjson=True))
+        # getting Job
+        job = runjson.get('Job', '')
         if job:
             if 'start_time' in job:
                 starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
@@ -782,14 +790,27 @@ class API(object):
             if 'end_time' in job:
                 endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
             else:
-                endtime = datetime.now()
+                endtime = datetime.utcnow()
             if 'filesystem' in job:
                 filesystem = job['filesystem']
-            elif not filesystem:
+            else:
+                filesystem = filesystem
+            if 'instance_id' in job:
+                instance_id = job['instance_id']
+            else:
+                ec2 = boto3.client('ec2')
+                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+                if res['Reservations']:
+                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                else:
+                    return None
+            # waiting 10 min to be sure the istance is starting
+            if (endtime - starttime) / timedelta(minutes=1) < 10:
+                printlog("the instance is still setting up. " +
+                         "Wait a few seconds/minutes and try again.")
                 return None
-            job['instance_id'] = instance_id
             M = TibannaResource(instance_id, filesystem, starttime, endtime)
-            M.plot_metrics(self, directory)
+            M.plot_metrics(directory)
         else:
             raise Exception("Job not found in postrunjson")
         # open metrics html in browser

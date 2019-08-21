@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 class TibannaResource(object):
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now()):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
         self.instance_id = instance_id
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name='us-east-1')
@@ -279,7 +279,7 @@ class TibannaResource(object):
         plt.xticks(fontsize=22)
         plt.yticks(fontsize=22)
         plt.ylim(ymin=0)
-        plt.xlim(xmin=-3 , xmax=self.total_minutes)
+        plt.xlim(xmin=0 , xmax=self.total_minutes)
         plt.title(title, fontsize=30, pad=60, fontweight="bold")
         # formatting grid
         plt.minorticks_on()
@@ -310,7 +310,7 @@ class TibannaResource(object):
         plt.xticks(fontsize=22)
         plt.yticks(fontsize=22)
         plt.ylim(ymin=0, ymax=100)
-        plt.xlim(xmin=-3, xmax=self.total_minutes)
+        plt.xlim(xmin=0, xmax=self.total_minutes)
         plt.title(title, fontsize=30, pad=60, fontweight="bold")
         plt.legend(fontsize=22, loc='upper center', bbox_to_anchor=(0.81, -0.055), ncol=3)
         # formatting grid
