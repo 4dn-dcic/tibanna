@@ -2,6 +2,7 @@ import random
 import string
 import logging
 import boto3
+import os
 from uuid import uuid4, UUID
 from .vars import _tibanna, EXECUTION_ARN
 
@@ -89,3 +90,13 @@ def does_key_exist(bucket, object_name):
         print(str(e))
         return False
     return file_metadata
+
+
+def upload(filepath, bucket, prefix=''):
+    """upload a file to S3 under a prefix.
+    The original directory structure is removed
+    and only the filename is preserved."""
+    s3 = boto3.client('s3')
+    dirname, filename = os.path.split(filepath)
+    key = os.path.join(prefix, filename)
+    s3.upload_file(filepath, bucket, key)
