@@ -4,4 +4,4 @@ botocore==1.10.42
 boto3==1.7.42
 urllib3==1.23
 requests==2.20.0
-matplotlib==3.1.1
+leather==0.3.3

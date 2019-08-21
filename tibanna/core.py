@@ -611,7 +611,7 @@ class API(object):
                 print(role_arn)
             extra_config['Role'] = role_arn
         if usergroup and suffix:
-            function_name_suffix = suffix + '_' + usergroup
+            function_name_suffix = usergroup + '_' + suffix
         elif suffix:
             function_name_suffix = suffix
         elif usergroup:
