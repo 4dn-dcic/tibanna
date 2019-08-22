@@ -1,5 +1,8 @@
 import boto3
-from tibanna.utils import printlog
+from tibanna.utils import (
+    printlog,
+    upload
+)
 # import pandas as pd
 # from datetime import datetime
 # from datetime import timezone
@@ -99,6 +102,12 @@ class TibannaResource(object):
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5),
         }
         self.list_files.append(self.write_tsv(directory, **input_dict))
+
+
+    def upload(self, bucket, prefix=''):
+        for f in list_files:
+            upload(f, bucket, prefix)
+
 
     def choose_max(self, x):
         M = -1
