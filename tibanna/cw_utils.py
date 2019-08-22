@@ -295,6 +295,7 @@ class TibannaResource(object):
         # saving the plot
         filename = directory + '/' + '_'.join(ylabel.replace('[', '').replace(']', '').split()).lower() + '.png'
         plt.savefig(filename)
+        plt.close(fig='all')
         # clearing plt
         plt.clf()
         return(filename)
@@ -327,6 +328,7 @@ class TibannaResource(object):
         # saving the plot
         filename = directory + '/' + 'utilization_mem_disk_cpu.png'
         plt.savefig(filename)
+        plt.close(fig='all')
         # clearing plt
         plt.clf()
         return(filename)

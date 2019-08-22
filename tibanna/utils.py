@@ -3,6 +3,7 @@ import string
 import logging
 import boto3
 import os
+import mimetypes
 from uuid import uuid4, UUID
 from .vars import _tibanna, EXECUTION_ARN
 
@@ -103,4 +104,7 @@ def upload(filepath, bucket, prefix='', public=True):
         acl='public-read'
     else:
         acl='private'
-    s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl})
+    content_type = mimetypes.guess_type(filename)[0]
+    if content_type is None:
+        content_type = 'binary/octet-stream'
+    s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})

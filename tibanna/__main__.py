@@ -37,6 +37,7 @@ class Subcommands(object):
                                  'Use it only when the IAM permissions need to be reset',
             'stat': 'print out executions with details',
             'users': 'list all users along with their associated tibanna user groups',
+            'plot_metrics': 'create a metrics report html'
         }
 
     @property
@@ -210,7 +211,17 @@ class Subcommands(object):
                   'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
                  {'flag': ["-g", "--usergroup"],
-                  'help': "Tibanna usergroup for the AWS Lambda function"}]
+                  'help': "Tibanna usergroup for the AWS Lambda function"}],
+            'plot_metrics':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
+                 {'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-u", "--upload"],
+                  'help': "upload the metrics report to s3 bucket (logbucket/jobid.metrics/metrics.html)",
+                  'action': "store_false"}]
         }
 
 
@@ -308,6 +319,11 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
     API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
+
+
+def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, upload=False):
+    """create a resource metrics report html"""
+    API().plot_metrics(job_id=job_id, sfn=sfn, upload=upload)
 
 
 def main(Subcommands=Subcommands):
