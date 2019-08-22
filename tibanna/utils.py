@@ -92,11 +92,15 @@ def does_key_exist(bucket, object_name):
     return file_metadata
 
 
-def upload(filepath, bucket, prefix=''):
+def upload(filepath, bucket, prefix='', public=True):
     """upload a file to S3 under a prefix.
     The original directory structure is removed
     and only the filename is preserved."""
     s3 = boto3.client('s3')
     dirname, filename = os.path.split(filepath)
     key = os.path.join(prefix, filename)
-    s3.upload_file(filepath, bucket, key)
+    if public:
+        acl='public-read'
+    else:
+        acl='private'
+    s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl})

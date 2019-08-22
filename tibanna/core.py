@@ -772,7 +772,7 @@ class API(object):
             break
         return sfndef.sfn_name
 
-    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, filesystem='/dev/nvme1n1'):
+    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, upload=False, filesystem='/dev/nvme1n1'):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
@@ -814,6 +814,8 @@ class API(object):
         else:
             raise Exception("Job not found in postrunjson")
         # open metrics html in browser
-        if open_browser:
+        if open_browser and shutil.which('open') is not None:
             for filename in M.list_files:
                 if filename.endswith('.html'): subprocess.call(["open", filename])
+        if upload:
+            M.upload(bucket=logbucket, prefix=jobid + '.metrics/')
