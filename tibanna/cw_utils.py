@@ -104,7 +104,7 @@ class TibannaResource(object):
         self.list_files.append(self.write_tsv(directory, **input_dict))
 
     def upload(self, bucket, prefix=''):
-        for f in list_files:
+        for f in self.list_files:
             upload(f, bucket, prefix)
 
     def choose_max(self, x):

@@ -818,4 +818,5 @@ class API(object):
             for filename in M.list_files:
                 if filename.endswith('.html'): subprocess.call(["open", filename])
         if upload:
-            M.upload(bucket=logbucket, prefix=jobid + '.metrics/')
+            log_bucket = runjson.get('config', {}).get('log_bucket', None)
+            M.upload(bucket=log_bucket, prefix=job_id + '.metrics/')
