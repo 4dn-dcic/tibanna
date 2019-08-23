@@ -464,8 +464,8 @@ class TibannaResource(object):
                         <table align="center">
                           <tr>
                             <th>Start Time</th>
-                            <th>Time of Request</th>
-                            <th>Total Time Passed</th>
+                            <th>End Time</th>
+                            <th>Total Time</th>
                           </tr>
                           <tr>
                             <td>%s</td>

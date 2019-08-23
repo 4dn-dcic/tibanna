@@ -821,3 +821,6 @@ class API(object):
             # open metrics html in browser
             if open_browser:
                 webbrowser.open('https://tibanna-output.s3.amazonaws.com/' + job_id + '.metrics/metrics.html')
+            #clean up uploaded files
+            for f in M.list_files:
+                os.remove(f)
