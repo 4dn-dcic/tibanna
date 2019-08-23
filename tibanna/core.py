@@ -8,6 +8,7 @@ import logging
 import importlib
 import shutil
 import subprocess
+import webbrowser
 from datetime import datetime, timedelta
 from uuid import uuid4, UUID
 from types import ModuleType
@@ -813,10 +814,10 @@ class API(object):
             M.plot_metrics(directory)
         else:
             raise Exception("Job not found in postrunjson")
-        # open metrics html in browser
-        if open_browser and shutil.which('open') is not None:
-            for filename in M.list_files:
-                if filename.endswith('.html'): subprocess.call(["open", filename])
+        # upload files
         if upload:
             log_bucket = runjson.get('config', {}).get('log_bucket', None)
             M.upload(bucket=log_bucket, prefix=job_id + '.metrics/')
+            # open metrics html in browser
+            if open_browser:
+                webbrowser.open('https://tibanna-output.s3.amazonaws.com/' + job_id + '.metrics/metrics.html')

@@ -221,7 +221,7 @@ class Subcommands(object):
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-u", "--upload"],
                   'help': "upload the metrics report to s3 bucket (logbucket/jobid.metrics/metrics.html)",
-                  'action': "store_false"}]
+                  'action': "store_true"}]
         }
 
 
