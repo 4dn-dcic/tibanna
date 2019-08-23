@@ -98,7 +98,7 @@ class TibannaResource(object):
             'max_disk_space_used_GB': (max_disk_space_used_GB_chunks_all_pts, 1),
             'max_mem_utilization_percent': (max_mem_utilization_percent_chunks_all_pts, 1),
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
-            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5),
+            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(directory))
