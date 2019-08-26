@@ -29,6 +29,7 @@ from .vars import (
     TIBANNA_REPO_BRANCH,
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
+    METRICS_URL,
 )
 from .utils import (
     _tibanna_settings,
@@ -823,7 +824,7 @@ class API(object):
             M.upload(bucket=log_bucket, prefix=job_id + '.metrics/')
             # open metrics html in browser
             if open_browser:
-                webbrowser.open('https://' + log_bucket + '.s3.amazonaws.com/' + job_id + '.metrics/metrics.html')
+                webbrowser.open(METRICS_URL(log_bucket, job_id))
             # clean up uploaded files
             for f in M.list_files:
                 os.remove(f)
