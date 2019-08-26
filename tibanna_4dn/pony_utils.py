@@ -31,6 +31,9 @@ from tibanna.ec2_utils import (
 from tibanna.awsem import (
     AwsemPostRunJson
 )
+from tibanna.var import (
+    METRICS_URL
+)
 from .config import (
     higlass_config
 )
@@ -445,6 +448,12 @@ class FourfrontUpdater(object):
         self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
+
+    def create_wfr_qc(self):
+        qcuuid = str(uuid.uuid4())
+        url = METRICS_URL(self.config.log_bucket, self.jobid)
+        self.update_post_items(qcuuid, {'url': url}, 'QualityMetricWorkflowrun')
+        self.ff_meta.quality_metric = qcuuid
 
     def handle_success(self):
         # update run status in metadata first
@@ -1138,6 +1147,7 @@ class FourfrontUpdater(object):
         self.update_md5()
         self.update_qc()
         self.update_input_extras()
+        self.create_wfr_qc()
         self.post_all()
         self.patch_all()
         self.ff_meta.run_status = 'complete'
