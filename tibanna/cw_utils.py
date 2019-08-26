@@ -154,22 +154,22 @@ class TibannaResource(object):
 
     # functions that returns only max or min (backward compatible)
     def max_memory_utilization(self):
-        return(self.get_max(self.max_memory_utilization_all_pts()))
+        return(self.choose_max(self.max_memory_utilization_all_pts()))
 
     def max_memory_used(self):
-        return(self.get_max(self.max_memory_used_all_pts()))
+        return(self.choose_max(self.max_memory_used_all_pts()))
 
     def min_memory_available(self):
-        return(self.get_min(self.min_memory_available_all_pts()))
+        return(self.choose_min(self.min_memory_available_all_pts()))
 
     def max_cpu_utilization(self):
-        return(self.get_max(self.max_cpu_utilization_all_pts()))
+        return(self.choose_max(self.max_cpu_utilization_all_pts()))
 
     def max_disk_space_utilization(self):
-        return(self.get_max(self.max_disk_space_utilization_all_pts()))
+        return(self.choose_max(self.max_disk_space_utilization_all_pts()))
 
     def max_disk_space_used(self):
-        return(self.get_max(self.max_disk_space_used_all_pts()))
+        return(self.choose_max(self.max_disk_space_used_all_pts()))
 
     # functions that returns all points
     def max_memory_utilization_all_pts(self):
