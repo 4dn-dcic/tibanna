@@ -186,7 +186,7 @@ class TibannaResource(object):
             Unit='Percent'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     def max_memory_used_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -202,7 +202,7 @@ class TibannaResource(object):
             Unit='Megabytes'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     def min_memory_available_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -218,7 +218,7 @@ class TibannaResource(object):
             Unit='Megabytes'
         )
         pts = [(r['Minimum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     def max_cpu_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -234,7 +234,7 @@ class TibannaResource(object):
             Unit='Percent'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     def max_disk_space_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -252,7 +252,7 @@ class TibannaResource(object):
             Unit='Percent'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     def max_disk_space_used_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -270,7 +270,7 @@ class TibannaResource(object):
             Unit='Gigabytes'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
-        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])] if pts else []
 
     # # functions to plot
     # def plot_single(self, directory, chuncks_all_pts, ylabel, title):

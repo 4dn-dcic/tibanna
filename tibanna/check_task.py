@@ -102,14 +102,14 @@ def check_task(input_json):
     raise StillRunningException("job %s still running" % jobid)
 
 
-def handle_postrun_json(bucket_name, jobid, input_json, filesystem=None, public_read=False):
+def handle_postrun_json(bucket_name, jobid, input_json, public_read=False):
     postrunjson = "%s.postrun.json" % jobid
     if not does_key_exist(bucket_name, postrunjson):
         postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
         raise Exception("Postrun json not found at %s" % postrunjson_location)
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
     prj = AwsemPostRunJson(**postrunjsoncontent)
-    prj.Job.update(instance_id=input_json['config'].get('instance_id', None), filesystem=filesystem)
+    prj.Job.update(instance_id=input_json['config'].get('instance_id', ''))
     handle_metrics(prj)
     printlog("inside funtion handle_postrun_json")
     printlog("content=\n" + json.dumps(prj.as_dict(), indent=4))
@@ -146,5 +146,5 @@ def handle_metrics(prj):
     except Exception as e:
         raise Exception("error getting metrics: %s" % str(e))
     prj.Job.update(Metrics=resources.as_dict())
-    resources.plot_metrics(directory='/tmp/tibanna_metrics/')
+    resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
     resources.upload(bucket=prj.config.log_bucket, prefix=prj.JOBID + '.metrics/')
