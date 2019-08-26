@@ -787,7 +787,7 @@ class API(object):
             if 'start_time' in job:
                 starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
             else:
-                return None
+                return None # we have to do something here
             if 'end_time' in job:
                 endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
             else:
@@ -804,23 +804,26 @@ class API(object):
                 if res['Reservations']:
                     instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
                 else:
-                    return None
+                    return None # we have to do something here
+            # getting instance type
+            instance_type = runjson.get('config', {}).get('instance_type', 'unknown')
             # waiting 10 min to be sure the istance is starting
             if (endtime - starttime) / timedelta(minutes=1) < 10:
                 printlog("the instance is still setting up. " +
                          "Wait a few seconds/minutes and try again.")
                 return None
+            # plotting
             M = TibannaResource(instance_id, filesystem, starttime, endtime)
-            M.plot_metrics(directory)
+            M.plot_metrics(instance_type, directory)
         else:
-            raise Exception("Job not found in postrunjson")
+            raise Exception("Job not found in runjson/postrunjson")
         # upload files
         if upload:
             log_bucket = runjson.get('config', {}).get('log_bucket', None)
             M.upload(bucket=log_bucket, prefix=job_id + '.metrics/')
             # open metrics html in browser
             if open_browser:
-                webbrowser.open('https://tibanna-output.s3.amazonaws.com/' + job_id + '.metrics/metrics.html')
-            #clean up uploaded files
+                webbrowser.open('https://' + log_bucket + '.s3.amazonaws.com/' + job_id + '.metrics/metrics.html')
+            # clean up uploaded files
             for f in M.list_files:
                 os.remove(f)

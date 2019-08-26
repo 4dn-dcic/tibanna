@@ -63,7 +63,7 @@ class TibannaResource(object):
         self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
         self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
 
-    def plot_metrics(self, directory='.'):
+    def plot_metrics(self, instance_type, directory='.'):
         """plot full metrics across all time chunks.
         AWS allows only 1440 data points at a time
         which corresponds to 24 hours at 1min interval,
@@ -90,7 +90,7 @@ class TibannaResource(object):
         # self.list_files.append(self.plot_single(directory, min_mem_available_MB_chunks_all_pts, 'Memory available [Mb]', 'Memory Available'))
         # self.list_files.append(self.plot_single(directory, max_disk_space_used_GB_chunks_all_pts, 'Disk space used [Gb]', 'Disk Usage (/data1)'))
         # self.list_files.append(self.plot_percent(directory, max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts))
-        self.list_files.append(self.create_html(directory))
+        self.list_files.append(self.create_html(instance_type, directory))
         # writing values as tsv
         input_dict ={
             'max_mem_used_MB': (max_mem_used_MB_chunks_all_pts, 1),
@@ -101,7 +101,7 @@ class TibannaResource(object):
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
         self.list_files.append(self.write_tsv(directory, **input_dict))
-        self.list_files.append(self.write_metrics(directory))
+        self.list_files.append(self.write_metrics(instance_type, directory))
 
     def upload(self, bucket, prefix=''):
         for f in self.list_files:
@@ -333,7 +333,7 @@ class TibannaResource(object):
     #     plt.clf()
     #     return(filename)
 
-    def create_html(self, directory):
+    def create_html(self, instance_type, directory):
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             html = """\
@@ -444,7 +444,7 @@ class TibannaResource(object):
                             <td>%d</td>
                           </tr>
                           <tr>
-                            <td>Maximum Disk Used [Gb]</td>
+                            <td>Maximum Disk Used (/data1) [Gb]</td>
                             <td>%d</td>
                           </tr>
                           <tr>
@@ -458,6 +458,10 @@ class TibannaResource(object):
                           <tr>
                             <td>Maximum Disk Utilization (/data1) [%%]</td>
                             <td>%d</td>
+                          </tr>
+                          <tr>
+                            <td>EC2 Instance Type</td>
+                            <td>%s</td>
                           </tr>
                         </table>
                         </br></br>
@@ -744,6 +748,7 @@ class TibannaResource(object):
 
             fo.write(html % (self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB,
                              self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent,
+                             instance_type,
                              str(self.start), str(self.end), str(self.end - self.start)
                             )
                     )
@@ -773,11 +778,14 @@ class TibannaResource(object):
             for i in range(len(data_unpacked[0])):
                 fo.write(str(i + 1))
                 for data in data_unpacked:
-                    fo.write('\t' + str(data[i]))
+                    try:
+                        fo.write('\t' + str(data[i]))
+                    except:
+                        fo.write('\t' + '-')
                 fo.write('\n')
         return(filename)
 
-    def write_metrics(self, directory):
+    def write_metrics(self, instance_type, directory):
         filename = directory + '/' + 'metrics_report.tsv'
         with open(filename, 'w') as fo:
             fo.write('Metric\tValue\n')
@@ -788,5 +796,6 @@ class TibannaResource(object):
             fo.write('Maximum_CPU_Utilization' + '\t' + str(self.max_cpu_utilization_percent) + '\n')
             fo.write('Maximum_Disk_Utilization' + '\t' + str(self.max_disk_space_utilization_percent) + '\n')
             fo.write('Start_Time' + '\t' + str(self.start) + '\n')
-            fo.write('Time_of_Request' + '\t' + str(self.end) + '\n')
+            fo.write('End_time' + '\t' + str(self.end) + '\n')
+            fo.write('Instance_Type' + '\t' + instance_type + '\n')
         return(filename)
