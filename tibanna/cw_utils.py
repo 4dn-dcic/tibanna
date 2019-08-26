@@ -1,4 +1,4 @@
-import boto3
+import boto3, os
 from tibanna.utils import (
     printlog,
     upload
@@ -334,6 +334,7 @@ class TibannaResource(object):
     #     return(filename)
 
     def create_html(self, instance_type, directory):
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             html = """\
@@ -755,6 +756,7 @@ class TibannaResource(object):
         return(filename)
 
     def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.tsv'
         with open(filename, 'w') as fo:
             # preparing data and writing header
@@ -786,6 +788,7 @@ class TibannaResource(object):
         return(filename)
 
     def write_metrics(self, instance_type, directory):
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics_report.tsv'
         with open(filename, 'w') as fo:
             fo.write('Metric\tValue\n')
@@ -799,3 +802,7 @@ class TibannaResource(object):
             fo.write('End_time' + '\t' + str(self.end) + '\n')
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
         return(filename)
+
+    def check_mkdir(self, directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
