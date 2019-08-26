@@ -47,7 +47,10 @@ def check_task(input_json):
 
     # check to see if job has error, report if so
     if does_key_exist(bucket_name, job_error):
-        handle_postrun_json(bucket_name, jobid, input_json_copy, False, public_read=public_postrun_json)
+        try:
+            handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
+        except Exception as e:
+            printlog("error handling postrun json %s" % str(e))
         errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
         raise AWSEMJobErrorException(errmsg)
 
@@ -99,13 +102,11 @@ def check_task(input_json):
     raise StillRunningException("job %s still running" % jobid)
 
 
-def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesystem=None, public_read=False):
+def handle_postrun_json(bucket_name, jobid, input_json, filesystem=None, public_read=False):
     postrunjson = "%s.postrun.json" % jobid
     if not does_key_exist(bucket_name, postrunjson):
-        if raise_error:
-            postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
-            raise Exception("Postrun json not found at %s" % postrunjson_location)
-        return None
+        postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
+        raise Exception("Postrun json not found at %s" % postrunjson_location)
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
     prj = AwsemPostRunJson(**postrunjsoncontent)
     prj.Job.update(instance_id=input_json['config'].get('instance_id', None), filesystem=filesystem)
@@ -143,9 +144,7 @@ def handle_metrics(prj):
                                     prj.Job.start_time_as_str,
                                     prj.Job.end_time_as_str or datetime.now())
     except Exception as e:
-        printlog("error getting metrics: %s" % str(e))
-        return
+        raise("error getting metrics: %s" % str(e))
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(directory='/tmp/tibanna_metrics/')
-    s3_loc = '%s/%s.metrics' % (prj.config.log_bucket, prj.JOBID)
-    resources.upload_plots(s3_target=s3_loc)
+    resources.upload(bucket=prj.config.log_bucket, prefix=prj.JOBID + '.metrics/')
