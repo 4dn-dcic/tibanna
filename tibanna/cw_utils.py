@@ -3,11 +3,9 @@ from tibanna.utils import (
     printlog,
     upload
 )
-# import pandas as pd
 # from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
-# import matplotlib.pyplot as plt
 
 # instance_id = 'i-0167a6c2d25ce5822'
 # filesystem = "/dev/xvdb"
@@ -86,10 +84,6 @@ class TibannaResource(object):
             max_disk_space_utilization_percent_chunks_all_pts.append(self.max_disk_space_utilization_all_pts())
             max_disk_space_used_GB_chunks_all_pts.append(self.max_disk_space_used_all_pts())
         # plots and writing html
-        # self.list_files.append(self.plot_single(directory, max_mem_used_MB_chunks_all_pts, 'Memory used [Mb]', 'Memory Usage'))
-        # self.list_files.append(self.plot_single(directory, min_mem_available_MB_chunks_all_pts, 'Memory available [Mb]', 'Memory Available'))
-        # self.list_files.append(self.plot_single(directory, max_disk_space_used_GB_chunks_all_pts, 'Disk space used [Gb]', 'Disk Usage (/data1)'))
-        # self.list_files.append(self.plot_percent(directory, max_mem_utilization_percent_chunks_all_pts, max_disk_space_utilization_percent_chunks_all_pts, max_cpu_utilization_percent_chunks_all_pts))
         self.list_files.append(self.create_html(instance_type, directory))
         # writing values as tsv
         input_dict ={
@@ -272,67 +266,7 @@ class TibannaResource(object):
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
-    # # functions to plot
-    # def plot_single(self, directory, chuncks_all_pts, ylabel, title):
-    #     plt.ioff() # rendering off
-    #     plt.figure(figsize=(40,10))
-    #     # preparing and plotting data
-    #     y = []
-    #     [y.extend(chunck_all_pts) for chunck_all_pts in chuncks_all_pts]
-    #     plt.plot(list(range(len(y))), y, '-o', linewidth=3, markersize=1.5)
-    #     # formatting labels, axis and title
-    #     plt.xlabel('Time [min]', fontsize=22, labelpad=30)
-    #     plt.ylabel(ylabel, fontsize=22, labelpad=30)
-    #     plt.xticks(fontsize=22)
-    #     plt.yticks(fontsize=22)
-    #     plt.ylim(ymin=0)
-    #     plt.xlim(xmin=0 , xmax=self.total_minutes)
-    #     plt.title(title, fontsize=30, pad=60, fontweight="bold")
-    #     # formatting grid
-    #     plt.minorticks_on()
-    #     plt.grid(b=True, which='major', color='#666666', linestyle='-')
-    #     plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
-    #     # saving the plot
-    #     filename = directory + '/' + '_'.join(ylabel.replace('[', '').replace(']', '').split()).lower() + '.png'
-    #     plt.savefig(filename)
-    #     plt.close(fig='all')
-    #     # clearing plt
-    #     plt.clf()
-    #     return(filename)
-
-    # def plot_percent(self, directory, mem_chuncks_all_pts, disk_chuncks_all_pts, cpu_chuncks_all_pts, title='Resources Utilization'):
-    #     plt.ioff() # rendering off
-    #     plt.figure(figsize=(40,12))
-    #     # preparing and plotting data
-    #     y_mem, y_disk, y_cpu = [], [], []
-    #     [y_mem.extend(chunck_all_pts) for chunck_all_pts in mem_chuncks_all_pts]
-    #     [y_disk.extend(chunck_all_pts) for chunck_all_pts in disk_chuncks_all_pts]
-    #     [y_cpu.extend(chunck_all_pts) for chunck_all_pts in cpu_chuncks_all_pts]
-    #     plt.plot(list(range(len(y_mem))), y_mem, '-o', linewidth=3, markersize=1.5, color='blue', label='Memory Utilization')
-    #     plt.plot(list(range(len(y_disk))), y_disk, '-o', linewidth=3, markersize=1.5, color='purple', label='Disk Utilization')
-    #     x_cpu = list(range(len(y_cpu)))
-    #     plt.plot([x*5 for x in x_cpu], y_cpu, '-o', linewidth=3, markersize=1.5, color='green', label='CPU Utilization') #goes by 5
-    #     # formatting labels, axis and title
-    #     plt.xlabel('Time [min]', fontsize=22, labelpad=30)
-    #     plt.ylabel('Percentage', fontsize=22, labelpad=30)
-    #     plt.xticks(fontsize=22)
-    #     plt.yticks(fontsize=22)
-    #     plt.ylim(ymin=0, ymax=100)
-    #     plt.xlim(xmin=0, xmax=self.total_minutes)
-    #     plt.title(title, fontsize=30, pad=60, fontweight="bold")
-    #     plt.legend(fontsize=22, loc='upper center', bbox_to_anchor=(0.81, -0.055), ncol=3)
-    #     # formatting grid
-    #     plt.minorticks_on()
-    #     plt.grid(b=True, which='major', color='#666666', linestyle='-')
-    #     plt.grid(b=True, which='minor', color='#999999', linestyle='--', alpha=0.3)
-    #     # saving the plot
-    #     filename = directory + '/' + 'utilization_mem_disk_cpu.png'
-    #     plt.savefig(filename)
-    #     plt.close(fig='all')
-    #     # clearing plt
-    #     plt.clf()
-    #     return(filename)
-
+    # functions to create reports and html
     def create_html(self, instance_type, directory):
         self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
