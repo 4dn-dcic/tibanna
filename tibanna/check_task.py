@@ -147,4 +147,4 @@ def handle_metrics(prj):
         raise Exception("error getting metrics: %s" % str(e))
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
-    resources.upload(bucket=prj.config.log_bucket, prefix=prj.JOBID + '.metrics/')
+    resources.upload(bucket=prj.config.log_bucket, prefix=prj.Job.JOBID + '.metrics/')

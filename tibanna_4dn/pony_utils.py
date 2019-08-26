@@ -31,7 +31,7 @@ from tibanna.ec2_utils import (
 from tibanna.awsem import (
     AwsemPostRunJson
 )
-from tibanna.var import (
+from tibanna.vars import (
     METRICS_URL
 )
 from .config import (
