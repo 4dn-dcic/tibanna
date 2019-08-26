@@ -52,7 +52,7 @@ _tibanna = '_tibanna'
 # step function and execution ARN generators
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
-
+BASE_METRICS_URL = 'https://%s.s3.amazonaws.com/%s.metrics/metrics.html'
 
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_ARN % ('stateMachine', sfn)
@@ -60,3 +60,7 @@ def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
 
 def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_EXEC_ARN % (sfn, exec_name)
+
+
+def METRICS_URL(log_bucket, job_id):
+    return BASE_METRICS_URL % (log_bucket, job_id)

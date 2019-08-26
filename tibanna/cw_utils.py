@@ -340,7 +340,6 @@ class TibannaResource(object):
             html = """\
                     <!DOCTYPE html>
                     <meta charset="utf-8">
-
                     <style type="text/css">
                     /* Basic Styling with CSS */
                     h2 {
@@ -383,7 +382,6 @@ class TibannaResource(object):
                       width: 85%%;
                       background-color: #e6f2ff;
                     }
-
                     /* Style the lines by removing the fill and applying a stroke */
                     .line {
                         fill: none;
@@ -394,7 +392,6 @@ class TibannaResource(object):
                       fill: none;
                       pointer-events: all;
                     }
-
                     /* Legend */
                     .data-name {
                         margin: 0 !important;
@@ -423,7 +420,6 @@ class TibannaResource(object):
                         height: auto;
                     }
                     </style>
-
                     <!-- Body tag is where we will append our SVG and SVG objects-->
                     <body>
                       <section>
@@ -505,116 +501,95 @@ class TibannaResource(object):
                           <div id="chart_disk"> </div>
                       </section>
                     </body>
-
                     <!-- Load in the d3 library -->
                     <script src="https://d3js.org/d3.v5.min.js"></script>
                     <script>
-
                     //var onResize = _.debounce(function(){
                     //  svgElem.innerHTML = '';
                     //  line_plot();
                     //});
-
                     //window.onload = function(){
                     //  window.addEventListener('resize', onResize);
                     //}
-
                     /* Functions definition */
                     function percent_plot(data_array, div) { // data_array = [data_mem, data_disk, data_cpu]
                       // Get div dimensions
                       var div_width = document.getElementById(div).offsetWidth
                         , div_height = document.getElementById(div).offsetHeight;
-
                       // Use the margin convention practice
                       var margin = {top: 40, right: 150, bottom: 100, left: 150}
                         , width = div_width - margin.left - margin.right // Use the window's width
                         , height = div_height - margin.top - margin.bottom; // Use the window's height
-
                       // Dataset as y values
                       data_mem = data_array[0]
                       data_disk = data_array[1]
                       data_cpu = data_array[2]
-
                       // The number of datapoints
                       var n = data_mem.length;
                       var n_cpu = data_cpu.length;
-
                       // X scale will use the index of our data
                       var xScale = d3.scaleLinear()
                           .domain([0, n-1]) // input
                           .range([0, width]); // output
-
                       // X scale for CPU utilization that has interval size of 5 instead of 1
                       var xScale_cpu = d3.scaleLinear()
                           .domain([0, n_cpu-1]) // input
                           .range([0, width]); // output
-
                       // Y scale will use the randomly generate number
                       var yScale = d3.scaleLinear()
                           .domain([0, 100]) // input
                           .range([height, 0]); // output
-
                       // d3's line generator
                       var line = d3.line()
                           .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
                           .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                           //.curve(d3.curveMonotoneX) // apply smoothing to the line
-
                       // d3's line generator for CPU utilization
                       var line_cpu = d3.line()
                           .x(function(d, i) { return xScale_cpu(i); }) // set the x values for the line generator
                           .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                           //.curve(d3.curveMonotoneX) // apply smoothing to the line
-
                       // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
                       var dataset_mem = d3.range(n).map(function(d) { return {"y": data_mem[d] } })
                       var dataset_disk = d3.range(n).map(function(d) { return {"y": data_disk[d] } })
                       var dataset_cpu = d3.range(n_cpu).map(function(d) { return {"y": data_cpu[d] } })
-
                       // Add the SVG to the page
                       var svg = d3.select("#" + div).append("svg")
                           .attr("width", width + margin.left + margin.right)
                           .attr("height", height + margin.top + margin.bottom)
                         .append("g")
                           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
                       // Call the x axis in a group tag
                       svg.append("g")
                           .attr("class", "x axis")
                           .attr("transform", "translate(0," + height + ")")
                           .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
-
                       // Call the y axis in a group tag
                       svg.append("g")
                           .attr("class", "y axis")
                           .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
-
                       // Append the path, bind the data, and call the line generator
                       svg.append("path")
                           .datum(dataset_mem) // Binds data to the line
                           .attr("class", "line") // Assign a class for styling
                           .style("stroke", "blue")
                           .attr("d", line); // Calls the line generator
-
                       // Append the path, bind the data, and call the line generator
                       svg.append("path")
                           .datum(dataset_disk) // Binds data to the line
                           .attr("class", "line") // Assign a class for styling
                           .style("stroke", "green")
                           .attr("d", line); // Calls the line generator
-
                       // Append the path, bind the data, and call the line generator
                       svg.append("path")
                           .datum(dataset_cpu) // Binds data to the line
                           .attr("class", "line") // Assign a class for styling
                           .style("stroke", "purple")
                           .attr("d", line_cpu); // Calls the line generator
-
                       svg.append("text")
                           .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - margin.bottom / 2) + ")")
                           .style("text-anchor", "middle")
                           .text("Time [min]");
-
                       svg.append("text")
                           .attr("transform", "rotate(-90)")
                           .attr("y", 0 - margin.left + margin.left / 2)
@@ -623,68 +598,55 @@ class TibannaResource(object):
                           .style("text-anchor", "middle")
                           .text('Percentage [%%]');
                     }
-
                     function line_plot(data, div, axis_label) {
                       // Get div dimensions
                       var div_width = document.getElementById(div).offsetWidth
                         , div_height = document.getElementById(div).offsetHeight;
-
                       // Use the margin convention practice
                       var margin = {top: 20, right: 150, bottom: 100, left: 150}
                         , width = div_width - margin.left - margin.right // Use the window's width
                         , height = div_height - margin.top - margin.bottom; // Use the window's height
-
                       // The number of datapoints
                       var n = data.length;
-
                       // X scale will use the index of our data
                       var xScale = d3.scaleLinear()
                           .domain([0, n-1]) // input
                           .range([0, width]); // output
-
                       // Y scale will use the randomly generate number
                       var yScale = d3.scaleLinear()
                           .domain([0, d3.max(data)]) // input
                           .range([height, 0]); // output
-
                       // d3's line generator
                       var line = d3.line()
                           .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
                           .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                           //.curve(d3.curveMonotoneX) // apply smoothing to the line
-
                       // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
                       var dataset = d3.range(n).map(function(d) { return {"y": data[d] } })
-
                       // Add the SVG to the page
                       var svg = d3.select("#" + div).append("svg")
                           .attr("width", width + margin.left + margin.right)
                           .attr("height", height + margin.top + margin.bottom)
                         .append("g")
                           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
                       // Call the x axis in a group tag
                       svg.append("g")
                           .attr("class", "x axis")
                           .attr("transform", "translate(0," + height + ")")
                           .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
-
                       // Call the y axis in a group tag
                       svg.append("g")
                           .attr("class", "y axis")
                           .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
-
                       // Append the path, bind the data, and call the line generator
                       svg.append("path")
                           .datum(dataset) // Binds data to the line
                           .attr("class", "line") // Assign a class for styling
                           .attr("d", line); // Calls the line generator
-
                       svg.append("text")
                           .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - margin.bottom / 2) + ")")
                           .style("text-anchor", "middle")
                           .text("Time [min]");
-
                       svg.append("text")
                           .attr("transform", "rotate(-90)")
                           .attr("y", 0 - margin.left + margin.left / 2)
@@ -693,7 +655,6 @@ class TibannaResource(object):
                           .style("text-anchor", "middle")
                           .text(axis_label);
                     }
-
                     /* Reading data and Plotting */
                     d3.tsv("metrics.tsv").then(function(data) {
                         return data.map(function(d){
@@ -704,7 +665,6 @@ class TibannaResource(object):
                       }).then(function(d){
                         line_plot(d, 'chart_max_mem', 'Memory used [Mb]');
                     });
-
                     d3.tsv("metrics.tsv").then(function(data) {
                         return data.map(function(d){
                           if (Number.isNaN(parseFloat(d.min_mem_available_MB)) == false) {
@@ -714,7 +674,6 @@ class TibannaResource(object):
                       }).then(function(d){
                         line_plot(d, 'chart_min_mem', 'Memory available [Mb]');
                     });
-
                     d3.tsv("metrics.tsv").then(function(data) {
                         return data.map(function(d){
                           if (Number.isNaN(parseFloat(d.max_disk_space_used_GB)) == false) {
@@ -724,18 +683,15 @@ class TibannaResource(object):
                       }).then(function(d){
                         line_plot(d, 'chart_disk', 'Disk space used [Gb]');
                     });
-
                     d3.tsv("metrics.tsv").then(function(data) {
                         var data_array = [[], [], []]
                         data.forEach(function(d) {
                             if (Number.isNaN(parseFloat(d.max_mem_utilization_percent)) == false) {
                               data_array[0].push(parseFloat(d.max_mem_utilization_percent));
                             }
-
                             if (Number.isNaN(parseFloat(d.max_disk_space_utilization_percent)) == false) {
                               data_array[1].push(parseFloat(d.max_disk_space_utilization_percent));
                             }
-
                             if (Number.isNaN(parseFloat(d.max_cpu_utilization_percent)) == false) {
                               data_array[2].push(parseFloat(d.max_cpu_utilization_percent));
                             }
