@@ -312,7 +312,7 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
@@ -332,7 +332,8 @@ class API(object):
                 res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
             except Exception as e:
                 if 'NoSuchKey' in str(e):
-                    printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                    if not quiet:
+                        printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
                     return ''
                 else:
                     raise e
@@ -352,8 +353,9 @@ class API(object):
                             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         except Exception as e:
                             if 'NoSuchKey' in str(e):
-                                printlog("log/postrunjson file is not ready yet. " +
-                                         "Wait a few seconds/minutes and try again.")
+                                if not quiet:
+                                    printlog("log/postrunjson file is not ready yet. " +
+                                             "Wait a few seconds/minutes and try again.")
                                 return ''
                             else:
                                 raise e
@@ -791,16 +793,21 @@ class API(object):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
-        try:
-            runjson = AwsemPostRunJson(**json.loads(self.log(job_id=job_id, sfn=sfn, postrunjson=True)))
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True, quiet=True)
+        if postrunjsonstr:
+            postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
             job_complete = True
-        except MalFormattedPostrunJsonException as e:
-            raise(e)
-        except:  # still running
-            runjson = AwsemRunJson(**json.loads(self.log(job_id=job_id, sfn=sfn, runjson=True)))
-        # getting Job
-        job = runjson.Job
-        log_bucket = runjson.config.log_bucket
+            job = postrunjson.Job
+            log_bucket = postrunjson.config.log_bucket
+        else:
+            runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
+            if runjsonstr:
+                runjson = AwsemRunJson(**json.loads(runjsonstr))
+                job = runjson.Job
+                log_bucket = runjson.config.log_bucket
+            else:
+                raise Exception("Neither postrun json nor run json can be retrieved." +
+                                "Check job_id or step function?")
         # report already on s3 with a lock
         if self.check_metrics_plot(job_id, log_bucket) and \
            self.check_metrics_lock(job_id, log_bucket) and \
