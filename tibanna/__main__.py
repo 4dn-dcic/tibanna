@@ -341,7 +341,7 @@ def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=Fa
 
 def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     """print out cost of a specific job"""
-    API().cost(job_id=job_id, sfn=sfn)
+    print(API().cost(job_id=job_id, sfn=sfn))
 
 
 def main(Subcommands=Subcommands):
