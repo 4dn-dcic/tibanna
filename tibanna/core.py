@@ -875,3 +875,25 @@ class API(object):
         # clean up uploaded files
         for f in M.list_files:
             os.remove(f)
+
+    def cost(self, job_id, sfn=None):
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
+        if not postrunjsonstr:
+            return None
+        job = AwsemPostRunJson(**json.loads(postrunjsonstr)).Job
+
+        def reformat_time(t, delta):
+            d = datetime.strptime(t, '%Y%m%d-%H:%M:%S-UTC') + timedelta(days=delta)
+            return d.strftime("%Y-%m-%d")
+
+        start_time = reformat_time(job.start_time, -1)  # give more room
+        end_time = reformat_time(job.end_time, 1)  # give more room
+        billing_args = {'Filter': {'Tags': {'Key': 'Name', 'Values': ['awsem-' + job_id]}},
+                        'Granularity': 'DAILY',
+                        'TimePeriod': {'Start': start_time,
+                                       'End': end_time},
+                        'Metrics': ['BlendedCost']}
+        billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+        return sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
