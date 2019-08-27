@@ -51,7 +51,6 @@ from .stepfunction import StepFunctionUnicorn
 from .cw_utils import TibannaResource
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
-    MalFormattedPostrunJsonException,
     MetricRetrievalException
 )
 
@@ -797,7 +796,7 @@ class API(object):
         return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
 
     def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
-                     endtime='', filesystem='/dev/nvme1n1'):
+                     update_html_only=False, endtime='', filesystem='/dev/nvme1n1'):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
@@ -859,13 +858,16 @@ class API(object):
                 else:
                     job_complete = True  # job failed a lont time ago
         # plotting
-        try:
-            M = TibannaResource(instance_id, filesystem, starttime, endtime)
-            M.plot_metrics(instance_type, directory)
-        except Exception as e:
-            raise MetricRetrievalException(e)
-        # upload files
-        M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
+        if update_html_only:
+            TibannaResource.update_html(log_bucket, job_id + '.metrics/', lock=job_complete)
+        else:
+            try:
+                M = TibannaResource(instance_id, filesystem, starttime, endtime)
+                M.plot_metrics(instance_type, directory)
+            except Exception as e:
+                raise MetricRetrievalException(e)
+            # upload files
+            M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
         printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
         # open metrics html in browser
         if open_browser:
