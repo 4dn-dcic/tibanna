@@ -50,7 +50,10 @@ from .iam_utils import (
 from .stepfunction import StepFunctionUnicorn
 from .cw_utils import TibannaResource
 from .awsem import AwsemRunJson, AwsemPostRunJson
-
+from .exceptions import (
+    MalFormattedPostrunJsonException,
+    MetricRetrievalException
+)
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -778,14 +781,13 @@ class API(object):
         return sfndef.sfn_name
 
     def check_metrics_plot(self, job_id, log_bucket):
-        return True if does_key_exist(log_bucket, job_id + '.metrics/metrics.html') else False
-
+        return True if does_key_exist(log_bucket, job_id + '.metrics/metrics.html', quiet=True) else False
 
     def check_metrics_lock(self, job_id, log_bucket):
-        return True if does_key_exist(log_bucket, job_id + '.metrics/lock') else False
+        return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
 
-
-    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False, endtime='', filesystem='/dev/nvme1n1'):
+    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
+                     endtime='', filesystem='/dev/nvme1n1'):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
@@ -794,11 +796,12 @@ class API(object):
             job_complete = True
         except MalFormattedPostrunJsonException as e:
             raise(e)
-        except: # still running
+        except:  # still running
             runjson = AwsemRunJson(**json.loads(self.log(job_id=job_id, sfn=sfn, runjson=True)))
         # getting Job
         job = runjson.Job
         log_bucket = runjson.config.log_bucket
+        # report already on s3 with a lock
         if self.check_metrics_plot(job_id, log_bucket) and \
            self.check_metrics_lock(job_id, log_bucket) and \
            not force_upload:
@@ -807,7 +810,9 @@ class API(object):
             # open metrics html in browser
             if open_browser:
                 webbrowser.open(METRICS_URL(log_bucket, job_id))
-        starttime =job.start_time_as_str
+            return None
+        # report not already on s3 with a lock
+        starttime = job.start_time_as_str
         if not endtime:
             if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
                 endtime = job.end_time_as_str

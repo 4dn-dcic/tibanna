@@ -83,12 +83,13 @@ def read_s3(bucket, object_name):
     return response['Body'].read().decode('utf-8', 'backslashreplace')
 
 
-def does_key_exist(bucket, object_name):
+def does_key_exist(bucket, object_name, quiet=False):
     try:
         file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object_name)
     except Exception as e:
-        print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
-        print(str(e))
+        if not quiet:
+            print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
+            print(str(e))
         return False
     return file_metadata
 
