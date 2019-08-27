@@ -571,8 +571,10 @@ class TibannaResource(object):
                   var n_l = 0
                   if (n <= 100) {
                     n_l = n / 10
-                  } else {
+                  } else if (n <= 1000) {
                     n_l = n / 50
+                  } else {
+                    n_l = n / 500
                   }
                   return d3.axisLeft(y)
                         .ticks(n_l)
