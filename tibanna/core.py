@@ -326,47 +326,55 @@ class API(object):
             exec_arn = EXECUTION_ARN(exec_name, sfn)
         if exec_arn:
             desc = sf.describe_execution(executionArn=exec_arn)
-            jobid = str(json.loads(desc['input'])['jobid'])
+            job_id = str(json.loads(desc['input'])['jobid'])
             logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-            try:
-                res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
-            except Exception as e:
-                if 'NoSuchKey' in str(e):
-                    if not quiet:
-                        printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
-                    return ''
-                else:
-                    raise e
-            if res_s3:
-                return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         elif job_id:
-            stateMachineArn = STEP_FUNCTION_ARN(sfn)
-            res = sf.list_executions(stateMachineArn=stateMachineArn)
-            while True:
-                if 'executions' not in res or not res['executions']:
-                    break
-                for exc in res['executions']:
-                    desc = sf.describe_execution(executionArn=exc['executionArn'])
-                    if job_id == str(json.loads(desc['input'])['jobid']):
-                        logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                        try:
-                            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
-                        except Exception as e:
-                            if 'NoSuchKey' in str(e):
-                                if not quiet:
-                                    printlog("log/postrunjson file is not ready yet. " +
-                                             "Wait a few seconds/minutes and try again.")
-                                return ''
-                            else:
-                                raise e
-                        if res_s3:
-                            return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
+            # first try dynanmodb to get logbucket
+            ddres = dict()
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName='tibanna-master',
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+            except Exception as e:
+                pass
+            if 'Item' in ddres:
+                logbucket = ddres['Items'][0]['Log Bucket']['S']
+            else:
+                # search through executions to get logbucket
+                stateMachineArn = STEP_FUNCTION_ARN(sfn)
+                res = sf.list_executions(stateMachineArn=stateMachineArn)
+                while True:
+                    if 'executions' not in res or not res['executions']:
                         break
-                if 'nextToken' in res:
-                    res = sf.list_executions(nextToken=res['nextToken'],
-                                             stateMachineArn=stateMachineArn)
-                else:
-                    break
+                    breakwhile = False
+                    for exc in res['executions']:
+                        desc = sf.describe_execution(executionArn=exc['executionArn'])
+                        if job_id == str(json.loads(desc['input'])['jobid']):
+                            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+                            breakwhile = True
+                            break
+                    if breakwhile:
+                        break
+                    if 'nextToken' in res:
+                        res = sf.list_executions(nextToken=res['nextToken'],
+                                                 stateMachineArn=stateMachineArn)
+                    else:
+                        break
+        else:
+            raise Exception("Either job_id, exec_arn or exec_name must be provided.")
+        try:
+            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+        except Exception as e:
+            if 'NoSuchKey' in str(e):
+                if not quiet:
+                    printlog("log/postrunjson file is not ready yet. " +
+                             "Wait a few seconds/minutes and try again.")
+                return ''
+            else:
+                raise e
+        if res_s3:
+            return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         return None
 
     def stat(self, sfn=None, status=None, verbose=False, n=None):
