@@ -18,7 +18,8 @@ from .exceptions import (
     EC2StartingException,
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
-    EC2IdleException
+    EC2IdleException,
+    MetricRetrievalException
 )
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
@@ -85,7 +86,10 @@ def check_task(input_json):
         start = end - timedelta(hours=1)
         jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
         if jobstart_time + timedelta(hours=1) < end:
-            cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+            try:
+                cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+            except Exception as e:
+                raise MetricRetrievalException(e)
             if 'max_cpu_utilization_percent' in cw_res:
                 if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
                     # the instance wasn't terminated - otherwise it would have been captured in the previous error.
@@ -144,7 +148,7 @@ def handle_metrics(prj):
                                     prj.Job.start_time_as_str,
                                     prj.Job.end_time_as_str or datetime.now())
     except Exception as e:
-        raise Exception("error getting metrics: %s" % str(e))
+        raise MetricRetrivalException("error getting metrics: %s" % str(e))
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
     resources.upload(bucket=prj.config.log_bucket, prefix=prj.Job.JOBID + '.metrics/')
