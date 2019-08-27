@@ -35,6 +35,7 @@ from .utils import (
     _tibanna_settings,
     printlog,
     create_jobid,
+    does_key_exist
 )
 from .ec2_utils import (
     UnicornInput,
@@ -48,6 +49,8 @@ from .iam_utils import (
 )
 from .stepfunction import StepFunctionUnicorn
 from .cw_utils import TibannaResource
+from .awsem import AwsemRunJson, AwsemPostRunJson
+
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -789,6 +792,8 @@ class API(object):
         try:
             runjson = AwsemPostRunJson(**json.loads(self.log(job_id=job_id, sfn=sfn, postrunjson=True)))
             job_complete = True
+        except MalFormattedPostrunJsonException as e:
+            raise(e)
         except: # still running
             runjson = AwsemRunJson(**json.loads(self.log(job_id=job_id, sfn=sfn, runjson=True)))
         # getting Job

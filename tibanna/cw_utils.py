@@ -97,9 +97,11 @@ class TibannaResource(object):
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
 
-    def upload(self, bucket, prefix=''):
+    def upload(self, bucket, prefix='', lock=True):
         for f in self.list_files:
             upload(f, bucket, prefix)
+        if lock:
+            upload(None, bucket, os.path.join(prefix, 'lock'))
 
     def choose_max(self, x):
         M = -1
