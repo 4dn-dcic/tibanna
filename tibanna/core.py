@@ -794,8 +794,9 @@ class API(object):
         # getting Job
         job = runjson.Job
         log_bucket = runjson.config.log_bucket
-        if self.check_metrics_plot(job_id, log_bucket) and self.check_metrics_lock(job_id, log_bucket)
-           and not force_upload:
+        if self.check_metrics_plot(job_id, log_bucket) and \
+           self.check_metrics_lock(job_id, log_bucket) and \
+           not force_upload:
             printlog("Metrics plot is already on S3 bucket.")
             printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
             # open metrics html in browser

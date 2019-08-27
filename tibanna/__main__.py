@@ -37,7 +37,7 @@ class Subcommands(object):
                                  'Use it only when the IAM permissions need to be reset',
             'stat': 'print out executions with details',
             'users': 'list all users along with their associated tibanna user groups',
-            'plot_metrics': 'create a metrics report html'
+            'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists'
         }
 
     @property
@@ -219,9 +219,11 @@ class Subcommands(object):
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
-                 {'flag': ["-u", "--upload"],
-                  'help': "upload the metrics report to s3 bucket (logbucket/jobid.metrics/metrics.html)",
-                  'action': "store_true"}]
+                 {'flag': ["-f", "--force-upload"],
+                  'help': "upload the metrics report to s3 bucket even if there is a lock",
+                  'action': "store_true"},
+                 {'flag': ["-e", "--endtime"],
+                  'help': "endtime (default job end time if the job has finished or the current time)"}]
         }
 
 
@@ -321,9 +323,9 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
     API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
 
 
-def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, upload=False):
+def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, endtime=''):
     """create a resource metrics report html"""
-    API().plot_metrics(job_id=job_id, sfn=sfn, upload=upload)
+    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, endtime=endtime)
 
 
 def main(Subcommands=Subcommands):
