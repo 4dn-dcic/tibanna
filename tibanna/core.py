@@ -856,7 +856,7 @@ class API(object):
                     raise Exception("the instance is still setting up. " +
                                     "Wait a few seconds/minutes and try again.")
                 else:
-                    job_complete = True  # job failed a lont time ago
+                    raise Exception("instance id not available for this run.")
         # plotting
         if update_html_only:
             TibannaResource.update_html(log_bucket, job_id + '.metrics/', lock=job_complete)

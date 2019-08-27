@@ -326,9 +326,9 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
     API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
 
 
-def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, endtime=''):
+def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False, endtime=''):
     """create a resource metrics report html"""
-    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, endtime=endtime)
+    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=False, endtime=endtime)
 
 
 def main(Subcommands=Subcommands):

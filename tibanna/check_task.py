@@ -121,7 +121,7 @@ def handle_postrun_json(bucket_name, jobid, input_json, public_read=False):
     acl = 'public-read' if public_read else 'private'
     try:
         boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
-                                      Body=json.dumps(postrunjsoncontent, indent=4).encode())
+                                      Body=json.dumps(prj.as_dict(), indent=4).encode())
     except Exception as e:
         raise "error in updating postrunjson %s" % str(e)
     # add postrun json to the input json
