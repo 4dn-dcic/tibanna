@@ -450,10 +450,10 @@ class FourfrontUpdater(object):
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
 
     def create_wfr_qc(self):
-        qcuuid = str(uuid.uuid4())
-        url = METRICS_URL(self.config.log_bucket, self.jobid)
-        self.update_post_items(qcuuid, {'url': url}, 'QualityMetricWorkflowrun')
-        self.ff_meta.quality_metric = qcuuid
+        qc_object = self.create_qc_template()
+        qc_object['url'] = METRICS_URL(self.config.log_bucket, self.jobid)
+        self.update_post_items(qc_object['uuid'], qc_object, 'QualityMetricWorkflowrun')
+        self.ff_meta.quality_metric = qc_object['uuid']
 
     def handle_success(self):
         # update run status in metadata first
