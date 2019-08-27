@@ -859,7 +859,7 @@ class API(object):
                     raise Exception("instance id not available for this run.")
         # plotting
         if update_html_only:
-            TibannaResource.update_html(log_bucket, job_id + '.metrics/', lock=job_complete)
+            TibannaResource.update_html(log_bucket, job_id + '.metrics/')
         else:
             try:
                 M = TibannaResource(instance_id, filesystem, starttime, endtime)
@@ -868,13 +868,13 @@ class API(object):
                 raise MetricRetrievalException(e)
             # upload files
             M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
+            # clean up uploaded files
+            for f in M.list_files:
+                os.remove(f)
         printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
         # open metrics html in browser
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
-        # clean up uploaded files
-        for f in M.list_files:
-            os.remove(f)
 
     def cost(self, job_id, sfn=None):
         if not sfn:
