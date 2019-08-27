@@ -807,12 +807,14 @@ class API(object):
             job_complete = True
             job = postrunjson.Job
             log_bucket = postrunjson.config.log_bucket
+            instance_type = postrunjson.config.instance_type or 'unknown'
         else:
             runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
             if runjsonstr:
                 runjson = AwsemRunJson(**json.loads(runjsonstr))
                 job = runjson.Job
                 log_bucket = runjson.config.log_bucket
+                instance_type = runjson.config.instance_type or 'unknown'
             else:
                 raise Exception("Neither postrun json nor run json can be retrieved." +
                                 "Check job_id or step function?")
@@ -856,8 +858,6 @@ class API(object):
                                     "Wait a few seconds/minutes and try again.")
                 else:
                     job_complete = True  # job failed a lont time ago
-        # getting instance type
-        instance_type = runjson.config.instance_type or 'unknown'
         # plotting
         try:
             M = TibannaResource(instance_id, filesystem, starttime, endtime)
