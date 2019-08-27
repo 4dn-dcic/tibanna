@@ -222,6 +222,9 @@ class Subcommands(object):
                  {'flag': ["-f", "--force-upload"],
                   'help': "upload the metrics report to s3 bucket even if there is a lock",
                   'action': "store_true"},
+                 {'flag': ["-u", "--update-html-only"],
+                  'help': "update html only and do not update the text files",
+                  'action': "store_true"},
                  {'flag': ["-e", "--endtime"],
                   'help': "endtime (default job end time if the job has finished or the current time)"}]
         }
