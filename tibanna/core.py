@@ -35,6 +35,7 @@ from .utils import (
     _tibanna_settings,
     printlog,
     create_jobid,
+    does_key_exist
 )
 from .ec2_utils import (
     UnicornInput,
@@ -48,6 +49,11 @@ from .iam_utils import (
 )
 from .stepfunction import StepFunctionUnicorn
 from .cw_utils import TibannaResource
+from .awsem import AwsemRunJson, AwsemPostRunJson
+from .exceptions import (
+    MalFormattedPostrunJsonException,
+    MetricRetrievalException
+)
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -306,7 +312,7 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
@@ -326,7 +332,8 @@ class API(object):
                 res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
             except Exception as e:
                 if 'NoSuchKey' in str(e):
-                    printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
+                    if not quiet:
+                        printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
                     return ''
                 else:
                     raise e
@@ -346,8 +353,9 @@ class API(object):
                             res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
                         except Exception as e:
                             if 'NoSuchKey' in str(e):
-                                printlog("log/postrunjson file is not ready yet. " +
-                                         "Wait a few seconds/minutes and try again.")
+                                if not quiet:
+                                    printlog("log/postrunjson file is not ready yet. " +
+                                             "Wait a few seconds/minutes and try again.")
                                 return ''
                             else:
                                 raise e
@@ -774,57 +782,86 @@ class API(object):
             break
         return sfndef.sfn_name
 
-    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, upload=False, filesystem='/dev/nvme1n1'):
+    def check_metrics_plot(self, job_id, log_bucket):
+        return True if does_key_exist(log_bucket, job_id + '.metrics/metrics.html', quiet=True) else False
+
+    def check_metrics_lock(self, job_id, log_bucket):
+        return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
+
+    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
+                     endtime='', filesystem='/dev/nvme1n1'):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
-        try:
-            runjson = json.loads(self.log(job_id=job_id, sfn=sfn, postrunjson=True))
-        except: # still running
-            runjson = json.loads(self.log(job_id=job_id, sfn=sfn, runjson=True))
-        # getting Job
-        job = runjson.get('Job', '')
-        if job:
-            if 'start_time' in job:
-                starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
-            else:
-                return None # we have to do something here
-            if 'end_time' in job:
-                endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
-            else:
-                endtime = datetime.utcnow()
-            if 'filesystem' in job:
-                filesystem = job['filesystem']
-            else:
-                filesystem = filesystem
-            if 'instance_id' in job:
-                instance_id = job['instance_id']
-            else:
-                ec2 = boto3.client('ec2')
-                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
-                if res['Reservations']:
-                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-                else:
-                    return None # we have to do something here
-            # getting instance type
-            instance_type = runjson.get('config', {}).get('instance_type', 'unknown')
-            # waiting 10 min to be sure the istance is starting
-            if (endtime - starttime) / timedelta(minutes=1) < 10:
-                printlog("the instance is still setting up. " +
-                         "Wait a few seconds/minutes and try again.")
-                return None
-            # plotting
-            M = TibannaResource(instance_id, filesystem, starttime, endtime)
-            M.plot_metrics(instance_type, directory)
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True, quiet=True)
+        if postrunjsonstr:
+            postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+            job_complete = True
+            job = postrunjson.Job
+            log_bucket = postrunjson.config.log_bucket
         else:
-            raise Exception("Job not found in runjson/postrunjson")
-        # upload files
-        if upload:
-            log_bucket = runjson.get('config', {}).get('log_bucket', None)
-            M.upload(bucket=log_bucket, prefix=job_id + '.metrics/')
+            runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
+            if runjsonstr:
+                runjson = AwsemRunJson(**json.loads(runjsonstr))
+                job = runjson.Job
+                log_bucket = runjson.config.log_bucket
+            else:
+                raise Exception("Neither postrun json nor run json can be retrieved." +
+                                "Check job_id or step function?")
+        # report already on s3 with a lock
+        if self.check_metrics_plot(job_id, log_bucket) and \
+           self.check_metrics_lock(job_id, log_bucket) and \
+           not force_upload:
+            printlog("Metrics plot is already on S3 bucket.")
+            printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
             # open metrics html in browser
             if open_browser:
                 webbrowser.open(METRICS_URL(log_bucket, job_id))
-            # clean up uploaded files
-            for f in M.list_files:
-                os.remove(f)
+            return None
+        # report not already on s3 with a lock
+        starttime = job.start_time_as_str
+        if not endtime:
+            if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
+                endtime = job.end_time_as_str
+            else:
+                endtime = datetime.utcnow()
+        if hasattr(job, 'filesystem') and job.filesystem:
+            filesystem = job.filesystem
+        else:
+            filesystem = filesystem
+        if hasattr(job, 'instance_id') and job.instance_id:
+            instance_id = job.instance_id
+        else:
+            ec2 = boto3.client('ec2')
+            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+            if res['Reservations']:
+                instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
+                if instance_status in ['terminated', 'shutting-down']:
+                    job_complete = True  # job failed
+                else:
+                    job_complete = False  # still running
+            else:
+                # waiting 10 min to be sure the istance is starting
+                if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
+                    raise Exception("the instance is still setting up. " +
+                                    "Wait a few seconds/minutes and try again.")
+                else:
+                    job_complete = True  # job failed a lont time ago
+        # getting instance type
+        instance_type = runjson.config.instance_type or 'unknown'
+        # plotting
+        try:
+            M = TibannaResource(instance_id, filesystem, starttime, endtime)
+            M.plot_metrics(instance_type, directory)
+        except Exception as e:
+            raise MetricRetrievalException(e)
+        # upload files
+        M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
+        printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+        # open metrics html in browser
+        if open_browser:
+            webbrowser.open(METRICS_URL(log_bucket, job_id))
+        # clean up uploaded files
+        for f in M.list_files:
+            os.remove(f)

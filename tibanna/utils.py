@@ -83,12 +83,13 @@ def read_s3(bucket, object_name):
     return response['Body'].read().decode('utf-8', 'backslashreplace')
 
 
-def does_key_exist(bucket, object_name):
+def does_key_exist(bucket, object_name, quiet=False):
     try:
         file_metadata = boto3.client('s3').head_object(Bucket=bucket, Key=object_name)
     except Exception as e:
-        print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
-        print(str(e))
+        if not quiet:
+            print("object %s not found on bucket %s" % (str(object_name), str(bucket)))
+            print(str(e))
         return False
     return file_metadata
 
@@ -96,15 +97,20 @@ def does_key_exist(bucket, object_name):
 def upload(filepath, bucket, prefix='', public=True):
     """upload a file to S3 under a prefix.
     The original directory structure is removed
-    and only the filename is preserved."""
-    s3 = boto3.client('s3')
-    dirname, filename = os.path.split(filepath)
-    key = os.path.join(prefix, filename)
+    and only the filename is preserved.
+    If filepath is none, upload an empty file with prefix
+    itself as key"""
     if public:
         acl='public-read'
     else:
         acl='private'
-    content_type = mimetypes.guess_type(filename)[0]
-    if content_type is None:
-        content_type = 'binary/octet-stream'
-    s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
+    s3 = boto3.client('s3')
+    if filepath:
+        dirname, filename = os.path.split(filepath)
+        key = os.path.join(prefix, filename)
+        content_type = mimetypes.guess_type(filename)[0]
+        if content_type is None:
+            content_type = 'binary/octet-stream'
+        s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
+    else:
+        s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
