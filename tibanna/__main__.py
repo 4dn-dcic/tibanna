@@ -234,7 +234,10 @@ class Subcommands(object):
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}]
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-u", "--update-tsv"],
+                  'help': "add cost to the metric tsv file on S3",
+                  'action': "store_true"}]
         }
 
 
@@ -339,9 +342,9 @@ def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=Fa
     API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=False, endtime=endtime)
 
 
-def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv):
     """print out cost of a specific job"""
-    print(API().cost(job_id=job_id, sfn=sfn))
+    print(API().cost(job_id=job_id, sfn=sfn, update_tsv))
 
 
 def main(Subcommands=Subcommands):
