@@ -339,12 +339,12 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
 
 def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False, endtime=''):
     """create a resource metrics report html"""
-    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=False, endtime=endtime)
+    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=update_html_only, endtime=endtime)
 
 
-def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv):
+def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
-    print(API().cost(job_id=job_id, sfn=sfn, update_tsv))
+    print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
 
 def main(Subcommands=Subcommands):
