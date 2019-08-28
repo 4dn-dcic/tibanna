@@ -295,7 +295,10 @@ class TibannaResource(object):
             d.setdefault(k, v) # everything is string now
         # times into datetime objects
         starttime = datetime.strptime(d['Start_Time'], '%Y-%m-%d %H:%M:%S')
-        endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
+        try:
+            endtime = datetime.strptime(d['End_Time'], '%Y-%m-%d %H:%M:%S')
+        except: # temporary fix for retrocompatibility
+            endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
         cost = d['Cost'] if 'Cost' in d else '---'
         # writing
         with open(filename, 'w') as fo:
@@ -354,7 +357,7 @@ class TibannaResource(object):
             fo.write('Maximum_CPU_Utilization' + '\t' + str(self.max_cpu_utilization_percent) + '\n')
             fo.write('Maximum_Disk_Utilization' + '\t' + str(self.max_disk_space_utilization_percent) + '\n')
             fo.write('Start_Time' + '\t' + str(self.start) + '\n')
-            fo.write('End_time' + '\t' + str(self.end) + '\n')
+            fo.write('End_Time' + '\t' + str(self.end) + '\n')
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
         return(filename)
 
