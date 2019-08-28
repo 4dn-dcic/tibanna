@@ -903,6 +903,7 @@ class API(object):
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
             # reading from metrics_report.tsv
+            does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
             write_file = read_file + 'Cost\t' + str(cost) + '\n'
             # writing
