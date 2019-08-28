@@ -35,7 +35,9 @@ from .utils import (
     _tibanna_settings,
     printlog,
     create_jobid,
-    does_key_exist
+    does_key_exist,
+    read_s3,
+    upload
 )
 from .ec2_utils import (
     UnicornInput,
@@ -876,13 +878,14 @@ class API(object):
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
 
-    def cost(self, job_id, sfn=None):
+    def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:
             sfn = self.default_stepfunction_name
         postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
         if not postrunjsonstr:
             return None
-        job = AwsemPostRunJson(**json.loads(postrunjsonstr)).Job
+        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+        job = postrunjson.Job
 
         def reformat_time(t, delta):
             d = datetime.strptime(t, '%Y%m%d-%H:%M:%S-UTC') + timedelta(days=delta)
@@ -896,4 +899,16 @@ class API(object):
                                        'End': end_time},
                         'Metrics': ['BlendedCost']}
         billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
-        return sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
+        cost = sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
+        if update_tsv:
+            log_bucket = postrunjson.config.log_bucket
+            # reading from metrics_report.tsv
+            read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
+            write_file = read_file + 'Cost\t' + str(cost) + '\n'
+            # writing
+            with open('metrics_report.tsv', 'w') as fo:
+                fo.write(write_file)
+            # upload new metrics_report.tsv
+            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+            os.remove('metrics_report.tsv')
+        return cost
