@@ -298,11 +298,15 @@ class TibannaResource(object):
         try:
             endtime = datetime.strptime(d['End_Time'], '%Y-%m-%d %H:%M:%S')
         except: # temporary fix for retrocompatibility
-            endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
+            if 'End_time' in d:
+                endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
+            else:
+                endtime = datetime.strptime(d['Time_of_Request'], '%Y-%m-%d %H:%M:%S')
         cost = d['Cost'] if 'Cost' in d else '---'
+        instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         with open(filename, 'w') as fo:
-            fo.write(TibannaResource.create_html() % (d['Instance_Type'],
+            fo.write(TibannaResource.create_html() % (instance,
                              float(d['Maximum_Memory_Used_Mb']), float(d['Minimum_Memory_Available_Mb']), float(d['Maximum_Disk_Used_Gb']),
                              float(d['Maximum_Memory_Utilization']), float(d['Maximum_CPU_Utilization']), float(d['Maximum_Disk_Utilization']),
                              cost,
@@ -575,9 +579,11 @@ class TibannaResource(object):
                   if (n <= 100) {
                     n_l = n / 10
                   } else if (n <= 1000) {
-                    n_l = n / 50
+                    n_l = n / 100
+                  } else if (n <= 50000) {
+                    n_l = n / 1000
                   } else {
-                    n_l = n / 500
+                    n_l = n / 5000
                   }
                   return d3.axisLeft(y)
                         .ticks(n_l)
