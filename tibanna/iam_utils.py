@@ -571,6 +571,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     # create IAM group for users who share permission
     custom_policy_names = [bucket_policy_name,
                            ec2_desc_policy_name,
+                           cloudwatch_metric_policy_name,
                            dynamodb_policy_name,
                            termination_policy_name]
     create_user_group(iam, tibanna_policy_prefix, custom_policy_names, account_id)
