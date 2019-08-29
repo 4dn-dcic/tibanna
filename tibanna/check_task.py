@@ -148,7 +148,7 @@ def handle_metrics(prj):
                                     prj.Job.start_time_as_str,
                                     prj.Job.end_time_as_str or datetime.now())
     except Exception as e:
-        raise MetricRetrivalException("error getting metrics: %s" % str(e))
+        raise MetricRetrievalException("error getting metrics: %s" % str(e))
     prj.Job.update(Metrics=resources.as_dict())
     resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
     resources.upload(bucket=prj.config.log_bucket, prefix=prj.Job.JOBID + '.metrics/')
