@@ -340,7 +340,7 @@ class API(object):
                                                            'ComparisonOperator': 'EQ'}})
             except Exception as e:
                 pass
-            if 'Item' in ddres:
+            if 'Items' in ddres:
                 logbucket = ddres['Items'][0]['Log Bucket']['S']
             else:
                 # search through executions to get logbucket
