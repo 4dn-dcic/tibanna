@@ -110,7 +110,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
                  start_time, end_time=None, status=None, Log=None,
                  total_input_size=None, total_output_size=None, total_tmp_size=None,
                  # older postrunjsons don't have these fields
-                 filesystem=None, instance_id=None,
+                 filesystem='', instance_id='',
                  Metrics=None):
         super().__init__(App, Input, Output, JOBID, start_time, Log)
         self.end_time = end_time
