@@ -17,7 +17,6 @@ from .vars import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-    DYNAMODB_TABLE,
     STEP_FUNCTION_ARN,
     EXECUTION_ARN,
     AMI_ID_CWL_V1,
@@ -853,8 +852,8 @@ class API(object):
                                                            'ComparisonOperator': 'EQ'}})
             except Exception as e:
                 pass
-            if 'Item' in ddres:
-                instance_id = ddres['Items'][0].get('instance_id',{}).get('S', '')
+            if 'Items' in ddres:
+                instance_id = ddres['Items'][0].get('instance_id', {}).get('S', '')
             if not instance_id:
                 ec2 = boto3.client('ec2')
                 res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
@@ -918,11 +917,14 @@ class API(object):
             # reading from metrics_report.tsv
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
-            write_file = read_file + 'Cost\t' + str(cost) + '\n'
-            # writing
-            with open('metrics_report.tsv', 'w') as fo:
-                fo.write(write_file)
-            # upload new metrics_report.tsv
-            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
-            os.remove('metrics_report.tsv')
+            if 'Cost' not in read_file:
+                write_file = read_file + 'Cost\t' + str(cost) + '\n'
+                # writing
+                with open('metrics_report.tsv', 'w') as fo:
+                    fo.write(write_file)
+                # upload new metrics_report.tsv
+                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+                os.remove('metrics_report.tsv')
+            else:
+                printlog("cost already in the tsv file. not updating")
         return cost
