@@ -1,6 +1,7 @@
 import boto3
 import json
 import random
+from .vars import DYNAMODB_TABLE
 
 
 def generate_policy_prefix(user_group_name, no_randomize=False):
@@ -198,7 +199,7 @@ def generate_dynamodb_policy(account_id, region, tibanna_policy_prefix):
                     "dynamodb:DescribeTable",
                     "dynamodb:PutItem"
                 ],
-                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/tibanna-master"
+                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/" + DYNAMODB_TABLE
             }
         ]
     }

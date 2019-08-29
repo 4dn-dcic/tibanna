@@ -30,6 +30,7 @@ from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
+    DYNAMODB_TABLE
 )
 from .utils import (
     _tibanna_settings,
@@ -334,7 +335,7 @@ class API(object):
             ddres = dict()
             try:
                 dd = boto3.client('dynamodb')
-                ddres = dd.query(TableName='tibanna-master',
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
                                  KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
                                                            'ComparisonOperator': 'EQ'}})
             except Exception as e:
