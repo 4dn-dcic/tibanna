@@ -841,25 +841,37 @@ class API(object):
             filesystem = job.filesystem
         else:
             filesystem = filesystem
+        instance_id = ''
         if hasattr(job, 'instance_id') and job.instance_id:
             instance_id = job.instance_id
         else:
-            ec2 = boto3.client('ec2')
-            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
-            if res['Reservations']:
-                instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-                instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
-                if instance_status in ['terminated', 'shutting-down']:
-                    job_complete = True  # job failed
+            ddres = dict()
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+            except Exception as e:
+                pass
+            if 'Item' in ddres:
+                instance_id = ddres['Items'][0].get('instance_id',{}).get('S', '')
+            if not instance_id:
+                ec2 = boto3.client('ec2')
+                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+                if res['Reservations']:
+                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                    instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
+                    if instance_status in ['terminated', 'shutting-down']:
+                        job_complete = True  # job failed
+                    else:
+                        job_complete = False  # still running
                 else:
-                    job_complete = False  # still running
-            else:
-                # waiting 10 min to be sure the istance is starting
-                if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
-                    raise Exception("the instance is still setting up. " +
-                                    "Wait a few seconds/minutes and try again.")
-                else:
-                    raise Exception("instance id not available for this run.")
+                    # waiting 10 min to be sure the istance is starting
+                    if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
+                        raise Exception("the instance is still setting up. " +
+                                        "Wait a few seconds/minutes and try again.")
+                    else:
+                        raise Exception("instance id not available for this run.")
         # plotting
         if update_html_only:
             TibannaResource.update_html(log_bucket, job_id + '.metrics/')
