@@ -119,7 +119,8 @@ class Args(SerializableObject):
     def fill_default(self):
         for field in ['input_files', 'input_parameters', 'input_env',
                       'secondary_files', 'output_target',
-                      'secondary_output_target', 'alt_cond_output_argnames']:
+                      'secondary_output_target', 'alt_cond_output_argnames',
+                      'additional_benchmarking_parameters']:
             if not hasattr(self, field):
                 setattr(self, field, {})
         for field in ['app_version']:
@@ -438,9 +439,11 @@ class Execution(object):
         return input_size_in_bytes
 
     def get_benchmarking(self, input_size_in_bytes):
+        benchmark_parameters = copy.deepcopy(self.args.input_parameters)
+        benchmark_parameters.update(self.args.additional_benchmarking_parameters)
         try:
             res = B.benchmark(self.args.app_name, {'input_size_in_bytes': input_size_in_bytes,
-                                                   'parameters': self.args.input_parameters})
+                                                   'parameters': benchmark_parameters})
         except:
             try:
                 res

@@ -134,8 +134,9 @@ def start_run(input_json):
     ff_meta.post(key=tbn.ff_keys)
 
     # parameters
-    args['input_parameters'] = input_json_copy.get('parameters')
-
+    args['input_parameters'] = input_json_copy.get('parameters', {})
+    args['additional_benchmarking_parameters'] = input_json_copy.get('additional_benchmarking_parameters', {})
+    
     # output target
     args['output_target'] = dict()
     args['secondary_output_target'] = dict()
