@@ -576,11 +576,15 @@ class TibannaResource(object):
                 }
                 function make_y_gridlines(y, n) {
                   var n_l = 0
-                  if (n <= 100) {
+                  if (n <= 200) {
                     n_l = n / 10
-                  } else if (n <= 1000) {
+                  } else if (n <= 500) {
+                    n_l = n / 50
+                  } else if (n <= 2000) {
                     n_l = n / 100
-                  } else if (n <= 50000) {
+                  } else if (n <= 5000) {
+                    n_l = n / 500
+                  } else if (n <= 20000) {
                     n_l = n / 1000
                   } else {
                     n_l = n / 5000
