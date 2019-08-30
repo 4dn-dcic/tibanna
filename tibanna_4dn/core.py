@@ -1,6 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionPony
-from .vars import SECRET, S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from .vars import S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
 
 
@@ -36,16 +36,13 @@ class API(_API):
         envlist_pony = {
             'run_workflow': {'TIBANNA_AWS_REGION': AWS_REGION,
                              'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'start_run_awsem': {'SECRET': SECRET,
-                                'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
+            'start_run_awsem': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
                                 'TIBANNA_AWS_REGION': AWS_REGION,
                                 'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'update_ffmeta_awsem': {'SECRET': SECRET,
-                                    'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
+            'update_ffmeta_awsem': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
                                     'TIBANNA_AWS_REGION': AWS_REGION,
                                     'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
-            'validate_md5_s3_initiator': {'SECRET': SECRET,
-                                          'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
+            'validate_md5_s3_initiator': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY,
                                           'TIBANNA_AWS_REGION': AWS_REGION,
                                           'AWS_ACCOUNT_NUMBER': AWS_ACCOUNT_NUMBER},
             'validate_md5_s3_trigger': {'TIBANNA_AWS_REGION': AWS_REGION,

@@ -1,7 +1,6 @@
 from tibanna.vars import *
 import os
 
-SECRET = os.environ.get("SECRET", '')
 S3_ENCRYPT_KEY = os.environ.get("S3_ENCRYPT_KEY", '')
 
 # default step function name
