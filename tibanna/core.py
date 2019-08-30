@@ -8,7 +8,8 @@ import logging
 import importlib
 import shutil
 import subprocess
-from datetime import datetime
+import webbrowser
+from datetime import datetime, timedelta
 from uuid import uuid4, UUID
 from types import ModuleType
 from .vars import (
@@ -16,7 +17,6 @@ from .vars import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION,
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-    DYNAMODB_TABLE,
     STEP_FUNCTION_ARN,
     EXECUTION_ARN,
     AMI_ID_CWL_V1,
@@ -28,11 +28,16 @@ from .vars import (
     TIBANNA_REPO_BRANCH,
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
+    METRICS_URL,
+    DYNAMODB_TABLE
 )
 from .utils import (
     _tibanna_settings,
     printlog,
     create_jobid,
+    does_key_exist,
+    read_s3,
+    upload
 )
 from .ec2_utils import (
     UnicornInput,
@@ -45,7 +50,11 @@ from .iam_utils import (
     get_lambda_role_name,
 )
 from .stepfunction import StepFunctionUnicorn
-
+from .cw_utils import TibannaResource
+from .awsem import AwsemRunJson, AwsemPostRunJson
+from .exceptions import (
+    MetricRetrievalException
+)
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -304,9 +313,11 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
+        elif runjson:
+            suffix = '.run.json'
         else:
             suffix = '.log'
         if not sfn:
@@ -316,45 +327,55 @@ class API(object):
             exec_arn = EXECUTION_ARN(exec_name, sfn)
         if exec_arn:
             desc = sf.describe_execution(executionArn=exec_arn)
-            jobid = str(json.loads(desc['input'])['jobid'])
+            job_id = str(json.loads(desc['input'])['jobid'])
             logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-            try:
-                res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=jobid + suffix)
-            except Exception as e:
-                if 'NoSuchKey' in str(e):
-                    printlog("log/postrunjson file is not ready yet. Wait a few seconds/minutes and try again.")
-                    return ''
-                else:
-                    raise e
-            if res_s3:
-                return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         elif job_id:
-            stateMachineArn = STEP_FUNCTION_ARN(sfn)
-            res = sf.list_executions(stateMachineArn=stateMachineArn)
-            while True:
-                if 'executions' not in res or not res['executions']:
-                    break
-                for exc in res['executions']:
-                    desc = sf.describe_execution(executionArn=exc['executionArn'])
-                    if job_id == str(json.loads(desc['input'])['jobid']):
-                        logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                        try:
-                            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
-                        except Exception as e:
-                            if 'NoSuchKey' in str(e):
-                                printlog("log/postrunjson file is not ready yet." +
-                                         "Wait a few seconds/minutes and try again.")
-                                return ''
-                            else:
-                                raise e
-                        if res_s3:
-                            return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
+            # first try dynanmodb to get logbucket
+            ddres = dict()
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+            except Exception as e:
+                pass
+            if 'Items' in ddres:
+                logbucket = ddres['Items'][0]['Log Bucket']['S']
+            else:
+                # search through executions to get logbucket
+                stateMachineArn = STEP_FUNCTION_ARN(sfn)
+                res = sf.list_executions(stateMachineArn=stateMachineArn)
+                while True:
+                    if 'executions' not in res or not res['executions']:
                         break
-                if 'nextToken' in res:
-                    res = sf.list_executions(nextToken=res['nextToken'],
-                                             stateMachineArn=stateMachineArn)
-                else:
-                    break
+                    breakwhile = False
+                    for exc in res['executions']:
+                        desc = sf.describe_execution(executionArn=exc['executionArn'])
+                        if job_id == str(json.loads(desc['input'])['jobid']):
+                            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+                            breakwhile = True
+                            break
+                    if breakwhile:
+                        break
+                    if 'nextToken' in res:
+                        res = sf.list_executions(nextToken=res['nextToken'],
+                                                 stateMachineArn=stateMachineArn)
+                    else:
+                        break
+        else:
+            raise Exception("Either job_id, exec_arn or exec_name must be provided.")
+        try:
+            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+        except Exception as e:
+            if 'NoSuchKey' in str(e):
+                if not quiet:
+                    printlog("log/postrunjson file is not ready yet. " +
+                             "Wait a few seconds/minutes and try again.")
+                return ''
+            else:
+                raise e
+        if res_s3:
+            return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         return None
 
     def stat(self, sfn=None, status=None, verbose=False, n=None):
@@ -611,7 +632,7 @@ class API(object):
                 print(role_arn)
             extra_config['Role'] = role_arn
         if usergroup and suffix:
-            function_name_suffix = suffix + '_' + usergroup
+            function_name_suffix = usergroup + '_' + suffix
         elif suffix:
             function_name_suffix = suffix
         elif usergroup:
@@ -769,3 +790,141 @@ class API(object):
                 raise(e)
             break
         return sfndef.sfn_name
+
+    def check_metrics_plot(self, job_id, log_bucket):
+        return True if does_key_exist(log_bucket, job_id + '.metrics/metrics.html', quiet=True) else False
+
+    def check_metrics_lock(self, job_id, log_bucket):
+        return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
+
+    def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
+                     update_html_only=False, endtime='', filesystem='/dev/nvme1n1'):
+        ''' retrieve instance_id and plots metrics '''
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True, quiet=True)
+        if postrunjsonstr:
+            postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+            job_complete = True
+            job = postrunjson.Job
+            log_bucket = postrunjson.config.log_bucket
+            instance_type = postrunjson.config.instance_type or 'unknown'
+        else:
+            runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
+            if runjsonstr:
+                runjson = AwsemRunJson(**json.loads(runjsonstr))
+                job = runjson.Job
+                log_bucket = runjson.config.log_bucket
+                instance_type = runjson.config.instance_type or 'unknown'
+            else:
+                raise Exception("Neither postrun json nor run json can be retrieved." +
+                                "Check job_id or step function?")
+        # report already on s3 with a lock
+        if self.check_metrics_plot(job_id, log_bucket) and \
+           self.check_metrics_lock(job_id, log_bucket) and \
+           not force_upload:
+            printlog("Metrics plot is already on S3 bucket.")
+            printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+            # open metrics html in browser
+            if open_browser:
+                webbrowser.open(METRICS_URL(log_bucket, job_id))
+            return None
+        # report not already on s3 with a lock
+        starttime = job.start_time_as_str
+        if not endtime:
+            if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
+                endtime = job.end_time_as_str
+            else:
+                endtime = datetime.utcnow()
+        if hasattr(job, 'filesystem') and job.filesystem:
+            filesystem = job.filesystem
+        else:
+            filesystem = filesystem
+        instance_id = ''
+        if hasattr(job, 'instance_id') and job.instance_id:
+            instance_id = job.instance_id
+        else:
+            ddres = dict()
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+            except Exception as e:
+                pass
+            if 'Items' in ddres:
+                instance_id = ddres['Items'][0].get('instance_id', {}).get('S', '')
+            if not instance_id:
+                ec2 = boto3.client('ec2')
+                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+                if res['Reservations']:
+                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                    instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
+                    if instance_status in ['terminated', 'shutting-down']:
+                        job_complete = True  # job failed
+                    else:
+                        job_complete = False  # still running
+                else:
+                    # waiting 10 min to be sure the istance is starting
+                    if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
+                        raise Exception("the instance is still setting up. " +
+                                        "Wait a few seconds/minutes and try again.")
+                    else:
+                        raise Exception("instance id not available for this run.")
+        # plotting
+        if update_html_only:
+            TibannaResource.update_html(log_bucket, job_id + '.metrics/')
+        else:
+            try:
+                M = TibannaResource(instance_id, filesystem, starttime, endtime)
+                M.plot_metrics(instance_type, directory)
+            except Exception as e:
+                raise MetricRetrievalException(e)
+            # upload files
+            M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
+            # clean up uploaded files
+            for f in M.list_files:
+                os.remove(f)
+        printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+        # open metrics html in browser
+        if open_browser:
+            webbrowser.open(METRICS_URL(log_bucket, job_id))
+
+    def cost(self, job_id, sfn=None, update_tsv=False):
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
+        if not postrunjsonstr:
+            return None
+        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+        job = postrunjson.Job
+
+        def reformat_time(t, delta):
+            d = datetime.strptime(t, '%Y%m%d-%H:%M:%S-UTC') + timedelta(days=delta)
+            return d.strftime("%Y-%m-%d")
+
+        start_time = reformat_time(job.start_time, -1)  # give more room
+        end_time = reformat_time(job.end_time, 1)  # give more room
+        billing_args = {'Filter': {'Tags': {'Key': 'Name', 'Values': ['awsem-' + job_id]}},
+                        'Granularity': 'DAILY',
+                        'TimePeriod': {'Start': start_time,
+                                       'End': end_time},
+                        'Metrics': ['BlendedCost']}
+        billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+        cost = sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
+        if update_tsv:
+            log_bucket = postrunjson.config.log_bucket
+            # reading from metrics_report.tsv
+            does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
+            read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
+            if 'Cost' not in read_file:
+                write_file = read_file + 'Cost\t' + str(cost) + '\n'
+                # writing
+                with open('metrics_report.tsv', 'w') as fo:
+                    fo.write(write_file)
+                # upload new metrics_report.tsv
+                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+                os.remove('metrics_report.tsv')
+            else:
+                printlog("cost already in the tsv file. not updating")
+        return cost

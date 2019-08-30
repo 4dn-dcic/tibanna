@@ -37,6 +37,8 @@ class Subcommands(object):
                                  'Use it only when the IAM permissions need to be reset',
             'stat': 'print out executions with details',
             'users': 'list all users along with their associated tibanna user groups',
+            'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists',
+            'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes'
         }
 
     @property
@@ -210,7 +212,35 @@ class Subcommands(object):
                   'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
                  {'flag': ["-g", "--usergroup"],
-                  'help': "Tibanna usergroup for the AWS Lambda function"}]
+                  'help': "Tibanna usergroup for the AWS Lambda function"}],
+            'plot_metrics':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
+                 {'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-f", "--force-upload"],
+                  'help': "upload the metrics report to s3 bucket even if there is a lock",
+                  'action': "store_true"},
+                 {'flag': ["-B", "--do-not-open-browser"],
+                  'help': "Do not open browser",
+                  'action': "store_true"},
+                 {'flag': ["-u", "--update-html-only"],
+                  'help': "update html only and do not update the text files",
+                  'action': "store_true"},
+                 {'flag': ["-e", "--endtime"],
+                  'help': "endtime (default job end time if the job has finished or the current time)"}],
+            'cost':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
+                 {'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-u", "--update-tsv"],
+                  'help': "add cost to the metric tsv file on S3",
+                  'action': "store_true"}]
         }
 
 
@@ -308,6 +338,18 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
     API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
+
+
+def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False,
+                 endtime='', do_not_open_browser=False):
+    """create a resource metrics report html"""
+    API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=update_html_only,
+                       endtime=endtime, open_browser=not do_not_open_browser)
+
+
+def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
+    """print out cost of a specific job"""
+    print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
 
 def main(Subcommands=Subcommands):

@@ -31,6 +31,9 @@ from tibanna.ec2_utils import (
 from tibanna.awsem import (
     AwsemPostRunJson
 )
+from tibanna.vars import (
+    METRICS_URL
+)
 from .config import (
     higlass_config
 )
@@ -445,6 +448,12 @@ class FourfrontUpdater(object):
         self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
+
+    def create_wfr_qc(self):
+        qc_object = self.create_qc_template()
+        qc_object['url'] = METRICS_URL(self.config.log_bucket, self.jobid)
+        self.update_post_items(qc_object['uuid'], qc_object, 'QualityMetricWorkflowrun')
+        self.ff_meta.quality_metric = qc_object['uuid']
 
     def handle_success(self):
         # update run status in metadata first
@@ -962,7 +971,7 @@ class FourfrontUpdater(object):
                 qc_key = self.file_key(qc.workflow_argument_name)
                 # if there is an html, add qc_url for the html
                 if qc.qc_zipped_html or qc.qc_html:
-                    target_html = qc_target_accession + 'qc_report.html'
+                    target_html = qc_target_accession + '/qc_report.html'
                     qc_url = 'https://s3.amazonaws.com/' + qc_bucket + '/' + target_html
                 else:
                     qc_url = None
@@ -1138,6 +1147,7 @@ class FourfrontUpdater(object):
         self.update_md5()
         self.update_qc()
         self.update_input_extras()
+        self.create_wfr_qc()
         self.post_all()
         self.patch_all()
         self.ff_meta.run_status = 'complete'

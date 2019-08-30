@@ -1,6 +1,7 @@
 import boto3
 import json
 import random
+from .vars import DYNAMODB_TABLE
 
 
 def generate_policy_prefix(user_group_name, no_randomize=False):
@@ -198,7 +199,7 @@ def generate_dynamodb_policy(account_id, region, tibanna_policy_prefix):
                     "dynamodb:DescribeTable",
                     "dynamodb:PutItem"
                 ],
-                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/tibanna-master"
+                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/" + DYNAMODB_TABLE
             }
         ]
     }
@@ -570,6 +571,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     # create IAM group for users who share permission
     custom_policy_names = [bucket_policy_name,
                            ec2_desc_policy_name,
+                           cloudwatch_metric_policy_name,
                            dynamodb_policy_name,
                            termination_policy_name]
     create_user_group(iam, tibanna_policy_prefix, custom_policy_names, account_id)

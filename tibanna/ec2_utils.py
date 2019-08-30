@@ -20,7 +20,8 @@ from .vars import (
     AMI_ID_SHELL,
     AMI_ID_SNAKEMAKE,
     AMI_ID_CWL_V1,
-    AMI_ID_CWL_DRAFT3
+    AMI_ID_CWL_DRAFT3,
+    DYNAMODB_TABLE
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -337,6 +338,7 @@ class Execution(object):
     def launch(self):
         self.instance_id = self.launch_and_get_instance_id()
         self.cfg.update(self.get_instance_info())
+        self.add_instance_id_to_dynamodb()
 
     def postlaunch(self):
         if self.cfg.cloudwatch_dashboard:
@@ -717,6 +719,28 @@ class Execution(object):
                     raise DependencyStillRunningException("Dependency is still running: %s" % arn)
                 elif res['status'] == 'FAILED':
                     raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
+
+    def add_instance_id_to_dynamodb(self):
+        dd = boto3.client('dynamodb')
+        try:
+            ddres = dd.update_item(
+                TableName=DYNAMODB_TABLE,
+                Key={
+                    'Job Id': {
+                        'S': self.jobid
+                    }
+                },
+                AttributeUpdates={
+                    'instance_id': {
+                        'Value': {
+                            'S': self.instance_id
+                        },
+                        'Action': 'PUT'
+                    }
+                }
+            )
+        except:
+            pass
 
     def create_cloudwatch_dashboard(self, dashboard_name):
         instance_id = self.instance_id

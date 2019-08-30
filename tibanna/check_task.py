@@ -10,12 +10,16 @@ from .utils import (
     does_key_exist,
     read_s3
 )
+from .awsem import (
+    AwsemPostRunJson
+)
 from .exceptions import (
     StillRunningException,
     EC2StartingException,
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
-    EC2IdleException
+    EC2IdleException,
+    MetricRetrievalException
 )
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
@@ -44,7 +48,10 @@ def check_task(input_json):
 
     # check to see if job has error, report if so
     if does_key_exist(bucket_name, job_error):
-        handle_postrun_json(bucket_name, jobid, input_json_copy, False, public_read=public_postrun_json)
+        try:
+            handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
+        except Exception as e:
+            printlog("error handling postrun json %s" % str(e))
         errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
         raise AWSEMJobErrorException(errmsg)
 
@@ -79,7 +86,10 @@ def check_task(input_json):
         start = end - timedelta(hours=1)
         jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
         if jobstart_time + timedelta(hours=1) < end:
-            cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+            try:
+                cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+            except Exception as e:
+                raise MetricRetrievalException(e)
             if 'max_cpu_utilization_percent' in cw_res:
                 if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
                     # the instance wasn't terminated - otherwise it would have been captured in the previous error.
@@ -96,52 +106,49 @@ def check_task(input_json):
     raise StillRunningException("job %s still running" % jobid)
 
 
-def handle_postrun_json(bucket_name, jobid, input_json, raise_error=True, filesystem=None, public_read=False):
+def handle_postrun_json(bucket_name, jobid, input_json, public_read=False):
     postrunjson = "%s.postrun.json" % jobid
     if not does_key_exist(bucket_name, postrunjson):
-        if raise_error:
-            postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
-            raise Exception("Postrun json not found at %s" % postrunjson_location)
-        return None
+        postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
+        raise Exception("Postrun json not found at %s" % postrunjson_location)
     postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
-    if 'instance_id' in input_json['config']:
-        update_postrun_json(postrunjsoncontent, input_json['config']['instance_id'], filesystem)
+    prj = AwsemPostRunJson(**postrunjsoncontent)
+    prj.Job.update(instance_id=input_json['config'].get('instance_id', ''))
+    handle_metrics(prj)
     printlog("inside funtion handle_postrun_json")
-    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
-    printlog("content=\n" + json.dumps(postrunjsoncontent, indent=4))
+    printlog("content=\n" + json.dumps(prj.as_dict(), indent=4))
+    # upload postrun json file back to s3
     acl = 'public-read' if public_read else 'private'
     try:
         boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
-                                      Body=json.dumps(postrunjsoncontent, indent=4).encode())
+                                      Body=json.dumps(prj.as_dict(), indent=4).encode())
     except Exception as e:
         raise "error in updating postrunjson %s" % str(e)
-    add_postrun_json(postrunjsoncontent, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
+    # add postrun json to the input json
+    add_postrun_json(prj, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
 
 
-def add_postrun_json(postrunjsoncontent, input_json, limit):
-    if len(str(postrunjsoncontent)) + len(str(input_json)) < limit:
-        input_json['postrunjson'] = postrunjsoncontent
+def add_postrun_json(prj, input_json, limit):
+    prjd = prj.as_dict()
+    if len(str(prjd)) + len(str(input_json)) < limit:
+        input_json['postrunjson'] = prjd
     else:
-        input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit',
-                                     'Job': {'Output':  postrunjsoncontent['Job']['Output']}}
+        del prjd['commands']
+        if len(str(prjd)) + len(str(input_json)) < limit:
+            prjd['log'] = 'postrun json not included due to data size limit'
+            input_json['postrunjson'] = prjd
+        else:
+            input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit'}
 
 
-def update_postrun_json(postrunjsoncontent, instance_id, filesystem=None):
-    job = postrunjsoncontent.get('Job', '')
-    if job:
-        if 'start_time' in job:
-            starttime = datetime.strptime(job['start_time'], '%Y%m%d-%H:%M:%S-UTC')
-        else:
-            return None
-        if 'end_time' in job:
-            endtime = datetime.strptime(job['end_time'], '%Y%m%d-%H:%M:%S-UTC')
-        else:
-            endtime = datetime.now()
-        if 'filesystem' in job:
-            filesystem = job['filesystem']
-        elif not filesystem:
-            return None
-        job['instance_id'] = instance_id
-        job['Metrics'] = TibannaResource(instance_id, filesystem, starttime, endtime).as_dict()
-    else:
-        raise Exception("Job not found in postrunjson")
+def handle_metrics(prj):
+    try:
+        resources = TibannaResource(prj.Job.instance_id,
+                                    prj.Job.filesystem,
+                                    prj.Job.start_time_as_str,
+                                    prj.Job.end_time_as_str or datetime.now())
+    except Exception as e:
+        raise MetricRetrievalException("error getting metrics: %s" % str(e))
+    prj.Job.update(Metrics=resources.as_dict())
+    resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
+    resources.upload(bucket=prj.config.log_bucket, prefix=prj.Job.JOBID + '.metrics/')
