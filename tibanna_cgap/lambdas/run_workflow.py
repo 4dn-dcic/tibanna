@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from tibanna_4dn.core import API
-from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION, LAMBDA_TYPE
+from tibanna_cgap.core import API
+from tibanna_cgap.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION, LAMBDA_TYPE
 
 
 config = {

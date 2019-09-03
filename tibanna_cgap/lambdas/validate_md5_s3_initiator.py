@@ -2,14 +2,14 @@
 from dcicutils.ff_utils import get_metadata
 from tibanna.utils import _tibanna_settings, printlog
 # from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from tibanna_4dn.core import API
-from tibanna_4dn.exceptions import TibannaStartException, FdnConnectionException
+from tibanna_cgap.core import API
+from tibanna_cgap.exceptions import TibannaStartException, FdnConnectionException
 from tibanna_ffcommon.portal_utils import (
     TibannaSettings,
     FormatExtensionMap,
     parse_formatstr
 )
-from tibanna_4dn.vars import AWS_REGION, LAMBDA_TYPE
+from tibanna_cgap.vars import AWS_REGION, LAMBDA_TYPE
 
 
 config = {
