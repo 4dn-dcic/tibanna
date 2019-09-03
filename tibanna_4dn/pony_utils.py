@@ -362,7 +362,7 @@ class TibannaSettings(object):
         self.s3 = s3Utils(env=env)
 
         if not ff_keys:
-            ff_keys = self.s3.get_access_keys()
+            ff_keys = self.s3.get_access_keys('access_key_tibanna')
         self.ff_keys = ff_keys
 
         if not settings:

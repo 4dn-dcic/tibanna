@@ -1,1 +1,1 @@
-dcicutils==0.7.7
+dcicutils==0.8.0
