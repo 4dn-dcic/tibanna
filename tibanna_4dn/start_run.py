@@ -17,70 +17,13 @@ from tibanna_ffcommon.portal_utils import (
     output_target_for_input_extra
 )
 from .pony_utils import (
+    PonyInput,
     WorkflowRunMetadata,
     ProcessedFileMetadata,
     WorkflowRunOutputFiles,
     merge_source_experiments,
 )
 
-
-class FFInput(SerializableObject):
-    def __init__(self, workflow_uuid, output_bucket, jobid='', config, _tibanna=None, **kwargs):
-        self.config = Config(**config)
-        self.jobid = jobid
-
-        self.input_files = kwargs.get('input_files', [])
-        for infile in self.input_files:
-        if not infile:
-            raise("malformed input, check your input_files")
-
-        self.workflow_uuid = workflow_uuid
-        self.output_bucket = output_bucket
-        self.parameters = ff_utils.convert_param(kwargs.get('parameters', {}), True)
-        self.additional_benchmarking_parameters = kwargs.get('additional_benchmarking_parameters', {})
-        self.tag = kwargs.get('tag', None)
-        self.custom_pf_fields = kwargs.get('custom_pf_fields', None)  # custon fields for PF
-        self.wfr_meta = kwargs.get('wfr_meta', None)  # custom fields for WFR
-        self.output_files = kwargs.get('output_files', None)  # for user-supplied output files
-        self.dependency = kwargs.get('dependency', None)
-        self.wf_meta_ = None
-
-        self.tibanna_settings = None
-        if _tibanna:
-            env =  _tibanna.get('env', '-'.join(self.output_bucket.split('-')[1:-1]))
-            try:
-                self.tibanna_settings = TibannaSettings(env, settings=_tibanna)
-            except Exception as e:
-                raise TibannaStartException("%s" % e)
-
-        if not hasattr(self.config, 'overwrite_input_extra'):
-            self.config.overwrite_input_extra = False
-        if not config.public_postrun_json:
-            config.public_postrun_json = True
-        if not hasattr(config, 'email'):
-            config.email = False
-
-        @property
-        def input_file_uuids(self):
-            return [_['uuid'] for _ in self.input_files]
-
-        @property
-        def wf_meta(self):
-            if self.wf_meta_:
-                return self.wf_meta_
-            try:
-                self.wf_meta_ = ff_utils.get_metadata(self.workflow_uuid,
-                                                      key=self.tibanna_settings.ff_keys,
-                                                      ff_env=self.tibanna_settings.env,
-                                                      add_on='frame=object')
-                return self.wf_meta_
-            except Except as e:
-                raise FdnConnectionException(e)
-
-        def update(self, **kwargs):
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-            
 
 def start_run(input_json):
     '''
@@ -91,7 +34,7 @@ def start_run(input_json):
     Note multiple workflow_uuids can be available for an app_name
     (different versions of the same app could have a different uuid)
     '''
-    inp = FFInput(**input_json)
+    inp = PonyInput(**input_json)
     if inp.config.log_bucket and inp.jobid:
         s3 = boto3.client('s3')
         s3.put_object(Body=json.dumps(input_json, indent=4).encode('ascii'),
@@ -101,9 +44,6 @@ def start_run(input_json):
     # input file args for awsem
     for input_file in inp.input_files:
         process_input_file_info(input_file, inp.tibanna_settings.ff_keys, inp.tibanna_settings.env, args)
-
-    # create the ff_meta output info
-    input_files_for_ffmeta = create_ffmeta_input_files_from_ff_input_file_list(inp.input_files)
 
     # source experiments
     pf_source_experiments = merge_source_experiments(inp.input_file_uuids,
@@ -118,6 +58,8 @@ def start_run(input_json):
                                                     user_supplied_output_files=inp.output_files)
     print("output files= %s" % str(output_files))
 
+    # create the ff_meta output info
+    input_files_for_ffmeta = create_ffmeta_input_files_from_ff_input_file_list(inp.input_files)
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = WorkflowRunMetadata(
         workflow=inp.workflow_uuid, awsem_app_name=inp.wf_meta['app_name'], app_version=inp.wf_meta['app_version'],
@@ -126,61 +68,15 @@ def start_run(input_json):
         output_files=inp.output_files, parameters=inp.parameters,
         extra_meta=inp.wfr_meta, awsem_job_id=inp.jobid
     )
-
     printlog("ff_meta is %s" % ff_meta.as_dict())
-
     # store metadata so we know the run has started
     ff_meta.post(key=tbn.ff_keys)
 
-    # create args
-    args = dict()
-    for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames',
-              'wdl_directory_url', 'wdl_main_filename', 'wdl_child_filenames']:
-        printlog(inp.wf_meta.get(k))
-        args[k] = inp.wf_meta.get(k, '')
-    if inp.wf_meta.get('workflow_language', '') == 'WDL':
-        args['language'] = 'wdl'
-    else:
-        # switch to v1 if available
-        if 'cwl_directory_url_v1' in inp.wf_meta:  # use CWL v1
-            args['cwl_directory_url'] = inp.wf_meta['cwl_directory_url_v1']
-            args['cwl_version'] = 'v1'
-        else:
-            args['cwl_version'] = 'draft3'
-
-    args['input_parameters'] = inp.parameters
-    args['additional_benchmarking_parameters'] = inp.additional_benchmarking_parameters
-    args['output_S3_bucket'] = inp.output_bucket
-    args['dependency'] = inp.dependency
-
-    # output target
-    args['output_target'] = dict()
-    args['secondary_output_target'] = dict()
-    for of in ff_meta.output_files:
-        arg_name = of.get('workflow_argument_name')
-        if of.get('type') == 'Output processed file':
-            args['output_target'][arg_name] = of.get('upload_key')
-        elif of.get('type') == 'Output to-be-extra-input file':
-            target_inf = ff_meta.input_files[0]  # assume only one input for now
-            target_key = output_target_for_input_extra(target_inf, of, inp.tibanna_settings, inp.overwrite_input_extra)
-            args['output_target'][arg_name] = target_key
-        else:
-            random_tag = str(int(random.random() * 1000000000000))
-            # add a random tag at the end for non-processed file e.g. md5 report,
-            # so that if two or more wfr are trigerred (e.g. one with parent file, one with extra file)
-            # it will create a different output. Not implemented for processed files -
-            # it's tricky because processed files must have a specific name.
-            args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
-        if 'secondary_file_formats' in of and 'extra_files' in of and of['extra_files']:
-            for ext in of.get('extra_files'):
-                if arg_name not in args['secondary_output_target']:
-                    args['secondary_output_target'] = {arg_name: [ext.get('upload_key')]}
-                else:
-                    args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
+    # crate args
+    inp.add_args(ff_meta)
 
     inp.update(ff_meta=ff_meta.as_dict(),
-               pf_meta=[meta.as_dict() for meta in pf_meta],
-               args=Args(**args))
+               pf_meta=[meta.as_dict() for meta in pf_meta])
     return(inp.as_dict())
 
 

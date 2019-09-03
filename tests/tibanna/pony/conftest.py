@@ -35,7 +35,7 @@ def s3_utils(used_env):
 
 @pytest.fixture(scope='session')
 def ff_keys(s3_utils):
-    return s3_utils.get_access_keys()
+    return s3_utils.get_access_keys('access_key_tibanna')
 
 
 @pytest.fixture(scope='session')

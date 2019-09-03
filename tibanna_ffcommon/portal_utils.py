@@ -45,6 +45,156 @@ from .exceptions import (
 )
 
 
+class FFInputAbstract(SerializableObject):
+    def __init__(self, workflow_uuid, output_bucket, jobid='', config, _tibanna=None, **kwargs):
+        self.config = Config(**config)
+        self.jobid = jobid
+
+        self.input_files = kwargs.get('input_files', [])
+        for infile in self.input_files:
+        if not infile:
+            raise("malformed input, check your input_files")
+
+        self.workflow_uuid = workflow_uuid
+        self.output_bucket = output_bucket
+        self.parameters = ff_utils.convert_param(kwargs.get('parameters', {}), True)
+        self.additional_benchmarking_parameters = kwargs.get('additional_benchmarking_parameters', {})
+        self.tag = kwargs.get('tag', None)
+        self.custom_pf_fields = kwargs.get('custom_pf_fields', None)  # custon fields for PF
+        self.wfr_meta = kwargs.get('wfr_meta', None)  # custom fields for WFR
+        self.output_files = kwargs.get('output_files', None)  # for user-supplied output files
+        self.dependency = kwargs.get('dependency', None)
+        self.wf_meta_ = None
+
+        self.tibanna_settings = None
+        if _tibanna:
+            env =  _tibanna.get('env', '-'.join(self.output_bucket.split('-')[1:-1]))
+            try:
+                self.tibanna_settings = TibannaSettings(env, settings=_tibanna)
+            except Exception as e:
+                raise TibannaStartException("%s" % e)
+
+        if not hasattr(self.config, 'overwrite_input_extra'):
+            self.config.overwrite_input_extra = False
+        if not config.public_postrun_json:
+            config.public_postrun_json = True
+        if not hasattr(config, 'email'):
+            config.email = False
+
+    @property
+    def input_file_uuids(self):
+        return [_['uuid'] for _ in self.input_files]
+
+    @property
+    def wf_meta(self):
+        if self.wf_meta_:
+            return self.wf_meta_
+        try:
+            self.wf_meta_ = ff_utils.get_metadata(self.workflow_uuid,
+                                                  key=self.tibanna_settings.ff_keys,
+                                                  ff_env=self.tibanna_settings.env,
+                                                  add_on='frame=object')
+            return self.wf_meta_
+        except Except as e:
+            raise FdnConnectionException(e)
+
+    def update(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def add_args(self, ff_meta):
+       # create args
+        args = dict()
+        for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames',
+                  'wdl_directory_url', 'wdl_main_filename', 'wdl_child_filenames']:
+            printlog(inp.wf_meta.get(k))
+            args[k] = inp.wf_meta.get(k, '') 
+        if inp.wf_meta.get('workflow_language', '') == 'WDL':
+            args['language'] = 'wdl'
+        else:
+            # switch to v1 if available
+            if 'cwl_directory_url_v1' in inp.wf_meta:  # use CWL v1
+                args['cwl_directory_url'] = inp.wf_meta['cwl_directory_url_v1']
+                args['cwl_version'] = 'v1'
+            else:
+                args['cwl_version'] = 'draft3'
+    
+        args['input_parameters'] = inp.parameters
+        args['additional_benchmarking_parameters'] = inp.additional_benchmarking_parameters
+        args['output_S3_bucket'] = inp.output_bucket
+        args['dependency'] = inp.dependency
+    
+        # output target
+        args['output_target'] = dict()
+        args['secondary_output_target'] = dict()
+        for of in ff_meta.output_files:
+            arg_name = of.get('workflow_argument_name')
+            if of.get('type') == 'Output processed file':
+                args['output_target'][arg_name] = of.get('upload_key')
+            elif of.get('type') == 'Output to-be-extra-input file':
+                target_inf = ff_meta.input_files[0]  # assume only one input for now
+                target_key = self.output_target_for_input_extra(target_inf, of)
+                args['output_target'][arg_name] = target_key
+            else:
+                random_tag = str(int(random.random() * 1000000000000))
+                # add a random tag at the end for non-processed file e.g. md5 report,
+                # so that if two or more wfr are trigerred (e.g. one with parent file, one with extra file)
+                # it will create a different output. Not implemented for processed files -
+                # it's tricky because processed files must have a specific name.
+                args['output_target'][arg_name] = ff_meta.uuid + '/' + arg_name + random_tag
+            if 'secondary_file_formats' in of and 'extra_files' in of and of['extra_files']:
+                for ext in of.get('extra_files'):
+                    if arg_name not in args['secondary_output_target']:
+                        args['secondary_output_target'] = {arg_name: [ext.get('upload_key')]}
+                    else:
+                        args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
+        self.args = Args(**args)
+
+    def output_target_for_input_extra(target_inf, of):
+        extrafileexists = False
+        printlog("target_inf = %s" % str(target_inf))  # debugging
+        target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
+                                                key=self.tibanna_settings.ff_keys,
+                                                ff_env=self.tibanna_settings.env,
+                                                add_on='frame=object',
+                                                check_queue=True)
+        target_format = parse_formatstr(of.get('format'))
+        if target_inf_meta.get('extra_files'):
+            for exf in target_inf_meta.get('extra_files'):
+                if parse_formatstr(exf.get('file_format')) == target_format:
+                    extrafileexists = True
+                    if self.overwrite_input_extra:
+                        exf['status'] = 'to be uploaded by workflow'
+                    break
+            if not extrafileexists:
+                new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+                target_inf_meta['extra_files'].append(new_extra)
+        else:
+            new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+            target_inf_meta['extra_files'] = [new_extra]
+        if self.overwrite_input_extra or not extrafileexists:
+            # first patch metadata
+            printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
+            ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
+                                    target_inf.get('value'),
+                                    key=self.tibanna_settings.ff_keys,
+                                    ff_env=self.tibanna_settings.env)
+            # target key
+            # NOTE : The target bucket is assume to be the same as output bucket
+            # i.e. the bucket for the input file should be the same as the output bucket.
+            # which is true if both input and output are processed files.
+            orgfile_key = target_inf_meta.get('upload_key')
+            orgfile_format = parse_formatstr(target_inf_meta.get('file_format'))
+            fe_map = FormatExtensionMap(self.tibanna_settings.ff_keys)
+            printlog("orgfile_key = %s" % orgfile_key)
+            printlog("orgfile_format = %s" % orgfile_format)
+            printlog("target_format = %s" % target_format)
+            target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
+            return target_key
+        else:
+            raise Exception("input already has extra: 'User overwrite_input_extra': true")
+
+
 class WorkflowRunMetadataAbstract(SerializableObject):
     '''
     fourfront metadata
@@ -280,7 +430,7 @@ class TibannaSettings(object):
         self.s3 = s3Utils(env=env)
 
         if not ff_keys:
-            ff_keys = self.s3.get_access_keys()
+            ff_keys = self.s3.get_access_keys('access_key_tibanna')
         self.ff_keys = ff_keys
 
         if not settings:
@@ -1203,46 +1353,3 @@ def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
                                         'object_key': extra_file_keys}})
 
 
-def output_target_for_input_extra(target_inf, of, tbn, overwrite_input_extra=False):
-    extrafileexists = False
-    printlog("target_inf = %s" % str(target_inf))  # debugging
-    target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
-                                            key=tbn.ff_keys,
-                                            ff_env=tbn.env,
-                                            add_on='frame=object',
-                                            check_queue=True)
-    target_format = parse_formatstr(of.get('format'))
-    if target_inf_meta.get('extra_files'):
-        for exf in target_inf_meta.get('extra_files'):
-            if parse_formatstr(exf.get('file_format')) == target_format:
-                extrafileexists = True
-                if overwrite_input_extra:
-                    exf['status'] = 'to be uploaded by workflow'
-                break
-        if not extrafileexists:
-            new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
-            target_inf_meta['extra_files'].append(new_extra)
-    else:
-        new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
-        target_inf_meta['extra_files'] = [new_extra]
-    if overwrite_input_extra or not extrafileexists:
-        # first patch metadata
-        printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
-        ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
-                                target_inf.get('value'),
-                                key=tbn.ff_keys,
-                                ff_env=tbn.env)
-        # target key
-        # NOTE : The target bucket is assume to be the same as output bucket
-        # i.e. the bucket for the input file should be the same as the output bucket.
-        # which is true if both input and output are processed files.
-        orgfile_key = target_inf_meta.get('upload_key')
-        orgfile_format = parse_formatstr(target_inf_meta.get('file_format'))
-        fe_map = FormatExtensionMap(tbn.ff_keys)
-        printlog("orgfile_key = %s" % orgfile_key)
-        printlog("orgfile_format = %s" % orgfile_format)
-        printlog("target_format = %s" % target_format)
-        target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
-        return target_key
-    else:
-        raise Exception("input already has extra: 'User overwrite_input_extra': true")

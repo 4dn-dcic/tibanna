@@ -18,8 +18,13 @@ from .vars import (
 from tibanna_ffcommon.portal_utils import (
     WorkflowRunMetadataAbstract,
     ProcessedFileMetadataAbstract,
-    FourfrontUpdaterAbstract
+    FourfrontUpdaterAbstract,
+    FFInputAbstract
 )
+
+
+class ZebraInput(FFInputAbstract):
+    pass
 
 
 class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
