@@ -2,8 +2,8 @@ from tibanna.vars import *
 import os
 
 
-LAMBDA_TYPE = 'pony'
-ACCESSION_PREFIX = '4DN'
+LAMBDA_TYPE = 'zebra'
+ACCESSION_PREFIX = 'GAP'
 S3_ENCRYPT_KEY = os.environ.get("S3_ENCRYPT_KEY", '')
 
 

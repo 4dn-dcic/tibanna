@@ -37,7 +37,7 @@ def exception_coordinator(lambda_name, metadata_only_func):
                 logger.info('skipping %s since skip was set in input_json' % lambda_name)
                 return event
             elif event.get('push_error_to_end', False) and event.get('error', False) \
-                    and lambda_name != 'update_ffmeta_awsem':
+                    and lambda_name != 'update_ffmeta':
                 logger.info('skipping %s since a value for "error" is in input json '
                             'and lambda is not update_ffmeta_awsem' % lambda_name)
                 return event
@@ -50,7 +50,7 @@ def exception_coordinator(lambda_name, metadata_only_func):
                 if type(e) in ignored_exceptions:
                     raise e
                     # update ff_meta to error status
-                elif lambda_name == 'update_ffmeta_awsem':
+                elif lambda_name == 'update_ffmeta':
                     # for last step just pit out error
                     if 'error' in event:
                         error_msg = "error from earlier step: %s" % event["error"]

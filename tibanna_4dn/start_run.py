@@ -6,7 +6,7 @@ import random
 import copy
 from dcicutils import ff_utils
 from tibanna.utils import printlog
-from .exceptions import TibannaStartException
+from tibanna_ffcommon.exceptions import TibannaStartException
 from .pony_utils import (
     TibannaSettings,
     merge_source_experiments,

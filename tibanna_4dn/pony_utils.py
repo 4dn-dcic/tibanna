@@ -37,7 +37,7 @@ from tibanna.vars import (
 from .config import (
     higlass_config
 )
-from .exceptions import (
+from tibanna_ffcommon.exceptions import (
     TibannaStartException,
     FdnConnectionException
 )

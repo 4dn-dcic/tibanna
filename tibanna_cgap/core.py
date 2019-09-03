@@ -1,6 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionZebra
-from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 
 class API(_API):
@@ -34,9 +34,9 @@ class API(_API):
             return envlist
         envlist_zebra = {
             'run_workflow_zebra': {},
-            'start_run_zebra': {'SECRET': SECRET, 'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
-            'update_ffmeta_zebra': {'SECRET': SECRET, 'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
-            'validate_md5_s3_initiator_zebra': {'SECRET': SECRET, 'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'start_run_zebra': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'update_ffmeta_zebra': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'validate_md5_s3_initiator_zebra': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
             'validate_md5_s3_trigger_zebra': {}
         }
         return envlist_zebra.get(name, '')
