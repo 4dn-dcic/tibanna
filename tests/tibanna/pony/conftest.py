@@ -103,8 +103,23 @@ def update_ffmeta_event_data_newmd5(ff_keys):
 
 
 @pytest.fixture(scope='session')
+def update_ffmeta_event_data_bed2multivec(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_bed2multivec.json')
+
+
+@pytest.fixture(scope='session')
 def update_ffmeta_event_data_pairsqc(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_pairsqc.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data_repliseq(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_repliseq.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data_imargi(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_imargi.json')
 
 
 @pytest.fixture(scope='session')
@@ -115,6 +130,21 @@ def update_ffmeta_mcool(ff_keys):
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_fastqc(ff_keys):
     return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data_fastqc2(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc2.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data_bamcheck(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_bamcheck.json')
+
+
+@pytest.fixture(scope='session')
+def update_ffmeta_event_data_chipseq(ff_keys):
+    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_chipseq.json')
 
 
 @pytest.fixture(scope='session')

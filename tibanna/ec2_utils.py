@@ -20,7 +20,8 @@ from .vars import (
     AMI_ID_SHELL,
     AMI_ID_SNAKEMAKE,
     AMI_ID_CWL_V1,
-    AMI_ID_CWL_DRAFT3
+    AMI_ID_CWL_DRAFT3,
+    DYNAMODB_TABLE
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -31,6 +32,7 @@ from .exceptions import (
     DependencyStillRunningException,
     DependencyFailedException
 )
+from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
@@ -41,7 +43,7 @@ NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavio
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
 
-class UnicornInput(object):
+class UnicornInput(SerializableObject):
     def __init__(self, input_dict):
         if 'jobid' in input_dict and input_dict.get('jobid'):
             self.jobid = input_dict.get('jobid')
@@ -57,10 +59,9 @@ class UnicornInput(object):
         self.auto_fill()
 
     def as_dict(self):
-        d = copy.deepcopy(self.__dict__)
+        d = super().as_dict()
+        d['config'] = copy.deepcopy(d['cfg'])
         del(d['cfg'])
-        d['args'] = self.args.as_dict()
-        d['config'] = self.cfg.as_dict()
         return d
 
     def auto_fill(self):
@@ -104,7 +105,7 @@ class UnicornInput(object):
         args.dependency = copy.deepcopy(dependency)
 
 
-class Args(object):
+class Args(SerializableObject):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -119,7 +120,8 @@ class Args(object):
     def fill_default(self):
         for field in ['input_files', 'input_parameters', 'input_env',
                       'secondary_files', 'output_target',
-                      'secondary_output_target', 'alt_cond_output_argnames']:
+                      'secondary_output_target', 'alt_cond_output_argnames',
+                      'additional_benchmarking_parameters']:
             if not hasattr(self, field):
                 setattr(self, field, {})
         for field in ['app_version']:
@@ -235,11 +237,8 @@ class Args(object):
             return object_key
         return bucket_name, object_key
 
-    def as_dict(self):
-        return copy.deepcopy(self.__dict__)
 
-
-class Config(object):
+class Config(SerializableObject):
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -305,9 +304,6 @@ class Config(object):
     def fill_other_fields(self, app_name=''):
         self.job_tag = app_name
 
-    def as_dict(self):
-        return copy.deepcopy(self.__dict__)
-
 
 class Execution(object):
 
@@ -342,6 +338,7 @@ class Execution(object):
     def launch(self):
         self.instance_id = self.launch_and_get_instance_id()
         self.cfg.update(self.get_instance_info())
+        self.add_instance_id_to_dynamodb()
 
     def postlaunch(self):
         if self.cfg.cloudwatch_dashboard:
@@ -428,7 +425,9 @@ class Execution(object):
         input_size_in_bytes = dict()
         input_plus_secondary_files = copy.deepcopy(self.args.input_files)
         if self.args.secondary_files:
-            input_plus_secondary_files.update({k+'_secondary': v for k, v in self.args.secondary_files.items()})
+            secondary_files_as_input = {k+'_secondary': v for k, v in self.args.secondary_files.items()
+                                        if is_not_empty(v['object_key'])}
+            input_plus_secondary_files.update(secondary_files_as_input)
         for argname, f in iter(input_plus_secondary_files.items()):
             bucket = f['bucket_name']
             if isinstance(f['object_key'], list):
@@ -442,9 +441,11 @@ class Execution(object):
         return input_size_in_bytes
 
     def get_benchmarking(self, input_size_in_bytes):
+        benchmark_parameters = copy.deepcopy(self.args.input_parameters)
+        benchmark_parameters.update(self.args.additional_benchmarking_parameters)
         try:
             res = B.benchmark(self.args.app_name, {'input_size_in_bytes': input_size_in_bytes,
-                                                   'parameters': self.args.input_parameters})
+                                                   'parameters': benchmark_parameters})
         except:
             try:
                 res
@@ -719,6 +720,28 @@ class Execution(object):
                 elif res['status'] == 'FAILED':
                     raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
 
+    def add_instance_id_to_dynamodb(self):
+        dd = boto3.client('dynamodb')
+        try:
+            ddres = dd.update_item(
+                TableName=DYNAMODB_TABLE,
+                Key={
+                    'Job Id': {
+                        'S': self.jobid
+                    }
+                },
+                AttributeUpdates={
+                    'instance_id': {
+                        'Value': {
+                            'S': self.instance_id
+                        },
+                        'Action': 'PUT'
+                    }
+                }
+            )
+        except:
+            pass
+
     def create_cloudwatch_dashboard(self, dashboard_name):
         instance_id = self.instance_id
         body = {
@@ -916,3 +939,16 @@ def get_file_size(key, bucket, size_in_gb=False):
     if size_in_gb:
         size = size / one_gb
     return size
+
+
+def is_not_empty(x):
+    if not isinstance(x, list):
+        if x:
+            return True
+        else:
+            return False
+    else:
+        if list(filter(lambda x: x, flatten(x))):
+            return True
+        else:
+            return False

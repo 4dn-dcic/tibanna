@@ -51,7 +51,17 @@ Deployment requires an admin user credentials. For more details, check out https
 
 To only run workflows using Tibanna, you need a regular user credentials.
 
-Once you have the user credentials, we can add that information to the local machine using ``awscli`` or by manually creating two files in ``~/.aws``. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
+Once you have the user credentials, we can add that information to the local machine using one of the following three methods:
+
+  1) using ``awscli`` 
+  2) by manually creating two files in ``~/.aws``. 
+  3) setting AWS environment variables
+
+Details of each method is described below. Tibanna uses this information to know that you have the permission to deploy to your AWS account.
+
+
+1) using ``awscli``
+
 
 ::
 
@@ -70,6 +80,9 @@ Type in your keys, region and output format ('json') as below.
     AWS Secret Access Key [None]: <your_aws_secret_key>
     Default region name [None]: us-east-1
     Default output format [None]: json
+
+
+2) by manually creating two files in ``~/.aws``
 
 
 Alternatively, (in case you can't install ``awscli`` for any reason (e.g. ``PyYAML`` version conflict)), do the following manually to set up AWS credentials and config.
@@ -97,26 +110,24 @@ Add the following to ``~/.aws/config``.
     output = json
 
 
+3) setting AWS environment variables
+
+
+Alternatively, you can directly set AWS credentials and config as environment variables
+(instead of creating ``~/.aws/credentials`` and ``~/.aws/config``).
+
+::
+
+    export AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY>
+    export AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
+    export AWS_DEFAULT_REGION=<AWS_DEFAULT_REGION>
+
+
 
 Tibanna environment variables
 -----------------------------
 
-To use Tibanna, you need an AWS account and the following environmental variables set and exported on your local machine.
-
-::
-
-    export AWS_ACCOUNT_NUMBER=<your_12_digit_aws_account_number>
-    export TIBANNA_AWS_REGION=<aws_region>  # (e.g. us-east-1)
-
-
-You can find your aws account number from the AWS Web Console.
-
-=================  ========================
-|console_account|  |console_account_number|
-=================  ========================
-
-.. |console_account| image:: images/console_account.png
-.. |console_account_number| image:: images/console_account_number.png
+Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 
 
 Deploying Tibanna Unicorn to AWS

@@ -128,14 +128,15 @@ def start_run(input_json):
         extra_meta=input_json_copy.get('wfr_meta'), jobid=jobid
     )
 
-    printlog("ff_meta is %s" % ff_meta.__dict__)
+    printlog("ff_meta is %s" % ff_meta.as_dict())
 
     # store metadata so we know the run has started
     ff_meta.post(key=tbn.ff_keys)
 
     # parameters
-    args['input_parameters'] = input_json_copy.get('parameters')
-
+    args['input_parameters'] = input_json_copy.get('parameters', {})
+    args['additional_benchmarking_parameters'] = input_json_copy.get('additional_benchmarking_parameters', {})
+    
     # output target
     args['output_target'] = dict()
     args['secondary_output_target'] = dict()
@@ -178,6 +179,8 @@ def start_run(input_json):
         config['ebs_size'] = 0
     if 'public_postrun_json' not in config:
         config['public_postrun_json'] = True
+    if 'email' not in config:
+        config['email'] = False
 
     input_json_copy.update({"ff_meta": ff_meta.as_dict(),
                             'pf_meta': [meta.as_dict() for meta in pf_meta],
@@ -195,6 +198,7 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
     args['input_files'].update({input_file['workflow_argument_name']: {
                                 'bucket_name': input_file['bucket_name'],
                                 'rename': input_file.get('rename', ''),
+                                'unzip': input_file.get('unzip', ''),
                                 'object_key': object_key}})
     if input_file.get('format_if_extra', ''):
         args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
@@ -314,7 +318,7 @@ def create_wfr_output_files_and_processed_files(wf_meta, tbn, pf_source_experime
                 pf, resp = user_supplied_proc_file(user_supplied_output_files,
                                                    arg.get('workflow_argument_name'),
                                                    tbn)
-                printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.__dict__), str(resp)))
+                printlog("proc_file_for_arg_name returned %s \nfrom ff result of\n %s" % (str(pf.as_dict()), str(resp)))
             else:
                 if arg.get('argument_type', '') == 'Output processed file':
                     argname = arg.get('workflow_argument_name')

@@ -1,9 +1,25 @@
 import os
-
+import boto3
 
 # AWS account info
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
+if not AWS_ACCOUNT_NUMBER:
+    try:
+        AWS_ACCOUNT_NUMBER = boto3.client('sts').get_caller_identity().get('Account')
+    except Exception as e:
+        raise Exception("Cannot find AWS_ACCOUNT_NUMBER: %s" % e)
+
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
+if not AWS_REGION:
+    # I'm a lambda
+    AWS_REGION = os.environ.get('AWS_REGION', '')  # reserved variable in lambda
+    # I'm a user
+    if not AWS_REGION:
+        try:
+            AWS_REGION = boto3.session.Session().region_name  # for a user
+        except Exception as e:
+            raise Exception("Cannot find AWS_REGION: %s" % e)
+
 
 # Tibanna AMI info
 AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'
@@ -36,7 +52,7 @@ _tibanna = '_tibanna'
 # step function and execution ARN generators
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
-
+BASE_METRICS_URL = 'https://%s.s3.amazonaws.com/%s.metrics/metrics.html'
 
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_ARN % ('stateMachine', sfn)
@@ -44,3 +60,7 @@ def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
 
 def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_EXEC_ARN % (sfn, exec_name)
+
+
+def METRICS_URL(log_bucket, job_id):
+    return BASE_METRICS_URL % (log_bucket, job_id)

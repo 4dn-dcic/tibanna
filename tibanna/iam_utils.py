@@ -1,6 +1,7 @@
 import boto3
 import json
 import random
+from .vars import DYNAMODB_TABLE
 
 
 def generate_policy_prefix(user_group_name, no_randomize=False):
@@ -198,7 +199,7 @@ def generate_dynamodb_policy(account_id, region, tibanna_policy_prefix):
                     "dynamodb:DescribeTable",
                     "dynamodb:PutItem"
                 ],
-                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/tibanna-master"
+                "Resource": "arn:aws:dynamodb:" + region + ":" + account_id + ":table/" + DYNAMODB_TABLE
             }
         ]
     }
@@ -353,21 +354,12 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_metric_policy_name
-    )
-    if verbose:
-        print(response)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + cloudwatch_policy_name
-    )
-    if verbose:
-        print(response)
-    response = role_lambda_run.attach_policy(
-        PolicyArn='arn:aws:iam::' + account_id + ':policy/' + bucket_policy_name
-    )
-    if verbose:
-        print(response)
+    for pn in [cloudwatch_metric_policy_name, cloudwatch_policy_name, bucket_policy_name]:
+        response = role_lambda_run.attach_policy(
+            PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
+        )
+        if verbose:
+            print(response)
 
 
 def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
@@ -528,6 +520,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     ec2_desc_policy_name = tibanna_policy_prefix + '_ec2_desc'
     policy_ec2_desc = generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix)
     create_policy_robust(client, ec2_desc_policy_name, json.dumps(policy_ec2_desc), account_id, verbose)
+
     # roles
     # role for bucket
     create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
@@ -578,6 +571,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     # create IAM group for users who share permission
     custom_policy_names = [bucket_policy_name,
                            ec2_desc_policy_name,
+                           cloudwatch_metric_policy_name,
                            dynamodb_policy_name,
                            termination_policy_name]
     create_user_group(iam, tibanna_policy_prefix, custom_policy_names, account_id)

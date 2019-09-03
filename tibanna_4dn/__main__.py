@@ -120,6 +120,11 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):
     API().stat(sfn=sfn, status=status, long=long)
 
 
+def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, upload=False):
+    """create a resource metrics report html"""
+    API().plot_metrics(job_id=job_id, sfn=sfn, upload=upload)
+
+
 def main(Subcommands=Subcommands):
     """
     Execute the program from the command line

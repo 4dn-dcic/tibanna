@@ -1,0 +1,45 @@
+{
+    "push_error_to_end": true, 
+    "app_name": "hi-c-processing-pairs", 
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+    "jobid": "F7lX4sTGwxMp", 
+    "parameters": {
+        "min_res": 1000, 
+        "nthreads": 1, 
+        "maxmem": "32g"
+    }, 
+    "config": {
+        "instance_type": "t3.medium",
+        "ebs_type": "io1", 
+        "key_name": "4dn-encode", 
+        "ebs_iops": 500, 
+        "shutdown_min": "now", 
+        "run_name": "hi-c-processing-pairs_1522c85b-c900-41ce-b9fb-3efaa7005a2f", 
+        "log_bucket": "tibanna-output"
+    }, 
+    "workflow_uuid": "4dn-dcic-lab:wf-hi-c-processing-pairs-0.2.7", 
+    "input_files": [
+        {
+            "workflow_argument_name": "chromsizes", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "uuid": "4a6d10ee-2edb-4402-a98f-0edb1d58f5e9", 
+            "object_key": "4DNFI823LSII.chrom.sizes"
+        }, 
+        {
+            "object_key": [
+                "4DNFI1ZLO9D7.pairs.gz"
+            ], 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+            "uuid": [
+                "817f3faa-0573-45c0-8230-02ec19de6544"
+            ], 
+            "workflow_argument_name": "input_pairs"
+        }, 
+        {
+            "object_key": "4DNFI823MBKE.txt", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-files", 
+            "uuid": "595763c6-58d3-4ec4-8f04-3dbb88ed4736", 
+            "workflow_argument_name": "restriction_file"
+        }
+    ]
+}
