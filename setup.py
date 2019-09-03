@@ -16,6 +16,7 @@ with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
 install_requires = [req.strip() for req in set_parsed if 'git+' not in req]
 
+# these are OLD requirements
 # install_requires = [
 #     'python-lambda-4dn==0.11.1',
 #     'Benchmark-4dn==0.5.2',
