@@ -65,7 +65,7 @@ def start_run(input_json):
         workflow=inp.workflow_uuid, awsem_app_name=inp.wf_meta['app_name'], app_version=inp.wf_meta['app_version'],
         input_files=input_files_for_ffmeta,
         tag=inp.tag, run_url=inp.tibanna_settings.settings.get('url', ''),
-        output_files=inp.output_files, parameters=inp.parameters,
+        output_files=output_files, parameters=inp.parameters,
         extra_meta=inp.wfr_meta, awsem_job_id=inp.jobid
     )
     printlog("ff_meta is %s" % ff_meta.as_dict())
