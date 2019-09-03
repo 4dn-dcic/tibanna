@@ -1,6 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionPony
-from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE
 
 
 class API(_API):
@@ -22,24 +22,10 @@ class API(_API):
     StepFunction = StepFunctionPony
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
-    sfn_type = 'pony'
-    do_not_delete = ['validate_md5_s3_trigger_pony']
+    sfn_type = LAMBDA_TYPE
 
     def __init__(self):
         pass
-
-    def env_list(self, name):
-        envlist = super().env_list(name)
-        if envlist:
-            return envlist
-        envlist_pony = {
-            'run_workflow_pony': {},
-            'start_run_pony': {'SECRET': SECRET},
-            'update_ffmeta_pony': {'SECRET': SECRET},
-            'validate_md5_s3_initiator_pony': {'SECRET': SECRET},
-            'validate_md5_s3_trigger_pony': {}
-        }
-        return envlist_pony.get(name, '')
 
     def deploy_pony(self, suffix=None, usergroup=None):
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup)

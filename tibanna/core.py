@@ -89,7 +89,10 @@ class API(object):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
     sfn_type = 'unicorn'
-    do_not_delete = []  # list of lambda names that should not be deleted before updating
+
+    @property
+    def do_not_delete(self):
+        return []  # list of lambda names that should not be deleted before updating
 
     def __init__(self):
         pass
