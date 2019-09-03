@@ -7,16 +7,17 @@ import copy
 from dcicutils import ff_utils
 from tibanna.utils import printlog
 from tibanna_ffcommon.exceptions import TibannaStartException
-from .pony_utils import (
+from tibanna_ffcommon.portal_utils import (
     TibannaSettings,
-    merge_source_experiments,
-    create_ffmeta_awsem,
-    ProcessedFileMetadata,
-    WorkflowRunOutputFiles,
     FormatExtensionMap,
     get_extra_file_key,
     create_ffmeta_input_files_from_pony_input_file_list,
     parse_formatstr
+)
+from .pony_utils import (
+    merge_source_experiments,
+    ProcessedFileMetadata,
+    WorkflowRunOutputFiles,
 )
 from tibanna.nnested_array import (
     run_on_nested_arrays2,
