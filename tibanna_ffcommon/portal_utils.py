@@ -1,8 +1,6 @@
 import json
-import os
 import datetime
 import boto3
-import gzip
 import copy
 from uuid import uuid4
 import requests
@@ -10,10 +8,15 @@ from dcicutils.ff_utils import (
     get_metadata,
     post_metadata,
     patch_metadata,
+    search_metadata,
     generate_rand_accession,
     HIGLASS_BUCKETS
 )
 from dcicutils.s3_utils import s3Utils
+from tibanna.nnested_array import (
+    flatten,
+    create_dim
+)
 from tibanna.utils import (
     printlog
 )
@@ -45,7 +48,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
 
     def __init__(self, workflow, awsem_app_name, app_version, input_files=[],
                  parameters=[], title=None, uuid=None, output_files=None,
-                 run_status='started', run_platform='AWSEM', run_url='', tag=None, 
+                 run_status='started', run_platform='AWSEM', run_url='', tag=None,
                  aliases=None,  awsem_postrun_json=None, submitted_by=None, extra_meta=None,
                  awsem_job_id=None, **kwargs):
         """Class for WorkflowRun that matches the 4DN Metadata schema
@@ -148,7 +151,7 @@ class ProcessedFileMetadataAbstract(SerializableObject):
             self.higlass_uid = higlass_uid
 
 
-class WorkflowRunOutputFiles(object):
+class WorkflowRunOutputFiles(SerializableObject):
     def __init__(self, workflow_argument_name, argument_type, file_format=None, secondary_file_formats=None,
                  upload_key=None, uuid=None, extra_files=None):
         self.workflow_argument_name = workflow_argument_name
@@ -164,7 +167,102 @@ class WorkflowRunOutputFiles(object):
         if upload_key:
             self.upload_key = upload_key
 
+
+def parse_formatstr(file_format_str):
+    if not file_format_str:
+        return None
+    return file_format_str.replace('/file-formats/', '').replace('/', '')
+
+
+def create_ordinal(a):
+    if isinstance(a, list):
+        return list(range(1, len(a)+1))
+    else:
+        return 1
+
+
+def create_ffmeta_input_files_from_ff_input_file_list(input_file_list):
+    input_files_for_ffmeta = []
+    for input_file in input_file_list:
+        dim = flatten(create_dim(input_file['uuid']))
+        if not dim:  # singlet
+            dim = '0'
+        uuid = flatten(input_file['uuid'])
+        ordinal = create_ordinal(uuid)
+        for d, u, o in zip(aslist(dim), aslist(uuid), aslist(ordinal)):
+            infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], u, o,
+                                            input_file.get('format_if_extra', ''), d)
+            input_files_for_ffmeta.append(infileobj.as_dict())
+    printlog("input_files_for_ffmeta is %s" % input_files_for_ffmeta)
+    return input_files_for_ffmeta
+
+
+class InputFileForWFRMeta(object):
+    def __init__(self, workflow_argument_name=None, value=None, ordinal=None, format_if_extra=None, dimension=None):
+        self.workflow_argument_name = workflow_argument_name
+        self.value = value
+        self.ordinal = ordinal
+        if dimension:
+            self.dimension = dimension
+        if format_if_extra:
+            self.format_if_extra = format_if_extra
+
     def as_dict(self):
+        return self.__dict__
+
+
+def aslist(x):
+    if isinstance(x, list):
+        return x
+    else:
+        return [x]
+
+
+def ensure_list(val):
+    if isinstance(val, (list, tuple)):
+        return val
+    return [val]
+
+
+def get_extra_file_key(infile_format, infile_key, extra_file_format, fe_map):
+    infile_extension = fe_map.get_extension(infile_format)
+    extra_file_extension = fe_map.get_extension(extra_file_format)
+    if not infile_extension or not extra_file_extension:
+        errmsg = "Extension not found for infile_format %s (key=%s)" % (infile_format, infile_key)
+        errmsg += "extra_file_format %s" % extra_file_format
+        errmsg += "(infile extension %s, extra_file_extension %s)" % (infile_extension, extra_file_extension)
+        raise Exception(errmsg)
+    return infile_key.replace(infile_extension, extra_file_extension)
+
+
+class FormatExtensionMap(object):
+    def __init__(self, ff_keys):
+        try:
+            printlog("Searching in server : " + ff_keys['server'])
+            ffe_all = search_metadata("/search/?type=FileFormat&frame=object", key=ff_keys)
+        except Exception as e:
+            raise Exception("Can't get the list of FileFormat objects. %s\n" % e)
+        self.fe_dict = dict()
+        printlog("**ffe_all = " + str(ffe_all))
+        for k in ffe_all:
+            file_format = k['file_format']
+            self.fe_dict[file_format] = \
+                {'standard_extension': k['standard_file_extension'],
+                 'other_allowed_extensions': k.get('other_allowed_extensions', []),
+                 'extrafile_formats': k.get('extrafile_formats', [])
+                 }
+
+    def get_extension(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['standard_extension']
+        else:
+            return None
+
+    def get_other_extensions(self, file_format):
+        if file_format in self.fe_dict:
+            return self.fe_dict[file_format]['other_allowed_extensions']
+        else:
+            return []
 
 
 class TibannaSettings(object):
@@ -291,9 +389,9 @@ class FourfrontUpdaterAbstract(object):
         # send a notification email before throwing error
         if self.config.email:
             self.send_notification_email(self.tibanna_settings.settings['run_name'],
-                                        self.jobid,
-                                        self.ff_meta.run_status,
-                                        self.tibanna_settings.settings['url'])
+                                         self.jobid,
+                                         self.ff_meta.run_status,
+                                         self.tibanna_settings.settings['url'])
         # raise error
         raise Exception(err_msg)
 
@@ -820,7 +918,6 @@ class FourfrontUpdaterAbstract(object):
             self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
             self.update_patch_items(qc_target_accession, {'quality_metric': qc_object['uuid']})
 
-
     def qc_schema(self, qc_schema_name):
         try:
             # schema. do not need to check_queue
@@ -978,7 +1075,9 @@ class FourfrontUpdaterAbstract(object):
             else:
                 raise e
 
-    def send_notification_email(job_name, jobid, status, exec_url=None, sender=self.default_email_sender):
+    def send_notification_email(self, job_name, jobid, status, exec_url=None, sender=None):
+        if not sender:
+            sender = self.default_email_sender
         subject = '[Tibanna] job %s : %s' % (status, job_name)
         msg = 'Job %s (%s) finished with status %s\n' % (jobid, job_name, status) \
               + 'For more detail, go to %s' % exec_url
@@ -990,53 +1089,6 @@ class FourfrontUpdaterAbstract(object):
                                        'Body': {'Text': {'Data': msg}}})
         except Exception as e:
             printlog("Cannot send email: %s" % e)
-
-
-def post_random_file(bucket, ff_key,
-                     file_format='pairs', extra_file_format='pairs_px2',
-                     file_extension='pairs.gz', extra_file_extension='pairs.gz.px2',
-                     schema='file_processed', extra_status=None):
-    """Generates a fake file with random uuid and accession
-    and posts it to fourfront. The content is unique since it contains
-    its own uuid. The file metadata does not contain md5sum or
-    content_md5sum.
-    Uses the given fourfront keys
-    """
-    uuid = str(uuid4())
-    accession = generate_rand_accession()
-    newfile = {
-      "accession": accession,
-      "file_format": file_format,
-      "award": "b0b9c607-f8b4-4f02-93f4-9895b461334b",
-      "lab": "828cd4fe-ebb0-4b36-a94a-d2e3a36cc989",
-      "uuid": uuid
-    }
-    upload_key = uuid + '/' + accession + '.' + file_extension
-    tmpfilename = 'alsjekvjf'
-    with gzip.open(tmpfilename, 'wb') as f:
-        f.write(uuid.encode('utf-8'))
-    s3 = boto3.resource('s3')
-    s3.meta.client.upload_file(tmpfilename, bucket, upload_key)
-
-    # extra file
-    if extra_file_format:
-        newfile["extra_files"] = [
-            {
-               "file_format": extra_file_format,
-               "accession": accession,
-               "uuid": uuid
-            }
-        ]
-        if extra_status:
-            newfile["extra_files"][0]['status'] = extra_status
-        extra_upload_key = uuid + '/' + accession + '.' + extra_file_extension
-        extra_tmpfilename = 'alsjekvjf-extra'
-        with open(extra_tmpfilename, 'w') as f:
-            f.write(uuid + extra_file_extension)
-        s3.meta.client.upload_file(extra_tmpfilename, bucket, extra_upload_key)
-    response = post_metadata(newfile, schema, key=ff_key)
-    print(response)
-    return newfile
 
 
 def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):

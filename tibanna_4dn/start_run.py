@@ -11,7 +11,7 @@ from tibanna_ffcommon.portal_utils import (
     TibannaSettings,
     FormatExtensionMap,
     get_extra_file_key,
-    create_ffmeta_input_files_from_pony_input_file_list,
+    create_ffmeta_input_files_from_ff_input_file_list,
     parse_formatstr
 )
 from .pony_utils import (
@@ -105,7 +105,7 @@ def start_run(input_json):
         process_input_file_info(input_file, tbn.ff_keys, tbn.env, args)
 
     # create the ff_meta output info
-    input_files_for_ffmeta = create_ffmeta_input_files_from_pony_input_file_list(input_file_list)
+    input_files_for_ffmeta = create_ffmeta_input_files_from_ff_input_file_list(input_file_list)
 
     # source experiments
     input_file_uuids = [_['uuid'] for _ in input_file_list]
@@ -123,7 +123,8 @@ def start_run(input_json):
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
     ff_meta = WorkflowRunMetadata(
-        workflow_uuid, args['app_name'], args['app_version'], input_files_for_ffmeta,
+        workflow=workflow_uuid, awsem_app_name=args['app_name'], app_version=args['app_version'],
+        input_files=input_files_for_ffmeta,
         tag=tag, run_url=tbn.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
         extra_meta=input_json_copy.get('wfr_meta'), awsem_job_id=jobid
