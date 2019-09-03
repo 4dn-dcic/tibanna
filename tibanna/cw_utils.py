@@ -373,35 +373,39 @@ class TibannaResource(object):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">
+                <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,300i,400i,600i" rel="stylesheet"/>
                 <style type="text/css">
+                :root { font-size: 16px }
                 /* Basic Styling with CSS */
                 h2 {
                   text-align: center;
-                  font-family: "Times New Roman";
-                  font-size: 19px;
+                  font-family: "Source Sans Pro", sans-serif;
+                  font-size: 1.3rem;
                   padding: 10px;
+                  color: #ffffff;
+                  font-weight: lighter;
                 }
                 p {
-                  font-size: 14px;
+                  font-size: .9rem;
                 }
                 table {
-                  font-family: "Times New Roman";
+                  font-family: "Source Sans Pro", sans-serif;
                   width: 60%%;
+                  border-collapse: collapse;
                 }
                 td {
-                  border: 1px solid #dddddd;
+                  border-bottom: 1px solid #dddddd;
                   text-align: left;
                   padding: 8px;
-                  font-size: 13px;
+                  font-size: .925rem;
                 }
                 th {
-                  border: 1px solid #dddddd;
                   text-align: left;
                   padding: 8px;
-                  font-size: 15px;
-                }
-                tr:nth-child(even) {
-                  background-color: #e6f2ff;
+                  font-size: 1rem;
+                  background-color: #2C6088;
+                  color: #ffffff;
+                  font-weight: normal;
                 }
                 div {
                   display: block;
@@ -413,7 +417,7 @@ class TibannaResource(object):
                   margin-right: auto;
                   height: auto;
                   width: 85%%;
-                  background-color: #e6f2ff;
+                  background-color: #2C6088;
                 }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
