@@ -10,8 +10,8 @@ from tibanna.nnested_array import (
     flatten,
 )
 from .vars import (
-    DEFAULT_AWARD,
-    DEFAULT_LAB
+    DEFAULT_PROJECT,
+    DEFAULT_INSTITUTION
 )
 from tibanna_ffcommon.portal_utils import (
     WorkflowRunMetadataAbstract,
@@ -27,16 +27,16 @@ class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.award = kwargs.get('award', DEFAULT_AWARD)
-        self.lab = kwargs.get('lab', DEFAULT_LAB)
+        self.institution = kwargs.get('institution', DEFAULT_INSTITUTION)
+        self.project = kwargs.get('project', DEFAULT_PROJECT)
 
 
 class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.award = kwargs.get('award', DEFAULT_AWARD)
-        self.lab = kwargs.get('lab', DEFAULT_LAB)
-        self.source_experiments = kwargs.get('source_experiments', None)
+        self.institution = kwargs.get('institution', DEFAULT_INSTITUTION)
+        self.project = kwargs.get('project', DEFAULT_PROJECT)
+        self.source_samples = kwargs.get('source_samples', None)
 
     @classmethod
     def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
@@ -57,12 +57,12 @@ class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
             return pf
 
 
-def get_source_experiment(input_file_uuid, ff_keys, ff_env):
+def get_source_sample(input_file_uuid, ff_keys, ff_env):
     """
     Connects to fourfront and get source experiment info as a unique list
     Takes a single input file uuid.
     """
-    pf_source_experiments_set = set()
+    pf_source_samples_set = set()
     inf_uuids = aslist(flatten(input_file_uuid))
     for inf_uuid in inf_uuids:
         infile_meta = get_metadata(inf_uuid,
@@ -75,22 +75,22 @@ def get_source_experiment(input_file_uuid, ff_keys, ff_env):
                                        key=ff_keys,
                                        ff_env=ff_env,
                                        add_on='frame=raw')
-                pf_source_experiments_set.add(exp_obj['uuid'])
-        if infile_meta.get('source_experiments'):
+                pf_source_samples_set.add(exp_obj['uuid'])
+        if infile_meta.get('source_samples'):
             # this field is an array of strings, not linkTo's
-            pf_source_experiments_set.update(infile_meta.get('source_experiments'))
-    return list(pf_source_experiments_set)
+            pf_source_samples_set.update(infile_meta.get('source_samples'))
+    return list(pf_source_samples_set)
 
 
-def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
+def merge_source_samples(input_file_uuids, ff_keys, ff_env=None):
     """
     Connects to fourfront and get source experiment info as a unique list
     Takes a list of input file uuids.
     """
-    pf_source_experiments = set()
+    pf_source_samples = set()
     for input_file_uuid in input_file_uuids:
-        pf_source_experiments.update(get_source_experiment(input_file_uuid, ff_keys, ff_env))
-    return list(pf_source_experiments)
+        pf_source_samples.update(get_source_sample(input_file_uuid, ff_keys, ff_env))
+    return list(pf_source_samples)
 
 
 class FourfrontUpdater(FourfrontUpdaterAbstract):
@@ -110,13 +110,13 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
 
     def create_qc_template(self):
         res = super().create_qc_template()
-        res.update({"award": DEFAULT_AWARD,
-                    "lab": DEFAULT_LAB})
+        res.update({"institution": DEFAULT_INSTITUTION,
+                    "project": DEFAULT_PROJECT})
         return res
 
     @property
     def default_email_sender(self):
-        return '4dndcic@gmail.com'
+        return 'cgap.everyone@gmail.com'
 
 
 def post_random_file(bucket, ff_key,
@@ -134,8 +134,8 @@ def post_random_file(bucket, ff_key,
     newfile = {
       "accession": accession,
       "file_format": file_format,
-      "award": DEFAULT_AWARD,
-      "lab": DEFAULT_LAB,
+      "institution": DEFAULT_INSTITUTION,
+      "project": DEFAULT_PROJECT,
       "uuid": uuid
     }
     upload_key = uuid + '/' + accession + '.' + file_extension
