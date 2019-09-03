@@ -12,6 +12,10 @@ from dcicutils.ff_utils import (
     generate_rand_accession,
     HIGLASS_BUCKETS
 )
+from tibanna.nnested_array import (
+    run_on_nested_arrays2,
+    combine_two
+)
 from dcicutils.s3_utils import s3Utils
 from tibanna.nnested_array import (
     flatten,
@@ -1136,3 +1140,105 @@ def number(astring):
         return num
     except ValueError:
         return astring
+
+
+def process_input_file_info(input_file, ff_keys, ff_env, args):
+    if not args or 'input_files' not in args:
+        args['input_files'] = dict()
+    if not args or 'secondary_files' not in args:
+        args['secondary_files'] = dict()
+    object_key = combine_two(input_file['uuid'], input_file['object_key'])
+    args['input_files'].update({input_file['workflow_argument_name']: {
+                                'bucket_name': input_file['bucket_name'],
+                                'rename': input_file.get('rename', ''),
+                                'unzip': input_file.get('unzip', ''),
+                                'object_key': object_key}})
+    if input_file.get('format_if_extra', ''):
+        args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
+            = input_file.get('format_if_extra')
+    else:  # do not add this if the input itself is an extra file
+        add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
+
+
+def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_env, fe_map):
+    extra_file_keys = []
+    not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
+    infile_meta = ff_utils.get_metadata(inf_uuid,
+                                        key=ff_keys,
+                                        ff_env=ff_env,
+                                        add_on='frame=object')
+    if infile_meta.get('extra_files'):
+        infile_format = parse_formatstr(infile_meta.get('file_format'))
+        for extra_file in infile_meta.get('extra_files'):
+            if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
+                extra_file_format = parse_formatstr(extra_file.get('file_format'))
+                extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
+                extra_file_keys.append(extra_file_key)
+    if len(extra_file_keys) == 0:
+        extra_file_keys = None
+    return extra_file_keys
+
+
+def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
+    if not args or 'input_files' not in args:
+        raise Exception("args must contain key 'input_files'")
+    if 'secondary_files'not in args:
+        args['secondary_files'] = dict()
+    argname = input_file['workflow_argument_name']
+    fe_map = FormatExtensionMap(ff_keys)
+    extra_file_keys = run_on_nested_arrays2(input_file['uuid'],
+                                            args['input_files'][argname]['object_key'],
+                                            get_extra_file_key_given_input_uuid_and_key,
+                                            ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
+    if extra_file_keys and len(extra_file_keys) > 0:
+        if len(extra_file_keys) == 1:
+            extra_file_keys = extra_file_keys[0]
+        args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                        'bucket_name': input_file['bucket_name'],
+                                        'rename': input_file.get('rename', ''),
+                                        'object_key': extra_file_keys}})
+
+
+def output_target_for_input_extra(target_inf, of, tbn, overwrite_input_extra=False):
+    extrafileexists = False
+    printlog("target_inf = %s" % str(target_inf))  # debugging
+    target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
+                                            key=tbn.ff_keys,
+                                            ff_env=tbn.env,
+                                            add_on='frame=object',
+                                            check_queue=True)
+    target_format = parse_formatstr(of.get('format'))
+    if target_inf_meta.get('extra_files'):
+        for exf in target_inf_meta.get('extra_files'):
+            if parse_formatstr(exf.get('file_format')) == target_format:
+                extrafileexists = True
+                if overwrite_input_extra:
+                    exf['status'] = 'to be uploaded by workflow'
+                break
+        if not extrafileexists:
+            new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+            target_inf_meta['extra_files'].append(new_extra)
+    else:
+        new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
+        target_inf_meta['extra_files'] = [new_extra]
+    if overwrite_input_extra or not extrafileexists:
+        # first patch metadata
+        printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
+        ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
+                                target_inf.get('value'),
+                                key=tbn.ff_keys,
+                                ff_env=tbn.env)
+        # target key
+        # NOTE : The target bucket is assume to be the same as output bucket
+        # i.e. the bucket for the input file should be the same as the output bucket.
+        # which is true if both input and output are processed files.
+        orgfile_key = target_inf_meta.get('upload_key')
+        orgfile_format = parse_formatstr(target_inf_meta.get('file_format'))
+        fe_map = FormatExtensionMap(tbn.ff_keys)
+        printlog("orgfile_key = %s" % orgfile_key)
+        printlog("orgfile_format = %s" % orgfile_format)
+        printlog("target_format = %s" % target_format)
+        target_key = get_extra_file_key(orgfile_format, orgfile_key, target_format, fe_map)
+        return target_key
+    else:
+        raise Exception("input already has extra: 'User overwrite_input_extra': true")
