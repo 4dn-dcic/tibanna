@@ -9,8 +9,7 @@ from dcicutils.ff_utils import (
     post_metadata,
     patch_metadata,
     search_metadata,
-    generate_rand_accession,
-    HIGLASS_BUCKETS
+    generate_rand_accession
 )
 from tibanna.nnested_array import (
     run_on_nested_arrays2,
