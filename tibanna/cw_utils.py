@@ -389,7 +389,7 @@ class TibannaResource(object):
                   text-align: center;
                   font-family: "Source Sans Pro", sans-serif;
                   font-size: 1rem;
-                  padding: 14px;
+                  padding: 13px;
                   color: #ffffff;
                   font-weight: normal;
                 }
@@ -418,11 +418,11 @@ class TibannaResource(object):
                 }
                 td {
                   border-bottom: 1px solid #dddddd;
-                  padding: 12px;
+                  padding: 11px;
                   font-size: .925rem;
                 }
                 th {
-                  padding: 14px;
+                  padding: 13px;
                   font-size: 1rem;
                   background-color: #2C6088;
                   color: #ffffff;
