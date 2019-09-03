@@ -122,11 +122,15 @@ class WorkflowRunMetadataAbstract(SerializableObject):
 
 
 class ProcessedFileMetadataAbstract(SerializableObject):
+
+    # actual values go here for inherited classes
+    accession_prefix = 'ABC'
+
     def __init__(self, uuid=None, accession=None, file_format='',
                  extra_files=None, status='to be uploaded by workflow',
                  md5sum=None, file_size=None, other_fields=None, **kwargs):
         self.uuid = uuid if uuid else str(uuid4())
-        self.accession = accession if accession else generate_rand_accession()
+        self.accession = accession if accession else generate_rand_accession(self.accession_prefix, 'FI')
         self.status = status
         self.file_format = parse_formatstr(file_format)
         self.extra_files = extra_files

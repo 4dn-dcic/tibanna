@@ -12,6 +12,7 @@ from tibanna.nnested_array import (
 from .vars import (
     DEFAULT_PROJECT,
     DEFAULT_INSTITUTION,
+    ACCESSION_PREFIX,
     HIGLASS_BUCKETS
 )
 from tibanna_ffcommon.portal_utils import (
@@ -33,6 +34,9 @@ class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
 
 
 class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
+
+    accession_prefix = ACCESSION_PREFIX
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.institution = kwargs.get('institution', DEFAULT_INSTITUTION)
@@ -133,7 +137,7 @@ def post_random_file(bucket, ff_key,
     Uses the given fourfront keys
     """
     uuid = str(uuid4())
-    accession = generate_rand_accession()
+    accession = generate_rand_accession(ACCESSION_PREFIX, 'FI')
     newfile = {
       "accession": accession,
       "file_format": file_format,
