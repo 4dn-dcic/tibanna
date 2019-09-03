@@ -434,7 +434,7 @@ class TibannaResource(object):
                   width: 100%%;
                 }
                 .logo {
-                  height: 82px;
+                  max-height: 81px;
                   width: 100%%;
                   background-color: #20445E;
                   display: flex;
