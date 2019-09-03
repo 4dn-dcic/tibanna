@@ -1,4 +1,4 @@
-from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
+from .vars import LAMBDA_TYPE
 from tibanna_ffcommon.stepfunction import StepFunctionFFAbstract
 
 
@@ -6,4 +6,4 @@ class StepFunctionZebra(StepFunctionFFAbstract):
 
     @property
     def lambda_type(self):
-        return 'zebra'
+        return LAMBDA_TYPE
