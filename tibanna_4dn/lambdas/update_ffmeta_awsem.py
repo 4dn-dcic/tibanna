@@ -4,7 +4,7 @@ from tibanna_4dn.update_ffmeta import update_ffmeta
 from tibanna_4dn.vars import AWS_REGION
 
 config = {
-    'function_name': 'update_ffmeta_awsem',
+    'function_name': 'update_ffmeta_pony',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
@@ -32,7 +32,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@exception_coordinator('update_ffmeta_awsem', metadata_only)
+@exception_coordinator('update_ffmeta_pony', metadata_only)
 def handler(event, context):
     return real_handler(event, context)
 

@@ -6,7 +6,7 @@ from tibanna_4dn.vars import AWS_REGION
 
 
 config = {
-    'function_name': 'start_run_awsem',
+    'function_name': 'start_run_pony',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
@@ -26,7 +26,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@exception_coordinator('start_run_awsem', metadata_only)
+@exception_coordinator('start_run_pony', metadata_only)
 def handler(event, context):
     if event.get('push_error_to_end', True):
         event['push_error_to_end'] = True  # push error to end by default for pony

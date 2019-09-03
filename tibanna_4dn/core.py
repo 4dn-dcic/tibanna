@@ -23,7 +23,7 @@ class API(_API):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
     sfn_type = 'pony'
-    do_not_delete = ['validate_md5_s3_trigger']
+    do_not_delete = ['validate_md5_s3_trigger_pony']
 
     def __init__(self):
         pass
@@ -33,11 +33,11 @@ class API(_API):
         if envlist:
             return envlist
         envlist_pony = {
-            'run_workflow': {},
-            'start_run_awsem': {'SECRET': SECRET},
-            'update_ffmeta_awsem': {'SECRET': SECRET},
-            'validate_md5_s3_initiator': {'SECRET': SECRET},
-            'validate_md5_s3_trigger': {}
+            'run_workflow_pony': {},
+            'start_run_pony': {'SECRET': SECRET},
+            'update_ffmeta_pony': {'SECRET': SECRET},
+            'validate_md5_s3_initiator_pony': {'SECRET': SECRET},
+            'validate_md5_s3_trigger_pony': {}
         }
         return envlist_pony.get(name, '')
 

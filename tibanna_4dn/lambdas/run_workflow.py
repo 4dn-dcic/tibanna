@@ -4,7 +4,7 @@ from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION
 
 
 config = {
-    'function_name': 'run_workflow',
+    'function_name': 'run_workflow_pony',
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
