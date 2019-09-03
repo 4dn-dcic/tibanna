@@ -11,7 +11,8 @@ from tibanna.nnested_array import (
 )
 from .vars import (
     DEFAULT_AWARD,
-    DEFAULT_LAB
+    DEFAULT_LAB,
+    HIGLASS_BUCKETS
 )
 from tibanna_ffcommon.portal_utils import (
     WorkflowRunMetadataAbstract,
@@ -97,26 +98,20 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
+
+    WorkflowRunMetadata = WorkflowRunMetadata
+    ProcessedFileMetadata = ProcessedFileMetadata
+    default_email_sender = '4dndcic@gmail.com' 
+    higlass_buckets =  HIGLASS_BUCKETS
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs):
-
-    @property
-    def WorkflowRunMetadata(self):
-        return WorkflowRunMetadata
-
-    @property
-    def ProcessedFileMetadata(self):
-        return ProcessedFileMetadata
 
     def create_qc_template(self):
         res = super().create_qc_template()
         res.update({"award": DEFAULT_AWARD,
                     "lab": DEFAULT_LAB})
         return res
-
-    @property
-    def default_email_sender(self):
-        return '4dndcic@gmail.com'
 
 
 def post_random_file(bucket, ff_key,

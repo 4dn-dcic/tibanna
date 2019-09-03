@@ -14,3 +14,6 @@ TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTI
 # fourfront
 DEFAULT_AWARD = '1U01CA200059-01'
 DEFAULT_LAB = '4dn-dcic-lab'
+
+HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
+                   'elasticbeanstalk-fourfront-webdev-wfoutput']

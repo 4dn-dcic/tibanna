@@ -329,6 +329,13 @@ class FourfrontUpdaterAbstract(object):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
+
+    # replace the following with actual classes and values for inherited class
+    WorkflowRunMetadata = WorkflowRunMetadataAbstract
+    ProcessedFileMetadata = ProcessedFileMetadataAbstract
+    default_email_sender = ''
+    higlass_buckets = []
+
     def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields=None,
                  config=None, jobid=None, metadata_only=False, **kwargs):
         self.jobid = jobid
@@ -350,19 +357,6 @@ class FourfrontUpdaterAbstract(object):
         self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
-
-    @property
-    def WorkflowRunMetadata(self):
-        return WorkflowRunMetadataAbstract
-
-    @property
-    def ProcessedFileMetadata(self):
-        return ProcessedFileMetadataAbstract
-
-    @property
-    def default_email_sender(self):
-        """return an actual email sender address for inherited class"""
-        return ''
 
     def create_wfr_qc(self):
         qc_object = self.create_qc_template()
@@ -810,12 +804,12 @@ class FourfrontUpdaterAbstract(object):
                 key = self.file_key(pf_uuid=pf_uuid, secondary_format=extra_format)
                 break
         if hgcf:
-            higlass_uid = register_to_higlass(self.tibanna_settings,
-                                              self.bucket(pf_uuid=pf_uuid),
-                                              key,
-                                              hgcf['file_type'],
-                                              hgcf['data_type'],
-                                              self.genome_assembly(pf_uuid))
+            higlass_uid = self.register_to_higlass(self.tibanna_settings,
+                                                   self.bucket(pf_uuid=pf_uuid),
+                                                   key,
+                                                   hgcf['file_type'],
+                                                   hgcf['data_type'],
+                                                   self.genome_assembly(pf_uuid))
         if higlass_uid:
             # update the class object
             self.pf(pf_uuid).higlass_uid = higlass_uid
@@ -858,12 +852,12 @@ class FourfrontUpdaterAbstract(object):
                 higlass_uid = None
                 if hgcf:
                     # register extra file not the original input file
-                    higlass_uid = register_to_higlass(self.tibanna_settings,
-                                                      self.bucket(ie.workflow_argument_name),
-                                                      self.file_key(ie.workflow_argument_name),
-                                                      hgcf['file_type'],
-                                                      hgcf['data_type'],
-                                                      ip.get('genome_assembly', None))
+                    higlass_uid = self.register_to_higlass(self.tibanna_settings,
+                                                           self.bucket(ie.workflow_argument_name),
+                                                           self.file_key(ie.workflow_argument_name),
+                                                           hgcf['file_type'],
+                                                           hgcf['data_type'],
+                                                           ip.get('genome_assembly', None))
                 if higlass_uid:
                     self.update_patch_items(ip['uuid'], {'higlass_uid': higlass_uid})
             self.update_patch_items(ip['uuid'], {'extra_files': ip['extra_files']})
@@ -1090,31 +1084,30 @@ class FourfrontUpdaterAbstract(object):
         except Exception as e:
             printlog("Cannot send email: %s" % e)
 
-
-def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
-    if bucket not in HIGLASS_BUCKETS:
-        return None
-    if not key:
-        return None
-    if not genome_assembly:
-        return None
-    payload = {"filepath": bucket + "/" + key,
-               "filetype": filetype, "datatype": datatype,
-               "coordSystem": genome_assembly}
-    higlass_keys = tbn.s3.get_higlass_key()
-    if not isinstance(higlass_keys, dict):
-        raise Exception("Bad higlass keys found: %s" % higlass_keys)
-    auth = (higlass_keys['key'], higlass_keys['secret'])
-    headers = {'Content-Type': 'application/json',
-               'Accept': 'application/json'}
-    try:
-        res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
-                            data=json.dumps(payload), auth=auth, headers=headers)
-    except:
-        # do not raise error (do not fail the wrf) - will be taken care of by foursight later
-        return None
-    printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
-    return res.json()['uuid']
+    def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
+        if bucket not in self.higlass_buckets:
+            return None
+        if not key:
+            return None
+        if not genome_assembly:
+            return None
+        payload = {"filepath": bucket + "/" + key,
+                   "filetype": filetype, "datatype": datatype,
+                   "coordSystem": genome_assembly}
+        higlass_keys = tbn.s3.get_higlass_key()
+        if not isinstance(higlass_keys, dict):
+            raise Exception("Bad higlass keys found: %s" % higlass_keys)
+        auth = (higlass_keys['key'], higlass_keys['secret'])
+        headers = {'Content-Type': 'application/json',
+                   'Accept': 'application/json'}
+        try:
+            res = requests.post(higlass_keys['server'] + '/api/v1/link_tile/',
+                                data=json.dumps(payload), auth=auth, headers=headers)
+        except:
+            # do not raise error (do not fail the wrf) - will be taken care of by foursight later
+            return None
+        printlog("LOG resiter_to_higlass(POST request response): " + str(res.json()))
+        return res.json()['uuid']
 
 
 def cmp_fileformat(format1, format2):
