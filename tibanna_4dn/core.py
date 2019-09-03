@@ -1,4 +1,4 @@
-from tibanna.core import API as _API
+from tibanna_ffcommon.core import API as _API
 from .stepfunction import StepFunctionPony
 from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE
 

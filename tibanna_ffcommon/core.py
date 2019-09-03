@@ -1,7 +1,6 @@
 from tibanna.core import API as _API
 from .stepfunction import StepFunctionPony
-from .vars import SECRET, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-from .vars import LAMBDA_TYPE
+from .vars import S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE
 
 
 class API(_API):
@@ -37,9 +36,9 @@ class API(_API):
             return envlist
         envlist_ff = {
             'run_workflow_' + self.sfn_type: {},
-            'start_run_' + self.sfn_type: {'SECRET': SECRET},
-            'update_ffmeta_' + self.sfn_type: {'SECRET': SECRET},
-            'validate_md5_s3_initiator_' + self.sfn_type: {'SECRET': SECRET},
+            'start_run_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'update_ffmeta_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'validate_md5_s3_initiator_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
             'validate_md5_s3_trigger_' + self.sfn_type: {}
         }
         return envlist_ff.get(name, '')

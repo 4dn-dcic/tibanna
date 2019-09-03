@@ -373,47 +373,79 @@ class TibannaResource(object):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">
+                <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,300i,400i,600i" rel="stylesheet"/>
                 <style type="text/css">
+                :root { font-size: 16px }
+                body{ margin: 0; }
                 /* Basic Styling with CSS */
+                h1 {
+                  font-family: "Source Sans Pro", sans-serif;
+                  color: #D3DADF;
+                  font-weight: lighter;
+                  font-size: 1.7rem;
+                  padding-left: 50px;
+                }
                 h2 {
                   text-align: center;
-                  font-family: "Times New Roman";
-                  font-size: 19px;
-                  padding: 10px;
+                  font-family: "Source Sans Pro", sans-serif;
+                  font-size: 1rem;
+                  padding: 13px;
+                  color: #ffffff;
+                  font-weight: normal;
                 }
                 p {
-                  font-size: 14px;
+                  font-size: .9rem;
+                  font-family: "Source Sans Pro", sans-serif;
+                }
+                text {
+                  font-family: "Source Sans Pro", sans-serif;
+                  font-weight: normal;
+                  font-size: .825rem;
                 }
                 table {
-                  font-family: "Times New Roman";
-                  width: 60%%;
+                  font-family: "Source Sans Pro", sans-serif;
+                  width: 40%%;
+                  border-collapse: collapse;
+                }
+                .right {
+                  text-align: right;
+                }
+                .center {
+                  text-align: center;
+                }
+                .left {
+                  text-align: left;
                 }
                 td {
-                  border: 1px solid #dddddd;
-                  text-align: left;
-                  padding: 8px;
-                  font-size: 13px;
+                  border-bottom: 1px solid #dddddd;
+                  padding: 11px;
+                  font-size: .925rem;
                 }
                 th {
-                  border: 1px solid #dddddd;
-                  text-align: left;
-                  padding: 8px;
-                  font-size: 15px;
-                }
-                tr:nth-child(even) {
-                  background-color: #e6f2ff;
+                  padding: 13px;
+                  font-size: 1rem;
+                  background-color: #2C6088;
+                  color: #ffffff;
+                  font-weight: normal;
                 }
                 div {
                   display: block;
                   height: 500px;
                   width: 100%%;
                 }
+                .logo {
+                  max-height: 81px;
+                  width: 100%%;
+                  background-color: #20445E;
+                  display: flex;
+                  align-items: center;
+                }
                 .header {
                   margin-left: auto;
                   margin-right: auto;
                   height: auto;
                   width: 85%%;
-                  background-color: #e6f2ff;
+                  background-color: #2C6088;
                 }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
@@ -464,66 +496,65 @@ class TibannaResource(object):
                 </style>
                 <!-- Body tag is where we will append our SVG and SVG objects-->
                 <body>
+                    <div class="logo">
+                      <h1>Tibanna Metrics</h1>
+                    </div></br></br>
                   <section>
-                    <div class="header">
-                      <h2>Summary Metrics and Time</h2>
-                    </div>
                     </br>
                     <table align="center">
                       <tr>
                         <th colspan="2">General Information</th>
                       </tr>
                       <tr>
-                        <td>EC2 Instance Type</td>
-                        <td>%s</td>
+                        <td class="left">EC2 Instance Type</td>
+                        <td class="center">%s</td>
                       </tr>
                     </table>
                     </br></br>
                     <table align="center">
                       <tr>
-                        <th>Metric</th>
-                        <th>Value</th>
+                        <th colspan="2">Metrics</th>
                       </tr>
                       <tr>
-                        <td>Maximum Memory Used [Mb]</td>
-                        <td>%d</td>
+                        <td class="left">Maximum Memory Used [Mb]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Minimum Memory Available [Mb]</td>
-                        <td>%d</td>
+                        <td class="left">Minimum Memory Available [Mb]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Maximum Disk Used (/data1) [Gb]</td>
-                        <td>%d</td>
+                        <td class="left">Maximum Disk Used (/data1) [Gb]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Maximum Memory Utilization [%%]</td>
-                        <td>%d</td>
+                        <td class="left">Maximum Memory Utilization [%%]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Maximum CPU Utilization [%%]</td>
-                        <td>%d</td>
+                        <td class="left">Maximum CPU Utilization [%%]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Maximum Disk Utilization (/data1) [%%]</td>
-                        <td>%d</td>
+                        <td class="left">Maximum Disk Utilization (/data1) [%%]</td>
+                        <td class="center">%d</td>
                       </tr>
                       <tr>
-                        <td>Cost</td>
-                        <td>%s</td>
+                        <td class="left">Cost</td>
+                        <td class="center">%s</td>
                       </tr>
                     </table>
                     </br></br>
                     <table align="center">
                       <tr>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Total Time</th>
+                        <th class="left">Start Time [UTC]</th>
+                        <th class="left">End Time [UTC]</th>
+                        <th class="left">Total Time</th>
                       </tr>
                       <tr>
-                        <td>%s</td>
-                        <td>%s</td>
-                        <td>%s</td>
+                        <td class="left">%s</td>
+                        <td class="left">%s</td>
+                        <td class="left">%s</td>
                       </tr>
                     </table>
                   </section>
