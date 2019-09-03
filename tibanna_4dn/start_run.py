@@ -121,11 +121,11 @@ def start_run(input_json):
     print("output files= %s" % str(output_files))
 
     # 4DN dcic award and lab are used here, unless provided in wfr_meta
-    ff_meta = create_ffmeta_awsem(
+    ff_meta = WorkflowRunMetadata(
         workflow_uuid, args['app_name'], args['app_version'], input_files_for_ffmeta,
         tag=tag, run_url=tbn.settings.get('url', ''),
         output_files=output_files, parameters=parameters,
-        extra_meta=input_json_copy.get('wfr_meta'), jobid=jobid
+        extra_meta=input_json_copy.get('wfr_meta'), awsem_job_id=jobid
     )
 
     printlog("ff_meta is %s" % ff_meta.as_dict())
