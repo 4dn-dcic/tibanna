@@ -18,7 +18,7 @@ def start_run(input_json):
     if starter.inp.config.log_bucket and starter.inp.jobid:
         s3 = boto3.client('s3')
         s3.put_object(Body=json.dumps(input_json, indent=4).encode('ascii'),
-                      Key=inp.jobid + '.input.json',
-                      Bucket=inp.config.log_bucket)
+                      Key=starter.inp.jobid + '.input.json',
+                      Bucket=starter.inp.config.log_bucket)
     starter.run()
     return(starter.inp.as_dict())

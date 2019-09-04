@@ -20,8 +20,35 @@ from tibanna_ffcommon.portal_utils import (
     ProcessedFileMetadataAbstract,
     FourfrontUpdaterAbstract,
     FFInputAbstract,
-    FourfrontStarterAbstract
+    FourfrontStarterAbstract,
+    aslist
 )
+
+
+class PonyInput(FFInputAbstract):
+    pass
+
+
+class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
+    '''
+    fourfront metadata
+    '''
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.award = kwargs.get('award', DEFAULT_AWARD)
+        self.lab = kwargs.get('lab', DEFAULT_LAB)
+
+
+class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
+
+    accession_prefix = ACCESSION_PREFIX
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.award = kwargs.get('award', DEFAULT_AWARD)
+        self.lab = kwargs.get('lab', DEFAULT_LAB)
+        self.source_experiments = kwargs.get('source_experiments', None)
 
 
 class FourfrontStarter(FourfrontStarterAbstract):
@@ -59,7 +86,7 @@ class FourfrontStarter(FourfrontStarterAbstract):
                 # this field is an array of strings, not linkTo's
                 pf_source_experiments_set.update(infile_meta.get('source_experiments'))
         return list(pf_source_experiments_set)
-    
+
     def merge_source_experiments(self):
         """
         Connects to fourfront and get source experiment info as a unique list
@@ -78,132 +105,15 @@ class FourfrontStarter(FourfrontStarterAbstract):
             return self.source_experiments_
 
 
-class PonyInput(FFInputAbstract):
-    pass
-
-
-class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
-    '''
-    fourfront metadata
-    '''
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.award = kwargs.get('award', DEFAULT_AWARD)
-        self.lab = kwargs.get('lab', DEFAULT_LAB)
-
-
-class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
-
-    accession_prefix = ACCESSION_PREFIX
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.award = kwargs.get('award', DEFAULT_AWARD)
-        self.lab = kwargs.get('lab', DEFAULT_LAB)
-        self.source_experiments = kwargs.get('source_experiments', None)
-
-    @classmethod
-    def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
-        data = get_metadata(uuid,
-                            key=key,
-                            ff_env=ff_env,
-                            add_on='frame=object',
-                            check_queue=check_queue)
-        if type(data) is not dict:
-            raise Exception("unable to find object with unique key of %s" % uuid)
-        if 'FileProcessed' not in data.get('@type', {}):
-            raise Exception("you can only load ProcessedFiles into this object")
-
-        pf = ProcessedFileMetadata(**data)
-        if return_data:
-            return pf, data
-        else:
-            return pf
-
-
-
-
-class TibannaSettings(object):
-
-    def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
-        self.env = env
-        self.s3 = s3Utils(env=env)
-
-        if not ff_keys:
-            ff_keys = self.s3.get_access_keys('access_key_tibanna')
-        self.ff_keys = ff_keys
-
-        if not settings:
-            settings = {}
-        self.settings = settings
-
-    def get_reporter(self):
-        '''
-        a reporter is a generic name for somethign that reports on the results of each step
-        of the workflow.  For our immediate purposes this will return ffmetadata object
-        (which is a connection to our metadata repository, eventually it should, through
-        polymorphism support any type of reporter a user might develop.
-        '''
-        return None
-
-    def get_runner(self):
-        '''
-        a runner is an object that implements a set api to run the workflow one step at a time.
-        Currently this is sbg for us.
-        '''
-        return None
-
-    def as_dict(self):
-        return {'env': self.env,
-                'settings': self.settings}
-
-
-def current_env():
-    return os.environ.get('ENV_NAME', 'test')
-
-
-def is_prod():
-    return current_env().lower() == 'prod'
-
-
-class QCArgumentInfo(SerializableObject):
-    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to, qc_type,
-                 qc_zipped=False, qc_html=False, qc_json=False, qc_table=False,
-                 qc_zipped_html=None, qc_zipped_tables=None):
-        if argument_type != 'Output QC file':
-            raise Exception("QCArgument it not Output QC file: %s" % argument_type)
-        self.workflow_argument_name = workflow_argument_name
-        self.argument_to_be_attached_to = argument_to_be_attached_to
-        self.qc_type = qc_type
-        self.qc_zipped = qc_zipped
-        self.qc_html = qc_html
-        self.qc_json = qc_json
-        self.qc_table = qc_table
-        self.qc_zipped_html = qc_zipped_html
-        self.qc_zipped_tables = qc_zipped_tables
-
-
-class InputExtraArgumentInfo(SerializableObject):
-    def __init__(self, argument_type, workflow_argument_name, argument_to_be_attached_to, **kwargs):
-        if argument_type != 'Output to-be-extra-input file':
-            raise Exception("InputExtraArgumentInfo is not Output to-be-extra-input file: %s" % argument_type)
-        self.workflow_argument_name = workflow_argument_name
-        self.argument_to_be_attached_to = argument_to_be_attached_to
-
-
-class FourfrontUpdater(object):
+class FourfrontUpdater(FourfrontUpdaterAbstract):
     """This class integrates three different sources of information:
     postrunjson, workflowrun, processed_files,
     and does the final updates necessary"""
 
     WorkflowRunMetadata = WorkflowRunMetadata
     ProcessedFileMetadata = ProcessedFileMetadata
-    default_email_sender = '4dndcic@gmail.com' 
-    higlass_buckets =  HIGLASS_BUCKETS
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs):
+    default_email_sender = '4dndcic@gmail.com'
+    higlass_buckets = HIGLASS_BUCKETS
 
     def create_qc_template(self):
         res = super().create_qc_template()

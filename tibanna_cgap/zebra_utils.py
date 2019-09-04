@@ -18,8 +18,10 @@ from .vars import (
 from tibanna_ffcommon.portal_utils import (
     WorkflowRunMetadataAbstract,
     ProcessedFileMetadataAbstract,
+    FourfrontStarterAbstract,
     FourfrontUpdaterAbstract,
-    FFInputAbstract
+    FFInputAbstract,
+    aslist
 )
 
 
@@ -48,59 +50,59 @@ class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
         self.project = kwargs.get('project', DEFAULT_PROJECT)
         self.source_samples = kwargs.get('source_samples', None)
 
-    @classmethod
-    def get(cls, uuid, key, ff_env=None, check_queue=False, return_data=False):
-        data = get_metadata(uuid,
-                            key=key,
-                            ff_env=ff_env,
-                            add_on='frame=object',
-                            check_queue=check_queue)
-        if type(data) is not dict:
-            raise Exception("unable to find object with unique key of %s" % uuid)
-        if 'FileProcessed' not in data.get('@type', {}):
-            raise Exception("you can only load ProcessedFiles into this object")
 
-        pf = ProcessedFileMetadata(**data)
-        if return_data:
-            return pf, data
+class FourfrontStarter(FourfrontStarterAbstract):
+
+    InputClass = ZebraInput
+    ProcessedFileMetadata = ProcessedFileMetadata
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.source_samples_ = None
+
+    def pf(self, argname):
+        super().pf(argname, source_samples=self.source_samples)
+
+    def get_source_experiment(self, input_file_uuid):
+        """
+        Connects to fourfront and get source experiment info as a unique list
+        Takes a single input file uuid.
+        """
+        pf_source_samples_set = set()
+        inf_uuids = aslist(flatten(input_file_uuid))
+        for inf_uuid in inf_uuids:
+            infile_meta = get_metadata(inf_uuid,
+                                       key=self.tbn.ff_keys,
+                                       ff_env=self.tbn.ff_env,
+                                       add_on='frame=object')
+            if infile_meta.get('samples'):
+                for exp in infile_meta.get('samples'):
+                    exp_obj = get_metadata(exp,
+                                           key=self.tbn.ff_keys,
+                                           ff_env=self.tbn.ff_env,
+                                           add_on='frame=raw')
+                    pf_source_samples_set.add(exp_obj['uuid'])
+            if infile_meta.get('source_samples'):
+                # this field is an array of strings, not linkTo's
+                pf_source_samples_set.update(infile_meta.get('source_samples'))
+        return list(pf_source_samples_set)
+
+    def merge_source_samples(self):
+        """
+        Connects to fourfront and get source experiment info as a unique list
+        Takes a list of input file uuids.
+        """
+        pf_source_samples = set()
+        for input_file_uuid in self.inp.input_file_uuids:
+            pf_source_samples.update(self.get_source_experiment(input_file_uuid))
+        return list(pf_source_samples)
+
+    def source_samples(self):
+        if self.source_samples_:
+            return self.source_samples_
         else:
-            return pf
-
-
-def get_source_sample(input_file_uuid, ff_keys, ff_env):
-    """
-    Connects to fourfront and get source experiment info as a unique list
-    Takes a single input file uuid.
-    """
-    pf_source_samples_set = set()
-    inf_uuids = aslist(flatten(input_file_uuid))
-    for inf_uuid in inf_uuids:
-        infile_meta = get_metadata(inf_uuid,
-                                   key=ff_keys,
-                                   ff_env=ff_env,
-                                   add_on='frame=object')
-        if infile_meta.get('experiments'):
-            for exp in infile_meta.get('experiments'):
-                exp_obj = get_metadata(exp,
-                                       key=ff_keys,
-                                       ff_env=ff_env,
-                                       add_on='frame=raw')
-                pf_source_samples_set.add(exp_obj['uuid'])
-        if infile_meta.get('source_samples'):
-            # this field is an array of strings, not linkTo's
-            pf_source_samples_set.update(infile_meta.get('source_samples'))
-    return list(pf_source_samples_set)
-
-
-def merge_source_samples(input_file_uuids, ff_keys, ff_env=None):
-    """
-    Connects to fourfront and get source experiment info as a unique list
-    Takes a list of input file uuids.
-    """
-    pf_source_samples = set()
-    for input_file_uuid in input_file_uuids:
-        pf_source_samples.update(get_source_sample(input_file_uuid, ff_keys, ff_env))
-    return list(pf_source_samples)
+            self.source_samples_ = self.merge_source_samples()
+            return self.source_samples_
 
 
 class FourfrontUpdater(FourfrontUpdaterAbstract):
@@ -110,19 +112,8 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
 
     WorkflowRunMetadata = WorkflowRunMetadata
     ProcessedFileMetadata = ProcessedFileMetadata
-    default_email_sender = 'cgap.everyone@gmail.com' 
-    higlass_buckets =  HIGLASS_BUCKETS
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs):
-
-    @property
-    def WorkflowRunMetadata(self):
-        return WorkflowRunMetadata
-
-    @property
-    def ProcessedFileMetadata(self):
-        return ProcessedFileMetadata
+    default_email_sender = 'cgap.everyone@gmail.com'
+    higlass_buckets = HIGLASS_BUCKETS
 
     def create_qc_template(self):
         res = super().create_qc_template()

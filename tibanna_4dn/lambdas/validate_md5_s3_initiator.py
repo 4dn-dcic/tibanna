@@ -168,7 +168,7 @@ def make_input(event, wf='md5', dependency=None, run_name_prefix='validate'):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
-    
+
     if 'prod' in env:
         env = 'data'
 
