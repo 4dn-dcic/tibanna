@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from tibanna_cgap.exceptions import exception_coordinator
+from tibanna_ffcommon.exceptions import exception_coordinator
 from tibanna_cgap.update_ffmeta import update_ffmeta
 from tibanna_cgap.vars import AWS_REGION, LAMBDA_TYPE
 
