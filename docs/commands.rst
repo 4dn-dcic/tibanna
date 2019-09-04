@@ -402,7 +402,7 @@ To list all step functions
 plot_metrics
 ------------
 
-To collect, save and visualize the metrics from Cloud Watch
+To collect, save and visualize the resources metrics from Cloud Watch
 
 ::
 
@@ -419,10 +419,12 @@ To collect, save and visualize the metrics from Cloud Watch
                                       variable is not set, it uses name 'tibanna_pony' (4dn
                                       default, works only for 4dn).
 
-  -f|--force-upload                   This flag force the upload of the metrics reports to the S3 bucket,
-                                      even if there is a lock (upload blocked by default by the lock)
+  -f|--force-upload                   This flag force the upload of the metrics reports
+                                      to the S3 bucket, even if there is a lock (upload
+                                      is blocked by default by the lock)
 
-  -u|--update-html-only               This flag specify to only update the html file for metrics visualization,
+  -u|--update-html-only               This flag specify to only update the html file
+                                      for metrics visualization,
                                       metrics reports are not updated
 
   -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
@@ -448,7 +450,8 @@ To retrieve the cost and update the metrics report file created with plot_metric
                                      variable is not set, it uses name 'tibanna_pony' (4dn
                                      default, works only for 4dn).
 
- -u|--update-tsv                     Update with the cost the tsv file that stores metrics information on the S3 bucket
+ -u|--update-tsv                     Update with the cost the tsv file that stores metrics
+                                     information on the S3 bucket
 
 
 Admin only

@@ -398,7 +398,7 @@ To list all step functions
 plot_metrics
 ------------
 
-To collect, save and visualize the metrics from Cloud Watch
+To collect, save and visualize the resources metrics from Cloud Watch
 
 ::
 
@@ -415,19 +415,22 @@ To collect, save and visualize the metrics from Cloud Watch
                                     variable is not set, it uses name 'tibanna_pony' (4dn
                                     default, works only for 4dn).
 
- force-upload                       This flag force the upload of the metrics reports to the S3 bucket,
-                                    even if there is a lock (upload blocked by default by the lock)
+ force_upload                       This flag force the upload of the metrics reports
+                                    to the S3 bucket, even if there is a lock (upload
+                                    is blocked by default by the lock)
 
- update-html-only                   This flag specify to only update the html file for metrics visualization,
+ update_html_only                   This flag specify to only update the html file for
+                                    metrics visualization,
                                     metrics reports are not updated
 
- open_browser                       This flag specify to not open the browser to visualize the metrics html
-                                    after it has been created/updated
+ open_browser                       This flag specify to not open the browser to visualize
+                                    the metrics html after it has been created/updated
 
  filesystem=<filesystem>            Define the filesystem of the EC2 instance, default
                                     value is '/dev/nvme1n1'
 
-  endtime=<endtime>                 End time of the interval to be considered to retrieve the data
+ endtime=<endtime>                  End time of the interval to be considered
+                                    to retrieve the data
 
 
 cost
@@ -450,7 +453,8 @@ To retrieve the cost and update the metrics report file created with plot_metric
                                     variable is not set, it uses name 'tibanna_pony' (4dn
                                     default, works only for 4dn).
 
- update-tsv                         This flag specify to update with cost the tsv file that stores metrics information on the S3 bucket
+ update_tsv                         This flag specify to update with cost the tsv file that
+                                    stores metrics information on the S3 bucket
 
 
 
