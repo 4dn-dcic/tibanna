@@ -5,19 +5,11 @@ from .vars import S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 class API(_API):
 
-    # This one cannot be imported in advance, because it causes circular import.
-    # lambdas run_workflow / validate_md5_s3_initiator needs to import this API
-    # to call run_workflow
-    @property
-    def lambdas_module(self):
-        from . import lambdas as pony_lambdas
-        return pony_lambdas
-
     @property
     def tibanna_packages(self):
         import tibanna
-        import tibanna_4dn
-        return [tibanna, tibanna_4dn]
+        import tibanna_ffcommon
+        return [tibanna, tibanna_ffcommon]
 
     StepFunction = StepFunctionFFAbstract
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
@@ -25,7 +17,7 @@ class API(_API):
 
     @property
     def do_not_delete(self):
-        return ['validate_md5_s3_trigger_' + self.sfn_type]
+        return ['validate_md5_s3_trigger']
 
     def __init__(self):
         pass
@@ -35,10 +27,10 @@ class API(_API):
         if envlist:
             return envlist
         envlist_ff = {
-            'run_workflow_' + self.sfn_type: {},
-            'start_run_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
-            'update_ffmeta_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
-            'validate_md5_s3_initiator_' + self.sfn_type: {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
-            'validate_md5_s3_trigger_' + self.sfn_type: {}
+            'run_workflow': {},
+            'start_run': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'update_ffmeta': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'validate_md5_s3_initiator': {'S3_ENCRYPT_KEY': S3_ENCRYPT_KEY},
+            'validate_md5_s3_trigger': {}
         }
         return envlist_ff.get(name, '')

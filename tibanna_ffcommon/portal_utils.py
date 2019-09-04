@@ -9,7 +9,8 @@ from dcicutils.ff_utils import (
     post_metadata,
     patch_metadata,
     search_metadata,
-    generate_rand_accession
+    generate_rand_accession,
+    convert_param
 )
 from tibanna.nnested_array import (
     run_on_nested_arrays2,
@@ -47,6 +48,7 @@ from .exceptions import (
 class FFInputAbstract(SerializableObject):
     def __init__(self, workflow_uuid, output_bucket, config, jobid='', _tibanna=None, **kwargs):
         self.config = Config(**config)
+        self.config.fill_default()
         self.jobid = jobid
 
         self.input_files = kwargs.get('input_files', [])
@@ -56,7 +58,7 @@ class FFInputAbstract(SerializableObject):
 
         self.workflow_uuid = workflow_uuid
         self.output_bucket = output_bucket
-        self.parameters = ff_utils.convert_param(kwargs.get('parameters', {}), True)
+        self.parameters = convert_param(kwargs.get('parameters', {}), True)
         self.additional_benchmarking_parameters = kwargs.get('additional_benchmarking_parameters', {})
         self.tag = kwargs.get('tag', None)
         self.custom_pf_fields = kwargs.get('custom_pf_fields', None)  # custon fields for PF
@@ -75,10 +77,10 @@ class FFInputAbstract(SerializableObject):
 
         if not hasattr(self.config, 'overwrite_input_extra'):
             self.config.overwrite_input_extra = False
-        if not config.public_postrun_json:
-            config.public_postrun_json = True
+        if not self.config.public_postrun_json:
+            self.config.public_postrun_json = True
         if not hasattr(config, 'email'):
-            config.email = False
+            self.config.email = False
 
     @property
     def input_file_uuids(self):
@@ -89,10 +91,10 @@ class FFInputAbstract(SerializableObject):
         if self.wf_meta_:
             return self.wf_meta_
         try:
-            self.wf_meta_ = ff_utils.get_metadata(self.workflow_uuid,
-                                                  key=self.tibanna_settings.ff_keys,
-                                                  ff_env=self.tibanna_settings.env,
-                                                  add_on='frame=object')
+            self.wf_meta_ = get_metadata(self.workflow_uuid,
+                                         key=self.tibanna_settings.ff_keys,
+                                         ff_env=self.tibanna_settings.env,
+                                         add_on='frame=object')
             return self.wf_meta_
         except Exception as e:
             raise FdnConnectionException(e)
@@ -152,11 +154,11 @@ class FFInputAbstract(SerializableObject):
     def output_target_for_input_extra(target_inf, of):
         extrafileexists = False
         printlog("target_inf = %s" % str(target_inf))  # debugging
-        target_inf_meta = ff_utils.get_metadata(target_inf.get('value'),
-                                                key=self.tibanna_settings.ff_keys,
-                                                ff_env=self.tibanna_settings.env,
-                                                add_on='frame=object',
-                                                check_queue=True)
+        target_inf_meta = get_metadata(target_inf.get('value'),
+                                       key=self.tibanna_settings.ff_keys,
+                                       ff_env=self.tibanna_settings.env,
+                                       add_on='frame=object',
+                                       check_queue=True)
         target_format = parse_formatstr(of.get('format'))
         if target_inf_meta.get('extra_files'):
             for exf in target_inf_meta.get('extra_files'):
@@ -174,10 +176,10 @@ class FFInputAbstract(SerializableObject):
         if self.overwrite_input_extra or not extrafileexists:
             # first patch metadata
             printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
-            ff_utils.patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
-                                    target_inf.get('value'),
-                                    key=self.tibanna_settings.ff_keys,
-                                    ff_env=self.tibanna_settings.env)
+            patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
+                           target_inf.get('value'),
+                           key=self.tibanna_settings.ff_keys,
+                           ff_env=self.tibanna_settings.env)
             # target key
             # NOTE : The target bucket is assume to be the same as output bucket
             # i.e. the bucket for the input file should be the same as the output bucket.
@@ -1461,10 +1463,10 @@ def process_input_file_info(input_file, ff_keys, ff_env, args):
 def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_env, fe_map):
     extra_file_keys = []
     not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
-    infile_meta = ff_utils.get_metadata(inf_uuid,
-                                        key=ff_keys,
-                                        ff_env=ff_env,
-                                        add_on='frame=object')
+    infile_meta = get_metadata(inf_uuid,
+                               key=ff_keys,
+                               ff_env=ff_env,
+                               add_on='frame=object')
     if infile_meta.get('extra_files'):
         infile_format = parse_formatstr(infile_meta.get('file_format'))
         for extra_file in infile_meta.get('extra_files'):
