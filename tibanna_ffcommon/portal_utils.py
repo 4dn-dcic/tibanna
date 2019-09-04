@@ -44,158 +44,6 @@ from .exceptions import (
 )
 
 
-class FourfrontStarterAbstract(object):
-
-    InputClass = FFInputAbstract
-    ProcessedFileMetadata = ProcessedFileMetadataAbstract
-    output_arg_type_list = ['Output processed file',
-                            'Output report file',
-                            'Output QC file',
-                            'Output to-be-extra-input file']
-
-    def __init__(self, **kwargs):
-        self.inp = InputClass(**kwargs)
-        self.pfs = dict()
-        self.ff = None
-
-    def run(self):
-        self.create_pfs()
-        self.create_ff()
-        self.inp.add_args(self.ff)
-        self.inp.update(ff_meta=self.ff.as_dict(),
-                        pf_meta=[pf for _, pf in self.pfs.items()])
-
-    @property
-    def tbn(self):
-        return self.inp.tibanna_settings
-
-    def get_meta(self, uuid, check_queue=False):
-        try:
-            return get_metadata(uuid,
-                                key=self.tbn.key,
-                                ff_env=self.tbn.ff_env,
-                                add_on='frame=object',
-                                check_queue=check_queue)
-        except Exception as e:
-            raise FdnConnectionException(e)
-
-    @property
-    def args(self):
-        return self.inp.wf_meta.get('arguments', [])
-
-    def arg(self, argname):
-        return [arg for arg in self.args if arg.get('workflow_argument_name') == argname]
-
-    @property
-    def output_args(self):
-        return [arg for arg in self.argnames if arg.get('type') in self.output_arg_type_list]
-
-    @property
-    def output_argnames(self):
-        return [arg.get('workflow_argument_names') for arg in self.output_args]
-
-    # processed files-related functions
-    def create_pfs(self):
-       for argname in self.output_argnames:
-           self.pfs.update({argname: self.pf(argname)})
-
-    def user_supplied_output_files(self, argname=None):
-        if not argname:
-            return self.inp.output_files
-        return [outf for outf in self.inp.output_files if outf.get('workflow_argument_name') == argname]
-
-    def pf_extra_files(self, secondary_file_formats=None):
-        if not secondary_file_formats:
-            return None
-        return [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]        
-
-    def parse_custom_fields(self, custom_fields, argname):
-        pf_other_fields = dict()
-        if custom_fields:
-            if argname in custom_fields:
-                pf_other_fields.update(custom_fields[argname])
-            if 'ALL' in custom_fields:
-                pf_other_fields.update(custom_fields['ALL'])
-        if len(pf_other_fields) == 0:
-            pf_other_fields = None
-        return pf_other_fields
-
-    def pf(self, argname, **kwargs):
-        if self.user_supplied_output_files(argname):
-            res = self.get_meta(self.user_supplied_output_files(arg)[0])
-            return self.ProcessedFileMetadata(**res)
-        for arg in self.output_args:
-            printlog("processing arguments %s" % str(arg))
-            if argname == arg['workflow_argument_name']:
-                break
-        if arg.get('argument_type') != 'Output processed file':
-            return None
-        if 'file_format' not in arg:
-            raise Exception("file format for processed file must be provided")
-        if 'secondary_file_formats' in arg:
-            extra_files = [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
-        else:
-            extra_files = None
-        return self.ProcessedFileMetadata(
-            file_format=file_format,
-            extra_files=extra_files,
-            other_fields=parse_custom_fields(self.inp.custom_pf_fields, argname),
-            **kwargs
-        )
-
-    # ff (workflowrun)-related functions
-    def create_ff(self):
-        self.ff = WorkflowRunMetadata(
-            workflow=self.inp.workflow_uuid,
-            awsem_app_name=self.inp.wf_meta['app_name'],
-            app_version=self.inp.wf_meta['app_version'],
-            input_files=self.create_ff_iput_files(),
-            tag=inp.tag,
-            run_url=self.tbn.settings.get('url', ''),
-            output_files=self.create_ff_output_files(),
-            parameters=self.inp.parameters,
-            extra_meta=self.inp.wfr_meta,
-            awsem_job_id=self.inp.jobid
-        )
-
-    def create_ff_output_files(self):
-        ff_outfile_list = []
-        for argname in self.output_argnames:
-            ff_outfile_list.append(self.ff_outfile(argname))
-        return ff_outfile_list
-
-    def ff_outfile(self, argname):
-        if argname not in self.pfs:
-            raise Exception("processed file objects must be ready before creating ff_outfile")
-        try:
-            resp = self.get_meta(self.pfs[argname].uuid)
-        except Exception as e:
-            raise Exception("processed file must be posted before creating ff_outfile")
-        arg = self.arg(argname)
-        return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
-                                      arg.get('argument_type'),
-                                      arg.get('argument_format', None),
-                                      arg.get('secondary_file_formats', None),
-                                      resp.get('upload_key', None),
-                                      resp.get('uuid', None),
-                                      resp.get('extra_files', None))
-
-    def create_ff_input_files(self):
-        ff_infile_list = []
-        for input_file in self.inp.input_files:
-            dim = flatten(create_dim(input_file['uuid']))
-            if not dim:  # singlet
-                dim = '0'
-            uuid = flatten(input_file['uuid'])
-            ordinal = create_ordinal(uuid)
-            for d, u, o in zip(aslist(dim), aslist(uuid), aslist(ordinal)):
-                infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], u, o,
-                                                input_file.get('format_if_extra', ''), d)
-                ff_infile_list.append(infileobj.as_dict())
-        printlog("ff_infile_list is %s" % ff_infile_list)
-        return ff_infile_list
-
-
 class FFInputAbstract(SerializableObject):
     def __init__(self, workflow_uuid, output_bucket, jobid='', config, _tibanna=None, **kwargs):
         self.config = Config(**config)
@@ -591,6 +439,167 @@ class TibannaSettings(object):
     def as_dict(self):
         return {'env': self.env,
                 'settings': self.settings}
+
+
+class FourfrontStarterAbstract(object):
+
+    InputClass = FFInputAbstract
+    ProcessedFileMetadata = ProcessedFileMetadataAbstract
+    output_arg_type_list = ['Output processed file',
+                            'Output report file',
+                            'Output QC file',
+                            'Output to-be-extra-input file']
+
+    def __init__(self, **kwargs):
+        self.inp = InputClass(**kwargs)
+        self.pfs = dict()
+        self.ff = None
+
+    def run(self):
+        self.create_pfs()
+        self.post_pfs()  # must preceed creat_ff
+        self.create_ff()
+        self.post_ff()
+        self.inp.add_args(self.ff)
+        self.inp.update(ff_meta=self.ff.as_dict(),
+                        pf_meta=[pf.as_dict() for _, pf in self.pfs.items()])
+
+    @property
+    def tbn(self):
+        return self.inp.tibanna_settings
+
+    def get_meta(self, uuid, check_queue=False):
+        try:
+            return get_metadata(uuid,
+                                key=self.tbn.key,
+                                ff_env=self.tbn.ff_env,
+                                add_on='frame=object',
+                                check_queue=check_queue)
+        except Exception as e:
+            raise FdnConnectionException(e)
+
+    @property
+    def args(self):
+        return self.inp.wf_meta.get('arguments', [])
+
+    def arg(self, argname):
+        return [arg for arg in self.args if arg.get('workflow_argument_name') == argname]
+
+    @property
+    def output_args(self):
+        return [arg for arg in self.argnames if arg.get('type') in self.output_arg_type_list]
+
+    @property
+    def output_argnames(self):
+        return [arg.get('workflow_argument_names') for arg in self.output_args]
+
+    # processed files-related functions
+    def create_pfs(self):
+       for argname in self.output_argnames:
+           self.pfs.update({argname: self.pf(argname)})
+
+    def post_pfs(self):
+        for _, pf in self.pfs:
+            pf.post(self.tbn.key)
+
+    def user_supplied_output_files(self, argname=None):
+        if not argname:
+            return self.inp.output_files
+        return [outf for outf in self.inp.output_files if outf.get('workflow_argument_name') == argname]
+
+    def pf_extra_files(self, secondary_file_formats=None):
+        if not secondary_file_formats:
+            return None
+        return [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]        
+
+    def parse_custom_fields(self, custom_fields, argname):
+        pf_other_fields = dict()
+        if custom_fields:
+            if argname in custom_fields:
+                pf_other_fields.update(custom_fields[argname])
+            if 'ALL' in custom_fields:
+                pf_other_fields.update(custom_fields['ALL'])
+        if len(pf_other_fields) == 0:
+            pf_other_fields = None
+        return pf_other_fields
+
+    def pf(self, argname, **kwargs):
+        if self.user_supplied_output_files(argname):
+            res = self.get_meta(self.user_supplied_output_files(arg)[0])
+            return self.ProcessedFileMetadata(**res)
+        for arg in self.output_args:
+            printlog("processing arguments %s" % str(arg))
+            if argname == arg['workflow_argument_name']:
+                break
+        if arg.get('argument_type') != 'Output processed file':
+            return None
+        if 'file_format' not in arg:
+            raise Exception("file format for processed file must be provided")
+        if 'secondary_file_formats' in arg:
+            extra_files = [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
+        else:
+            extra_files = None
+        return self.ProcessedFileMetadata(
+            file_format=file_format,
+            extra_files=extra_files,
+            other_fields=parse_custom_fields(self.inp.custom_pf_fields, argname),
+            **kwargs
+        )
+
+    # ff (workflowrun)-related functions
+    def create_ff(self):
+        self.ff = WorkflowRunMetadata(
+            workflow=self.inp.workflow_uuid,
+            awsem_app_name=self.inp.wf_meta['app_name'],
+            app_version=self.inp.wf_meta['app_version'],
+            input_files=self.create_ff_iput_files(),
+            tag=inp.tag,
+            run_url=self.tbn.settings.get('url', ''),
+            output_files=self.create_ff_output_files(),
+            parameters=self.inp.parameters,
+            extra_meta=self.inp.wfr_meta,
+            awsem_job_id=self.inp.jobid
+        )
+
+    def post_ff(self):
+        self.ff.post(self.tbn.key)
+
+    def create_ff_output_files(self):
+        ff_outfile_list = []
+        for argname in self.output_argnames:
+            ff_outfile_list.append(self.ff_outfile(argname))
+        return ff_outfile_list
+
+    def ff_outfile(self, argname):
+        if argname not in self.pfs:
+            raise Exception("processed file objects must be ready before creating ff_outfile")
+        try:
+            resp = self.get_meta(self.pfs[argname].uuid)
+        except Exception as e:
+            raise Exception("processed file must be posted before creating ff_outfile")
+        arg = self.arg(argname)
+        return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
+                                      arg.get('argument_type'),
+                                      arg.get('argument_format', None),
+                                      arg.get('secondary_file_formats', None),
+                                      resp.get('upload_key', None),
+                                      resp.get('uuid', None),
+                                      resp.get('extra_files', None))
+
+    def create_ff_input_files(self):
+        ff_infile_list = []
+        for input_file in self.inp.input_files:
+            dim = flatten(create_dim(input_file['uuid']))
+            if not dim:  # singlet
+                dim = '0'
+            uuid = flatten(input_file['uuid'])
+            ordinal = create_ordinal(uuid)
+            for d, u, o in zip(aslist(dim), aslist(uuid), aslist(ordinal)):
+                infileobj = InputFileForWFRMeta(input_file['workflow_argument_name'], u, o,
+                                                input_file.get('format_if_extra', ''), d)
+                ff_infile_list.append(infileobj.as_dict())
+        printlog("ff_infile_list is %s" % ff_infile_list)
+        return ff_infile_list
 
 
 class QCArgumentInfo(SerializableObject):
