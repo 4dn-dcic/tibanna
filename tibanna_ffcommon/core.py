@@ -1,6 +1,6 @@
 from tibanna.core import API as _API
-from .stepfunction import StepFunctionPony
-from .vars import S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE
+from .stepfunction import StepFunctionFFAbstract
+from .vars import S3_ENCRYPT_KEY, TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 
 
 class API(_API):
@@ -21,7 +21,7 @@ class API(_API):
 
     StepFunction = StepFunctionFFAbstract
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-    sfn_type = LAMBDA_TYPE
+    sfn_type = ''  # fill in the actual type (e.g pony or zebra) for inherited class
 
     @property
     def do_not_delete(self):

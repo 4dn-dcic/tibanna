@@ -42,7 +42,7 @@ setup(
     description='Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=['tibanna', 'tibanna_4dn'],
+    packages=['tibanna', 'tibanna_ffcommon', 'tibanna_4dn', 'tibanna_cgap'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu, carl_vitzthum@hms.harvard.edu',
@@ -62,6 +62,7 @@ setup(
         'console_scripts': [
              'tibanna = tibanna.__main__:main',
              'tibanna_4dn = tibanna_4dn.__main__:main',
+             'tibanna_cgap = tibanna_cgap.__main__:main',
         ]
     }
 )
