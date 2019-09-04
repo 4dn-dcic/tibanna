@@ -45,14 +45,14 @@ from .exceptions import (
 
 
 class FFInputAbstract(SerializableObject):
-    def __init__(self, workflow_uuid, output_bucket, jobid='', config, _tibanna=None, **kwargs):
+    def __init__(self, workflow_uuid, output_bucket, config, jobid='', _tibanna=None, **kwargs):
         self.config = Config(**config)
         self.jobid = jobid
 
         self.input_files = kwargs.get('input_files', [])
         for infile in self.input_files:
-        if not infile:
-            raise("malformed input, check your input_files")
+            if not infile:
+                raise("malformed input, check your input_files")
 
         self.workflow_uuid = workflow_uuid
         self.output_bucket = output_bucket

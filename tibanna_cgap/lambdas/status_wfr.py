@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import boto3
-from tibanna_4dn.vars import AWS_REGION, LAMBDA_TYPE
+from tibanna_cgap.vars import AWS_REGION, LAMBDA_TYPE
 
 
 config = {

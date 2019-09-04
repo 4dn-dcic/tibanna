@@ -1,9 +1,9 @@
 # flake8: noqa
 from tibanna_4dn.lambdas import (
-    check_task_awsem,
-    run_task_awsem,
-    start_run_awsem,
-    update_ffmeta_awsem,
+    check_task,
+    run_task,
+    start_run,
+    update_ffmeta,
     run_workflow,
     status_wfr,
     validate_md5_s3_trigger,

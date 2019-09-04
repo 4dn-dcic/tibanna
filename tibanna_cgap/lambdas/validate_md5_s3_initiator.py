@@ -3,7 +3,7 @@ from dcicutils.ff_utils import get_metadata
 from tibanna.utils import _tibanna_settings, printlog
 # from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from tibanna_cgap.core import API
-from tibanna_cgap.exceptions import TibannaStartException, FdnConnectionException
+from tibanna_ffcommon.exceptions import TibannaStartException, FdnConnectionException
 from tibanna_ffcommon.portal_utils import (
     TibannaSettings,
     FormatExtensionMap,
