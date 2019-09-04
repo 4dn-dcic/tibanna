@@ -44,6 +44,93 @@ from .exceptions import (
 )
 
 
+class FourfrontStarterAbstract(object):
+
+    InputClass = FFInputAbstract
+    ProcessedFileMetadata = ProcessedFileMetadataAbstract
+    arg_type_list = ['Output processed file',
+                     'Output report file',
+                     'Output QC file',
+                     'Output to-be-extra-input file']
+
+    def __init__(self, **kwargs):
+        self.inp = InputClass(**kwargs)
+        self.pfs = []
+        self.ff = None
+
+    def run(self):
+        self.create_pfs()
+        self.create_ff()
+        self.inp.add_args(self.ff)
+
+    @property
+    def tbn(self):
+        return self.inp.tibanna_settings
+
+    def get_meta(self, uuid, check_queue=False):
+        try:
+            return get_metadata(uuid,
+                                key=self.tbn.key,
+                                ff_env=self.tbn.ff_env,
+                                add_on='frame=object',
+                                check_queue=check_queue)
+        except Exception as e:
+            raise FdnConnectionException(e)
+
+    @property
+    def argnames(self):
+        return self.inp.wf_meta.get('arguments', [])
+
+    # processed files-related functions
+    def create_pfs(self):
+       for arg in self.argnames:
+           self.pfs.append(self.pf(arg))
+
+    def user_supplied_output_files(self, argname=None):
+        if not argname:
+            return self.inp.output_files
+        return [outf for outf in self.inp.output_files if outf.get('workflow_argument_name') == argname]
+
+    def pf_extra_files(self, secondary_file_formats=None):
+        if not secondary_file_formats:
+            return None
+        return [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]        
+
+    def parse_custom_fields(self, custom_fields, argname):
+        pf_other_fields = dict()
+        if custom_fields:
+            if argname in custom_fields:
+                pf_other_fields.update(custom_fields[argname])
+            if 'ALL' in custom_fields:
+                pf_other_fields.update(custom_fields['ALL'])
+        if len(pf_other_fields) == 0:
+            pf_other_fields = None
+        return pf_other_fields
+
+    def pf(self, argname, **kwargs):
+        if self.user_supplied_output_files(arg):
+            res = self.get_meta(self.user_supplied_output_files(arg)[0])
+            return self.ProcessedFileMetadata(**res)
+        for arg in self.argnames:
+            printlog("processing arguments %s" % str(arg))
+            if argname == arg['workflow_argument_name']:
+                break
+        if arg.get('argument_type') != 'Output processed file':
+            return None
+        if 'file_format' not in arg:
+            raise Exception("file format for processed file must be provided")
+        if 'secondary_file_formats' in arg:
+            extra_files = [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
+        else:
+            extra_files = None
+        return self.ProcessedFileMetadata(
+            file_format=file_format,
+            extra_files=extra_files,
+            other_fields=parse_custom_fields(self.inp.custom_pf_fields, argname),
+            **kwargs
+        )
+
+
 class FFInputAbstract(SerializableObject):
     def __init__(self, workflow_uuid, output_bucket, jobid='', config, _tibanna=None, **kwargs):
         self.config = Config(**config)
@@ -94,7 +181,7 @@ class FFInputAbstract(SerializableObject):
                                                   ff_env=self.tibanna_settings.env,
                                                   add_on='frame=object')
             return self.wf_meta_
-        except Except as e:
+        except Exception as e:
             raise FdnConnectionException(e)
 
     def update(self, **kwargs):

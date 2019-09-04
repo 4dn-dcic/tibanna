@@ -19,8 +19,63 @@ from tibanna_ffcommon.portal_utils import (
     WorkflowRunMetadataAbstract,
     ProcessedFileMetadataAbstract,
     FourfrontUpdaterAbstract,
-    FFInputAbstract
+    FFInputAbstract,
+    FourfrontStarterAbstract
 )
+
+
+class FourfrontStarter(FourfrontStarterAbstract):
+
+    InputClass = PonyInput
+    ProcessedFileMetadata = ProcessedFileMetadata
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.source_experiments_ = None
+
+    def pf(self, argname):
+        super().pf(argname, source_experiments=self.source_experiments)
+
+    def get_source_experiment(self, input_file_uuid):
+        """
+        Connects to fourfront and get source experiment info as a unique list
+        Takes a single input file uuid.
+        """
+        pf_source_experiments_set = set()
+        inf_uuids = aslist(flatten(input_file_uuid))
+        for inf_uuid in inf_uuids:
+            infile_meta = get_metadata(inf_uuid,
+                                       key=self.tbn.ff_keys,
+                                       ff_env=self.tbn.ff_env,
+                                       add_on='frame=object')
+            if infile_meta.get('experiments'):
+                for exp in infile_meta.get('experiments'):
+                    exp_obj = get_metadata(exp,
+                                           key=self.tbn.ff_keys,
+                                           ff_env=self.tbn.ff_env,
+                                           add_on='frame=raw')
+                    pf_source_experiments_set.add(exp_obj['uuid'])
+            if infile_meta.get('source_experiments'):
+                # this field is an array of strings, not linkTo's
+                pf_source_experiments_set.update(infile_meta.get('source_experiments'))
+        return list(pf_source_experiments_set)
+    
+    def merge_source_experiments(self):
+        """
+        Connects to fourfront and get source experiment info as a unique list
+        Takes a list of input file uuids.
+        """
+        pf_source_experiments = set()
+        for input_file_uuid in self.inp.input_file_uuids:
+            pf_source_experiments.update(self.get_source_experiment(input_file_uuid))
+        return list(pf_source_experiments)
+
+    def source_experiments(self):
+        if self.source_experiments_:
+            return self.source_experiments_
+        else:
+            self.source_experiments_ = self.merge_source_experiments()
+            return self.source_experiments_
 
 
 class PonyInput(FFInputAbstract):
@@ -67,40 +122,6 @@ class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
             return pf
 
 
-def get_source_experiment(input_file_uuid, ff_keys, ff_env):
-    """
-    Connects to fourfront and get source experiment info as a unique list
-    Takes a single input file uuid.
-    """
-    pf_source_experiments_set = set()
-    inf_uuids = aslist(flatten(input_file_uuid))
-    for inf_uuid in inf_uuids:
-        infile_meta = get_metadata(inf_uuid,
-                                   key=ff_keys,
-                                   ff_env=ff_env,
-                                   add_on='frame=object')
-        if infile_meta.get('experiments'):
-            for exp in infile_meta.get('experiments'):
-                exp_obj = get_metadata(exp,
-                                       key=ff_keys,
-                                       ff_env=ff_env,
-                                       add_on='frame=raw')
-                pf_source_experiments_set.add(exp_obj['uuid'])
-        if infile_meta.get('source_experiments'):
-            # this field is an array of strings, not linkTo's
-            pf_source_experiments_set.update(infile_meta.get('source_experiments'))
-    return list(pf_source_experiments_set)
-
-
-def merge_source_experiments(input_file_uuids, ff_keys, ff_env=None):
-    """
-    Connects to fourfront and get source experiment info as a unique list
-    Takes a list of input file uuids.
-    """
-    pf_source_experiments = set()
-    for input_file_uuid in input_file_uuids:
-        pf_source_experiments.update(get_source_experiment(input_file_uuid, ff_keys, ff_env))
-    return list(pf_source_experiments)
 
 
 class TibannaSettings(object):
