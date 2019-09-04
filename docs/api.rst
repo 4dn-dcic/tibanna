@@ -250,9 +250,9 @@ rerun_many
 To rerun many jobs that failed after a certain time point
 
 ::
-    
+
     API().rerun_many(...)
-    
+
 
 **Options**
 
@@ -295,7 +295,7 @@ To rerun many jobs that failed after a certain time point
   appname_filter=<appname>       Rerun only if the app name matches the specified app name.
 
 
-**Example** 
+**Example**
 
 ::
 
@@ -340,7 +340,7 @@ The following message is printed out
 ::
 
     about to start run fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-    response from aws was: 
+    response from aws was:
     {u'startDate': datetime.datetime(2018, 10, 11, 20, 15, 0, 71000, tzinfo=tzlocal()), 'ResponseMetadata': {'RetryAttempts': 0, 'HTTPStatusCode': 200, 'RequestId': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'HTTPHeaders': {'x-amzn-requestid': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'content-length': '161', 'content-type': 'application/x-amz-json-1.0'}}, u'executionArn': u'arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293'}
     url to view status:
     https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
@@ -393,6 +393,64 @@ To list all step functions
 
     n      show stats of the number of jobs for per status (using this option could slow down the
            process)
+
+
+plot_metrics
+------------
+
+To collect, save and visualize the metrics from Cloud Watch
+
+::
+
+ API().plot_metrics(job_id=<jobid>, ...)
+
+**Options**
+
+::
+
+ sfn=<stepfunctionname>             An example step function name may be
+                                    'tibanna_unicorn_defaut_3978'. If not specified, default
+                                    value is taken from environmental variable
+                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                    variable is not set, it uses name 'tibanna_pony' (4dn
+                                    default, works only for 4dn).
+
+ force-upload                       This flag force the upload of the metrics reports to the S3 bucket,
+                                    even if there is a lock (upload blocked by default by the lock)
+
+ update-html-only                   This flag specify to only update the html file for metrics visualization,
+                                    metrics reports are not updated
+
+ open_browser                       This flag specify to not open the browser to visualize the metrics html
+                                    after it has been created/updated
+
+ filesystem=<filesystem>            Define the filesystem of the EC2 instance, default
+                                    value is '/dev/nvme1n1'
+
+  endtime=<endtime>                 End time of the interval to be considered to retrieve the data
+
+
+cost
+----
+
+To retrieve the cost and update the metrics report file created with plot_metrics
+
+::
+
+ API().cost(job_id=<jobid>, ...)
+
+**Options**
+
+::
+
+ sfn=<stepfunctionname>             An example step function name may be
+                                    'tibanna_unicorn_defaut_3978'. If not specified, default
+                                    value is taken from environmental variable
+                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                    variable is not set, it uses name 'tibanna_pony' (4dn
+                                    default, works only for 4dn).
+
+ update-tsv                         This flag specify to update with cost the tsv file that stores metrics information on the S3 bucket
 
 
 

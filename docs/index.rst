@@ -88,4 +88,4 @@ Contents:
    4dn_pipelines
    pony
    how_it_works
-
+   collecting_metrics
