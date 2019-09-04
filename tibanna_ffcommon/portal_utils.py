@@ -28,6 +28,7 @@ from tibanna.base import (
     SerializableObject
 )
 from tibanna.ec2_utils import (
+    Args,
     Config
 )
 from tibanna.awsem import (
@@ -108,22 +109,22 @@ class FFInputAbstract(SerializableObject):
         args = dict()
         for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames',
                   'wdl_directory_url', 'wdl_main_filename', 'wdl_child_filenames']:
-            printlog(inp.wf_meta.get(k))
-            args[k] = inp.wf_meta.get(k, '') 
-        if inp.wf_meta.get('workflow_language', '') == 'WDL':
+            printlog(self.wf_meta.get(k))
+            args[k] = self.wf_meta.get(k, '') 
+        if self.wf_meta.get('workflow_language', '') == 'WDL':
             args['language'] = 'wdl'
         else:
             # switch to v1 if available
-            if 'cwl_directory_url_v1' in inp.wf_meta:  # use CWL v1
-                args['cwl_directory_url'] = inp.wf_meta['cwl_directory_url_v1']
+            if 'cwl_directory_url_v1' in self.wf_meta:  # use CWL v1
+                args['cwl_directory_url'] = self.wf_meta['cwl_directory_url_v1']
                 args['cwl_version'] = 'v1'
             else:
                 args['cwl_version'] = 'draft3'
     
-        args['input_parameters'] = inp.parameters
-        args['additional_benchmarking_parameters'] = inp.additional_benchmarking_parameters
-        args['output_S3_bucket'] = inp.output_bucket
-        args['dependency'] = inp.dependency
+        args['input_parameters'] = self.parameters
+        args['additional_benchmarking_parameters'] = self.additional_benchmarking_parameters
+        args['output_S3_bucket'] = self.output_bucket
+        args['dependency'] = self.dependency
     
         # output target
         args['output_target'] = dict()
@@ -242,8 +243,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
                 aliases = [aliases, ]
             self.aliases = aliases
         self.input_files = input_files
-        if output_files:
-            self.output_files = output_files
+        self.output_files = output_files
         self.parameters = parameters
         if awsem_postrun_json:
             self.awsem_postrun_json = awsem_postrun_json
@@ -447,6 +447,7 @@ class FourfrontStarterAbstract(object):
 
     InputClass = FFInputAbstract
     ProcessedFileMetadata = ProcessedFileMetadataAbstract
+    WorkflowRunMetadata = WorkflowRunMetadataAbstract
     output_arg_type_list = ['Output processed file',
                             'Output report file',
                             'Output QC file',
@@ -473,7 +474,7 @@ class FourfrontStarterAbstract(object):
     def get_meta(self, uuid, check_queue=False):
         try:
             return get_metadata(uuid,
-                                key=self.tbn.key,
+                                key=self.tbn.ff_keys,
                                 ff_env=self.tbn.ff_env,
                                 add_on='frame=object',
                                 check_queue=check_queue)
@@ -489,7 +490,7 @@ class FourfrontStarterAbstract(object):
 
     @property
     def output_args(self):
-        return [arg for arg in self.argnames if arg.get('type') in self.output_arg_type_list]
+        return [arg for arg in self.args if arg.get('type') in self.output_arg_type_list]
 
     @property
     def output_argnames(self):
@@ -502,7 +503,7 @@ class FourfrontStarterAbstract(object):
 
     def post_pfs(self):
         for _, pf in self.pfs:
-            pf.post(self.tbn.key)
+            pf.post(self.tbn.ff_keys)
 
     def user_supplied_output_files(self, argname=None):
         if not argname:
@@ -550,12 +551,12 @@ class FourfrontStarterAbstract(object):
 
     # ff (workflowrun)-related functions
     def create_ff(self):
-        self.ff = WorkflowRunMetadata(
+        self.ff = self.WorkflowRunMetadata(
             workflow=self.inp.workflow_uuid,
             awsem_app_name=self.inp.wf_meta['app_name'],
             app_version=self.inp.wf_meta['app_version'],
-            input_files=self.create_ff_iput_files(),
-            tag=inp.tag,
+            input_files=self.create_ff_input_files(),
+            tag=self.inp.tag,
             run_url=self.tbn.settings.get('url', ''),
             output_files=self.create_ff_output_files(),
             parameters=self.inp.parameters,
@@ -564,7 +565,7 @@ class FourfrontStarterAbstract(object):
         )
 
     def post_ff(self):
-        self.ff.post(self.tbn.key)
+        self.ff.post(self.tbn.ff_keys)
 
     def create_ff_output_files(self):
         ff_outfile_list = []

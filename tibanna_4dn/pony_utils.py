@@ -55,6 +55,7 @@ class FourfrontStarter(FourfrontStarterAbstract):
 
     InputClass = PonyInput
     ProcessedFileMetadata = ProcessedFileMetadata
+    WorkflowRunMetadata = WorkflowRunMetadata
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
