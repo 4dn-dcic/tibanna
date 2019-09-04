@@ -2,7 +2,7 @@
 # import json
 import boto3
 import json
-from .pony_utils import FourfrontStarter
+from .zebra_utils import FourfrontStarter
 
 
 def start_run(input_json):

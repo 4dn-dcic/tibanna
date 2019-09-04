@@ -64,7 +64,6 @@ class FourfrontStarterAbstract(object):
         self.inp.add_args(self.ff)
         self.inp.update(ff_meta=self.ff.as_dict(),
                         pf_meta=[pf for _, pf in self.pfs.items()])
-        return self.inp
 
     @property
     def tbn(self):
