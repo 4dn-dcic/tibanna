@@ -16,13 +16,14 @@ class API(_API):
     @property
     def tibanna_packages(self):
         import tibanna
+        import tibanna_ffcommon
         import tibanna_cgap
-        return [tibanna, tibanna_cgap]
+        return [tibanna, tibanna_ffcommon, tibanna_cgap]
 
     StepFunction = StepFunctionZebra
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-cgap'
-    sfn_type = 'zebra'
+    sfn_type = LAMBDA_TYPE
 
     def __init__(self):
         pass

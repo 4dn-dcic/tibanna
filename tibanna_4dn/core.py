@@ -16,8 +16,9 @@ class API(_API):
     @property
     def tibanna_packages(self):
         import tibanna
+        import tibanna_ffcommon
         import tibanna_4dn
-        return [tibanna, tibanna_4dn]
+        return [tibanna, tibanna_ffcommon, tibanna_4dn]
 
     StepFunction = StepFunctionPony
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
