@@ -451,7 +451,7 @@ class FourfrontStarterAbstract(object):
                             'Output to-be-extra-input file']
 
     def __init__(self, **kwargs):
-        self.inp = InputClass(**kwargs)
+        self.inp = self.InputClass(**kwargs)
         self.pfs = dict()
         self.ff = None
 
