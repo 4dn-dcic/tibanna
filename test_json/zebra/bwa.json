@@ -1,0 +1,40 @@
+{
+    "_tibanna": {
+      "run_type": "bwa-mem",
+      "env": "fourfront-cgap"
+    },
+    "app_name": "bwa-mem",
+    "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
+    "workflow_uuid": "0fbe4db8-0b5f-448e-8b58-3f8c84baabf5",
+    "parameters" :  {"nThreads": 4},
+    "input_files" : [
+       {
+           "object_key": "4DNFIZQZ39L9.bwaIndex.tgz",
+           "workflow_argument_name": "bwa_index",
+           "uuid": "1f53df95-4cf3-41cc-971d-81bb16c486dd",
+           "bucket_name": "elasticbeanstalk-fourfront-cgap-files"
+       },
+       { 
+           "workflow_argument_name": "fastq1", 
+           "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
+           "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
+           "object_key": "GAPFI3JFGVN4.fastq.gz"
+       },
+       { 
+           "workflow_argument_name": "fastq2", 
+           "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
+           "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
+           "object_key": "GAPFI3JFGVN4.fastq.gz"
+       }
+  ],
+  "config": {
+    "ebs_size": 30,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode"
+  },
+  "custom_pf_fields": {
+    "out_bam": {
+        "genome_assembly": "GRCh38"
+    }
+  }
+}
