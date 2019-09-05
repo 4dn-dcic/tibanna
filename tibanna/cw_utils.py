@@ -278,8 +278,9 @@ class TibannaResource(object):
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             fo.write(TibannaResource.create_html() % (instance_type,
-                             self.max_mem_used_MB, self.min_mem_available_MB, self.max_disk_space_used_GB,
-                             self.max_mem_utilization_percent, self.max_cpu_utilization_percent, self.max_disk_space_utilization_percent,
+                             str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
+                             str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
+                             str(self.max_disk_space_utilization_percent),
                              '---', # cost placeholder for now
                              str(self.start), str(self.end), str(self.end - self.start)
                             )
@@ -310,8 +311,8 @@ class TibannaResource(object):
         # writing
         with open(filename, 'w') as fo:
             fo.write(TibannaResource.create_html() % (instance,
-                             float(d['Maximum_Memory_Used_Mb']), float(d['Minimum_Memory_Available_Mb']), float(d['Maximum_Disk_Used_Gb']),
-                             float(d['Maximum_Memory_Utilization']), float(d['Maximum_CPU_Utilization']), float(d['Maximum_Disk_Utilization']),
+                             d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
+                             d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
@@ -520,27 +521,27 @@ class TibannaResource(object):
                       </tr>
                       <tr>
                         <td class="left">Maximum Memory Used [Mb]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Minimum Memory Available [Mb]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Maximum Disk Used (/data1) [Gb]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Maximum Memory Utilization [%%]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Maximum CPU Utilization [%%]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Maximum Disk Utilization (/data1) [%%]</td>
-                        <td class="center">%d</td>
+                        <td class="center">%s</td>
                       </tr>
                       <tr>
                         <td class="left">Cost</td>

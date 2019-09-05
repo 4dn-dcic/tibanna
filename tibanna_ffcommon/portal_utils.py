@@ -2,6 +2,7 @@ import json
 import datetime
 import boto3
 import copy
+import random
 from uuid import uuid4
 import requests
 from dcicutils.ff_utils import (
@@ -78,7 +79,7 @@ class FFInputAbstract(SerializableObject):
         self._tibanna = _tibanna
         self.tibanna_settings = None
         if _tibanna:
-            env =  _tibanna.get('env', '-'.join(self.output_bucket.split('-')[1:-1]))
+            env = _tibanna.get('env', '-'.join(self.output_bucket.split('-')[1:-1]))
             try:
                 self.tibanna_settings = TibannaSettings(env, settings=_tibanna)
             except Exception as e:
@@ -118,12 +119,12 @@ class FFInputAbstract(SerializableObject):
             raise FdnConnectionException(e)
 
     def add_args(self, ff_meta):
-       # create args
+        # create args
         args = dict()
         for k in ['app_name', 'app_version', 'cwl_directory_url', 'cwl_main_filename', 'cwl_child_filenames',
                   'wdl_directory_url', 'wdl_main_filename', 'wdl_child_filenames']:
             printlog(self.wf_meta.get(k))
-            args[k] = self.wf_meta.get(k, '') 
+            args[k] = self.wf_meta.get(k, '')
         if self.wf_meta.get('workflow_language', '') == 'WDL':
             args['language'] = 'wdl'
         else:
@@ -138,7 +139,7 @@ class FFInputAbstract(SerializableObject):
         args['additional_benchmarking_parameters'] = self.additional_benchmarking_parameters
         args['output_S3_bucket'] = self.output_bucket
         args['dependency'] = self.dependency
-    
+
         # output target
         args['output_target'] = dict()
         args['secondary_output_target'] = dict()
@@ -171,7 +172,7 @@ class FFInputAbstract(SerializableObject):
         # create Args class object
         self.args = Args(**args)
 
-    def output_target_for_input_extra(target_inf, of):
+    def output_target_for_input_extra(self, target_inf, of):
         extrafileexists = False
         printlog("target_inf = %s" % str(target_inf))  # debugging
         target_inf_meta = get_metadata(target_inf.get('value'),
@@ -230,7 +231,7 @@ class FFInputAbstract(SerializableObject):
             args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
                 = input_file.get('format_if_extra')
         else:  # do not add this if the input itself is an extra file
-           self.add_secondary_files_to_args(input_file, args)
+            self.add_secondary_files_to_args(input_file, args)
 
     def get_extra_file_key_given_input_uuid_and_key(self, inf_uuid, inf_key, fe_map):
         extra_file_keys = []
@@ -572,8 +573,8 @@ class FourfrontStarterAbstract(object):
 
     # processed files-related functions
     def create_pfs(self):
-       for argname in self.output_argnames:
-           self.pfs.update({argname: self.pf(argname)})
+        for argname in self.output_argnames:
+            self.pfs.update({argname: self.pf(argname)})
 
     def post_pfs(self):
         for _, pf in self.pfs:
@@ -587,7 +588,7 @@ class FourfrontStarterAbstract(object):
     def pf_extra_files(self, secondary_file_formats=None):
         if not secondary_file_formats:
             return None
-        return [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]        
+        return [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
 
     def parse_custom_fields(self, custom_fields, argname):
         pf_other_fields = dict()
@@ -602,7 +603,7 @@ class FourfrontStarterAbstract(object):
 
     def pf(self, argname, **kwargs):
         if self.user_supplied_output_files(argname):
-            res = self.get_meta(self.user_supplied_output_files(arg)[0])
+            res = self.get_meta(self.user_supplied_output_files(argname)[0])
             return self.ProcessedFileMetadata(**res)
         for arg in self.output_args:
             printlog("processing arguments %s" % str(arg))
@@ -613,13 +614,13 @@ class FourfrontStarterAbstract(object):
         if 'file_format' not in arg:
             raise Exception("file format for processed file must be provided")
         if 'secondary_file_formats' in arg:
-            extra_files = [{"file_format": parse_formatstr(v)} for v in secondary_file_formats]
+            extra_files = self.pf_extra_files(arg.get('secondary_file_formats', []))
         else:
             extra_files = None
         return self.ProcessedFileMetadata(
-            file_format=file_format,
+            file_format=arg.get('file_format'),
             extra_files=extra_files,
-            other_fields=parse_custom_fields(self.inp.custom_pf_fields, argname),
+            other_fields=self.parse_custom_fields(self.inp.custom_pf_fields, argname),
             **kwargs
         )
 
@@ -648,20 +649,26 @@ class FourfrontStarterAbstract(object):
         return ff_outfile_list
 
     def ff_outfile(self, argname):
-        if argname not in self.pfs:
-            raise Exception("processed file objects must be ready before creating ff_outfile")
-        try:
-            resp = self.get_meta(self.pfs[argname].uuid)
-        except Exception as e:
-            raise Exception("processed file must be posted before creating ff_outfile")
         arg = self.arg(argname)
-        return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
-                                      arg.get('argument_type'),
-                                      arg.get('argument_format', None),
-                                      arg.get('secondary_file_formats', None),
-                                      resp.get('upload_key', None),
-                                      resp.get('uuid', None),
-                                      resp.get('extra_files', None))
+        if arg.get('argument_type') == 'Output processed file':
+            if argname not in self.pfs:
+                raise Exception("processed file objects must be ready before creating ff_outfile")
+            try:
+                resp = self.get_meta(self.pfs[argname].uuid)
+            except Exception as e:
+                raise Exception("processed file must be posted before creating ff_outfile: %s" % str(e))
+            return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
+                                          arg.get('argument_type'),
+                                          arg.get('argument_format', None),
+                                          arg.get('secondary_file_formats', None),
+                                          resp.get('upload_key', None),
+                                          resp.get('uuid', None),
+                                          resp.get('extra_files', None))
+        else:
+            return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
+                                          arg.get('argument_type'),
+                                          arg.get('argument_format', None),
+                                          arg.get('secondary_file_formats', None))
 
     def create_ff_input_files(self):
         ff_infile_list = []
@@ -1515,5 +1522,3 @@ def number(astring):
         return num
     except ValueError:
         return astring
-
-
