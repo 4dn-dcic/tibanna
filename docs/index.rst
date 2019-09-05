@@ -82,10 +82,10 @@ Contents:
    api
    execution_json
    monitoring
+   collecting_metrics
    cwl
    wdl
    ami
    4dn_pipelines
    pony
    how_it_works
-   collecting_metrics
