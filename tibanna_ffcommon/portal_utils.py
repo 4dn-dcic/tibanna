@@ -614,14 +614,14 @@ class FourfrontStarterAbstract(object):
                 break
         if arg.get('argument_type') != 'Output processed file':
             return None
-        if 'file_format' not in arg:
+        if 'argument_format' not in arg:
             raise Exception("file format for processed file must be provided")
         if 'secondary_file_formats' in arg:
             extra_files = self.pf_extra_files(arg.get('secondary_file_formats', []))
         else:
             extra_files = None
         return self.ProcessedFileMetadata(
-            file_format=arg.get('file_format'),
+            file_format=arg.get('argument_format'),
             extra_files=extra_files,
             other_fields=self.parse_custom_fields(self.inp.custom_pf_fields, argname),
             **kwargs
