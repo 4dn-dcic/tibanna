@@ -30,7 +30,7 @@ class Subcommands(_Subcommands):
     @property
     def descriptions(self):
         desc = super().descriptions
-        desc['deploy_zebra'] = 'deploy tibanna zebra to AWS cloud (zebra is for 4DN-DCIC only)'
+        desc['deploy_zebra'] = 'deploy tibanna zebra to AWS cloud (zebra is for CGAP only)'
         return desc
 
     @property

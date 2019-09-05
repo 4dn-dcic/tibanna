@@ -209,7 +209,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, awsem_app_name, app_version, input_files=[],
+    def __init__(self, workflow, awsem_app_name, app_version=None, input_files=[],
                  parameters=[], title=None, uuid=None, output_files=None,
                  run_status='started', run_platform='AWSEM', run_url='', tag=None,
                  aliases=None,  awsem_postrun_json=None, submitted_by=None, extra_meta=None,
@@ -1396,7 +1396,7 @@ class FourfrontUpdaterAbstract(object):
         except Exception as e:
             printlog("Cannot send email: %s" % e)
 
-    def register_to_higlass(tbn, bucket, key, filetype, datatype, genome_assembly=None):
+    def register_to_higlass(self, tbn, bucket, key, filetype, datatype, genome_assembly=None):
         if bucket not in self.higlass_buckets:
             return None
         if not key:
