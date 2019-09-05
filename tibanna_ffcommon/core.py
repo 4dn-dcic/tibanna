@@ -15,6 +15,9 @@ class API(_API):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     sfn_type = ''  # fill in the actual type (e.g pony or zebra) for inherited class
 
+    run_task_lambda = 'run_task'
+    check_task_lambda = 'check_task'
+
     @property
     def do_not_delete(self):
         return ['validate_md5_s3_trigger']

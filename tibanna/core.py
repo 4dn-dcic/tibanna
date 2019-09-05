@@ -90,6 +90,13 @@ class API(object):
     default_env = ''
     sfn_type = 'unicorn'
 
+    run_task_lambda = 'run_task_awsem'
+    check_task_lambda = 'check_task_awsem'
+
+    @property
+    def UNICORN_LAMBDAS(self):
+        return [self.run_task_lambda, self.check_task_lambda]
+
     @property
     def do_not_delete(self):
         return []  # list of lambda names that should not be deleted before updating
@@ -588,17 +595,17 @@ class API(object):
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
         envlist = {
-            'run_task_awsem': {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
+            self.run_task_lambda: {'AMI_ID_CWL_V1': AMI_ID_CWL_V1,
                                'AMI_ID_CWL_DRAFT3': AMI_ID_CWL_DRAFT3,
                                'AMI_ID_WDL': AMI_ID_WDL,
                                'AMI_ID_SNAKEMAKE': AMI_ID_SNAKEMAKE,
                                'AMI_ID_SHELL': AMI_ID_SHELL,
                                'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
-            'check_task_awsem': {}
+            self.check_task_lambda: {}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
-            envlist['run_task_awsem'].update({
+            envlist[self.run_task_lambda].update({
                 'TIBANNA_PROFILE_ACCESS_KEY': TIBANNA_PROFILE_ACCESS_KEY,
                 'TIBANNA_PROFILE_SECRET_KEY': TIBANNA_PROFILE_SECRET_KEY}
             )
@@ -618,7 +625,7 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
-        if name == 'run_task_awsem':
+        if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
                     = get_ec2_role_name('tibanna_' + usergroup)
@@ -626,7 +633,7 @@ class API(object):
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
         print('name=%s' % name)
-        if name in ['run_task_awsem', 'check_task_awsem']:
+        if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
                 role_arn = role_arn_prefix + get_lambda_role_name('tibanna_' + usergroup, name)
@@ -667,7 +674,7 @@ class API(object):
         if name == 'all':
             names = self.lambda_names
         elif name == 'unicorn':
-            names = UNICORN_LAMBDAS
+            names = self.UNICORN_LAMBDAS
         else:
             names = [name, ]
         for name in names:

@@ -5,7 +5,7 @@ class SerializableObject(object):
     def __init__(self):
         pass
 
-    def update(self, *kwargs):
+    def update(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
 

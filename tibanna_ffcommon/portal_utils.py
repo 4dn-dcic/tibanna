@@ -56,7 +56,6 @@ class FFInputAbstract(SerializableObject):
         if not config:
             raise MalFormattedFFInputException("missing field in input json: config")
         self.config = Config(**config)
-        self.config.fill_default()
         self.jobid = jobid
 
         self.input_files = kwargs.get('input_files', [])
@@ -66,7 +65,8 @@ class FFInputAbstract(SerializableObject):
 
         self.workflow_uuid = workflow_uuid
         self.output_bucket = output_bucket
-        self.parameters = convert_param(kwargs.get('parameters', {}), True)
+        self.parameters_ = kwargs.get('parameters', {})
+        self.parameters = convert_param(self.parameters_, True)
         self.additional_benchmarking_parameters = kwargs.get('additional_benchmarking_parameters', {})
         self.tag = kwargs.get('tag', None)
         self.custom_pf_fields = kwargs.get('custom_pf_fields', None)  # custon fields for PF
@@ -86,13 +86,14 @@ class FFInputAbstract(SerializableObject):
 
         if not hasattr(self.config, 'overwrite_input_extra'):
             self.config.overwrite_input_extra = False
-        if not self.config.public_postrun_json:
+        if not hasattr(self.config, 'public_postrun_json'):
             self.config.public_postrun_json = True
         if not hasattr(config, 'email'):
             self.config.email = False
 
     def as_dict(self):
         d_shallow = self.__dict__.copy()
+        del(d_shallow['parameters_'])
         del(d_shallow['wf_meta_'])
         del(d_shallow['tibanna_settings'])
         do = SerializableObject()
@@ -116,10 +117,6 @@ class FFInputAbstract(SerializableObject):
         except Exception as e:
             raise FdnConnectionException(e)
 
-    def update(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
-
     def add_args(self, ff_meta):
        # create args
         args = dict()
@@ -136,8 +133,8 @@ class FFInputAbstract(SerializableObject):
                 args['cwl_version'] = 'v1'
             else:
                 args['cwl_version'] = 'draft3'
-    
-        args['input_parameters'] = self.parameters
+
+        args['input_parameters'] = self.parameters_
         args['additional_benchmarking_parameters'] = self.additional_benchmarking_parameters
         args['output_S3_bucket'] = self.output_bucket
         args['dependency'] = self.dependency
@@ -166,6 +163,12 @@ class FFInputAbstract(SerializableObject):
                         args['secondary_output_target'] = {arg_name: [ext.get('upload_key')]}
                     else:
                         args['secondary_output_target'][arg_name].append(ext.get('upload_key'))
+
+        # input files
+        for input_file in self.input_files:
+            self.process_input_file_info(input_file, args)
+
+        # create Args class object
         self.args = Args(**args)
 
     def output_target_for_input_extra(target_inf, of):
@@ -211,6 +214,60 @@ class FFInputAbstract(SerializableObject):
             return target_key
         else:
             raise Exception("input already has extra: 'User overwrite_input_extra': true")
+
+    def process_input_file_info(self, input_file, args):
+        if not args or 'input_files' not in args:
+            args['input_files'] = dict()
+        if not args or 'secondary_files' not in args:
+            args['secondary_files'] = dict()
+        object_key = combine_two(input_file['uuid'], input_file['object_key'])
+        args['input_files'].update({input_file['workflow_argument_name']: {
+                                    'bucket_name': input_file['bucket_name'],
+                                    'rename': input_file.get('rename', ''),
+                                    'unzip': input_file.get('unzip', ''),
+                                    'object_key': object_key}})
+        if input_file.get('format_if_extra', ''):
+            args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
+                = input_file.get('format_if_extra')
+        else:  # do not add this if the input itself is an extra file
+           self.add_secondary_files_to_args(input_file, args)
+
+    def get_extra_file_key_given_input_uuid_and_key(self, inf_uuid, inf_key, fe_map):
+        extra_file_keys = []
+        not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
+        infile_meta = get_metadata(inf_uuid,
+                                   key=self.tibanna_settings.ff_keys,
+                                   ff_env=self.tibanna_settings.env,
+                                   add_on='frame=object')
+        if infile_meta.get('extra_files'):
+            infile_format = parse_formatstr(infile_meta.get('file_format'))
+            for extra_file in infile_meta.get('extra_files'):
+                if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
+                    extra_file_format = parse_formatstr(extra_file.get('file_format'))
+                    extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
+                    extra_file_keys.append(extra_file_key)
+        if len(extra_file_keys) == 0:
+            extra_file_keys = None
+        return extra_file_keys
+
+    def add_secondary_files_to_args(self, input_file, args):
+        if not args or 'input_files' not in args:
+            raise Exception("args must contain key 'input_files'")
+        if 'secondary_files'not in args:
+            args['secondary_files'] = dict()
+        argname = input_file['workflow_argument_name']
+        fe_map = FormatExtensionMap(self.tibanna_settings.ff_keys)
+        extra_file_keys = run_on_nested_arrays2(input_file['uuid'],
+                                                args['input_files'][argname]['object_key'],
+                                                self.get_extra_file_key_given_input_uuid_and_key,
+                                                fe_map=fe_map)
+        if extra_file_keys and len(extra_file_keys) > 0:
+            if len(extra_file_keys) == 1:
+                extra_file_keys = extra_file_keys[0]
+            args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                            'bucket_name': input_file['bucket_name'],
+                                            'rename': input_file.get('rename', ''),
+                                            'object_key': extra_file_keys}})
 
 
 class WorkflowRunMetadataAbstract(SerializableObject):
@@ -1458,62 +1515,5 @@ def number(astring):
         return num
     except ValueError:
         return astring
-
-
-def process_input_file_info(input_file, ff_keys, ff_env, args):
-    if not args or 'input_files' not in args:
-        args['input_files'] = dict()
-    if not args or 'secondary_files' not in args:
-        args['secondary_files'] = dict()
-    object_key = combine_two(input_file['uuid'], input_file['object_key'])
-    args['input_files'].update({input_file['workflow_argument_name']: {
-                                'bucket_name': input_file['bucket_name'],
-                                'rename': input_file.get('rename', ''),
-                                'unzip': input_file.get('unzip', ''),
-                                'object_key': object_key}})
-    if input_file.get('format_if_extra', ''):
-        args['input_files'][input_file['workflow_argument_name']]['format_if_extra'] \
-            = input_file.get('format_if_extra')
-    else:  # do not add this if the input itself is an extra file
-        add_secondary_files_to_args(input_file, ff_keys, ff_env, args)
-
-
-def get_extra_file_key_given_input_uuid_and_key(inf_uuid, inf_key, ff_keys, ff_env, fe_map):
-    extra_file_keys = []
-    not_ready_list = ['uploading', 'to be uploaded by workflow', 'upload failed', 'deleted']
-    infile_meta = get_metadata(inf_uuid,
-                               key=ff_keys,
-                               ff_env=ff_env,
-                               add_on='frame=object')
-    if infile_meta.get('extra_files'):
-        infile_format = parse_formatstr(infile_meta.get('file_format'))
-        for extra_file in infile_meta.get('extra_files'):
-            if 'status' not in extra_file or extra_file.get('status') not in not_ready_list:
-                extra_file_format = parse_formatstr(extra_file.get('file_format'))
-                extra_file_key = get_extra_file_key(infile_format, inf_key, extra_file_format, fe_map)
-                extra_file_keys.append(extra_file_key)
-    if len(extra_file_keys) == 0:
-        extra_file_keys = None
-    return extra_file_keys
-
-
-def add_secondary_files_to_args(input_file, ff_keys, ff_env, args):
-    if not args or 'input_files' not in args:
-        raise Exception("args must contain key 'input_files'")
-    if 'secondary_files'not in args:
-        args['secondary_files'] = dict()
-    argname = input_file['workflow_argument_name']
-    fe_map = FormatExtensionMap(ff_keys)
-    extra_file_keys = run_on_nested_arrays2(input_file['uuid'],
-                                            args['input_files'][argname]['object_key'],
-                                            get_extra_file_key_given_input_uuid_and_key,
-                                            ff_keys=ff_keys, ff_env=ff_env, fe_map=fe_map)
-    if extra_file_keys and len(extra_file_keys) > 0:
-        if len(extra_file_keys) == 1:
-            extra_file_keys = extra_file_keys[0]
-        args['secondary_files'].update({input_file['workflow_argument_name']: {
-                                        'bucket_name': input_file['bucket_name'],
-                                        'rename': input_file.get('rename', ''),
-                                        'object_key': extra_file_keys}})
 
 
