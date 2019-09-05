@@ -1,0 +1,29 @@
+{
+  "config": {
+    "shutdown_min": "now",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "password": "",
+    "run_name": "md5_31f6a02d-ca8f-49c9-9c45-5a20405334ee"
+  },
+  "_tibanna": {
+    "run_id": "31f6a02d-ca8f-49c9-9c45-5a20405334ee",
+    "env": "fourfront-cgap",
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_zebra_dev:md5_31f6a02d-ca8f-49c9-9c45-5a20405334ee",
+    "run_type": "md5",
+    "run_name": "md5_31f6a02d-ca8f-49c9-9c45-5a20405334ee",
+    "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_zebra_dev:md5_31f6a02d-ca8f-49c9-9c45-5a20405334ee"
+  },
+  "parameters": {},
+  "workflow_uuid": "4dn-dcic-lab:wf-md5-0.2.6",
+  "input_files": [
+    {
+      "workflow_argument_name": "input_file",
+      "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
+      "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
+      "object_key": "GAPFI3JFGVN4.fastq.gz"
+    }
+  ],
+  "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
+  "jobid": "uTbu0j96udgb"
+}

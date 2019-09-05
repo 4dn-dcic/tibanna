@@ -72,7 +72,7 @@ class FFInputAbstract(SerializableObject):
         self.tag = kwargs.get('tag', None)
         self.custom_pf_fields = kwargs.get('custom_pf_fields', None)  # custon fields for PF
         self.wfr_meta = kwargs.get('wfr_meta', None)  # custom fields for WFR
-        self.output_files = kwargs.get('output_files', None)  # for user-supplied output files
+        self.output_files = kwargs.get('output_files', [])  # for user-supplied output files
         self.dependency = kwargs.get('dependency', None)
         self.wf_meta_ = None
 
@@ -565,7 +565,7 @@ class FourfrontStarterAbstract(object):
 
     @property
     def output_args(self):
-        return [arg for arg in self.args if arg.get('type') in self.output_arg_type_list]
+        return [arg for arg in self.args if arg.get('argument_type') in self.output_arg_type_list]
 
     @property
     def output_argnames(self):
@@ -574,11 +574,14 @@ class FourfrontStarterAbstract(object):
     # processed files-related functions
     def create_pfs(self):
         for argname in self.output_argnames:
-            self.pfs.update({argname: self.pf(argname)})
+            pf = self.pf(argname)
+            if pf:
+                self.pfs.update({argname: pf})
 
     def post_pfs(self):
-        for _, pf in self.pfs:
-            pf.post(self.tbn.ff_keys)
+        if self.pfs:
+            for _, pf in self.pfs.items():
+                pf.post(self.tbn.ff_keys)
 
     def user_supplied_output_files(self, argname=None):
         if not argname:
@@ -644,32 +647,34 @@ class FourfrontStarterAbstract(object):
 
     def create_ff_output_files(self):
         ff_outfile_list = []
-        printlog(str(self.output_argnames))
         for argname in self.output_argnames:
-            ff_outfile_list.append(self.ff_outfile(argname))
+            ff_outfile_list.extend(self.ff_outfile(argname))
         return ff_outfile_list
 
     def ff_outfile(self, argname):
-        arg = self.arg(argname)
-        if arg.get('argument_type') == 'Output processed file':
-            if argname not in self.pfs:
-                raise Exception("processed file objects must be ready before creating ff_outfile")
-            try:
-                resp = self.get_meta(self.pfs[argname].uuid)
-            except Exception as e:
-                raise Exception("processed file must be posted before creating ff_outfile: %s" % str(e))
-            return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
-                                          arg.get('argument_type'),
-                                          arg.get('argument_format', None),
-                                          arg.get('secondary_file_formats', None),
-                                          resp.get('upload_key', None),
-                                          resp.get('uuid', None),
-                                          resp.get('extra_files', None))
-        else:
-            return WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
-                                          arg.get('argument_type'),
-                                          arg.get('argument_format', None),
-                                          arg.get('secondary_file_formats', None))
+        args = self.arg(argname)
+        wfrout = []
+        for arg in args:
+            if arg.get('argument_type') == 'Output processed file':
+                if argname not in self.pfs:
+                    raise Exception("processed file objects must be ready before creating ff_outfile")
+                try:
+                    resp = self.get_meta(self.pfs[argname].uuid)
+                except Exception as e:
+                    raise Exception("processed file must be posted before creating ff_outfile: %s" % str(e))
+                wfrout.append(WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
+                                                     arg.get('argument_type'),
+                                                     arg.get('argument_format', None),
+                                                     arg.get('secondary_file_formats', None),
+                                                     resp.get('upload_key', None),
+                                                     resp.get('uuid', None),
+                                                     resp.get('extra_files', None)).as_dict())
+            else:
+                wfrout.append(WorkflowRunOutputFiles(arg.get('workflow_argument_name'),
+                                                     arg.get('argument_type'),
+                                                     arg.get('argument_format', None),
+                                                     arg.get('secondary_file_formats', None)).as_dict())
+        return wfrout
 
     def create_ff_input_files(self):
         ff_infile_list = []
