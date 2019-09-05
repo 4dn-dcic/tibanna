@@ -644,6 +644,7 @@ class FourfrontStarterAbstract(object):
 
     def create_ff_output_files(self):
         ff_outfile_list = []
+        printlog(str(self.output_argnames))
         for argname in self.output_argnames:
             ff_outfile_list.append(self.ff_outfile(argname))
         return ff_outfile_list
