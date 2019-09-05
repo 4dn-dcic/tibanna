@@ -17,6 +17,5 @@
     "_tibanna":{
       "run_type": "fastqc",
       "env": "fourfront-cgap"
-    },
-    "tag": "hahaha"
+    }
 }
