@@ -58,6 +58,9 @@ class TibannaResource(object):
         if self.max_mem_used_MB:
             self.total_mem_MB = self.max_mem_used_MB + self.min_mem_available_MB
             self.max_mem_utilization_percent = self.max_mem_used_MB / self.total_mem_MB * 100
+        else:
+            self.total_mem_MB = ''
+            self.max_mem_utilization_percent = ''
         self.max_cpu_utilization_percent = self.choose_max(max_cpu_utilization_percent_chunks)
         self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
         self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)

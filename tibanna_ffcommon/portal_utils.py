@@ -568,7 +568,7 @@ class FourfrontStarterAbstract(object):
 
     @property
     def output_argnames(self):
-        return [arg.get('workflow_argument_names') for arg in self.output_args]
+        return [arg.get('workflow_argument_name') for arg in self.output_args]
 
     # processed files-related functions
     def create_pfs(self):
