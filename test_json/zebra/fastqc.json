@@ -7,8 +7,8 @@
     "input_files": [
                     {"workflow_argument_name": "input_fastq", 
                      "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
-                     "uuid": "d590fb80-f5e2-41cb-9fd3-48b382e32fb9",
-                     "object_key": "GAPFI2V6XRYN.fastq.gz"
+                     "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
+                     "object_key": "GAPFI3JFGVN4.fastq.gz"
                     }
     ],
     "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
