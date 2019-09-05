@@ -1,0 +1,22 @@
+{
+    "config": {
+      "shutdown_min" : "now",
+      "log_bucket" : "tibanna-output",
+      "key_name": "4dn-encode",
+      "password": ""
+    },
+    "_tibanna": {
+      "env": "fourfront-cgap",
+      "run_type": "md5"
+    },
+    "parameters": {}, 
+    "workflow_uuid": "4dn-dcic-lab:wf-md5-0.2.6",
+    "input_files": [
+                    {"workflow_argument_name": "input_file", 
+                     "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
+                     "uuid": "d590fb80-f5e2-41cb-9fd3-48b382e32fb9",
+                     "object_key": "GAPFI2V6XRYN.fastq.gz"
+                    }
+    ],
+    "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput"
+}

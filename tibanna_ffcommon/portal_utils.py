@@ -75,6 +75,7 @@ class FFInputAbstract(SerializableObject):
         self.dependency = kwargs.get('dependency', None)
         self.wf_meta_ = None
 
+        self._tibanna = _tibanna
         self.tibanna_settings = None
         if _tibanna:
             env =  _tibanna.get('env', '-'.join(self.output_bucket.split('-')[1:-1]))
@@ -89,6 +90,14 @@ class FFInputAbstract(SerializableObject):
             self.config.public_postrun_json = True
         if not hasattr(config, 'email'):
             self.config.email = False
+
+    def as_dict(self):
+        d_shallow = self.__dict__.copy()
+        del(d_shallow['wf_meta_'])
+        del(d_shallow['tibanna_settings'])
+        do = SerializableObject()
+        do.update(**d_shallow)
+        return do.as_dict()
 
     @property
     def input_file_uuids(self):
@@ -273,6 +282,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
                 type_name = 'workflow_run_awsem'
             else:
                 raise Exception("cannot determine workflow schema type from the run platform: should be AWSEM.")
+        printlog(self.as_dict())  # debug
         return post_metadata(self.as_dict(), type_name, key=key)
 
     def patch(self, key, type_name=None):
@@ -415,7 +425,7 @@ class FormatExtensionMap(object):
             return []
 
 
-class TibannaSettings(object):
+class TibannaSettings(SerializableObject):
 
     def __init__(self, env, ff_keys=None, sbg_keys=None, settings=None):
         self.env = env
