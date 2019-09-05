@@ -5,7 +5,7 @@
     },
     "app_name": "bwa-mem",
     "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
-    "workflow_uuid": "0fbe4db8-0b5f-448e-8b58-3f8c84baabf5",
+    "workflow_uuid": "10eedadc-50f9-4bb4-919b-09a8b731d0cc",
     "parameters" :  {"nThreads": 4},
     "input_files" : [
        {
