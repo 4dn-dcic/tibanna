@@ -62,7 +62,7 @@ class FourfrontStarter(FourfrontStarterAbstract):
         self.source_samples_ = None
 
     def pf(self, argname):
-        super().pf(argname, source_samples=self.source_samples)
+        return super().pf(argname, source_samples=self.source_samples)
 
     def get_source_experiment(self, input_file_uuid):
         """

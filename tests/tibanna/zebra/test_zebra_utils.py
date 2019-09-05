@@ -41,3 +41,16 @@ def test_fourfront_starter(start_run_event_md5):
     assert starter.inp.wf_meta['arguments'][1]['argument_type'] == 'Output report file'
     starter.run()
     assert len(starter.output_argnames) == 1
+
+
+@valid_env
+def test_fourfront_starter2(start_run_event_bwa_check):
+    starter = FourfrontStarter(**start_run_event_bwa_check)
+    assert starter
+    assert not starter.user_supplied_output_files('raw_bam')
+    assert len(starter.output_argnames) == 2
+    assert starter.output_argnames[0] == 'raw_bam'
+    assert starter.arg('raw_bam')[0]['argument_type'] == 'Output processed file'
+    assert starter.pf('raw_bam')
+    starter.create_pfs()
+    assert len(starter.pfs) == 1

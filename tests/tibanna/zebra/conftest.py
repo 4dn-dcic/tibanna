@@ -18,6 +18,11 @@ def start_run_event_md5():
     return get_event_file_for('start_run', event_file='event_md5.json')
 
 
+@pytest.fixture(scope='session')
+def start_run_event_bwa_check():
+    return get_event_file_for('start_run', event_file='event_bwa-check.json')
+
+
 def get_event_file_for(lambda_name, sbg_keys=None, ff_keys=None, event_file='event.json'):
     dir_path = os.path.dirname(os.path.realpath(__file__))
     event_file_name = os.path.join(dir_path, lambda_name, event_file)

@@ -580,8 +580,9 @@ class FourfrontStarterAbstract(object):
 
     def post_pfs(self):
         if self.pfs:
-            for _, pf in self.pfs.items():
-                pf.post(self.tbn.ff_keys)
+            for _, pfs in self.pfs.items():
+                for pf in pfs:
+                    pf.post(self.tbn.ff_keys)
 
     def user_supplied_output_files(self, argname=None):
         if not argname:
@@ -608,24 +609,25 @@ class FourfrontStarterAbstract(object):
         if self.user_supplied_output_files(argname):
             res = self.get_meta(self.user_supplied_output_files(argname)[0])
             return self.ProcessedFileMetadata(**res)
-        for arg in self.output_args:
-            printlog("processing arguments %s" % str(arg))
-            if argname == arg['workflow_argument_name']:
-                break
-        if arg.get('argument_type') != 'Output processed file':
-            return None
-        if 'argument_format' not in arg:
-            raise Exception("file format for processed file must be provided")
-        if 'secondary_file_formats' in arg:
-            extra_files = self.pf_extra_files(arg.get('secondary_file_formats', []))
-        else:
-            extra_files = None
-        return self.ProcessedFileMetadata(
-            file_format=arg.get('argument_format'),
-            extra_files=extra_files,
-            other_fields=self.parse_custom_fields(self.inp.custom_pf_fields, argname),
-            **kwargs
-        )
+        args = self.arg(argname)
+        pfs = []
+        for arg in args:
+            if arg.get('argument_type') != 'Output processed file':
+                continue
+            if 'argument_format' not in arg:
+                raise Exception("file format for processed file must be provided")
+            if 'secondary_file_formats' in arg:
+                extra_files = self.pf_extra_files(arg.get('secondary_file_formats', []))
+            else:
+                extra_files = None
+            printlog("appending %s to pfs" % arg.get('workflow_argument_name'))
+            pfs.append(self.ProcessedFileMetadata(
+                file_format=arg.get('argument_format'),
+                extra_files=extra_files,
+                other_fields=self.parse_custom_fields(self.inp.custom_pf_fields, argname),
+                **kwargs
+            ))
+        return pfs
 
     # ff (workflowrun)-related functions
     def create_ff(self):
