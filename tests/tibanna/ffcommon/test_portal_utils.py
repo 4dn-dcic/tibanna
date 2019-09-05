@@ -86,13 +86,6 @@ def test_workflow_run_metadata_abstract_missing_field_error2():
     assert 'missing' in str(excinfo)
 
 
-def test_workflow_run_metadata_abstract_missing_field_error3():
-    data = {'workflow': 'a', 'awsem_app_name': 'b'}
-    with pytest.raises(Exception) as excinfo:
-        WorkflowRunMetadataAbstract(**data)
-    assert 'missing' in str(excinfo)
-
-
 def test_processed_file_metadata_abstract():
     data = {'uuid': 'a'}
     pf = ProcessedFileMetadataAbstract(**data)
