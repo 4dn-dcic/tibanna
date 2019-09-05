@@ -12,6 +12,11 @@ class FdnConnectionException(Exception):
     pass
 
 
+class MalFormattedFFInputException(Exception):
+    """There is an error with pony/zebra input json format"""
+    pass
+
+
 def exception_coordinator(lambda_name, metadata_only_func):
     '''
     friendly wrapper for your lambda functions, based on input_json / event comming in...

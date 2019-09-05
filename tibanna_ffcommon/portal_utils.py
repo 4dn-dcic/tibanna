@@ -42,12 +42,19 @@ from .config import (
 )
 from .exceptions import (
     TibannaStartException,
-    FdnConnectionException
+    FdnConnectionException,
+    MalFormattedFFInputException
 )
 
 
 class FFInputAbstract(SerializableObject):
-    def __init__(self, workflow_uuid, output_bucket, config, jobid='', _tibanna=None, **kwargs):
+    def __init__(self, workflow_uuid=None, output_bucket=None, config=None, jobid='', _tibanna=None, **kwargs):
+        if not workflow_uuid:
+            raise MalFormattedFFInputException("missing field in input json: workflow_uuid")
+        if not output_bucket:
+            raise MalFormattedFFInputException("missing field in input json: output_bucket")
+        if not config:
+            raise MalFormattedFFInputException("missing field in input json: config")
         self.config = Config(**config)
         self.config.fill_default()
         self.jobid = jobid
@@ -55,7 +62,7 @@ class FFInputAbstract(SerializableObject):
         self.input_files = kwargs.get('input_files', [])
         for infile in self.input_files:
             if not infile:
-                raise("malformed input, check your input_files")
+                raise MalFormattedFFInputException("malformed input, check input_files in your input json")
 
         self.workflow_uuid = workflow_uuid
         self.output_bucket = output_bucket
