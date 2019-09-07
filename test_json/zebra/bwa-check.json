@@ -3,15 +3,15 @@
     "workflow_uuid": "9e094699-561b-4396-8d6a-ffc45f98c5e1",
     "input_files" : [
        {
-           "object_key": "GAPFIO67APU1.fastq.gz",
+           "object_key": "GAPFI3JFGVN4.fastq.gz",
            "workflow_argument_name": "fastq_R1",
-           "uuid": "10e82a90-49e5-4c33-afab-9ec90d65faa0",
+           "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
            "bucket_name": "elasticbeanstalk-fourfront-cgap-files"
        },
        {
-           "object_key": "GAPFIO67APT1.fastq.gz",
+           "object_key": "GAPFI3JFGVN4.fastq.gz",
            "workflow_argument_name": "fastq_R2",
-           "uuid": "10e82a90-49e5-4c33-afab-9ec90d65faa1",
+           "uuid": "8f84f677-ded6-4fd5-807c-a32a07089e90",
            "bucket_name": "elasticbeanstalk-fourfront-cgap-files"
        },
        {
