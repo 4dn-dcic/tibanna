@@ -15,7 +15,7 @@
            "bucket_name": "elasticbeanstalk-fourfront-cgap-files"
        },
        {
-           "object_key": "4DNFIYU3FC57.bwt",
+           "object_key": "GAPFI4U1HXIY.bwt",
            "workflow_argument_name": "reference",
            "uuid": "b24ed5ed-a037-48a0-a938-3fecfb90d0cf",
            "bucket_name": "elasticbeanstalk-fourfront-cgap-files"
