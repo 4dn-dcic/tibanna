@@ -370,6 +370,7 @@ class ProcessedFileMetadataAbstract(SerializableObject):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
     def post(self, key):
+        printlog(self.__dict__)  # debugging
         return post_metadata(self.as_dict(), "file_processed", key=key, add_on='force_md5')
 
     def patch(self, key, fields=None):
@@ -550,7 +551,7 @@ class FourfrontStarterAbstract(object):
         try:
             return get_metadata(uuid,
                                 key=self.tbn.ff_keys,
-                                ff_env=self.tbn.ff_env,
+                                ff_env=self.tbn.env,
                                 add_on='frame=object',
                                 check_queue=check_queue)
         except Exception as e:

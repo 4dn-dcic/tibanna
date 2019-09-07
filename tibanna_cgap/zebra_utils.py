@@ -64,7 +64,7 @@ class FourfrontStarter(FourfrontStarterAbstract):
     def pf(self, argname):
         return super().pf(argname, source_samples=self.source_samples)
 
-    def get_source_experiment(self, input_file_uuid):
+    def get_source_sample(self, input_file_uuid):
         """
         Connects to fourfront and get source experiment info as a unique list
         Takes a single input file uuid.
@@ -74,13 +74,13 @@ class FourfrontStarter(FourfrontStarterAbstract):
         for inf_uuid in inf_uuids:
             infile_meta = get_metadata(inf_uuid,
                                        key=self.tbn.ff_keys,
-                                       ff_env=self.tbn.ff_env,
+                                       ff_env=self.tbn.env,
                                        add_on='frame=object')
             if infile_meta.get('samples'):
                 for exp in infile_meta.get('samples'):
                     exp_obj = get_metadata(exp,
                                            key=self.tbn.ff_keys,
-                                           ff_env=self.tbn.ff_env,
+                                           ff_env=self.tbn.env,
                                            add_on='frame=raw')
                     pf_source_samples_set.add(exp_obj['uuid'])
             if infile_meta.get('source_samples'):
@@ -95,9 +95,10 @@ class FourfrontStarter(FourfrontStarterAbstract):
         """
         pf_source_samples = set()
         for input_file_uuid in self.inp.input_file_uuids:
-            pf_source_samples.update(self.get_source_experiment(input_file_uuid))
+            pf_source_samples.update(self.get_source_sample(input_file_uuid))
         return list(pf_source_samples)
 
+    @property
     def source_samples(self):
         if self.source_samples_:
             return self.source_samples_

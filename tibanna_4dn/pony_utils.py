@@ -74,13 +74,13 @@ class FourfrontStarter(FourfrontStarterAbstract):
         for inf_uuid in inf_uuids:
             infile_meta = get_metadata(inf_uuid,
                                        key=self.tbn.ff_keys,
-                                       ff_env=self.tbn.ff_env,
+                                       ff_env=self.tbn.env,
                                        add_on='frame=object')
             if infile_meta.get('experiments'):
                 for exp in infile_meta.get('experiments'):
                     exp_obj = get_metadata(exp,
                                            key=self.tbn.ff_keys,
-                                           ff_env=self.tbn.ff_env,
+                                           ff_env=self.tbn.env,
                                            add_on='frame=raw')
                     pf_source_experiments_set.add(exp_obj['uuid'])
             if infile_meta.get('source_experiments'):
@@ -98,6 +98,7 @@ class FourfrontStarter(FourfrontStarterAbstract):
             pf_source_experiments.update(self.get_source_experiment(input_file_uuid))
         return list(pf_source_experiments)
 
+    @property
     def source_experiments(self):
         if self.source_experiments_:
             return self.source_experiments_
