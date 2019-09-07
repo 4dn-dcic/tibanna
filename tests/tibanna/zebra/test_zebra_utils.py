@@ -50,7 +50,7 @@ def test_fourfront_starter2(start_run_event_bwa_check):
     assert not starter.user_supplied_output_files('raw_bam')
     assert len(starter.output_argnames) == 2
     assert starter.output_argnames[0] == 'raw_bam'
-    assert starter.arg('raw_bam')[0]['argument_type'] == 'Output processed file'
+    assert starter.arg('raw_bam')['argument_type'] == 'Output processed file'
     assert starter.pf('raw_bam')
     starter.create_pfs()
     assert len(starter.pfs) == 1
