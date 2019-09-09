@@ -85,6 +85,8 @@ class FFInputAbstract(SerializableObject):
             except Exception as e:
                 raise TibannaStartException("%s" % e)
 
+        if 'overwrite_input_extra' in kwargs:
+            self.config.overwrite_input_extra = kwargs['overwrite_input_extra']
         if not hasattr(self.config, 'overwrite_input_extra'):
             self.config.overwrite_input_extra = False
         if not hasattr(self.config, 'public_postrun_json'):
@@ -185,7 +187,7 @@ class FFInputAbstract(SerializableObject):
             for exf in target_inf_meta.get('extra_files'):
                 if parse_formatstr(exf.get('file_format')) == target_format:
                     extrafileexists = True
-                    if self.overwrite_input_extra:
+                    if self.config.overwrite_input_extra:
                         exf['status'] = 'to be uploaded by workflow'
                     break
             if not extrafileexists:
@@ -194,7 +196,7 @@ class FFInputAbstract(SerializableObject):
         else:
             new_extra = {'file_format': target_format, 'status': 'to be uploaded by workflow'}
             target_inf_meta['extra_files'] = [new_extra]
-        if self.overwrite_input_extra or not extrafileexists:
+        if self.config.overwrite_input_extra or not extrafileexists:
             # first patch metadata
             printlog("extra_files_to_patch: %s" % str(target_inf_meta.get('extra_files')))  # debugging
             patch_metadata({'extra_files': target_inf_meta.get('extra_files')},
