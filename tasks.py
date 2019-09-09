@@ -5,7 +5,7 @@ from invoke import run, task
 
 @task
 def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
-         ignore='', ignore_pony=False, ignore_webdev=False):
+         ignore='', ignore_pony=False, no_post=False):
     """Run the tests.
     Note: --watch requires pytest-xdist to be installed.
     """
@@ -30,9 +30,9 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     if ignore_pony:
         args.append('--ignore')
         args.append('tests/tibanna/pony')
-    if ignore_webdev:
-        args.append('--ignore')
-        args.append('tests/tibanna/pony/test_webdev.py')
+    if no_post:
+        args.append('--no-post')  # skip tests that posts items to portal
+    args.append('tests/tibanna/')
     retcode = pytest.main(args)
     if retcode != 0:
         print("test failed exiting")

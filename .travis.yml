@@ -24,7 +24,7 @@ jobs:
     - pip install codacy-coverage
     script:
     - if [ "$TRAVIS_BRANCH" != "doc" ]; then
-      invoke test --no-flake --ignore-webdev; fi  # temporarily ignore test_webdev which uses tibanna_pony
+      invoke test --no-flake --no-post; fi  # temporarily ignore test_webdev which uses tibanna_pony
     after_success:
     - echo "finished running tests on repo"
     - python-codacy-coverage -r coverage.xml

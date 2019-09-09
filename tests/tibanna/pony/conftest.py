@@ -54,37 +54,53 @@ def s3_trigger_event_data_pf_extra_status():
 
 
 @pytest.fixture(scope='session')
-def md5_event_data():
-    # I want this to go through the tibanna env lookup, to ensure it gets
-    # appropriate keys
-    return get_test_json('md5_input.json')
+def start_run_md5_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_md5.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys)
-
-
-@pytest.fixture(scope='session')
-def run_task_awsem_pseudo_workflow_event_data(ff_keys):
+def start_run_pseudo_workflow_event_data(ff_keys):
     return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data_secondary_files(ff_keys):
+def start_run_nestedarray_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event-nestedarray.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_dependency_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_dependency.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_dependency_fail_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_dependency_fail.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_fail_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_fail.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_fixedname_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_fixedname.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingbam_customfield_wALL_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_hicprocessingbam_customfield_wALL.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingbam_customfield_wArgname_data(ff_keys):
+    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_hicprocessingbam_customfield_wArgname.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingpartb_data(ff_keys):
     return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_hicprocessingpartb.json')
-
-
-@pytest.fixture(scope='session')
-def run_awsem_event_data_processed_files(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
-                              event_file='event_hicprocessingbam_customfield_wArgname.json')
-
-
-@pytest.fixture(scope='session')
-def run_awsem_event_data_processed_files2(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
-                              event_file='event_hicprocessingbam_customfield_wALL.json')
 
 
 @pytest.fixture(scope='session')
