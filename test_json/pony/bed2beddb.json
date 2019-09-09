@@ -1,0 +1,39 @@
+{
+    "push_error_to_end": true, 
+    "app_name": "bedtobeddb", 
+    "_tibanna": {
+        "run_type": "bedtobeddb", 
+        "run_id": "f7cc47bb-d940-476e-8445-6eebcb03021c", 
+        "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_default_luisa:bedtobeddb_f7cc47bb-d940-476e-8445-6eebcb03021c", 
+        "run_name": "bedtobeddb_f7cc47bb-d940-476e-8445-6eebcb03021c", 
+        "env": "fourfront-webdev", 
+        "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_default_luisa:bedtobeddb_f7cc47bb-d940-476e-8445-6eebcb03021c"
+    }, 
+    "overwrite_input_extra": true, 
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+    "jobid": "AlAiQd8HioY2", 
+    "parameters": {
+        "assembly": "hg38"
+    }, 
+    "config": {
+        "ebs_size": 10, 
+        "ebs_type": "gp2", 
+        "ebs_iops": "", 
+        "EBS_optimized": false, 
+        "json_bucket": "4dn-aws-pipeline-run-json", 
+        "shutdown_min": 30, 
+        "instance_type": "t2.micro", 
+        "key_name": "4dn-encode", 
+        "password": "dragonfly", 
+        "log_bucket": "tibanna-output"
+    }, 
+    "workflow_uuid": "9d575e99-5ffe-4ea4-b74f-ad40f621cd39", 
+    "input_files": [
+        {
+            "object_key": "4DNFIZMTKWDI.bed.gz", 
+            "bucket_name": "elasticbeanstalk-fourfront-webdev-wfoutput", 
+            "uuid": "e22ed503-e208-4fbd-a097-06022bb7a634", 
+            "workflow_argument_name": "bedfile"
+        }
+    ]
+}
