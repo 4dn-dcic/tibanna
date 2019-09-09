@@ -1,4 +1,4 @@
-from tibanna_4dn.lambdas.check_task_awsem import handler
+from tibanna_4dn.lambdas.check_task import handler
 from tests.tibanna.pony.conftest import valid_env
 import pytest
 import boto3

@@ -9,9 +9,7 @@ from tibanna_cgap.zebra_utils import (
 )
 import pytest
 from tests.tibanna.zebra.conftest import valid_env
-from tests.conftest import post
 from tibanna.utils import printlog
-import mock
 
 
 @valid_env
@@ -31,18 +29,6 @@ def test_format_extension_map():
     fe_map = FormatExtensionMap(tibanna.ff_keys)
     assert(fe_map)
     assert 'bwt' in fe_map.fe_dict.keys()
-
-
-@post
-@valid_env
-def test_fourfront_starter(start_run_event_md5):
-    starter = FourfrontStarter(**start_run_event_md5)
-    assert starter
-    assert 'arguments' in starter.inp.wf_meta
-    assert len(starter.inp.wf_meta['arguments']) == 2
-    assert starter.inp.wf_meta['arguments'][1]['argument_type'] == 'Output report file'
-    starter.run()
-    assert len(starter.output_argnames) == 1
 
 
 @valid_env
