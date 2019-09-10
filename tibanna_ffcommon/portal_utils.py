@@ -1270,7 +1270,10 @@ class FourfrontUpdaterAbstract(object):
                 qc_key = self.file_key(qc.workflow_argument_name)
                 # if there is an html, add qc_url for the html
                 if qc.qc_zipped_html or qc.qc_html:
-                    target_html = qc_target_accession + '/qc_report.html'
+                    if not qc.qc_zipped_html:
+                        target_html = qc_target_accession + '/qc_report.html'
+                    else:
+                        target_html = qc_target_accession + '/' + qc.qc_zipped_html
                     qc_url = 'https://s3.amazonaws.com/' + qc_bucket + '/' + target_html
                 else:
                     qc_url = None
