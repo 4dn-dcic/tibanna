@@ -3,17 +3,17 @@ from dcicutils.ff_utils import get_metadata
 from tibanna.utils import _tibanna_settings, printlog
 # from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
 from tibanna_4dn.core import API
-from tibanna_4dn.exceptions import TibannaStartException, FdnConnectionException
-from tibanna_4dn.pony_utils import (
+from tibanna_ffcommon.exceptions import TibannaStartException, FdnConnectionException
+from tibanna_ffcommon.portal_utils import (
     TibannaSettings,
     FormatExtensionMap,
     parse_formatstr
 )
-from tibanna.vars import AWS_REGION
+from tibanna_4dn.vars import AWS_REGION, LAMBDA_TYPE
 
 
 config = {
-    'function_name': 'validate_md5_s3_initiator',
+    'function_name': 'validate_md5_s3_initiator_' + LAMBDA_TYPE,
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
@@ -26,7 +26,7 @@ config = {
 }
 
 
-TIBANNA_DEFAULT_STEP_FUNCTION_NAME = 'tibanna_pony_tmp_md5'
+TIBANNA_DEFAULT_STEP_FUNCTION_NAME = 'tibanna_' + LAMBDA_TYPE + '_tmp_md5'
 
 
 def handler(event, context):
@@ -168,7 +168,7 @@ def make_input(event, wf='md5', dependency=None, run_name_prefix='validate'):
     # guess env from bucket name
     bucket = event['Records'][0]['s3']['bucket']['name']
     env = '-'.join(bucket.split('-')[1:3])
-    
+
     if 'prod' in env:
         env = 'data'
 

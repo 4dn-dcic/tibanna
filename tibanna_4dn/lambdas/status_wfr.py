@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import boto3
-from tibanna_4dn.vars import AWS_REGION
+from tibanna_4dn.vars import AWS_REGION, LAMBDA_TYPE
 
 
 config = {
-    'function_name': 'status_wfr',
+    'function_name': 'status_wfr_' + LAMBDA_TYPE,
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',

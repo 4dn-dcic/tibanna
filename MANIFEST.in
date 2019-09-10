@@ -2,6 +2,8 @@ include README.md
 include LICENSE.txt
 include requirements.txt
 include requirements-4dn.txt
+include requirements-cgap.txt
 include requirements-test.txt
 include tibanna/lambdas/*
 include tibanna_4dn/lambdas/*
+include tibanna_cgap/lambdas/*

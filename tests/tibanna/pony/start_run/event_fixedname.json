@@ -3,21 +3,17 @@
     "cwl_version": "draft3",
       "ebs_type" : "io1",
       "ebs_iops" : 500,
-
       "json_bucket": "4dn-aws-pipeline-run-json",
       "password": "",
       "shutdown_min" : 30,
-      
-      
       "log_bucket": "tibanna-output",
-
       "key_name": "4dn-encode"
     },
     "parameters" :  {},
     "_tibanna": {
       "env": "fourfront-webdev",
       "run_type": "md5",
-      "run_name": "md5_fail"
+      "run_name": "md5_test"
     },
     "app_name": "md5", 
     "workflow_uuid": "d3f25cd3-e726-4b3c-a022-48f844474b41", 
@@ -28,6 +24,6 @@
                      "object_key": "4DNFIRSRJH45.fastq.gz"
                     }
     ],
-    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutputt"
+    "output_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput"
 }
 

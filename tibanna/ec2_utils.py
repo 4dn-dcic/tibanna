@@ -446,12 +446,12 @@ class Execution(object):
         try:
             res = B.benchmark(self.args.app_name, {'input_size_in_bytes': input_size_in_bytes,
                                                    'parameters': benchmark_parameters})
-        except:
+        except Exception as e:
             try:
                 res
                 raise Exception("Benchmarking not working. : {}".format(str(res)))
             except:
-                raise Exception("Benchmarking not working. : None")
+                raise Exception("Benchmarking not working. : None. %s" % str(e))
         if res is not None:
             logger.info(str(res))
             instance_type = res['aws']['recommended_instance_type']

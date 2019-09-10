@@ -3,11 +3,15 @@ import boto3
 import json
 import uuid
 from tibanna.utils import printlog
-from tibanna_4dn.vars import AWS_REGION, STEP_FUNCTION_ARN
-
+from tibanna_4dn.vars import (
+    AWS_REGION,
+    STEP_FUNCTION_ARN,
+    LAMBDA_TYPE,
+    ACCESSION_PREFIX
+)
 
 config = {
-    'function_name': 'validate_md5_s3_trigger',
+    'function_name': 'validate_md5_s3_trigger_' + LAMBDA_TYPE,
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
@@ -20,7 +24,7 @@ config = {
 }
 
 
-INITIATOR_STEP_FUNCTION_NAME = 'tibanna_initiator'
+INITIATOR_STEP_FUNCTION_NAME = 'tibanna_initiator_' + LAMBDA_TYPE
 
 
 def handler(event, context):
@@ -30,8 +34,8 @@ def handler(event, context):
 
     upload_key = event['Records'][0]['s3']['object']['key']
     accession = upload_key.split('/')[1].split('.')[0]
-    if not accession.startswith('4DN'):
-        printlog("Skipping trigger: not 4DN accession %s" % accession)
+    if not accession.startswith(ACCESSION_PREFIX):
+        printlog("Skipping trigger: not the correct accession prefix %s" % accession)
         return event
     client = boto3.client('stepfunctions', region_name=AWS_REGION)
     response = client.start_execution(

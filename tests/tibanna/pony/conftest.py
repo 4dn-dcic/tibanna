@@ -14,8 +14,8 @@ valid_env = pytest.mark.skipif(not os.environ.get("S3_ENCRYPT_KEY", False),
 
 
 @pytest.fixture(scope='session')
-def run_task_awsem_event_md5_fail():
-    return get_event_file_for('run_task_awsem', event_file='event_fail.json')
+def run_task_event_md5_fail():
+    return get_event_file_for('run_task', event_file='event_fail.json')
 
 
 @pytest.fixture(scope='session')
@@ -54,117 +54,133 @@ def s3_trigger_event_data_pf_extra_status():
 
 
 @pytest.fixture(scope='session')
-def md5_event_data():
-    # I want this to go through the tibanna env lookup, to ensure it gets
-    # appropriate keys
-    return get_test_json('md5_input.json')
+def start_run_md5_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_md5.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys)
+def start_run_pseudo_workflow_event_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_metadata_only.json')
 
 
 @pytest.fixture(scope='session')
-def run_task_awsem_pseudo_workflow_event_data(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_metadata_only.json')
+def start_run_nestedarray_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event-nestedarray.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data_secondary_files(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys, event_file='event_hicprocessingpartb.json')
+def start_run_dependency_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_dependency.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data_processed_files(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
-                              event_file='event_hicprocessingbam_customfield_wArgname.json')
+def start_run_dependency_fail_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_dependency_fail.json')
 
 
 @pytest.fixture(scope='session')
-def run_awsem_event_data_processed_files2(ff_keys):
-    return get_event_file_for('start_run_awsem', ff_keys=ff_keys,
-                              event_file='event_hicprocessingbam_customfield_wALL.json')
+def start_run_fail_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_fail.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_fixedname_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_fixedname.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingbam_customfield_wALL_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_hicprocessingbam_customfield_wALL.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingbam_customfield_wArgname_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_hicprocessingbam_customfield_wArgname.json')
+
+
+@pytest.fixture(scope='session')
+def start_run_hicprocessingpartb_data(ff_keys):
+    return get_event_file_for('start_run', ff_keys=ff_keys, event_file='event_hicprocessingpartb.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys)
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys)
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_extra_md5(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_extra_md5.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_extra_md5.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_newmd5(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_newmd5.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_newmd5.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_bed2multivec(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_bed2multivec.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_bed2multivec.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_pairsqc(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_pairsqc.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_pairsqc.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_repliseq(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_repliseq.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_repliseq.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_imargi(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_imargi.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_imargi.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_mcool(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_mcool.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_mcool.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_fastqc(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_fastqc.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_fastqc2(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_fastqc2.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_fastqc2.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_bamcheck(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_bamcheck.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_bamcheck.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_event_data_chipseq(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_chipseq.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_chipseq.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_metaonly_data(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadataonly.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_metadataonly.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_metaonly_data2(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_metadata_2.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_metadata_2.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_tmpdata(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_tmp.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_tmp.json')
 
 
 @pytest.fixture(scope='session')
 def update_ffmeta_hicbam(ff_keys):
-    return get_event_file_for('update_ffmeta_awsem', ff_keys=ff_keys, event_file='event_hicbam.json')
+    return get_event_file_for('update_ffmeta', ff_keys=ff_keys, event_file='event_hicbam.json')
 
 
 def get_test_json(file_name):

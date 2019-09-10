@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from tibanna_4dn.core import API
-from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION
+from tibanna_4dn.vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, AWS_REGION, LAMBDA_TYPE
 
 
 config = {
-    'function_name': 'run_workflow',
+    'function_name': 'run_workflow_' + LAMBDA_TYPE,
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',

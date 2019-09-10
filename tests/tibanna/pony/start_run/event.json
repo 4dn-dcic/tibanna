@@ -1,11 +1,6 @@
 {
     "config": {
       "cwl_version": "draft3",
-      "ebs_type" : "io1",
-      "ebs_iops" : 500,
-      "json_bucket": "4dn-aws-pipeline-run-json",
-      "password": "",
-      "shutdown_min" : 0,
       "log_bucket": "tibanna-output",
       "key_name": "4dn-encode"
     },

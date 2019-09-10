@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-from tibanna_4dn.exceptions import exception_coordinator
-from tibanna_4dn.update_ffmeta import update_ffmeta
-from tibanna_4dn.vars import AWS_REGION
+from tibanna_ffcommon.exceptions import exception_coordinator
+from tibanna_cgap.update_ffmeta import update_ffmeta
+from tibanna_cgap.vars import AWS_REGION, LAMBDA_TYPE
 
 config = {
-    'function_name': 'update_ffmeta_awsem',
+    'function_name': 'update_ffmeta_' + LAMBDA_TYPE,
     'function_module': 'service',
     'function_handler': 'handler',
     'handler': 'service.handler',
     'region': AWS_REGION,
     'runtime': 'python3.6',
     'role': 'lambda_full_s3',
-    'description': 'Tibanna pony update_ffmeta_awsem',
+    'description': 'Tibanna pony update_ffmeta',
     'timeout': 300,
     'memory_size': 256
 }
@@ -32,7 +32,7 @@ def metadata_only(event):
     return real_handler(event, None)
 
 
-@exception_coordinator('update_ffmeta_awsem', metadata_only)
+@exception_coordinator('update_ffmeta', metadata_only)
 def handler(event, context):
     return real_handler(event, context)
 
