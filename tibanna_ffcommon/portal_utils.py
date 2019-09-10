@@ -726,12 +726,12 @@ class FourfrontUpdaterAbstract(object):
     default_email_sender = ''
     higlass_buckets = []
 
-    def __init__(self, postrunjson, ff_meta, pf_meta=None, _tibanna=None, custom_qc_fields=None,
+    def __init__(self, postrunjson=None, ff_meta=None, pf_meta=None, _tibanna=None, custom_qc_fields=None,
                  config=None, jobid=None, metadata_only=False, **kwargs):
         self.jobid = jobid
-        self.config = Config(**config)
-        self.ff_meta = self.WorkflowRunMetadata(**ff_meta)
-        self.postrunjson = AwsemPostRunJson(**postrunjson)
+        self.config = Config(**config) if config else None
+        self.ff_meta = self.WorkflowRunMetadata(**ff_meta) if ff_meta else None
+        self.postrunjson = AwsemPostRunJson(**postrunjson) if postrunjson else None
         if pf_meta:
             self.pf_output_files = {pf['uuid']: self.ProcessedFileMetadata(**pf) for pf in pf_meta}
         else:
@@ -946,7 +946,8 @@ class FourfrontUpdaterAbstract(object):
 
     def patch_ffmeta(self):
         try:
-            return self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
+            res = self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
+            printlog("ff_meta patch log: " + res)
         except Exception as e:
             raise Exception("Failed to update run_status %s" % str(e))
 
