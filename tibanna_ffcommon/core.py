@@ -14,6 +14,7 @@ class API(_API):
     StepFunction = StepFunctionFFAbstract
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     sfn_type = ''  # fill in the actual type (e.g pony or zebra) for inherited class
+    lambda_type = ''  # fill in the actual type (e.g pony or zebra) for inherited class
 
     run_task_lambda = 'run_task'
     check_task_lambda = 'check_task'

@@ -1,0 +1,29 @@
+{
+  "args": {
+    "app_name": "shell-test",
+    "input_parameters": {},
+    "language": "shell",
+    "command": "echo \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
+    "container_image": "ubuntu:16.04",
+    "output_target": {
+      "file:///data1/out/shell-test-output": "s3://tibanna-output/shell-test-output"
+    },
+    "secondary_output_target": {},
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "5",
+    "input_files": {
+        "/data1/shell/somefile": "s3://soos-4dn-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
+    },
+    "input_parameters": {
+    }
+  },
+  "config": {
+    "ebs_size": 10,
+    "EBS_optimized": false,
+    "instance_type": "t3.micro",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "cloudwatch_dashboard": false
+  }
+}
