@@ -48,6 +48,7 @@ from .iam_utils import (
     create_tibanna_iam,
     get_ec2_role_name,
     get_lambda_role_name,
+    generate_policy_prefix
 )
 from .stepfunction import StepFunctionUnicorn
 from .cw_utils import TibannaResource
@@ -89,6 +90,7 @@ class API(object):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
     sfn_type = 'unicorn'
+    lambda_type = ''
 
     run_task_lambda = 'run_task_awsem'
     check_task_lambda = 'check_task_awsem'
@@ -636,10 +638,11 @@ class API(object):
         if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
-                role_arn = role_arn_prefix + get_lambda_role_name('tibanna_' + usergroup, name)
+                tibanna_policy_prefix = generate_policy_prefix(usergroup, True, self.lambda_type)
+                role_arn = role_arn_prefix + get_lambda_role_name(tibanna_policy_prefix, name)
             else:
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-                print(role_arn)
+            print("role_arn=" + role_arn)
             extra_config['Role'] = role_arn
         if usergroup and suffix:
             function_name_suffix = usergroup + '_' + suffix
@@ -700,8 +703,15 @@ class API(object):
             bucket_names = None
         tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                    usergroup_tag, AWS_REGION, no_randomize=no_randomize,
+                                                   run_task_lambda_name=self.run_task_lambda,
+                                                   check_task_lambda_name=self.check_task_lambda,
+                                                   lambda_type=self.lambda_type,
                                                    verbose=verbose)
-        tibanna_usergroup = tibanna_policy_prefix.replace("tibanna_", "")
+        if self.lambda_type:
+            tibanna_policy_prefix_prefix = "tibanna_" + self.lambda_type + '_'
+        else:
+            tibanna_policy_prefix_prefix = "tibanna_"
+        tibanna_usergroup = tibanna_policy_prefix.replace(tibanna_policy_prefix_prefix, "")
         print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
         return tibanna_usergroup
 

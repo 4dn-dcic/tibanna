@@ -15,3 +15,8 @@ DEFAULT_LAB = '4dn-dcic-lab'
 
 HIGLASS_BUCKETS = ['elasticbeanstalk-fourfront-webprod-wfoutput',
                    'elasticbeanstalk-fourfront-webdev-wfoutput']
+
+IAM_BUCKETS = ['elasticbeanstalk-fourfront-webdev-wfoutput',
+               'elasticbeanstalk-fourfront-webdev-files',
+               'tibanna-output',
+               '4dn-aws-pipeline-run-json']

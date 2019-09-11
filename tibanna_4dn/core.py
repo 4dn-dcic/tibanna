@@ -1,6 +1,6 @@
 from tibanna_ffcommon.core import API as _API
 from .stepfunction import StepFunctionPony
-from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE
+from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE, IAM_BUCKETS
 
 
 class API(_API):
@@ -24,9 +24,11 @@ class API(_API):
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = 'fourfront-webdev'
     sfn_type = LAMBDA_TYPE
+    lambda_type = LAMBDA_TYPE
 
     def __init__(self):
         pass
 
-    def deploy_pony(self, suffix=None, usergroup=None):
-        self.deploy_tibanna(suffix=suffix, usergroup=usergroup)
+    def deploy_pony(self, suffix=None, usergroup=None, setup=False):
+        self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=setup,
+                            buckets=','.join(IAM_BUCKETS))

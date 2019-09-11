@@ -2,16 +2,22 @@ import boto3
 import json
 import random
 from .vars import DYNAMODB_TABLE
+from .utils import printlog
 
 
-def generate_policy_prefix(user_group_name, no_randomize=False):
-    '''policy prefix for user group'''
+def generate_policy_prefix(user_group_name, no_randomize=False, lambda_type=''):
+    """policy prefix for user group
+    lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra"""
     # add rangom tag to avoid attempting to overwrite a previously created and deleted policy and silently failing.
+    if lambda_type:
+        prefix = 'tibanna_' + lambda_type + '_'
+    else:
+        prefix = 'tibanna_'
     if no_randomize:
-        tibanna_policy_prefix = 'tibanna_' + user_group_name
+        tibanna_policy_prefix = prefix + user_group_name
     else:
         random_tag = str(int(random.random() * 10000))
-        tibanna_policy_prefix = 'tibanna_' + user_group_name + '_' + random_tag
+        tibanna_policy_prefix = prefix + user_group_name + '_' + random_tag
     return tibanna_policy_prefix
 
 
@@ -118,10 +124,10 @@ def generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix):
     return policy_iam_passrole_s3
 
 
-def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix):
+def generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix,
+                                 lambda_names=['run_task_awsem', 'check_task_awsem']):
     function_arn_prefix = 'arn:aws:lambda:' + region + ':' + account_id + ':function/'
-    resource = [function_arn_prefix + 'run_task_awsem' + '_' + tibanna_policy_prefix,
-                function_arn_prefix + 'check_task_awsem' + '_' + tibanna_policy_prefix]
+    resource = [function_arn_prefix + ln + '_' + tibanna_policy_prefix for ln in lambda_names]
     policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -324,9 +330,10 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
                                    desc_stepfunction_policy_name,
                                    cw_dashboard_policy_name,
                                    dynamodb_policy_name,
+                                   run_task_lambda_name='run_task_awsem',
                                    verbose=False):
     client = iam.meta.client
-    lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, 'run_task_awsem')
+    lambda_run_role_name = get_lambda_role_name(tibanna_policy_prefix, run_task_lambda_name)
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_run_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_run_role_name)
@@ -348,9 +355,10 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
 def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
                                      cloudwatch_metric_policy_name,
+                                     check_task_lambda_name='check_task_awsem',
                                      verbose=False):
     client = iam.meta.client
-    lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, 'check_task_awsem')
+    lambda_check_role_name = get_lambda_role_name(tibanna_policy_prefix, check_task_lambda_name)
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
@@ -462,14 +470,18 @@ def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=Fa
                 raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
 
 
-def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False):
+def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False,
+                       run_task_lambda_name='run_task_awsem', check_task_lambda_name='check_task_awsem',
+                       lambda_type=''):
     """creates IAM policies and roles and a user group for tibanna
     returns prefix of all IAM policies, roles and group.
     Total 4 policies, 3 roles and 1 group is generated that is associated with a single user group
     A user group shares permission for buckets, tibanna execution and logs
     """
+    lambda_names = [run_task_lambda_name, check_task_lambda_name]
     # create prefix that represent a single user group
-    tibanna_policy_prefix = generate_policy_prefix(user_group_name, no_randomize)
+    tibanna_policy_prefix = generate_policy_prefix(user_group_name, no_randomize, lambda_type=lambda_type)
+    printlog("creating iam permissions with tibanna policy prefix %s" % tibanna_policy_prefix)
     iam = boto3.resource('iam')
     client = iam.meta.client
     # bucket policy
@@ -497,7 +509,8 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     create_policy_robust(client, passrole_policy_name, json.dumps(policy_iam_ps3), account_id, verbose)
     # lambdainvoke policy for step function
     lambdainvoke_policy_name = tibanna_policy_prefix + '_lambdainvoke'
-    policy_lambdainvoke = generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix)
+    policy_lambdainvoke = generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix,
+                                                       lambda_names=lambda_names)
     create_policy_robust(client, lambdainvoke_policy_name, json.dumps(policy_lambdainvoke), account_id, verbose)
     desc_stepfunction_policy_name = tibanna_policy_prefix + '_desc_sts'
     policy_desc_stepfunction = generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix)
@@ -530,10 +543,12 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
                                    cloudwatch_policy_name, bucket_policy_name,
                                    list_policy_name, passrole_policy_name,
                                    desc_stepfunction_policy_name,
-                                   cw_dashboard_policy_name, dynamodb_policy_name)
+                                   cw_dashboard_policy_name, dynamodb_policy_name,
+                                   run_task_lambda_name=run_task_lambda_name)
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
-                                     cloudwatch_metric_policy_name)
+                                     cloudwatch_metric_policy_name,
+                                     check_task_lambda_name=check_task_lambda_name)
     create_empty_role_for_lambda(iam)
     # role for step function
     create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)
