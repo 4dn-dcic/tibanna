@@ -394,6 +394,59 @@ To list all step functions
     -n      show stats of the number of jobs for per status (using this option could slow down the
             process)
 
+plot_metrics
+------------
+
+To collect, save and visualize the resources metrics from Cloud Watch
+
+::
+
+  tibanna plot_metrics --job-id=<jobid> [<options>]
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
+
+  -f|--force-upload                   This flag force the upload of the metrics reports
+                                      to the S3 bucket, even if there is a lock (upload
+                                      is blocked by default by the lock)
+
+  -u|--update-html-only               This flag specify to only update the html file
+                                      for metrics visualization,
+                                      metrics reports are not updated
+
+  -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
+                                      after it has been created/updated
+
+cost
+----
+
+To retrieve the cost and update the metrics report file created with plot_metrics
+
+::
+
+ tibanna cost --job-id=<jobid> [<options>]
+
+**Options**
+
+::
+
+ -s|--sfn=<stepfunctionname>         An example step function name may be
+                                     'tibanna_unicorn_defaut_3978'. If not specified, default
+                                     value is taken from environmental variable
+                                     TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                     variable is not set, it uses name 'tibanna_pony' (4dn
+                                     default, works only for 4dn).
+
+ -u|--update-tsv                     Update with the cost the tsv file that stores metrics
+                                     information on the S3 bucket
 
 
 Admin only
