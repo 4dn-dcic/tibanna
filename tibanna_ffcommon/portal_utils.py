@@ -1304,7 +1304,10 @@ class FourfrontUpdaterAbstract(object):
                     qc_object.update(self.custom_qc_fields)
                 self.ff_output_file(qc.workflow_argument_name)['value_qc'] = qc_object['uuid']
             self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
-            self.update_patch_items(qc_target_accession, {'quality_metric': qc_object['uuid']})
+            self.patch_qc(qc_target_accession, qc_object['uuid'], qc.qc_type)
+
+    def patch_qc(self, qc_target_accession, qc_uuid, qc_type=None):
+        self.update_patch_items(qc_target_accession, {'quality_metric': qc_uuid})
 
     def qc_schema(self, qc_schema_name):
         try:

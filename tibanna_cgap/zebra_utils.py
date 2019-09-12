@@ -123,6 +123,48 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
                     "project": DEFAULT_PROJECT})
         return res
 
+    def patch_qc(self, qc_target_accession, qc_uuid, qc_type):
+        try:
+            res = get_metadata(qc_target_accession
+                               key=self.tibanna_settings.ff_keys,
+                               ff_env=self.tibanna_settings.env,
+                               add_on='frame=object',
+                               check_queue=check_queue)
+        except Exception as e:
+            raise FdnConnectionException(e)
+        if 'quality_metric' not in res:  # first qc metric for this file
+            super().patch_qc(qc_target_accession, qc_uuid)
+        else:
+            existing_qctype = res['quality_metric'].split('/')[1].replace('-', '_')
+            existing_qc_uuid = res['quality_metric'].split('/')[2]
+            if existing_qctype == qc_type:  # if existing qc metric is of the same type, overwrite.
+                super().patch_qc(qc_target_accession, qc_uuid)
+            elif existing_qctype == 'quality_metric_qclist':
+                # we assume that the same qc type occurs only once per qc list
+                # and so a new workflow run can update the one with the same qc type
+                existing_qc_meta = get_metadata(existing_qc_uuid,
+                                                key=self.tibanna_settings.ff_keys,
+                                                ff_env=self.tibanna_settings.env,
+                                                add_on='frame=object',
+                                                check_queue=check_queue)
+                if not qc_type in [qc['qc_type'] for qc in existing_qc_meta['qc_list']]:
+                    existing_qc_meta['qc_list'].append({'qc_type': qc_type, 'value': qc_uuid})
+                    self.update_patch_items(existing_qc_meta['uuid'], {'qc_list': existing_qc_meta['qc_list']})
+                else:
+                    for i, qc in enumerate(existing_qc_meta['qc_list']):
+                        if qc['qc_type'] == qc_type:
+                            existing_qc_meta['qc_list'][i]['value'] = qc_uuid
+                            break
+                    self.update_patch_items(existing_qc_meta['uuid'], {'qc_list': existing_qc_meta['qc_list']})
+            else:
+                # new qc type is being added - create a qc list and move the existing qc to the qc list and
+                # add the new one to the qc list
+                new_qclist_object = self.create_qc_template()
+                new_qclist_object['qc_list'] = [{'qc_type': existing_qctype, 'value': existing_qc_uuid},
+                                                {'qc_type': qc_type, 'value': qc_uuid}]
+                self.update_post_items(new_qclist_object['uuid'], new_qclist_object, 'quality_metric_qclist')
+                super().patch_qc(qc_target_accession, new_qclist_object['uuid'])
+
 
 def post_random_file(bucket, ff_key,
                      file_format='pairs', extra_file_format='pairs_px2',
