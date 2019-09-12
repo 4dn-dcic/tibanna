@@ -653,10 +653,11 @@ class API(object):
         else:
             function_name_suffix = ''
         # first delete the existing function to avoid the weird AWS KMS lambda error
+        function_name_prefix = getattr(self.lambdas_module, name).config.get('function_name')
         if function_name_suffix:
-            full_function_name = name + '_' + function_name_suffix
+            full_function_name = function_name_prefix + '_' + function_name_suffix
         else:
-            full_function_name = name
+            full_function_name = function_name_prefix
         if name not in self.do_not_delete:
             try:
                 boto3.client('lambda').get_function(FunctionName=full_function_name)
@@ -723,9 +724,9 @@ class API(object):
                 usergroup = self.setup_tibanna_env(buckets, usergroup, True)
             else:
                 usergroup = self.setup_tibanna_env(buckets)  # override usergroup
-        print("creating a new step function...")
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
+        print("creating a new step function... %s" % step_function_name)
         if setenv:
             os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
