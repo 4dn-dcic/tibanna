@@ -71,11 +71,11 @@ def test_qclist_handling():
     updater.patch_qc(new_pf['uuid'], new_qc_object['uuid'], 'quality_metric_bamcheck')
     assert new_pf['uuid'] in updater.patch_items
     new_qc_uuid = updater.patch_items[new_pf['uuid']]['quality_metric']
-    assert new_qc_uuid in updater.post_items
-    res = updater.post_items[new_qc_uuid]
+    assert new_qc_uuid in updater.post_items['quality_metric_qclist']
+    res = updater.post_items['quality_metric_qclist'][new_qc_uuid]
     assert 'qc_list' in res
     assert len(res['qc_list']) == 2
-    assert res['qc_list'][0]['qc_type'] == 'quality_metrics_wgs_bamqc'
+    assert res['qc_list'][0]['qc_type'] == 'quality_metric_wgs_bamqc'
     assert res['qc_list'][1]['qc_type'] == 'quality_metric_bamcheck'
     assert res['qc_list'][0]['value'] == existing_qc_object['uuid']
     assert res['qc_list'][1]['value'] == new_qc_object['uuid']
@@ -88,7 +88,7 @@ def test_qclist_handling():
     ff_utils.post_metadata(existing_qc_object, 'QualityMetricWgsBamqc',
                            key=updater.tibanna_settings.ff_keys)
     existing_qclist_object = updater.create_qc_template()
-    existing_qclist_object['qc_list'] = [{'qc_type': 'quality_metrics_wgs_bamqc',
+    existing_qclist_object['qc_list'] = [{'qc_type': 'quality_metric_wgs_bamqc',
                                           'value': existing_qc_object['uuid']}]
     ff_utils.post_metadata(existing_qclist_object,
                            'QualityMetricQclist', key=updater.tibanna_settings.ff_keys)
@@ -101,10 +101,10 @@ def test_qclist_handling():
     assert 'qc_list' in updater.patch_items[existing_qclist_object['uuid']]
     assert len(updater.patch_items[existing_qclist_object['uuid']]['qc_list']) == 2
     res = updater.patch_items[existing_qclist_object['uuid']]
-    assert res['qc_list'][0]['qc_type'] == 'quality_metrics_wgs_bamqc'
+    assert res['qc_list'][0]['qc_type'] == 'quality_metric_wgs_bamqc'
     assert res['qc_list'][1]['qc_type'] == 'quality_metric_bamcheck'
-    assert res['qc_list'][0]['value'] == existing_qc_object['uuid']
-    assert res['qc_list'][1]['value'] == new_qc_object['uuid']
+    assert existing_qc_object['uuid'] in res['qc_list'][0]['value']
+    assert new_qc_object['uuid'] in res['qc_list'][1]['value']
     ff_utils.delete_metadata(new_pf['uuid'], key=updater.tibanna_settings.ff_keys)
     ff_utils.delete_metadata(existing_qclist_object['uuid'], key=updater.tibanna_settings.ff_keys)
     ff_utils.delete_metadata(existing_qc_object['uuid'], key=updater.tibanna_settings.ff_keys)
@@ -122,7 +122,7 @@ def test_qclist_handling():
     new_pf['quality_metric'] = existing_qclist_object['uuid']
     ff_utils.post_metadata(new_pf, 'FileProcessed',
                            key=updater.tibanna_settings.ff_keys)
-    updater.patch_qc(new_pf['uuid'], 'quality_metric_bamcheck')
+    updater.patch_qc(new_pf['uuid'], new_qc_object['uuid'], 'quality_metric_bamcheck')
     assert new_pf['uuid'] not in updater.patch_items
     assert existing_qclist_object['uuid'] in updater.patch_items
     assert 'qc_list' in updater.patch_items[existing_qclist_object['uuid']]
