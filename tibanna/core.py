@@ -743,8 +743,11 @@ class API(object):
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
+        groupname_prefix = 'tibanna_'
+        if self.lambda_type:
+            groupname_prefix += self.lambda_type + '_'
         boto3.client('iam').add_user_to_group(
-            GroupName='tibanna_' + usergroup,
+            GroupName=groupname_prefix + usergroup,
             UserName=user
         )
 

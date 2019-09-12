@@ -15,7 +15,6 @@ from .core import API
 from tibanna.__main__ import Subcommands as _Subcommands
 from tibanna.__main__ import (
     users,
-    add_user
 )
 PACKAGE_NAME = 'tibanna_cgap'
 
@@ -126,6 +125,11 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False):
 def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, upload=False):
     """create a resource metrics report html"""
     API().plot_metrics(job_id=job_id, sfn=sfn, upload=upload)
+
+
+def add_user(user, usergroup):
+    """add a user to a tibanna group"""
+    API().add_user(user=user, usergroup=usergroup)
 
 
 def main(Subcommands=Subcommands):
