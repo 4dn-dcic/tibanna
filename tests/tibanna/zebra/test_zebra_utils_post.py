@@ -18,7 +18,3 @@ def test_fourfront_starter(start_run_event_md5):
     assert starter.inp.wf_meta['arguments'][1]['argument_type'] == 'Output report file'
     starter.run()
     assert len(starter.output_argnames) == 1
-
-
-@valid_env
-def test_qc_list_updater(update_meta
