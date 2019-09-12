@@ -278,7 +278,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, awsem_app_name, app_version=None, input_files=[],
+    def __init__(self, workflow, awsem_app_name='', app_version=None, input_files=[],
                  parameters=[], title=None, uuid=None, output_files=None,
                  run_status='started', run_platform='AWSEM', run_url='', tag=None,
                  aliases=None,  awsem_postrun_json=None, submitted_by=None, extra_meta=None,
@@ -744,7 +744,8 @@ class FourfrontUpdaterAbstract(object):
                 self.tibanna_settings = TibannaSettings(_tibanna['env'], settings=_tibanna)
             except Exception as e:
                 raise TibannaStartException("%s" % e)
-        self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
+        if config and jobid:
+            self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
 

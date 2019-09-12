@@ -1,6 +1,7 @@
 import boto3
 import gzip
 from uuid import uuid4
+from tibanna.utils import printlog
 from dcicutils.ff_utils import (
     get_metadata,
     post_metadata,
@@ -22,6 +23,9 @@ from tibanna_ffcommon.portal_utils import (
     FourfrontUpdaterAbstract,
     FFInputAbstract,
     aslist
+)
+from tibanna_ffcommon.exceptions import (
+    FdnConnectionException
 )
 
 
@@ -125,18 +129,21 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
 
     def patch_qc(self, qc_target_accession, qc_uuid, qc_type):
         try:
-            res = get_metadata(qc_target_accession
+            res = get_metadata(qc_target_accession,
                                key=self.tibanna_settings.ff_keys,
                                ff_env=self.tibanna_settings.env,
                                add_on='frame=object',
-                               check_queue=check_queue)
+                               check_queue=True)
         except Exception as e:
             raise FdnConnectionException(e)
         if 'quality_metric' not in res:  # first qc metric for this file
             super().patch_qc(qc_target_accession, qc_uuid)
         else:
-            existing_qctype = res['quality_metric'].split('/')[1].replace('-', '_')
+            existing_qctype = res['quality_metric'].split('/')[1].replace('-', '_'). \
+                              replace('quality_metrics', 'quality_metric')
             existing_qc_uuid = res['quality_metric'].split('/')[2]
+            printlog("existing qc=" + res['quality_metric'] + ' ' + existing_qctype)
+            printlog("new qc=" + qc_uuid + ' ' + qc_type)
             if existing_qctype == qc_type:  # if existing qc metric is of the same type, overwrite.
                 super().patch_qc(qc_target_accession, qc_uuid)
             elif existing_qctype == 'quality_metric_qclist':
@@ -146,8 +153,8 @@ class FourfrontUpdater(FourfrontUpdaterAbstract):
                                                 key=self.tibanna_settings.ff_keys,
                                                 ff_env=self.tibanna_settings.env,
                                                 add_on='frame=object',
-                                                check_queue=check_queue)
-                if not qc_type in [qc['qc_type'] for qc in existing_qc_meta['qc_list']]:
+                                                check_queue=True)
+                if qc_type not in [qc['qc_type'] for qc in existing_qc_meta['qc_list']]:
                     existing_qc_meta['qc_list'].append({'qc_type': qc_type, 'value': qc_uuid})
                     self.update_patch_items(existing_qc_meta['uuid'], {'qc_list': existing_qc_meta['qc_list']})
                 else:
