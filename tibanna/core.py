@@ -627,10 +627,11 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
+        tibanna_policy_prefix = generate_policy_prefix(usergroup, True, self.lambda_type)
         if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = get_ec2_role_name('tibanna_' + usergroup)
+                    = get_ec2_role_name(tibanna_policy_prefix)
             else:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
@@ -638,7 +639,6 @@ class API(object):
         if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
-                tibanna_policy_prefix = generate_policy_prefix(usergroup, True, self.lambda_type)
                 role_arn = role_arn_prefix + get_lambda_role_name(tibanna_policy_prefix, name)
             else:
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
