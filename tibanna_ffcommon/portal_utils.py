@@ -947,9 +947,8 @@ class FourfrontUpdaterAbstract(object):
     def patch_ffmeta(self):
         try:
             res = self.ff_meta.patch(key=self.tibanna_settings.ff_keys)
-            printlog("ff_meta patch log: " + res)
         except Exception as e:
-            raise Exception("Failed to update run_status %s" % str(e))
+            raise FdnConnectionException("Failed to update ff_meta %s" % str(e))
 
     def update_patch_items(self, uuid, item):
         if uuid in self.patch_items:

@@ -29,6 +29,6 @@ class API(_API):
     def __init__(self):
         pass
 
-    def deploy_zebra(self, suffix=None, usergroup=None, setup=False):
+    def deploy_zebra(self, suffix=None, usergroup='', setup=False):
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=False,
                             buckets=','.join(IAM_BUCKETS))

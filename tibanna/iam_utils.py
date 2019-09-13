@@ -5,7 +5,7 @@ from .vars import DYNAMODB_TABLE
 from .utils import printlog
 
 
-def generate_policy_prefix(user_group_name, no_randomize=False, lambda_type=''):
+def generate_policy_prefix(user_group_name='', no_randomize=False, lambda_type=''):
     """policy prefix for user group
     lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra"""
     # add rangom tag to avoid attempting to overwrite a previously created and deleted policy and silently failing.

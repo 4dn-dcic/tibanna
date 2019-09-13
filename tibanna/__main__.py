@@ -212,6 +212,7 @@ class Subcommands(object):
                   'help': "suffix (e.g. 'dev') to add to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
                  {'flag': ["-g", "--usergroup"],
+                  'default': '',
                   'help': "Tibanna usergroup for the AWS Lambda function"}],
             'plot_metrics':
                 [{'flag': ["-j", "--job-id"],
@@ -244,7 +245,7 @@ class Subcommands(object):
         }
 
 
-def deploy_core(name, suffix=None, usergroup=None):
+def deploy_core(name, suffix=None, usergroup=''):
     """
     New method of deploying packaged lambdas (BETA)
     """
@@ -264,7 +265,7 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
-                   no_setenv=False, usergroup=None):
+                   no_setenv=False, usergroup=''):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
                          usergroup=usergroup)

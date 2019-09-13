@@ -47,14 +47,14 @@ class Subcommands(_Subcommands):
         return _args
 
 
-def deploy_core(name, suffix=None, usergroup=None):
+def deploy_core(name, suffix=None, usergroup=''):
     """
     New method of deploying packaged lambdas (BETA)
     """
     API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
 
 
-def deploy_zebra(suffix=None, usergroup=None, setup=False):
+def deploy_zebra(suffix=None, usergroup='', setup=False):
     """deploy tibanna unicorn or zebra to AWS cloud (zebra is for 4DN-DCIC only)"""
     API().deploy_zebra(suffix=suffix, usergroup=usergroup, setup=setup)
 

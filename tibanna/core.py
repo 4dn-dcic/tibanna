@@ -613,7 +613,7 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup):
+    def deploy_lambda(self, name, suffix, usergroup=''):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA)
         """
@@ -672,7 +672,7 @@ class API(object):
                                    requirements_fpath=requirements_fpath,
                                    extra_config=extra_config)
 
-    def deploy_core(self, name, suffix=None, usergroup=None):
+    def deploy_core(self, name, suffix=None, usergroup=''):
         """deploy/update lambdas only"""
         print("preparing for deploy...")
         if name == 'all':
@@ -716,7 +716,7 @@ class API(object):
         print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
         return tibanna_usergroup
 
-    def deploy_tibanna(self, suffix=None, usergroup=None, setup=False,
+    def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
