@@ -928,13 +928,16 @@ class FourfrontUpdaterAbstract(object):
 
     # patch/post-related functionalities
     def post_all(self):
+        printlog("posting metadata : %s" % str(self.post_items))
         for schema, v in self.post_items.items():
             for item in v:
+                printlog("posting metadata %s to schema %s" % (str(v[item]), schema))
                 try:
-                    post_metadata(v[item], schema,
-                                  key=self.tibanna_settings.ff_keys,
-                                  ff_env=self.tibanna_settings.env,
-                                  add_on='force_md5')
+                    res = post_metadata(v[item], schema,
+                                        key=self.tibanna_settings.ff_keys,
+                                        ff_env=self.tibanna_settings.env,
+                                        add_on='force_md5')
+                    printlog("response=" + str(res))
                 except Exception as e:
                     raise e
 
@@ -1448,12 +1451,16 @@ class FourfrontUpdaterAbstract(object):
                 self.ff_meta.run_status = 'error'
         self.update_all_pfs()
         self.update_md5()
+        printlog("updating qc...")
         self.update_qc()
         self.update_input_extras()
         self.create_wfr_qc()
+        printlog("posting all...")
         self.post_all()
+        printlog("patching all...")
         self.patch_all()
         self.ff_meta.run_status = 'complete'
+        printlog("patching workflow run metadata...")
         self.patch_ffmeta()
 
     def get_postrunjson_url(self, config, jobid, metadata_only):

@@ -736,7 +736,7 @@ class API(object):
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup=None):
+                       no_setenv=False, usergroup=''):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv)

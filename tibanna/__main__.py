@@ -204,6 +204,7 @@ class Subcommands(object):
                           "environmental variable in your .bashrc",
                   'action': "store_true"},
                  {'flag': ["-g", "--usergroup"],
+                  'default': '',
                   'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],

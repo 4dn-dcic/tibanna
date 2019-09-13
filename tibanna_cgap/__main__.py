@@ -40,6 +40,7 @@ class Subcommands(_Subcommands):
               'help': "suffix (e.g. 'dev') to add to the end of the name of" +
                       "tibanna_zebra and AWS Lambda functions within the same usergroup"},
              {'flag': ["-g", "--usergroup"],
+              'default': '',
               'help': "Tibanna usergroup to share the permission to access buckets and run jobs"},
              {'flag': ["-S", "--setup"],
               'action': 'store_true',
