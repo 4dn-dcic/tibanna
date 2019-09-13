@@ -52,6 +52,9 @@ class Subcommands(object):
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-j", "--jobid"],
                   'help': "specify a user-defined job id (randomly generated if not specified)"},
+                 {'flag': ["-B", "--do-not-open-browser"],
+                  'help': "Do not open browser",
+                  'action': "store_true"},
                  {'flag': ["-S", "--sleep"],
                   'help': "number of seconds between submission, to avoid drop-out (default 3)",
                   'type': int,
@@ -253,9 +256,9 @@ def deploy_core(name, suffix=None, usergroup=''):
     API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
 
 
-def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', sleep=3):
+def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
     """run a workflow"""
-    API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, verbose=True)
+    API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, open_browser=not do_not_open_browser, verbose=True)
 
 
 def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
