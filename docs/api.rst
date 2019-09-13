@@ -137,7 +137,11 @@ To run workflow
                                  'tibanna_unicorn_defaut_3978'. If not specified, default
                                  value is taken from environmental variable
                                  TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
-
+  jobid=<JOBID>                  specify a user-defined job id (randomly generated if
+                                 not specified)
+  open_browser=<True|False>      Open browser (default True)
+  sleep=<SLEEP>                  Number of seconds between submission, to avoid drop-
+                                 out (default 3)
 
 
 stat
