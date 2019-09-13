@@ -278,7 +278,7 @@ class WorkflowRunMetadataAbstract(SerializableObject):
     fourfront metadata
     '''
 
-    def __init__(self, workflow, awsem_app_name, app_version=None, input_files=[],
+    def __init__(self, workflow, awsem_app_name='', app_version=None, input_files=[],
                  parameters=[], title=None, uuid=None, output_files=None,
                  run_status='started', run_platform='AWSEM', run_url='', tag=None,
                  aliases=None,  awsem_postrun_json=None, submitted_by=None, extra_meta=None,
@@ -744,7 +744,8 @@ class FourfrontUpdaterAbstract(object):
                 self.tibanna_settings = TibannaSettings(_tibanna['env'], settings=_tibanna)
             except Exception as e:
                 raise TibannaStartException("%s" % e)
-        self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
+        if config and jobid:
+            self.ff_meta.awsem_postrun_json = self.get_postrunjson_url(config, jobid, metadata_only)
         self.patch_items = dict()  # a collection of patch jsons (key = uuid)
         self.post_items = dict()  # a collection of patch jsons (key = uuid)
 
@@ -1303,7 +1304,10 @@ class FourfrontUpdaterAbstract(object):
                     qc_object.update(self.custom_qc_fields)
                 self.ff_output_file(qc.workflow_argument_name)['value_qc'] = qc_object['uuid']
             self.update_post_items(qc_object['uuid'], qc_object, qc.qc_type)
-            self.update_patch_items(qc_target_accession, {'quality_metric': qc_object['uuid']})
+            self.patch_qc(qc_target_accession, qc_object['uuid'], qc.qc_type)
+
+    def patch_qc(self, qc_target_accession, qc_uuid, qc_type=None):
+        self.update_patch_items(qc_target_accession, {'quality_metric': qc_uuid})
 
     def qc_schema(self, qc_schema_name):
         try:
