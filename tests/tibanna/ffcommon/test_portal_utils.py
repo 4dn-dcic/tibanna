@@ -79,13 +79,6 @@ def test_workflow_run_metadata_abstract_missing_field_error1():
     assert 'missing' in str(excinfo)
 
 
-def test_workflow_run_metadata_abstract_missing_field_error2():
-    data = {'workflow': 'a', 'app_version': 'c'}
-    with pytest.raises(Exception) as excinfo:
-        WorkflowRunMetadataAbstract(**data)
-    assert 'missing' in str(excinfo)
-
-
 def test_processed_file_metadata_abstract():
     data = {'uuid': 'a'}
     pf = ProcessedFileMetadataAbstract(**data)
