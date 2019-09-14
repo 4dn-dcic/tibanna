@@ -957,7 +957,7 @@ class API(object):
 
     def does_dynamo_table_exist(self, tablename):
         try:
-            res = client.describe_table(
+            res = boto3.client('dynamodb').describe_table(
                 TableName=tablename
             )
             if res:
@@ -974,7 +974,7 @@ class API(object):
         if self.does_dynamo_table_exist(tablename):
             print("dynamodb table %s already exists. skip creating db" % tablename)
         else:
-            response = client.create_table(
+            response = boto3.client('dynamodb').create_table(
                 TableName=tablename,
                 AttributeDefinitions=[
                     {
