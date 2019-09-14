@@ -29,7 +29,8 @@ from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
-    DYNAMODB_TABLE
+    DYNAMODB_TABLE,
+    DYNAMODB_KEYNAME
 )
 from .utils import (
     _tibanna_settings,
@@ -733,6 +734,7 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
+        self.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
@@ -952,3 +954,40 @@ class API(object):
             else:
                 printlog("cost already in the tsv file. not updating")
         return cost
+
+    def does_dynamo_table_exist(tablename):
+        try:
+            res = client.describe_table(
+                TableName=tablename
+            )
+            if res:
+                return True
+            else:
+                raise Exception("error describing table %s" % tablename)
+        except Exception as e:
+            if 'Requested resource not found' in str(e):
+                return False
+            else:
+                raise Exception("error describing table %s" % tablename)
+    
+    def create_dynamo_table(tablename, keyname):
+        if self.does_dynamo_table_exist(tablename):
+            print("dynamodb table %s already exists. skip creating db" % tablename)
+        else:
+            response = client.create_table(
+                TableName=tablename,
+                AttributeDefinitions=[
+                    {
+                         'AttributeName': keyname,
+                         'AttributeType': 'S'
+                    }
+                ],
+                KeySchema=[
+                    {
+                        'AttributeName': keyname,
+                        'KeyType': 'HASH'
+                     }
+                ],
+                BillingMode='PAY_PER_REQUEST'
+            )
+    

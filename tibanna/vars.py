@@ -45,6 +45,7 @@ TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTI
 
 # dynamo table (optional) for fast searching
 DYNAMODB_TABLE = 'tibanna-master'
+DYNAMODB_KEYNAME = 'Job Id'
 
 # field name reserved for Tibanna setting
 _tibanna = '_tibanna'
