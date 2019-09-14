@@ -113,7 +113,8 @@ def upload(filepath, bucket, prefix='', public=True):
             content_type = 'binary/octet-stream'
         # s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
         f = open(filepath, 'r')
-        s3.put_object(Body=f.read().encode('utf-8'), Bucket=bucket, Key=prefix, ACL=acl, ContentType=content_type)
+        content = f.read()
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=prefix, ACL=acl, ContentType=content_type)
         f.close()
     else:
         s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
