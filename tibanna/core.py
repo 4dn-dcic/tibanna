@@ -955,7 +955,7 @@ class API(object):
                 printlog("cost already in the tsv file. not updating")
         return cost
 
-    def does_dynamo_table_exist(tablename):
+    def does_dynamo_table_exist(self, tablename):
         try:
             res = client.describe_table(
                 TableName=tablename
@@ -970,7 +970,7 @@ class API(object):
             else:
                 raise Exception("error describing table %s" % tablename)
     
-    def create_dynamo_table(tablename, keyname):
+    def create_dynamo_table(self, tablename, keyname):
         if self.does_dynamo_table_exist(tablename):
             print("dynamodb table %s already exists. skip creating db" % tablename)
         else:
@@ -990,4 +990,3 @@ class API(object):
                 ],
                 BillingMode='PAY_PER_REQUEST'
             )
-    
