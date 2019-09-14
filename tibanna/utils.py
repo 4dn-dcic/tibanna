@@ -114,7 +114,8 @@ def upload(filepath, bucket, prefix='', public=True):
         # s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
         f = open(filepath, 'r')
         content = f.read()
-        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=prefix, ACL=acl, ContentType=content_type)
+        printlog("content of file to upload: " + content)
         f.close()
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=prefix, ACL=acl, ContentType=content_type)
     else:
         s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
