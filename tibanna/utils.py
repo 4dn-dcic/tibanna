@@ -108,6 +108,7 @@ def upload(filepath, bucket, prefix='', public=True):
     if filepath:
         dirname, filename = os.path.split(filepath)
         key = os.path.join(prefix, filename)
+        printlog("filepath=%s, filename=%s, key=%s" % (filepath, filename, key))
         content_type = mimetypes.guess_type(filename)[0]
         if content_type is None:
             content_type = 'binary/octet-stream'
