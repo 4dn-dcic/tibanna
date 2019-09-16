@@ -685,7 +685,8 @@ class API(object):
         for name in names:
             self.deploy_lambda(name, suffix, usergroup)
 
-    def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
+    def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
+                          do_not_delete_public_access_block=False, verbose=False):
         """set up usergroup environment on AWS
         This function is called automatically by deploy_tibanna or deploy_unicorn
         Use it only when the IAM permissions need to be reset"""
@@ -703,6 +704,11 @@ class API(object):
             bucket_names = buckets.split(',')
         else:
             bucket_names = None
+        if bucket_names and not do_not_delete_public_access_block:
+            client = boto3.client('s3')
+            for b in bucket_names:
+                printlog("Deleting public access block for bucket %s" % b)
+                response = client.delete_public_access_block(Bucket=b)
         tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                    usergroup_tag, AWS_REGION, no_randomize=no_randomize,
                                                    run_task_lambda_name=self.run_task_lambda,
@@ -718,13 +724,15 @@ class API(object):
         return tibanna_usergroup
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
-                       buckets='', setenv=False):
+                       buckets='', setenv=False, do_not_delete_public_access_block=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
-                usergroup = self.setup_tibanna_env(buckets, usergroup, True)
-            else:
-                usergroup = self.setup_tibanna_env(buckets)  # override usergroup
+                usergroup = self.setup_tibanna_env(buckets, usergroup, True,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+            else:  # override usergroup
+                usergroup = self.setup_tibanna_env(buckets,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         print("creating a new step function... %s" % step_function_name)
@@ -738,10 +746,11 @@ class API(object):
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup=''):
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
-                            buckets=buckets, setenv=not no_setenv)
+                            buckets=buckets, setenv=not no_setenv,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
