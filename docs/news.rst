@@ -16,6 +16,26 @@ Version updates
 
   **Sep 16, 2019** The latest version is now 0.9.1_.
 
+    - A new functionality of generating a resource metrics report html is now added! This report includes a graph of CPU/Memory/disk space utilization and usage at 1min interval, as well as a table of summary metrics.
+      - After each run, an html report gets automatically added to the ``log_bucket`` which can be viewed using a Web Browser. However, for this to take effect, the unicorn must be redeployed.
+      - The new ``plot_metrics`` function of CLI (``tibanna plot_metrics -h``) allows users to create the resource metrics report before a run it complete.
+      - The same function can be used through Python API (``API().plot_metrics(job_id=<jobid>, ...)``)
+    - A new functionality ``cost`` is added to the tibanna CLI/API, to retrieve the cost of a specific run.
+      - ``tibanna cost --job-id=<jobid>``
+      - It usually takes a day for the cost to be available.
+      - The cost can also be added to the resource plot, by
+
+      ::
+
+          tibanna cost -j <jobid> --update-tsv
+          tibanna plot_metrics -j <jobid> --update-html-only --force-upload
+    
+      - A new dynamoDB-based jobID indexing is enabled! This allows users to search by jobid without specifying step function name and even after the execution expires (e.g. ``tibanna log``, ``tibanna plot_metrics``)
+        - To use this feature, the unicorn must be redeployed. Only the runs created after the redeployment would be searchable using this feature. When the jobid index is not available, tibanna automatically switches to the old way of searching.
+        - DynamoDB may add to the cost but very minimally (up to $0.01 per month in case of 4DN)
+      - ``Benchmark`` ``0.5.5`` is used now for 4DN pipelines.
+      - ``run_workflow`` now has ``--do-not-open-browser`` option that disables opening the Step function execution on a Web Browser.
+
 
   **Aug 14, 2019** The latest version is now 0.9.0_.
 
@@ -260,6 +280,7 @@ Version updates
   **Oct 11. 2018** The latest version is now 0.4.5_.
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
+
 
 .. _0.9.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.1
 .. _0.9.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.0
