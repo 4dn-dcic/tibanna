@@ -48,23 +48,31 @@ To create an instance of tibanna unicorn (step function + lambdas)
 
 ::
 
-  -b|--buckets=<bucket1,bucket2,...>  List of buckets to use for tibanna runs.
-                                      The associated lambda functions, EC2 instances
-                                      and user group will be given permission to these buckets.
+  -b|--buckets=<bucket1,bucket2,...>       List of buckets to use for tibanna runs.
+                                           The associated lambda functions, EC2
+                                           instances and user group will be given
+                                           permission to these buckets.
 
-  -S|--no-setup                       Skip setup buckets/permissions and just redeploy tibanna
-                                      step function and lambdas.
-                                      This is useful when upgrading the existing tibanna that's
-                                      already set up.
+  -S|--no-setup                            Skip setup buckets/permissions and just
+                                           redeploy tibanna step function and lambdas.
+                                           This is useful when upgrading the existing
+                                           tibanna that's already set up.
 
-  -E|--no-setenv                      Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-                                      environmental variable in your bashrc.
+  -E|--no-setenv                           Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+                                           environmental variable in your bashrc.
 
-  -s|--suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
-                                      The step function and lambda functions will have the suffix.
+  -s|--suffix=<suffixname>                 Using suffix helps deploying various dev-version
+                                           tibanna. The step function and lambda functions
+                                           will have the suffix. Having a different suffix
+                                           does not create a new user group with a different
+                                           permission (for this purpose use --usergroup).
 
-  -g|--usergroup=<usergroup>          Tibanna usergroup to share the permission to access
-                                      buckets and run jobs
+  -g|--usergroup=<usergroup>               Tibanna usergroup to share the permission to access
+                                           buckets and run jobs
+
+  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
+                                           (this way postrunjson and metrics reports will
+                                           not be public)
 
 
 Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
@@ -473,14 +481,23 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
 
 ::
 
-  -g|--usergroup-tag=<usergrouptag>  an identifier for a usergroup that shares a tibanna
-                                     step function permission
-  -R|--no-randomize                  do not add a random number to generate a usergroup name
-                                     (e.g. the usergroup name used will be identical to the one
-                                     specified using the ``--usergrou-tag`` option.  By default,
-                                     a random number will be added at the end (e.g. default_2721).
-  -b|--buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
-                                     Tibanna needs access to through IAM role (input, output, log).
+  -g|--usergroup-tag=<usergrouptag>        an identifier for a usergroup that shares
+                                           a tibanna permission
+
+  -R|--no-randomize                        do not add a random number to generate a
+                                           usergroup name (e.g. the usergroup name used
+                                           will be identical to the one specified using
+                                           the ``--usergrou-tag`` option.  By default,
+                                           a random number will be added at the end
+                                           (e.g. default_2721).
+
+  -b|--buckets=<bucket_list>               A comma-delimited list of bucket names - the
+                                           buckets to which Tibanna needs access to
+                                           through IAM role (input, output, log).
+
+  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
+                                           (this way postrunjson and metrics reports will
+                                           not be public)
 
 
 Additional commands for tibanna_4dn

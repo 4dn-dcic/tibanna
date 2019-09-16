@@ -63,6 +63,11 @@ To create an instance of tibanna unicorn (step function + lambdas)
   usergroup                           Tibanna usergroup to share the permission to access
                                       buckets and run jobs
 
+  do_not_delete_public_access_block   If set True, Tibanna does not delete public
+                                      access block from the specified buckets
+                                      (this way postrunjson and metrics reports will
+                                      not be public). Default False.
+
 
 Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 
@@ -476,16 +481,24 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
 
 ::
 
-  usergroup_tag=<usergrouptag>  an identifier for a usergroup that shares a tibanna
-                                step function permission
+  usergroup_tag=<usergrouptag>        an identifier for a usergroup that shares
+                                      a tibanna permission
 
-  no_randomize                  do not add a random number to generate a usergroup name
-                                (e.g. the usergroup name used will be identical to the one
-                                specified using the ``usergrou_tag`` option.  By default,
-                                a random number will be added at the end (e.g. default_2721).
+  no_randomize                        If set True, Tibanna does not add a random
+                                      number to generate a usergroup name (e.g. the
+                                      usergroup name used will be identical to the
+                                      one specified using the ``usergrou_tag`` option.
+                                      By default, a random number will be added at the
+                                      end (e.g. default_2721). Default False.
 
-  buckets=<bucket_list>         A comma-delimited list of bucket names - the buckets to which
-                                Tibanna needs access to through IAM role (input, output, log).
+  buckets=<bucket_list>               A comma-delimited list of bucket names - the
+                                      buckets to which Tibanna needs access to
+                                      through IAM role (input, output, log).
+
+  do_not_delete_public_access_block   If set True, Tibanna does not delete public
+                                      access block from the specified buckets
+                                      (this way postrunjson and metrics reports will
+                                      not be public). Default False.
 
 
 Additional commands for tibanna_4dn
