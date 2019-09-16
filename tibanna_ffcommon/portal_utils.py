@@ -583,8 +583,9 @@ class FourfrontStarterAbstract(object):
 
     def post_pfs(self):
         if self.pfs:
-            for _, pf in self.pfs.items():
-                pf.post(self.tbn.ff_keys)
+            for argname, pf in self.pfs.items():
+                if not self.user_supplied_output_files(argname):
+                    pf.post(self.tbn.ff_keys)
 
     def user_supplied_output_files(self, argname=None):
         if not argname:
@@ -609,7 +610,7 @@ class FourfrontStarterAbstract(object):
 
     def pf(self, argname, **kwargs):
         if self.user_supplied_output_files(argname):
-            res = self.get_meta(self.user_supplied_output_files(argname)[0])
+            res = self.get_meta(self.user_supplied_output_files(argname)[0]['uuid'])
             return self.ProcessedFileMetadata(**res)
         arg = self.arg(argname)
         if arg.get('argument_type') != 'Output processed file':
