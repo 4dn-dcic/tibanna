@@ -49,7 +49,10 @@ When metrics are collected for a run that is complete, a lock file is automatica
 The ``--update-html-only`` allows to only update the metrics.html file without modifying the other tsv files.
 By default the command will open the html report in the browser for visualization when execution is complete, ``--do-not-open-browser`` can be added to prevent this behavior.
 
-**Metrics collected**
+
+Metrics collected
++++++++++++++++++
+
 
 The metrics that are collected are:
 
@@ -66,6 +69,8 @@ The metrics that are collected are:
 
 
 html report example
++++++++++++++++++++
+
 
 .. image:: images/report.png
 

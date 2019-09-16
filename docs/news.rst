@@ -14,6 +14,50 @@ Version updates
 +++++++++++++++
 
 
+  **Sep 16, 2019** The latest version is now 0.9.1_.
+
+
+  **Aug 14, 2019** The latest version is now 0.9.0_.
+
+    - ``root_ebs_size`` now supported (default 8) as a config field.
+      (useful for large docker images or multiple docker images, which uses root EBS)
+    - ``TIBANNA_AWS_REGION`` and ``AWS_ACCOUNT_NUMBER`` no longer required as environment variables.
+
+
+  **Jul 22, 2019** The latest version is now 0.8.8_.
+
+    - Fixed installation issue caused by ``python-lambda-4dn``
+    - Input file can now be a directory for ``shell`` and ``snakemake``
+      - e.g. ``"file:///data1/shell/somedir" : "s3://bucketname/dirname"``
+    - Output target can now be a directory for ``shell`` and ``snakemake``
+      - e.g. ``"file:///data1/shell/somedir": "dirname"``
+
+
+  **Jul 8, 2019** The latest version is now 0.8.7_.
+
+    - ec2 termination policy is added to usergroup to support ``kill`` function
+    - ``run_workflow`` ``verbose`` option is now passed to ``dynamodb``
+
+
+  **Jun 25, 2019** The latest version is now 0.8.6_.
+
+    - A newly introduced issue of not reporting ``Metric`` after the run is now fixed.
+    - With ``tibanna log``, when the log/postrunjson file is not available, it does not raise an error but prints a message.
+    - Benchmark ``0.5.4`` is used instead of ``0.5.3`` for 4DN pipelines.
+
+
+  **Jun 14, 2019** The latest version is now 0.8.5_.
+
+    - A newly introduced bug in the ``rerun`` cli (not working) now fixed.
+
+
+  **Jun 12, 2019** The latest version is now 0.8.4_.
+
+    - The issue of auto-determined EBS size being sometimes not an integer fixed.
+    - Now input files in the unicorn input json can be written in the format of ``s3://bucket/key`` as well as ``{'bucket_name': bucket, 'object_key': key}``
+    - command can be written in the format of a list for aesthetic purpose (e.g. ``[command1, command2, command3]`` is equivalent to ``command1; command2; command3``)
+
+
   **Jun 10, 2019** The latest version is now 0.8.3_.
 
     - A newly introduced issue of ``--usergroup`` not working properly with ``deploy_unicorn``/``deploy_core`` is now fixed.
@@ -217,6 +261,13 @@ Version updates
 
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
+.. _0.9.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.1
+.. _0.9.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.0
+.. _0.8.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.8
+.. _0.8.7: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.7
+.. _0.8.6: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.6
+.. _0.8.5: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.5
+.. _0.8.4: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.4
 .. _0.8.3: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.3
 .. _0.8.2: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.2
 .. _0.8.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.1
