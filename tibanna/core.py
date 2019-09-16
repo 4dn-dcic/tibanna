@@ -846,6 +846,7 @@ class API(object):
             instance_type = postrunjson.config.instance_type or 'unknown'
         else:
             runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
+            job_complete = False
             if runjsonstr:
                 runjson = AwsemRunJson(**json.loads(runjsonstr))
                 job = runjson.Job
