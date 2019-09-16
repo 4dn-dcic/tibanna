@@ -208,7 +208,11 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-g", "--usergroup"],
                   'default': '',
-                  'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
+                  'help': "Tibanna usergroup to share the permission to access buckets and run jobs"},
+                 {'flag': ["-P", "--do-not-delete-public-access-block"],
+                  'default': '',
+                  'help': "Do not delete public access block from buckets" +
+                          "(this way postrunjson and metrics reports will not be public)"}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
