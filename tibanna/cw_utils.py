@@ -649,7 +649,7 @@ class TibannaResource(object):
                   // X scale for CPU utilization that has interval size of 5 instead of 1
                   var xScale_cpu = d3.scaleLinear()
                       .domain([0, n_cpu-1]) // input
-                      .range([0, width]); // output
+                      .range([0, width*(n_cpu-1)*5/(n-1)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
