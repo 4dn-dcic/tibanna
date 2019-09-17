@@ -650,19 +650,19 @@ class TibannaResource(object):
                   // X scale for CPU utilization that has interval size of 5 instead of 1
                   var xScale_cpu = d3.scaleLinear()
                       .domain([0, n_cpu-1]) // input
-                      .range([0, width]); // output
+                      .range([0, width*(n_cpu-1)*5/(n-1)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale(i) + xScale(1); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // d3's line generator for CPU utilization
                   var line_cpu = d3.line()
-                      .x(function(d, i) { return xScale_cpu(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale_cpu(i) + xScale(1); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
@@ -749,7 +749,7 @@ class TibannaResource(object):
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale(i) + xScale(1); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number

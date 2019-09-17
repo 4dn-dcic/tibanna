@@ -25,7 +25,7 @@ def test_fourfront_starter(start_run_event_md5):
 
 @valid_env
 def test_qclist_handling():
-    data = {'ff_meta': {'workflow': '4dn-dcic-lab:workflow_bwa-mem_no_unzip-check_v9'},
+    data = {'ff_meta': {'workflow': 'cgap:workflow_bwa-mem_no_unzip-check_v10'},
             '_tibanna': {'env': 'fourfront-cgap', 'settings': {'1': '1'}}}
     updater = FourfrontUpdater(**data)
     assert updater

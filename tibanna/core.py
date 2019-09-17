@@ -287,26 +287,46 @@ class API(object):
             printlog("terminating EC2 instance")
             resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
             printlog(resp_term)
-            if not sfn:
-                printlog("Can't stop step function because step function name is not given.")
-                return None
-            stateMachineArn = STEP_FUNCTION_ARN(sfn)
-            res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-            while True:
-                if 'executions' not in res or not res['executions']:
-                    break
-                for exc in res['executions']:
-                    desc = sf.describe_execution(executionArn=exc['executionArn'])
-                    if job_id == str(json.loads(desc['input'])['jobid']):
-                        printlog("terminating step function execution")
-                        resp_sf = sf.stop_execution(executionArn=exc['executionArn'], error="Aborted")
-                        printlog(resp_sf)
+            # first try dynanmodb to get logbucket
+            ddres = dict()
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+            except Exception as e:
+                pass
+            if 'Items' in ddres:
+                exec_name = ddres['Items'][0]['Execution Name']['S']
+                sfn = ddres['Items'][0]['Step Function']['S']
+                exec_arn = EXECUTION_ARN(exec_name, sfn)
+            else:
+                if not sfn:
+                    printlog("Can't stop step function because step function name is not given.")
+                    return None
+                stateMachineArn = STEP_FUNCTION_ARN(sfn)
+                res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+                exec_arn = None
+                while True:
+                    if 'executions' not in res or not res['executions']:
                         break
-                if 'nextToken' in res:
-                    res = sf.list_executions(nextToken=res['nextToken'],
-                                             stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-                else:
-                    break
+                    for exc in res['executions']:
+                        desc = sf.describe_execution(executionArn=exc['executionArn'])
+                        if job_id == str(json.loads(desc['input'])['jobid']):
+                            exec_arn = exc['executionArn']
+                            break
+                    if exec_arn:
+                        break
+                    if 'nextToken' in res:
+                        res = sf.list_executions(nextToken=res['nextToken'],
+                                                 stateMachineArn=stateMachineArn, statusFilter='RUNNING')
+                    else:
+                        break
+                if not exec_arn:
+                    raise Exception("can't find the execution")
+            printlog("terminating step function execution")
+            resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
+            printlog(resp_sf)
 
     def kill_all(self, sfn=None):
         """killing all the running jobs"""
