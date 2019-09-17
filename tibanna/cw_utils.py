@@ -644,12 +644,12 @@ class TibannaResource(object):
                   var n_cpu = data_cpu.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n-1]) // input
+                      .domain([1, n]) // input
                       .range([0, width]); // output
                   // X scale for CPU utilization that has interval size of 5 instead of 1
                   var xScale_cpu = d3.scaleLinear()
-                      .domain([0, n_cpu-1]) // input
-                      .range([0, width*(n_cpu-1)*5/(n-1)]); // output
+                      .domain([1, n_cpu]) // input
+                      .range([0, width*(n_cpu)*5/(n)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
@@ -740,7 +740,7 @@ class TibannaResource(object):
                   var n = data.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n-1]) // input
+                      .domain([1, n]) // input
                       .range([0, width]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
