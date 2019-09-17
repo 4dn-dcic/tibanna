@@ -267,10 +267,11 @@ class FFInputAbstract(SerializableObject):
         if extra_file_keys and len(extra_file_keys) > 0:
             if len(extra_file_keys) == 1:
                 extra_file_keys = extra_file_keys[0]
-            args['secondary_files'].update({input_file['workflow_argument_name']: {
-                                            'bucket_name': input_file['bucket_name'],
-                                            'rename': input_file.get('rename', ''),
-                                            'object_key': extra_file_keys}})
+            if extra_file_keys:
+                args['secondary_files'].update({input_file['workflow_argument_name']: {
+                                                'bucket_name': input_file['bucket_name'],
+                                                'rename': input_file.get('rename', ''),
+                                                'object_key': extra_file_keys}})
 
 
 class WorkflowRunMetadataAbstract(SerializableObject):
