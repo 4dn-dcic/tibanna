@@ -644,24 +644,24 @@ class TibannaResource(object):
                   var n_cpu = data_cpu.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([1, n]) // input
+                      .domain([0, n-1]) // input
                       .range([0, width]); // output
                   // X scale for CPU utilization that has interval size of 5 instead of 1
                   var xScale_cpu = d3.scaleLinear()
-                      .domain([1, n_cpu]) // input
-                      .range([0, width*(n_cpu)*5/(n)]); // output
+                      .domain([0, n_cpu-1]) // input
+                      .range([0, width*(n_cpu-1)*5/(n-1)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale(i)+1; }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // d3's line generator for CPU utilization
                   var line_cpu = d3.line()
-                      .x(function(d, i) { return xScale_cpu(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale_cpu(i)+1; }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
@@ -740,7 +740,7 @@ class TibannaResource(object):
                   var n = data.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([1, n]) // input
+                      .domain([0, n-1]) // input
                       .range([0, width]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
@@ -748,7 +748,7 @@ class TibannaResource(object):
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+                      .x(function(d, i) { return xScale(i)+1; }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
