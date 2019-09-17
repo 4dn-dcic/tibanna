@@ -1,0 +1,19 @@
+# test for bucket public access block handling
+
+# Do the following test as admin of soo-10k account.
+
+# turn public block access on manually before this test
+tibanna deploy_unicorn -g test -b tibanna-test1234
+# check that the above command turned public block access off
+tibanna run_workflow -i test_json/unicorn/shelltest-soo10k.json --sfn=tibanna_unicorn_test
+# check that the above job successfully finished.
+# check that the metric html is publicly available
+
+# turn public block access on manually before this test
+tibanna deploy_unicorn -g test -b tibanna-test1234 -P
+# check that the above command did not turn public block access off
+tibanna run_workflow -i test_json/unicorn/shelltest-soo10k.json --sfn=tibanna_unicorn_test
+# check that the above job successfully finished.
+# check that the metric html is not publicly available
+
+

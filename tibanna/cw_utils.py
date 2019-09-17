@@ -102,6 +102,7 @@ class TibannaResource(object):
         self.list_files.append(self.write_html(instance_type, directory))
 
     def upload(self, bucket, prefix='', lock=True):
+        printlog(str(self.list_files))
         for f in self.list_files:
             upload(f, bucket, prefix)
         if lock:

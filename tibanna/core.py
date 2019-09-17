@@ -29,7 +29,8 @@ from .vars import (
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
-    DYNAMODB_TABLE
+    DYNAMODB_TABLE,
+    DYNAMODB_KEYNAME
 )
 from .utils import (
     _tibanna_settings,
@@ -704,7 +705,8 @@ class API(object):
         for name in names:
             self.deploy_lambda(name, suffix, usergroup)
 
-    def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False, verbose=False):
+    def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
+                          do_not_delete_public_access_block=False, verbose=False):
         """set up usergroup environment on AWS
         This function is called automatically by deploy_tibanna or deploy_unicorn
         Use it only when the IAM permissions need to be reset"""
@@ -722,6 +724,11 @@ class API(object):
             bucket_names = buckets.split(',')
         else:
             bucket_names = None
+        if bucket_names and not do_not_delete_public_access_block:
+            client = boto3.client('s3')
+            for b in bucket_names:
+                printlog("Deleting public access block for bucket %s" % b)
+                response = client.delete_public_access_block(Bucket=b)
         tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
                                                    usergroup_tag, AWS_REGION, no_randomize=no_randomize,
                                                    run_task_lambda_name=self.run_task_lambda,
@@ -737,13 +744,15 @@ class API(object):
         return tibanna_usergroup
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
-                       buckets='', setenv=False):
+                       buckets='', setenv=False, do_not_delete_public_access_block=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
-                usergroup = self.setup_tibanna_env(buckets, usergroup, True)
-            else:
-                usergroup = self.setup_tibanna_env(buckets)  # override usergroup
+                usergroup = self.setup_tibanna_env(buckets, usergroup, True,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+            else:  # override usergroup
+                usergroup = self.setup_tibanna_env(buckets,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         print("creating a new step function... %s" % step_function_name)
@@ -753,13 +762,15 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
+        self.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup=''):
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
-                            buckets=buckets, setenv=not no_setenv)
+                            buckets=buckets, setenv=not no_setenv,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
@@ -855,6 +866,7 @@ class API(object):
             instance_type = postrunjson.config.instance_type or 'unknown'
         else:
             runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
+            job_complete = False
             if runjsonstr:
                 runjson = AwsemRunJson(**json.loads(runjsonstr))
                 job = runjson.Job
@@ -972,3 +984,39 @@ class API(object):
             else:
                 printlog("cost already in the tsv file. not updating")
         return cost
+
+    def does_dynamo_table_exist(self, tablename):
+        try:
+            res = boto3.client('dynamodb').describe_table(
+                TableName=tablename
+            )
+            if res:
+                return True
+            else:
+                raise Exception("error describing table %s" % tablename)
+        except Exception as e:
+            if 'Requested resource not found' in str(e):
+                return False
+            else:
+                raise Exception("error describing table %s" % tablename)
+    
+    def create_dynamo_table(self, tablename, keyname):
+        if self.does_dynamo_table_exist(tablename):
+            print("dynamodb table %s already exists. skip creating db" % tablename)
+        else:
+            response = boto3.client('dynamodb').create_table(
+                TableName=tablename,
+                AttributeDefinitions=[
+                    {
+                         'AttributeName': keyname,
+                         'AttributeType': 'S'
+                    }
+                ],
+                KeySchema=[
+                    {
+                        'AttributeName': keyname,
+                        'KeyType': 'HASH'
+                     }
+                ],
+                BillingMode='PAY_PER_REQUEST'
+            )

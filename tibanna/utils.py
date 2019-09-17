@@ -108,9 +108,16 @@ def upload(filepath, bucket, prefix='', public=True):
     if filepath:
         dirname, filename = os.path.split(filepath)
         key = os.path.join(prefix, filename)
+        printlog("filepath=%s, filename=%s, key=%s" % (filepath, filename, key))
         content_type = mimetypes.guess_type(filename)[0]
         if content_type is None:
             content_type = 'binary/octet-stream'
-        s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
+        try:
+            s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
+        except Exception as e:
+            s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': 'private', 'ContentType': content_type})
     else:
-        s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
+        try:
+            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
+        except Exception as e:
+            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private')

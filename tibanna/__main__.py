@@ -192,7 +192,11 @@ class Subcommands(object):
                           "(e.g. name of a specific tibanna usergroup"},
                  {'flag': ["-R", "--no-randomize"],
                   'help': "do not add random numbers to the usergroup tag to generate usergroup name",
-                  'action': "store_true"}],
+                  'action': "store_true"},
+                 {'flag': ["-P", "--do-not-delete-public-access-block"],
+                  'action': "store_true",
+                  'help': "Do not delete public access block from buckets" +
+                          "(this way postrunjson and metrics reports will not be public)"}],
             'deploy_unicorn':
                 [{'flag': ["-s", "--suffix"],
                   'help': "suffix (e.g. 'dev') to add to the end of the name of" +
@@ -208,7 +212,11 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-g", "--usergroup"],
                   'default': '',
-                  'help': "Tibanna usergroup to share the permission to access buckets and run jobs"}],
+                  'help': "Tibanna usergroup to share the permission to access buckets and run jobs"},
+                 {'flag': ["-P", "--do-not-delete-public-access-block"],
+                  'action': "store_true",
+                  'help': "Do not delete public access block from buckets" +
+                          "(this way postrunjson and metrics reports will not be public)"}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
@@ -261,18 +269,20 @@ def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', d
     API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, open_browser=not do_not_open_browser, verbose=True)
 
 
-def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False):
+def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
+                      do_not_delete_public_access_block=False):
     """set up usergroup environment on AWS
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
-    API().setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize, verbose=False)
+    API().setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block, verbose=False)
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
-                   no_setenv=False, usergroup=''):
+                   no_setenv=False, usergroup='', do_not_delete_public_access_block=False):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
-                         usergroup=usergroup)
+                         usergroup=usergroup, do_not_delete_public_access_block=do_not_delete_public_access_block)
 
 
 def add_user(user, usergroup):
