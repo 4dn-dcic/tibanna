@@ -13,7 +13,7 @@
     "output_S3_bucket": "soos-4dn-bucket",
     "app_version": "5",
     "input_files": {
-        "/data1/shell/somefile": "s3://soos-4dn-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
+        "file:///data1/shell/somefile": "s3://soos-4dn-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
     },
     "input_parameters": {
     }

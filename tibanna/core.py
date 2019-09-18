@@ -52,7 +52,6 @@ from .iam_utils import (
     generate_policy_prefix
 )
 from .stepfunction import StepFunctionUnicorn
-from .cw_utils import TibannaResource
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
     MetricRetrievalException
@@ -103,6 +102,11 @@ class API(object):
     @property
     def do_not_delete(self):
         return []  # list of lambda names that should not be deleted before updating
+
+    @property
+    def TibannaResource(self):
+        from .cw_utils import TibannaResource
+        return TibannaResource
 
     def __init__(self):
         pass
@@ -929,10 +933,10 @@ class API(object):
                         raise Exception("instance id not available for this run.")
         # plotting
         if update_html_only:
-            TibannaResource.update_html(log_bucket, job_id + '.metrics/')
+            self.TibannaResource.update_html(log_bucket, job_id + '.metrics/')
         else:
             try:
-                M = TibannaResource(instance_id, filesystem, starttime, endtime)
+                M = self.TibannaResource(instance_id, filesystem, starttime, endtime)
                 M.plot_metrics(instance_type, directory)
             except Exception as e:
                 raise MetricRetrievalException(e)

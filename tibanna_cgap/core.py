@@ -26,6 +26,11 @@ class API(_API):
     sfn_type = LAMBDA_TYPE
     lambda_type = LAMBDA_TYPE
 
+    @property
+    def TibannaResource(self):
+        from .cw_utils import TibannaResource
+        return TibannaResource
+
     def __init__(self):
         pass
 
