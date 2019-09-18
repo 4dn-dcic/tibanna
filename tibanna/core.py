@@ -52,7 +52,6 @@ from .iam_utils import (
     generate_policy_prefix
 )
 from .stepfunction import StepFunctionUnicorn
-from .cw_utils import TibannaResource
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
     MetricRetrievalException
@@ -106,6 +105,7 @@ class API(object):
 
     @property
     def TibannaResource(self):
+        from .cw_utils import TibannaResource
         return TibannaResource
 
     def __init__(self):

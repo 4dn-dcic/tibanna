@@ -278,7 +278,7 @@ class TibannaResource(object):
         self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
-            fo.write(TibannaResource.create_html() % (instance_type,
+            fo.write(self.create_html() % (instance_type,
                              str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
                              str(self.max_disk_space_utilization_percent),
@@ -288,7 +288,8 @@ class TibannaResource(object):
                     )
         return(filename)
 
-    def update_html(bucket, prefix, directory='.', upload_new=True):
+    @classmethod
+    def update_html(cls, bucket, prefix, directory='.', upload_new=True):
         if not os.path.exists(directory):
             os.makedirs(directory)
         filename = directory + '/' + 'metrics.html'
@@ -311,7 +312,7 @@ class TibannaResource(object):
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         with open(filename, 'w') as fo:
-            fo.write(TibannaResource.create_html() % (instance,
+            fo.write(cls.create_html() % (instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
@@ -374,7 +375,8 @@ class TibannaResource(object):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-    def create_html():
+    @classmethod
+    def create_html(cls):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">

@@ -15,7 +15,8 @@ from tibanna.cw_utils import TibannaResource as TibannaResource_
 
 
 class TibannaResource(TibannaResource_):
-    def create_html():
+    @classmethod
+    def create_html(cls):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">
