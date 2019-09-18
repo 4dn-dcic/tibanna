@@ -14,4 +14,4 @@ def metadata_only(event):
 
 @exception_coordinator('check_task', metadata_only)
 def handler(event, context):
-    return check_task(event, context)
+    return check_task(event)
