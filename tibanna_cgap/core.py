@@ -1,6 +1,7 @@
 from tibanna_ffcommon.core import API as _API
 from .stepfunction import StepFunctionZebra
 from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME, LAMBDA_TYPE, IAM_BUCKETS
+from .cw_utils import TibannaResource
 
 
 class API(_API):
@@ -25,6 +26,10 @@ class API(_API):
     default_env = 'fourfront-cgap'
     sfn_type = LAMBDA_TYPE
     lambda_type = LAMBDA_TYPE
+
+    @property
+    def TibannaResource(self):
+        return TibannaResource
 
     def __init__(self):
         pass
