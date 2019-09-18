@@ -7,7 +7,7 @@ from tibanna.utils import (
 # from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
-from tibanna.TibannaResource import TibannaResource as TibannaResource_
+from tibanna.cw_utils import TibannaResource as TibannaResource_
 
 # instance_id = 'i-0167a6c2d25ce5822'
 # filesystem = "/dev/xvdb"
