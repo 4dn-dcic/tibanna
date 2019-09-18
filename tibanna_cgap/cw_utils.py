@@ -143,7 +143,7 @@ class TibannaResource(TibannaResource):
                 <!-- Body tag is where we will append our SVG and SVG objects-->
                 <body>
                     <div class="logo">
-                      <h1>Tibanna Metrics</h1>
+                      <h1>Pipeline Run Metrics</h1>
                     </div></br></br>
                   <section>
                     </br>
