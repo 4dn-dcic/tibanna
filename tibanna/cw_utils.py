@@ -641,16 +641,22 @@ class TibannaResource(object):
                   data_disk = data_array[1]
                   data_cpu = data_array[2]
                   // The number of datapoints
-                  var n = data_mem.length;
+                  var n_data = data_mem.length;
+                  var n = 0
+                  if (n_data < 5) {
+                    n = 5
+                  } else {
+                    n = n_data
+                  }
                   var n_cpu = data_cpu.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n-1]) // input
+                      .domain([0, n]) // input
                       .range([0, width]); // output
                   // X scale for CPU utilization that has interval size of 5 instead of 1
                   var xScale_cpu = d3.scaleLinear()
-                      .domain([0, n_cpu-1]) // input
-                      .range([0, width*(n_cpu-1)*5/(n-1)]); // output
+                      .domain([0, n_cpu]) // input
+                      .range([0, width*(n_cpu)*5/(n)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
@@ -666,8 +672,8 @@ class TibannaResource(object):
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-                  var dataset_mem = d3.range(n).map(function(d) { return {"y": data_mem[d] } })
-                  var dataset_disk = d3.range(n).map(function(d) { return {"y": data_disk[d] } })
+                  var dataset_mem = d3.range(n_data).map(function(d) { return {"y": data_mem[d] } })
+                  var dataset_disk = d3.range(n_data).map(function(d) { return {"y": data_disk[d] } })
                   var dataset_cpu = d3.range(n_cpu).map(function(d) { return {"y": data_cpu[d] } })
                   // Add the SVG to the page
                   var svg = d3.select("#" + div).append("svg")
@@ -738,10 +744,16 @@ class TibannaResource(object):
                     , width = div_width - margin.left - margin.right // Use the window's width
                     , height = div_height - margin.top - margin.bottom; // Use the window's height
                   // The number of datapoints
-                  var n = data.length;
+                  var n_data = data.length;
+                  var n = 0
+                  if (n_data < 5) {
+                    n = 5
+                  } else {
+                    n = n_data
+                  }
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n-1]) // input
+                      .domain([0, n]) // input
                       .range([0, width]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
@@ -753,7 +765,7 @@ class TibannaResource(object):
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-                  var dataset = d3.range(n).map(function(d) { return {"y": data[d] } })
+                  var dataset = d3.range(n_data).map(function(d) { return {"y": data[d] } })
                   // Add the SVG to the page
                   var svg = d3.select("#" + div).append("svg")
                       .attr("width", width + margin.left + margin.right)
