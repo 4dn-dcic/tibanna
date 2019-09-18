@@ -7,14 +7,14 @@ from tibanna.utils import (
 # from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
-from tibanna.TibannaResource import TibannaResource_
+from tibanna.TibannaResource import TibannaResource as TibannaResource_
 
 # instance_id = 'i-0167a6c2d25ce5822'
 # filesystem = "/dev/xvdb"
 # filesystem = "/dev/nvme1n1"
 
 
-class TibannaResource(TibannaResource):
+class TibannaResource(TibannaResource_):
     def create_html():
         html = """\
                 <!DOCTYPE html>
