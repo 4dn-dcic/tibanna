@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .cw_utils import TibannaResource
-from tibanna.check_task import CheckTask as CheckTAsk_
+from tibanna.check_task import CheckTask as CheckTask_
 
 
 def check_task(input_json):
