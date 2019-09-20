@@ -69,8 +69,10 @@ def list_sfns(numbers=False):
     API().list_sfns(numbers=numbers)
 
 
-def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
-    API().log(exec_arn, job_id, exec_name, sfn, postrunjson)
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+        postrunjson=False, runjson=False, unicorn_input_json=False):
+    """print execution log or postrun json (-p) for a job"""
+    print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson, runjson, unicorn_input_json))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):

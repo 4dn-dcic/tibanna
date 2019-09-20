@@ -99,7 +99,11 @@ class Subcommands(object):
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-p", "--postrunjson"],
-                  'help': "print out postrun json instead", 'action': "store_true"}],
+                  'help': "print out postrun json instead", 'action': "store_true"},
+                 {'flag': ["-p", "--runjson"],
+                  'help': "print out run json instead", 'action': "store_true"},
+                 {'flag': ["-p", "--unicorn-input-json"],
+                  'help': "print out unicorn input json instead", 'action': "store_true"}],
             'add_user':
                 [{'flag': ["-u", "--user"],
                   'help': "user to add to a Tibanna usergroup"},
@@ -300,9 +304,10 @@ def list_sfns(numbers=False):
     API().list_sfns(numbers=numbers)
 
 
-def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+        postrunjson=False, runjson=False, unicorn_input_json=False):
     """print execution log or postrun json (-p) for a job"""
-    print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson))
+    print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson, runjson, unicorn_input_json))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
