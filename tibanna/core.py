@@ -356,7 +356,7 @@ class API(object):
             suffix = '.postrun.json'
         elif runjson:
             suffix = '.run.json'
-        elif unicorninputjson:
+        elif unicorn_input_json:
             suffix = '.unicorn.input.json'
         else:
             suffix = '.log'
