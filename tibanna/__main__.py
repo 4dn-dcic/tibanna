@@ -100,9 +100,9 @@ class Subcommands(object):
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-p", "--postrunjson"],
                   'help': "print out postrun json instead", 'action': "store_true"},
-                 {'flag': ["-p", "--runjson"],
+                 {'flag': ["-r", "--runjson"],
                   'help': "print out run json instead", 'action': "store_true"},
-                 {'flag': ["-p", "--unicorn-input-json"],
+                 {'flag': ["-u", "--unicorn-input-json"],
                   'help': "print out unicorn input json instead", 'action': "store_true"}],
             'add_user':
                 [{'flag': ["-u", "--user"],
