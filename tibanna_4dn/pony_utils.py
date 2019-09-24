@@ -35,9 +35,9 @@ class WorkflowRunMetadata(WorkflowRunMetadataAbstract):
     '''
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.award = kwargs.get('award', DEFAULT_AWARD)
         self.lab = kwargs.get('lab', DEFAULT_LAB)
+        super().__init__(**kwargs)
 
 
 class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
@@ -45,10 +45,10 @@ class ProcessedFileMetadata(ProcessedFileMetadataAbstract):
     accession_prefix = ACCESSION_PREFIX
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
         self.award = kwargs.get('award', DEFAULT_AWARD)
         self.lab = kwargs.get('lab', DEFAULT_LAB)
         self.source_experiments = kwargs.get('source_experiments', None)
+        super().__init__(**kwargs)
 
 
 class FourfrontStarter(FourfrontStarterAbstract):
