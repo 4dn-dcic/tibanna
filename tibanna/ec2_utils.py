@@ -330,6 +330,7 @@ class Execution(object):
         return self.unicorn_input.as_dict()
 
     def prelaunch(self, profile=None):
+        self.upload_run_json(self.input_dict, suffix='unicorn.input.json')
         self.check_dependency(**self.args.dependency)
         runjson = self.create_run_json_dict()
         self.upload_run_json(runjson)
@@ -605,9 +606,9 @@ class Execution(object):
             del(pre['config']['key_name'])
         return pre
 
-    def upload_run_json(self, runjson):
+    def upload_run_json(self, runjson, suffix = 'run.json'):
         jsonbody = json.dumps(runjson, indent=4, sort_keys=True)
-        jsonkey = self.jobid + '.run.json'
+        jsonkey = self.jobid + '.' + suffix
         # Keep log of the final json
         logger.info("jsonbody=\n" + jsonbody)
         # copy the json file to the s3 bucket
@@ -619,7 +620,7 @@ class Execution(object):
         try:
             res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
         except Exception:
-            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
+            raise Exception("boto3 client error: Failed to upload %s %s to s3: %s" % (suffix, jsonkey, str(res)))
 
     def create_userdata(self, profile=None):
         """Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.

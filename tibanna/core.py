@@ -350,11 +350,14 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, quiet=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False,
+            runjson=False, unicorn_input_json=False, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
             suffix = '.run.json'
+        elif unicorn_input_json:
+            suffix = '.unicorn.input.json'
         else:
             suffix = '.log'
         if not sfn:
