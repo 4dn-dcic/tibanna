@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import webbrowser
 from datetime import datetime, timedelta
+from dateutil.tz import tzutc
 from uuid import uuid4, UUID
 from types import ModuleType
 from .vars import (
@@ -1024,3 +1025,19 @@ class API(object):
                 ],
                 BillingMode='PAY_PER_REQUEST'
             )
+
+    def is_idle(self, instance_id, max_cpu_percent_threshold=1.0):
+        """returns True if the instance is idle i.e. not doing anything for
+        the past 1 hour and is safe to kill"""
+        end = datetime.now(tzutc())
+        start = end - timedelta(hours=1)
+        filesystem = '/dev/nvme1n1'  # doesn't matter for cpu utilization
+        try:
+            cw_res = self.TibannaResource(instance_id, filesystem, start, end).as_dict()
+        except Exception as e:
+            raise MetricRetrievalException(e)
+        if not cw_res['max_cpu_utilization_percent']:
+            return True
+        if cw_res['max_cpu_utilization_percent'] < max_cpu_percent_threshold:
+            return True
+        return False
