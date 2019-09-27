@@ -1,4 +1,4 @@
-boto3==1.9.218
-botocore==1.12.218
+boto3>=1.9
+botocore>=1.12.1
 urllib3==1.24.2
 Benchmark-4dn==0.5.6
