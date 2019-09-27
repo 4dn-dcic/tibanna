@@ -1,6 +1,6 @@
 python-lambda-4dn==0.12.2
 Benchmark-4dn==0.5.6
-botocore==1.12.218
-boto3==1.9.218
+botocore==1.12
+boto3==1.9
 urllib3==1.24.2
-requests==2.20.0
+requests==2.22.0
