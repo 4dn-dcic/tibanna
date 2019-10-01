@@ -753,6 +753,8 @@ class FourfrontUpdaterAbstract(object):
     def create_wfr_qc(self):
         qc_object = self.create_qc_template()
         qc_object['url'] = METRICS_URL(self.config.log_bucket, self.jobid)
+        if self.custom_qc_fields:
+            qc_object.update(self.custom_qc_fields)
         self.update_post_items(qc_object['uuid'], qc_object, 'QualityMetricWorkflowrun')
         self.ff_meta.quality_metric = qc_object['uuid']
 
