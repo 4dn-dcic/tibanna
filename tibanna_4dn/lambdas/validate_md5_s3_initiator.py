@@ -193,7 +193,7 @@ _workflows = {'md5':
 def _make_input(env, bucket, workflow, object_key, uuid, run_name, dependency=None):
     if env in ['data', 'staging']:
         output_bucket = "elasticbeanstalk-fourfront-webprod-wfoutput"
-    else
+    else:
         output_bucket = "elasticbeanstalk-%s-wfoutput" % env
     workflow_uuid = _workflows[workflow]['uuid']
     workflow_arg_name = _workflows[workflow]['arg_name']
