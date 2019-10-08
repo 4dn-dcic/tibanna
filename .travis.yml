@@ -19,12 +19,11 @@ jobs:
     install:
     - pip install six
     - python setup.py install
-    - pip install -U -r requirements-4dn.txt
     - pip install -U -r requirements-test.txt
     - pip install codacy-coverage
     script:
     - if [ "$TRAVIS_BRANCH" != "doc" ]; then
-      invoke test --no-flake --no-post; fi  # temporarily ignore test_webdev which uses tibanna_pony
+      invoke test --no-flake; fi
     after_success:
     - echo "finished running tests on repo"
     - python-codacy-coverage -r coverage.xml
