@@ -87,5 +87,4 @@ Contents:
    wdl
    ami
    4dn_pipelines
-   pony
    how_it_works
