@@ -114,7 +114,7 @@ class API(object):
 
     def randomize_run_name(self, run_name, sfn):
         arn = EXECUTION_ARN(run_name, sfn)
-        client = boto3.client('stepfunctions', region_name='us-east-1')
+        client = boto3.client('stepfunctions', region_name=AWS_REGION)
         try:
             response = client.describe_execution(
                     executionArn=arn
@@ -152,8 +152,8 @@ class API(object):
             sfn = self.default_stepfunction_name
         if not env:
             env = self.default_env
-        client = boto3.client('stepfunctions', region_name='us-east-1')
-        base_url = 'https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/'
+        client = boto3.client('stepfunctions', region_name=AWS_REGION)
+        base_url = 'https://console.aws.amazon.com/states/home?region=' + AWS_REGION + '#/executions/details/'
         # build from appropriate input json
         # assume run_type and and run_id
         if 'run_name' in data['config']:
