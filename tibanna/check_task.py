@@ -69,7 +69,7 @@ class CheckTask(object):
             return input_json_copy
     
         # checking if instance is terminated for no reason
-        instance_id = input_json_copy.get('instance_id', '')
+        instance_id = input_json_copy['config'].get('instance_id', '')
         if instance_id:  # skip test for instance_id by not giving it to input_json_copy
             try:
                 res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
@@ -94,7 +94,7 @@ class CheckTask(object):
             jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
             if jobstart_time + timedelta(hours=1) < end:
                 try:
-                    cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+                    cw_res = self.TibannaResource(instance_id, filesystem, start, end).as_dict()
                 except Exception as e:
                     raise MetricRetrievalException(e)
                 if 'max_cpu_utilization_percent' in cw_res:
