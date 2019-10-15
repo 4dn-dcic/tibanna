@@ -22,10 +22,27 @@ if not AWS_REGION:
 
 
 # Tibanna AMI info
-if AWS_REGION == 'us-east-1':
-    AMI_ID = 'ami-0f06a8358d41c4b9c'
-elif AWS_REGION == 'ap-southeast-2':
-    AMI_ID = 'ami-08015a75aa06d5169'
+AMI_PER_REGION = {
+    'us-east-1': 'ami-0f06a8358d41c4b9c',
+    'ap-south-1' : 'ami-09d95d9217d0cf385',
+    'ap-northeast-2' : 'ami-0c41548ca349c7a24',
+    'ap-southeast-1' : 'ami-05ed988e6e239f8ab',
+    'ap-southeast-2' : 'ami-08015a75aa06d5169',
+    'ap-northeast-1' : 'ami-0ca2f82fea1712d9c',
+    'ca-central-1': 'ami-0db70f7b86ac96a83',
+    'eu-central-1': 'ami-04e369eb9ff2f4f2d',
+    'eu-west-1': 'ami-02de1cc972d19b5f0',
+    'eu-west-2': 'ami-092454e8dfc2d7fa6',
+    'eu-west-3': 'ami-02f01bb8e27345b00',
+    'eu-north-1': 'ami-06cff15ceaadf54ca',
+    'sa-east-1': 'ami-06f63076e5a4fa510',
+    'us-east-2': 'ami-0691eb4caeced8412',
+    'us-west-1': 'ami-009aab2c590a01210',
+    'us-west-2': 'ami-05bcbe2628605a628'
+}
+AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
+if not AMI_ID:
+    raise Exception("AMI for region %s is not supported" % AWS_REGION)
 AMI_ID_CWL_V1 = AMI_ID
 AMI_ID_CWL_DRAFT3 = AMI_ID
 AMI_ID_WDL = AMI_ID
