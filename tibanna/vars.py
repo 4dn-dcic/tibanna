@@ -22,11 +22,15 @@ if not AWS_REGION:
 
 
 # Tibanna AMI info
-AMI_ID_CWL_V1 = 'ami-0f06a8358d41c4b9c'
-AMI_ID_CWL_DRAFT3 = 'ami-0f06a8358d41c4b9c'
-AMI_ID_WDL = 'ami-0f06a8358d41c4b9c'
-AMI_ID_SHELL = 'ami-0f06a8358d41c4b9c'
-AMI_ID_SNAKEMAKE = 'ami-0f06a8358d41c4b9c'
+if AWS_REGION == 'us-east-1':
+    AMI_ID = 'ami-0f06a8358d41c4b9c'
+elif AWS_REGION == 'ap-southeast-2':
+    AMI_ID = 'ami-08015a75aa06d5169'
+AMI_ID_CWL_V1 = AMI_ID
+AMI_ID_CWL_DRAFT3 = AMI_ID
+AMI_ID_WDL = AMI_ID
+AMI_ID_SHELL = AMI_ID
+AMI_ID_SNAKEMAKE = AMI_ID
 
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
