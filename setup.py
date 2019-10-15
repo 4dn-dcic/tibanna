@@ -16,17 +16,6 @@ with open('requirements.txt') as f:
     set_parsed = f.read().splitlines()
 install_requires = [req.strip() for req in set_parsed if 'git+' not in req]
 
-# these are OLD requirements
-# install_requires = [
-#     'python-lambda-4dn==0.11.1',
-#     'Benchmark-4dn==0.5.2',
-#     'awscli==1.15.42',
-#     'botocore==1.10.42',
-#     'boto3==1.7.42',
-#     'urllib3==1.23',
-#     'requests==2.20.0'
-# ]
-
 tests_requires = [
     'flake8',
     'pytest',
