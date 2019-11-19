@@ -169,6 +169,12 @@ echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOG
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
+### prepare for file mounting
+exl curl -O -L http://bit.ly/goofys-latest
+exl chmod +x goofys-latest
+exl echo "user_allow_other" >> /etc/fuse.conf
+export GOOFY_COMMAND='./goofys-latest -o allow_other -o nonempty'
+
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
 exl date 
