@@ -28,6 +28,9 @@ Example job description for CWL
         "input_parameters": {
           "nThreads": 16
         },
+        "input_env": {
+          "TEST_ENV_VAR": "abcd"
+        },
         "output_S3_bucket": "montys-data-bucket",
         "output_target": {
           "out_pairsam": "output/dataset1/sample1.sam.pairs.gz"
@@ -277,6 +280,19 @@ Input data specification
 
         {
             'nThreads': 16
+        }
+
+    )
+
+
+:input_env:
+    - A dictionary that specifies environment variables to be passed.
+    - (e.g.
+
+    ::
+
+        {
+            "TEST_ENV_VAR": "abcd"
         }
 
     )
