@@ -1,0 +1,66 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "md5",
+            "App_version": "0.2.6",
+            "cwl_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+            "language": "cwl_v1",
+            "main_cwl": "md5.cwl",
+            "other_cwl_files": ""
+        },
+        "Input": {
+            "Env": {},
+            "Input_files_data": {
+                "input_file": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-webdev-wfoutput",
+                    "path": "56b52219-32b9-40db-af38-80233c4717ec/4DNFICGOY5GV.pairs.gz",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": "",
+                    "mount": true
+                }
+            },
+            "Input_parameters": {},
+            "Secondary_files_data": {}
+        },
+        "JOBID": "Ffbc4BqvRYIq",
+        "Log": {
+            "log_bucket_directory": "tibanna-output"
+        },
+        "Output": {
+            "alt_cond_output_argnames": {},
+            "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput",
+            "output_target": {
+                "report": "6bd26c06-14ea-42ab-9922-63a07fd727ba/report443201463749"
+            },
+            "secondary_output_target": {}
+        },
+        "start_time": "20190907-01:27:54-UTC"
+    },
+    "config": {
+        "EBS_optimized": true,
+        "ami_id": "ami-0f06a8358d41c4b9c",
+        "behavior_on_capacity_limit": "fail",
+        "cloudwatch_dashboard": false,
+        "cpu": "",
+        "ebs_iops": 500,
+        "ebs_size": 10,
+        "ebs_type": "io1",
+        "email": false,
+        "instance_type": "t3.micro",
+        "job_tag": "md5",
+        "json_bucket": "tibanna-output",
+        "language": "cwl_v1",
+        "log_bucket": "tibanna-output",
+        "mem": 0,
+        "overwrite_input_extra": false,
+        "public_postrun_json": true,
+        "root_ebs_size": 8,
+        "run_name": "md5-30192d9d-4042-45a9-9dda-855cce39cca1",
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+        "shutdown_min": 30,
+        "spot_duration": "",
+        "spot_instance": false
+    }
+}

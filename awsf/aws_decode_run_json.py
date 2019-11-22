@@ -4,9 +4,11 @@ import sys
 import re
 
 downloadlist_filename = "download_command_list.txt"
+mountlist_filename = "mount_command_list.txt"
 input_yml_filename = "inputs.yml"
 env_filename = "env_command_list.txt"
 INPUT_DIR = "/data1/input"
+INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"
 
 
 def main():
@@ -24,6 +26,9 @@ def main():
     # create a download command list file from the information in json
     create_download_command_list(downloadlist_filename, d_input, language)
 
+    # create a bucket-mounting command list file
+    create_mount_command_list(mountlist_filename, d_input)
+
     # create an input yml file to be used on awsem
     if language == 'wdl':  # wdl
         create_input_for_wdl(input_yml_filename, d_input)
@@ -36,11 +41,24 @@ def main():
     create_env_def_file(env_filename, d, language)
 
 
+def create_mount_command_list(mountlist_filename, d_input):
+    buckets_to_be_mounted = dict()
+    for category in ["Input_files_data", "Secondary_files_data"]:
+        for inkey, v in d_input[category].iteritems():
+            if v.get("mount", False): 
+                buckets_to_be_mounted[v['dir']] = 1
+    with open(mountlist_filename, 'w') as f:
+        for b in buckets_to_be_mounted:
+            f.write("$GOOFYS_COMMAND %s %s\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+
+
 def create_download_command_list(downloadlist_filename, d_input, language):
     """create a download command list file from the information in json"""
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
             for inkey, v in d_input[category].iteritems():
+                if v.get("mount", False):  # do not download if it will be mounted
+                    continue
                 if inkey.startswith('file://'):
                     if language not in ['shell', 'snakemake']:
                         raise Exception('input file has to be defined with argument name for CWL and WDL')
@@ -93,15 +111,12 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
                        " else aws s3 cp --recursive s3://{0}/{1} {2} {3}; %s fi\n"
         cmd4 = ''
         cmd5 = ''
-            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
         if unzip == 'gz':
             cmd4 = "gunzip {2};"
             cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f;"
-            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; gunzip {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n"
 	elif unzip == 'bz2':
             cmd4 = "bzip2 -d {2};"
             cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f;"
-            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; bzip2 -d {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n"
         cmd = cmd_template % (cmd4, cmd5)
 	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
@@ -120,91 +135,91 @@ def file2wdlfile(filename, dir, unzip):
 
 # create an input yml file for cwl-runner
 def create_input_for_cwl(input_yml_filename, d_input):
-    with open(input_yml_filename, 'w') as f_yml:
-        inputs = d_input.copy()
-        yml = {}
-        for category in ["Input_parameters"]:
-            for item, value in inputs[category].iteritems():
-                yml[item] = value
-        for category in ["Input_files_data"]:
-            for item in inputs[category].keys():
-                v = inputs[category][item]
-                if 'dir' in v:
-                    del v['dir']
-                if 'profile' in v:
-                    del v['profile']
-                if 'rename' in v and v['rename']:
-                    if isinstance(v['rename'], list):
-                        v['path'] = v['rename'].copy()
+    inputs = d_input.copy()
+    yml = {}
+    for category in ["Input_parameters"]:
+        for item, value in inputs[category].iteritems():
+            yml[item] = value
+    for category in ["Input_files_data"]:
+        for item in inputs[category].keys():
+            v = inputs[category][item]
+            if 'dir' in v:
+                del v['dir']
+            if 'profile' in v:
+                del v['profile']
+            if 'rename' in v and v['rename']:
+                if isinstance(v['rename'], list):
+                    v['path'] = v['rename'].copy()
+                else:
+                    v['path'] = v['rename']
+                del v['rename']
+            if 'unzip' in v:
+                unzip = v['unzip']
+                del v['unzip']
+            else:
+                unzip = ''
+            if isinstance(v['path'], list):
+                v2 = []
+                for pi in v['path']:
+                    if isinstance(pi, list):
+                        nested = []
+                        for ppi in pi:
+                            if isinstance(ppi, list):
+                                nested.append([file2cwlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
+                            else:
+                                nested.append(file2cwlfile(ppi, INPUT_DIR, unzip))
+                        v2.append(nested)
                     else:
-                        v['path'] = v['rename']
-                    del v['rename']
-                if 'unzip' in v:
-                    unzip = v['unzip']
-                    del v['unzip']
-                else:
-                    unzip = ''
-                if isinstance(v['path'], list):
-                    v2 = []
-                    for pi in v['path']:
-                        if isinstance(pi, list):
-                            nested = []
-                            for ppi in pi:
-                                if isinstance(ppi, list):
-                                    nested.append([file2cwlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
-                                else:
-                                    nested.append(file2cwlfile(ppi, INPUT_DIR, unzip))
-                            v2.append(nested)
-                        else:
-                            v2.append(file2cwlfile(pi, INPUT_DIR, unzip))
-                    v = v2
-                    yml[item] = v
-                else:
-                    if unzip:
-                        v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                    v['path'] = INPUT_DIR + '/' + v['path']
-                    yml[item] = v.copy()
+                        v2.append(file2cwlfile(pi, INPUT_DIR, unzip))
+                v = v2
+                yml[item] = v
+            else:
+                if unzip:
+                    v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
+                v['path'] = INPUT_DIR + '/' + v['path']
+                yml[item] = v.copy()
+    with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
 def create_input_for_wdl(input_yml_filename, d_input):
-    with open(input_yml_filename, 'w') as f_yml:
-        inputs = d_input.copy()
-        yml = {}
-        for category in ["Input_parameters"]:
-            for item, value in inputs[category].iteritems():
-                yml[item] = value
-        for category in ["Input_files_data"]:
-            for item in inputs[category].keys():
-                v = inputs[category][item]
-                if 'rename' in v and v['rename']:
-                    if isinstance(v['rename'], list):
-                        v['path'] = list(v['rename'])
+    inputs = d_input.copy()
+    yml = {}
+    for category in ["Input_parameters"]:
+        for item, value in inputs[category].iteritems():
+            yml[item] = value
+    for category in ["Input_files_data"]:
+        for item in inputs[category].keys():
+            v = inputs[category][item]
+            if 'rename' in v and v['rename']:
+                if isinstance(v['rename'], list):
+                    v['path'] = list(v['rename'])
+                else:
+                    v['path'] = v['rename']
+                del v['rename']
+            if 'unzip' in v:
+                unzip = v['unzip']
+                del v['unzip']
+            else:
+                unzip = ''
+            if isinstance(v['path'], list):
+                yml[item] = []
+                for pi in v['path']:
+                    if isinstance(pi, list):
+                        nested = []
+                        for ppi in pi:
+                            if isinstance(ppi, list):
+                                nested.append([file2wdlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
+                            else:
+                                nested.append(file2wdlfile(ppi, INPUT_DIR, unzip))
+                        yml[item].append(nested)
                     else:
-                        v['path'] = v['rename']
-                    del v['rename']
-                if 'unzip' in v:
-                    unzip = v['unzip']
-                    del v['unzip']
-                else:
-                    unzip = ''
-                if isinstance(v['path'], list):
-                    yml[item] = []
-                    for pi in v['path']:
-                        if isinstance(pi, list):
-                            nested = []
-                            for ppi in pi:
-                                if isinstance(ppi, list):
-                                    nested.append([file2wdlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
-                                else:
-                                    nested.append(file2wdlfile(ppi, INPUT_DIR, unzip))
-                            yml[item].append(nested)
-                        else:
-                            yml[item].append(file2wdlfile(pi, INPUT_DIR, unzip))
-                else:
-                    if unzip:
-                        v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                    yml[item] = INPUT_DIR + '/' + v['path']
+                        yml[item].append(file2wdlfile(pi, INPUT_DIR, unzip))
+            else:
+                if unzip:
+                    v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
+                yml[item] = INPUT_DIR + '/' + v['path']
+    with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
