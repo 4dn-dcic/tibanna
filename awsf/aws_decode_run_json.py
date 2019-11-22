@@ -89,12 +89,20 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
-        if not unzip:
-            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
-        elif unzip == 'gz':
-            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; gunzip {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n"
+        cmd_template = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; %s" + \
+                       " else aws s3 cp --recursive s3://{0}/{1} {2} {3}; %s fi\n"
+        cmd4 = ''
+        cmd5 = ''
+            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; fi\n"
+        if unzip == 'gz':
+            cmd4 = "gunzip {2};"
+            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f;"
+            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; gunzip {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n"
 	elif unzip == 'bz2':
-            cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; bzip2 -d {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n"
+            cmd4 = "bzip2 -d {2};"
+            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f;"
+            # cmd = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; bzip2 -d {2}; else aws s3 cp --recursive s3://{0}/{1} {2} {3}; for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n"
+        cmd = cmd_template % (cmd4, cmd5)
 	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
@@ -240,4 +248,6 @@ def create_env_def_file(env_filename, d, language):
         f_env.write("export PRESERVED_ENV_OPTION=\"{}\"\n".format(env_preserv_str))
         f_env.write("export DOCKER_ENV_OPTION=\"{}\"\n".format(docker_env_str))
 
-main()
+
+if __name__ == '__main__':
+    main()
