@@ -242,8 +242,10 @@ md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum f
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
-exl ls -lhtr $LOCAL_OUTDIR/
-exl ls -lhtrR $EBS_DIR/
+exl ls -lhtrR $LOCAL_OUTDIR/
+exl ls -lhtr $EBS_DIR/
+exl ls -lhtrR $LOCAL_INPUT_DIR/
+exl ls -lhtrR $LOCAL_WFDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
