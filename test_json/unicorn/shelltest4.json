@@ -3,7 +3,7 @@
     "app_name": "shell-test",
     "input_parameters": {},
     "language": "shell",
-    "command": "$ECHO_COMMAND \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
+    "command": "\\$ECHO_COMMAND \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
     "container_image": "ubuntu:16.04",
     "output_target": {
       "file:///data1/out/shell-test-output": "s3://tibanna-output/shell-test-output"
