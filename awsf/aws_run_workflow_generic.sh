@@ -196,7 +196,9 @@ send_log
 exl df
 exl pwd
 exl ls -lh /
-exl ls -lhR $EBS_DIR
+exl ls -lh $EBS_DIR
+exl ls -lhR $LOCAL_INPUT_DIR
+exl ls -lhR $LOCAL_WFDIR
 send_log
 
 ### run command
