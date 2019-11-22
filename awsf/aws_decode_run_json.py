@@ -231,11 +231,13 @@ def create_env_def_file(env_filename, d, language):
         f_env.write("export OUTBUCKET={}\n".format(d["Job"]["Output"]["output_bucket_directory"]))
         f_env.write("export PUBLIC_POSTRUN_JSON={}\n".format('1' if d["config"].get('public_postrun_json', False) else '0'))
         env_preserv_str = ''
+        docker_env_str = ''
         if "Env" in d["Job"]["Input"]:
             for ev, val in d["Job"]["Input"]["Env"].iteritems():
-                f_env.write("{}={}\n".format(ev, val))
+                f_env.write("export {}={}\n".format(ev, val))
                 env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
+                docker_env_str = docker_env_str + "-e " + ev + " "
         f_env.write("export PRESERVED_ENV_OPTION=\"{}\"\n".format(env_preserv_str))
-
+        f_env.write("export DOCKER_ENV_OPTION=\"{}\"\n".format(docker_env_str))
 
 main()
