@@ -52,6 +52,7 @@ export LOCAL_WF_TMPDIR=$EBS_DIR/tmp
 export MD5FILE=$JOBID.md5sum.txt
 export INPUT_YML_FILE=inputs.yml
 export DOWNLOAD_COMMAND_FILE=download_command_list.txt
+export MOUNT_COMMAND_FILE=mount_command_list.txt
 export ENV_FILE=env_command_list.txt
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
@@ -173,7 +174,7 @@ cd $cwd0
 exl curl -O -L http://bit.ly/goofys-latest
 exl chmod +x goofys-latest
 exl echo "user_allow_other" >> /etc/fuse.conf
-export GOOFY_COMMAND='./goofys-latest -o allow_other -o nonempty'
+export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
@@ -182,6 +183,14 @@ exle source $DOWNLOAD_COMMAND_FILE
 exl date
 exl ls
 send_log 
+
+### mount input buckets
+exl cat $MOUNT_COMMAND_FILE
+exl date
+exle source $MOUNT_COMMAND_FILE
+exl date
+exl ls
+send_log
 
 ### just some more logging
 exl df
