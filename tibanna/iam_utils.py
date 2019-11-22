@@ -364,7 +364,7 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
     for pn in [cloudwatch_metric_policy_name, cloudwatch_policy_name, bucket_policy_name,
-               ec2_desc_policy_name]:
+               ec2_desc_policy_name, termination_policy_name]:
         response = role_lambda_run.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
         )
