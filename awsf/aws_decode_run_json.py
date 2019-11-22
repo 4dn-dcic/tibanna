@@ -7,8 +7,8 @@ downloadlist_filename = "download_command_list.txt"
 mountlist_filename = "mount_command_list.txt"
 input_yml_filename = "inputs.yml"
 env_filename = "env_command_list.txt"
-INPUT_DIR = "/data1/input"
-INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"
+INPUT_DIR = "/data1/input"  # data are downloaded to this directory
+INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
 
 
 def main():
@@ -143,8 +143,13 @@ def create_input_for_cwl(input_yml_filename, d_input):
     for category in ["Input_files_data"]:
         for item in inputs[category].keys():
             v = inputs[category][item]
-            if 'dir' in v:
-                del v['dir']
+            if v.get('mount', False):
+                input_dir = INPUT_MOUNT_DIR_PREFIX + v['dir']
+            else:
+                input_dir = INPUT_DIR
+            if 'mount' in v:
+                del v['mount']
+            del v['dir']
             if 'profile' in v:
                 del v['profile']
             if 'rename' in v and v['rename']:
@@ -165,18 +170,18 @@ def create_input_for_cwl(input_yml_filename, d_input):
                         nested = []
                         for ppi in pi:
                             if isinstance(ppi, list):
-                                nested.append([file2cwlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
+                                nested.append([file2cwlfile(pppi, input_dir, unzip) for pppi in ppi])
                             else:
-                                nested.append(file2cwlfile(ppi, INPUT_DIR, unzip))
+                                nested.append(file2cwlfile(ppi, input_dir, unzip))
                         v2.append(nested)
                     else:
-                        v2.append(file2cwlfile(pi, INPUT_DIR, unzip))
+                        v2.append(file2cwlfile(pi, input_dir, unzip))
                 v = v2
                 yml[item] = v
             else:
                 if unzip:
                     v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                v['path'] = INPUT_DIR + '/' + v['path']
+                v['path'] = input_dir + '/' + v['path']
                 yml[item] = v.copy()
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
@@ -191,6 +196,12 @@ def create_input_for_wdl(input_yml_filename, d_input):
     for category in ["Input_files_data"]:
         for item in inputs[category].keys():
             v = inputs[category][item]
+            if v.get('mount', False):
+                input_dir = INPUT_MOUNT_DIR_PREFIX + v['dir']
+            else:
+                input_dir = INPUT_DIR
+            if 'mount' in v:
+                del v['mount']
             if 'rename' in v and v['rename']:
                 if isinstance(v['rename'], list):
                     v['path'] = list(v['rename'])
@@ -209,16 +220,16 @@ def create_input_for_wdl(input_yml_filename, d_input):
                         nested = []
                         for ppi in pi:
                             if isinstance(ppi, list):
-                                nested.append([file2wdlfile(pppi, INPUT_DIR, unzip) for pppi in ppi])
+                                nested.append([file2wdlfile(pppi, input_dir, unzip) for pppi in ppi])
                             else:
-                                nested.append(file2wdlfile(ppi, INPUT_DIR, unzip))
+                                nested.append(file2wdlfile(ppi, input_dir, unzip))
                         yml[item].append(nested)
                     else:
-                        yml[item].append(file2wdlfile(pi, INPUT_DIR, unzip))
+                        yml[item].append(file2wdlfile(pi, input_dir, unzip))
             else:
                 if unzip:
                     v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                yml[item] = INPUT_DIR + '/' + v['path']
+                yml[item] = input_dir + '/' + v['path']
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
