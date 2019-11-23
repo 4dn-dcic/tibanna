@@ -588,7 +588,9 @@ class Execution(object):
                                                              'path': value.get('object_key'),
                                                              'rename': value.get('rename'),
                                                              'profile': value.get('profile', ''),
-                                                             'unzip': value.get('unzip', '')}
+                                                             'unzip': value.get('unzip', ''),
+                                                             'mount': value.get('mount', '')}
+    
         for item, value in iter(args.secondary_files.items()):
             if value.get('unzip', '') not in ['gz', 'bz2', '']:
                 raise MalFormattedInputJsonException("unzip field must be gz, bz2 or ''")
@@ -597,7 +599,8 @@ class Execution(object):
                                                                  'path': value.get('object_key'),
                                                                  'rename': value.get('rename'),
                                                                  'profile': value.get('profile', ''),
-                                                                 'unzip': value.get('unzip', '')}
+                                                                 'unzip': value.get('unzip', ''),
+                                                                 'mount': value.get('mount', '')}
         # remove the password and keyname info
         if 'password' in pre['config']:
             del(pre['config']['password'])

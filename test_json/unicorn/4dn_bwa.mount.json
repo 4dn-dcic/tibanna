@@ -1,0 +1,63 @@
+{
+  "config": {
+    "ebs_size": 30,
+    "ebs_type": "io1",
+    "ebs_iops": 500,
+    "log_bucket": "tibanna-output",
+    "key_name": "",
+    "run_name": "bwa-mem_d07f0f7b-6b82-4396-aa58-596cf56f4c99",
+    "overwrite_input_extra": false,
+    "public_postrun_json": true,
+    "email": false
+  },
+  "_tibanna": {
+    "run_id": "d07f0f7b-6b82-4396-aa58-596cf56f4c99",
+    "env": "fourfront-webdev",
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:bwa-mem_d07f0f7b-6b82-4396-aa58-596cf56f4c99",
+    "run_type": "bwa-mem",
+    "run_name": "bwa-mem_d07f0f7b-6b82-4396-aa58-596cf56f4c99",
+    "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_pony_dev:bwa-mem_d07f0f7b-6b82-4396-aa58-596cf56f4c99"
+  },
+  "args": {
+    "app_name": "bwa-mem",
+    "app_version": "0.2.0",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.0/cwl_awsem/",
+    "cwl_main_filename": "bwa-mem.cwl",
+    "cwl_child_filenames": [],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": "",
+    "cwl_version": "draft3",
+    "input_parameters": {
+      "nThreads": 4
+    },
+    "additional_benchmarking_parameters": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-webdev-wfoutput",
+    "output_target": {
+      "out_bam": "17a279ba-5dad-4813-a06d-3c93185c8603/4DNFIVXSGA6C.bam"
+    },
+    "secondary_output_target": {},
+    "input_files": {
+      "bwa_index": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "unzip": "",
+        "object_key": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz",
+        "mount": true
+      },
+      "fastq1": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "unzip": "",
+        "object_key": "1150b428-272b-4a0c-b3e6-4b405c148f7c/4DNFIVOZN511.fastq.gz"
+      },
+      "fastq2": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "rename": "",
+        "unzip": "",
+        "object_key": "f4864029-a8ad-4bb8-93e7-5108f462ccaa/4DNFIRSRJH45.fastq.gz"
+      }
+    },
+    "secondary_files": {}
+  }
+}

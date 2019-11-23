@@ -355,6 +355,7 @@ def create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
 def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
                                      cloudwatch_metric_policy_name,
+                                     ec2_desc_policy_name, termination_policy_name,
                                      check_task_lambda_name='check_task_awsem',
                                      verbose=False):
     client = iam.meta.client
@@ -362,7 +363,8 @@ def create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
     role_policy_doc_lambda = generate_assume_role_policy_document('lambda')
     create_role_robust(client, lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
     role_lambda_run = iam.Role(lambda_check_role_name)
-    for pn in [cloudwatch_metric_policy_name, cloudwatch_policy_name, bucket_policy_name]:
+    for pn in [cloudwatch_metric_policy_name, cloudwatch_policy_name, bucket_policy_name,
+               ec2_desc_policy_name, termination_policy_name]:
         response = role_lambda_run.attach_policy(
             PolicyArn='arn:aws:iam::' + account_id + ':policy/' + pn
         )
@@ -548,6 +550,7 @@ def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbos
     create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
                                      cloudwatch_policy_name, bucket_policy_name,
                                      cloudwatch_metric_policy_name,
+                                     ec2_desc_policy_name, termination_policy_name,
                                      check_task_lambda_name=check_task_lambda_name)
     create_empty_role_for_lambda(iam)
     # role for step function
