@@ -1,0 +1,24 @@
+{
+  "args": {
+    "container_image": "duplexa/md5:v2",
+    "command": ["run.sh input.gz"],
+    "language": "shell",
+    "input_files": {
+      "file:///data1/shell/input.gz": "s3://my-tibanna-test-input-bucket/somefastqfile.fastq.gz"
+    },
+    "secondary_files": {},
+    "input_parameters": {},
+    "output_S3_bucket": "my-tibanna-test-bucket",
+    "output_target": {
+      "file:///data1/shell/report": "some_sub_dirname/my_first_md5_report"
+    },
+    "secondary_output_target": {}
+  },
+  "config": {
+    "ebs_size": 10,
+    "instance_type": "t2.micro",
+    "EBS_optimized": false,
+    "password": "whateverpasswordworks",
+    "log_bucket": "my-tibanna-test-bucket"
+  }
+}

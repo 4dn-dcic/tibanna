@@ -22,9 +22,9 @@ What do I need to run pipelines using Tibanna?
 Pipeline
 ++++++++
 
-- Your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/).
 - The commands to run your pipeline must be written in either Common Workflow Language (CWL_) (recommended), Workflow Description Language (WDL_) (only basic support), Snakemake_ or a list of shell commands.
 - The pipelines may be local CWL/WDL/Snakemake files or they should be downloadable from public urls. 
+- With the exception of Snakemake, your pipeline and dependencies must be pre-installed as a Docker image (https://www.docker.com/). For Snakemake, conda can be used instead.
 
 .. _CWL: https://www.commonwl.org/
 .. _WDL: https://software.broadinstitute.org/wdl/

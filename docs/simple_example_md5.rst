@@ -172,6 +172,17 @@ WDL
     The pipeline is ready!
 
 
+Shell
+#####
+
+    A list of shell commands can also be used. It could be something like this. A shell command doesn't have to be written in a file. The command itself can be passed to Tibanna as part of the job description json.
+
+
+    ::
+
+        run.sh input.gz
+
+
 
 Job description
 +++++++++++++++
@@ -210,15 +221,10 @@ Job description for CWL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
             "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": 30,
             "instance_type": "t2.micro",
-            "ebs_type": "io1",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         }
     
@@ -261,15 +267,10 @@ Job description for WDL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
             "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": 30,
             "instance_type": "t2.micro",
-            "ebs_type": "io1",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         }
     
@@ -277,6 +278,46 @@ Job description for WDL
     The json file specifies the input with ``md5.md5_step.gzfile``, matching the name in WDL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the WDL file with ``wdl_filename`` and its url with ``wdl_directory_url``. Note that the file name itself is not included in the url).
     
     The config field is identical to the CWL input json. In ``config``, we specify that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
+
+
+
+Job description for shell
+#########################
+
+    The job description for running shell commands requires ``command`` and ``container_image`` fields. The former is a list of commands and the latter is the Docker image name.
+
+    The current working directory for running shell commands is ``/data1/shell`` and it can be requested that input files be copied from S3 to this directory.
+
+    In the following example, input file ``s3://my-tibanna-test-input-bucket/somefastqfile.fastq.gz`` is copied to ``/data1/shell`` as ``input.gz`` which matches the input file in the ``command`` field (``run.sh input.gz``). The output file ``report`` in the same directory is copied to the output bucket ``my-tibanna-test-bucket`` as ``some_sub_dirname/my_first_md5_report``.
+
+
+    ::
+    
+        {
+          "args": {
+            "container_image": "duplexa/md5:v2",
+            "command": ["run.sh input.gz"],
+            "language": "shell",
+            "input_files": {
+              "file:///data1/shell/input.gz": "s3://my-tibanna-test-input-bucket/somefastqfile.fastq.gz"
+            },
+            "secondary_files": {},
+            "input_parameters": {},
+            "output_S3_bucket": "my-tibanna-test-bucket",
+            "output_target": {
+              "file:///data1/shell/report": "some_sub_dirname/my_first_md5_report"
+            },
+            "secondary_output_target": {}
+          },
+          "config": {
+            "ebs_size": 10,
+            "instance_type": "t2.micro",
+            "EBS_optimized": false,
+            "password": "whateverpasswordworks",
+            "log_bucket": "my-tibanna-test-bucket"
+          }
+        }
+
 
 
 Tibanna run
@@ -317,7 +358,15 @@ To run Tibanna,
     
         cd tibanna
         tibanna run_workflow --input-json=examples/md5/md5_wdl_input.json
-    
+
+
+    or for shell,
+
+    ::
+
+        cd tibanna
+        tibanna run_workflow --input-json=examples/md5/md5_shell_input.json    
+
 
 6. Check status
 
