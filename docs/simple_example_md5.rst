@@ -175,13 +175,15 @@ WDL
 Shell
 #####
 
-    A list of shell commands can also be used. It could be something like this. A shell command doesn't have to be written in a file. The command itself can be passed to Tibanna as part of the job description json.
+    A list of shell commands can also be used. It could be something like this.
 
 
     ::
 
         run.sh input.gz
 
+
+    A shell command doesn't have to be written in a file. The command itself can be passed to Tibanna as part of the job description json.
 
 
 Job description
