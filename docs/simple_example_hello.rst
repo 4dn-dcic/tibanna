@@ -13,6 +13,8 @@ The job description for running shell commands requires ``command`` and ``contai
 
 In the following example, the output file ``hello.txt`` in the same directory is copied to the output bucket ``my-tibanna-test-bucket`` as ``some_sub_dirname/my_first_hello.txt``.
 
+This json can be found at https://github.com/4dn-dcic/tibanna/blob/master/examples/hello/hello_shell_input.json
+
 
     ::
     

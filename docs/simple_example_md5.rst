@@ -293,6 +293,9 @@ Job description for shell
     In the following example, input file ``s3://my-tibanna-test-input-bucket/somefastqfile.fastq.gz`` is copied to ``/data1/shell`` as ``input.gz`` which matches the input file in the ``command`` field (``run.sh input.gz``). The output file ``report`` in the same directory is copied to the output bucket ``my-tibanna-test-bucket`` as ``some_sub_dirname/my_first_md5_report``.
 
 
+    This json file can be found at https://github.com/4dn-dcic/tibanna/blob/master/examples/md5/md5_shell_input.json
+
+
     ::
     
         {
