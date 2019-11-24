@@ -76,8 +76,25 @@ To run Tibanna,
 
 6. Check status
 
-::
+    ::
 
-    tibanna stat
+        tibanna stat
+
+
+7. Check output file
+
+
+    Let's try downloading the output file to check the content.
+
+    ::
+
+        aws s3 cp s3://my-tibanna-test-bucket/some_sub_dirname/my_first_hello.txt .
+
+
+    The output would look as below.
+
+    ::
+
+        Hello world, Soo!
 
 
