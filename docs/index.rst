@@ -87,7 +87,6 @@ Contents:
    api
    execution_json
    monitoring
-   collecting_metrics
    cwl
    wdl
    snakemake

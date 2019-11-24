@@ -268,8 +268,7 @@ class Config(SerializableObject):
             self.spot_instance = False
         if not hasattr(self, "behavior_on_capacity_limit"):
             self.behavior_on_capacity_limit = 'fail'
-        if not hasattr(self, 'cloudwatch_dashboard'):
-            self.cloudwatch_dashboard = False
+        self.cloudwatch_dashboard = False  # now this is always false
         # postrun json should be made public?
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
@@ -590,7 +589,7 @@ class Execution(object):
                                                              'profile': value.get('profile', ''),
                                                              'unzip': value.get('unzip', ''),
                                                              'mount': value.get('mount', '')}
-    
+
         for item, value in iter(args.secondary_files.items()):
             if value.get('unzip', '') not in ['gz', 'bz2', '']:
                 raise MalFormattedInputJsonException("unzip field must be gz, bz2 or ''")

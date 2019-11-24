@@ -398,6 +398,7 @@ Cloudwatch dashboard option is now disabled and replaced by the resource metric 
 
 
 
+
 .. toctree::
    :hidden:
 
@@ -405,6 +406,7 @@ Cloudwatch dashboard option is now disabled and replaced by the resource metric 
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    collecting_metrics
+
