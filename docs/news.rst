@@ -14,6 +14,12 @@ Version updates
 +++++++++++++++
 
 
+  For more recent version updates, check out Tibanna releases_
+
+
+.. _releases: https://github.com/4dn-dcic/tibanna/releases
+
+
   **Sep 16, 2019** The latest version is now 0.9.1_.
 
     - A new functionality of generating a resource metrics report html is now added! This report includes a graph of CPU/Memory/disk space utilization and usage at 1min interval, as well as a table of summary metrics.

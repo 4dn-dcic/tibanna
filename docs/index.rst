@@ -90,6 +90,7 @@ Contents:
    collecting_metrics
    cwl
    wdl
+   snakemake
    ami
    4dn_pipelines
    how_it_works
