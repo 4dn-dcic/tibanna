@@ -91,7 +91,7 @@ To run Tibanna,
         aws s3 cp s3://my-tibanna-test-bucket/some_sub_dirname/my_first_hello.txt .
 
 
-    The output would look as below.
+    The output file ``my_first_hello.txt`` would look as below.
 
     ::
 
