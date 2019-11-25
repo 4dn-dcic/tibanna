@@ -129,6 +129,18 @@ def test_args_parse_input_files_format_error2():
     assert 'bucket' in str(ex.value)
 
 
+def test_args_input_files_w_mount():
+    input_dict = {'args': {'input_files': {
+                               "file1": {"bucket_name": "a", "object_key": "b", "mount": True}
+                           },
+                           'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'main.cwl',
+                           'cwl_directory_url': 'someurl',
+                           'app_name': 'someapp'}}
+    args = Args(**input_dict['args'])
+    assert args.input_files['file1']['mount']
+
+
 def test_parse_command():
     input_dict = {'args': {'command': ['command1', 'command2', 'command3'],
                            'output_S3_bucket': 'somebucket',
