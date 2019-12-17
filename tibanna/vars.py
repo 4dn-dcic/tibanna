@@ -1,5 +1,12 @@
 import os
 import boto3
+import sys
+
+
+if boto3.session.Session().get_credentials() is None:
+    print('Please provide AWS credentials.')
+    sys.exit(-1)
+
 
 # AWS account info
 AWS_ACCOUNT_NUMBER = os.environ.get('AWS_ACCOUNT_NUMBER', '')
@@ -7,7 +14,7 @@ if not AWS_ACCOUNT_NUMBER:
     try:
         AWS_ACCOUNT_NUMBER = boto3.client('sts').get_caller_identity().get('Account')
     except Exception as e:
-        raise Exception("Cannot find AWS_ACCOUNT_NUMBER: %s" % e)
+        raise Exception("Cannot obtain AWS account number. Please provide AWS credentials")
 
 AWS_REGION = os.environ.get('TIBANNA_AWS_REGION', '')
 if not AWS_REGION:
