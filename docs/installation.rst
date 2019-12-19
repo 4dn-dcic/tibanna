@@ -144,6 +144,15 @@ If you're using a forked Tibanna repo or want to use a specific branch, set the 
     export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: master)
 
 
+If you're using an external bucket with a separate credential, you can give the permission to this bucket to tibanna unicorn during deployment by setting the following additional environment variables before deploying. This credential will be added as profile ``user1`` on the EC2 instances to run. This profile name can be added to input file specifications for the files that require this external credential. For most cases, this part can be ignored.
+
+::
+
+    # only if you're using an external bucket with a separate credential
+    export TIBANNA_PROFILE_ACCESS_KEY=<external_profile_access_key>
+    export TIBANNA_PROFILE_SECRET_KEY=<external_profile_secret_key>
+
+
 Then, deploy a copy of Tibanna as below.
 
 If you want to operate multiple copies of Tibanna (e.g. for different projects), you can try to name each copy of Tibanna using ``--usergroup`` option (by default the name is ``default_<random_number>``).
