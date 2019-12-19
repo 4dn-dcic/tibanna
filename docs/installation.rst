@@ -133,6 +133,8 @@ Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and
 Deploying Tibanna Unicorn to AWS
 --------------------------------
 
+*Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
+
 If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
 
 ::
@@ -180,7 +182,7 @@ To set this environmental variable,
     source ~/.bashrc
 
 
-You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group.
+You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group. The following command launches a workflow run. See below for what to feed as input json, which contains information about what buckets to use, where to find the workflow CWL/WDL or what command to run inside a docker container, what the output file names should be, etc.
 
 ::
 
