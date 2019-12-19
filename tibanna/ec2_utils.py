@@ -399,7 +399,10 @@ class Execution(object):
         if not hasattr(self, 'input_size_in_bytes'):
             raise Exception("Cannot calculate total input size " +
                             "- run get_input_size_in_bytes() first")
-        return B2GB(sum([sum(flatten([v])) for s, v in self.input_size_in_bytes.items()]))
+        try:
+            return B2GB(sum([sum(flatten([v])) for s, v in self.input_size_in_bytes.items()]))
+        except:
+            return None
 
     def auto_calculate_ebs_size(self):
         """if ebs_size is in the format of e.g. '3x', it updates the size
@@ -407,6 +410,10 @@ class Execution(object):
         keep 10GB"""
         if isinstance(self.cfg.ebs_size, str) and self.cfg.ebs_size.endswith('x'):
             multiplier = float(self.cfg.ebs_size.rstrip('x'))
+            if not self.total_input_size_in_gb:
+                raise Exception("Cannot calculate ebs size - input size unavailable," +
+                                "possibly because the lambda does not have permission to input files." +
+                                "Specify the actual GB when input file size is unavailable")
             self.cfg.ebs_size = multiplier * self.total_input_size_in_gb
             if round(self.cfg.ebs_size) < self.cfg.ebs_size:
                 self.cfg.ebs_size = round(self.cfg.ebs_size) + 1
@@ -725,7 +732,7 @@ class Execution(object):
     def add_instance_id_to_dynamodb(self):
         dd = boto3.client('dynamodb')
         try:
-            ddres = dd.update_item(
+            dd.update_item(
                 TableName=DYNAMODB_TABLE,
                 Key={
                     'Job Id': {
@@ -933,8 +940,10 @@ def get_file_size(key, bucket, size_in_gb=False):
             printlog("trying to get total size of the prefix")
             for item in get_all_objects_in_prefix(bucket, key):
                 size += item['Size']
-        except Exception as e:
-            raise Exception("key not found: Can't get input file size : %s\n%s" % (key, str(e)))
+        except:
+            return None  # do not throw an error here - if lambda doens't have s3 access, pass.
+            # s3 bucket access permissions may be quite complex - e.g. some buckets may work only
+            # on EC2 instance, which means a lambda would not be able to get the file size.
     else:
         size = meta['ContentLength']
     one_gb = 1073741824
