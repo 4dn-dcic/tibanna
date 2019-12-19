@@ -108,7 +108,7 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
-        cmd_template = "if [[ -z $(aws s3 ls s3://{0}/{1}/) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; %s" + \
+        cmd_template = "if [[ -z $(aws s3 ls s3://{0}/{1}/ {3}) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; %s" + \
                        " else aws s3 cp --recursive s3://{0}/{1} {2} {3}; %s fi\n"
         cmd4 = ''
         cmd5 = ''
