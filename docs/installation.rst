@@ -229,6 +229,9 @@ First, create the input json file ``my_test_tibanna_input.json`` as below.
 Deploying Tibanna Unicorn with private buckets
 ----------------------------------------------
 
+*Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
+
+
 Creating a bucket
 +++++++++++++++++
 
