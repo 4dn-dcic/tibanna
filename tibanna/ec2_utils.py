@@ -253,7 +253,7 @@ class Config(SerializableObject):
     def fill_default(self):
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
-                      'spot_duration']:
+                      'spot_duration', 'availability_zone']:
             if not hasattr(self, field):
                 setattr(self, field, '')
         if not hasattr(self, "mem"):
@@ -698,6 +698,8 @@ class Execution(object):
                 spot_options['BlockDurationMinutes'] = self.cfg.spot_duration
             largs.update({'InstanceMarketOptions': {'MarketType': 'spot',
                                                     'SpotOptions': spot_options}})
+        if self.cfg.availability_zone:
+            largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
