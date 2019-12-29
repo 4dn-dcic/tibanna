@@ -698,8 +698,8 @@ class Execution(object):
                 spot_options['BlockDurationMinutes'] = self.cfg.spot_duration
             largs.update({'InstanceMarketOptions': {'MarketType': 'spot',
                                                     'SpotOptions': spot_options}})
-        if self.availability_zone:
-            largs.update({'Placement': {'AvailabilityZone': self.availability_zone}})
+        if self.cfg.availability_zone:
+            largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
