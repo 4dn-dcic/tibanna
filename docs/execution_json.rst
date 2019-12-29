@@ -488,3 +488,7 @@ The ``config`` field describes execution configuration.
       - ``retry_without_spot`` (try with the same instance type but not a spot instance) : this option is applicable only when
         ``spot_instance`` is set to ```True``
 
+:availability_zone:
+      - specify availability zone (by default, availability zone is randomly selected within region by AWS)
+      - e.g. ``us-east-1a``
+      - optional (no default)
