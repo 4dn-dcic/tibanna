@@ -1,4 +1,4 @@
 urllib3>=1.24
-Benchmark-4dn==0.5.8
+Benchmark-4dn>=0.5.8
 boto3>=1.9.0
 botocore>=1.12.1
