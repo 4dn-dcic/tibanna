@@ -15,6 +15,12 @@ class StepFunctionUnicorn(object):
             "IntervalSeconds": 600,
             "MaxAttempts": 1008,  # 1 wk
             "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": [ "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 60,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
         }
     ]
     sfn_check_task_retry_conditions = [
@@ -29,6 +35,12 @@ class StepFunctionUnicorn(object):
             "IntervalSeconds": 300,
             "MaxAttempts": 100000,
             "BackoffRate": 1.0
+        },
+        {
+            "ErrorEquals": [ "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
+            "IntervalSeconds": 60,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
         }
     ]
 

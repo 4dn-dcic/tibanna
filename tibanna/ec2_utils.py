@@ -626,9 +626,9 @@ class Execution(object):
         except Exception as e:
             raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
         try:
-            res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
-        except Exception:
-            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
+            s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
+        except Exception as e:
+            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(e)))
 
     def create_userdata(self, profile=None):
         """Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
