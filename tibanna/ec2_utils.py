@@ -356,7 +356,7 @@ class Execution(object):
                                             'EBS_optimized': False})
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
-            list0 = get_instance_types(self.cfg.mem, self.cfg.cpu, instance_list(exclude_t=False))
+            list0 = get_instance_types(self.cfg.cpu, self.cfg.mem, instance_list(exclude_t=False))
             nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
             instance_type_dlist.extend(nonredundant_list)
         # user specifically wanted EBS_optimized instances
