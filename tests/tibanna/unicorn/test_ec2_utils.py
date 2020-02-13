@@ -724,6 +724,26 @@ def test_ec2_exception_coordinator8():
     assert execution.cfg.instance_type == 't3.small'  # skill t2.micro since it was already tried
 
 
+def test_ec2_exception_coordinator9():
+    """ec2 exceptions with 'other_instance_types' with both instance_type and mem/cpu
+    specified"""
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket,
+                             'mem': 2, 'cpu': 1,
+                             'behavior_on_capacity_limit': 'other_instance_types'},
+                  'jobid': jobid}
+    execution = Execution(input_dict, dryrun=True)
+    assert execution.cfg.instance_type == 't3.small'
+    execution.userdata = execution.create_userdata()
+    res = execution.ec2_exception_coordinator(fun)()
+    assert res == 'continue'
+    assert execution.cfg.instance_type == 't2.small'
+
+
 def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     jobid = create_jobid()
     run_task_awsem_event_cwl_upload['jobid'] = jobid
