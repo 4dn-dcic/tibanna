@@ -45,6 +45,7 @@ class TibannaResource(object):
         max_cpu_utilization_percent_chunks = []
         max_disk_space_utilization_percent_chunks = []
         max_disk_space_used_GB_chunks = []
+        max_ebs_read_chunks = []
         for i in range(0, nTimeChunks):
             self.starttime = self.starttimes[i]
             self.endtime = self.endtimes[i]
@@ -53,6 +54,7 @@ class TibannaResource(object):
             max_cpu_utilization_percent_chunks.append(self.max_cpu_utilization())
             max_disk_space_utilization_percent_chunks.append(self.max_disk_space_utilization())
             max_disk_space_used_GB_chunks.append(self.max_disk_space_used())
+            max_ebs_read_chunks.append(self.max_ebs_read())
         self.max_mem_used_MB = self.choose_max(max_mem_used_MB_chunks)
         self.min_mem_available_MB = self.choose_min(min_mem_available_MB_chunks)
         if self.max_mem_used_MB:
@@ -64,6 +66,8 @@ class TibannaResource(object):
         self.max_cpu_utilization_percent = self.choose_max(max_cpu_utilization_percent_chunks)
         self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
         self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
+        # this following one is used to detect file copying while CPU utilization is near zero
+        self.max_ebs_read_bytes = self.choose_max(max_ebs_read_chunks)
 
     def plot_metrics(self, instance_type, directory='.'):
         """plot full metrics across all time chunks.
@@ -172,6 +176,9 @@ class TibannaResource(object):
     def max_disk_space_used(self):
         return(self.get_max(self.max_disk_space_used_all_pts()))
 
+    def max_ebs_read(self):
+        return(self.get_max(self.max_ebs_read_used_all_pts()))
+
     # functions that returns all points
     def max_memory_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
@@ -271,6 +278,22 @@ class TibannaResource(object):
             Unit='Gigabytes'
         )
         pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        return[p[0] for p in sorted(pts, key=lambda x: x[1])]
+
+    def max_ebs_read_used_all_pts(self):
+        res = self.client.get_metric_statistics(
+            Namespace='AWS/EC2',
+            MetricName='EBSReadBytes',
+            Dimensions=[{
+                'Name': 'InstanceId', 'Value': self.instance_id
+            }],
+            Period=60*5,
+            Statistics=['Average'],
+            StartTime=self.starttime,
+            EndTime=self.endtime,
+            Unit='Bytes'
+        )
+        pts = [(r['Average'], r['Timestamp']) for r in res['Datapoints']]
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     # functions to create reports and html
