@@ -244,13 +244,24 @@ class API(object):
         except Exception as e:
             raise(e)
 
-    def check_status(self, exec_arn):
+    def check_status(self, exec_arn=None, job_id=None):
         '''checking status of an execution'''
+        if not exec_arn and job_id:
+            exec_arn = self.get_info_from_dd(job_id).get['exec_arn']
+            if not exec_arn:
+                raise Exception("Can't find exec_arn from the job_id") 
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
         return sts.describe_execution(executionArn=exec_arn)['status']
 
-    def check_output(self, exec_arn):
+    def check_output(self, exec_arn=None, job_id=None):
         '''checking status of an execution first and if it's success, get output'''
+        if not exec_arn and job_id:
+            ddinfo = self.get_info_from_dd(job_id)
+            if not ddinfo:
+                raise Exception("Can't find exec_arn from the job_id")
+            exec_arn = ddinfo.get('exec_arn', '')
+            if not exec_arn:
+                raise Exception("Can't find exec_arn from the job_id")
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
         if self.check_status(exec_arn) == 'SUCCEEDED':
             desc = sts.describe_execution(executionArn=exec_arn)
@@ -258,6 +269,39 @@ class API(object):
                 return json.loads(desc['output'])
             else:
                 return None
+
+    def get_info_from_dd(self, job_id):
+        ddres = dict()
+        try:
+            dd = boto3.client('dynamodb')
+            ddres = dd.query(TableName=DYNAMODB_TABLE,
+                             KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                       'ComparisonOperator': 'EQ'}})
+        except:
+            return None
+        if 'Items' in ddres:
+            try:
+                dditem = ddres['Items'][0]
+                exec_name = dditem['Execution Name']['S']
+                sfn = dditem['Step Function']['S']
+                exec_arn = EXECUTION_ARN(exec_name, sfn)
+                if 'instance_id' in dditem:
+                    instance_id = dditem['instance_iD']['S']
+                else:
+                    instance_id = ''
+                if 'Log Bucket' in dditem:
+                    logbucket = dditem['Log Bucket']['S']
+                else:
+                    logbucket = ''
+                return {'exec_name': exec_name,
+                        'exec_arn': exec_arn,
+                        'step_function': sfn,
+                        'instance_id': instance_id,
+                        'log_bucket': logbucket}
+            except:
+                return None
+        else:
+            return None
 
     def kill(self, exec_arn=None, job_id=None, sfn=None):
         sf = boto3.client('stepfunctions')
