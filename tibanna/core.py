@@ -249,7 +249,7 @@ class API(object):
         if not exec_arn and job_id:
             exec_arn = self.get_info_from_dd(job_id).get['exec_arn']
             if not exec_arn:
-                raise Exception("Can't find exec_arn from the job_id") 
+                raise Exception("Can't find exec_arn from the job_id")
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
         return sts.describe_execution(executionArn=exec_arn)['status']
 
@@ -270,7 +270,7 @@ class API(object):
             else:
                 return None
 
-    def get_info_from_dd(self, job_id):
+    def get_info_from_dd(job_id):
         ddres = dict()
         try:
             dd = boto3.client('dynamodb')
