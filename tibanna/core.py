@@ -273,7 +273,7 @@ class API(object):
             else:
                 return None
 
-    def get_info_from_dd(job_id):
+    def get_info_from_dd(self, job_id):
         ddres = dict()
         try:
             dd = boto3.client('dynamodb')
