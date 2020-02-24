@@ -247,7 +247,10 @@ class API(object):
     def check_status(self, exec_arn=None, job_id=None):
         '''checking status of an execution'''
         if not exec_arn and job_id:
-            exec_arn = self.get_info_from_dd(job_id).get['exec_arn']
+            ddinfo = self.get_info_from_dd(job_id)
+            if not ddinfo:
+                raise Exception("Can't find exec_arn from the job_id")
+            exec_arn = ddinfo.get('exec_arn', '')
             if not exec_arn:
                 raise Exception("Can't find exec_arn from the job_id")
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
