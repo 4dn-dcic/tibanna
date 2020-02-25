@@ -245,9 +245,10 @@ class API(object):
             raise(e)
 
     def check_status(self, exec_arn=None, job_id=None):
-        '''checking status of an execution'''
+        '''checking status of an execution.
+        It works only if the execution info is still in the step function.'''
         if not exec_arn and job_id:
-            ddinfo = self.get_info_from_dd(job_id)
+            ddinfo = self.info(job_id)
             if not ddinfo:
                 raise Exception("Can't find exec_arn from the job_id")
             exec_arn = ddinfo.get('exec_arn', '')
@@ -257,9 +258,10 @@ class API(object):
         return sts.describe_execution(executionArn=exec_arn)['status']
 
     def check_output(self, exec_arn=None, job_id=None):
-        '''checking status of an execution first and if it's success, get output'''
+        '''checking status of an execution first and if it's success, get output.
+        It works only if the execution info is still in the step function.'''
         if not exec_arn and job_id:
-            ddinfo = self.get_info_from_dd(job_id)
+            ddinfo = self.info(job_id)
             if not ddinfo:
                 raise Exception("Can't find exec_arn from the job_id")
             exec_arn = ddinfo.get('exec_arn', '')
@@ -273,14 +275,27 @@ class API(object):
             else:
                 return None
 
-    def get_info_from_dd(self, job_id):
+    def get_dd(self, job_id):
+        '''return raw content from dynamodb for a given job id'''
         ddres = dict()
         try:
             dd = boto3.client('dynamodb')
             ddres = dd.query(TableName=DYNAMODB_TABLE,
                              KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
                                                        'ComparisonOperator': 'EQ'}})
-        except:
+            return ddres
+        except Exception as e:
+            printlog("Warning: dynamoDB entry not found: %s" % e)
+            return None
+
+    def info(self, job_id):
+        '''returns content from dynamodb for a given job id in a dictionary form'''
+        ddres = self.get_dd(job_id)
+        return self.get_info_from_dd(ddres)
+
+    def get_info_from_dd(self, ddres):
+        '''converts raw content from dynamodb to a dictionary form'''
+        if not ddres:
             return None
         if 'Items' in ddres:
             try:
@@ -289,7 +304,7 @@ class API(object):
                 sfn = dditem['Step Function']['S']
                 exec_arn = EXECUTION_ARN(exec_name, sfn)
                 if 'instance_id' in dditem:
-                    instance_id = dditem['instance_iD']['S']
+                    instance_id = dditem['instance_id']['S']
                 else:
                     instance_id = ''
                 if 'Log Bucket' in dditem:
@@ -301,9 +316,11 @@ class API(object):
                         'step_function': sfn,
                         'instance_id': instance_id,
                         'log_bucket': logbucket}
-            except:
+            except Exception as e:
+                printlog("Warning: dynamoDB fields not found: %s" % e)
                 return None
         else:
+            printlog("Warning: dynamoDB Items field not found:")
             return None
 
     def kill(self, exec_arn=None, job_id=None, sfn=None):
