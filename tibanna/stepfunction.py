@@ -3,6 +3,16 @@ from .iam_utils import get_stepfunction_role_name
 
 
 class StepFunctionUnicorn(object):
+    lambda_error_retry_condition = {
+        "ErrorEquals": [ "Lambda.ServiceException",
+                         "Lambda.AWSLambdaException",
+                         "Lambda.SdkClientException",
+                         "Lambda.ResourceNotFoundException"],
+        "IntervalSeconds": 60,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+    }
+
     sfn_run_task_retry_conditions = [
         {
             "ErrorEquals": ["DependencyStillRunningException"],
@@ -16,13 +26,9 @@ class StepFunctionUnicorn(object):
             "MaxAttempts": 1008,  # 1 wk
             "BackoffRate": 1.0
         },
-        {
-            "ErrorEquals": [ "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
-            "IntervalSeconds": 60,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-        }
+        lambda_error_retry_condition
     ]
+
     sfn_check_task_retry_conditions = [
         {
             "ErrorEquals": ["EC2StartingException"],
@@ -36,12 +42,7 @@ class StepFunctionUnicorn(object):
             "MaxAttempts": 100000,
             "BackoffRate": 1.0
         },
-        {
-            "ErrorEquals": [ "Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException"],
-            "IntervalSeconds": 60,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-        }
+        lambda_error_retry_condition
     ]
 
     def __init__(self,
