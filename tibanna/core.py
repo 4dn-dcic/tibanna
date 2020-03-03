@@ -1105,3 +1105,37 @@ class API(object):
         if cw_res['max_cpu_utilization_percent'] < max_cpu_percent_threshold:
             return True
         return False
+
+    def cleaup(self, sfn, ignore_errors=False):
+
+        def handle_error(errmsg):
+            if ignore_errors:
+                printlog(errmsg)
+                printlog("continue to remove the other components")
+            else:
+                raise Exception(errmsg)
+
+        if not sfn.startswith('tibanna_' + self.sfn_type):
+            errmsg = "Wrong step function name: %s. An example step function name should be" + 
+                     "tibanna_%s_mygroup"
+            raise Exception(errmsg % (sfn, self.sfn_type))
+        if sfn == 'tibanna_' + self.sfn_type:
+            lambda_suffix = ''
+        else:
+            lambda_suffix = sfn.replace('tibanna_' + self.sfn_type, '')
+        # delete step function
+        printlog("deleting step function %s" %s sfn)        
+        try:
+            boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
+        except Exception as e:
+            handle_error("Failed to cleanup step function: %s" % str(e))
+        # delete lambdas
+        lambda_client = boto3.client('lambda')
+        for lmb in self.lambda_names:
+            printlog("deleting lambda functions %s" %s lmb)
+            try:
+                lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
+            except Exception as e:
+                handle_error("Failed to cleanup lambda: %s" % str(e))
+        # delete IAM policies, roles and groups
+

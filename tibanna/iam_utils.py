@@ -258,6 +258,26 @@ def get_stepfunction_role_name(tibanna_policy_prefix):
     return tibanna_policy_prefix + '_states'
 
 
+def remove_role(client, rolename):
+    # first remove instance profiles attached to it
+    res = client.list_instance_profiles_for_role(RoleName=rolename)
+    for inst in res['InstanceProfiles']:
+        client.remove_role_from_instance_profile(
+            RoleName=rolename,
+            InstanceProfileName=inst['InstanceProfileName']
+        )
+    # detach all policies
+    iam = boto3.resource('iam')
+    role = iam.Role(rolename)
+    for pol in list(role.attached_policies.all()):
+        client.detach_role_policy(
+            RoleName=rolename,
+            PolicyArn=pol.arn
+        )
+    # delete role
+    client.delete_role(RoleName=rolename)
+
+
 def create_role_robust(client, rolename, roledoc, verbose=False):
     try:
         response = client.create_role(
@@ -267,23 +287,8 @@ def create_role_robust(client, rolename, roledoc, verbose=False):
     except Exception as e:
         if 'EntityAlreadyExists' in str(e):
             try:
-                # first remove instance profiles attached to it
-                res = client.list_instance_profiles_for_role(RoleName=rolename)
-                for inst in res['InstanceProfiles']:
-                    client.remove_role_from_instance_profile(
-                        RoleName=rolename,
-                        InstanceProfileName=inst['InstanceProfileName']
-                    )
-                # detach all policies
-                iam = boto3.resource('iam')
-                role = iam.Role(rolename)
-                for pol in list(role.attached_policies.all()):
-                    client.detach_role_policy(
-                        RoleName=rolename,
-                        PolicyArn=pol.arn
-                    )
-                # delete role
-                client.delete_role(RoleName=rolename)
+                # first remove
+                remove_role(client, rolename)
                 # recreate
                 response = client.create_role(
                    RoleName=rolename,
@@ -387,6 +392,18 @@ def create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id,
         print(response)
 
 
+def detach_group(client, group_name):
+    try:
+        # do not actually delete the group, just detach existing policies.
+        # deleting a group would require users to be detached from the group.
+        for pol in list(iam.Group(group_name).attached_policies.all()):
+            res = client.detach_group_policy(GroupName=group_name, PolicyArn=pol.arn)
+            if verbose:
+                print(res)
+    except Exception as e2:
+        raise Exception("Can't detach policies from group %s : %s" % (group_name, str(e2)))
+
+
 def create_user_group(iam, group_name, custom_policy_names,
                       account_id, verbose=False):
     client = iam.meta.client
@@ -398,15 +415,9 @@ def create_user_group(iam, group_name, custom_policy_names,
             print(response)
     except Exception as e:
         if 'EntityAlreadyExists' in str(e):
-            try:
-                # do not actually delete the group, just detach existing policies.
-                # deleting a group would require users to be detached from the group.
-                for pol in list(iam.Group(group_name).attached_policies.all()):
-                    res = client.detach_group_policy(GroupName=group_name, PolicyArn=pol.arn)
-                    if verbose:
-                        print(res)
-            except Exception as e2:
-                raise Exception("Can't detach policies from group %s : %s" % (group_name, str(e2)))
+            # do not actually delete the group, just detach existing policies.
+            # deleting a group would require users to be detached from the group.
+            detach_group(client, group_name)
     group = iam.Group(group_name)
     response = group.attach_policy(
         PolicyArn='arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess'
@@ -436,6 +447,23 @@ def create_user_group(iam, group_name, custom_policy_names,
             print(response)
 
 
+def delete_policy(client, policy_name, account_id):
+    policy_arn = 'arn:aws:iam::' + account_id + ':policy/' + policy_name
+    # first detach roles and groups and delete versions (requirements for deleting policy)
+    res = client.list_entities_for_policy(PolicyArn=policy_arn)
+    iam = boto3.resource('iam')
+    policy = iam.Policy(policy_arn)
+    for role in res['PolicyRoles']:
+        policy.detach_role(RoleName=role['RoleName'])
+    for group in res['PolicyGroups']:
+        policy.detach_group(GroupName=group['GroupName'])
+    for v in list(policy.versions.all()):
+        if not v.is_default_version:
+            client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
+    # delete policy
+    client.delete_policy(PolicyArn=policy_arn)
+
+
 def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=False):
     try:
         response = client.create_policy(
@@ -447,20 +475,8 @@ def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=Fa
     except Exception as e:
         if 'EntityAlreadyExists' in str(e):
             try:
-                policy_arn = 'arn:aws:iam::' + account_id + ':policy/' + policy_name
-                # first detach roles and groups and delete versions (requirements for deleting policy)
-                res = client.list_entities_for_policy(PolicyArn=policy_arn)
-                iam = boto3.resource('iam')
-                policy = iam.Policy(policy_arn)
-                for role in res['PolicyRoles']:
-                    policy.detach_role(RoleName=role['RoleName'])
-                for group in res['PolicyGroups']:
-                    policy.detach_group(GroupName=group['GroupName'])
-                for v in list(policy.versions.all()):
-                    if not v.is_default_version:
-                        client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
-                # delete policy
-                client.delete_policy(PolicyArn=policy_arn)
+                # first delete policy
+                delete_policy(client, policy_name, account_id)
                 # recreate policy
                 response = client.create_policy(
                     PolicyName=policy_name,
