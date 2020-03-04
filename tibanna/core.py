@@ -46,12 +46,7 @@ from .ec2_utils import (
     upload_workflow_to_s3
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
-from .iam_utils import (
-    create_tibanna_iam,
-    get_ec2_role_name,
-    get_lambda_role_name,
-    generate_policy_prefix
-)
+from .iam_utils import IAM
 from .stepfunction import StepFunctionUnicorn
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
@@ -717,11 +712,11 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
-        tibanna_policy_prefix = generate_policy_prefix(usergroup, True, self.lambda_type)
+        tibanna_iam = IAM(None, usergroup, no_randomize=True, lambda_type=self.lambda_type)
         if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = get_ec2_role_name(tibanna_policy_prefix)
+                    = tibanna_iam.role_name('ec2')
             else:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
@@ -729,7 +724,7 @@ class API(object):
         if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
-                role_arn = role_arn_prefix + get_lambda_role_name(tibanna_policy_prefix, name)
+                role_arn = role_arn_prefix + tibanna_iam.role_name(name)
             else:
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
             print("role_arn=" + role_arn)
@@ -798,19 +793,12 @@ class API(object):
             for b in bucket_names:
                 printlog("Deleting public access block for bucket %s" % b)
                 response = client.delete_public_access_block(Bucket=b)
-        tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
-                                                   usergroup_tag, AWS_REGION, no_randomize=no_randomize,
-                                                   run_task_lambda_name=self.run_task_lambda,
-                                                   check_task_lambda_name=self.check_task_lambda,
-                                                   lambda_type=self.lambda_type,
-                                                   verbose=verbose)
-        if self.lambda_type:
-            tibanna_policy_prefix_prefix = "tibanna_" + self.lambda_type + '_'
-        else:
-            tibanna_policy_prefix_prefix = "tibanna_"
-        tibanna_usergroup = tibanna_policy_prefix.replace(tibanna_policy_prefix_prefix, "")
-        print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
-        return tibanna_usergroup
+        tibanna_iam = IAM(bucket_names, usergroup_tag, run_task_lambda_name=self.run_task_lambda,
+                          check_task_lambda_name=self.check_task_lambda, lambda_type=self.lambda_type,
+                          no_randomize=no_randomize)
+        tibanna_iam.create_tibanna_iam(verbose=verbose)
+        print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.usergroup)
+        return tibanna_iam.usergroup
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False):

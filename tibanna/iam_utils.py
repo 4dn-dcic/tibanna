@@ -9,13 +9,14 @@ class IAM(object):
 
     account_id = AWS_ACCOUNT_NUMBER
     region = AWS_REGION
-    lambda_type = ''  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
-    run_task_lambda_name='run_task_awsem'
-    check_task_lambda_name='check_task_awsem'
 
-    def __init__(self, bucket_names, user_group_name, no_randomize=False):
+    def __init__(self, bucket_names, user_group_tag, run_task_lambda_name='run_task_awsem',
+                 check_task_lambda_name='check_task_awsem', lambda_type = '', no_randomize=False):
         self.bucket_names = bucket_names
-        self.user_group_name = user_group_name
+        self.user_group_tag = user_group_tag
+        self.lambda_type = lambda_type  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
+        self.run_task_lambda_name=run_task_awsem_name
+        self.check_task_lambda_name=check_task_awsem_name
         self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name]
         self.client = boto3.client('iam')
         self.iam = boto3.resource('iam')
@@ -23,17 +24,24 @@ class IAM(object):
 
     def generate_policy_prefix(self, no_randomize=False):
         """policy prefix for user group
-        lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra"""
+        lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
+        example>
+          user_group_tag : default
+          user_group_name : default_3465
+          tibanna_policy_prefix : tibanna_unicorn_default_3465
+          prefix : tibanna_unicorn_
+        """
         # add rangom tag to avoid attempting to overwrite a previously created and deleted policy and silently failing.
         if self.lambda_type:
-            prefix = 'tibanna_' + self.lambda_type + '_'
+            self.prefix = 'tibanna_' + self.lambda_type + '_'
         else:
-            prefix = 'tibanna_'
+            self.prefix = 'tibanna_'
         if no_randomize:
-            self.tibanna_policy_prefix = prefix + self.user_group_name
+            self.user_group_name = self.user_group_tag
         else:
             random_tag = str(int(random.random() * 10000))
-            self.tibanna_policy_prefix = prefix + self.user_group_name + '_' + random_tag
+            self.user_group_name = self.user_group_tag + '_' + random_tag
+        self.tibanna_policy_prefix = self.prefix + self.user_group_name
 
     @property
     def iam_group_name(self):
@@ -242,7 +250,7 @@ class IAM(object):
     @property
     def policy_desc_stepfunction(self):
         execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
-        resource = execution_arn_prefix + '*' + self.user_group_name + ':*'
+        resource = execution_arn_prefix + self.tibanna_policy_prefix + ':*'
         policy = {
             "Version": "2012-10-17",
             "Statement": [
