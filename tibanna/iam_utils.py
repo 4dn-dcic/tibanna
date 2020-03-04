@@ -11,12 +11,12 @@ class IAM(object):
     region = AWS_REGION
 
     def __init__(self, bucket_names, user_group_tag, run_task_lambda_name='run_task_awsem',
-                 check_task_lambda_name='check_task_awsem', lambda_type = '', no_randomize=False):
+                 check_task_lambda_name='check_task_awsem', lambda_type='', no_randomize=False):
         self.bucket_names = bucket_names
         self.user_group_tag = user_group_tag
         self.lambda_type = lambda_type  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
-        self.run_task_lambda_name=run_task_awsem_name
-        self.check_task_lambda_name=check_task_awsem_name
+        self.run_task_lambda_name = run_task_lambda_name
+        self.check_task_lambda_name = check_task_lambda_name
         self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name]
         self.client = boto3.client('iam')
         self.iam = boto3.resource('iam')
@@ -50,11 +50,11 @@ class IAM(object):
     @property
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
-                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc'] 
+                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
-    
+
     def policy_suffix(self, policy_type):
         suffices = {'bucket': 'bucket_access',
                     'termination': 'ec2_termination',
@@ -68,7 +68,7 @@ class IAM(object):
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc'}
         if policy_type not in suffices:
-            raise Exception("policy %s must be one of %s." % (policy_type, str(policy_types)))
+            raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
 
     def policy_name(self, policy_type):
@@ -117,9 +117,9 @@ class IAM(object):
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
                                           'termination']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']],
-                   #'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
+                   # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
-                   self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] + 
+                   self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] +
                                               ['arn:aws:iam::aws:policy/AmazonEC2FullAccess'],
                    self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types]}
         if role_type not in arnlist:
@@ -159,7 +159,7 @@ class IAM(object):
             ]
         }
         return policy_bucket_access
-    
+
     @property
     def policy_terminate_instances(self):
         policy = {
@@ -173,7 +173,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_list_instanceprofiles(self):
         policy_list_instanceprofiles = {
@@ -192,7 +192,7 @@ class IAM(object):
             ]
         }
         return policy_list_instanceprofiles
-    
+
     @property
     def policy_cloudwatchlogs(self):
         policy_cloudwatchlogs = {
@@ -210,7 +210,7 @@ class IAM(object):
             ]
         }
         return policy_cloudwatchlogs
-    
+
     @property
     def policy_iam_passrole_s3(self):
         role_resource = ['arn:aws:iam::' + self.account_id + ':role/' + self.tibanna_policy_prefix + '_for_ec2']
@@ -228,7 +228,7 @@ class IAM(object):
             ]
         }
         return policy_iam_passrole_s3
-    
+
     @property
     def policy_lambdainvoke(self):
         function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function/'
@@ -246,7 +246,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_desc_stepfunction(self):
         execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
@@ -264,7 +264,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_cloudwatch_metric(self):
         policy = {
@@ -281,7 +281,7 @@ class IAM(object):
             ]
         }
         return policy
-   
+
     @property
     def policy_cw_dashboard(self):
         policy = {
@@ -297,7 +297,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_dynamodb(self):
         policy = {
@@ -314,7 +314,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_ec2_desc_policy(self):
         policy = {
@@ -331,7 +331,7 @@ class IAM(object):
             ]
         }
         return policy
-   
+
     def role_policy_document(self, service):
         '''service: 'ec2', 'lambda' or 'states' '''
         AssumeRolePolicyDocument = {
@@ -347,7 +347,7 @@ class IAM(object):
             ]
         }
         return AssumeRolePolicyDocument
-    
+
     def remove_role(self, rolename):
         # first remove instance profiles attached to it
         res = self.client.list_instance_profiles_for_role(RoleName=rolename)
@@ -365,7 +365,7 @@ class IAM(object):
             )
         # delete role
         self.client.delete_role(RoleName=rolename)
-    
+
     def create_role_robust(self, rolename, roledoc, verbose=False):
         try:
             response = self.client.create_role(
@@ -395,17 +395,17 @@ class IAM(object):
         except Exception:
             print("creating %s", empty_role_name)
             self.create_role_robust(empty_role_name, json.dumps(role_policy_doc_lambda), verbose)
-   
-    def create_role_for_role_type(self, role_type):
+
+    def create_role_for_role_type(self, role_type, verbose=False):
         role_policy_doc = self.role_policy_document(self.role_service(role_type))
-        self.create_role_robust(self.role_name(role_type, json.dumps(role_policy_doc), verbose)
-        role = self.iam.Role(self.role_name(role_type)
+        self.create_role_robust(self.role_name(role_type, json.dumps(role_policy_doc), verbose))
+        role = self.iam.Role(self.role_name(role_type))
         for p_arn in self.policy_arn_list_for_role(role_type):
             response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
                 print(response)
 
-    def detach_policies_from_group(self):
+    def detach_policies_from_group(self, verbose=False):
         try:
             # do not actually delete the group, just detach existing policies.
             # deleting a group would require users to be detached from the group.
@@ -415,7 +415,7 @@ class IAM(object):
                     print(res)
         except Exception as e2:
             raise Exception("Can't detach policies from group %s : %s" % (self.iam_group_name, str(e2)))
-    
+
     def create_user_group(self, verbose=False):
         try:
             response = self.client.create_group(
@@ -450,13 +450,13 @@ class IAM(object):
         if verbose:
             print(response)
         custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination']
-        for pn in [self.policy_name(pt) for pt in custom_policy_types]
+        for pn in [self.policy_name(pt) for pt in custom_policy_types]:
             response = group.attach_policy(
                 PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn
             )
             if verbose:
                 print(response)
-    
+
     def remove_policy(self, policy_name):
         policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
         # first detach roles and groups and delete versions (requirements for deleting policy)
@@ -471,7 +471,7 @@ class IAM(object):
                 self.client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
         # delete policy
         self.client.delete_policy(PolicyArn=policy_arn)
-    
+
     def create_policy_robust(self, policy_name, policy_doc, verbose=False):
         try:
             response = self.client.create_policy(
@@ -494,7 +494,7 @@ class IAM(object):
                         print(response)
                 except Exception as e2:
                     raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
-    
+
     def remove_instance_profile(self, instance_profile_name):
         try:
             self.client.delete_instance_profile(InstanceProfileName=instance_profile_name)
@@ -539,12 +539,12 @@ class IAM(object):
         A user group shares permission for buckets, tibanna execution and logs
         """
         # create prefix that represent a single user group
-        printlog("creating iam permissions with tibanna policy prefix %s" % tibanna_policy_prefix)
+        printlog("creating iam permissions with tibanna policy prefix %s" % self.tibanna_policy_prefix)
 
         # policies
         for pt in self.policy_types:
             self.create_policy_robust(self.policy_name(pt), json.dumps(self.policy_definition(pt)), verbose)
-    
+
         # roles
         for rt in self.role_types:
             self.create_role_for_role_type(rt, verbose)

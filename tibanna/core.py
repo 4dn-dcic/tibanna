@@ -1056,7 +1056,7 @@ class API(object):
                 return False
             else:
                 raise Exception("error describing table %s" % tablename)
-    
+
     def create_dynamo_table(self, tablename, keyname):
         if self.does_dynamo_table_exist(tablename):
             print("dynamodb table %s already exists. skip creating db" % tablename)
@@ -1104,7 +1104,7 @@ class API(object):
                 raise Exception(errmsg)
 
         if not sfn.startswith('tibanna_' + self.sfn_type):
-            errmsg = "Wrong step function name: %s. An example step function name should be" + 
+            errmsg = "Wrong step function name: %s. An example step function name should be" + \
                      "tibanna_%s_mygroup"
             raise Exception(errmsg % (sfn, self.sfn_type))
         if sfn == 'tibanna_' + self.sfn_type:
@@ -1112,7 +1112,7 @@ class API(object):
         else:
             lambda_suffix = sfn.replace('tibanna_' + self.sfn_type, '')
         # delete step function
-        printlog("deleting step function %s" %s sfn)        
+        printlog("deleting step function %s" % sfn)
         try:
             boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
         except Exception as e:
@@ -1120,10 +1120,9 @@ class API(object):
         # delete lambdas
         lambda_client = boto3.client('lambda')
         for lmb in self.lambda_names:
-            printlog("deleting lambda functions %s" %s lmb)
+            printlog("deleting lambda functions %s" % lmb)
             try:
                 lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
             except Exception as e:
                 handle_error("Failed to cleanup lambda: %s" % str(e))
         # delete IAM policies, roles and groups
-
