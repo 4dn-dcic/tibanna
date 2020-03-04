@@ -13,17 +13,14 @@ class IAM(object):
     run_task_lambda_name='run_task_awsem'
     check_task_lambda_name='check_task_awsem'
 
-    def __init__(self, bucket_names, user_group_name):
+    def __init__(self, bucket_names, user_group_name, no_randomize=False):
         self.bucket_names = bucket_names
         self.user_group_name = user_group_name
         self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name]
         self.client = boto3.client('iam')
         self.iam = boto3.resource('iam')
+        self.generate_policy_prefix(no_randomize)
 
-    @property
-    def iam_group_name(self):
-        return self.tibanna_policy_prefix
- 
     def generate_policy_prefix(self, no_randomize=False):
         """policy prefix for user group
         lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra"""
@@ -38,6 +35,18 @@ class IAM(object):
             random_tag = str(int(random.random() * 10000))
             self.tibanna_policy_prefix = prefix + self.user_group_name + '_' + random_tag
 
+    @property
+    def iam_group_name(self):
+        return self.tibanna_policy_prefix
+
+    @property
+    def policy_types(self):
+        return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
+                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc'] 
+
+    def policy_arn(self, policy_type):
+        return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
+    
     def policy_suffix(self, policy_type):
         suffices = {'bucket': 'bucket_access',
                     'termination': 'ec2_termination',
@@ -51,7 +60,7 @@ class IAM(object):
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc'}
         if policy_type not in suffices:
-            raise Exception("policy %s must be one of %s." % (policy_type, str(suffices)))
+            raise Exception("policy %s must be one of %s." % (policy_type, str(policy_types)))
         return suffices[policy_type]
 
     def policy_name(self, policy_type):
@@ -70,8 +79,44 @@ class IAM(object):
                        'dynamodb': self.policy_dynamodb,
                        'ec2_desc': self.policy_ec2_desc_policy}
         if policy_type not in definitions:
-            raise Exception("policy %s must be one of %s." % (policy_type, str(definitions)))
+            raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
+
+    @property
+    def role_types(self):
+        return ['ec2', 'stepfunction'] + self.lambda_names
+
+    def role_suffix(self, role_type):
+        suffices = {'ec2': 'for_ec2',
+                    'stepfunction': 'states'}
+        suffices.update({_: _ for _ in self.lambda_names})
+        if role_type not in suffices:
+            raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
+
+    def role_name(self, role_type):
+        return self.tibanna_policy_prefix + '_' + self.role_suffix(role_type)
+
+    def role_service(self, role_type):
+        services = {'ec2': 'ec2',
+                    'stepfunction': 'states'}
+        services.update({_: 'lambda' for _ in self.lambda_names})
+        if role_type not in services:
+            raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
+
+    def policy_arn_list_for_role(self, role_type):
+        run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
+                                        'desc_stepfunction', 'cw_dashboard']
+        check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
+                                          'termination']
+        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']],
+                   #'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
+                   'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
+                   self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] + 
+                                              ['arn:aws:iam::aws:policy/AmazonEC2FullAccess'],
+                   self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types]}
+        if role_type not in arnlist:
+            raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
+        return arnlist[role_type]
 
     @property
     def policy_bucket_access(self):
@@ -279,7 +324,7 @@ class IAM(object):
         }
         return policy
    
-    def generate_assume_role_policy_document(self, service):
+    def role_policy_document(self, service):
         '''service: 'ec2', 'lambda' or 'states' '''
         AssumeRolePolicyDocument = {
             "Version": "2012-10-17",
@@ -295,15 +340,6 @@ class IAM(object):
         }
         return AssumeRolePolicyDocument
     
-    def ec2_role_name(self):
-        return self.tibanna_policy_prefix + '_for_ec2'
-    
-    def lambda_role_name(self, lambda_name):
-        return self.tibanna_policy_prefix + '_' + lambda_name
-    
-    def stepfunction_role_name(self):
-        return self.tibanna_policy_prefix + '_states'
-
     def remove_role(self, rolename):
         # first remove instance profiles attached to it
         res = self.client.list_instance_profiles_for_role(RoleName=rolename)
@@ -342,71 +378,25 @@ class IAM(object):
                     raise Exception("Can't create role %s: %s" % (rolename, str(e2)))
         if verbose:
             print(response)
-    
+
     def create_empty_role_for_lambda(self, verbose=False):
-        role_policy_doc_lambda = self.generate_assume_role_policy_document('lambda')
+        role_policy_doc_lambda = self.role_policy_document('lambda')
         empty_role_name = 'tibanna_lambda_init_role'
         try:
             self.client.get_role(RoleName=empty_role_name)
         except Exception:
             print("creating %s", empty_role_name)
             self.create_role_robust(empty_role_name, json.dumps(role_policy_doc_lambda), verbose)
-    
-    def create_role_for_ec2(self, verbose=False):
-        role_policy_doc_ec2 = self.generate_assume_role_policy_document('ec2')
-        self.create_role_robust(self.ec2_role_name, json.dumps(role_policy_doc_ec2), verbose)
-        role_bucket = self.iam.Role(self.ec2_role_name())
-        response = role_bucket.attach_policy(
-            PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name('bucket')
-        )
-        response = role_bucket.attach_policy(
-            PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name('cloudwatch_metric')
-        )
-        if verbose:
-            print(response)
-    
-    def create_role_for_run_task_awsem(self, verbose=False):
-        lambda_run_role_name = self.lambda_role_name(self.run_task_lambda_name)
-        role_policy_doc_lambda = self.generate_assume_role_policy_document('lambda')
-        self.create_role_robust(lambda_run_role_name, json.dumps(role_policy_doc_lambda), verbose)
-        role_lambda_run = self.iam.Role(lambda_run_role_name)
-        custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb', 'desc_stepfunction', 'cw_dashboard']
-        for pn in [self.policy_name(pt) for pt in custom_policy_types]
-            response = role_lambda_run.attach_policy(
-                PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn
-            )
+   
+    def create_role_for_role_type(self, role_type):
+        role_policy_doc = self.role_policy_document(self.role_service(role_type))
+        self.create_role_robust(self.role_name(role_type, json.dumps(role_policy_doc), verbose)
+        role = self.iam.Role(self.role_name(role_type)
+        for p_arn in self.policy_arn_list_for_role(role_type):
+            response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
                 print(response)
-        response = role_lambda_run.attach_policy(
-            PolicyArn='arn:aws:iam::aws:policy/AmazonEC2FullAccess'
-        )
-        if verbose:
-            print(response)
-    
-    def create_role_for_check_task_awsem(self, verbose=False):
-        lambda_check_role_name = self.lambda_role_name(self.check_task_lambda_name)
-        role_policy_doc_lambda = self.generate_assume_role_policy_document('lambda')
-        self.create_role_robust(lambda_check_role_name, json.dumps(role_policy_doc_lambda), verbose)
-        role_lambda_run = self.iam.Role(lambda_check_role_name)
-        custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc', 'termination']
-        for pn in [self.policy_name(pt) for pt in custom_policy_types]
-            response = role_lambda_run.attach_policy(
-                PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn
-            )
-            if verbose:
-                print(response)
-    
-    def create_role_for_stepfunction(self, verbose=False):
-        role_policy_doc = self.generate_assume_role_policy_document('states')
-        self.create_role_robust(self.stepfunction_role_name(), json.dumps(role_policy_doc), verbose)
-        role_stepfunction = self.iam.Role(self.stepfunction_role_name())
-        response = role_stepfunction.attach_policy(
-            PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaRole'
-            # PolicyArn='arn:aws:iam::' + account_id + ':policy/' + lambdainvoke_policy_name
-        )
-        if verbose:
-            print(response)
-    
+
     def detach_policies_from_group(self):
         try:
             # do not actually delete the group, just detach existing policies.
@@ -459,25 +449,24 @@ class IAM(object):
             if verbose:
                 print(response)
     
-    def remove_policy(client, policy_name, account_id):
-        policy_arn = 'arn:aws:iam::' + account_id + ':policy/' + policy_name
+    def remove_policy(self, policy_name):
+        policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
         # first detach roles and groups and delete versions (requirements for deleting policy)
-        res = client.list_entities_for_policy(PolicyArn=policy_arn)
-        iam = boto3.resource('iam')
-        policy = iam.Policy(policy_arn)
+        res = self.client.list_entities_for_policy(PolicyArn=policy_arn)
+        policy = self.iam.Policy(policy_arn)
         for role in res['PolicyRoles']:
             policy.detach_role(RoleName=role['RoleName'])
         for group in res['PolicyGroups']:
             policy.detach_group(GroupName=group['GroupName'])
         for v in list(policy.versions.all()):
             if not v.is_default_version:
-                client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
+                self.client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
         # delete policy
-        client.delete_policy(PolicyArn=policy_arn)
+        self.client.delete_policy(PolicyArn=policy_arn)
     
-    def create_policy_robust(client, policy_name, policy_doc, account_id, verbose=False):
+    def create_policy_robust(self, policy_name, policy_doc, verbose=False):
         try:
-            response = client.create_policy(
+            response = self.client.create_policy(
                 PolicyName=policy_name,
                 PolicyDocument=policy_doc,
             )
@@ -487,9 +476,9 @@ class IAM(object):
             if 'EntityAlreadyExists' in str(e):
                 try:
                     # first delete policy
-                    remove_policy(client, policy_name, account_id)
+                    self.remove_policy(policy_name)
                     # recreate policy
-                    response = client.create_policy(
+                    response = self.client.create_policy(
                         PolicyName=policy_name,
                         PolicyDocument=policy_doc,
                     )
@@ -498,112 +487,29 @@ class IAM(object):
                 except Exception as e2:
                     raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
     
-    def remove_instance_profile(client, instance_profile_name):
+    def remove_instance_profile(self, instance_profile_name):
         try:
-            client.delete_instance_profile(InstanceProfileName=instance_profile_name)
+            self.client.delete_instance_profile(InstanceProfileName=instance_profile_name)
         except Exception as e:
             raise Exception("Can't delete instance profile. %s" % str(e))
-    
-    def create_tibanna_iam(account_id, bucket_names, user_group_name, region, verbose=False, no_randomize=False,
-                           run_task_lambda_name='run_task_awsem', check_task_lambda_name='check_task_awsem',
-                           lambda_type=''):
-        """creates IAM policies and roles and a user group for tibanna
-        returns prefix of all IAM policies, roles and group.
-        Total 4 policies, 3 roles and 1 group is generated that is associated with a single user group
-        A user group shares permission for buckets, tibanna execution and logs
-        """
-        # create prefix that represent a single user group
-        tibanna_policy_prefix = generate_policy_prefix(user_group_name, no_randomize, lambda_type=lambda_type)
-        printlog("creating iam permissions with tibanna policy prefix %s" % tibanna_policy_prefix)
-        iam = boto3.resource('iam')
-        client = iam.meta.client
-        # bucket policy
-        bucket_policy_name = tibanna_policy_prefix + '_bucket_access'
-        policy_ba = generate_policy_bucket_access(bucket_names)
-        create_policy_robust(client, bucket_policy_name, json.dumps(policy_ba), account_id, verbose)
-        # EC2 termination policy
-        termination_policy_name = tibanna_policy_prefix + '_ec2_termination'
-        create_policy_robust(client, termination_policy_name,
-                             json.dumps(generate_policy_terminate_instances()), account_id, verbose)
-        # lambda policies
-        # list_instanceprofiles : by default not user-dependent,
-        # but create per user group to allow future modification per user-group
-        list_policy_name = tibanna_policy_prefix + '_list_instanceprofiles'
-        create_policy_robust(client, list_policy_name,
-                             json.dumps(generate_policy_list_instanceprofiles()), account_id, verbose)
-        # cloudwatchlogs: by default not user-dependent,
-        # but create per user group to allow future modification per user-group
-        cloudwatch_policy_name = tibanna_policy_prefix + '_cloudwatchlogs'
-        create_policy_robust(client, cloudwatch_policy_name,
-                             json.dumps(generate_policy_cloudwatchlogs()), account_id, verbose)
-        # iam_passrole_s3: passrole policy per user group
-        passrole_policy_name = tibanna_policy_prefix + '_iam_passrole_s3'
-        policy_iam_ps3 = generate_policy_iam_passrole_s3(account_id, tibanna_policy_prefix)
-        create_policy_robust(client, passrole_policy_name, json.dumps(policy_iam_ps3), account_id, verbose)
-        # lambdainvoke policy for step function
-        lambdainvoke_policy_name = tibanna_policy_prefix + '_lambdainvoke'
-        policy_lambdainvoke = generate_lambdainvoke_policy(account_id, region, tibanna_policy_prefix,
-                                                           lambda_names=lambda_names)
-        create_policy_robust(client, lambdainvoke_policy_name, json.dumps(policy_lambdainvoke), account_id, verbose)
-        desc_stepfunction_policy_name = tibanna_policy_prefix + '_desc_sts'
-        policy_desc_stepfunction = generate_desc_stepfunction_policy(account_id, region, tibanna_policy_prefix)
-        create_policy_robust(client, desc_stepfunction_policy_name,
-                             json.dumps(policy_desc_stepfunction), account_id, verbose)
-        # permission to send cloudwatch metric (ec2)
-        cloudwatch_metric_policy_name = tibanna_policy_prefix + '_cw_metric'
-        policy_cloudwatch_metric = generate_cloudwatch_metric_policy(account_id, region, tibanna_policy_prefix)
-        create_policy_robust(client, cloudwatch_metric_policy_name,
-                             json.dumps(policy_cloudwatch_metric), account_id, verbose)
-        # permission for cloudwatch dashboard creation (run_task_awsem)
-        cw_dashboard_policy_name = tibanna_policy_prefix + '_cw_dashboard'
-        policy_cw_dashboard = generate_cw_dashboard_policy(account_id, region, tibanna_policy_prefix)
-        create_policy_robust(client, cw_dashboard_policy_name, json.dumps(policy_cw_dashboard), account_id, verbose)
-        # permission for adding entries to dynamodb - user
-        dynamodb_policy_name = tibanna_policy_prefix + '_dynamodb'
-        policy_dynamodb = generate_dynamodb_policy(account_id, region, tibanna_policy_prefix)
-        create_policy_robust(client, dynamodb_policy_name, json.dumps(policy_dynamodb), account_id, verbose)
-        # ec2 describe policy for invoke stat -v (user)
-        ec2_desc_policy_name = tibanna_policy_prefix + '_ec2_desc'
-        policy_ec2_desc = generate_ec2_desc_policy(account_id, region, tibanna_policy_prefix)
-        create_policy_robust(client, ec2_desc_policy_name, json.dumps(policy_ec2_desc), account_id, verbose)
-    
-        # roles
-        # role for bucket
-        create_role_for_ec2(iam, tibanna_policy_prefix, account_id,
-                            bucket_policy_name, cloudwatch_metric_policy_name)
-        # role for lambda
-        create_role_for_run_task_awsem(iam, tibanna_policy_prefix, account_id,
-                                       cloudwatch_policy_name, bucket_policy_name,
-                                       list_policy_name, passrole_policy_name,
-                                       desc_stepfunction_policy_name,
-                                       cw_dashboard_policy_name, dynamodb_policy_name,
-                                       run_task_lambda_name=run_task_lambda_name)
-        create_role_for_check_task_awsem(iam, tibanna_policy_prefix, account_id,
-                                         cloudwatch_policy_name, bucket_policy_name,
-                                         cloudwatch_metric_policy_name,
-                                         ec2_desc_policy_name, termination_policy_name,
-                                         check_task_lambda_name=check_task_lambda_name)
-        create_empty_role_for_lambda(iam)
-        # role for step function
-        create_role_for_stepfunction(iam, tibanna_policy_prefix, account_id, lambdainvoke_policy_name)
-        # instance profile
-        # create instance profile
-        instance_profile_name = get_ec2_role_name(tibanna_policy_prefix)
+
+    def create_instance_profile(self, verbose=False):
+        instance_profile_name = self.role_name('ec2')
         try:
-            client.create_instance_profile(
+            self.client.create_instance_profile(
                 InstanceProfileName=instance_profile_name
             )
         except Exception as e:
             if 'EntityAlreadyExists' in str(e):
-                remove_instance_profile(client,nstanceProfileName=instance_profile_name)
+                self.remove_instance_profile(instance_profile_name)
                 try:
-                    client.create_instance_profile(
+                    self.client.create_instance_profile(
                         InstanceProfileName=instance_profile_name
                     )
                 except Exception as e2:
                     raise Exception("Can't create instance profile %s: %s" % (instance_profile_name, str(e2)))
         # add role to instance profile
-        ip = iam.InstanceProfile(instance_profile_name)
+        ip = self.iam.InstanceProfile(instance_profile_name)
         try:
             ip.add_role(
                 RoleName=instance_profile_name
@@ -617,6 +523,29 @@ class IAM(object):
                     )
                 except Exception as e2:
                     raise Exception("Can't add role %s: %s" % (instance_profile_name, str(e2)))
+
+    def create_tibanna_iam(self, verbose=False):
+        """creates IAM policies and roles and a user group for tibanna
+        returns prefix of all IAM policies, roles and group.
+        Total 4 policies, 3 roles and 1 group is generated that is associated with a single user group
+        A user group shares permission for buckets, tibanna execution and logs
+        """
+        # create prefix that represent a single user group
+        printlog("creating iam permissions with tibanna policy prefix %s" % tibanna_policy_prefix)
+
+        # policies
+        for pt in self.policy_types:
+            self.create_policy_robust(self.policy_name(pt), json.dumps(self.policy_definition(pt)), verbose)
+    
+        # roles
+        for rt in self.role_types:
+            self.create_role_for_role_type(rt, verbose)
+        # initial empty role for lambda
+        self.create_empty_role_for_lambda(verbose)
+
+        # instance profile
+        # create instance profile
+        self.create_instance_profile(verbose)
         # create IAM group for users who share permission
         self.create_user_group()
-        return tibanna_policy_prefix
+        return self.tibanna_policy_prefix
