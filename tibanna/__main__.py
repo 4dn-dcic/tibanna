@@ -38,7 +38,8 @@ class Subcommands(object):
             'stat': 'print out executions with details',
             'users': 'list all users along with their associated tibanna user groups',
             'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists',
-            'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes'
+            'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes',
+            'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups'
         }
 
     @property
@@ -253,7 +254,23 @@ class Subcommands(object):
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-u", "--update-tsv"],
                   'help': "add cost to the metric tsv file on S3",
-                  'action': "store_true"}]
+                  'action': "store_true"}],
+            'cleanup':
+                [{'flag': ["-g", "--usergroup"],
+                  'help': "Tibanna usergroup that shares the permission to access buckets and run jobs"},
+                 {'flag': ["-s", "--suffix"],
+                  'default': '',
+                  'help': "suffix (e.g. 'dev') that is added to the end of the name of the AWS " +
+                          "Lambda function, within the same usergroup"},
+                 {'flag': ["-G", "--do-not-remove-iam-group"],
+                  'action': 'store_true',
+                  'help': "Do not remove IAM groups and permission, just remove step functions and lambda"},
+                 {'flag': ["--verbose"],
+                  'action': 'store_true',
+                  'help': "verbose"},
+                 {'flag': ["-E", "--do-not-ignore-errors"],
+                  'action': 'store_true',
+                  'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}]
         }
 
 
@@ -365,6 +382,12 @@ def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=Fa
 def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
+
+
+def cleanup(usergroup, suffix='', do_not_remove_iam_group=False, do_not_ignore_errors=False, verbose=False):
+    print(API().cleanup(user_group_name=usergroup, suffix=suffix,
+                        do_not_remove_iam_group=do_not_remove_iam_group,
+                        ignore_errors = not do_not_ignore_errors, verbose=verbose))
 
 
 def main(Subcommands=Subcommands):

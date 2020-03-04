@@ -1,7 +1,14 @@
 import boto3
 import json
 import random
-from .vars import DYNAMODB_TABLE, AWS_ACCOUNT_NUMBER, AWS_REGION
+from .vars import (
+    DYNAMODB_TABLE,
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION,
+    LAMBDA_TYPE,
+    RUN_TASK_LAMBDA_NAME,
+    CHECK_TASK_LAMBDA_NAME
+)
 from .utils import printlog
 
 
@@ -9,27 +16,28 @@ class IAM(object):
 
     account_id = AWS_ACCOUNT_NUMBER
     region = AWS_REGION
+    lambda_type = LAMBDA_TYPE  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
+    run_task_lambda_name = RUN_TASK_LAMBDA_NAME
+    check_task_lambda_name = CHECK_TASK_LAMBDA_NAME
 
-    def __init__(self, bucket_names, user_group_tag, run_task_lambda_name='run_task_awsem',
-                 check_task_lambda_name='check_task_awsem', lambda_type='', no_randomize=False):
+    def __init__(self, user_group_tag, bucket_names='', no_randomize=True):
         """policy prefix for user group
         lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
         example>
           user_group_tag : default
           user_group_name : default_3465
-          tibanna_policy_prefix : tibanna_unicorn_default_3465
-          prefix : tibanna_unicorn_
+          tibanna_policy_prefix : tibanna_default_3465 / tibanna_pony_default_3465
+          prefix : tibanna_ / tibanna_pony_
         """
-        self.bucket_names = bucket_names
-        self.user_group_tag = user_group_tag
-        self.lambda_type = lambda_type  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
-        self.run_task_lambda_name = run_task_lambda_name
-        self.check_task_lambda_name = check_task_lambda_name
+        # lambda names
         self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name]
         if self.lambda_type:
             self.prefix = 'tibanna_' + self.lambda_type + '_'
         else:
             self.prefix = 'tibanna_'
+
+        # user group name & tibanna_policy_prefix
+        self.user_group_tag = user_group_tag
         # add rangom tag to avoid attempting to overwrite a previously created and deleted policy and silently failing.
         if no_randomize:
             self.user_group_name = self.user_group_tag
@@ -38,6 +46,10 @@ class IAM(object):
             self.user_group_name = self.user_group_tag + '_' + random_tag
         self.tibanna_policy_prefix = self.prefix + self.user_group_name
 
+        # bucket names
+        self.bucket_names = bucket_names
+
+        # iam client/resource
         self.client = boto3.client('iam')
         self.iam = boto3.resource('iam')
 
@@ -98,6 +110,7 @@ class IAM(object):
         suffices.update({_: _ for _ in self.lambda_names})
         if role_type not in suffices:
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
+        return suffices[role_type]
 
     def role_name(self, role_type):
         return self.tibanna_policy_prefix + '_' + self.role_suffix(role_type)
@@ -123,6 +136,10 @@ class IAM(object):
         if role_type not in arnlist:
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
         return arnlist[role_type]
+
+    @property
+    def instance_profile_name(self):
+        return self.role_name('ec2')
 
     @property
     def policy_bucket_access(self):
@@ -346,24 +363,6 @@ class IAM(object):
         }
         return AssumeRolePolicyDocument
 
-    def remove_role(self, rolename):
-        # first remove instance profiles attached to it
-        res = self.client.list_instance_profiles_for_role(RoleName=rolename)
-        for inst in res['InstanceProfiles']:
-            self.client.remove_role_from_instance_profile(
-                RoleName=rolename,
-                InstanceProfileName=inst['InstanceProfileName']
-            )
-        # detach all policies
-        role = self.iam.Role(rolename)
-        for pol in list(role.attached_policies.all()):
-            self.client.detach_role_policy(
-                RoleName=rolename,
-                PolicyArn=pol.arn
-            )
-        # delete role
-        self.client.delete_role(RoleName=rolename)
-
     def create_role_robust(self, rolename, roledoc, verbose=False):
         try:
             response = self.client.create_role(
@@ -402,17 +401,6 @@ class IAM(object):
             response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
                 print(response)
-
-    def detach_policies_from_group(self, verbose=False):
-        try:
-            # do not actually delete the group, just detach existing policies.
-            # deleting a group would require users to be detached from the group.
-            for pol in list(self.iam.Group(self.iam_group_name).attached_policies.all()):
-                res = self.client.detach_group_policy(GroupName=self.iam_group_name, PolicyArn=pol.arn)
-                if verbose:
-                    print(res)
-        except Exception as e2:
-            raise Exception("Can't detach policies from group %s : %s" % (self.iam_group_name, str(e2)))
 
     def create_user_group(self, verbose=False):
         try:
@@ -455,21 +443,6 @@ class IAM(object):
             if verbose:
                 print(response)
 
-    def remove_policy(self, policy_name):
-        policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
-        # first detach roles and groups and delete versions (requirements for deleting policy)
-        res = self.client.list_entities_for_policy(PolicyArn=policy_arn)
-        policy = self.iam.Policy(policy_arn)
-        for role in res['PolicyRoles']:
-            policy.detach_role(RoleName=role['RoleName'])
-        for group in res['PolicyGroups']:
-            policy.detach_group(GroupName=group['GroupName'])
-        for v in list(policy.versions.all()):
-            if not v.is_default_version:
-                self.client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
-        # delete policy
-        self.client.delete_policy(PolicyArn=policy_arn)
-
     def create_policy_robust(self, policy_name, policy_doc, verbose=False):
         try:
             response = self.client.create_policy(
@@ -493,42 +466,35 @@ class IAM(object):
                 except Exception as e2:
                     raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
 
-    def remove_instance_profile(self, instance_profile_name):
-        try:
-            self.client.delete_instance_profile(InstanceProfileName=instance_profile_name)
-        except Exception as e:
-            raise Exception("Can't delete instance profile. %s" % str(e))
-
     def create_instance_profile(self, verbose=False):
-        instance_profile_name = self.role_name('ec2')
         try:
             self.client.create_instance_profile(
-                InstanceProfileName=instance_profile_name
+                InstanceProfileName=self.instance_profile_name
             )
         except Exception as e:
             if 'EntityAlreadyExists' in str(e):
-                self.remove_instance_profile(instance_profile_name)
+                self.remove_instance_profile(verbose=verbose)
                 try:
                     self.client.create_instance_profile(
-                        InstanceProfileName=instance_profile_name
+                        InstanceProfileName=self.instance_profile_name
                     )
                 except Exception as e2:
-                    raise Exception("Can't create instance profile %s: %s" % (instance_profile_name, str(e2)))
+                    raise Exception("Can't create instance profile %s: %s" % (self.instance_profile_name, str(e2)))
         # add role to instance profile
-        ip = self.iam.InstanceProfile(instance_profile_name)
+        ip = self.iam.InstanceProfile(self.instance_profile_name)
         try:
             ip.add_role(
-                RoleName=instance_profile_name
+                RoleName=self.instance_profile_name
             )
         except Exception as e:
             if 'LimitExceeded' in e:
-                ip.remove_role(instance_profile_name)
+                ip.remove_role(self.instance_profile_name)
                 try:
                     ip.add_role(
-                        RoleName=instance_profile_name
+                        RoleName=self.instance_profile_name
                     )
                 except Exception as e2:
-                    raise Exception("Can't add role %s: %s" % (instance_profile_name, str(e2)))
+                    raise Exception("Can't add role %s: %s" % (self.instance_profile_name, str(e2)))
 
     def create_tibanna_iam(self, verbose=False):
         """creates IAM policies and roles and a user group for tibanna
@@ -555,3 +521,126 @@ class IAM(object):
         # create IAM group for users who share permission
         self.create_user_group()
         return self.tibanna_policy_prefix
+
+    def remove_role(self, rolename, verbose=False, ignore_errors=True):
+        printlog("removing role %s" % rolename)
+        try:
+            role = self.iam.Role(rolename)
+            role.description
+        except Exception as e:
+            if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
+                if ignore_errors:
+                    printlog("role %s doesn't exist. skipping." % rolename)
+                    return
+                else:
+                    raise Exception(e)
+            raise Exception("Can't delete role %s. %s" % (rolename, str(e)))
+        # first remove instance profiles attached to it
+        res = self.client.list_instance_profiles_for_role(RoleName=rolename)
+        for inst in res['InstanceProfiles']:
+            res2 = self.client.remove_role_from_instance_profile(
+                RoleName=rolename,
+                InstanceProfileName=inst['InstanceProfileName']
+            )
+            if verbose:
+                printlog(res2)
+        # detach all policies
+        for pol in list(role.attached_policies.all()):
+            res2 = self.client.detach_role_policy(
+                RoleName=rolename,
+                PolicyArn=pol.arn
+            )
+            if verbose:
+                printlog(res2)
+        # delete role
+        res2 = self.client.delete_role(RoleName=rolename)
+        if verbose:
+            printlog(res2)
+
+    def remove_roles(self, verbose=False, ignore_errors=True):
+        for rn in [self.role_name(rt) for rt in self.role_types]:
+            self.remove_role(rn, verbose=verbose, ignore_errors=ignore_errors)
+
+    def remove_instance_profile(self, verbose=False, ignore_errors=True):
+        printlog("removing instance profile %s" % self.instance_profile_name)
+        try:
+            res = self.client.delete_instance_profile(InstanceProfileName=self.instance_profile_name)
+            if verbose:
+                printlog(res)
+        except Exception as e:
+            if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
+                if ignore_errors:
+                    printlog("instance profile %s doesn't exist. skipping." % self.instance_profile_name)
+                    return
+                else:
+                    raise Exception(e)
+            raise Exception("Can't delete instance profile. %s" % str(e))
+
+    def remove_policy(self, policy_name, verbose=False, ignore_errors=True):
+        printlog("removing policy %s" % policy_name)
+        policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
+        # first detach roles and groups and delete versions (requirements for deleting policy)
+        try:
+            policy = self.iam.Policy(policy_arn)
+            policy.description
+        except Exception as e:
+            if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
+                if ignore_errors:
+                    printlog("policy %s doesn't exist. skipping." % policy_arn)
+                    return
+                else:
+                    raise Exception(e)
+            raise Exception("Can't delete policy %s. %s" % (policy_arn, str(e)))
+        res = self.client.list_entities_for_policy(PolicyArn=policy_arn)
+        if verbose:
+            printlog(res)
+        for role in res['PolicyRoles']:
+            res2 = policy.detach_role(RoleName=role['RoleName'])
+            if verbose:
+                printlog(res2)
+        for group in res['PolicyGroups']:
+            res2 = policy.detach_group(GroupName=group['GroupName'])
+            if verbose:
+                printlog(res2)
+        for v in list(policy.versions.all()):
+            if not v.is_default_version:
+                res2 = self.client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
+                if verbose:
+                    printlog(res2)
+        # delete policy
+        res2 = self.client.delete_policy(PolicyArn=policy_arn)
+        if verbose:
+            printlog(res2)
+
+    def remove_policies(self, verbose=False, ignore_errors=True):
+        for pn in [self.policy_name(pt) for pt in self.policy_types]:
+            self.remove_policy(pn, verbose=verbose, ignore_errors=ignore_errors)
+
+    def detach_policies_from_group(self, verbose=False):
+        try:
+            # do not actually delete the group, just detach existing policies.
+            # deleting a group would require users to be detached from the group.
+            for pol in list(self.iam.Group(self.iam_group_name).attached_policies.all()):
+                res = self.client.detach_group_policy(GroupName=self.iam_group_name, PolicyArn=pol.arn)
+                if verbose:
+                    print(res)
+        except Exception as e2:
+            raise Exception("Can't detach policies from group %s : %s" % (self.iam_group_name, str(e2)))
+
+    def remove_users_from_group(self, verbose=False):
+        gr = self.iam.Group(self.iam_group_name)
+        for u in gr.users.iterator():
+            gr.remove_user(UserName=u.user_name)
+
+    def delete_group(self, verbose=False):
+        printlog("removing group %s" % self.iam_group_name)
+        self.remove_users_from_group(verbose)
+        self.detach_policies_from_group(verbose)
+        gr = self.iam.Group(self.iam_group_name)
+        gr.delete()
+
+    def delete_tibanna_iam(self, verbose=False, ignore_errors=True):
+        self.remove_policies(verbose=verbose, ignore_errors=ignore_errors)
+        self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
+        self.remove_roles(verbose=verbose, ignore_errors=ignore_errors)
+        self.delete_group(verbose=verbose)

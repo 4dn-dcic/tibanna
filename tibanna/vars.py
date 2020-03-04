@@ -78,6 +78,13 @@ DYNAMODB_KEYNAME = 'Job Id'
 # field name reserved for Tibanna setting
 _tibanna = '_tibanna'
 
+
+SFN_TYPE = 'unicorn'
+LAMBDA_TYPE = ''
+RUN_TASK_LAMBDA_NAME = 'run_task_awsem'
+CHECK_TASK_LAMBDA_NAME = 'check_task_awsem'
+
+
 # step function and execution ARN generators
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'

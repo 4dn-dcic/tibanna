@@ -31,7 +31,11 @@ from .vars import (
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
     DYNAMODB_TABLE,
-    DYNAMODB_KEYNAME
+    DYNAMODB_KEYNAME,
+    SFN_TYPE,
+    LAMBDA_TYPE,
+    RUN_TASK_LAMBDA_NAME,
+    CHECK_TASK_LAMBDA_NAME
 )
 from .utils import (
     _tibanna_settings,
@@ -85,11 +89,11 @@ class API(object):
     StepFunction = StepFunctionUnicorn
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
-    sfn_type = 'unicorn'
-    lambda_type = ''
+    sfn_type = SFN_TYPE
+    lambda_type = LAMBDA_TYPE
 
-    run_task_lambda = 'run_task_awsem'
-    check_task_lambda = 'check_task_awsem'
+    run_task_lambda = RUN_TASK_LAMBDA_NAME
+    check_task_lambda = CHECK_TASK_LAMBDA_NAME
 
     @property
     def UNICORN_LAMBDAS(self):
@@ -712,7 +716,7 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
-        tibanna_iam = IAM(None, usergroup, no_randomize=True, lambda_type=self.lambda_type)
+        tibanna_iam = IAM(usergroup)
         if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
@@ -793,9 +797,7 @@ class API(object):
             for b in bucket_names:
                 printlog("Deleting public access block for bucket %s" % b)
                 response = client.delete_public_access_block(Bucket=b)
-        tibanna_iam = IAM(bucket_names, usergroup_tag, run_task_lambda_name=self.run_task_lambda,
-                          check_task_lambda_name=self.check_task_lambda, lambda_type=self.lambda_type,
-                          no_randomize=no_randomize)
+        tibanna_iam = IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.usergroup)
         return tibanna_iam.usergroup
@@ -1094,7 +1096,7 @@ class API(object):
             return True
         return False
 
-    def cleaup(self, sfn, ignore_errors=False):
+    def cleanup(self, user_group_name, suffix='', ignore_errors=True, do_not_remove_iam_group=False, verbose=False):
 
         def handle_error(errmsg):
             if ignore_errors:
@@ -1103,15 +1105,14 @@ class API(object):
             else:
                 raise Exception(errmsg)
 
-        if not sfn.startswith('tibanna_' + self.sfn_type):
-            errmsg = "Wrong step function name: %s. An example step function name should be" + \
-                     "tibanna_%s_mygroup"
-            raise Exception(errmsg % (sfn, self.sfn_type))
-        if sfn == 'tibanna_' + self.sfn_type:
-            lambda_suffix = ''
+        if user_group_name.startswith('tibanna'):
+            raise Exception("User_group_name does not start with tibanna or tibanna_unicorn.")
+        if suffix:
+            lambda_suffix = '_' + user_group_name + '_' + suffix
         else:
-            lambda_suffix = sfn.replace('tibanna_' + self.sfn_type, '')
+            lambda_suffix = '_' + user_group_name
         # delete step function
+        sfn = 'tibanna_' + self.sfn_type + lambda_suffix
         printlog("deleting step function %s" % sfn)
         try:
             boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
@@ -1126,3 +1127,7 @@ class API(object):
             except Exception as e:
                 handle_error("Failed to cleanup lambda: %s" % str(e))
         # delete IAM policies, roles and groups
+        if not do_not_remove_iam_group:
+            printlog("deleting IAM permissions %s" % sfn)
+            iam = IAM(user_group_name)
+            iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
