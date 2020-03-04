@@ -265,9 +265,9 @@ class Subcommands(object):
                  {'flag': ["-G", "--do-not-remove-iam-group"],
                   'action': 'store_true',
                   'help': "Do not remove IAM groups and permission, just remove step functions and lambda"},
-                 {'flag': ["--verbose"],
+                 {'flag': ["-q", "--quiet"],
                   'action': 'store_true',
-                  'help': "verbose"},
+                  'help': "quiet"},
                  {'flag': ["-E", "--do-not-ignore-errors"],
                   'action': 'store_true',
                   'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}]
@@ -384,10 +384,10 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
 
-def cleanup(usergroup, suffix='', do_not_remove_iam_group=False, do_not_ignore_errors=False, verbose=False):
+def cleanup(usergroup, suffix='', do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):
     print(API().cleanup(user_group_name=usergroup, suffix=suffix,
                         do_not_remove_iam_group=do_not_remove_iam_group,
-                        ignore_errors = not do_not_ignore_errors, verbose=verbose))
+                        ignore_errors = not do_not_ignore_errors, verbose=not quiet))
 
 
 def main(Subcommands=Subcommands):

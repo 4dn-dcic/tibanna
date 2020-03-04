@@ -632,15 +632,26 @@ class IAM(object):
         for u in gr.users.iterator():
             gr.remove_user(UserName=u.user_name)
 
-    def delete_group(self, verbose=False):
+    def delete_group(self, verbose=False, ignore_errors=True):
         printlog("removing group %s" % self.iam_group_name)
+        try:
+            gr = self.iam.Group(self.iam_group_name)
+            gr.group_id
+        except Exception as e:
+            if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
+                if ignore_errors:
+                    printlog("group %s doesn't exist. skipping." % self.iam_group_name)
+                    return
+                else:
+                    raise Exception(e)
+            raise Exception("Can't delete policy %s. %s" % (self.iam_group_name, str(e)))
+        
         self.remove_users_from_group(verbose)
         self.detach_policies_from_group(verbose)
-        gr = self.iam.Group(self.iam_group_name)
         gr.delete()
 
     def delete_tibanna_iam(self, verbose=False, ignore_errors=True):
         self.remove_policies(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_roles(verbose=verbose, ignore_errors=ignore_errors)
-        self.delete_group(verbose=verbose)
+        self.delete_group(verbose=verbose, ignore_errors=ignore_errors)
