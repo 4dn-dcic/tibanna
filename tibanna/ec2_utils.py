@@ -700,6 +700,8 @@ class Execution(object):
                                                     'SpotOptions': spot_options}})
         if self.cfg.availability_zone:
             largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
+        if self.cfg.security_group:
+            largs.update({'SecurityGroupIds': [self.cfg.security_group]}) 
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
