@@ -652,6 +652,6 @@ class IAM(object):
 
     def delete_tibanna_iam(self, verbose=False, ignore_errors=True):
         self.remove_policies(verbose=verbose, ignore_errors=ignore_errors)
-        self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_roles(verbose=verbose, ignore_errors=ignore_errors)
+        self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
         self.delete_group(verbose=verbose, ignore_errors=ignore_errors)

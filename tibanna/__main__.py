@@ -262,6 +262,9 @@ class Subcommands(object):
                   'default': '',
                   'help': "suffix (e.g. 'dev') that is added to the end of the name of the AWS " +
                           "Lambda function, within the same usergroup"},
+                 {'flag': ["-p", "--purge-history"],
+                  'action': 'store_true',
+                  'help': "Purge all the logs from S3 and delete all records and history of runs from dynamoDB. If you use this option, you cannot check the logs or other information in the future."},
                  {'flag': ["-G", "--do-not-remove-iam-group"],
                   'action': 'store_true',
                   'help': "Do not remove IAM groups and permission, just remove step functions and lambda"},
@@ -384,10 +387,11 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
 
-def cleanup(usergroup, suffix='', do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):
+def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):
     print(API().cleanup(user_group_name=usergroup, suffix=suffix,
                         do_not_remove_iam_group=do_not_remove_iam_group,
-                        ignore_errors = not do_not_ignore_errors, verbose=not quiet))
+                        ignore_errors = not do_not_ignore_errors,
+                        purge_history=purge_history, verbose=not quiet))
 
 
 def main(Subcommands=Subcommands):

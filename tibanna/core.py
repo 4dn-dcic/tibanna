@@ -43,7 +43,9 @@ from .utils import (
     create_jobid,
     does_key_exist,
     read_s3,
-    upload
+    upload,
+    retrieve_all_keys,
+    delete_keys
 )
 from .ec2_utils import (
     UnicornInput,
@@ -1096,7 +1098,8 @@ class API(object):
             return True
         return False
 
-    def cleanup(self, user_group_name, suffix='', ignore_errors=True, do_not_remove_iam_group=False, verbose=False):
+    def cleanup(self, user_group_name, suffix='', ignore_errors=True, do_not_remove_iam_group=False,
+                purge_history=False, verbose=False):
 
         def handle_error(errmsg):
             if ignore_errors:
@@ -1121,7 +1124,7 @@ class API(object):
         # delete lambdas
         lambda_client = boto3.client('lambda')
         for lmb in self.lambda_names:
-            printlog("deleting lambda functions %s" % lmb)
+            printlog("deleting lambda functions %s" % lmb + lambda_suffix)
             try:
                 lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
             except Exception as e:
@@ -1131,3 +1134,12 @@ class API(object):
             printlog("deleting IAM permissions %s" % sfn)
             iam = IAM(user_group_name)
             iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
+        if purge_history:
+            printlog("deleting all job files and history")
+            item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
+            for item in itemlist:
+                jobid = item[DYNAMODB_KEYNAME]
+                keylist = retrieve_all_keys(jobid, item['Log Bucket'])
+                printlog("deleting %d job files for job %s" % (len(keylist), jobid))
+                delete_keys(keylist, item['Log Bucket'])
+            dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list)

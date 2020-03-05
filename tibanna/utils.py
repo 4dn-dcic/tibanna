@@ -121,3 +121,36 @@ def upload(filepath, bucket, prefix='', public=True):
             s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
         except Exception as e:
             s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private')
+
+
+def retrieve_all_keys(prefix, bucket):
+    s3 = boto3.client('s3')
+    ContinuationToken=''
+    keylist = []
+    list_input = {'Bucket': bucket, 'Prefix': prefix}
+    while(True):
+        if ContinuationToken:
+            list_input.update({'ContinuationToken': ContinuationToken})
+        res = s3.list_objects_v2(**list_input)
+        keylist.extend([str(rc['Key']) for rc in res.get('Contents', [])])
+        if 'IsTruncated' in res and res['IsTruncated']:
+            ContinuationToken=res['NextContinuationToken']
+        else:
+            break
+    return keylist
+
+
+def delete_keys(keylist, bucket):
+    s3 = boto3.client('s3')
+    max_n = 1000  # limit for number of objects to be deleted together
+    i_curr = 0
+    while(i_curr< len(keylist)):
+        i_next = min(i_curr + max_n, len(keylist))
+        object_list = [{'Key': k} for k in keylist[i_curr:i_next]]
+        s3.delete_objects(
+            Bucket=bucket,
+            Delete={
+                'Objects': object_list, 'Quiet': True
+            }
+        )
+        i_curr = i_next
