@@ -58,6 +58,8 @@ from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
     MetricRetrievalException
 )
+from . import dd_utils
+
 
 # logger
 LOG = logging.getLogger(__name__)
