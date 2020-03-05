@@ -114,10 +114,10 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
         cmd5 = ''
         if unzip == 'gz':
             cmd4 = "gunzip {2};"
-            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f;"
+            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done;"
 	elif unzip == 'bz2':
             cmd4 = "bzip2 -d {2};"
-            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f;"
+            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done;"
         cmd = cmd_template % (cmd4, cmd5)
 	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 

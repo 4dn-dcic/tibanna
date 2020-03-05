@@ -253,7 +253,7 @@ class Config(SerializableObject):
     def fill_default(self):
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
-                      'spot_duration', 'availability_zone']:
+                      'spot_duration', 'availability_zone', 'security_group', 'subnet']:
             if not hasattr(self, field):
                 setattr(self, field, '')
         if not hasattr(self, "mem"):
@@ -700,6 +700,10 @@ class Execution(object):
                                                     'SpotOptions': spot_options}})
         if self.cfg.availability_zone:
             largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
+        if self.cfg.security_group:
+            largs.update({'SecurityGroupIds': [self.cfg.security_group]})
+        if self.cfg.subnet:
+            largs.update({'SubnetId': self.cfg.subnet})
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
@@ -715,6 +719,9 @@ class Execution(object):
             try:
                 # sometimes you don't get a description immediately
                 instance_desc_log = ec2.describe_instances(InstanceIds=[self.instance_id])
+                if 'PublicIpAddress' not in instance_desc_log['Reservations'][0]['Instances'][0]:
+                    instance_ip = ''
+                    break
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
                 break
             except:

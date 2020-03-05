@@ -28,6 +28,7 @@
     "EBS_optimized": false,
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode",
-    "cloudwatch_dashboard": false
+    "cloudwatch_dashboard": false,
+    "subnet": "subnet-efb1b3c4"
   }
 }
