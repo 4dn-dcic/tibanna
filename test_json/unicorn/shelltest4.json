@@ -29,6 +29,6 @@
     "log_bucket": "tibanna-output",
     "key_name": "4dn-encode",
     "cloudwatch_dashboard": false,
-    "security_group": "sg-00151073fdf57305f"
+    "subnet": "subnet-efb1b3c4"
   }
 }

@@ -253,7 +253,7 @@ class Config(SerializableObject):
     def fill_default(self):
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
-                      'spot_duration', 'availability_zone']:
+                      'spot_duration', 'availability_zone', 'security_group', 'subnet']:
             if not hasattr(self, field):
                 setattr(self, field, '')
         if not hasattr(self, "mem"):
@@ -702,6 +702,8 @@ class Execution(object):
             largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
         if self.cfg.security_group:
             largs.update({'SecurityGroupIds': [self.cfg.security_group]}) 
+        if self.cfg.subnet:
+            largs.update({'SubnetId': self.cfg.subnet})
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
