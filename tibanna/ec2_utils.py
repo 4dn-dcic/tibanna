@@ -701,7 +701,7 @@ class Execution(object):
         if self.cfg.availability_zone:
             largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
         if self.cfg.security_group:
-            largs.update({'SecurityGroupIds': [self.cfg.security_group]}) 
+            largs.update({'SecurityGroupIds': [self.cfg.security_group]})
         if self.cfg.subnet:
             largs.update({'SubnetId': self.cfg.subnet})
         if self.dryrun:
@@ -719,6 +719,9 @@ class Execution(object):
             try:
                 # sometimes you don't get a description immediately
                 instance_desc_log = ec2.describe_instances(InstanceIds=[self.instance_id])
+                if 'PublicIpAddress' not in instance_desc_log['Reservations'][0]['Instances'][0]:
+                    instance_ip = ''
+                    break
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
                 break
             except:
