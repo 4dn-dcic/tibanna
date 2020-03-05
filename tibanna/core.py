@@ -1139,7 +1139,7 @@ class API(object):
         if purge_history:
             printlog("deleting all job files and history")
             item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
-            for item in itemlist:
+            for item in item_list:
                 jobid = item[DYNAMODB_KEYNAME]
                 keylist = retrieve_all_keys(jobid, item['Log Bucket'])
                 printlog("deleting %d job files for job %s" % (len(keylist), jobid))

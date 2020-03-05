@@ -28,8 +28,9 @@ def get_items(table_name, primary_key, filter_key, filter_value, additional_keys
                 for ak in additional_keys:
                     entry.update({ak: item[ak]['S']})
                 entries.append(entry)
-        if 'LastEvaluatedKey' in res:
-            start_key = res['LastEvaluatedKey']['S']
+        if 'LastEvaluatedKey' in res and res['LastEvaluatedKey']:
+            printlog("LastEvaluatedKey=%s" % str(res['LastEvaluatedKey']))
+            start_key = res['LastEvaluatedKey'][primary_key]['S']
         else:
             break
     return entries
