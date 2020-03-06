@@ -2,6 +2,44 @@ import boto3
 from .utils import printlog
 
 
+def does_dynamo_table_exist(tablename):
+    try:
+        res = boto3.client('dynamodb').describe_table(
+            TableName=tablename
+        )
+        if res:
+            return True
+        else:
+            raise Exception("error describing table %s" % tablename)
+    except Exception as e:
+        if 'Requested resource not found' in str(e):
+            return False
+        else:
+            raise Exception("error describing table %s" % tablename)
+
+
+def create_dynamo_table(tablename, keyname):
+    if does_dynamo_table_exist(tablename):
+        print("dynamodb table %s already exists. skip creating db" % tablename)
+    else:
+        response = boto3.client('dynamodb').create_table(
+            TableName=tablename,
+            AttributeDefinitions=[
+                {
+                     'AttributeName': keyname,
+                     'AttributeType': 'S'
+                }
+            ],
+            KeySchema=[
+                {
+                    'AttributeName': keyname,
+                    'KeyType': 'HASH'
+                 }
+            ],
+            BillingMode='PAY_PER_REQUEST'
+        )
+
+
 def get_items(table_name, primary_key, filter_key, filter_value, additional_keys=None):
     '''filter by filter_key=filter_value
     return all the values of primary_key and additional_keys.

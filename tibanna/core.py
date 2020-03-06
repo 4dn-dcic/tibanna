@@ -216,7 +216,7 @@ class API(object):
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
-        start_time = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
+        time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
@@ -241,8 +241,8 @@ class API(object):
                     'Log Bucket': {
                         'S': logbucket
                     },
-                    'Start Time': {
-                        'S': start_time
+                    'Time Stamp': {
+                        'S': time_stamp
                     }
                 }
             )
@@ -829,7 +829,7 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
-        self.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
+        dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
