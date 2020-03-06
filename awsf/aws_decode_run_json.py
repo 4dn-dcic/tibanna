@@ -155,7 +155,7 @@ def create_input_for_cwl(input_yml_filename, d_input):
                 del v['profile']
             if 'rename' in v and v['rename']:
                 if isinstance(v['rename'], list):
-                    v['path'] = v['rename'].copy()
+                    v['path'] = v['rename'][:]
                 else:
                     v['path'] = v['rename']
                 del v['rename']
