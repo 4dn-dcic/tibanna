@@ -395,7 +395,7 @@ class IAM(object):
 
     def create_role_for_role_type(self, role_type, verbose=False):
         role_policy_doc = self.role_policy_document(self.role_service(role_type))
-        self.create_role_robust(self.role_name(role_type, json.dumps(role_policy_doc), verbose))
+        self.create_role_robust(self.role_name(role_type), json.dumps(role_policy_doc), verbose)
         role = self.iam.Role(self.role_name(role_type))
         for p_arn in self.policy_arn_list_for_role(role_type):
             response = role.attach_policy(PolicyArn=p_arn)
@@ -645,7 +645,7 @@ class IAM(object):
                 else:
                     raise Exception(e)
             raise Exception("Can't delete policy %s. %s" % (self.iam_group_name, str(e)))
-        
+
         self.remove_users_from_group(verbose)
         self.detach_policies_from_group(verbose)
         gr.delete()
