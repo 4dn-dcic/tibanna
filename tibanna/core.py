@@ -1109,8 +1109,9 @@ class API(object):
 
         def handle_error(errmsg):
             if ignore_errors:
-                printlog(errmsg)
-                printlog("continue to remove the other components")
+                if verbose:
+                    printlog(errmsg)
+                    printlog("continue to remove the other components")
             else:
                 raise Exception(errmsg)
 
@@ -1122,7 +1123,8 @@ class API(object):
             lambda_suffix = '_' + user_group_name
         # delete step function
         sfn = 'tibanna_' + self.sfn_type + lambda_suffix
-        printlog("deleting step function %s" % sfn)
+        if verbose:
+            printlog("deleting step function %s" % sfn)
         try:
             boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
         except Exception as e:
@@ -1130,18 +1132,21 @@ class API(object):
         # delete lambdas
         lambda_client = boto3.client('lambda')
         for lmb in self.lambda_names:
-            printlog("deleting lambda functions %s" % lmb + lambda_suffix)
+            if verbose:
+                printlog("deleting lambda functions %s" % lmb + lambda_suffix)
             try:
                 lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
             except Exception as e:
                 handle_error("Failed to cleanup lambda: %s" % str(e))
         # delete IAM policies, roles and groups
         if not do_not_remove_iam_group:
-            printlog("deleting IAM permissions %s" % sfn)
+            if verbose:
+                printlog("deleting IAM permissions %s" % sfn)
             iam = IAM(user_group_name)
             iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
         if purge_history:
-            printlog("deleting all job files and history")
+            if verbose:
+                printlog("deleting all job files and history")
             item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
             for item in item_list:
                 jobid = item[DYNAMODB_KEYNAME]
@@ -1150,11 +1155,15 @@ class API(object):
                         keylist = retrieve_all_keys(jobid, item['Log Bucket'])
                     except Exception as e:
                         if 'NoSuchBucket' in str(e):
-                            printlog("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
+                            if verbose:
+                                printlog("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
                             continue
-                    printlog("deleting %d job files for job %s" % (len(keylist), jobid))
+                    if verbose:
+                        printlog("deleting %d job files for job %s" % (len(keylist), jobid))
                     delete_keys(keylist, item['Log Bucket'])
                 else:
-                    printlog("log bucket info missing.. skip job %s" % jobid)
-            dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list)
-        printlog("Finished cleaning")
+                    if verbose:
+                        printlog("log bucket info missing.. skip job %s" % jobid)
+            dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list, verbose=verbose)
+        if verbose:
+            printlog("Finished cleaning")

@@ -38,7 +38,7 @@ def get_items(table_name, primary_key, filter_key, filter_value, additional_keys
     return entries
 
 
-def delete_items(table_name, primary_key, item_list):
+def delete_items(table_name, primary_key, item_list, verbose=True):
     '''item_list is a list of dictionaries in the format of
     key1: value1, key2: value2, ...
     there has to be a primary key always.'''
@@ -48,4 +48,5 @@ def delete_items(table_name, primary_key, item_list):
             TableName=table_name,
             Key={primary_key: {'S': item[primary_key]}}
         )
-    printlog("%d entries deleted from dynamodb." % len(item_list))
+    if verbose:
+        printlog("%d entries deleted from dynamodb." % len(item_list))

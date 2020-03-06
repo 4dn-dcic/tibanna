@@ -374,7 +374,7 @@ class IAM(object):
             if 'EntityAlreadyExists' in str(e):
                 try:
                     # first remove
-                    self.remove_role(rolename)
+                    self.remove_role(rolename, ignore_errors=False)
                     # recreate
                     response = self.client.create_role(
                        RoleName=rolename,
@@ -456,7 +456,7 @@ class IAM(object):
             if 'EntityAlreadyExists' in str(e):
                 try:
                     # first delete policy
-                    self.remove_policy(policy_name)
+                    self.remove_policy(policy_name, ignore_errors=False)
                     # recreate policy
                     response = self.client.create_policy(
                         PolicyName=policy_name,
@@ -474,7 +474,7 @@ class IAM(object):
             )
         except Exception as e:
             if 'EntityAlreadyExists' in str(e):
-                self.remove_instance_profile(verbose=verbose)
+                self.remove_instance_profile(ignore_errors=False)
                 try:
                     self.client.create_instance_profile(
                         InstanceProfileName=self.instance_profile_name
@@ -489,7 +489,7 @@ class IAM(object):
             )
         except Exception as e:
             if 'LimitExceeded' in e:
-                ip.remove_role(self.instance_profile_name)
+                ip.remove_role(self.instance_profile_name, ignore_errors=False)
                 try:
                     ip.add_role(
                         RoleName=self.instance_profile_name
@@ -524,14 +524,16 @@ class IAM(object):
         return self.tibanna_policy_prefix
 
     def remove_role(self, rolename, verbose=False, ignore_errors=True):
-        printlog("removing role %s" % rolename)
+        if verbose:
+            printlog("removing role %s" % rolename)
         try:
             role = self.iam.Role(rolename)
             role.description
         except Exception as e:
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
-                    printlog("role %s doesn't exist. skipping." % rolename)
+                    if verbose:
+                        printlog("role %s doesn't exist. skipping." % rolename)
                     return
                 else:
                     raise Exception(e)
@@ -543,42 +545,37 @@ class IAM(object):
                 RoleName=rolename,
                 InstanceProfileName=inst['InstanceProfileName']
             )
-            if verbose:
-                printlog(res2)
         # detach all policies
         for pol in list(role.attached_policies.all()):
             res2 = self.client.detach_role_policy(
                 RoleName=rolename,
                 PolicyArn=pol.arn
             )
-            if verbose:
-                printlog(res2)
         # delete role
         res2 = self.client.delete_role(RoleName=rolename)
-        if verbose:
-            printlog(res2)
 
     def remove_roles(self, verbose=False, ignore_errors=True):
         for rn in [self.role_name(rt) for rt in self.role_types]:
             self.remove_role(rn, verbose=verbose, ignore_errors=ignore_errors)
 
     def remove_instance_profile(self, verbose=False, ignore_errors=True):
-        printlog("removing instance profile %s" % self.instance_profile_name)
+        if verbose:
+            printlog("removing instance profile %s" % self.instance_profile_name)
         try:
             res = self.client.delete_instance_profile(InstanceProfileName=self.instance_profile_name)
-            if verbose:
-                printlog(res)
         except Exception as e:
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
-                    printlog("instance profile %s doesn't exist. skipping." % self.instance_profile_name)
+                    if verbose:
+                        printlog("instance profile %s doesn't exist. skipping." % self.instance_profile_name)
                     return
                 else:
                     raise Exception(e)
             raise Exception("Can't delete instance profile. %s" % str(e))
 
     def remove_policy(self, policy_name, verbose=False, ignore_errors=True):
-        printlog("removing policy %s" % policy_name)
+        if verbose:
+            printlog("removing policy %s" % policy_name)
         policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
         # first detach roles and groups and delete versions (requirements for deleting policy)
         try:
@@ -587,31 +584,22 @@ class IAM(object):
         except Exception as e:
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
-                    printlog("policy %s doesn't exist. skipping." % policy_arn)
+                    if verbose:
+                        printlog("policy %s doesn't exist. skipping." % policy_arn)
                     return
                 else:
                     raise Exception(e)
             raise Exception("Can't delete policy %s. %s" % (policy_arn, str(e)))
         res = self.client.list_entities_for_policy(PolicyArn=policy_arn)
-        if verbose:
-            printlog(res)
         for role in res['PolicyRoles']:
             res2 = policy.detach_role(RoleName=role['RoleName'])
-            if verbose:
-                printlog(res2)
         for group in res['PolicyGroups']:
             res2 = policy.detach_group(GroupName=group['GroupName'])
-            if verbose:
-                printlog(res2)
         for v in list(policy.versions.all()):
             if not v.is_default_version:
                 res2 = self.client.delete_policy_version(PolicyArn=policy_arn, VersionId=v.version_id)
-                if verbose:
-                    printlog(res2)
         # delete policy
         res2 = self.client.delete_policy(PolicyArn=policy_arn)
-        if verbose:
-            printlog(res2)
 
     def remove_policies(self, verbose=False, ignore_errors=True):
         for pn in [self.policy_name(pt) for pt in self.policy_types]:
@@ -623,8 +611,6 @@ class IAM(object):
             # deleting a group would require users to be detached from the group.
             for pol in list(self.iam.Group(self.iam_group_name).attached_policies.all()):
                 res = self.client.detach_group_policy(GroupName=self.iam_group_name, PolicyArn=pol.arn)
-                if verbose:
-                    print(res)
         except Exception as e2:
             raise Exception("Can't detach policies from group %s : %s" % (self.iam_group_name, str(e2)))
 
@@ -634,14 +620,16 @@ class IAM(object):
             gr.remove_user(UserName=u.user_name)
 
     def delete_group(self, verbose=False, ignore_errors=True):
-        printlog("removing group %s" % self.iam_group_name)
+        if verbose:
+            printlog("removing group %s" % self.iam_group_name)
         try:
             gr = self.iam.Group(self.iam_group_name)
             gr.group_id
         except Exception as e:
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
-                    printlog("group %s doesn't exist. skipping." % self.iam_group_name)
+                    if verbose:
+                        printlog("group %s doesn't exist. skipping." % self.iam_group_name)
                     return
                 else:
                     raise Exception(e)
@@ -651,7 +639,7 @@ class IAM(object):
         self.detach_policies_from_group(verbose)
         gr.delete()
 
-    def delete_tibanna_iam(self, verbose=False, ignore_errors=True):
+    def delete_tibanna_iam(self, verbose=True, ignore_errors=True):
         self.remove_policies(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_roles(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
