@@ -216,6 +216,7 @@ class API(object):
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
+        start_time = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
@@ -240,6 +241,9 @@ class API(object):
                     'Log Bucket': {
                         'S': logbucket
                     },
+                    'Start Time': {
+                        'S': start_time
+                    }
                 }
             )
             if verbose:
@@ -803,8 +807,8 @@ class API(object):
                 response = client.delete_public_access_block(Bucket=b)
         tibanna_iam = IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
-        print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.usergroup)
-        return tibanna_iam.usergroup
+        print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
+        return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False):

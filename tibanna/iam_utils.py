@@ -121,6 +121,7 @@ class IAM(object):
         services.update({_: 'lambda' for _ in self.lambda_names})
         if role_type not in services:
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
+        return services[role_type]
 
     def policy_arn_list_for_role(self, role_type):
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
