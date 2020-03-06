@@ -31,7 +31,11 @@ from .vars import (
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
     DYNAMODB_TABLE,
-    DYNAMODB_KEYNAME
+    DYNAMODB_KEYNAME,
+    SFN_TYPE,
+    LAMBDA_TYPE,
+    RUN_TASK_LAMBDA_NAME,
+    CHECK_TASK_LAMBDA_NAME
 )
 from .utils import (
     _tibanna_settings,
@@ -39,24 +43,23 @@ from .utils import (
     create_jobid,
     does_key_exist,
     read_s3,
-    upload
+    upload,
+    retrieve_all_keys,
+    delete_keys
 )
 from .ec2_utils import (
     UnicornInput,
     upload_workflow_to_s3
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
-from .iam_utils import (
-    create_tibanna_iam,
-    get_ec2_role_name,
-    get_lambda_role_name,
-    generate_policy_prefix
-)
+from .iam_utils import IAM
 from .stepfunction import StepFunctionUnicorn
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
     MetricRetrievalException
 )
+from . import dd_utils
+
 
 # logger
 LOG = logging.getLogger(__name__)
@@ -90,11 +93,11 @@ class API(object):
     StepFunction = StepFunctionUnicorn
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
-    sfn_type = 'unicorn'
-    lambda_type = ''
+    sfn_type = SFN_TYPE
+    lambda_type = LAMBDA_TYPE
 
-    run_task_lambda = 'run_task_awsem'
-    check_task_lambda = 'check_task_awsem'
+    run_task_lambda = RUN_TASK_LAMBDA_NAME
+    check_task_lambda = CHECK_TASK_LAMBDA_NAME
 
     @property
     def UNICORN_LAMBDAS(self):
@@ -213,6 +216,7 @@ class API(object):
         return data
 
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
+        time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
@@ -237,6 +241,9 @@ class API(object):
                     'Log Bucket': {
                         'S': logbucket
                     },
+                    'Time Stamp': {
+                        'S': time_stamp
+                    }
                 }
             )
             if verbose:
@@ -717,11 +724,11 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
-        tibanna_policy_prefix = generate_policy_prefix(usergroup, True, self.lambda_type)
+        tibanna_iam = IAM(usergroup)
         if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = get_ec2_role_name(tibanna_policy_prefix)
+                    = tibanna_iam.role_name('ec2')
             else:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
@@ -729,7 +736,7 @@ class API(object):
         if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
-                role_arn = role_arn_prefix + get_lambda_role_name(tibanna_policy_prefix, name)
+                role_arn = role_arn_prefix + tibanna_iam.role_name(name)
             else:
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
             print("role_arn=" + role_arn)
@@ -798,19 +805,10 @@ class API(object):
             for b in bucket_names:
                 printlog("Deleting public access block for bucket %s" % b)
                 response = client.delete_public_access_block(Bucket=b)
-        tibanna_policy_prefix = create_tibanna_iam(AWS_ACCOUNT_NUMBER, bucket_names,
-                                                   usergroup_tag, AWS_REGION, no_randomize=no_randomize,
-                                                   run_task_lambda_name=self.run_task_lambda,
-                                                   check_task_lambda_name=self.check_task_lambda,
-                                                   lambda_type=self.lambda_type,
-                                                   verbose=verbose)
-        if self.lambda_type:
-            tibanna_policy_prefix_prefix = "tibanna_" + self.lambda_type + '_'
-        else:
-            tibanna_policy_prefix_prefix = "tibanna_"
-        tibanna_usergroup = tibanna_policy_prefix.replace(tibanna_policy_prefix_prefix, "")
-        print("Tibanna usergroup %s has been created on AWS." % tibanna_usergroup)
-        return tibanna_usergroup
+        tibanna_iam = IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
+        tibanna_iam.create_tibanna_iam(verbose=verbose)
+        print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
+        return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False):
@@ -831,7 +829,7 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
         print("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
-        self.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
+        dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
@@ -1068,7 +1066,7 @@ class API(object):
                 return False
             else:
                 raise Exception("error describing table %s" % tablename)
-    
+
     def create_dynamo_table(self, tablename, keyname):
         if self.does_dynamo_table_exist(tablename):
             print("dynamodb table %s already exists. skip creating db" % tablename)
@@ -1105,3 +1103,67 @@ class API(object):
         if cw_res['max_cpu_utilization_percent'] < max_cpu_percent_threshold:
             return True
         return False
+
+    def cleanup(self, user_group_name, suffix='', ignore_errors=True, do_not_remove_iam_group=False,
+                purge_history=False, verbose=False):
+
+        def handle_error(errmsg):
+            if ignore_errors:
+                if verbose:
+                    printlog(errmsg)
+                    printlog("continue to remove the other components")
+            else:
+                raise Exception(errmsg)
+
+        if user_group_name.startswith('tibanna'):
+            raise Exception("User_group_name does not start with tibanna or tibanna_unicorn.")
+        if suffix:
+            lambda_suffix = '_' + user_group_name + '_' + suffix
+        else:
+            lambda_suffix = '_' + user_group_name
+        # delete step function
+        sfn = 'tibanna_' + self.sfn_type + lambda_suffix
+        if verbose:
+            printlog("deleting step function %s" % sfn)
+        try:
+            boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
+        except Exception as e:
+            handle_error("Failed to cleanup step function: %s" % str(e))
+        # delete lambdas
+        lambda_client = boto3.client('lambda')
+        for lmb in self.lambda_names:
+            if verbose:
+                printlog("deleting lambda functions %s" % lmb + lambda_suffix)
+            try:
+                lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
+            except Exception as e:
+                handle_error("Failed to cleanup lambda: %s" % str(e))
+        # delete IAM policies, roles and groups
+        if not do_not_remove_iam_group:
+            if verbose:
+                printlog("deleting IAM permissions %s" % sfn)
+            iam = IAM(user_group_name)
+            iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
+        if purge_history:
+            if verbose:
+                printlog("deleting all job files and history")
+            item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
+            for item in item_list:
+                jobid = item[DYNAMODB_KEYNAME]
+                if 'Log Bucket' in item and item['Log Bucket']:
+                    try:
+                        keylist = retrieve_all_keys(jobid, item['Log Bucket'])
+                    except Exception as e:
+                        if 'NoSuchBucket' in str(e):
+                            if verbose:
+                                printlog("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
+                            continue
+                    if verbose:
+                        printlog("deleting %d job files for job %s" % (len(keylist), jobid))
+                    delete_keys(keylist, item['Log Bucket'])
+                else:
+                    if verbose:
+                        printlog("log bucket info missing.. skip job %s" % jobid)
+            dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list, verbose=verbose)
+        if verbose:
+            printlog("Finished cleaning")

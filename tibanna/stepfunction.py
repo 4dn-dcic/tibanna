@@ -1,5 +1,5 @@
 from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
-from .iam_utils import get_stepfunction_role_name
+from .iam_utils import IAM
 
 
 class StepFunctionUnicorn(object):
@@ -84,7 +84,7 @@ class StepFunctionUnicorn(object):
                            ":role/service-role/StatesExecutionRole-" + self.region_name
         else:
             sfn_role_arn = "arn:aws:iam::" + self.aws_acc + ":role/" + \
-                get_stepfunction_role_name('tibanna_' + self.usergroup)
+                IAM(self.usergroup).role_name('stepfunction')
         return sfn_role_arn
 
     @property
