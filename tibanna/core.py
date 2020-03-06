@@ -1141,7 +1141,16 @@ class API(object):
             item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
             for item in item_list:
                 jobid = item[DYNAMODB_KEYNAME]
-                keylist = retrieve_all_keys(jobid, item['Log Bucket'])
-                printlog("deleting %d job files for job %s" % (len(keylist), jobid))
-                delete_keys(keylist, item['Log Bucket'])
+                if 'Log Bucket' in item and item['Log Bucket']:
+                    try:
+                        keylist = retrieve_all_keys(jobid, item['Log Bucket'])
+                    except Exception as e:
+                        if 'NoSuchBucket' in str(e):
+                            printlog("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
+                            continue
+                    printlog("deleting %d job files for job %s" % (len(keylist), jobid))
+                    delete_keys(keylist, item['Log Bucket'])
+                else:
+                    printlog("log bucket info missing.. skip job %s" % jobid)
             dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list)
+        printlog("Finished cleaning")

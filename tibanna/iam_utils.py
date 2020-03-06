@@ -654,4 +654,4 @@ class IAM(object):
         self.remove_policies(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_roles(verbose=verbose, ignore_errors=ignore_errors)
         self.remove_instance_profile(verbose=verbose, ignore_errors=ignore_errors)
-        self.delete_group(verbose=verbose, ignore_errors=ignore_errors)
+        res = self.delete_group(verbose=verbose, ignore_errors=ignore_errors)
