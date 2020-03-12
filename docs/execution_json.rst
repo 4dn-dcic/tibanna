@@ -493,16 +493,30 @@ The ``config`` field describes execution configuration.
         ``spot_instance`` is set to ```True``
 
 :availability_zone:
-      - specify availability zone (by default, availability zone is randomly selected within region by AWS)
-      - e.g. ``us-east-1a``
-      - optional (no default)
+    - specify availability zone (by default, availability zone is randomly selected within region by AWS)
+    - e.g. ``us-east-1a``
+    - optional (no default)
 
 :security_group:
-      - specify security group. This feature may be useful to launch an instance to a specific VPC.
-      - e.g. ``sg-00151073fdf57305f``
-      - optional (no default)
+    - specify security group. This feature may be useful to launch an instance to a specific VPC.
+    - e.g. ``sg-00151073fdf57305f``
+    - optional (no default)
+    - This feature is supported in version `0.15.6`. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
+
+      ::
+
+          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
 
 :subnet:
-      - specify subnet ID. This feature may be useful to launch an instance to a specific VPC. If you don't have default VPC, subnet must be specified.
-      - e.g. ``subnet-efb1b3c4``
-      - optional (no default)
+    - specify subnet ID. This feature may be useful to launch an instance to a specific VPC. If you don't have default VPC, subnet must be specified.
+    - e.g. ``subnet-efb1b3c4``
+    - optional (no default)
+    - This feature is supported in version `0.15.6`. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
+
+      ::
+      
+          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
+
+
