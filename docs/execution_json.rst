@@ -437,7 +437,7 @@ The ``config`` field describes execution configuration.
     
       ::
 
-          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
+          tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
 
 
 :shutdown_min:
@@ -506,7 +506,7 @@ The ``config`` field describes execution configuration.
 
       ::
 
-          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
+          tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
 
 :subnet:
     - specify subnet ID. This feature may be useful to launch an instance to a specific VPC. If you don't have default VPC, subnet must be specified.
@@ -517,6 +517,6 @@ The ``config`` field describes execution configuration.
 
       ::
       
-          tibanna deploy_core -n run_task_awsem -g <usergroup> -s <suffix>
+          tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
 
 
