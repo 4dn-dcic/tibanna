@@ -132,25 +132,24 @@ To remove Tibanna components on AWS.
 
 ::
 
-  suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added here.
-                                 The step function and lambda functions will have the suffix at the end.
+  suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added
+                                 here. The step function and lambda functions will have the
+                                 suffix at the end.
 
-  usergroup=<usergroup>          Tibanna usergroup to share the permission to access
-                                 buckets and run jobs
+  ignore_errors=<True|False>     If True, if any of the components does not exist (e.g.
+                                 already removed), it does not throw an error and keeps on
+                                 to remove the other components. (default True)
 
-  ignore_errors=True|False       if True, if any of the components does not exist (e.g. already removed),
-                                 it does not throw an error and keeps on to remove the other components.
-                                 (default True)
+  do_not_remove_iam_group<True|False>
+                                 If True, does not remove the IAM permission. This option is
+                                 recommended if various suffices are used to share the same
+                                 usergroup. (default False)
 
-  do_not_remove_iam_group=True|False
-                                 if True, does not remove the IAM permission. This option is recommended if various
-                                 suffices are used to share the same usergroup. (default False)
+  purge_history=<True|False>     If True, remove all the job logs and other job-related files
+                                 from S3 bucket and dynamoDB. Please use with caution.
+                                 (default False)
 
-  purge_history=True|False       if True, remove all the job logs and other job-related files from S3 bucket
-                                 and dynamoDB. Please use with caution. (default False)
-
-  verbose=True|False             verbose if True.
-  
+  verbose=<True|False>           Verbose if True. (default False)
 
 
 Non-admin

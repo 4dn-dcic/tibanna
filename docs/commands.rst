@@ -140,18 +140,21 @@ To remove Tibanna components on AWS.
 ::
 
 
-  -s|--suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added here.
-                                      The step function and lambda functions will have the suffix at the end.
+  -s|--suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added
+                                      here. The step function and lambda functions will have the
+                                      suffix at the end.
 
-  -E|--do-not-ignore-errors           By default, if any of the components does not exist (e.g. already removed),
-                                      it does not throw an error and keeps on to remove the other components.
-                                      Using this option turns off this feature and will throw an error.
+  -E|--do-not-ignore-errors           By default, if any of the components does not exist (e.g.
+                                      already removed), it does not throw an error and keeps on
+                                      to remove the other components. Using this option turns off
+                                      this feature and will throw an error.
 
-  -G|--do-not-remove-iam-group        if set, it does not remove the IAM permissions. This option is recommended if
-                                      various suffices are used to share the same usergroup.
+  -G|--do-not-remove-iam-group        if set, it does not remove the IAM permissions. This option
+                                      is recommended if various suffices are used to share the
+                                      same usergroup.
 
-  -p|--purge-history                  if set, remove all the job logs and other job-related files from S3 bucket
-                                      and dynamoDB. Please use with caution.
+  -p|--purge-history                  if set, remove all the job logs and other job-related files
+                                      from S3 bucket and dynamoDB. Please use with caution.
 
   -q|--quiet                          run quietly
 
