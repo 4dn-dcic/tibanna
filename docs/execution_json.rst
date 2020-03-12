@@ -433,7 +433,7 @@ The ``config`` field describes execution configuration.
       recommended to use a directory under ``/data1`` as a temp directory when running in the ``shell`` mode, which
       is mounted from data EBS.
     - This field is supported in version ``0.9.0`` or higher. If an older version has been used, redeploy
-      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
+      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` or higher, as below.
     
       ::
 
@@ -501,8 +501,8 @@ The ``config`` field describes execution configuration.
     - specify security group. This feature may be useful to launch an instance to a specific VPC.
     - e.g. ``sg-00151073fdf57305f``
     - optional (no default)
-    - This feature is supported in version `0.15.6`. If an older version has been used, redeploy
-      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
+    - This feature is supported in version `0.15.6` or higher. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.15.6`` or higher, as below.
 
       ::
 
@@ -512,8 +512,8 @@ The ``config`` field describes execution configuration.
     - specify subnet ID. This feature may be useful to launch an instance to a specific VPC. If you don't have default VPC, subnet must be specified.
     - e.g. ``subnet-efb1b3c4``
     - optional (no default)
-    - This feature is supported in version `0.15.6`. If an older version has been used, redeploy
-      ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` as below.
+    - This feature is supported in version `0.15.6` or higher. If an older version has been used, redeploy
+      ``run_task_awsem`` to enable this feature, after installing ``0.15.6`` or higher, as below.
 
       ::
       
