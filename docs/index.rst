@@ -93,4 +93,3 @@ Contents:
    ami
    4dn_pipelines
    how_it_works
-   dev
