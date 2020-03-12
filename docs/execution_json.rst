@@ -215,8 +215,9 @@ Input data specification
       - ``profile`` if the bucket can only be accessed through profile (profile can be set during Tibanna deployment)
       - ``rename`` if the file name must be changed upon download to the EC2 instance. This could be useful if your files are organized in certain names on S3 but the pipeline requires it to have a different name.
       - ``unzip`` to unzip the file during the upload to the EBS volume. Supported compression types are "gz" and "bz2".
+      - ``mount`` to mount the input instead of downloading. This saves downloading time but may slow down the file reading slightly. The mounting is done at the bucket level to the EBS. We have tested up to 50 instances concurrently mounting the same bucket with no problem - if you're running 10,000 jobs, we cannot guarantee if this would still work. ``mount`` and ``rename`` cannot be used together. If another input file is specified without mount but from the same bucket, this other input file will be downloaded to the running instance even though the bucket is mounted.
 
-    - ``object_key`` and ``rename`` can be a singlet, an array, an array of arrays or an array of arrays of arrays.
+    - ``object_key`` and ``rename`` can be a singleton, an array, an array of arrays or an array of arrays of arrays.
     - (e.g.
 
     ::
@@ -224,7 +225,8 @@ Input data specification
         {
             "bam": {
                 "bucket_name": "montys-data-bucket",
-                "object_key": "dataset1/sample1.bam"
+                "object_key": "dataset1/sample1.bam",
+                "mount": true
             },
             "chromsize": {
                 "bucket_name": "montys-data-bucket",
@@ -287,6 +289,7 @@ Input data specification
 
 :input_env:
     - A dictionary that specifies environment variables to be passed.
+    - Do not use this feature to pass in AWS_ACCESS_KEY and/or AWS_SECRET_KEY or AWS_REGION - it will interfere with the bucket permission of the instance.
     - (e.g.
 
     ::
@@ -463,6 +466,7 @@ The ``config`` field describes execution configuration.
     - optional (default: gp2)
 
 :cloudwatch_dashboard:
+    - **This option is now depricated.**
     - if true, Memory Used, Disk Used, CPU Utilization Cloudwatch metrics are collected into a single Cloudwatch Dashboard page. (default ``false``)
     - Warning: very expensive - Do not use it unless absolutely neessary.
       Cloudwatch metrics are collected for every awsem EC2 instances even if this option is turned off.
@@ -491,4 +495,14 @@ The ``config`` field describes execution configuration.
 :availability_zone:
       - specify availability zone (by default, availability zone is randomly selected within region by AWS)
       - e.g. ``us-east-1a``
+      - optional (no default)
+
+:security_group:
+      - specify security group. This feature may be useful to launch an instance to a specific VPC.
+      - e.g. ``sg-00151073fdf57305f``
+      - optional (no default)
+
+:subnet:
+      - specify subnet ID. This feature may be useful to launch an instance to a specific VPC. If you don't have default VPC, subnet must be specified.
+      - e.g. ``subnet-efb1b3c4``
       - optional (no default)
