@@ -133,6 +133,8 @@ Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and
 Deploying Tibanna Unicorn to AWS
 --------------------------------
 
+*Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
+
 If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
 
 ::
@@ -140,6 +142,15 @@ If you're using a forked Tibanna repo or want to use a specific branch, set the 
     # only if you're using a forked repo
     export TIBANNA_REPO_NAME=<git_hub_repo_name>  # (default: 4dn-dcic/tibanna)
     export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: master)
+
+
+If you're using an external bucket with a separate credential, you can give the permission to this bucket to tibanna unicorn during deployment by setting the following additional environment variables before deploying. This credential will be added as profile ``user1`` on the EC2 instances to run. This profile name can be added to input file specifications for the files that require this external credential. For most cases, this part can be ignored.
+
+::
+
+    # only if you're using an external bucket with a separate credential
+    export TIBANNA_PROFILE_ACCESS_KEY=<external_profile_access_key>
+    export TIBANNA_PROFILE_SECRET_KEY=<external_profile_secret_key>
 
 
 Then, deploy a copy of Tibanna as below.
@@ -180,7 +191,7 @@ To set this environmental variable,
     source ~/.bashrc
 
 
-You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group.
+You can run a workflow using Tibanna if you're an admin user or if you are a user that belongs to the user group. The following command launches a workflow run. See below for what to feed as input json, which contains information about what buckets to use, where to find the workflow CWL/WDL or what command to run inside a docker container, what the output file names should be, etc.
 
 ::
 
@@ -226,6 +237,9 @@ First, create the input json file ``my_test_tibanna_input.json`` as below.
 
 Deploying Tibanna Unicorn with private buckets
 ----------------------------------------------
+
+*Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
+
 
 Creating a bucket
 +++++++++++++++++

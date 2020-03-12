@@ -69,7 +69,7 @@ class CheckTask(object):
             return input_json_copy
     
         # checking if instance is terminated for no reason
-        instance_id = input_json_copy.get('instance_id', '')
+        instance_id = input_json_copy['config'].get('instance_id', '')
         if instance_id:  # skip test for instance_id by not giving it to input_json_copy
             try:
                 res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
@@ -94,20 +94,26 @@ class CheckTask(object):
             jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
             if jobstart_time + timedelta(hours=1) < end:
                 try:
-                    cw_res = TibannaResource(instance_id, filesystem, start, end).as_dict()
+                    cw_res = self.TibannaResource(instance_id, filesystem, start, end).as_dict()
                 except Exception as e:
                     raise MetricRetrievalException(e)
                 if 'max_cpu_utilization_percent' in cw_res:
                     if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
                         # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-                        try:
-                            boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                        except Exception as e:
-                            errmsg = "Nothing has been running for the past hour for job %s," + \
-                                     "but cannot terminate the instance (cpu utilization (%s) : %s" % \
-                                     jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
-                            printlog(errmsg)
-                            raise EC2IdleException(errmsg)
+                        if not cw_res['max_ebs_read_bytes'] or cw_res['max_ebs_read_bytes'] < 1000:  # minimum 1kb
+                        # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
+                            try:
+                                boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                                errmsg = "Nothing has been running for the past hour for job %s " + \
+                                         "(CPU utilization %s and EBS read %s bytes)." % \
+                                         (jobid, str(cw_res['max_cpu_utilization_percent']), str(cw_res['max_ebs_read_bytes']))
+                                raise EC2IdleException(errmsg)
+                            except Exception as e:
+                                errmsg = "Nothing has been running for the past hour for job %s," + \
+                                         "but cannot terminate the instance (cpu utilization (%s) : %s" % \
+                                         jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
+                                printlog(errmsg)
+                                raise EC2IdleException(errmsg)
     
         # if none of the above
         raise StillRunningException("job %s still running" % jobid)

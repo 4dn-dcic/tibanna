@@ -253,7 +253,7 @@ class Config(SerializableObject):
     def fill_default(self):
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
-                      'spot_duration']:
+                      'spot_duration', 'availability_zone', 'security_group', 'subnet']:
             if not hasattr(self, field):
                 setattr(self, field, '')
         if not hasattr(self, "mem"):
@@ -268,8 +268,7 @@ class Config(SerializableObject):
             self.spot_instance = False
         if not hasattr(self, "behavior_on_capacity_limit"):
             self.behavior_on_capacity_limit = 'fail'
-        if not hasattr(self, 'cloudwatch_dashboard'):
-            self.cloudwatch_dashboard = False
+        self.cloudwatch_dashboard = False  # now this is always false
         # postrun json should be made public?
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
@@ -357,7 +356,7 @@ class Execution(object):
                                             'EBS_optimized': False})
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
-            list0 = get_instance_types(self.cfg.mem, self.cfg.cpu, instance_list(exclude_t=False))
+            list0 = get_instance_types(self.cfg.cpu, self.cfg.mem, instance_list(exclude_t=False))
             nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
             instance_type_dlist.extend(nonredundant_list)
         # user specifically wanted EBS_optimized instances
@@ -400,7 +399,10 @@ class Execution(object):
         if not hasattr(self, 'input_size_in_bytes'):
             raise Exception("Cannot calculate total input size " +
                             "- run get_input_size_in_bytes() first")
-        return B2GB(sum([sum(flatten([v])) for s, v in self.input_size_in_bytes.items()]))
+        try:
+            return B2GB(sum([sum(flatten([v])) for s, v in self.input_size_in_bytes.items()]))
+        except:
+            return None
 
     def auto_calculate_ebs_size(self):
         """if ebs_size is in the format of e.g. '3x', it updates the size
@@ -408,6 +410,10 @@ class Execution(object):
         keep 10GB"""
         if isinstance(self.cfg.ebs_size, str) and self.cfg.ebs_size.endswith('x'):
             multiplier = float(self.cfg.ebs_size.rstrip('x'))
+            if not self.total_input_size_in_gb:
+                raise Exception("Cannot calculate ebs size - input size unavailable," +
+                                "possibly because the lambda does not have permission to input files." +
+                                "Specify the actual GB when input file size is unavailable")
             self.cfg.ebs_size = multiplier * self.total_input_size_in_gb
             if round(self.cfg.ebs_size) < self.cfg.ebs_size:
                 self.cfg.ebs_size = round(self.cfg.ebs_size) + 1
@@ -588,7 +594,9 @@ class Execution(object):
                                                              'path': value.get('object_key'),
                                                              'rename': value.get('rename'),
                                                              'profile': value.get('profile', ''),
-                                                             'unzip': value.get('unzip', '')}
+                                                             'unzip': value.get('unzip', ''),
+                                                             'mount': value.get('mount', '')}
+
         for item, value in iter(args.secondary_files.items()):
             if value.get('unzip', '') not in ['gz', 'bz2', '']:
                 raise MalFormattedInputJsonException("unzip field must be gz, bz2 or ''")
@@ -597,7 +605,8 @@ class Execution(object):
                                                                  'path': value.get('object_key'),
                                                                  'rename': value.get('rename'),
                                                                  'profile': value.get('profile', ''),
-                                                                 'unzip': value.get('unzip', '')}
+                                                                 'unzip': value.get('unzip', ''),
+                                                                 'mount': value.get('mount', '')}
         # remove the password and keyname info
         if 'password' in pre['config']:
             del(pre['config']['password'])
@@ -617,9 +626,9 @@ class Execution(object):
         except Exception as e:
             raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
         try:
-            res = s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
-        except Exception:
-            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(res)))
+            s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
+        except Exception as e:
+            raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(e)))
 
     def create_userdata(self, profile=None):
         """Create a userdata script to pass to the instance. The userdata script is run_workflow.$JOBID.sh.
@@ -689,6 +698,12 @@ class Execution(object):
                 spot_options['BlockDurationMinutes'] = self.cfg.spot_duration
             largs.update({'InstanceMarketOptions': {'MarketType': 'spot',
                                                     'SpotOptions': spot_options}})
+        if self.cfg.availability_zone:
+            largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
+        if self.cfg.security_group:
+            largs.update({'SecurityGroupIds': [self.cfg.security_group]})
+        if self.cfg.subnet:
+            largs.update({'SubnetId': self.cfg.subnet})
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
@@ -704,6 +719,9 @@ class Execution(object):
             try:
                 # sometimes you don't get a description immediately
                 instance_desc_log = ec2.describe_instances(InstanceIds=[self.instance_id])
+                if 'PublicIpAddress' not in instance_desc_log['Reservations'][0]['Instances'][0]:
+                    instance_ip = ''
+                    break
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
                 break
             except:
@@ -723,7 +741,7 @@ class Execution(object):
     def add_instance_id_to_dynamodb(self):
         dd = boto3.client('dynamodb')
         try:
-            ddres = dd.update_item(
+            dd.update_item(
                 TableName=DYNAMODB_TABLE,
                 Key={
                     'Job Id': {
@@ -931,8 +949,10 @@ def get_file_size(key, bucket, size_in_gb=False):
             printlog("trying to get total size of the prefix")
             for item in get_all_objects_in_prefix(bucket, key):
                 size += item['Size']
-        except Exception as e:
-            raise Exception("key not found: Can't get input file size : %s\n%s" % (key, str(e)))
+        except:
+            return None  # do not throw an error here - if lambda doens't have s3 access, pass.
+            # s3 bucket access permissions may be quite complex - e.g. some buckets may work only
+            # on EC2 instance, which means a lambda would not be able to get the file size.
     else:
         size = meta['ContentLength']
     one_gb = 1073741824

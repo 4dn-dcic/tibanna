@@ -28,6 +28,9 @@ Example job description for CWL
         "input_parameters": {
           "nThreads": 16
         },
+        "input_env": {
+          "TEST_ENV_VAR": "abcd"
+        },
         "output_S3_bucket": "montys-data-bucket",
         "output_target": {
           "out_pairsam": "output/dataset1/sample1.sam.pairs.gz"
@@ -282,6 +285,19 @@ Input data specification
     )
 
 
+:input_env:
+    - A dictionary that specifies environment variables to be passed.
+    - (e.g.
+
+    ::
+
+        {
+            "TEST_ENV_VAR": "abcd"
+        }
+
+    )
+
+
 Output target specification
 ###########################
 
@@ -472,3 +488,7 @@ The ``config`` field describes execution configuration.
       - ``retry_without_spot`` (try with the same instance type but not a spot instance) : this option is applicable only when
         ``spot_instance`` is set to ```True``
 
+:availability_zone:
+      - specify availability zone (by default, availability zone is randomly selected within region by AWS)
+      - e.g. ``us-east-1a``
+      - optional (no default)

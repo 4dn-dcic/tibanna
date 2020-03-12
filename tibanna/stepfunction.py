@@ -1,8 +1,18 @@
 from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
-from .iam_utils import get_stepfunction_role_name
+from .iam_utils import IAM
 
 
 class StepFunctionUnicorn(object):
+    lambda_error_retry_condition = {
+        "ErrorEquals": [ "Lambda.ServiceException",
+                         "Lambda.AWSLambdaException",
+                         "Lambda.SdkClientException",
+                         "Lambda.ResourceNotFoundException"],
+        "IntervalSeconds": 60,
+        "MaxAttempts": 6,
+        "BackoffRate": 2
+    }
+
     sfn_run_task_retry_conditions = [
         {
             "ErrorEquals": ["DependencyStillRunningException"],
@@ -15,8 +25,10 @@ class StepFunctionUnicorn(object):
             "IntervalSeconds": 600,
             "MaxAttempts": 1008,  # 1 wk
             "BackoffRate": 1.0
-        }
+        },
+        lambda_error_retry_condition
     ]
+
     sfn_check_task_retry_conditions = [
         {
             "ErrorEquals": ["EC2StartingException"],
@@ -29,7 +41,8 @@ class StepFunctionUnicorn(object):
             "IntervalSeconds": 300,
             "MaxAttempts": 100000,
             "BackoffRate": 1.0
-        }
+        },
+        lambda_error_retry_condition
     ]
 
     def __init__(self,
@@ -71,7 +84,7 @@ class StepFunctionUnicorn(object):
                            ":role/service-role/StatesExecutionRole-" + self.region_name
         else:
             sfn_role_arn = "arn:aws:iam::" + self.aws_acc + ":role/" + \
-                get_stepfunction_role_name('tibanna_' + self.usergroup)
+                IAM(self.usergroup).role_name('stepfunction')
         return sfn_role_arn
 
     @property

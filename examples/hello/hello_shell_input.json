@@ -1,0 +1,23 @@
+{
+  "args": {
+    "container_image": "ubuntu:16.04",
+    "command": ["echo \"Hello world, \\$NAME!\" > hello.txt"],
+    "language": "shell",
+    "input_files": {},
+    "secondary_files": {},
+    "input_parameters": {},
+    "input_env": {"NAME": "Soo"},
+    "output_S3_bucket": "my-tibanna-test-bucket",
+    "output_target": {
+      "file:///data1/shell/hello.txt": "some_sub_dirname/my_first_hello.txt"
+    },
+    "secondary_output_target": {}
+  },
+  "config": {
+    "ebs_size": 10,
+    "instance_type": "t2.micro",
+    "EBS_optimized": false,
+    "password": "whateverpasswordworks",
+    "log_bucket": "my-tibanna-test-bucket"
+  }
+}

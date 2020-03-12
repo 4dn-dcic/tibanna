@@ -27,13 +27,6 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
     if ignore:
         args.append('--ignore')
         args.append(ignore)
-    if ignore_pony:
-        args.append('--ignore')
-        args.append('tests/tibanna/pony')
-    if no_post:
-        args.append('--ignore')  # skip tests that posts items to portal
-        args.append('tests/tibanna/pony/test_pony_utils_post.py')
-        args.append('tests/tibanna/zebra/test_zebra_utils_post.py')
     args.append('tests/tibanna/')
     retcode = pytest.main(args)
     if retcode != 0:
