@@ -18,17 +18,6 @@ def test_general_awsem_check_log_msg():
     assert res == 'check log using tibanna log --job-id=somejobid [--sfn=stepfunction]'
 
 
-def test_awsem_exception_no_peak_called():
-    log = "sometext some text some other text " + \
-          "Exception: File is empty (1234567890abcdefg.regionPeak.gz) some other text"
-    eh = AWSEMErrorHandler()
-    res = eh.parse_log(log)
-    assert res
-    with pytest.raises(AWSEMJobErrorException) as exec_info:
-        raise res
-    assert 'No peak called' in str(exec_info)
-
-
 def test_awsem_exception_not_enough_space_for_input():
     log = "sometext some text some other text " + \
           "download failed: s3://somebucket/somefile to ../../data1/input/somefile " + \
@@ -96,3 +85,24 @@ def test_add_custom_errors():
         raise res
     assert 'Unmatching pairs in fastq' in str(exec_info)
     assert 'H3MVTCCXX:4:1101:1174861:0' in str(exec_info)
+
+
+def test_add_custom_errors2():
+    log = "sometext some text some other text " + \
+          "Exception: File is empty (1234567890abcdefg.regionPeak.gz) some other text"
+    eh = AWSEMErrorHandler()
+    eh.add_custom_errors([{"error_type": "No peak called",
+                           "pattern": "Exception: File is empty (.+.regionPeak.gz)"}])
+    res = eh.parse_log(log)
+    assert res
+    with pytest.raises(AWSEMJobErrorException) as exec_info:
+        raise res
+    assert 'No peak called' in str(exec_info)
+    assert '1234567890abcdefg.regionPeak.gz' in str(exec_info)
+
+
+def test_no_matching_error():
+    log = 'some text some text no error just some text'
+    eh = AWSEMErrorHandler()
+    res = eh.parse_log(log)
+    assert not res

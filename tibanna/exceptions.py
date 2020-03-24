@@ -38,9 +38,7 @@ class AWSEMErrorHandler(object):
             # not enough disk space
             self.AWSEMError('Not enough space', '.+No space left on device'),
             # CWL missing input error
-            self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True),
-            # chip-seq peak calling failed
-            self.AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
+            self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True)
         ]
 
     def parse_log(self, log):
