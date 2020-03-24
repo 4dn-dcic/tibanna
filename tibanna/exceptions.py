@@ -15,7 +15,9 @@ class AWSEMErrorHandler(object):
 
     @property
     def ErrorList(self):
+        """add any specific error types with recognizable strings or patterns here"""
         return [
+            # chip-seq peak calling failed
             self.AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
         ]
 
