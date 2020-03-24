@@ -380,6 +380,29 @@ Dependency specification
         }
 
 
+Custom error handling
+#####################
+
+:custom_errors:
+    - List of dictionaries describing custom error types
+    - This field allows users to define workflow-specific errors based on a string pattern in log. Tibanna CheckTask step will parse the logs and detect this error.
+    - This does not serve as error detection - it serves as error identification once the run has failed.
+    - If the matching error happens, you'll see the error type and the corresponding line(s) of the error in the log file printed as the Exception in Step function.
+    - ``error_type`` is a short tag that defines the name of the error.
+    - ``pattern`` is the regex pattern to be detected in the log.
+    - ``multiline`` (optional) should be set True if ``pattern`` is multi-line (e.g. contains ``\n``).
+
+    ::
+
+        [
+            {
+                 "error_type": "Unmatching pairs in fastq"
+                 "pattern": "paired reads have different names: .+", 
+                 "multiline": False
+            }
+        ]
+
+
 config
 ------
 
