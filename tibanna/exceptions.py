@@ -17,11 +17,11 @@ class AWSEMErrorHandler(object):
     def ErrorList(self):
         """add any specific error types with recognizable strings or patterns here"""
         return [
+            # download failure due to not enough disk space
+            self.AWSEMError('Not enough space for input files', 'download failed: .+ No space left on device'),
             # chip-seq peak calling failed
             self.AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
         ]
-
-    #AWSEMErrorExceptionList = [NoPeakException]
 
     def parse_log(self, log):
         #for ex in self.AWSEMErrorExceptionList:
@@ -49,6 +49,8 @@ class StillRunningException(Exception):
 class EC2StartingException(Exception):
     """EC2 AWSEM instance is still starting (job not complete)"""
     pass
+
+
 class DependencyStillRunningException(Exception):
     pass
 
