@@ -67,7 +67,7 @@ class CheckTask(object):
             log = API().log(job_id=jobid)
             ex = eh.parse_log(log)
             if ex:
-                msg_aug = str(ex) + ". For more info - " + eh.general_awsem_error_msg(jobid)
+                msg_aug = str(ex) + ". For more info - " + eh.general_awsem_check_log_msg(jobid)
                 raise AWSEMJobErrorException(msg_aug)
             else:
                 raise AWSEMJobErrorException(eh.general_awsem_error_msg(jobid))

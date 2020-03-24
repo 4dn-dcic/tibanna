@@ -34,8 +34,15 @@ class AWSEMErrorHandler(object):
         return
 
     @property
+    def general_awsem_check_log_msg_template(self):
+        return "check log using tibanna log --job-id=%s [--sfn=stepfunction]"
+
+    def general_awsem_check_log_msg(self, job_id):
+        return self.general_awsem_check_log_msg_template % job_id
+
+    @property
     def general_awsem_error_msg_template(self):
-        return "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]"
+        return "Job encountered an error " + self.general_awsem_check_log_msg_template
 
     def general_awsem_error_msg(self, job_id):
         return self.general_awsem_error_msg_template % job_id

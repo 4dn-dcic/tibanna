@@ -11,6 +11,12 @@ def test_general_awsem_error_msg():
     assert res == 'Job encountered an error check log using tibanna log --job-id=somejobid [--sfn=stepfunction]'
 
 
+def test_general_awsem_check_log_msg():
+    eh = AWSEMErrorHandler()
+    res = eh.general_awsem_check_log_msg('somejobid')
+    assert res == 'check log using tibanna log --job-id=somejobid [--sfn=stepfunction]'
+
+
 def test_awsem_exception_no_peak_called():
     log = "sometext some text some other text " + \
           "Exception: File is empty (1234567890abcdefg.regionPeak.gz) some other text"
