@@ -9,9 +9,12 @@ class AWSEMJobErrorException(Exception):
 class AWSEMErrorHandler(object):
 
     class AWSEMError(object):
-        def __init__(self, error_type, pattern_in_log):
+        def __init__(self, error_type, pattern_in_log, multiline=False):
             self.error_type = error_type
-            self.pattern_in_log = pattern_in_log
+            if multiline:
+                self.pattern_in_log = re.compile(pattern_in_log, re.MULTILINE)
+            else:
+                self.pattern_in_log = pattern_in_log
 
     @property
     def ErrorList(self):
@@ -19,6 +22,8 @@ class AWSEMErrorHandler(object):
         return [
             # download failure due to not enough disk space
             self.AWSEMError('Not enough space for input files', 'download failed: .+ No space left on device'),
+            # CWL missing input error
+            self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True),
             # chip-seq peak calling failed
             self.AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
         ]
@@ -29,6 +34,8 @@ class AWSEMErrorHandler(object):
             res = re.search(ex.pattern_in_log, log)
             if res:
                 match = res.string[res.regs[0][0]:res.regs[0][1] + 1]
+                match = re.sub('\n',' ', match)  # \n not recognized and subsequent content is dropped from Exception
+                match = re.sub(' +', ' ', match)
                 msg = "%s: %s" % (ex.error_type, match)
                 return AWSEMJobErrorException(msg)
         return

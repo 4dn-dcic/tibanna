@@ -3,6 +3,7 @@ from tibanna.exceptions import (
     AWSEMErrorHandler,
     AWSEMJobErrorException
 )
+from tibanna.utils import printlog
 
 
 def test_general_awsem_error_msg():
@@ -39,3 +40,18 @@ def test_awsem_exception_not_enough_space_for_input():
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
     assert 'Not enough space for input files' in str(exec_info)
+
+
+def test_awsem_exception_cwl_missing_input():
+    log = "Workflow error, try again with --debug for more information:\n" + \
+          "Invalid job input record:\n" + \
+          "workflow_gatk-GenotypeGVCFs_plus_vcf-integrity-check.cwl:28:5: Missing required input parameter\n" + \
+          "                                                     'chromosomes'\n" + \
+          "some text some text"
+    eh = AWSEMErrorHandler()
+    res = eh.parse_log(log)
+    assert res
+    with pytest.raises(AWSEMJobErrorException) as exec_info:
+        raise res
+    assert 'CWL missing input' in str(exec_info)
+    assert 'chromosomes' in str(exec_info)
