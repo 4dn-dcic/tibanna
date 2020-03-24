@@ -27,12 +27,16 @@ class AWSEMErrorHandler(object):
 
     @property
     def _ErrorList(self):
-        """add any specific error types with recognizable strings or patterns here"""
+        """add any specific error types with recognizable strings or patterns here.
+        the order is important. The earlier ones are checked first and if there is a match,
+        the later ones will not be checked."""
         return [
             # input download failure due to not enough disk space
             self.AWSEMError('Not enough space for input files', 'download failed: .+ No space left on device'),
             # Docker pull failure due to not enough root disk space
             self.AWSEMError('No space for docker', 'failed to register layer.+no space left on device'),
+            # not enough disk space
+            self.AWSEMError('Not enough space', '.+No space left on device'),
             # CWL missing input error
             self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True),
             # chip-seq peak calling failed

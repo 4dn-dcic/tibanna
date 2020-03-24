@@ -42,6 +42,31 @@ def test_awsem_exception_not_enough_space_for_input():
     assert 'Not enough space for input files' in str(exec_info)
 
 
+def test_awsem_exception_no_space_for_docker():
+    log = "failed to register layer: Error processing tar file(exit status 1): " + \
+          "write /miniconda3/pkgs/python-3.7.6-h0371630_2.tar.bz2: no space left on device" + \
+          "some text some text"
+    eh = AWSEMErrorHandler()
+    res = eh.parse_log(log)
+    assert res
+    with pytest.raises(AWSEMJobErrorException) as exec_info:
+        raise res
+    assert 'No space for docker' in str(exec_info)
+    assert 'tar.bz2: no space left' in str(exec_info)
+
+
+def test_awsem_exception_no_space():
+    log = '[fputs] No space left on device' + \
+          'some text some text'
+    eh = AWSEMErrorHandler()
+    res = eh.parse_log(log)
+    assert res
+    with pytest.raises(AWSEMJobErrorException) as exec_info:
+        raise res
+    assert 'Not enough space' in str(exec_info)
+    assert '[fputs]' in str(exec_info)
+
+
 def test_awsem_exception_cwl_missing_input():
     log = "Workflow error, try again with --debug for more information:\n" + \
           "Invalid job input record:\n" + \
@@ -64,7 +89,7 @@ def test_add_custom_errors():
     eh.add_custom_errors([{"error_type": "Unmatching pairs in fastq",
                            "pattern": "paired reads have different names: .+",
                            "multiline": False}])
-    assert len(eh.ErrorList) == 4
+    assert len(eh.ErrorList) == len(eh._ErrorList) + 1
     res = eh.parse_log(log)
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
