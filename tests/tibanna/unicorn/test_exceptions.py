@@ -55,3 +55,19 @@ def test_awsem_exception_cwl_missing_input():
         raise res
     assert 'CWL missing input' in str(exec_info)
     assert 'chromosomes' in str(exec_info)
+
+
+def test_add_custom_errors():
+    log = "[M::mem_pestat] low and high boundaries for proper pairs: (1, 22)" + \
+          "[mem_sam_pe] paired reads have different names: \"H3MVTCCXX:4:1101:1174861:0\", \"H3MVTCCXX:4:1101:743397:0\""
+    eh = AWSEMErrorHandler()
+    eh.add_custom_errors([{"error_type": "Unmatching pairs in fastq",
+                           "pattern": "paired reads have different names: .+",
+                           "multiline": False}])
+    assert len(eh.ErrorList) == 4
+    res = eh.parse_log(log)
+    assert res
+    with pytest.raises(AWSEMJobErrorException) as exec_info:
+        raise res
+    assert 'Unmatching pairs in fastq' in str(exec_info)
+    assert 'H3MVTCCXX:4:1101:1174861:0' in str(exec_info)

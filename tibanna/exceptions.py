@@ -8,6 +8,9 @@ class AWSEMJobErrorException(Exception):
 
 class AWSEMErrorHandler(object):
 
+    def __init__(self):
+        self.ErrorList = self._ErrorList  # initial error list, custom errors can be added
+
     class AWSEMError(object):
         def __init__(self, error_type, pattern_in_log, multiline=False):
             self.error_type = error_type
@@ -16,12 +19,20 @@ class AWSEMErrorHandler(object):
             else:
                 self.pattern_in_log = pattern_in_log
 
+    def add_custom_errors(self, custom_err_list):
+        """add custom errors to ErrorList.
+        custom_err_list is a list of dictionaries w/ keys 'error_type', 'pattern', 'multiline'"""
+        for err in custom_err_list:
+            self.ErrorList.append(self.AWSEMError(err['error_type'], err['pattern'], err.get('multiline', False)))
+
     @property
-    def ErrorList(self):
+    def _ErrorList(self):
         """add any specific error types with recognizable strings or patterns here"""
         return [
-            # download failure due to not enough disk space
+            # input download failure due to not enough disk space
             self.AWSEMError('Not enough space for input files', 'download failed: .+ No space left on device'),
+            # Docker pull failure due to not enough root disk space
+            self.AWSEMError('No space for docker', 'failed to register layer.+no space left on device'),
             # CWL missing input error
             self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True),
             # chip-seq peak calling failed
@@ -33,7 +44,7 @@ class AWSEMErrorHandler(object):
         for ex in self.ErrorList:
             res = re.search(ex.pattern_in_log, log)
             if res:
-                match = res.string[res.regs[0][0]:res.regs[0][1] + 1]
+                match = res.string[res.regs[0][0]:res.regs[0][1]]
                 match = re.sub('\n',' ', match)  # \n not recognized and subsequent content is dropped from Exception
                 match = re.sub(' +', ' ', match)
                 msg = "%s: %s" % (ex.error_type, match)

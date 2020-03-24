@@ -64,6 +64,8 @@ class CheckTask(object):
             except Exception as e:
                 printlog("error handling postrun json %s" % str(e))
             eh = AWSEMErrorHandler()
+            if 'custom_errors' in input_json_copy['args']:
+                eh.add_custom_errors(input_json_copy['args']['custom_errors'])
             log = API().log(job_id=jobid)
             ex = eh.parse_log(log)
             if ex:
