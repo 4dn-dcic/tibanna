@@ -19,8 +19,11 @@ from .exceptions import (
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
     EC2IdleException,
-    MetricRetrievalException
+    MetricRetrievalException,
+    AWSEMErrorHandler
 )
+from .core import API
+
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
 
@@ -31,6 +34,7 @@ def check_task(input_json):
 
 class CheckTask(object):
     TibannaResource = TibannaResource
+    API = API
 
     def __init__(self, input_json):
         self.input_json = copy.deepcopy(input_json)
@@ -59,8 +63,13 @@ class CheckTask(object):
                 self.handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
             except Exception as e:
                 printlog("error handling postrun json %s" % str(e))
-            errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
-            raise AWSEMJobErrorException(errmsg)
+            eh = AWSEMErrorHandler()
+            log = API().log(job_id=jobid)
+            ex = eh.parse_log(log)
+            if ex:
+                raise ex
+            else:
+                raise AWSEMJobErrorException(eh.general_awsem_error_msg(jobid))
     
         # check to see if job has completed
         if does_key_exist(bucket_name, job_success):

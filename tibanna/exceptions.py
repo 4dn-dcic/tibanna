@@ -13,9 +13,11 @@ class AWSEMErrorHandler(object):
             self.error_type = error_type
             self.pattern_in_log = pattern_in_log
 
-    ErrorList = [
-        AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
-    ]
+    @property
+    def ErrorList(self):
+        return [
+            self.AWSEMError('No peak called', 'Exception: File is empty (.+.regionPeak.gz)')
+        ]
 
     #AWSEMErrorExceptionList = [NoPeakException]
 
@@ -28,6 +30,13 @@ class AWSEMErrorHandler(object):
                 msg = "%s: %s" % (ex.error_type, match)
                 return AWSEMJobErrorException(msg)
         return
+
+    @property
+    def general_awsem_error_msg_template(self):
+        return "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]"
+
+    def general_awsem_error_msg(self, job_id):
+        return self.general_awsem_error_msg_template % job_id
 
 
 class StillRunningException(Exception):
