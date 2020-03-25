@@ -124,6 +124,9 @@ class Args(SerializableObject):
                       'additional_benchmarking_parameters']:
             if not hasattr(self, field):
                 setattr(self, field, {})
+        for field in ['custom_errors']:
+            if not hasattr(self, field):
+                setattr(self, field, [])
         for field in ['app_version']:
             if not hasattr(self, field):
                 setattr(self, field, '')

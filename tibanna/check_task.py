@@ -19,8 +19,11 @@ from .exceptions import (
     AWSEMJobErrorException,
     EC2UnintendedTerminationException,
     EC2IdleException,
-    MetricRetrievalException
+    MetricRetrievalException,
+    AWSEMErrorHandler
 )
+from .core import API
+
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
 
@@ -31,43 +34,52 @@ def check_task(input_json):
 
 class CheckTask(object):
     TibannaResource = TibannaResource
+    API = API
 
     def __init__(self, input_json):
         self.input_json = copy.deepcopy(input_json)
 
     def run(self):
         input_json_copy = self.input_json
-    
+
         # s3 bucket that stores the output
         bucket_name = input_json_copy['config']['log_bucket']
-    
+
         # info about the jobby job
         jobid = input_json_copy['jobid']
         job_started = "%s.job_started" % jobid
         job_success = "%s.success" % jobid
         job_error = "%s.error" % jobid
-    
+
         public_postrun_json = input_json_copy['config'].get('public_postrun_json', False)
-    
+
         # check to see ensure this job has started else fail
         if not does_key_exist(bucket_name, job_started):
             raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
-    
+
         # check to see if job has error, report if so
         if does_key_exist(bucket_name, job_error):
             try:
                 self.handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
             except Exception as e:
                 printlog("error handling postrun json %s" % str(e))
-            errmsg = "Job encountered an error check log using tibanna log --job-id=%s [--sfn=stepfunction]" % jobid
-            raise AWSEMJobErrorException(errmsg)
-    
+            eh = AWSEMErrorHandler()
+            if 'custom_errors' in input_json_copy['args']:
+                eh.add_custom_errors(input_json_copy['args']['custom_errors'])
+            log = API().log(job_id=jobid)
+            ex = eh.parse_log(log)
+            if ex:
+                msg_aug = str(ex) + ". For more info - " + eh.general_awsem_check_log_msg(jobid)
+                raise AWSEMJobErrorException(msg_aug)
+            else:
+                raise AWSEMJobErrorException(eh.general_awsem_error_msg(jobid))
+
         # check to see if job has completed
         if does_key_exist(bucket_name, job_success):
             self.handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
             print("completed successfully")
             return input_json_copy
-    
+
         # checking if instance is terminated for no reason
         instance_id = input_json_copy['config'].get('instance_id', '')
         if instance_id:  # skip test for instance_id by not giving it to input_json_copy
@@ -86,7 +98,7 @@ class CheckTask(object):
                     errmsg = "EC2 is terminated unintendedly for job %s - please rerun." % jobid
                     printlog(errmsg)
                     raise EC2UnintendedTerminationException(errmsg)
-    
+
             # check CPU utilization for the past hour
             filesystem = '/dev/nvme1n1'  # doesn't matter for cpu utilization
             end = datetime.now(tzutc())
@@ -98,25 +110,30 @@ class CheckTask(object):
                 except Exception as e:
                     raise MetricRetrievalException(e)
                 if 'max_cpu_utilization_percent' in cw_res:
-                    if not cw_res['max_cpu_utilization_percent'] or cw_res['max_cpu_utilization_percent'] < 1.0:
-                        # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-                        if not cw_res['max_ebs_read_bytes'] or cw_res['max_ebs_read_bytes'] < 1000:  # minimum 1kb
-                        # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
-                            try:
-                                boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                                errmsg = "Nothing has been running for the past hour for job %s " + \
-                                         "(CPU utilization %s and EBS read %s bytes)." % \
-                                         (jobid, str(cw_res['max_cpu_utilization_percent']), str(cw_res['max_ebs_read_bytes']))
-                                raise EC2IdleException(errmsg)
-                            except Exception as e:
-                                errmsg = "Nothing has been running for the past hour for job %s," + \
-                                         "but cannot terminate the instance (cpu utilization (%s) : %s" % \
-                                         jobid, str(cw_res['max_cpu_utilization_percent']), str(e)
-                                printlog(errmsg)
-                                raise EC2IdleException(errmsg)
-    
+                    self.terminate_idle_instance(jobid,
+                                                 instance_id,
+                                                 cw_res['max_cpu_utilization_percent'],
+                                                 cw_res['max_ebs_read_bytes'])
         # if none of the above
         raise StillRunningException("job %s still running" % jobid)
+
+    def terminate_idle_instance(self, jobid, instance_id, cpu, ebs_read):
+        if not cpu or cpu < 1.0:
+            # the instance wasn't terminated - otherwise it would have been captured in the previous error.
+            if not ebs_read or ebs_read < 1000:  # minimum 1kb
+                # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
+                try:
+                    boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                    errmsg = "Nothing has been running for the past hour for job %s " + \
+                             "(CPU utilization %s and EBS read %s bytes)." % \
+                             (jobid, str(cpu), str(ebs_read))
+                    raise EC2IdleException(errmsg)
+                except Exception as e:
+                    errmsg = "Nothing has been running for the past hour for job %s," + \
+                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
+                             jobid, str(cpu), str(e)
+                    printlog(errmsg)
+                    raise EC2IdleException(errmsg)
 
     def handle_postrun_json(self, bucket_name, jobid, input_json, public_read=False):
         postrunjson = "%s.postrun.json" % jobid
@@ -141,7 +158,7 @@ class CheckTask(object):
             raise "error in updating postrunjson %s" % str(e)
         # add postrun json to the input json
         self.add_postrun_json(prj, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
-    
+
     def add_postrun_json(self, prj, input_json, limit):
         prjd = prj.as_dict()
         if len(str(prjd)) + len(str(input_json)) < limit:
@@ -153,7 +170,7 @@ class CheckTask(object):
                 input_json['postrunjson'] = prjd
             else:
                 input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit'}
-    
+
     def handle_metrics(self, prj):
         try:
             resources = self.TibannaResource(prj.Job.instance_id,
