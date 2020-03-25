@@ -1,5 +1,6 @@
 import re
 
+
 # custom exceptions
 class AWSEMJobErrorException(Exception):
     """There is an error from a worklow run on the EC2 AWSEM instance."""
@@ -42,12 +43,12 @@ class AWSEMErrorHandler(object):
         ]
 
     def parse_log(self, log):
-        #for ex in self.AWSEMErrorExceptionList:
+        # for ex in self.AWSEMErrorExceptionList:
         for ex in self.ErrorList:
             res = re.search(ex.pattern_in_log, log)
             if res:
                 match = res.string[res.regs[0][0]:res.regs[0][1]]
-                match = re.sub('\n',' ', match)  # \n not recognized and subsequent content is dropped from Exception
+                match = re.sub('\n', ' ', match)  # \n not recognized and subsequent content is dropped from Exception
                 match = re.sub(' +', ' ', match)
                 msg = "%s: %s" % (ex.error_type, match)
                 return AWSEMJobErrorException(msg)

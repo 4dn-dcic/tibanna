@@ -3,7 +3,6 @@ from tibanna.exceptions import (
     AWSEMErrorHandler,
     AWSEMJobErrorException
 )
-from tibanna.utils import printlog
 
 
 def test_general_awsem_error_msg():
@@ -73,7 +72,8 @@ def test_awsem_exception_cwl_missing_input():
 
 def test_add_custom_errors():
     log = "[M::mem_pestat] low and high boundaries for proper pairs: (1, 22)" + \
-          "[mem_sam_pe] paired reads have different names: \"H3MVTCCXX:4:1101:1174861:0\", \"H3MVTCCXX:4:1101:743397:0\""
+          "[mem_sam_pe] paired reads have different names: " + \
+          "\"H3MVTCCXX:4:1101:1174861:0\", \"H3MVTCCXX:4:1101:743397:0\""
     eh = AWSEMErrorHandler()
     eh.add_custom_errors([{"error_type": "Unmatching pairs in fastq",
                            "pattern": "paired reads have different names: .+",
