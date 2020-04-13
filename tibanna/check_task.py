@@ -55,7 +55,7 @@ class CheckTask(object):
 
         # check to see ensure this job has started else fail
         if not does_key_exist(bucket_name, job_started):
-            start_time = PARSE_AWSEM_TIME(self.input_json['start_time'])
+            start_time = PARSE_AWSEM_TIME(self.input_json['config']['start_time'])
             now = datetime.now(tzutc())
             # terminate the instance if EC2 is not booting for more than 10 min.
             if start_time + timedelta(minutes=10) < now:

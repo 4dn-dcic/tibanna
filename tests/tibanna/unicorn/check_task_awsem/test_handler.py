@@ -35,8 +35,8 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     jobid = 'notmyjobid'
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
-    check_task_input_modified['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=4),
-                                                                AWSEM_TIME_STAMP_FORMAT)
+    check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=4),
+                                                                          AWSEM_TIME_STAMP_FORMAT)
     job_started = "%s.job_started" % jobid
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     with pytest.raises(EC2StartingException) as excinfo:
@@ -50,8 +50,8 @@ def test_check_task_awsem_fails_if_no_job_started_for_too_long(check_task_input,
     jobid = 'notmyjobid'
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
-    check_task_input_modified['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=13),
-                                                                AWSEM_TIME_STAMP_FORMAT)
+    check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=13),
+                                                                          AWSEM_TIME_STAMP_FORMAT)
     job_started = "%s.job_started" % jobid
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     with pytest.raises(EC2IdleException) as excinfo:
