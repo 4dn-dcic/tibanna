@@ -22,6 +22,7 @@ from .exceptions import (
     MetricRetrievalException,
     AWSEMErrorHandler
 )
+from .vars import PARSE_AWSEM_TIME
 from .core import API
 
 
@@ -54,13 +55,15 @@ class CheckTask(object):
 
         # check to see ensure this job has started else fail
         if not does_key_exist(bucket_name, job_started):
-            start_time = datetime.strftime(self.input_json['start_time'], AWSEM_TIME_STAMP_FORMAT)
+            start_time = PARSE_AWSEM_TIME(self.input_json['start_time'])
             now = datetime.now(tzutc())
             # terminate the instance if EC2 is not booting for more than 10 min.
-            if now - start_time > timedelta(minutes=10):
+            if start_time + timedelta(minutes=10) < now:
                 try:
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                    raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
+                except:
+                    pass  # most likely already terminated or never initiated
+                raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
             raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
 
         # check to see if job has error, report if so

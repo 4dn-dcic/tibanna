@@ -1,6 +1,8 @@
 import os
 import boto3
 import sys
+from datetime import datetime
+from dateutil.tz import tzutc
 
 
 if boto3.session.Session().get_credentials() is None:
@@ -80,6 +82,12 @@ _tibanna = '_tibanna'
 
 # Awsem time stamp format
 AWSEM_TIME_STAMP_FORMAT = '%Y%m%d-%H:%M:%S-UTC'
+
+
+def PARSE_AWSEM_TIME(t_str):
+  t = datetime.strptime(t_str, AWSEM_TIME_STAMP_FORMAT)
+  return t.replace(tzinfo=tzutc())
+
 
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''
