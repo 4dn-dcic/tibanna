@@ -78,6 +78,8 @@ DYNAMODB_KEYNAME = 'Job Id'
 # field name reserved for Tibanna setting
 _tibanna = '_tibanna'
 
+# Awsem time stamp format
+AWSEM_TIME_STAMP_FORMAT = '%Y%m%d-%H:%M:%S-UTC'
 
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''
