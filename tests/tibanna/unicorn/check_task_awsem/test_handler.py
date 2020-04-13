@@ -2,14 +2,18 @@ from tibanna.lambdas import check_task_awsem as service
 from tibanna.exceptions import (
     EC2StartingException,
     StillRunningException,
-    MetricRetrievalException
+    MetricRetrievalException,
+    EC2IdleException
 )
 import pytest
 import boto3
 import random
 import string
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
+from dateutil.tz import tzutc
+from tibanna.vars import AWSEM_TIME_STAMP_FORMAT
+
 
 @pytest.fixture()
 def check_task_input():
@@ -31,11 +35,27 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     jobid = 'notmyjobid'
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
+    check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=4),
+                                                                          AWSEM_TIME_STAMP_FORMAT)
     job_started = "%s.job_started" % jobid
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     with pytest.raises(EC2StartingException) as excinfo:
         service.handler(check_task_input_modified, '')
+    assert 'Failed to find jobid' in str(excinfo.value)
 
+
+@pytest.mark.webtest
+def test_check_task_awsem_fails_if_no_job_started_for_too_long(check_task_input, s3):
+    # ensure there is no job started
+    jobid = 'notmyjobid'
+    check_task_input_modified = check_task_input
+    check_task_input_modified['jobid'] = jobid
+    check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=13),
+                                                                          AWSEM_TIME_STAMP_FORMAT)
+    job_started = "%s.job_started" % jobid
+    s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
+    with pytest.raises(EC2IdleException) as excinfo:
+        service.handler(check_task_input_modified, '')
     assert 'Failed to find jobid' in str(excinfo.value)
 
 
@@ -43,7 +63,6 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
 def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
     with pytest.raises(StillRunningException) as excinfo:
         service.handler(check_task_input, '')
-
     assert 'still running' in str(excinfo.value)
     assert 'error' not in check_task_input
 

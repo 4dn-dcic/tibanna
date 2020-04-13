@@ -2,6 +2,7 @@ from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
 from .exceptions import MalFormattedPostrunJsonException
+from .vars import AWSEM_TIME_STAMP_FORMAT
 
 
 class AwsemRunJson(SerializableObject):
@@ -31,7 +32,7 @@ class AwsemRunJsonJob(SerializableObject):
 
     @property
     def start_time_as_str(self):
-        return datetime.strptime(self.start_time, '%Y%m%d-%H:%M:%S-UTC')    
+        return datetime.strptime(self.start_time, AWSEM_TIME_STAMP_FORMAT)
 
 
 class AwsemRunJsonApp(SerializableObject):
@@ -130,7 +131,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
     @property
     def end_time_as_str(self):
         try:
-            return datetime.strptime(self.end_time, '%Y%m%d-%H:%M:%S-UTC')   
+            return datetime.strptime(self.end_time, AWSEM_TIME_STAMP_FORMAT)
         except:
             return None
 

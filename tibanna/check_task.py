@@ -22,6 +22,7 @@ from .exceptions import (
     MetricRetrievalException,
     AWSEMErrorHandler
 )
+from .vars import PARSE_AWSEM_TIME
 from .core import API
 
 
@@ -40,32 +41,40 @@ class CheckTask(object):
         self.input_json = copy.deepcopy(input_json)
 
     def run(self):
-        input_json_copy = self.input_json
-
         # s3 bucket that stores the output
-        bucket_name = input_json_copy['config']['log_bucket']
+        bucket_name = self.input_json['config']['log_bucket']
+        instance_id = self.input_json['config'].get('instance_id', '')
 
         # info about the jobby job
-        jobid = input_json_copy['jobid']
+        jobid = self.input_json['jobid']
         job_started = "%s.job_started" % jobid
         job_success = "%s.success" % jobid
         job_error = "%s.error" % jobid
 
-        public_postrun_json = input_json_copy['config'].get('public_postrun_json', False)
+        public_postrun_json = self.input_json['config'].get('public_postrun_json', False)
 
         # check to see ensure this job has started else fail
         if not does_key_exist(bucket_name, job_started):
+            start_time = PARSE_AWSEM_TIME(self.input_json['config']['start_time'])
+            now = datetime.now(tzutc())
+            # terminate the instance if EC2 is not booting for more than 10 min.
+            if start_time + timedelta(minutes=10) < now:
+                try:
+                    boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                except:
+                    pass  # most likely already terminated or never initiated
+                raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
             raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
 
         # check to see if job has error, report if so
         if does_key_exist(bucket_name, job_error):
             try:
-                self.handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
+                self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             except Exception as e:
                 printlog("error handling postrun json %s" % str(e))
             eh = AWSEMErrorHandler()
-            if 'custom_errors' in input_json_copy['args']:
-                eh.add_custom_errors(input_json_copy['args']['custom_errors'])
+            if 'custom_errors' in self.input_json['args']:
+                eh.add_custom_errors(self.input_json['args']['custom_errors'])
             log = API().log(job_id=jobid)
             ex = eh.parse_log(log)
             if ex:
@@ -76,13 +85,12 @@ class CheckTask(object):
 
         # check to see if job has completed
         if does_key_exist(bucket_name, job_success):
-            self.handle_postrun_json(bucket_name, jobid, input_json_copy, public_read=public_postrun_json)
+            self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             print("completed successfully")
-            return input_json_copy
+            return self.input_json
 
         # checking if instance is terminated for no reason
-        instance_id = input_json_copy['config'].get('instance_id', '')
-        if instance_id:  # skip test for instance_id by not giving it to input_json_copy
+        if instance_id:  # skip test for instance_id by not giving it to self.input_json
             try:
                 res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
             except Exception as e:
