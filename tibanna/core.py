@@ -52,7 +52,6 @@ from .ec2_utils import (
     upload_workflow_to_s3
 )
 # from botocore.errorfactory import ExecutionAlreadyExists
-from .iam_utils import IAM
 from .stepfunction import StepFunctionUnicorn
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
@@ -111,6 +110,11 @@ class API(object):
     def TibannaResource(self):
         from .cw_utils import TibannaResource
         return TibannaResource
+
+    @property
+    def IAM(self):
+        from .iam_utils import IAM
+        return IAM
 
     def __init__(self):
         pass
@@ -724,7 +728,7 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
-        tibanna_iam = IAM(usergroup)
+        tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             if usergroup:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
@@ -805,7 +809,7 @@ class API(object):
             for b in bucket_names:
                 printlog("Deleting public access block for bucket %s" % b)
                 response = client.delete_public_access_block(Bucket=b)
-        tibanna_iam = IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
+        tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
         return tibanna_iam.user_group_name
@@ -1142,7 +1146,7 @@ class API(object):
         if not do_not_remove_iam_group:
             if verbose:
                 printlog("deleting IAM permissions %s" % sfn)
-            iam = IAM(user_group_name)
+            iam = self.IAM(user_group_name)
             iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
         if purge_history:
             if verbose:
