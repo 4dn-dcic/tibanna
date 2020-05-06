@@ -179,7 +179,8 @@ export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 ### log into ECR if necessary
 export AWS_REGION='us-east-1'  # hardcoded for testing
 export AWS_ACCOUNT_NUMBER='643366669028'  # hardcoded for testing
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com
+exl echo "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com"
+exl aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
