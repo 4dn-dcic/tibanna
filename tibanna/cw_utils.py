@@ -4,6 +4,9 @@ from tibanna.utils import (
     upload,
     read_s3
 )
+from .vars import (
+    AWS_REGION
+)
 # from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
@@ -17,7 +20,7 @@ class TibannaResource(object):
     def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
         self.instance_id = instance_id
         self.filesystem = filesystem
-        self.client = boto3.client('cloudwatch', region_name='us-east-1')
+        self.client = boto3.client('cloudwatch', region_name=AWS_REGION)
         # get resource metrics
         nTimeChunks = (endtime - starttime) / timedelta(days=1)
         # self.total_minutes = (endtime - starttime) / timedelta(minutes=1)

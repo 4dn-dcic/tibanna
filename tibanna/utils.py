@@ -5,7 +5,11 @@ import boto3
 import os
 import mimetypes
 from uuid import uuid4, UUID
-from .vars import _tibanna, EXECUTION_ARN
+from .vars import (
+    _tibanna,
+    EXECUTION_ARN,
+    AWS_REGION
+)
 
 
 LOG = logging.getLogger(__name__)
@@ -48,7 +52,7 @@ def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
 
 def randomize_run_name(run_name, sfn):
     arn = EXECUTION_ARN(run_name, sfn)
-    client = boto3.client('stepfunctions', region_name='us-east-1')
+    client = boto3.client('stepfunctions', region_name=AWS_REGION)
     try:
         response = client.describe_execution(
                 executionArn=arn
