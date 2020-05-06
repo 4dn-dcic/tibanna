@@ -1,0 +1,31 @@
+{
+  "args": {
+    "app_name": "shell-test",
+    "input_parameters": {},
+    "language": "shell",
+    "command": "\\$ECHO_COMMAND \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
+    "container_image": "643366669028.dkr.ecr.us-east-1.amazonaws.com/ubuntu16.04-python35-pip19:v1",
+    "output_target": {
+      "file:///data1/out/shell-test-output": "s3://tibanna-output/shell-test-output"
+    },
+    "secondary_output_target": {},
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "5",
+    "input_files": {
+        "file:///data1/shell/somefile": "s3://soos-4dn-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
+    },
+    "input_parameters": {
+    },
+    "input_env": {
+        "ECHO_COMMAND": "echo"
+    }
+  },
+  "config": {
+    "mem": 2,
+    "cpu": 1,
+    "ebs_size": 10,
+    "EBS_optimized": false,
+    "log_bucket": "tibanna-output"
+  }
+}
