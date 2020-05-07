@@ -180,8 +180,8 @@ export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 export AWS_REGION='us-east-1'  # hardcoded for testing
 export AWS_ACCOUNT_NUMBER='643366669028'  # hardcoded for testing
 pip install awscli -U
-exl echo "docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com $(aws ecr get-login-password --region $AWS_REGION)"
-exl docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com $(aws ecr get-login-password --region $AWS_REGION)
+exl echo "docker login --username AWS --password $(aws ecr get-login-password --region $AWS_REGION) $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com"
+exl docker login --username AWS --password $(aws ecr get-login-password --region $AWS_REGION) $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
