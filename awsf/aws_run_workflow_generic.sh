@@ -59,8 +59,8 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
-export INSTANCE_REGION=$(ec2-metadata --availability-zone | sed 's/[a-z]$//')
+export INSTANCE_ID=$(ec2metadata -i|cut -d' ' -f2)
+export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 if [[ $LANGUAGE == 'wdl' ]]
