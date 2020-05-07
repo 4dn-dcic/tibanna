@@ -180,7 +180,6 @@ export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
 ### log into ECR if necessary
 pip install awscli -U
-exl echo "docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com"
 exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com
 
 ### download data & reference files from s3
