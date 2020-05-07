@@ -128,7 +128,8 @@ class IAM(object):
                                         'desc_stepfunction', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
                                           'termination']
-        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']],
+        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
+                          ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
                    self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] +
