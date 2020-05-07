@@ -60,6 +60,8 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+export INSTANCE_REGION=$(ec2-metadata --availability-zone | sed 's/[a-z]$//')
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity|grep Account | sed 's/[^0-9]//g')
 
 if [[ $LANGUAGE == 'wdl' ]]
 then
@@ -177,11 +179,8 @@ exl echo "user_allow_other" >> /etc/fuse.conf
 export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
 ### log into ECR if necessary
-export AWS_REGION='us-east-1'  # hardcoded for testing
-export AWS_ACCOUNT_NUMBER='643366669028'  # hardcoded for testing
 pip install awscli -U
-exl echo "docker login --username AWS --password $(aws ecr get-login-password --region $AWS_REGION) $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com"
-exl docker login --username AWS --password $(aws ecr get-login-password --region $AWS_REGION) $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com
+exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
