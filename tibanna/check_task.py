@@ -75,7 +75,7 @@ class CheckTask(object):
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
-            log = API().log(job_id=jobid)
+            log = API().log(job_id=jobid, logbucket=bucket_name)
             ex = eh.parse_log(log)
             if ex:
                 msg_aug = str(ex) + ". For more info - " + eh.general_awsem_check_log_msg(jobid)

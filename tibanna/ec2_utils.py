@@ -34,6 +34,7 @@ from .exceptions import (
 )
 from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
+from ._version import __version__
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
 from Benchmark.byteformat import B2GB
@@ -657,6 +658,7 @@ class Execution(object):
             str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
         if hasattr(cfg, 'singularity') and cfg.singularity:
             str += " -g"
+        str += " -V {version}".format(version=__version__)
         str += "\n"
         print(str)
         return(str)

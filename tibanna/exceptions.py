@@ -39,7 +39,9 @@ class AWSEMErrorHandler(object):
             # not enough disk space
             self.AWSEMError('Not enough space', '.+No space left on device'),
             # CWL missing input error
-            self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True)
+            self.AWSEMError('CWL missing input', 'Missing required input parameter\n.+\n', True),
+            # Bucket access error
+            self.AWSEMError('Bucket/file access denied', 'when calling the ListObjectsV2 operation: Access Denied')
         ]
 
     def parse_log(self, log):

@@ -426,7 +426,7 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, quiet=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, logbucket=None, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
@@ -441,40 +441,45 @@ class API(object):
         if exec_arn:
             desc = sf.describe_execution(executionArn=exec_arn)
             job_id = str(json.loads(desc['input'])['jobid'])
-            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+            if not logbucket:
+                logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
         elif job_id:
-            # first try dynanmodb to get logbucket
-            ddres = dict()
-            try:
-                dd = boto3.client('dynamodb')
-                ddres = dd.query(TableName=DYNAMODB_TABLE,
-                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                           'ComparisonOperator': 'EQ'}})
-            except Exception as e:
-                pass
-            if 'Items' in ddres:
-                logbucket = ddres['Items'][0]['Log Bucket']['S']
-            else:
-                # search through executions to get logbucket
-                stateMachineArn = STEP_FUNCTION_ARN(sfn)
-                res = sf.list_executions(stateMachineArn=stateMachineArn)
-                while True:
-                    if 'executions' not in res or not res['executions']:
-                        break
-                    breakwhile = False
-                    for exc in res['executions']:
-                        desc = sf.describe_execution(executionArn=exc['executionArn'])
-                        if job_id == str(json.loads(desc['input'])['jobid']):
-                            logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                            breakwhile = True
-                            break
-                    if breakwhile:
-                        break
-                    if 'nextToken' in res:
-                        res = sf.list_executions(nextToken=res['nextToken'],
-                                                 stateMachineArn=stateMachineArn)
-                    else:
-                        break
+            if not logbucket:
+                # first try dynanmodb to get logbucket
+                ddres = dict()
+                try:
+                    dd = boto3.client('dynamodb')
+                    ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                     KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                               'ComparisonOperator': 'EQ'}})
+                except Exception as e:
+                    pass
+                if 'Items' in ddres:
+                    logbucket = ddres['Items'][0]['Log Bucket']['S']
+                else:
+                    # search through executions to get logbucket
+                    stateMachineArn = STEP_FUNCTION_ARN(sfn)
+                    try:
+                        res = sf.list_executions(stateMachineArn=stateMachineArn)
+                        while True:
+                            if 'executions' not in res or not res['executions']:
+                                break
+                            breakwhile = False
+                            for exc in res['executions']:
+                                desc = sf.describe_execution(executionArn=exc['executionArn'])
+                                if job_id == str(json.loads(desc['input'])['jobid']):
+                                    logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+                                    breakwhile = True
+                                    break
+                            if breakwhile:
+                                break
+                            if 'nextToken' in res:
+                                res = sf.list_executions(nextToken=res['nextToken'],
+                                                         stateMachineArn=stateMachineArn)
+                            else:
+                                break
+                    except:
+                        raise Exception("Cannot retrieve job. Try again later.")
         else:
             raise Exception("Either job_id, exec_arn or exec_name must be provided.")
         try:

@@ -8,9 +8,10 @@ export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION=
+export TIBANNA_VERSION=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
     echo "-i JOBID : awsem job id (required)"
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
@@ -22,9 +23,10 @@ printHelpAndExit() {
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
+    echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:m:j:l:L:u:p:a:s:r:g" opt; do
+while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
@@ -37,6 +39,7 @@ while getopts "i:m:j:l:L:u:p:a:s:r:g" opt; do
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION=--singularity;;  # use singularity
+        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -59,7 +62,9 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_ID=$(ec2-metadata -i|cut -d' ' -f2)
+export INSTANCE_ID=$(ec2metadata -i|cut -d' ' -f2)
+export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 if [[ $LANGUAGE == 'wdl' ]]
 then
@@ -175,6 +180,12 @@ exl curl -O -L http://bit.ly/goofys-latest
 exl chmod +x goofys-latest
 exl echo "user_allow_other" >> /etc/fuse.conf
 export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
+
+### log into ECR if necessary
+if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
+  pip install awscli -U;
+  exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
+fi
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
