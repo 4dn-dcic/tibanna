@@ -20,7 +20,7 @@ def get_test_json(file_name):
 def deploy_sfn1_to_region1():
     os.environ['AWS_DEFAULT_REGION'] = REGION1
     API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1')
-    
+
 
 def deploy_sfn1_to_region2():
     os.environ['AWS_DEFAULT_REGION'] = REGION2
@@ -49,13 +49,12 @@ def cleanup_sfn2_region2():
 
 
 def pytest_sessionstart(session):
-    #deploy_sfn1_to_region1()
-    #deploy_sfn1_to_region2()
-    #deploy_sfn2_to_region2()
-    pass
+    deploy_sfn1_to_region1()
+    deploy_sfn1_to_region2()
+    deploy_sfn2_to_region2()
+
 
 def pytest_sessionfinish(session, exitstatus):
-    #cleanup_sfn1_region1()
-    #cleanup_sfn1_region2()
-    #cleanup_sfn2_region2()
-    pass
+    cleanup_sfn1_region1()
+    cleanup_sfn1_region2()
+    cleanup_sfn2_region2()
