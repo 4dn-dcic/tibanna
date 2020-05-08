@@ -1,0 +1,45 @@
+{
+  "_tibanna": {
+    "env": "fourfront-webdev",
+    "run_type": "bwa-mem"
+  },
+  "args": {
+    "app_name": "bwa-mem",
+    "input_parameters": {},
+    "cwl_child_filenames": [],
+    "output_target": {
+      "out_bam": "lalala/out.bam"
+    },
+    "secondary_output_target": {},
+    "cwl_main_filename": "bwa-mem.cwl",
+    "secondary_files": {},
+    "output_S3_bucket": "tibanna-output",
+    "app_version": "5",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/master/cwl_awsem_v1/",
+    "cwl_version": "v1",
+    "input_files": {
+      "fastq1": {
+        "bucket_name": "4dn-tool-evaluation-files",
+        "object_key": "GM12878_SRR1658581_1pc_1_R1.fastq.h10000"
+      },
+      "fastq2": {
+        "bucket_name": "4dn-tool-evaluation-files",
+        "object_key": "GM12878_SRR1658581_1pc_1_R2.fastq.h10000"
+      },
+      "bwa_index": {
+        "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
+        "object_key": "1f53df95-4cf3-41cc-971d-81bb16c486dd/4DNFIZQZ39L9.bwaIndex.tgz"
+      }
+    },
+    "input_parameters": {
+        "nThreads": 2
+    }
+  },
+  "config": {
+    "ebs_size": 30,
+    "root_ebs_size": 20,
+    "EBS_optimized": true,
+    "instance_type": "t3.large",
+    "log_bucket": "tibanna-output"
+  }
+}
