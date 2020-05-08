@@ -31,7 +31,7 @@ def test(ctx, watch=False, last_failing=False, no_flake=False, k='',  extra='',
             args.append('--ignore')
             args.append(ignore)
         args.append('--ignore')
-        args.append('tests/post_deployment/')
+        args.append('tests/tibanna/post_deployment/')
         args.append('tests/tibanna/')
         retcode = pytest.main(args)
     if retcode != 0:
