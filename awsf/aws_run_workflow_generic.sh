@@ -184,7 +184,7 @@ export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 ### log into ECR if necessary
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
   pip install awscli -U;
-  exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com
+  exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 fi
 
 ### download data & reference files from s3
