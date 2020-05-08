@@ -46,6 +46,6 @@ def test_cw_metrics_region2():
     time.sleep(60 * 20)
     status = API().check_status(job_id=jobid)
     assert status == 'SUCCEEDED'
-    prj = json.loads(log(job_id=jobid, postrunjson=True))
+    prj = json.loads(API().log(job_id=jobid, postrunjson=True))
     assert prj['metrics']['max_mem_utilization_percent']
     assert prj['metrics']['max_cpu_utilization_percent']
