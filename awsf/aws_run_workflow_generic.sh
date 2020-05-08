@@ -23,10 +23,10 @@ printHelpAndExit() {
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
-    echo "-V : tibanna version"
+    echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:m:j:l:L:u:p:a:s:r:g" opt; do
+while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
@@ -39,7 +39,7 @@ while getopts "i:m:j:l:L:u:p:a:s:r:g" opt; do
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION=--singularity;;  # use singularity
-        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task that launched this instance
+        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
