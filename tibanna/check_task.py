@@ -132,14 +132,16 @@ class CheckTask(object):
                 # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
                 try:
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                    errmsg = "Nothing has been running for the past hour for job %s " + \
-                             "(CPU utilization %s and EBS read %s bytes)." % \
-                             (jobid, str(cpu), str(ebs_read))
+                    errmsg = (
+                        "Nothing has been running for the past hour for job %s,"
+                        "(CPU utilization %s and EBS read %s bytes)."
+                    ) %  (jobid, str(cpu), str(ebs_read))
                     raise EC2IdleException(errmsg)
                 except Exception as e:
-                    errmsg = "Nothing has been running for the past hour for job %s," + \
-                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
-                             jobid, str(cpu), str(e)
+                    errmsg = (
+                        "Nothing has been running for the past hour for job %s,"
+                        "but cannot terminate the instance - cpu utilization (%s) : %s"
+                    ) %  (jobid, str(cpu), str(e))
                     printlog(errmsg)
                     raise EC2IdleException(errmsg)
 
