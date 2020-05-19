@@ -112,7 +112,7 @@ class CheckTask(object):
             end = datetime.now(tzutc())
             start = end - timedelta(hours=1)
             jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
-            if jobstart_time + timedelta(hours=1) < end:
+            if False and jobstart_time + timedelta(hours=1) < end:
                 try:
                     cw_res = self.TibannaResource(instance_id, filesystem, start, end).as_dict()
                 except Exception as e:
@@ -137,9 +137,10 @@ class CheckTask(object):
                              (jobid, str(cpu), str(ebs_read))
                     raise EC2IdleException(errmsg)
                 except Exception as e:
-                    errmsg = "Nothing has been running for the past hour for job %s," + \
-                             "but cannot terminate the instance (cpu utilization (%s) : %s" % \
-                             jobid, str(cpu), str(e)
+                    errmsg = (
+                        "Nothing has been running for the past hour for job %s,"
+                        "but cannot terminate the instance - cpu utilization (%s) : %s"
+                    ) %  (jobid, str(cpu), str(e))
                     printlog(errmsg)
                     raise EC2IdleException(errmsg)
 
