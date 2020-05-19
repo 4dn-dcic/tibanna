@@ -112,7 +112,7 @@ class CheckTask(object):
             end = datetime.now(tzutc())
             start = end - timedelta(hours=1)
             jobstart_time = boto3.client('s3').get_object(Bucket=bucket_name, Key=job_started).get('LastModified')
-            if False and jobstart_time + timedelta(hours=1) < end:
+            if jobstart_time + timedelta(hours=1) < end:
                 try:
                     cw_res = self.TibannaResource(instance_id, filesystem, start, end).as_dict()
                 except Exception as e:
@@ -132,9 +132,10 @@ class CheckTask(object):
                 # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
                 try:
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                    errmsg = "Nothing has been running for the past hour for job %s " + \
-                             "(CPU utilization %s and EBS read %s bytes)." % \
-                             (jobid, str(cpu), str(ebs_read))
+                    errmsg = (
+                        "Nothing has been running for the past hour for job %s,"
+                        "(CPU utilization %s and EBS read %s bytes)."
+                    ) %  (jobid, str(cpu), str(ebs_read))
                     raise EC2IdleException(errmsg)
                 except Exception as e:
                     errmsg = (
