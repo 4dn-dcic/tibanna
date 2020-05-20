@@ -1124,7 +1124,7 @@ class API(object):
             else:
                 raise Exception(errmsg)
 
-        if user_group_name.startswith('tibanna'):
+        if user_group_name.startswith('tibanna_'):
             raise Exception("User_group_name does not start with tibanna or tibanna_unicorn.")
         if suffix:
             lambda_suffix = '_' + user_group_name + '_' + suffix
