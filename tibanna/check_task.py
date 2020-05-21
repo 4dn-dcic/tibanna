@@ -174,7 +174,8 @@ class CheckTask(object):
         if len(str(prjd)) + len(str(input_json)) < limit:
             input_json['postrunjson'] = prjd
         else:
-            del prjd['commands']
+            if 'commands' in prjd:
+                del prjd['commands']
             if len(str(prjd)) + len(str(input_json)) < limit:
                 prjd['log'] = 'postrun json not included due to data size limit'
                 input_json['postrunjson'] = prjd
