@@ -244,7 +244,9 @@ class Subcommands(object):
                   'help': "update html only and do not update the text files",
                   'action': "store_true"},
                  {'flag': ["-e", "--endtime"],
-                  'help': "endtime (default job end time if the job has finished or the current time)"}],
+                  'help': "endtime (default job end time if the job has finished or the current time)"},
+                 {'flag': ["-i", "--instance_id"],
+                  'help': "manually provide instance_id if somehow tibanna fails to retrieve the info"}],
             'cost':
                 [{'flag': ["-j", "--job-id"],
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
@@ -376,10 +378,10 @@ def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines
 
 
 def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False,
-                 endtime='', do_not_open_browser=False):
+                 endtime='', do_not_open_browser=False, instance_id=''):
     """create a resource metrics report html"""
     API().plot_metrics(job_id=job_id, sfn=sfn, force_upload=force_upload, update_html_only=update_html_only,
-                       endtime=endtime, open_browser=not do_not_open_browser)
+                       endtime=endtime, open_browser=not do_not_open_browser, instance_id=instance_id)
 
 
 def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):

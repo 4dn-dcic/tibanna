@@ -929,7 +929,7 @@ class API(object):
         return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
 
     def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
-                     update_html_only=False, endtime='', filesystem='/dev/nvme1n1'):
+                     update_html_only=False, endtime='', filesystem='/dev/nvme1n1', instance_id=''):
         ''' retrieve instance_id and plots metrics '''
         if not sfn:
             sfn = self.default_stepfunction_name
@@ -972,37 +972,38 @@ class API(object):
             filesystem = job.filesystem
         else:
             filesystem = filesystem
-        instance_id = ''
-        if hasattr(job, 'instance_id') and job.instance_id:
-            instance_id = job.instance_id
-        else:
-            ddres = dict()
-            try:
-                dd = boto3.client('dynamodb')
-                ddres = dd.query(TableName=DYNAMODB_TABLE,
-                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                           'ComparisonOperator': 'EQ'}})
-            except Exception as e:
-                pass
-            if 'Items' in ddres:
-                instance_id = ddres['Items'][0].get('instance_id', {}).get('S', '')
-            if not instance_id:
-                ec2 = boto3.client('ec2')
-                res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
-                if res['Reservations']:
-                    instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-                    instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
-                    if instance_status in ['terminated', 'shutting-down']:
-                        job_complete = True  # job failed
+        if not instance_id:
+            if hasattr(job, 'instance_id') and job.instance_id:
+                instance_id = job.instance_id
+            else:
+                ddres = dict()
+                try:
+                    dd = boto3.client('dynamodb')
+                    ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                     KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                               'ComparisonOperator': 'EQ'}})
+                except Exception as e:
+                    pass
+                if 'Items' in ddres:
+                    instance_id = ddres['Items'][0].get('instance_id', {}).get('S', '')
+                if not instance_id:
+                    ec2 = boto3.client('ec2')
+                    res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+                    if res['Reservations']:
+                        instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
+                        instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
+                        if instance_status in ['terminated', 'shutting-down']:
+                            job_complete = True  # job failed
+                        else:
+                            job_complete = False  # still running
                     else:
-                        job_complete = False  # still running
-                else:
-                    # waiting 10 min to be sure the istance is starting
-                    if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
-                        raise Exception("the instance is still setting up. " +
-                                        "Wait a few seconds/minutes and try again.")
-                    else:
-                        raise Exception("instance id not available for this run.")
+                        # waiting 10 min to be sure the istance is starting
+                        if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
+                            raise Exception("the instance is still setting up. " +
+                                            "Wait a few seconds/minutes and try again.")
+                        else:
+                            raise Exception("instance id not available for this run. Try manually providing " + \
+                                            "it using the instance_id parameter (--instance-id option)")
         # plotting
         if update_html_only:
             self.TibannaResource.update_html(log_bucket, job_id + '.metrics/')
