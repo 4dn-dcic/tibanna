@@ -473,6 +473,10 @@ To collect, save and visualize the resources metrics from Cloud Watch
   -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
                                       after it has been created/updated
 
+  -i|--instance-id=<instance_id>      Manually provide instance ID in case Tibanna somehow
+                                      can't find the information. This field is not required normally.
+  
+
 cost
 ----
 

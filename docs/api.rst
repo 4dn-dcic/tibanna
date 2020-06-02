@@ -469,6 +469,10 @@ To collect, save and visualize the resources metrics from Cloud Watch
  endtime=<endtime>                  End time of the interval to be considered
                                     to retrieve the data
 
+ instance_id=<instance_id>          Manually provide instance ID in case Tibanna somehow
+                                    can't find the information. This field is not required
+                                    normally.
+
 
 cost
 ----
