@@ -188,8 +188,8 @@ if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
 fi
 
 ### urllib3 version conflict
-pip uninstall urllib3
-pip install urllib3==1.21
+pip uninstall -y urllib3
+pip install -y urllib3==1.21
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
