@@ -189,7 +189,7 @@ fi
 
 ### urllib3 version conflict
 pip uninstall -y urllib3
-pip install -y urllib3==1.21
+pip install urllib3==1.21
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
