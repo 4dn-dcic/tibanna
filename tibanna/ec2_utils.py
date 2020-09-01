@@ -9,7 +9,8 @@ import re
 from .utils import (
     printlog,
     does_key_exist,
-    create_jobid
+    create_jobid,
+    parse_log_bucket
 )
 from .vars import (
     AWS_REGION,
@@ -249,6 +250,7 @@ class Config(SerializableObject):
         for field in ['log_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in config" % field)
+        self.log_bucket = self.log_bucket.rstrip('/')  # be consistent
 
     def update(self, d):
         for k, v in d.items():
@@ -893,12 +895,7 @@ def upload_workflow_to_s3(unicorn_input):
     cfg = unicorn_input.cfg
     jobid = unicorn_input.jobid
     # allow directory under log_bucket
-    s3_location = cfg.log_bucket.split('/')
-    bucket = s3_location[0]
-    if len(s3_location)>1:
-        bucket_dir = '/'.join(s3_location[1:]) + '/'
-    else:
-        bucket_dir = ''
+    bucket, bucket_dir = parse_log_bucket(cfg.log_bucket)
     key_prefix = bucket_dir + jobid + '.workflow/'
     if args.language == 'wdl':
         main_wf = args.wdl_main_filename

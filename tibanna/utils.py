@@ -158,3 +158,15 @@ def delete_keys(keylist, bucket):
             }
         )
         i_curr = i_next
+
+
+def parse_log_bucket(log_bucket):
+    s3_location = log_bucket.split('/')
+    bucket = s3_location[0]
+    if len(s3_location)>1:
+        bucket_dir = '/'.join(s3_location[1:])
+        if not bucket_dir.endswith('/'):
+            bucket_dir = bucket_dir + '/'
+    else:
+        bucket_dir = ''
+    return (bucket, bucket_dir)

@@ -8,7 +8,8 @@ from dateutil.tz import tzutc
 from .utils import (
     printlog,
     does_key_exist,
-    read_s3
+    read_s3,
+    parse_log_bucket
 )
 from .awsem import (
     AwsemPostRunJson
@@ -42,14 +43,15 @@ class CheckTask(object):
 
     def run(self):
         # s3 bucket that stores the output
-        bucket_name = self.input_json['config']['log_bucket']
+        log_bucket = self.input_json['config']['log_bucket']
+        bucket_name, bucket_dir = parse_log_bucket(log_bucket)
         instance_id = self.input_json['config'].get('instance_id', '')
 
         # info about the jobby job
         jobid = self.input_json['jobid']
-        job_started = "%s.job_started" % jobid
-        job_success = "%s.success" % jobid
-        job_error = "%s.error" % jobid
+        job_started = bucket_dir + "%s.job_started" % jobid
+        job_success = bucket_dir + "%s.success" % jobid
+        job_error = bucket_dir + "%s.error" % jobid
 
         public_postrun_json = self.input_json['config'].get('public_postrun_json', False)
 
@@ -69,13 +71,13 @@ class CheckTask(object):
         # check to see if job has error, report if so
         if does_key_exist(bucket_name, job_error):
             try:
-                self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
+                self.handle_postrun_json(log_bucket, jobid, self.input_json, public_read=public_postrun_json)
             except Exception as e:
                 printlog("error handling postrun json %s" % str(e))
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
-            log = API().log(job_id=jobid, logbucket=bucket_name)
+            log = API().log(job_id=jobid, logbucket=log_bucket)
             ex = eh.parse_log(log)
             if ex:
                 msg_aug = str(ex) + ". For more info - " + eh.general_awsem_check_log_msg(jobid)
@@ -85,7 +87,7 @@ class CheckTask(object):
 
         # check to see if job has completed
         if does_key_exist(bucket_name, job_success):
-            self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
+            self.handle_postrun_json(log_bucket, jobid, self.input_json, public_read=public_postrun_json)
             print("completed successfully")
             return self.input_json
 
@@ -145,8 +147,9 @@ class CheckTask(object):
                     printlog(errmsg)
                     raise EC2IdleException(errmsg)
 
-    def handle_postrun_json(self, bucket_name, jobid, input_json, public_read=False):
-        postrunjson = "%s.postrun.json" % jobid
+    def handle_postrun_json(self, log_bucket, jobid, input_json, public_read=False):
+        bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+        postrunjson = bucket_dir + "%s.postrun.json" % jobid
         if not does_key_exist(bucket_name, postrunjson):
             postrunjson_location = "https://s3.amazonaws.com/%s/%s" % (bucket_name, postrunjson)
             raise Exception("Postrun json not found at %s" % postrunjson_location)

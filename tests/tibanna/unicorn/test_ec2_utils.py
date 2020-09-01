@@ -173,6 +173,12 @@ def test_config2():
     assert cfg_dict['root_ebs_size'] == 8
 
 
+def test_config_logbucket_rstrip():
+    input_dict = {'config': {'log_bucket': 'tibanna-output/somedir/'}}
+    cfg = Config(**input_dict['config'])
+    assert cfg.log_bucket == 'tibanna-output/somedir'
+
+
 def test_config_root_ebs_size():
     input_dict = {'config': {'log_bucket': 'tibanna-output', 'root_ebs_size': 20}}
     cfg = Config(**input_dict['config'])
@@ -763,3 +769,47 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
                       Delete={'Objects': [{'Key': jobid + '.workflow/main.cwl'},
                                           {'Key': jobid + '.workflow/child1.cwl'},
                                           {'Key': jobid + '.workflow/child2.cwl'}]})
+
+
+def test_upload_workflow_to_s3_bucket_subdir(run_task_awsem_event_cwl_upload):
+    jobid = create_jobid()
+    run_task_awsem_event_cwl_upload['jobid'] = jobid
+    log_bucket = run_task_awsem_event_cwl_upload['config']['log_bucket']
+    run_task_awsem_event_cwl_upload['config']['log_bucket'] = log_bucket + '/somedir'
+    unicorn_input = UnicornInput(run_task_awsem_event_cwl_upload)
+    upload_workflow_to_s3(unicorn_input)
+    s3 = boto3.client('s3')
+    res1 = s3.get_object(Bucket=log_bucket, Key='somedir/' + jobid + '.workflow/main.cwl')
+    res2 = s3.get_object(Bucket=log_bucket, Key='somedir/' + jobid + '.workflow/child1.cwl')
+    res3 = s3.get_object(Bucket=log_bucket, Key='somedir/' + jobid + '.workflow/child2.cwl')
+    assert res1
+    assert res2
+    assert res3
+    assert unicorn_input.args.cwl_directory_url == 's3://tibanna-output/somedir/' + jobid + '.workflow/'
+    # clean up afterwards
+    s3.delete_objects(Bucket=log_bucket,
+                      Delete={'Objects': [{'Key': 'somedir/' + jobid + '.workflow/main.cwl'},
+                                          {'Key': 'somedir/' + jobid + '.workflow/child1.cwl'},
+                                          {'Key': 'somedir/' + jobid + '.workflow/child2.cwl'}]})
+
+
+def test_upload_workflow_to_s3_bucket_subsubdir(run_task_awsem_event_cwl_upload):
+    jobid = create_jobid()
+    run_task_awsem_event_cwl_upload['jobid'] = jobid
+    log_bucket = run_task_awsem_event_cwl_upload['config']['log_bucket']
+    run_task_awsem_event_cwl_upload['config']['log_bucket'] = log_bucket + '/somedir/somesubdir/'
+    unicorn_input = UnicornInput(run_task_awsem_event_cwl_upload)
+    upload_workflow_to_s3(unicorn_input)
+    s3 = boto3.client('s3')
+    res1 = s3.get_object(Bucket=log_bucket, Key='somedir/somesubdir/' + jobid + '.workflow/main.cwl')
+    res2 = s3.get_object(Bucket=log_bucket, Key='somedir/somesubdir/' + jobid + '.workflow/child1.cwl')
+    res3 = s3.get_object(Bucket=log_bucket, Key='somedir/somesubdir/' + jobid + '.workflow/child2.cwl')
+    assert res1
+    assert res2
+    assert res3
+    assert unicorn_input.args.cwl_directory_url == 's3://tibanna-output/somedir/somesubdir/' + jobid + '.workflow/'
+    # clean up afterwards
+    s3.delete_objects(Bucket=log_bucket,
+                      Delete={'Objects': [{'Key': 'somedir/somesubdir/' + jobid + '.workflow/main.cwl'},
+                                          {'Key': 'somedir/somesubdir/' + jobid + '.workflow/child1.cwl'},
+                                          {'Key': 'somedir/somesubdir/' + jobid + '.workflow/child2.cwl'}]})
