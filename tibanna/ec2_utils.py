@@ -892,8 +892,14 @@ def upload_workflow_to_s3(unicorn_input):
     args = unicorn_input.args
     cfg = unicorn_input.cfg
     jobid = unicorn_input.jobid
-    bucket = cfg.log_bucket
-    key_prefix = jobid + '.workflow/'
+    # allow directory under log_bucket
+    s3_location = cfg.log_bucket.split('/')
+    bucket = s3_location[0]
+    if len(s3_location)>1:
+        bucket_dir = '/'.join(s3_location[1:]) + '/'
+    else:
+        bucket_dir = ''
+    key_prefix = bucket_dir + jobid + '.workflow/'
     if args.language == 'wdl':
         main_wf = args.wdl_main_filename
         wf_files = args.wdl_child_filenames.copy()
