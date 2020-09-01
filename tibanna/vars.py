@@ -106,7 +106,3 @@ def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
 
 def EXECUTION_ARN(exec_name, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_EXEC_ARN % (sfn, exec_name)
-
-
-def METRICS_URL(log_bucket, job_id):
-    return BASE_METRICS_URL % (log_bucket, job_id)

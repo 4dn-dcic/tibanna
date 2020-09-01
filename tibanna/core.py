@@ -29,7 +29,6 @@ from .vars import (
     TIBANNA_REPO_BRANCH,
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
-    METRICS_URL,
     DYNAMODB_TABLE,
     DYNAMODB_KEYNAME,
     SFN_TYPE,
@@ -45,7 +44,9 @@ from .utils import (
     read_s3,
     upload,
     retrieve_all_keys,
-    delete_keys
+    delete_keys,
+    parse_log_bucket,
+    get_metrics_url
 )
 from .ec2_utils import (
     UnicornInput,
@@ -483,7 +484,8 @@ class API(object):
         else:
             raise Exception("Either job_id, exec_arn or exec_name must be provided.")
         try:
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+            bucket_name, bucket_dir = parse_log_bucket(logbucket)
+            res_s3 = boto3.client('s3').get_object(Bucket=bucket_name, Key=bucket_dir + job_id + suffix)
         except Exception as e:
             if 'NoSuchKey' in str(e):
                 if not quiet:
@@ -923,10 +925,12 @@ class API(object):
         return sfndef.sfn_name
 
     def check_metrics_plot(self, job_id, log_bucket):
-        return True if does_key_exist(log_bucket, job_id + '.metrics/metrics.html', quiet=True) else False
+        bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+        return True if does_key_exist(bucket_name, bucket_dir + job_id + '.metrics/metrics.html', quiet=True) else False
 
     def check_metrics_lock(self, job_id, log_bucket):
-        return True if does_key_exist(log_bucket, job_id + '.metrics/lock', quiet=True) else False
+        bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+        return True if does_key_exist(bucket_name, bucket_dir + job_id + '.metrics/lock', quiet=True) else False
 
     def plot_metrics(self, job_id, sfn=None, directory='.', open_browser=True, force_upload=False,
                      update_html_only=False, endtime='', filesystem='/dev/nvme1n1', instance_id=''):
@@ -956,10 +960,10 @@ class API(object):
            self.check_metrics_lock(job_id, log_bucket) and \
            not force_upload:
             printlog("Metrics plot is already on S3 bucket.")
-            printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+            printlog('metrics url= ' + get_metrics_url(log_bucket, job_id))
             # open metrics html in browser
             if open_browser:
-                webbrowser.open(METRICS_URL(log_bucket, job_id))
+                webbrowser.open(get_metrics_url(log_bucket, job_id))
             return None
         # report not already on s3 with a lock
         starttime = job.start_time_as_str
@@ -1014,14 +1018,15 @@ class API(object):
             except Exception as e:
                 raise MetricRetrievalException(e)
             # upload files
-            M.upload(bucket=log_bucket, prefix=job_id + '.metrics/', lock=job_complete)
+            bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+            M.upload(bucket=bucket_name, prefix=bucker_dir + job_id + '.metrics/', lock=job_complete)
             # clean up uploaded files
             for f in M.list_files:
                 os.remove(f)
-        printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+        printlog('metrics url= ' + get_metrics_url(log_bucket, job_id))
         # open metrics html in browser
         if open_browser:
-            webbrowser.open(METRICS_URL(log_bucket, job_id))
+            webbrowser.open(get_metrics_url(log_bucket, job_id))
 
     def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:
@@ -1056,7 +1061,8 @@ class API(object):
                 with open('metrics_report.tsv', 'w') as fo:
                     fo.write(write_file)
                 # upload new metrics_report.tsv
-                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+                bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+                upload(bucket_dir + 'metrics_report.tsv', bucket_name, job_id + '.metrics/')
                 os.remove('metrics_report.tsv')
             else:
                 printlog("cost already in the tsv file. not updating")
@@ -1170,7 +1176,8 @@ class API(object):
                             continue
                     if verbose:
                         printlog("deleting %d job files for job %s" % (len(keylist), jobid))
-                    delete_keys(keylist, item['Log Bucket'])
+                    bucket_name, bucket_dir = parse_log_bucket(item['Log Bucket'])
+                    delete_keys([bucket_dir + _ for _ in keylist], bucket_name)
                 else:
                     if verbose:
                         printlog("log bucket info missing.. skip job %s" % jobid)

@@ -8,7 +8,8 @@ from uuid import uuid4, UUID
 from .vars import (
     _tibanna,
     EXECUTION_ARN,
-    AWS_REGION
+    AWS_REGION,
+    BASE_METRICS_URL
 )
 
 
@@ -170,3 +171,8 @@ def parse_log_bucket(log_bucket):
     else:
         bucket_dir = ''
     return (bucket, bucket_dir)
+
+
+def get_metrics_url(log_bucket, job_id):
+    bucket_name, bucket_dir = parse_log_bucket(log_bucket)
+    return BASE_METRICS_URL % (bucket_name, bucket_dir + job_id)
