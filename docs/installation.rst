@@ -358,7 +358,7 @@ For example, if you have a user named ``monty`` and you want to give permission 
 
 ::
 
-    tibanna add_uesrs --user=monty --group=lalala
+    tibanna add_users --user=monty --group=lalala
 
 
 Check users again.
