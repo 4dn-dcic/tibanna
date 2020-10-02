@@ -267,7 +267,7 @@ Upload your files to the data bucket by using the following
 ::
 
     aws s3 cp <filename> s3://<bucketname>/<filename>
-    aws s3 cp -R <dirname> s3://<bucketname>/<dirname>
+    aws s3 cp --recursive <dirname> s3://<bucketname>/<dirname>
 
 
 **Example**
@@ -275,7 +275,7 @@ Upload your files to the data bucket by using the following
 ::
 
     aws s3 cp somebamfile.bam s3://montys-data-bucket/somebamfile.bam
-    aws s3 cp -R montys-input-data-folder s3://montys-data-bucket/montys-input-data-folder
+    aws s3 cp --recursive montys-input-data-folder s3://montys-data-bucket/montys-input-data-folder
 
 
 
