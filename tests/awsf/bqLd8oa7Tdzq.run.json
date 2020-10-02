@@ -52,6 +52,9 @@
                 "count_bg": [
                     "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bedGraph.gz.px2", 
                     "test-d07f8b11-1103-433d-b719-5a03e62d94dc/4DNFIZ8WWO5S.bw"
+                ],
+                "filtered_sorted_deduped_bam": [
+                    "test-ca56a9c8-46c3-4351-aa63-390b29e9798f/4DNFIXU55ATC.bam.bai"
                 ]
             }
         }, 
