@@ -183,7 +183,7 @@ for k in output_meta:
 
     if 'secondaryFiles' in output_meta[k]:
         n_assigned = 0
-        n_target = sum([len(v) for u, v in secondary_output_target.items()])
+        n_target = len(secondary_output_target.get(k, []))
         for i, sf in enumerate(output_meta[k]['secondaryFiles']):
             source = sf.get('path')
             source_name = source.replace(source_directory, '')
