@@ -13,7 +13,17 @@
         "location": "file://tests/awsf/out.rmdup.bam", 
         "path": "tests/awsf/out.rmdup.bam", 
         "class": "File", 
-        "size": 11061946
+        "size": 11061946,
+        "secondaryFiles": [
+            {
+                "checksum": "sha1$213ddf927f049f96ee6a16913b614170d8eee333", 
+                "basename": "out.rmdup.bam.bai", 
+                "location": "file://tests/awsf/out.rmdup.bam.bai", 
+                "path": "tests/awsf/out.rmdup.bam.bai", 
+                "class": "File", 
+                "size": 3120059
+            }
+        ]
     }, 
     "count_bg": {
         "checksum": "sha1$e520dbce9c8351e64b0bc16248886aee2ca83ae5", 
