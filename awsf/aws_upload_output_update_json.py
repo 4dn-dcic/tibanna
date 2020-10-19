@@ -40,7 +40,7 @@ def parse_command(logfile):
     return(command_list)
 
 
-def upload_to_s3(s3, source, bucket, target):
+def upload_to_s3(s3, source, bucket, dest, unzip=False):
     if os.path.isdir(source):
         print("source " + source + " is a directory")
         source = source.rstrip('/')
@@ -48,20 +48,16 @@ def upload_to_s3(s3, source, bucket, target):
             for f in files:
                 source_f = os.path.join(root, f)
                 if root == source:
-                    target_f = os.path.join(target, f)
+                    dest_f = os.path.join(dest, f)
                 else:
-                    target_subdir = re.sub('^' + source + '/', '', root)
-                    target_f = os.path.join(target, target_subdir, f)
+                    dest_subdir = re.sub('^' + source + '/', '', root)
+                    dest_f = os.path.join(dest, dest_subdir, f)
                 print("source_f=" + source_f)
-                print("target_f=" + target_f)
-                s3.upload_file(source_f, bucket, target_f)
-            # for d in dirs:
-            #     source_d = os.path.join(root, d)
-            #     target_d = os.path.join(target, re.sub(source + '/', '', root), d)
-            #     upload_to_s3(s3, source_d, bucket, target_d)
+                print("dest_f=" + dest_f)
+                s3.upload_file(source_f, bucket, dest_f)
     else:
         print("source " + source + " is a not a directory")
-        s3.upload_file(source, bucket, target)
+        s3.upload_file(source, bucket, dest)
 
 
 # read old json file
@@ -141,43 +137,86 @@ s3 = boto3.client('s3')
 
 # 'file://' output targets
 for k in output_target:
-    if k.startswith('file://'):
-        source = k.replace('file://', '')
-        target = output_target[k]
-        bucket = output_bucket  # default
-        if target.startswith('s3://'):  # this allows using different output buckets
-            output_path = re.sub('^s3://', '', target)
-            bucket = output_path.split('/')[0]
-            target = re.sub('^' + bucket + '/', '', output_path)
+    target = Target()
+    target.parse_custom_target(k, output_target[k])
+    if target.is_valid:
         try:
             print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
-            # s3.upload_file(source, bucket, target)
-            upload_to_s3(s3, source, bucket, target)
+            upload_to_s3(s3, **target.as_dict())
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
 
 
+class Target(object):
+    def __init__(self):
+        self.source = ''
+        self.bucket = output_bucket
+        self.dest = ''
+        self.unzip = False
+
+    def is_valid(self):
+        if self.source and self.dest and self.bucket:
+            return True
+        else:
+            return False
+
+    def parse_custom_target(self, target_key, target_value):
+        """takes a key-value pair from output_target, parses the content.
+        This function only handles custom cases where the key starts with file://
+        (not valid CWL/WDL targets)"""
+        if target_key.startswith('file://'):
+            self.source = target_key.replace('file://', '')
+            self.parse_target_value(target_value)
+
+    def parse_cwl_target(self, target_key, target_value, output_meta):
+        """takes a key-value pair from output_target, parses the content.
+        output meta is ['Job']['Output']['Output files'] of the run json"""
+        self.source = output_meta[target_key].get('path')
+        source_name = source.replace(source_directory, '')
+        self.parse_target_value(target_value)
+    else:
+        self.dest = source_name  # do not change file name
+
+    def parse_target_value(self, target_value):
+        """target value can be a dictionary with following keys: object_key, bucket_name, object_prefix, unzip.
+        or it can be a string that refers to the object_key or in the format of s3://<bucket_name>/<object_key>.
+        This function changes attributes bucket, dest, unzip."""
+        if isinstance(target_value, dict):
+            if 'unzip' in target_value:
+                self.unzip = True
+            if 'bucket_name' in target_value:  # this allows using different output buckets
+                self.bucket = target_value['bucket_name']
+            if 'object_prefix' in target_value:
+                if 'object_key' in target_value:
+                    raise Exception("Specify either object_key or object_prefix, but not both in output_target")
+                if not target_value['object_prefix'].endswith('/'):
+                    target_value['object_prefix'] += '/'
+                self.dest = target_value['object_prefix']
+            if 'object_key' in target_value:
+                self.dest = target_value['object_key']
+        elif isinstance(target_value, str):
+            if target_value.startswith('s3://'):  # this allows using different output buckets
+                output_path = re.sub('^s3://', '', target_value)
+                self.bucket = output_path.split('/')[0]
+                self.dest = re.sub('^' + bucket + '/', '', output_path)
+            else:
+                self.dest = target_value  # change file name to what's specified in output_target
+
+    def as_dict(self):
+        return self.__dict__()
+
+
 # legitimate CWL/WDL output targets
 for k in output_meta:
-    source = output_meta[k].get('path')
-    source_name = source.replace(source_directory, '')
-    bucket = output_bucket  # default
-    if k in output_target:
-        target = output_target[k]  # change file name to what's specified in output_target
-        if target.startswith('s3://'):  # this allows using different output buckets
-            output_path = re.sub('^s3://', '', target)
-            bucket = output_path.split('/')[0]
-            target = re.sub('^' + bucket + '/', '', output_path)
-    else:
-        target = source_name  # do not change file name
+    target = Target()
+    target.parse_cwl_target(k, output_target[k], output_meta)
     print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
     try:
-        # s3.upload_file(source, bucket, target)
-        upload_to_s3(s3, source, bucket, target)
+        upload_to_s3(s3, **target.as_dict())
     except Exception as e:
         raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
     try:
-        output_meta[k]['target'] = target
+        output_meta[k]['target'] = target.dest
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
 
