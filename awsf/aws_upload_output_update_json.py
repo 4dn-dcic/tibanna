@@ -67,6 +67,10 @@ class Target(object):
         self.dest = ''
         self.unzip = False
 
+    @property
+    def source_name(self):
+        self.source.replace(source_directory, '')
+
     def is_valid(self):
         if self.source and self.dest and self.bucket:
             return True
@@ -79,16 +83,18 @@ class Target(object):
         (not valid CWL/WDL targets)"""
         if target_key.startswith('file://'):
             self.source = target_key.replace('file://', '')
+            if not target_value:
+                raise Exception("output_target missing for target %s" % target_key)
             self.parse_target_value(target_value)
 
     def parse_cwl_target(self, target_key, target_value, output_meta):
         """takes a key-value pair from output_target, parses the content.
         output_meta is a dictionary that contains {<argname>: {'path': <outfile_path_on_awsem>}}"""
         self.source = output_meta[target_key].get('path')
-        source_name = source.replace(source_directory, '')
-        self.parse_target_value(target_value)
-    else:
-        self.dest = source_name  # do not change file name
+        if target_value:
+            self.parse_target_value(target_value)
+        else:
+            self.dest = self.source_name  # do not change file name
 
     def parse_target_value(self, target_value):
         """target value can be a dictionary with following keys: object_key, bucket_name, object_prefix, unzip.
@@ -117,6 +123,65 @@ class Target(object):
 
     def as_dict(self):
         return self.__dict__
+
+
+class SecondaryTarget(Target):
+    def is_matched(self, source_path):
+        if not self.dest:
+            raise Exception("first calculate dest (destination) to check matching.")
+        # check the last three letters between dest and source_path
+        if self.dest[-3:] == source_path[-3:]:
+            return True
+        else:
+            return False
+
+    def parse_custom_target(self, target_key, target_value):
+        raise Exception("Function disabled")
+
+    def parse_cwl_target(self, target_key, target_value, output_meta):
+        raise Exception("Function disabled")
+
+
+class SecondaryTargetList(object):
+    def __init__(self):
+        self.n = 0  # size of the list (i.e. number of secondary targets)
+        self.secondary_targets = []  # list of SecondaryTarget objects
+
+    def parse_target_values(self, target_values):
+        self.n = len(target_values)  # size of the list (i.e. number of secondary targets)
+        self.secondary_targets = [SecondaryTarget() for i in range(self.n)]
+        for st, tv in zip(self.secondary_targets, target_values):
+            st.parse_target_value(tv)
+
+    def reorder_by_source(self, source_paths):
+        if len(source_paths) < self.n:
+            raise Exception("Not enough source_paths for secondary targets " +
+                            "(%d vs %d)" % (len(source_paths), self.n))
+        n_assigned = 0
+        reordered_secondary_targets = []
+        for sp in source_paths:
+            for st in self.secondary_targets:
+                if st.is_matched(sp):
+                    st.source = sp
+                    reordered_secondary_targets.append(st)
+                    n_assigned += 1
+                    break
+
+            # if no matching target is defined, use the source name
+            additional_st = SecondaryTarget()
+            additional_st.source = sp
+            additional_st.dest = additional_st.source_name
+            reordered_secondary_targets.append(additiona_st)
+            n_assigned += 1
+            self.n += 1
+
+        if n_assigned != self.n:
+            raise Exception("Error: Not all secondary output targets are being uploaded!" +
+                            "{} vs {}".format(n_assigned, self.n))
+        self.secondary_targets = reordered_secondary_targets
+
+    def as_dict(self):
+        return [st.as_dict() for st in self.secondary_targets]
 
 
 def create_out_meta(language='cwl', execution_metadata, md5dict=None):
@@ -203,7 +268,6 @@ for k, k_alt in replace_list:
     output_target[k_alt] = output_target[k]
     del output_target[k]
 
-
 s3 = boto3.client('s3')
 
 # 'file://' output targets
@@ -217,11 +281,10 @@ for k in output_target:
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
 
-
 # legitimate CWL/WDL output targets
 for k in output_meta:
     target = Target()
-    target.parse_cwl_target(k, output_target[k], output_meta)
+    target.parse_cwl_target(k, output_target.get(k, ''), output_meta)
     print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
     try:
         upload_to_s3(s3, **target.as_dict())
@@ -231,43 +294,17 @@ for k in output_meta:
         output_meta[k]['target'] = target.dest
     except Exception as e:
         raise Exception("cannot update target info to json %s" % e)
-
     if 'secondaryFiles' in output_meta[k]:
-        n_assigned = 0
-        n_target = len(secondary_output_target.get(k, []))
-        for i, sf in enumerate(output_meta[k]['secondaryFiles']):
-            source = sf.get('path')
-            source_name = source.replace(source_directory, '')
-            bucket = output_bucket  # default
-            if k in secondary_output_target:
-                if len(secondary_output_target[k]) == 1:  # one extra file
-                    target = secondary_output_target[k][i]
-                    n_assigned = n_assigned + 1
-                else:
-                    for targ in secondary_output_target[k]:
-                        if targ[-3:] == source_name[-3:]:  # matching the last three letters
-                            target = targ
-                            n_assigned = n_assigned + 1
-                            break
-                if target.startswith('s3://'):  # this allows using different output buckets
-                    output_path = re.sub('^s3://', '', target)
-                    bucket = output_path.split('/')[0]
-                    target = re.sub('^' + bucket + '/', '', output_path)
-            else:
-                target = source_name  # do not change file name
-            try:
-                print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
-                s3.upload_file(source, bucket, target)
-            except Exception as e:
-                raise Exception("output file {} upload to {} failed. %s".format(
-                    source, bucket + '/' + target) % e)
-            try:
-                sf['target'] = target
-            except Exception as e:
-                raise Exception("cannot update target info to json %s" % e)
-        if n_assigned != n_target:
-            raise Exception("Error: Not all secondary output targets are uploaded!" +
-                            "{} vs {}".format(n_assigned, n_target))
+        stlist = SecondaryTargetList()
+        stlist.parse_target_values(secondary_output_target.get(k, []))
+        stlist.reorder_by_source([sf.get('path') for sf in output_meta[k]['secondaryFiles']])
+        for st in stlist.as_dict():
+            s3.upload_file(**st)
+        try:
+            for sf, st in zip(output_meta[k]['secondaryFiles'], stlist):
+                sf['target'] = st.dest
+        except Exception as e:
+            raise Exception("cannot update target info to json %s" % e)
 
 # add commands
 old_dict['commands'] = parse_command(logfile)
