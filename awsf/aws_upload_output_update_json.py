@@ -60,6 +60,99 @@ def upload_to_s3(s3, source, bucket, dest, unzip=False):
         s3.upload_file(source, bucket, dest)
 
 
+class Target(object):
+    def __init__(self):
+        self.source = ''
+        self.bucket = output_bucket
+        self.dest = ''
+        self.unzip = False
+
+    def is_valid(self):
+        if self.source and self.dest and self.bucket:
+            return True
+        else:
+            return False
+
+    def parse_custom_target(self, target_key, target_value):
+        """takes a key-value pair from output_target, parses the content.
+        This function only handles custom cases where the key starts with file://
+        (not valid CWL/WDL targets)"""
+        if target_key.startswith('file://'):
+            self.source = target_key.replace('file://', '')
+            self.parse_target_value(target_value)
+
+    def parse_cwl_target(self, target_key, target_value, output_meta):
+        """takes a key-value pair from output_target, parses the content.
+        output_meta is a dictionary that contains {<argname>: {'path': <outfile_path_on_awsem>}}"""
+        self.source = output_meta[target_key].get('path')
+        source_name = source.replace(source_directory, '')
+        self.parse_target_value(target_value)
+    else:
+        self.dest = source_name  # do not change file name
+
+    def parse_target_value(self, target_value):
+        """target value can be a dictionary with following keys: object_key, bucket_name, object_prefix, unzip.
+        or it can be a string that refers to the object_key or in the format of s3://<bucket_name>/<object_key>.
+        This function changes attributes bucket, dest, unzip."""
+        if isinstance(target_value, dict):
+            if 'unzip' in target_value:
+                self.unzip = True
+            if 'bucket_name' in target_value:  # this allows using different output buckets
+                self.bucket = target_value['bucket_name']
+            if 'object_prefix' in target_value:
+                if 'object_key' in target_value:
+                    raise Exception("Specify either object_key or object_prefix, but not both in output_target")
+                if not target_value['object_prefix'].endswith('/'):
+                    target_value['object_prefix'] += '/'
+                self.dest = target_value['object_prefix']
+            if 'object_key' in target_value:
+                self.dest = target_value['object_key']
+        elif isinstance(target_value, str):
+            if target_value.startswith('s3://'):  # this allows using different output buckets
+                output_path = re.sub('^s3://', '', target_value)
+                self.bucket = output_path.split('/')[0]
+                self.dest = re.sub('^' + bucket + '/', '', output_path)
+            else:
+                self.dest = target_value  # change file name to what's specified in output_target
+
+    def as_dict(self):
+        return self.__dict__
+
+
+def create_out_meta(language='cwl', execution_metadata, md5dict=None):
+    """create a dictionary that contains 'path', 'secondaryFiles', 'md5sum' with argnames as keys.
+    For snakemake and shell, returns an empty dictionary.
+    secondaryFiles is added only if the language is cwl.
+    md5dict is a dictionary with key=file path, value=md5sum (optional)"""
+    out_meta = dict()
+    if language == 'wdl':
+        # read wdl output json file
+        with open(execution_metadata, 'r') as json_out_f:
+            wdl_output = json.load(json_out_f)
+        for argname, outfile in wdl_output['outputs'].iteritems():
+            if outfile:
+                out_meta[argname] = {'path': outfile}
+    elif language == 'snakemake' or language == 'shell':
+        out_meta = {}
+    else:
+        # read cwl output json file
+        with open(execution_metadata, 'r') as json_out_f:
+            out_meta = json.load(json_out_f)
+
+    # add md5
+    if not md5dict:
+        md5dict = {}
+    for of, ofv in out_meta.iteritems():
+        if ofv['path'] in md5dict:
+            ofv['md5sum'] = md5dict[ofv['path']]
+        if 'secondaryFiles' in ofv:
+            for sf in ofv['secondaryFiles']:
+                if sf['path'] in md5dict:
+                    sf['md5sum'] = md5dict[sf['path']]
+
+    return out_meta
+
+
 # read old json file
 with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
@@ -71,25 +164,6 @@ with open(json_old, 'r') as json_old_f:
         if not isinstance(v, list):
             secondary_output_target[u] = [v]
 
-if language == 'wdl':
-    # read wdl output json file
-    with open(execution_metadata, 'r') as json_out_f:
-        wdl_output = json.load(json_out_f)
-        old_dict['Job']['Output'].update({'Output files': {}})
-        for argname, outfile in wdl_output['outputs'].iteritems():
-            if outfile:
-                old_dict['Job']['Output']['Output files'].update({argname: {'path': outfile}})
-elif language == 'snakemake':
-    old_dict['Job']['Output'].update({'Output files': {}})
-elif language == 'shell':
-    old_dict['Job']['Output'].update({'Output files': {}})
-else:
-    # read cwl output json file
-    with open(execution_metadata, 'r') as json_out_f:
-        cwl_output = json.load(json_out_f)
-        old_dict['Job']['Output'].update({'Output files': cwl_output})
-
-output_meta = old_dict['Job']['Output']['Output files']
 
 # fillig in md5
 with open(md5file, 'r') as md5_f:
@@ -100,13 +174,10 @@ with open(md5file, 'r') as md5_f:
         md5sum = a[0]
         md5dict[path] = md5sum
 
-for of, ofv in output_meta.iteritems():
-    if ofv['path'] in md5dict:
-        ofv['md5sum'] = md5dict[ofv['path']]
-    if 'secondaryFiles' in ofv:
-        for sf in ofv['secondaryFiles']:
-            if sf['path'] in md5dict:
-                sf['md5sum'] = md5dict[sf['path']]
+
+output_meta = create_out_meta(language, execution_metadata, md5dict)
+old_dict['Job']['Output']['Output files'] = output_meta
+
 
 # sanity check for output target, this skips secondary files
 # in case conditional alternative output targets exist, replace the output target key with
@@ -145,65 +216,6 @@ for k in output_target:
             upload_to_s3(s3, **target.as_dict())
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
-
-
-class Target(object):
-    def __init__(self):
-        self.source = ''
-        self.bucket = output_bucket
-        self.dest = ''
-        self.unzip = False
-
-    def is_valid(self):
-        if self.source and self.dest and self.bucket:
-            return True
-        else:
-            return False
-
-    def parse_custom_target(self, target_key, target_value):
-        """takes a key-value pair from output_target, parses the content.
-        This function only handles custom cases where the key starts with file://
-        (not valid CWL/WDL targets)"""
-        if target_key.startswith('file://'):
-            self.source = target_key.replace('file://', '')
-            self.parse_target_value(target_value)
-
-    def parse_cwl_target(self, target_key, target_value, output_meta):
-        """takes a key-value pair from output_target, parses the content.
-        output meta is ['Job']['Output']['Output files'] of the run json"""
-        self.source = output_meta[target_key].get('path')
-        source_name = source.replace(source_directory, '')
-        self.parse_target_value(target_value)
-    else:
-        self.dest = source_name  # do not change file name
-
-    def parse_target_value(self, target_value):
-        """target value can be a dictionary with following keys: object_key, bucket_name, object_prefix, unzip.
-        or it can be a string that refers to the object_key or in the format of s3://<bucket_name>/<object_key>.
-        This function changes attributes bucket, dest, unzip."""
-        if isinstance(target_value, dict):
-            if 'unzip' in target_value:
-                self.unzip = True
-            if 'bucket_name' in target_value:  # this allows using different output buckets
-                self.bucket = target_value['bucket_name']
-            if 'object_prefix' in target_value:
-                if 'object_key' in target_value:
-                    raise Exception("Specify either object_key or object_prefix, but not both in output_target")
-                if not target_value['object_prefix'].endswith('/'):
-                    target_value['object_prefix'] += '/'
-                self.dest = target_value['object_prefix']
-            if 'object_key' in target_value:
-                self.dest = target_value['object_key']
-        elif isinstance(target_value, str):
-            if target_value.startswith('s3://'):  # this allows using different output buckets
-                output_path = re.sub('^s3://', '', target_value)
-                self.bucket = output_path.split('/')[0]
-                self.dest = re.sub('^' + bucket + '/', '', output_path)
-            else:
-                self.dest = target_value  # change file name to what's specified in output_target
-
-    def as_dict(self):
-        return self.__dict__()
 
 
 # legitimate CWL/WDL output targets
