@@ -5,6 +5,8 @@ from awsf3.target import (
     SecondaryTargetList,
     create_out_meta
 )
+from tests.awsf3.conftest import upload_test_bucket
+import boto3
 
 
 def test_target_init():
@@ -303,3 +305,45 @@ def test_create_out_meta_snakemake():
 def test_create_out_meta_shell():
     outmeta = create_out_meta('shell')
     assert outmeta == {}
+
+def test_upload_file():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_file_to_upload'
+    target.dest = 'some_test_object_key'
+    target.upload_to_s3()
+    s3 = boto3.client('s3')
+    res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert res['Body'].read().decode('utf-8') == 'abcd\n'
+    s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    with pytest.raises(Exception) as ex:
+        res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert 'NoSuchKey' in str(ex)
+
+def test_upload_dir():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_dir_to_upload'  # has two files and one subdir
+    target.dest = 'some_test_object_prefix'
+    target.upload_to_s3()
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex)
+
+    test_and_delete_key('some_test_object_prefix/file1')
+    test_and_delete_key('some_test_object_prefix/file2')
+    test_and_delete_key('some_test_object_prefix/dir1/file1')
+
+
+def test_upload_file_err():
+    target = Target(upload_test_bucket)
+    target.source = 'some_test_file_that_does_not_exist'
+    target.dest = 'whatever'
+    with pytest.raises(Exception) as ex:
+        target.upload_to_s3()
+    assert 'failed to upload output file some_test_file_that_does_not_exist' + \
+           ' to %s/whatever' % upload_test_bucket in str(ex)

@@ -41,26 +41,6 @@ def parse_command(logfile):
     return(command_list)
 
 
-def upload_to_s3(s3, source, bucket, dest, unzip=False):
-    if os.path.isdir(source):
-        print("source " + source + " is a directory")
-        source = source.rstrip('/')
-        for root, dirs, files in os.walk(source):
-            for f in files:
-                source_f = os.path.join(root, f)
-                if root == source:
-                    dest_f = os.path.join(dest, f)
-                else:
-                    dest_subdir = re.sub('^' + source + '/', '', root)
-                    dest_f = os.path.join(dest, dest_subdir, f)
-                print("source_f=" + source_f)
-                print("dest_f=" + dest_f)
-                s3.upload_file(source_f, bucket, dest_f)
-    else:
-        print("source " + source + " is a not a directory")
-        s3.upload_file(source, bucket, dest)
-
-
 # read old json file
 with open(json_old, 'r') as json_old_f:
     old_dict = json.load(json_old_f)
@@ -120,7 +100,7 @@ for k in output_target:
     if target.is_valid:
         try:
             print("uploading output file {} upload to {}".format(source, bucket + '/' + target))
-            upload_to_s3(s3, **target.as_dict())
+            target.upload_to_s3()
         except Exception as e:
             raise Exception("output file {} upload to {} failed. %s".format(source, bucket + '/' + target) % e)
 

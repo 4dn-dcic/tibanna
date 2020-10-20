@@ -1,5 +1,8 @@
 import json
 import re
+import os
+import boto3
+from botocore.stub import Stubber
 
 
 class Target(object):
@@ -12,6 +15,7 @@ class Target(object):
         self.bucket = output_bucket
         self.dest = ''
         self.unzip = False
+        self.s3 = None  # boto3 client
 
     @property
     def source_name(self):
@@ -72,6 +76,39 @@ class Target(object):
 
     def as_dict(self):
         return self.__dict__
+
+    def upload_to_s3(self):
+        """upload target to s3, source can be either a file or a directory."""
+        if not self.is_valid():
+            raise Exception('Upload Error: source / dest must be specified first')
+        if not self.s3:
+            self.s3 = boto3.client('s3')
+        err_msg = "failed to upload output file %s to %s. %s"
+        if os.path.isdir(self.source):
+            print("source " + self.source + " is a directory")
+            print("uploading output directory %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
+            source = self.source.rstrip('/')
+            for root, dirs, files in os.walk(source):
+                for f in files:
+                    source_f = os.path.join(root, f)
+                    if root == source:
+                        dest_f = os.path.join(self.dest, f)
+                    else:
+                        dest_subdir = re.sub('^' + source + '/', '', root)
+                        dest_f = os.path.join(self.dest, dest_subdir, f)
+                    print("source_f=" + source_f)
+                    print("dest_f=" + dest_f)
+                    try:
+                        self.s3.upload_file(source_f, self.bucket, dest_f)
+                    except Exception as e:
+                        raise Exception(err_msg % (source_f, self.bucket + '/' + dest_f, str(e)))
+        else:
+            print("source " + self.source + " is a not a directory")
+            print("uploading output source %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
+            try:
+                self.s3.upload_file(self.source, self.bucket, self.dest)
+            except Exception as e:
+                raise Exception(err_msg % (self.source, self.bucket + '/' + self.dest, str(e)))
 
 
 class SecondaryTarget(Target):
