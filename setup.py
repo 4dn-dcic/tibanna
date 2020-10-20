@@ -31,10 +31,11 @@ setup(
     description='Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    packages=['tibanna'],
+    packages=['tibanna', 'awsf3'],
     zip_safe=False,
     author='4DN Team at Harvard Medical School',
-    author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu, carl_vitzthum@hms.harvard.edu',
+    author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu,' +
+                 'carl_vitzthum@hms.harvard.edu, Michele_Berselli@hms.harvard.edu',
     url='http://data.4dnucleome.org',
     license='MIT',
     classifiers=[
