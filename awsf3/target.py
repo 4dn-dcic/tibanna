@@ -2,7 +2,9 @@ import json
 import re
 import os
 import boto3
-from botocore.stub import Stubber
+from zipfile import ZipFile
+from io import BytesIO
+import mimetypes
 
 
 class Target(object):
@@ -77,6 +79,18 @@ class Target(object):
     def as_dict(self):
         return self.__dict__
 
+    def unzip_source(self):
+        if not self.unzip:
+            raise Exception("Unzip error: unzip=True is not set")
+        with open(self.source, 'rb') as zf:
+            body = zf.read()
+        z = ZipFile(BytesIO(body))
+        for content_file_name in z.namelist():
+            if content_file_name.endswith('/'):  # only copy files
+                continue
+            yield {'name': content_file_name, 'content': z.open(content_file_name).read()}
+        yield None
+
     def upload_to_s3(self):
         """upload target to s3, source can be either a file or a directory."""
         if not self.is_valid():
@@ -87,6 +101,8 @@ class Target(object):
         if os.path.isdir(self.source):
             print("source " + self.source + " is a directory")
             print("uploading output directory %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
+            if self.unzip:
+                print("Warning: unzip option is ignored because the source is a directory.")
             source = self.source.rstrip('/')
             for root, dirs, files in os.walk(source):
                 for f in files:
@@ -102,8 +118,32 @@ class Target(object):
                         self.s3.upload_file(source_f, self.bucket, dest_f)
                     except Exception as e:
                         raise Exception(err_msg % (source_f, self.bucket + '/' + dest_f, str(e)))
+        elif self.unzip:
+            # unzip the content files to S3
+            try:
+                zip_content = self.unzip_source()
+            except:
+                print("Unzipping failed: source " + self.source + " may not be a zip file")
+            print("source " + self.source + " is a zip file. Unzipping..")
+            arcfile = next(zip_content)
+            while(arcfile):
+                # decide on content type
+                content_type = mimetypes.guess_type(arcfile['name'])[0]
+                if not content_type:
+                    content_type = 'binary/octet-stream'
+                # upload to S3
+                put_object_args = {'Bucket': self.bucket,
+                                   'Key': self.dest + arcfile['name'],
+                                   'Body': arcfile['content'],
+                                   'ContentType': content_type}
+                try:
+                    print("Putting object %s to %s in bucket %s" % (arcfile['name'], self.dest + arcfile['name'], self.bucket))
+                    self.s3.put_object(**put_object_args)
+                except Exception as e:
+                    raise Exception("failed to put unzipped content %s for file %s. %s" % (arcfile['name'], self.source, str(e)))
+                arcfile = next(zip_content)
         else:
-            print("source " + self.source + " is a not a directory")
+            print("source " + self.source + " is an ordinary file.")
             print("uploading output source %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
             try:
                 self.s3.upload_file(self.source, self.bucket, self.dest)
@@ -204,3 +244,4 @@ def create_out_meta(language='cwl', execution_metadata=None, md5dict=None):
                     sf['md5sum'] = md5dict[sf['path']]
 
     return out_meta
+

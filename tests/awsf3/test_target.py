@@ -5,8 +5,9 @@ from awsf3.target import (
     SecondaryTargetList,
     create_out_meta
 )
-from tests.awsf3.conftest import upload_test_bucket
+from tests.awsf3.conftest import upload_test_bucket, CaptureOut
 import boto3
+import io
 
 
 def test_target_init():
@@ -322,7 +323,7 @@ def test_upload_file():
 def test_upload_dir():
     target = Target(upload_test_bucket)
     target.source = 'tests/awsf3/test_files/some_test_dir_to_upload'  # has two files and one subdir
-    target.dest = 'some_test_object_prefix'
+    target.dest = 'some_test_object_prefix/'
     target.upload_to_s3()
     s3 = boto3.client('s3')
 
@@ -338,6 +339,25 @@ def test_upload_dir():
     test_and_delete_key('some_test_object_prefix/file2')
     test_and_delete_key('some_test_object_prefix/dir1/file1')
 
+def test_upload_zip():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_zip_file_to_upload.zip'  # has two files and one subdir
+    target.dest = 'some_test_object_prefix/'
+    target.unzip = True
+    target.upload_to_s3()
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex)
+
+    test_and_delete_key('some_test_object_prefix/file1')
+    test_and_delete_key('some_test_object_prefix/file2')
+    test_and_delete_key('some_test_object_prefix/dir1/file1')
 
 def test_upload_file_err():
     target = Target(upload_test_bucket)
@@ -347,3 +367,48 @@ def test_upload_file_err():
         target.upload_to_s3()
     assert 'failed to upload output file some_test_file_that_does_not_exist' + \
            ' to %s/whatever' % upload_test_bucket in str(ex)
+
+def test_upload_zip_not_a_zip_file_err():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_zip_file_to_upload'  # not a zip file
+    target.dest = 'some_test_object_prefix/'
+    target.unzip = True
+    with pytest.raises(Exception) as ex:
+        target.upload_to_s3()
+    assert 'not a zip file' in str(ex)
+
+def test_upload_zip_not_a_zip_file_err2():
+    target = Target(upload_test_bucket)
+    target.source = 'some_test_file_that_does_not_exist'
+    target.dest = 'some_test_object_prefix/'
+    target.unzip = True
+    with pytest.raises(Exception) as ex:
+        target.upload_to_s3()
+    assert 'not a zip file' in str(ex)
+
+def test_upload_zip_directory_conflict(capsys):
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_dir_to_upload'  # has two files and one subdir
+    target.dest = 'some_test_object_prefix/'
+    target.unzip = True  # conflict, since the source is a directory
+
+    # test stdout
+    cap = CaptureOut()
+    with cap:
+        target.upload_to_s3()
+    assert 'Warning' in cap.get_captured_out()
+    
+    # still the directory should be uploaded despite the unzip conflict
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex)
+
+    test_and_delete_key('some_test_object_prefix/file1')
+    test_and_delete_key('some_test_object_prefix/file2')
+    test_and_delete_key('some_test_object_prefix/dir1/file1')
