@@ -37,6 +37,12 @@ def test_target_parse_target_value_dict_object_key():
     assert target.bucket == 'some_bucket'
     assert target.unzip is False
 
+def test_target_parse_target_value_dict_object_key_err():
+    target = Target('some_bucket')
+    with pytest.raises(Exception) as ex:
+        target.parse_target_value({'object_key': 'some_object_key/'})
+    assert 'object_prefix' in str(ex)
+
 def test_target_parse_target_value_dict_object_key_bucket():
     target = Target('some_bucket')
     target.parse_target_value({'object_key': 'some_object_key', 'bucket_name': 'another_bucket'})
@@ -318,6 +324,19 @@ def test_upload_file():
     s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_key')
     with pytest.raises(Exception) as ex:
         res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert 'NoSuchKey' in str(ex)
+
+def test_upload_file_prefix():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_file_to_upload'
+    target.dest = 'some_test_object_prefix/'
+    target.upload_to_s3()
+    s3 = boto3.client('s3')
+    res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    assert res['Body'].read().decode('utf-8') == 'abcd\n'
+    s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    with pytest.raises(Exception) as ex:
+        res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
     assert 'NoSuchKey' in str(ex)
 
 def test_upload_dir():

@@ -67,6 +67,8 @@ class Target(object):
                     target_value['object_prefix'] += '/'
                 self.dest = target_value['object_prefix']
             if 'object_key' in target_value:
+                if target_value['object_key'].endswith('/'):
+                    raise Exception("object_key cannot end with '/' - please use object_prefix instead")
                 self.dest = target_value['object_key']
         elif isinstance(target_value, str):
             if target_value.startswith('s3://'):  # this allows using different output buckets
@@ -144,11 +146,20 @@ class Target(object):
                 arcfile = next(zip_content)
         else:
             print("source " + self.source + " is an ordinary file.")
-            print("uploading output source %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
-            try:
-                self.s3.upload_file(self.source, self.bucket, self.dest)
-            except Exception as e:
-                raise Exception(err_msg % (self.source, self.bucket + '/' + self.dest, str(e)))
+            if self.dest.endswith('/'):
+                # self.dest is a prefix
+                dest = os.path.join(self.dest, self.source_name)
+                print("uploading output source %s to %s in bucket %s" % (self.source, dest, self.bucket))
+                try:
+                    self.s3.upload_file(self.source, self.bucket, dest)
+                except Exception as e:
+                    raise Exception(err_msg % (self.source, self.bucket + '/' + dest, str(e)))
+            else:
+                try:
+                    print("uploading output source %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
+                    self.s3.upload_file(self.source, self.bucket, self.dest)
+                except Exception as e:
+                    raise Exception(err_msg % (self.source, self.bucket + '/' + self.dest, str(e)))
 
 
 class SecondaryTarget(Target):
