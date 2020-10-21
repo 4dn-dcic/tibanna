@@ -230,37 +230,3 @@ class SecondaryTargetList(object):
 
     def as_dict(self):
         return [st.as_dict() for st in self.secondary_targets]
-
-
-def create_out_meta(language='cwl', execution_metadata=None, md5dict=None):
-    """create a dictionary that contains 'path', 'secondaryFiles', 'md5sum' with argnames as keys.
-    For snakemake and shell, returns an empty dictionary (execution_metadata not required).
-    secondaryFiles is added only if the language is cwl.
-    execution_metadata is a dictionary read from wdl/cwl execution log json file.
-    md5dict is a dictionary with key=file path, value=md5sum (optional)."""
-    if language in ['cwl', 'wdl'] and not execution_metadata:
-        raise Exception("execution_metadata is required for cwl/wdl.")
-    out_meta = dict()
-    if language == 'wdl':
-        for argname, outfile in execution_metadata['outputs'].items():
-            if outfile:
-                out_meta[argname] = {'path': outfile}
-    elif language == 'snakemake' or language == 'shell':
-        out_meta = {}
-    else:
-        # read cwl output json file
-        out_meta = execution_metadata
-
-    # add md5
-    if not md5dict:
-        md5dict = {}
-    for of, ofv in out_meta.items():
-        if ofv['path'] in md5dict:
-            ofv['md5sum'] = md5dict[ofv['path']]
-        if 'secondaryFiles' in ofv:
-            for sf in ofv['secondaryFiles']:
-                if sf['path'] in md5dict:
-                    sf['md5sum'] = md5dict[sf['path']]
-
-    return out_meta
-
