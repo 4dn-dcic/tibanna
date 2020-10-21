@@ -389,7 +389,7 @@ def test_upload_file_err():
 
 def test_upload_zip_not_a_zip_file_err():
     target = Target(upload_test_bucket)
-    target.source = 'tests/awsf3/test_files/some_zip_file_to_upload'  # not a zip file
+    target.source = 'tests/awsf3/test_files/some_test_file_to_upload'  # not a zip file
     target.dest = 'some_test_object_prefix/'
     target.unzip = True
     with pytest.raises(Exception) as ex:
@@ -403,7 +403,7 @@ def test_upload_zip_not_a_zip_file_err2():
     target.unzip = True
     with pytest.raises(Exception) as ex:
         target.upload_to_s3()
-    assert 'not a zip file' in str(ex)
+    assert 'FileNotFound' in str(ex)
 
 def test_upload_zip_directory_conflict(capsys):
     target = Target(upload_test_bucket)

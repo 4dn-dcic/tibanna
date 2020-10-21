@@ -2,6 +2,7 @@ import json
 import re
 import os
 import boto3
+import copy
 from zipfile import ZipFile
 from io import BytesIO
 import mimetypes
@@ -79,7 +80,14 @@ class Target(object):
                 self.dest = target_value  # change file name to what's specified in output_target
 
     def as_dict(self):
-        return self.__dict__
+        d = copy.deepcopy(self.__dict__)
+        for attr in self.exclude_from_dict:
+            del d[attr]
+        return d
+
+    @property
+    def exclude_from_dict(self):
+        return ['s3']
 
     def unzip_source(self):
         if not self.unzip:
