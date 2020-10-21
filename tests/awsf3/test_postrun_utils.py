@@ -3,9 +3,20 @@ import pytest
 from awsf3.postrun_utils import (
     create_out_meta,
     parse_commands,
-    read_logfile_by_line
+    read_logfile_by_line,
+    read_md5file
 )
 
+
+def test_read_md5file():
+    test_md5file_name = 'some_test_md5_file'
+    with open(test_md5file_name, 'w') as fo:
+        fo.write('62449071d08c9a9dfa0efbaaa82a62f3\tsomefile\n')  # could be tab-delimited
+        fo.write('d41d8cd98f00b204e9800998ecf8427e anotherfile\n')  # could be space-delimited
+    md5dict = read_md5file(test_md5file_name)
+    assert md5dict == {'somefile': '62449071d08c9a9dfa0efbaaa82a62f3',
+                       'anotherfile': 'd41d8cd98f00b204e9800998ecf8427e'}
+    os.remove(test_md5file_name)
 
 def test_read_logfile_by_line():
     test_logfile_name = 'some_test_log_file'
