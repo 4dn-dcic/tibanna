@@ -31,6 +31,7 @@ while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         L) export LANGUAGE=$OPTARG;;  # workflow language
+        u) ;;  # keep it for now so that we don't get a nonexisting option error for old lambdas.
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
