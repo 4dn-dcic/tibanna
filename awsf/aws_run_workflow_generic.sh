@@ -155,11 +155,7 @@ LOGFILE=$LOGFILE2
 send_log
 
 # awscli version upgrade
-pip install awscli -U
-
-### urllib3 version conflict
-pip uninstall -y urllib3
-pip install urllib3==1.25
+exl pip install awscli -U
 
 ### download cwl from github or any other url.
 exl ./download_workflow.py
