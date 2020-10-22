@@ -139,10 +139,7 @@ cat cloudwatch.jobs | crontab -
 cd $cwd0
 
 ### prepare for file mounting
-exl curl -O -L http://bit.ly/goofys-latest
-exl chmod +x goofys-latest
-exl echo "user_allow_other" >> /etc/fuse.conf
-export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
+export GOOFYS_COMMAND='goofys-latest'
 
 
 # docker start
@@ -178,7 +175,6 @@ exl pwd
 exl ls -lh /
 exl ls -lh $EBS_DIR
 exl ls -lhR $LOCAL_INPUT_DIR
-exl ls -lhR $LOCAL_WFDIR
 send_log
 
 ### run command
@@ -226,7 +222,6 @@ send_log
 exl ls -lhtrR $LOCAL_OUTDIR/
 exl ls -lhtr $EBS_DIR/
 exl ls -lhtrR $LOCAL_INPUT_DIR/
-exl ls -lhtrR $LOCAL_WFDIR/
 #exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
 if [[ $LANGUAGE == 'wdl' ]]
 then
@@ -240,7 +235,7 @@ then
 else
   LANGUAGE_OPTION=
 fi
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
+exle python /usr/local/bin/aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  

@@ -5,6 +5,7 @@ MAINTAINER Soo Lee (duplexa@gmail.com)
 RUN apt-get update -y && apt-get install -y \
     bzip2 \
     curl \
+    fuse \
     gcc \
     g++ \
     git \
@@ -20,13 +21,11 @@ RUN apt-get update -y && apt-get install -y \
     libbz2-dev \
     liblzma-dev \
     locales \
-    parallel \
     autoconf \
     autogen \
     autotools-dev \
     automake \
     pkg-config \
-    tabix \
     yasm
 
 WORKDIR /usr/local/bin
@@ -35,9 +34,13 @@ WORKDIR /usr/local/bin
 RUN conda install python=3.6.8 && \
     conda clean -a -y -f
 
+# python packages
 RUN pip install --use-feature=2020-resolver boto3==1.15 awscli==1.18.152 urllib3==1.22 botocore==1.18.11
 RUN conda uninstall --force ruamel_yaml  # version conflict with cwltool
-RUN pip install --use-feature=2020-resolver schema-salad==2.7.20180514132321 cwltool==1.0.20180525185854
+RUN pip install --use-feature=2020-resolver schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
+
+# goofys
+RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
 
 # awsf scripts
 COPY aws_run_workflow_generic.sh *.py ./

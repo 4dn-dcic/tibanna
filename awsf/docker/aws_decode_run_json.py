@@ -49,7 +49,7 @@ def create_mount_command_list(mountlist_filename, d_input):
     with open(mountlist_filename, 'w') as f:
         for b in buckets_to_be_mounted:
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            f.write("$GOOFYS_COMMAND %s %s\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+            f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
 def create_download_command_list(downloadlist_filename, d_input, language):
