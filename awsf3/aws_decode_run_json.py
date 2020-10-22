@@ -44,8 +44,8 @@ def main():
 def create_mount_command_list(mountlist_filename, d_input):
     buckets_to_be_mounted = dict()
     for category in ["Input_files_data", "Secondary_files_data"]:
-        for inkey, v in d_input[category].iteritems():
-            if v.get("mount", False): 
+        for inkey, v in d_input[category].items():
+            if v.get("mount", False):
                 buckets_to_be_mounted[v['dir']] = 1
     with open(mountlist_filename, 'w') as f:
         for b in buckets_to_be_mounted:
@@ -57,7 +57,7 @@ def create_download_command_list(downloadlist_filename, d_input, language):
     """create a download command list file from the information in json"""
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
-            for inkey, v in d_input[category].iteritems():
+            for inkey, v in d_input[category].items():
                 if v.get("mount", False):  # do not download if it will be mounted
                     continue
                 if inkey.startswith('file://'):
@@ -115,11 +115,11 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
         if unzip == 'gz':
             cmd4 = "gunzip {2};"
             cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done;"
-	elif unzip == 'bz2':
+        elif unzip == 'bz2':
             cmd4 = "bzip2 -d {2};"
             cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done;"
         cmd = cmd_template % (cmd4, cmd5)
-	f.write(cmd.format(data_bucket, data_file, target, profile_flag))
+        f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
 def file2cwlfile(filename, dir, unzip):
@@ -139,7 +139,7 @@ def create_input_for_cwl(input_yml_filename, d_input):
     inputs = d_input.copy()
     yml = {}
     for category in ["Input_parameters"]:
-        for item, value in inputs[category].iteritems():
+        for item, value in inputs[category].items():
             yml[item] = value
     for category in ["Input_files_data"]:
         for item in inputs[category].keys():
@@ -192,7 +192,7 @@ def create_input_for_wdl(input_yml_filename, d_input):
     inputs = d_input.copy()
     yml = {}
     for category in ["Input_parameters"]:
-        for item, value in inputs[category].iteritems():
+        for item, value in inputs[category].items():
             yml[item] = value
     for category in ["Input_files_data"]:
         for item in inputs[category].keys():
@@ -268,7 +268,7 @@ def create_env_def_file(env_filename, d, language):
         env_preserv_str = ''
         docker_env_str = ''
         if "Env" in d["Job"]["Input"]:
-            for ev, val in d["Job"]["Input"]["Env"].iteritems():
+            for ev, val in d["Job"]["Input"]["Env"].items():
                 f_env.write("export {}={}\n".format(ev, val))
                 env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
                 docker_env_str = docker_env_str + "-e " + ev + " "
