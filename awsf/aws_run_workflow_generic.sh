@@ -64,7 +64,6 @@ export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 if [[ $LANGUAGE == 'wdl' ]]
 then
@@ -122,44 +121,16 @@ if [ ! -z $PASSWORD ]; then
 fi
 
 
-### 2. get the run.json file and parse it to get environmental variables WDL_URL, MAIN_WDL, and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
-exl wget $SCRIPTS_URL/aws_decode_run_json.py
-exl wget $SCRIPTS_URL/aws_update_run_json.py
-exl wget $SCRIPTS_URL/aws_upload_output_update_json.py
-exl wget $SCRIPTS_URL/download_workflow.py
-
-exl echo $JSON_BUCKET_NAME
-exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chown -R ubuntu .
-exl chmod -R +x .
-exl ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
-exl source $ENV_FILE
-
 ###  mount the EBS volume to the EBS_DIR
 exl lsblk $TMPLOGFILE
 export EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
-exl mkdir $EBS_DIR
-exl mount $EBS_DEVICE $EBS_DIR # mount
+exl mkdir /mnt/$EBS_DIR
+exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
+exl ln -s /mnt/$EBS_DIR $EBS_DIR
 exl chown -R ubuntu $EBS_DIR
 exl chmod -R +x $EBS_DIR
 
-
-### create subdirectories under the mounted ebs directory and move log file into that output directory
-exl mkdir -p $LOCAL_OUTDIR
-exl mkdir -p $LOCAL_INPUT_DIR
-exl mkdir -p $LOCAL_REFERENCE_DIR
-exl mkdir -p $LOCAL_WFDIR
-mv $LOGFILE1 $LOGFILE2
-LOGFILE=$LOGFILE2
-send_log
-
-# install boto3, awscli version upgrade
-exl pip install boto3
-exl pip install awscli -U
-
-### download cwl from github or any other url.
-exl ./download_workflow.py
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
 cwd0=$(pwd)
@@ -170,147 +141,14 @@ curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScrip
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
-echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
-### prepare for file mounting
-exl curl -O -L http://bit.ly/goofys-latest
-exl chmod +x goofys-latest
-exl echo "user_allow_other" >> /etc/fuse.conf
-export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
-### log into ECR if necessary
-exl echo "tibanna version=$TIBANNA_VERSION"
-if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
-  exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
-fi
-send_log
-
-### download data & reference files from s3
-exl cat $DOWNLOAD_COMMAND_FILE
-exl date 
-exle source $DOWNLOAD_COMMAND_FILE 
-exl date
-exl ls
-send_log 
-
-### mount input buckets
-exl cat $MOUNT_COMMAND_FILE
-exl date
-exle source $MOUNT_COMMAND_FILE
-exl date
-exl ls
-send_log
-
-### just some more logging
-exl df
-exl pwd
-exl ls -lh /
-exl ls -lh $EBS_DIR
-exl ls -lhR $LOCAL_INPUT_DIR
-exl ls -lhR $LOCAL_WFDIR
-send_log
-
-### run command
-cwd0=$(pwd)
-cd $LOCAL_WFDIR  
-mkdir -p $LOCAL_WF_TMPDIR
-#send_log_regularly &
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
-  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
-  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
-  LOGJSONFILE='-'  # no file
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
-  exl echo "docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c \"$COMMAND\""
-  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
-  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
-  LOGJSONFILE='-'  # no file
-else
-  if [[ $LANGUAGE == 'cwl_draft3' ]]
-  then
-    # older version of cwltoolthat works with draft3
-    pip uninstall cwltool
-    git clone https://github.com/SooLee/cwltool
-    cd cwltool
-    git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
-    python setup.py install
-    cd $LOCAL_WFDIR
-  fi
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
-fi
-cd $cwd0
-send_log 
-
-### copy output files to s3
-md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
-mv $MD5FILE $LOCAL_OUTDIR
-exl date ## done time
-send_log
-exl ls -lhtrR $LOCAL_OUTDIR/
-exl ls -lhtr $EBS_DIR/
-exl ls -lhtrR $LOCAL_INPUT_DIR/
-exl ls -lhtrR $LOCAL_WFDIR/
-#exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  LANGUAGE_OPTION=wdl
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  LANGUAGE_OPTION=snakemake
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  LANGUAGE_OPTION=shell
-else
-  LANGUAGE_OPTION=
-fi
-exle ./aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
-mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
-send_log
- 
-### updating status
-# status report should be improved.
-if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
-# This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
-### 8. create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
-export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
-export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
-export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
-
-exl ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
-if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
-then
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
-else
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
-fi
-if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
-send_log
-
-df -h >> $LOGFILE
-send_log
+# run dockerized awsf scripts
+docker run --privileged --net host -it -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPTS_URL -V $TIBANNA_VERSION -R $INSTANCE_REGION
 
 
-# more comprehensive log for wdl
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  cd $LOCAL_WFDIR
-  find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
--name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
-| xargs tar -zcvf debug.tar.gz
-  aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
-fi
-
-### how do we send a signal that the job finished?
-#<some script>
- 
 ### self-terminate
 # (option 1)  ## This is the easiest if the 'shutdown behavior' set to 'terminate' for the instance at launch.
 sudo shutdown -h $SHUTDOWN_MIN 
