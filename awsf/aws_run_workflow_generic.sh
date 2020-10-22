@@ -159,7 +159,7 @@ pip install awscli -U
 
 ### urllib3 version conflict
 pip uninstall -y urllib3
-pip install urllib3==1.21.1
+pip install urllib3==1.25
 
 ### download cwl from github or any other url.
 exl ./download_workflow.py
