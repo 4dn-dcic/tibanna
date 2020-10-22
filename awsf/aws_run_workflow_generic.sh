@@ -154,7 +154,8 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
-# awscli version upgrade
+# install boto3, awscli version upgrade
+exl pip install boto3
 exl pip install awscli -U
 
 ### download cwl from github or any other url.
