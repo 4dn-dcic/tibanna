@@ -154,8 +154,14 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
+# awscli version upgrade
+pip install awscli -U
+
+### urllib3 version conflict
+pip uninstall -y urllib3
+pip install urllib3==1.21.1
+
 ### download cwl from github or any other url.
-pip install boto3
 exl ./download_workflow.py
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
@@ -180,14 +186,9 @@ export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 ### log into ECR if necessary
 exl echo "tibanna version=$TIBANNA_VERSION"
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
-  pip install awscli -U;
   exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 fi
 send_log
-
-### urllib3 version conflict
-pip uninstall -y urllib3
-pip install urllib3==1.21.1
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
