@@ -178,10 +178,12 @@ exl echo "user_allow_other" >> /etc/fuse.conf
 export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
 ### log into ECR if necessary
+exl echo "tibanna version=$TIBANNA_VERSION"
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
   pip install awscli -U;
   exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 fi
+send_log
 
 ### urllib3 version conflict
 pip uninstall -y urllib3
