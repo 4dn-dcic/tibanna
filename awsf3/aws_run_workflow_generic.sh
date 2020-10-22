@@ -62,7 +62,7 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_ID=$(ec2metadata -i|cut -d' ' -f2)
+export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
@@ -112,10 +112,6 @@ cd /home/ubuntu/
 touch $LOGFILE 
 exl date  ## start logging
 
-### sshd configure for password recognition
--echo -ne "$PASSWORD\n$PASSWORD\n" | passwd ubuntu
--sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config
--exl service ssh restart
 
 ### sshd configure for password recognition
 if [ ! -z $PASSWORD ]; then
@@ -158,8 +154,11 @@ mv $LOGFILE1 $LOGFILE2
 LOGFILE=$LOGFILE2
 send_log
 
+# install boto3, awscli version upgrade
+exl pip install boto3
+exl pip install awscli -U
+
 ### download cwl from github or any other url.
-pip install boto3
 exl ./download_workflow.py
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
@@ -182,14 +181,11 @@ exl echo "user_allow_other" >> /etc/fuse.conf
 export GOOFYS_COMMAND='./goofys-latest -o allow_other -o nonempty'
 
 ### log into ECR if necessary
+exl echo "tibanna version=$TIBANNA_VERSION"
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
-  pip install awscli -U;
   exl docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 fi
-
-### urllib3 version conflict
-pip uninstall -y urllib3
-pip install urllib3==1.21.1
+send_log
 
 ### download data & reference files from s3
 exl cat $DOWNLOAD_COMMAND_FILE
