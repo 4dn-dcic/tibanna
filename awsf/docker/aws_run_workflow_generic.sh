@@ -119,16 +119,10 @@ touch $LOGFILE
 exl date  ## start logging
 
 
-### 2. get the run.json file and parse it to get environmental variables WDL_URL, MAIN_WDL, and LOGBUCKET and create an inputs.yml file (INPUT_YML_FILE).
-exl wget $SCRIPTS_URL/aws_decode_run_json.py
-exl wget $SCRIPTS_URL/aws_update_run_json.py
-exl wget $SCRIPTS_URL/download_workflow.py
-
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
-exl chown -R ubuntu .
 exl chmod -R +x .
-exl python ./aws_decode_run_json.py $RUN_JSON_FILE_NAME
+exl python /usr/local/bin/aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
 
 
@@ -143,7 +137,7 @@ send_log
 
 
 ### download cwl from github or any other url.
-exl python ./download_workflow.py
+exl python /usr/local/bin/download_workflow.py
 
 # set up cronjojb for top command
 cwd0=$(pwd)
@@ -221,7 +215,7 @@ else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
     # older version of cwltoolthat works with draft3
-    pip uninstall cwltool
+    pip uninstall -y cwltool
     git clone https://github.com/SooLee/cwltool
     cd cwltool
     git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
@@ -268,7 +262,7 @@ export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
 export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
-exl python ./aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
+exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
 then
   exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read

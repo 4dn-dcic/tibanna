@@ -36,10 +36,12 @@ RUN conda install python=3.6.8 && \
     conda clean -a -y -f
 
 RUN pip install --use-feature=2020-resolver boto3==1.15 awscli==1.18.152 urllib3==1.22 botocore==1.18.11
+RUN conda uninstall --force ruamel_yaml  # version conflict with cwltool
+RUN pip install --use-feature=2020-resolver schema-salad==2.7.20180514132321 cwltool==1.0.20180525185854
 
 # awsf scripts
-COPY aws_run_workflow_generic.sh .
-RUN chmod +x aws_run_workflow_generic.sh
+COPY aws_run_workflow_generic.sh *.py ./
+RUN chmod +x aws_run_workflow_generic.sh *py
 
 
 # supporting UTF-8
