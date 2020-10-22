@@ -146,7 +146,7 @@ cd $cwd0
 
 
 # run dockerized awsf scripts
-docker run --privileged --net host -it -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPTS_URL -V $TIBANNA_VERSION -R $INSTANCE_REGION
+docker run --privileged --net host -it -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE-V $TIBANNA_VERSION -R $INSTANCE_REGION
 
 
 ### self-terminate
