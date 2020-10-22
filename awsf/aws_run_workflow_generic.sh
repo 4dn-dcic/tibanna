@@ -155,8 +155,7 @@ LOGFILE=$LOGFILE2
 send_log
 
 # install boto3, awscli version upgrade
-exl pip install boto3
-exl pip install awscli -U
+exl pip install --use-feature=2020-resolver boto3==1.15 awscli==1.18.152 urllib3==1.22 botocore==1.18.11
 
 ### download cwl from github or any other url.
 exl ./download_workflow.py
