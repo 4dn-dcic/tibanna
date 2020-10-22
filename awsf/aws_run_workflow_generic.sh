@@ -24,7 +24,7 @@ printHelpAndExit() {
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:m:j:l:L:p:a:s:r:gV:" opt; do
+while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
