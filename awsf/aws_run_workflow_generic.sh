@@ -115,8 +115,6 @@ cd $cwd0
 # send log before starting docker
 send_log
 
-export STATUS=0
-
 # run dockerized awsf scripts
 if [ -z $REGION ]; then
   export REGION=$INSTANCE_REGION
