@@ -6,11 +6,11 @@ export PASSWORD=
 export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
-export SINGULARITY_OPTION=
+export SINGULARITY_OPTION_TO_PASS=
 export TIBANNA_VERSION=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-u SCRIPTS_URL] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
+    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
     echo "-i JOBID : awsem job id (required)"
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
@@ -31,53 +31,27 @@ while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         L) export LANGUAGE=$OPTARG;;  # workflow language
-        u) ;;  # keep it for now so that we don't get a nonexisting option error for old lambdas.
+        u) ;;  # deprecated SCRIPT_URL option - keep it for now so that we don't get a nonexisting option error for old lambdas.
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
-        g) export SINGULARITY_OPTION=--singularity;;  # use singularity
+        g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
         V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
 done
 
-export RUN_JSON_FILE_NAME=$JOBID.run.json
-export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_OUTDIR=$EBS_DIR/out  
-export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
-export LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
-export LOCAL_WF_TMPDIR=$EBS_DIR/tmp
-export MD5FILE=$JOBID.md5sum.txt
-export INPUT_YML_FILE=inputs.yml
-export DOWNLOAD_COMMAND_FILE=download_command_list.txt
-export MOUNT_COMMAND_FILE=mount_command_list.txt
-export ENV_FILE=env_command_list.txt
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
-export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/wdl
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/snakemake
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/shell
-else
-  export LOCAL_WFDIR=$EBS_DIR/cwl
-fi
-
-# set profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 # first create an output bucket/directory
 touch $JOBID.job_started
@@ -85,26 +59,13 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
-exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one separates stdout to json as well.
-exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
-
-
-# function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
-send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
-send_log_regularly(){  
-    watch -n 60 "top -b | head -15 >> $LOGFILE; \
-    du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
-    du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; \
-    du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
-    aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null";
-}  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
-send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
+send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }
 
 
 ### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
-LOGFILE=$LOGFILE1
+export LOGFILE=$LOGFILE1
 cd /home/ubuntu/
 touch $LOGFILE 
 exl date  ## start logging
@@ -130,6 +91,12 @@ exl chown -R ubuntu $EBS_DIR
 exl chmod -R +x $EBS_DIR
 
 
+### create local outdir under the mounted ebs directory and move log file into that output directory
+exl mkdir -p $LOCAL_OUTDIR
+mv $LOGFILE1 $LOGFILE2
+export LOGFILE=$LOGFILE2
+
+
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
 cwd0=$(pwd)
 cd ~
@@ -144,7 +111,14 @@ cd $cwd0
 
 
 # run dockerized awsf scripts
-exl docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -V $TIBANNA_VERSION -R $INSTANCE_REGION
+if [ -z $REGION ]; then
+  export REGION=$INSTANCE_REGION
+fi
+export PROFILE_OPTIONS_TO_PASS=
+if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
+  export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
+fi
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
 
 
 ### self-terminate

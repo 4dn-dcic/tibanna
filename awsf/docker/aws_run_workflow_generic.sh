@@ -1,18 +1,23 @@
 #!/bin/bash
 shopt -s extglob
+export INSTANCE_REGION=
+export INSTANCE_ID=
 export LANGUAGE=cwl_draft3
 export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION=
 export TIBANNA_VERSION=
+export STATUS=0
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -j JSON_BUCKET_NAME -l LOGBUCKET [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
+    echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -I INSTANCE_ID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
     echo "-i JOBID : awsem job id (required)"
     echo "-R INSTANCE_REGION: region of the current EC2 instance (required)"
+    echo "-I INSTANCE_ID: ID of the current EC2 instance (required)"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
+    echo "-S STATUS: inherited status environment variable, if any"
     echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
@@ -21,12 +26,14 @@ printHelpAndExit() {
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:R:j:l:L:a:s:r:gV:" opt; do
+while getopts "i:R:I:j:l:S:L:a:s:r:gV:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         R) export INSTANCE_REGION=$OPTARG;;  # region of the current EC2 instance
+        I) export INSTANCE_ID=$OPTARG;;  # ID of the current EC2 instance
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        S) export STATUS=$OPTARG;;  # inherited STATUS env
         L) export LANGUAGE=$OPTARG;;  # workflow language
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
@@ -43,17 +50,14 @@ export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_OUTDIR=$EBS_DIR/out  
 export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
-export LOCAL_REFERENCE_DIR=$EBS_DIR/reference  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_WF_TMPDIR=$EBS_DIR/tmp
 export MD5FILE=$JOBID.md5sum.txt
 export INPUT_YML_FILE=inputs.yml
 export DOWNLOAD_COMMAND_FILE=download_command_list.txt
 export MOUNT_COMMAND_FILE=mount_command_list.txt
 export ENV_FILE=env_command_list.txt
-export LOGFILE1=templog___  # log before mounting ebs
-export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
+export LOGFILE=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
-export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
@@ -76,12 +80,13 @@ else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
 
+# create subdirectories
+exl mkdir -p $LOCAL_INPUT_DIR
+exl mkdir -p $LOCAL_WFDIR
+
 # set profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
-# first create an output bucket/directory
-touch $JOBID.job_started
-aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
@@ -91,39 +96,17 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRC
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
-send_log_regularly(){  
-    watch -n 60 "top -b | head -15 >> $LOGFILE; \
-    du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; \
-    du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; \
-    du -h $LOCAL_OUTDIR/ >> $LOGFILE; \
-    aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null";
-}  ## usage: send_log_regularly (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
 
-### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
-LOGFILE=$LOGFILE1
-cd /home/ubuntu/
-touch $LOGFILE 
-exl date  ## start logging
-
-
+# setting additional env variables
 exl echo $JSON_BUCKET_NAME
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl python /usr/local/bin/aws_decode_run_json.py $RUN_JSON_FILE_NAME
 exl source $ENV_FILE
-
-
-### create subdirectories under the mounted ebs directory and move log file into that output directory
-exl mkdir -p $LOCAL_OUTDIR
-exl mkdir -p $LOCAL_INPUT_DIR
-exl mkdir -p $LOCAL_REFERENCE_DIR
-exl mkdir -p $LOCAL_WFDIR
-mv $LOGFILE1 $LOGFILE2
-LOGFILE=$LOGFILE2
 send_log
 
 
@@ -181,7 +164,6 @@ send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
 mkdir -p $LOCAL_WF_TMPDIR
-#send_log_regularly &
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
@@ -235,32 +217,9 @@ then
 else
   LANGUAGE_OPTION=
 fi
-exle python /usr/local/bin/aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
-mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
-send_log
- 
-### updating status
-# status report should be improved.
-if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
-# This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
-### 8. create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
-export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
-export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
-export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
-
-exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
-if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
-then
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
-else
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
-fi
-if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
-send_log
 
 df -h >> $LOGFILE
 send_log
-
 
 # more comprehensive log for wdl
 if [[ $LANGUAGE == 'wdl' ]]
@@ -272,3 +231,31 @@ then
   aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
 fi
 
+exle python /usr/local/bin/aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
+mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
+send_log
+ 
+### updating status
+# status report should be improved.
+if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
+# This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
+
+### create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
+export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
+export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
+export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
+
+# update postrun json and send it to s3
+exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
+if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
+then
+  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
+else
+  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
+fi
+
+# send the final log
+send_log
+
+# send success message
+if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
