@@ -60,6 +60,9 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
 
+# function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
+send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
+
 # function that sends error file to s3 to notify something went wrong.
 send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }
 
@@ -109,6 +112,10 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
+# send log before starting docker
+send_log
+
+export STATUS=0
 
 # run dockerized awsf scripts
 if [ -z $REGION ]; then
