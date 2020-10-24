@@ -112,7 +112,6 @@ echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile use
 # setting additional env variables
 exl echo
 exl echo "## Downloading and parsing run.json file"
-exl echo "json bucket name=$JSON_BUCKET_NAME"
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl python /usr/local/bin/aws_decode_run_json.py $RUN_JSON_FILE_NAME
@@ -277,10 +276,12 @@ export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
 export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
-# update postrun json and send it to s3
+# update postrun json
+exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
+
+# send postrun json to s3
 exl echo
 exl echo "## Uploading postrun json file"
-exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
 then
   exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
@@ -291,6 +292,7 @@ fi
 # send the final log
 exl echo
 exl echo "Done"
+exl date
 send_log
 
 # send success message
