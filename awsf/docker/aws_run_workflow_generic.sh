@@ -103,7 +103,9 @@ echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile use
 
 
 # setting additional env variables
-exl echo $JSON_BUCKET_NAME
+exl echo
+exl echo "## Downloading and parsing run.json file"
+exl echo "json bucket name=$JSON_BUCKET_NAME"
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl python /usr/local/bin/aws_decode_run_json.py $RUN_JSON_FILE_NAME
@@ -112,6 +114,8 @@ send_log
 
 
 ### download cwl from github or any other url.
+exl echo
+exl echo "## Downloading workflow files"
 exl python /usr/local/bin/download_workflow.py
 
 # set up cronjojb for top command
@@ -128,6 +132,8 @@ service docker start
 
 
 ### log into ECR if necessary
+exl echo
+exl echo "## Logging into ECR"
 exl echo "tibanna version=$TIBANNA_VERSION"
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
   exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
@@ -135,6 +141,8 @@ fi
 send_log
 
 ### download data & reference files from s3
+exl echo
+exl echo "## Downloading data & reference files from S3"
 exl cat $DOWNLOAD_COMMAND_FILE
 exl date 
 exle source $DOWNLOAD_COMMAND_FILE 
@@ -143,6 +151,8 @@ exl ls
 send_log 
 
 ### mount input buckets
+exl echo
+exl echo "## Mounting input S3 buckets"
 exl cat $MOUNT_COMMAND_FILE
 exl date
 exle source $MOUNT_COMMAND_FILE
@@ -151,14 +161,18 @@ exl ls
 send_log
 
 ### just some more logging
-exl df
-exl pwd
+exl echo
+exl echo "## Current file system status"
+exl df -h
 exl ls -lh /
 exl ls -lh $EBS_DIR
 exl ls -lhR $LOCAL_INPUT_DIR
 send_log
 
 ### run command
+exl echo
+exl echo "## Running CWL/WDL/Snakemake/Shell commands"
+exl echo "current directory="$(pwd)
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
 mkdir -p $LOCAL_WF_TMPDIR
@@ -195,14 +209,36 @@ cd $cwd0
 send_log 
 
 ### copy output files to s3
+exl echo
+exl echo "## Calculating md5sum of output files"
+exl date
 md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log
+
+exl echo
+exl echo "## Current file system status"
+exl df -h
 exl ls -lhtrR $LOCAL_OUTDIR/
 exl ls -lhtr $EBS_DIR/
 exl ls -lhtrR $LOCAL_INPUT_DIR/
-#exle aws s3 cp --recursive $LOCAL_OUTDIR s3://$OUTBUCKET
+send_log
+
+# more comprehensive log for wdl
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  exl echo
+  exl echo "## Uploading WDL log files to S3"
+  cd $LOCAL_WFDIR
+  find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
+-name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
+| xargs tar -zcvf debug.tar.gz
+  aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+fi
+
+exl echo
+exl echo "## Uploading output files to S3"
 if [[ $LANGUAGE == 'wdl' ]]
 then
   LANGUAGE_OPTION=wdl
@@ -215,25 +251,13 @@ then
 else
   LANGUAGE_OPTION=
 fi
-
-df -h >> $LOGFILE
-send_log
-
-# more comprehensive log for wdl
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  cd $LOCAL_WFDIR
-  find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
--name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
-| xargs tar -zcvf debug.tar.gz
-  aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
-fi
-
 exle python /usr/local/bin/aws_upload_output_update_json.py $RUN_JSON_FILE_NAME $LOGJSONFILE $LOGFILE $LOCAL_OUTDIR/$MD5FILE $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
 mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
 send_log
  
 ### updating status
+exl echo
+exl echo "## Updating postrun json file with status, time stamp, input & output size"
 # status report should be improved.
 if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
 # This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
@@ -244,6 +268,8 @@ export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
 # update postrun json and send it to s3
+exl echo
+exl echo "## Uploading postrun json file"
 exl python /usr/local/bin/aws_update_run_json.py $RUN_JSON_FILE_NAME $POSTRUN_JSON_FILE_NAME
 if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
 then
@@ -253,6 +279,8 @@ else
 fi
 
 # send the final log
+exl echo
+exl echo "Done"
 send_log
 
 # send success message

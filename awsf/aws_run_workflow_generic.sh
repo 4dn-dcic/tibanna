@@ -71,10 +71,15 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }
 export LOGFILE=$LOGFILE1
 cd /home/ubuntu/
 touch $LOGFILE 
-exl date  ## start logging
 
+### start logging
+exl echo
+exl echo "## Starting..."
+exl date
 
 ### sshd configure for password recognition
+exl echo
+exl echo "## Confirugin ssh"
 if [ ! -z $PASSWORD ]; then
   echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
@@ -84,6 +89,8 @@ fi
 
 
 ###  mount the EBS volume to the EBS_DIR
+exl echo
+exl echo "## Mounting EBS"
 exl lsblk $TMPLOGFILE
 export EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
@@ -101,6 +108,8 @@ export LOGFILE=$LOGFILE2
 
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
+exl
+exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
 cd ~
 apt-get update
