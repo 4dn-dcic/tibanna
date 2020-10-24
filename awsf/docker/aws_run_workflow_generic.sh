@@ -121,9 +121,6 @@ echo "*/1 * * * * send_log" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
-### prepare for file mounting
-export GOOFYS_COMMAND='goofys-latest'
-
 
 # docker start
 service docker start
