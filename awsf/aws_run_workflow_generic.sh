@@ -78,9 +78,10 @@ exl echo "## Starting..."
 exl date
 
 ### env
-exl echo "job id = $JOBID"
-exl echo "tibanna version = $TIBANNA_VERSION"
-exl echo "awsf image = $AWSF_IMAGE"
+exl echo
+exl echo "job id: $JOBID"
+exl echo "tibanna version: $TIBANNA_VERSION"
+exl echo "awsf image: $AWSF_IMAGE"
 
 ### sshd configure for password recognition
 exl echo
