@@ -8,6 +8,7 @@ export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION_TO_PASS=
 export TIBANNA_VERSION=
+export AWSF_IMAGE=duplexa/tibanna-awsf:pre
 
 printHelpAndExit() {
     echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
@@ -73,13 +74,17 @@ cd /home/ubuntu/
 touch $LOGFILE 
 
 ### start logging
-exl echo
 exl echo "## Starting..."
 exl date
 
+### env
+exl echo "job id = $JOBID"
+exl echo "tibanna version = $TIBANNA_VERSION"
+exl echo "awsf image = $AWSF_IMAGE"
+
 ### sshd configure for password recognition
 exl echo
-exl echo "## Confirugin ssh"
+exl echo "## Configuring and starting ssh"
 if [ ! -z $PASSWORD ]; then
   echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
@@ -108,7 +113,7 @@ export LOGFILE=$LOGFILE2
 
 
 # set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
-exl
+exl echo
 exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
 cd ~
@@ -122,6 +127,8 @@ cat cloudwatch.jobs | crontab -
 cd $cwd0
 
 # send log before starting docker
+exl echo
+exl echo "## Running dockerized awsf scripts"
 send_log
 
 # run dockerized awsf scripts
@@ -132,7 +139,7 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw duplexa/tibanna-awsf:pre aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
 
 
 ### self-terminate

@@ -94,9 +94,16 @@ else
   export LOCAL_WFDIR=$EBS_DIR/cwl
 fi
 
+
+# log the first message from the container
+exl echo
+exl echo "## AWSF Docker container created"
+
+
 # create subdirectories
 exl mkdir -p $LOCAL_INPUT_DIR
 exl mkdir -p $LOCAL_WFDIR
+
 
 # set additional profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
@@ -118,6 +125,7 @@ exl echo
 exl echo "## Downloading workflow files"
 exl python /usr/local/bin/download_workflow.py
 
+
 # set up cronjojb for top command
 cwd0=$(pwd)
 cd ~
@@ -134,7 +142,6 @@ service docker start
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
-exl echo "tibanna version=$TIBANNA_VERSION"
 if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
   exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 fi
@@ -143,29 +150,28 @@ send_log
 ### download data & reference files from s3
 exl echo
 exl echo "## Downloading data & reference files from S3"
-exl cat $DOWNLOAD_COMMAND_FILE
 exl date 
+exl cat $DOWNLOAD_COMMAND_FILE
 exle source $DOWNLOAD_COMMAND_FILE 
 exl date
-exl ls
 send_log 
 
 ### mount input buckets
 exl echo
 exl echo "## Mounting input S3 buckets"
-exl cat $MOUNT_COMMAND_FILE
 exl date
+exl cat $MOUNT_COMMAND_FILE
 exle source $MOUNT_COMMAND_FILE
 exl date
-exl ls
 send_log
 
 ### just some more logging
 exl echo
 exl echo "## Current file system status"
 exl df -h
-exl ls -lh /
+exl echo
 exl ls -lh $EBS_DIR
+exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
 send_log
 
@@ -212,6 +218,7 @@ send_log
 exl echo
 exl echo "## Calculating md5sum of output files"
 exl date
+exl echo "md5sum $LOCAL_OUTDIR/*"
 md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
@@ -220,8 +227,11 @@ send_log
 exl echo
 exl echo "## Current file system status"
 exl df -h
+exl echo
 exl ls -lhtrR $LOCAL_OUTDIR/
+exl echo
 exl ls -lhtr $EBS_DIR/
+exl echo
 exl ls -lhtrR $LOCAL_INPUT_DIR/
 send_log
 
@@ -234,7 +244,7 @@ then
   find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
 -name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
 | xargs tar -zcvf debug.tar.gz
-  aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+  exle aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
 fi
 
 exl echo
