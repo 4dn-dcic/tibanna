@@ -218,8 +218,8 @@ send_log
 exl echo
 exl echo "## Calculating md5sum of output files"
 exl date
-exl echo "md5sum $LOCAL_OUTDIR/*"
 md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
+exl cat $MD5FILE
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
 send_log

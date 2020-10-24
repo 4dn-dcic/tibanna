@@ -74,14 +74,14 @@ cd /home/ubuntu/
 touch $LOGFILE 
 
 ### start logging
+### env
+exl echo "## job id: $JOBID"
+exl echo "## tibanna version: $TIBANNA_VERSION"
+exl echo "## awsf image: $AWSF_IMAGE"
+exl echo
 exl echo "## Starting..."
 exl date
 
-### env
-exl echo
-exl echo "job id: $JOBID"
-exl echo "tibanna version: $TIBANNA_VERSION"
-exl echo "awsf image: $AWSF_IMAGE"
 
 ### sshd configure for password recognition
 exl echo
