@@ -281,7 +281,7 @@ export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
 # update postrun json
-exl awsf3 update_run_json -i $RUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
+exl awsf3 update_postrun_json -i $RUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
 
 # send postrun json to s3
 exl echo
