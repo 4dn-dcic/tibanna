@@ -4,8 +4,6 @@ cache:
   pip: false
 env:
   global:
-  - AWS_ACCOUNT_NUMBER=643366669028
-  - TIBANNA_AWS_REGION=us-east-1
   - AWS_S3_ROLE_NAME=S3_access
 jobs:
   include:
@@ -22,9 +20,3 @@ jobs:
     after_success:
     - echo "finished running tests on repo"
     - python-codacy-coverage -r coverage.xml
-  - stage: awsf tests
-    python: '2.7'
-    script:
-    - ./tests/awsf/test.sh
-    after_success:
-    - echo "finished running awsf tests"

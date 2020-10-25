@@ -1,6 +1,9 @@
 import json
-import sys
+import os
+import subprocess
+import boto3
 import re
+
 
 downloadlist_filename = "download_command_list.txt"
 mountlist_filename = "mount_command_list.txt"
@@ -10,15 +13,15 @@ INPUT_DIR = "/data1/input"  # data are downloaded to this directory
 INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
 
 
-def main():
+def decode_run_json(input_json_file):
     """reads a run json file and creates three text files:
     download command list file (commands to download input files from s3)
     input yml file (for cwl/wdl/snakemake run)
     env list file (environment variables to be sourced)
     """
     # read json file
-    with open(sys.argv[1], 'r') as json_file:
-        d = json.load(json_file)
+    with open(input_json_file, 'r') as f:
+        d = json.load(f)
     d_input = d["Job"]["Input"]
     language = d["Job"]["App"]["language"]
 
@@ -49,7 +52,7 @@ def create_mount_command_list(mountlist_filename, d_input):
     with open(mountlist_filename, 'w') as f:
         for b in buckets_to_be_mounted:
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            f.write("$GOOFYS_COMMAND %s %s\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+            f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
 def create_download_command_list(downloadlist_filename, d_input, language):
@@ -275,5 +278,54 @@ def create_env_def_file(env_filename, d, language):
         f_env.write("export DOCKER_ENV_OPTION=\"{}\"\n".format(docker_env_str))
 
 
-if __name__ == '__main__':
-    main()
+def download_workflow():
+    language = os.environ.get('LANGUAGE')
+    if language == 'shell':
+        return
+    local_wfdir = os.environ.get('LOCAL_WFDIR')
+    subprocess.call(['mkdir', '-p', local_wfdir])
+    
+    if language == 'wdl':
+        main_wf = os.environ.get('MAIN_WDL', '')
+        wf_files = os.environ.get('WDL_FILES', '')
+        wf_url = os.environ.get('WDL_URL')
+    elif language == 'snakemake':
+        main_wf = os.environ.get('MAIN_SNAKEMAKE', '')
+        wf_files = os.environ.get('SNAKEMAKE_FILES', '')
+        wf_url = os.environ.get('SNAKEMAKE_URL')
+    else:
+        main_wf = os.environ.get('MAIN_CWL', '')
+        wf_files = os.environ.get('CWL_FILES', '')
+        wf_url = os.environ.get('CWL_URL')
+    # turn into a list
+    if not wf_files:
+        wf_files = []
+    elif ' ' in wf_files:
+        wf_files = wf_files.split(' ')
+    else:
+        wf_files = [wf_files]
+    wf_files.append(main_wf)
+    wf_url = wf_url.rstrip('/')
+    
+    print("main workflow file: %s" % main_wf)
+    print("workflow files: " + str(wf_files))
+    
+    s3 = boto3.client('s3')
+    for wf_file in wf_files:
+        target = "%s/%s" % (local_wfdir, wf_file)
+        source = "%s/%s" % (wf_url, wf_file)
+        if wf_url.startswith('http'):
+            subprocess.call(["wget", "-O" + target, source])
+        elif wf_url.startswith('s3'):
+            wf_loc = wf_url.replace('s3://', '')
+            bucket_name = wf_loc.split('/')[0]
+            if len(wf_loc.split('/')) > 1:
+                subdirectory = wf_loc.replace(bucket_name + '/', '')
+                key = subdirectory + '/' + wf_file
+            else:
+                key = wf_file
+            print("downloading key %s from bucket %s to target %s" % (key, bucket_name, target))
+            if '/' in target:
+                targetdir = re.sub('[^/]+$', '', target)
+                subprocess.call(["mkdir", "-p", targetdir])
+            s3.download_file(Bucket=bucket_name, Key=key, Filename=target)

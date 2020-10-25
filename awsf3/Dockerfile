@@ -44,8 +44,8 @@ RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
 
 # awsf scripts
 COPY aws_run_workflow_generic.sh *.py ./
-RUN chmod +x aws_run_workflow_generic.sh *py
-
+RUN chmod +x aws_run_workflow_generic.sh
+RUN python setup.py install
 
 # supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"

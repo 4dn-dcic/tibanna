@@ -3,7 +3,7 @@ from awsf3.target import (
     Target,
     SecondaryTarget,
     SecondaryTargetList,
-    create_out_meta
+    create_outmeta
 )
 from tests.awsf3.conftest import upload_test_bucket, CaptureOut
 import boto3

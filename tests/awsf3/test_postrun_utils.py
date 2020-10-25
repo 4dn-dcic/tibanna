@@ -1,10 +1,14 @@
 import os
 import pytest
+import json
+from datetime import datetime
 from awsf3.postrun_utils import (
     create_out_meta,
     parse_commands,
     read_logfile_by_line,
-    read_md5file
+    read_md5file,
+    update_postrun_json_job_content,
+    update_postrun_json
 )
 
 
@@ -98,3 +102,45 @@ def test_create_out_meta_snakemake():
 def test_create_out_meta_shell():
     outmeta = create_out_meta('shell')
     assert outmeta == {}
+
+
+def test_update_postrun_json_job_content():
+    dict_job = {'whateverisalreadythere': 1234}
+    os.environ['JOB_STATUS'] = '0'
+    os.environ['INSTANCE_ID'] = 'test_instance_id'
+    os.environ['INPUTSIZE'] = '34K'
+    os.environ['TEMPSIZE'] = '56M'
+    os.environ['OUTPUTSIZE'] = '78K'
+
+    update_postrun_json_job_content(dict_job)
+
+    for k in ['end_time', 'status', 'instance_id', 'total_input_size',
+              'total_tmp_size', 'total_output_size', 'whateverisalreadythere']:
+        assert k in dict_job
+
+    today = datetime.now().strftime('%Y%m%d')
+    assert dict_job['end_time'].startswith(today)
+    assert len(dict_job['end_time'].split('-')) == 3
+    assert dict_job['status'] == '0'
+    assert dict_job['instance_id'] == 'test_instance_id'
+    assert dict_job['total_input_size'] == '34K'
+    assert dict_job['total_tmp_size'] == '56M'
+    assert dict_job['total_output_size'] == '78K'
+
+
+def test_update_postrun_json():
+    with open('test_postrun.json', 'w') as fo:
+        fo.write('{"Job": {"App": {"App_name": "repliseq-parta"}, "JOBID": "alw3r78v3"}}')
+
+    update_postrun_json('test_postrun.json', 'test_updated_postrun.json')
+
+    with open('test_updated_postrun.json') as f:
+        d = json.load(f)
+
+    assert 'Job' in d
+    for k in ['end_time', 'status', 'instance_id', 'total_input_size',
+              'total_tmp_size', 'total_output_size', 'App', 'JOBID']:
+        assert k in d['Job']
+
+    os.remove('test_postrun.json')
+    os.remove('test_updated_postrun.json')

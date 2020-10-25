@@ -36,7 +36,7 @@ setup(
     author='4DN Team at Harvard Medical School',
     author_email='duplexa@gmail.com, jeremy_johnson@hms.harvard.edu,' +
                  'carl_vitzthum@hms.harvard.edu, Michele_Berselli@hms.harvard.edu',
-    url='http://data.4dnucleome.org',
+    url='http://github.com/4dn-dcic/tibanna',
     license='MIT',
     classifiers=[
             'License :: OSI Approved :: MIT License',
@@ -51,6 +51,7 @@ setup(
     entry_points={
         'console_scripts': [
              'tibanna = tibanna.__main__:main',
+             'awsf3 = awsf3.__main__:main',
         ]
     }
 )

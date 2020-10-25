@@ -1,8 +1,9 @@
 #!/usr/bin/python
 import json
 import os
+import time
 from .target import Target, SecondaryTargetList
-
+    
 
 def read_logfile_by_line(logfile):
     """generator function that yields the log file content line by line"""
@@ -164,3 +165,23 @@ def upload_output_update_json(json_old, execution_metadata_file, logfile, md5fil
     # write to new json file
     with open(json_new, 'w') as json_new_f:
         json.dump(old_dict, json_new_f, indent=4, sort_keys=True)
+
+
+def update_postrun_json(json_old, json_new):
+    # read old json file
+    with open(json_old, 'r') as json_old_f:
+        Dict = json.load(json_old_f)
+    update_postrun_json_job_content(Dict['Job'])
+    # write to new json file
+    with open(json_new, 'w') as json_new_f:
+        json.dump(Dict, json_new_f, indent=4, sort_keys=True)
+    
+
+def update_postrun_json_job_content(dict_job):    
+    # add end time, status, instance_id
+    dict_job['end_time'] = time.strftime("%Y%m%d-%H:%M:%S-%Z")
+    dict_job['status'] = os.getenv('JOB_STATUS')
+    dict_job['instance_id'] = os.getenv('INSTANCE_ID')
+    dict_job['total_input_size'] = os.getenv('INPUTSIZE')
+    dict_job['total_tmp_size'] = os.getenv('TEMPSIZE')
+    dict_job['total_output_size'] = os.getenv('OUTPUTSIZE')
