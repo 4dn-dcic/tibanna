@@ -131,7 +131,8 @@ def upload_output_update_json(json_old, execution_metadata_file, logfile, md5fil
     for k in output_target:
         target = Target(output_bucket)
         target.parse_custom_target(k, output_target[k])
-        target.upload_to_s3()
+        if target.is_valid:
+            target.upload_to_s3()
 
     # legitimate CWL/WDL output targets
     for k in output_meta:

@@ -109,12 +109,16 @@ exl mkdir -p $LOCAL_WFDIR
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 
 
-# setting additional env variables
+# getting run.json file
 exl echo
 exl echo "## Downloading and parsing run.json file"
+exl cd /home/ubuntu/
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
+
+
+# setting additional env variables
 exl source $ENV_FILE
 send_log
 

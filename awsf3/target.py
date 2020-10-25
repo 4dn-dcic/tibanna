@@ -25,6 +25,7 @@ class Target(object):
         return re.sub('^/data1/((shell|out)/)*', '', self.source)
         # return self.source.replace(self.source_directory, '')
 
+    @property
     def is_valid(self):
         if self.source and self.dest and self.bucket:
             return True
@@ -103,7 +104,7 @@ class Target(object):
 
     def upload_to_s3(self):
         """upload target to s3, source can be either a file or a directory."""
-        if not self.is_valid():
+        if not self.is_valid:
             raise Exception('Upload Error: source / dest must be specified first')
         if not self.s3:
             self.s3 = boto3.client('s3')

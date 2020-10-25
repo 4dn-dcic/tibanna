@@ -43,9 +43,9 @@ RUN pip install --use-feature=2020-resolver schema-salad==7.0.20200811075006 cwl
 RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
 
 # awsf scripts
-COPY aws_run_workflow_generic.sh *.py ./
+COPY aws_run_workflow_generic.sh .
 RUN chmod +x aws_run_workflow_generic.sh
-RUN python setup.py install
+RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
 
 # supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
