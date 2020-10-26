@@ -131,7 +131,7 @@ def create_input_for_cwl(input_yml_filename, runjson_input):
 
 
 def create_input_for_wdl(input_yml_filename, runjson_input):
-    yml = runjson_input.as_dict_as_wdl_input(INPUT_DIR, INPUT_MOUNT_DIR_PREFIX))
+    yml = runjson_input.as_dict_as_wdl_input(INPUT_DIR, INPUT_MOUNT_DIR_PREFIX)
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
