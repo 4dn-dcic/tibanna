@@ -117,6 +117,10 @@ class MalFormattedInputJsonException(Exception):
     pass
 
 
+class MalFormattedRunJsonException(Exception):
+    pass
+
+
 class MalFormattedPostrunJsonException(Exception):
     pass
 

@@ -125,13 +125,13 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
 
 # create an input yml file for cwl-runner
 def create_input_for_cwl(input_yml_filename, runjson_input):
-    yml = runjson_input.as_dict_as_cwl_input()
+    yml = runjson_input.as_dict_as_cwl_input(INPUT_DIR, INPUT_MOUNT_DIR_PREFIX)
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
 def create_input_for_wdl(input_yml_filename, runjson_input):
-    yml = runjson_input.as_dict_as_wdl_input()
+    yml = runjson_input.as_dict_as_wdl_input(INPUT_DIR, INPUT_MOUNT_DIR_PREFIX))
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 

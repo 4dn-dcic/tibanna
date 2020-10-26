@@ -2,8 +2,9 @@ import re
 from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
-from .exceptions import MalFormattedPostrunJsonException
+from .exceptions import MalFormattedPostrunJsonException, MalFormattedRunJsonException
 from .vars import AWSEM_TIME_STAMP_FORMAT
+from .nnested_array import flatten
 
 
 class AwsemRunJson(SerializableObject):
@@ -65,13 +66,13 @@ class AwsemRunJsonInput(SerializableObject):
         if Input_files_reference:
             self.Input_files_reference = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_reference.items()}
 
-    def as_dict_as_cwl_input(self):
-        d = {k: v.as_dict_as_cwl_input() for k, v in self.Input_files_data.items()}
+    def as_dict_as_cwl_input(self, input_dir='', input_mount_dir_prefix=''):
+        d = {k: v.as_dict_as_cwl_input(input_dir, input_mount_dir_prefix) for k, v in self.Input_files_data.items()}
         d.update(self.Input_parameters)
         return d
 
-    def as_dict_as_wdl_input(self):
-        d = {k: v.as_dict_as_wdl_input() for k, v in self.Input_files_data.items()}
+    def as_dict_as_wdl_input(self, input_dir='', input_mount_dir_prefix=''):
+        d = {k: v.as_dict_as_wdl_input(input_dir, input_mount_dir_prefix) for k, v in self.Input_files_data.items()}
         d.update(self.Input_parameters)
         return d
 
@@ -88,6 +89,13 @@ class AwsemRunJsonInputFile(SerializableObject):
         self.class_ = kwargs.get('class', None)
         self.dir_ = kwargs.get('dir', None)
 
+        # field compatibility check
+        errmsg = "Incompatible input for file %s: %s and mount cannot be used together."
+        if len(flatten(self.rename))>0 and self.mount:
+            raise MalFormattedRunJsonException(errmsg % (self.path, 'rename'))
+        if self.unzip and self.mount:
+            raise MalFormattedRunJsonException(errmsg % (self.path, 'unzip'))
+
     def as_dict(self):
         d = super().as_dict()
         # handling reserved name key
@@ -98,11 +106,11 @@ class AwsemRunJsonInputFile(SerializableObject):
                 del(d[rk_alt])
         return d
 
-    def as_dict_as_cwl_input(self):
+    def as_dict_as_cwl_input(self, input_dir='', input_mount_dir_prefix=''):
         if self.mount:
-            input_dir = INPUT_MOUNT_DIR_PREFIX + v.dir_
+            input_dir = input_mount_dir_prefix + self.dir_
         else:
-            input_dir = INPUT_DIR
+            input_dir = input_dir
         if self.rename:
             if isinstance(self.rename, list):
                 path = self.rename[:]
@@ -127,11 +135,11 @@ class AwsemRunJsonInputFile(SerializableObject):
         else:
             return file2cwlfile(path, input_dir, self.unzip)
 
-    def as_dict_as_wdl_input():
-        if not self.mount:
-            input_dir = INPUT_MOUNT_DIR_PREFIX + v.dir_
+    def as_dict_as_wdl_input(self, input_dir='', input_mount_dir_prefix=''):
+        if self.mount:
+            input_dir = input_mount_dir_prefix + self.dir_
         else:
-            input_dir = INPUT_DIR
+            input_dir = input_dir
         if self.rename:
             if isinstance(self.rename, list):
                 path = list(self.rename)
@@ -264,10 +272,14 @@ class AwsemPostRunJsonOutputFile(SerializableObject):
 def file2cwlfile(filename, dirname, unzip):
     if unzip:
         filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+    if dirname.endswith('/'):
+        dirname = dirname.rstrip('/')
     return {"class": 'File', "path": dirname + '/' + filename}
 
 
 def file2wdlfile(filename, dirname, unzip):
     if unzip:
         filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+    if dirname.endswith('/'):
+        dirname = dirname.rstrip('/')
     return dirname + '/' + filename
