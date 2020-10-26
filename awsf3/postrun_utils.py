@@ -3,6 +3,7 @@ import json
 import os
 import time
 from .target import Target, SecondaryTargetList
+from tibanna.awsem import AwsemRunJson, AwsemPostRunJsonOutput
     
 
 def read_logfile_by_line(logfile):
@@ -48,7 +49,7 @@ def read_md5file(md5file):
     return md5dict
 
 
-def create_out_meta(language='cwl', execution_metadata=None, md5dict=None):
+def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=None):
     """create a dictionary that contains 'path', 'secondaryFiles', 'md5sum' with argnames as keys.
     For snakemake and shell, returns an empty dictionary (execution_metadata not required).
     secondaryFiles is added only if the language is cwl.
@@ -82,91 +83,69 @@ def create_out_meta(language='cwl', execution_metadata=None, md5dict=None):
 
 
 def upload_output_update_json(json_old, execution_metadata_file, logfile, md5file, json_new, language='cwl-draft3'):
-
-    # read old json file
+    # read old json file and prepare postrunjson skeleton
     with open(json_old, 'r') as json_old_f:
-        old_dict = json.load(json_old_f)
-        output_target = old_dict.get('Job').get('Output').get('output_target')
-        alt_output_argnames = old_dict.get('Job').get('Output').get('alt_cond_output_argnames')
-        output_bucket = old_dict.get('Job').get('Output').get('output_bucket_directory')
-        secondary_output_target = old_dict.get('Job').get('Output').get('secondary_output_target')
-        for u, v in secondary_output_target.items():
-            if not isinstance(v, list):
-                secondary_output_target[u] = [v]
+        prj = AwsemPostRunJson(**json.load(json_old_f))
 
-    # fillig in md5
+    # read md5 file
     md5dict = read_md5file(md5file)
 
-    # output meta
+    # read execution metadata file
     with open(execution_metadata_file, 'r') as f:
         execution_metadata = json.load(f)
-    output_meta = create_out_meta(language, execution_metadata, md5dict)
-    old_dict['Job']['Output']['Output files'] = output_meta
+    output_files = create_output_files_dict(language, execution_metadata, md5dict)
 
-    # sanity check for output target, this skips secondary files
-    # in case conditional alternative output targets exist, replace the output target key with
-    # the alternative name
-    # We don't need to do the same for secondary files because
-    # conditional alternative names only occur in WDL which does not support secondary files
-    replace_list = []
-    for k in output_target:
-        if k.startswith('file://'):
-            continue
-        if k not in output_meta:
-            if k in alt_output_argnames:
-                key_exists = False  # initialize
-                for k_alt in alt_output_argnames[k]:
-                    if k_alt in output_meta and output_meta[k_alt]['path']:
-                        key_exists = True
-                        replace_list.append((k, k_alt))
-                if not key_exists:
-                    raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
-            else:
-                raise Exception("output target key {} doesn't exist in cwl-runner output".format(k))
-    for k, k_alt in replace_list:
-        output_target[k_alt] = output_target[k]
-        del output_target[k]
+    # create output files for postrun json
+    prj_out = prj.Job.Output
+    prj_out.add_output_files(output_files)
 
-    # 'file://' output targets
-    for k in output_target:
-        target = Target(output_bucket)
-        target.parse_custom_target(k, output_target[k])
-        if target.is_valid:
-            target.upload_to_s3()
-
-    # legitimate CWL/WDL output targets
-    for k in output_meta:
-        target = Target(output_bucket)
-        target.parse_cwl_target(k, output_target.get(k, ''), output_meta)
-        target.upload_to_s3()
-        try:
-            output_meta[k]['target'] = target.dest
-        except Exception as e:
-            raise Exception("cannot update target info to json %s" % e)
-        # upload secondary files
-        if 'secondaryFiles' in output_meta[k]:
-            stlist = SecondaryTargetList(output_bucket)
-            stlist.parse_target_values(secondary_output_target.get(k, []))
-            stlist.reorder_by_source([sf.get('path') for sf in output_meta[k]['secondaryFiles']])
-            for st in stlist.as_dict():
-                st.upload_to_s3()
-            try:
-                for i, sf in enumerate(output_meta[k]['secondaryFiles']):
-                    sf['target'] = stlist[i].dest
-            except Exception as e:
-                raise Exception("cannot update target info to json %s" % e)
+    # parsing output_target and uploading output files to output target
+    upload_to_output_target(prj_out)
 
     # add commands
     log_content = read_logfile_by_line(logfile)
-    old_dict['commands'] = parse_commands(log_content)
+    prj.add_commands(parse_commands(log_content))
 
     # add file system info
-    old_dict['Job']['filesystem'] = os.environ.get('EBS_DEVICE', '')
+    prj.add_filesystem(os.environ.get('EBS_DEVICE', ''))
 
     # write to new json file
     with open(json_new, 'w') as json_new_f:
-        json.dump(old_dict, json_new_f, indent=4, sort_keys=True)
+        json.dump(prj.as_dict(), json_new_f, indent=4, sort_keys=True)
 
+
+def upload_to_output_target(prj_out):
+    # parsing output_target and uploading output files to output target
+    output_bucket = prj_out.output_bucket_directory
+    output_argnames = prj_out.output_files.keys()
+    output_target = prj_out.alt_output_target(output_argnames)
+
+    for k in output_target:
+        target = Target(output_bucket)
+
+        # 'file://' output targets
+        target.parse_custom_target(k, output_target[k])
+        if target.is_valid:
+            target.upload_to_s3()
+        else:
+            # legitimate CWL/WDL output targets
+            target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
+            if target.is_valid:
+                target.upload_to_s3()
+                prj_out.output_files[k].add_target(target.dest)
+    
+                # upload secondary files
+                secondary_output_files = prj_out.output_files[k].secondaryFiles
+                if secondary_output_files:
+                    stlist = SecondaryTargetList(output_bucket)
+                    stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
+                    stlist.reorder_by_source([sf.path for sf in secondary_output_files])
+                    for st in stlist.secondary_targets:
+                        st.upload_to_s3()
+                    for i, sf in enumerate(secondary_output_files):
+                        sf.add_target(stlist.secondary_targets[i].dest)
+            else:
+                raise Exception("Failed to upload to output target %s" % k)
 
 def update_postrun_json(json_old, json_new):
     # read old json file

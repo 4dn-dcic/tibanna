@@ -1,4 +1,5 @@
 import re
+import copy
 from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
@@ -173,6 +174,44 @@ class AwsemRunJsonOutput(SerializableObject):
         self.secondary_output_target = secondary_output_target
         self.alt_cond_output_argnames = alt_cond_output_argnames
 
+        for u, v in self.secondary_output_target.items():
+            if not isinstance(v, list):
+                self.secondary_output_target[u] = [v]
+
+    def alt_output_target(self, argname_list):
+        """In case conditional alternative output targets exist, return alternative output target
+        where the output target keys are replaced with the alternative names.
+        If not, return output_target itself.
+        This function does not actually modify output_target.
+        It cannot be applied to custom output targets starting with 'file://'
+        We don't need to do the same for secondary files because
+        conditional alternative names only occur in WDL which does not support secondary files"""
+
+        # first create a list of keys to be replaced
+        replace_list = []
+        for k in self.output_target:
+            if k.startswith('file://'):
+                continue
+            if k not in argname_list:
+                if k in self.alt_cond_output_argnames:
+                    key_exists = False  # initialize
+                    for k_alt in self.alt_cond_output_argnames[k]:
+                        if k_alt in argname_list:
+                            key_exists = True
+                            replace_list.append((k, k_alt))
+                            break
+                    if not key_exists:
+                        raise Exception("output target key %s doesn't exist in argname list" % k)
+                else:
+                    raise Exception("output target key %s doesn't exist in argname list" % k)
+
+        # return the alternated output_target
+        alt_output_target = copy.deepcopy(self.output_target)
+        for k, k_alt in replace_list:
+            alt_output_target[k_alt] = alt_output_target[k]
+            del alt_output_target[k]
+        return alt_output_target
+
 
 class AwsemPostRunJson(AwsemRunJson):
     def __init__(self, Job, config, commands=None,log=None):
@@ -181,6 +220,12 @@ class AwsemPostRunJson(AwsemRunJson):
             self.commands = commands
         if log:
             self.log = log
+
+    def add_commands(self, commands):
+        self.commands = commands
+
+    def add_filesystem(self, filesystem):
+        self.Job.add_filesystem(filesystem)
 
     def create_Job(self, Job):
         self.Job = AwsemPostRunJsonJob(**Job)
@@ -213,6 +258,10 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
         except:
             return None
 
+    def add_filesystem(self, filesystem):
+        self.filesystem = filesystem
+
+
 class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
     def __init__(self, output_bucket_directory=None, output_target=None,
                  secondary_output_target=None, alt_cond_output_argnames=None,
@@ -222,11 +271,18 @@ class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
         super().__init__(output_bucket_directory, output_target,
                          secondary_output_target, alt_cond_output_argnames)
         if 'Output files' in kwargs:
-            self.Output_files_ = {k: AwsemPostRunJsonOutputFile(**v) for k, v in kwargs['Output files'].items()}
+            self.add_output_files(kwargs['Output files'])
+        else:
+            self.Output_files_ = {}
 
     @property
     def output_files(self):
         return self.Output_files_
+
+    def add_output_files(self, output_files):
+        """add or replace output files. output_files is a dictionary with argnames as keys
+           and a dict form of AwsemPostRunJsonOutputFile objects as values"""
+        self.Output_files_ = {k: AwsemPostRunJsonOutputFile(**v) for k, v in output_files.items()}
 
     def as_dict(self):
         d = super().as_dict()
@@ -238,7 +294,7 @@ class AwsemPostRunJsonOutput(AwsemRunJsonOutput):
 
 
 class AwsemPostRunJsonOutputFile(SerializableObject):
-    def __init__(self, path, target, basename=None, checksum=None,
+    def __init__(self, path, target=None, basename=None, checksum=None,
                  location=None, md5sum=None, size=None, secondaryFiles=None,
                  **kwargs):  # kwargs includes 'class'
         # both WDL and CWL
@@ -259,6 +315,9 @@ class AwsemPostRunJsonOutputFile(SerializableObject):
             self.secondaryFiles = None
         # handling reserved name key
         self.class_ = kwargs.get('class', None)
+
+    def add_target(self, target):
+        self.target = target
 
     def as_dict(self):
         d = super().as_dict()

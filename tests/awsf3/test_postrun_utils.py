@@ -1,15 +1,19 @@
 import os
 import pytest
 import json
+import boto3
 from datetime import datetime
 from awsf3.postrun_utils import (
-    create_out_meta,
+    create_output_files_dict,
     parse_commands,
     read_logfile_by_line,
     read_md5file,
     update_postrun_json_job_content,
-    update_postrun_json
+    update_postrun_json,
+    upload_to_output_target
 )
+from tibanna.awsem import AwsemPostRunJsonOutput
+from tests.awsf3.conftest import upload_test_bucket
 
 
 def test_read_md5file():
@@ -62,56 +66,56 @@ def test_parse_commands():
                         ['docker', 'run', '-i', 'duplexa/4dn-repliseq:v14', 'run-align.sh']]
 
 
-def test_create_out_meta_cwl():
+def test_create_output_files_dict_cwl():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
-    outmeta = create_out_meta('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}, md5dict=md5dict)
+    outmeta = create_output_files_dict('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}, md5dict=md5dict)
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1']},
                        'arg2': {'path': 'path2', 'md5sum': md5dict['path2']}}
 
 
-def test_create_out_meta_cwl_secondary_files():
+def test_create_output_files_dict_cwl_secondary_files():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
-    outmeta = create_out_meta('cwl', {'arg1': {'path': 'path1', 'secondaryFiles': [{'path': 'path2'}]}}, md5dict=md5dict)
+    outmeta = create_output_files_dict('cwl', {'arg1': {'path': 'path1', 'secondaryFiles': [{'path': 'path2'}]}}, md5dict=md5dict)
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1'],
                                 'secondaryFiles': [{'path': 'path2', 'md5sum': md5dict['path2']}]}}
 
 
-def test_create_out_meta_cwl_no_md5():
-    outmeta = create_out_meta('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}})
+def test_create_output_files_dict_cwl_no_md5():
+    outmeta = create_output_files_dict('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}})
     assert outmeta == {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}
 
 
-def test_create_out_meta_cwl_no_execution_metadata():
+def test_create_output_files_dict_cwl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
-        outmeta = create_out_meta('cwl')
+        outmeta = create_output_files_dict('cwl')
     assert 'execution_metadata' in str(ex)
 
 
-def test_create_out_meta_wdl():
+def test_create_output_files_dict_wdl():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
-    outmeta = create_out_meta('wdl', {'outputs': {'arg1': 'path1', 'arg2': 'path2'}}, md5dict=md5dict)
+    outmeta = create_output_files_dict('wdl', {'outputs': {'arg1': 'path1', 'arg2': 'path2'}}, md5dict=md5dict)
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1']},
                        'arg2': {'path': 'path2', 'md5sum': md5dict['path2']}}
 
 
-def test_create_out_meta_wdl_no_md5():
-    outmeta = create_out_meta('wdl', {'outputs': {'arg1': 'path1', 'arg2': 'path2'}})
+def test_create_output_files_dict_wdl_no_md5():
+    outmeta = create_output_files_dict('wdl', {'outputs': {'arg1': 'path1', 'arg2': 'path2'}})
     assert outmeta == {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}
 
 
-def test_create_out_meta_wdl_no_execution_metadata():
+def test_create_output_files_dict_wdl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
-        outmeta = create_out_meta('wdl')
+        outmeta = create_output_files_dict('wdl')
     assert 'execution_metadata' in str(ex)
 
 
-def test_create_out_meta_snakemake():
-    outmeta = create_out_meta('snakemake')
+def test_create_output_files_dict_snakemake():
+    outmeta = create_output_files_dict('snakemake')
     assert outmeta == {}
 
 
-def test_create_out_meta_shell():
-    outmeta = create_out_meta('shell')
+def test_create_output_files_dict_shell():
+    outmeta = create_output_files_dict('shell')
     assert outmeta == {}
 
 
@@ -155,3 +159,52 @@ def test_update_postrun_json():
 
     os.remove('test_postrun.json')
     os.remove('test_updated_postrun.json')
+
+
+def test_upload_to_output_target():
+    """testing comprehensively that includes custom target (file://),
+    cwl with two secondary file, wdl with conditional arg names"""
+    testfiledir = 'tests/awsf3/test_files/'
+    localfile1 = testfiledir + 'some_test_file_to_upload'
+    localfile2 = testfiledir + 'some_test_file_to_upload2'
+    localfile3 = testfiledir + 'some_test_file_to_upload3.abc'
+    localfile4 = testfiledir + 'some_test_file_to_upload3.def'
+    localfile5 = testfiledir + 'some_test_file_to_upload3.ghi'
+
+    # prep prjo (postrun_json_output)
+    output_target = {'file://' + localfile1: 'somekey',
+                     'arg1': 'somekey2',
+                     'arg2': 'somekey3.abc'}
+    secondary_output_target = {'arg2': ['somekey3.def', 'somekey3.ghi']}
+    output_files = {'file://' + localfile1: {'path': localfile1},
+                    'arg1b': {'path': localfile2},
+                    'arg2': {'path': localfile3,
+                             'secondaryFiles': [{'path': localfile4},
+                                                {'path': localfile5}]}}
+    alt_cond_output_argnames = {'arg1': ['arg1a', 'arg1b']}
+    prjo_dict = {'output_target': output_target,
+                 'Output files': output_files,
+                 'secondary_output_target': secondary_output_target,
+                 'alt_cond_output_argnames': alt_cond_output_argnames,
+                 'output_bucket_directory': upload_test_bucket}
+    prjo = AwsemPostRunJsonOutput(**prjo_dict)
+
+    # run function upload_to_output_target
+    upload_to_output_target(prjo)
+    
+    # still the directory should be uploaded despite the unzip conflict
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex)
+
+    test_and_delete_key('somekey2')
+    test_and_delete_key('somekey3.abc')
+    test_and_delete_key('somekey3.def')
+    test_and_delete_key('somekey3.ghi')
+    test_and_delete_key('somekey')

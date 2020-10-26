@@ -42,10 +42,10 @@ class Target(object):
                 raise Exception("output_target missing for target %s" % target_key)
             self.parse_target_value(target_value)
 
-    def parse_cwl_target(self, target_key, target_value, output_meta):
+    def parse_cwl_target(self, target_key, target_value, prj_output_files):
         """takes a key-value pair from output_target, parses the content.
-        output_meta is a dictionary that contains {<argname>: {'path': <outfile_path_on_awsem>}}"""
-        self.source = output_meta[target_key].get('path')
+        prj_output_files is a dictionary that contains {<argname>: <AwsemPostRunJsonOutputFile object>"""
+        self.source = prj_output_files[target_key].path
         if target_value:
             self.parse_target_value(target_value)
         else:
@@ -184,7 +184,7 @@ class SecondaryTarget(Target):
     def parse_custom_target(self, target_key, target_value):
         raise Exception("Function disabled")
 
-    def parse_cwl_target(self, target_key, target_value, output_meta):
+    def parse_cwl_target(self, target_key, target_value, prj_output_files):
         raise Exception("Function disabled")
 
 

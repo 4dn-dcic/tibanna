@@ -533,3 +533,10 @@ def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array_mount(run_json_inputfile)
                          '/data1/input-mounted-somebucket/path2'],
                         ['/data1/input-mounted-somebucket/path3',
                          '/data1/input-mounted-somebucket/path4']]
+
+
+def test_AwsemPostRunJsonOutput_alt_output_target(postrun_json_output):
+    postrun_json_output['output_target'] = {'arg1': 'target1', 'arg2': 'target2'}
+    postrun_json_output['alt_cond_output_argnames'] = {'arg2': ['arg2a', 'arg2b']}
+    prjo = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
+    assert prjo.alt_output_target(['arg1', 'arg2b']) == {'arg1': 'target1', 'arg2b': 'target2'}

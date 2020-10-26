@@ -135,9 +135,10 @@ def test_target_parse_custom_target_null_target_value():
 
 def test_target_parse_cwl_target_str_object_key():
     target = Target('some_bucket')
+    outfile = AwsemPostRunJsonOutputFile(**{'path': '/data1/out/1/somefile'})
     target.parse_cwl_target(target_key='some_argname',
                             target_value='some_object_key',
-                            output_meta={'some_argname': {'path': '/data1/out/1/somefile'}})
+                            prj_output_files={'some_argname': outfile})
     assert target.dest == 'some_object_key'
     assert target.bucket == 'some_bucket'
     assert target.unzip is False
@@ -146,9 +147,10 @@ def test_target_parse_cwl_target_str_object_key():
 
 def test_target_parse_cwl_target_dict_object_key():
     target = Target('some_bucket')
+    outfile = AwsemPostRunJsonOutputFile(**{'path': '/data1/out/1/somefile'})
     target.parse_cwl_target(target_key='some_argname',
                             target_value={'object_key': 'some_object_key'},
-                            output_meta={'some_argname': {'path': '/data1/out/1/somefile'}})
+                            prj_output_files={'some_argname': outfile})
     assert target.dest == 'some_object_key'
     assert target.bucket == 'some_bucket'
     assert target.unzip is False
@@ -157,9 +159,10 @@ def test_target_parse_cwl_target_dict_object_key():
 
 def test_target_parse_cwl_target_null_target_value():
     target = Target('some_bucket')
+    outfile = AwsemPostRunJsonOutputFile(**{'path': '/data1/out/1/somefile'})
     target.parse_cwl_target(target_key='some_argname',
                             target_value=None,
-                            output_meta={'some_argname': {'path': '/data1/out/1/somefile'}})
+                            prj_output_files={'some_argname': outfile})
     # use sourcename as dest if target_value is not given
     assert target.dest == '1/somefile'
     assert target.bucket == 'some_bucket'
