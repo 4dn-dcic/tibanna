@@ -3,6 +3,7 @@ import os
 import subprocess
 import boto3
 import re
+from tibanna.awsem import AwsemRunJson
 
 
 downloadlist_filename = "download_command_list.txt"
@@ -21,46 +22,46 @@ def decode_run_json(input_json_file):
     """
     # read json file
     with open(input_json_file, 'r') as f:
-        d = json.load(f)
-    d_input = d["Job"]["Input"]
-    language = d["Job"]["App"]["language"]
+        runjson = AwsemRunJson(**json.load(f))
+    runjson_input = runjson.Job.Input
+    language = runjson.Job.App.language
 
     # create a download command list file from the information in json
-    create_download_command_list(downloadlist_filename, d_input, language)
+    create_download_command_list(downloadlist_filename, runjson_input, language)
 
     # create a bucket-mounting command list file
-    create_mount_command_list(mountlist_filename, d_input)
+    create_mount_command_list(mountlist_filename, runjson_input)
 
     # create an input yml file to be used on awsem
     if language == 'wdl':  # wdl
-        create_input_for_wdl(input_yml_filename, d_input)
+        create_input_for_wdl(input_yml_filename, runjson_input)
     elif language == 'snakemake':  # snakemake
-        create_input_for_snakemake(input_yml_filename, d_input)
+        create_input_for_snakemake(input_yml_filename, runjson_input)
     else:  # cwl
-        create_input_for_cwl(input_yml_filename, d_input)
+        create_input_for_cwl(input_yml_filename, runjson_input)
 
     # create a file that defines environmental variables
-    create_env_def_file(env_filename, d, language)
+    create_env_def_file(env_filename, runjson_input, language)
 
 
-def create_mount_command_list(mountlist_filename, d_input):
-    buckets_to_be_mounted = dict()
+def create_mount_command_list(mountlist_filename, runjson_input):
+    buckets_to_be_mounted = set()
     for category in ["Input_files_data", "Secondary_files_data"]:
-        for inkey, v in d_input[category].items():
-            if v.get("mount", False):
-                buckets_to_be_mounted[v['dir']] = 1
+        for inkey, v in getattr(runjson_input, category).items():
+            if not v.mount:
+                buckets_to_be_mounted.add(v.dir_)
     with open(mountlist_filename, 'w') as f:
         for b in buckets_to_be_mounted:
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
             f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
-def create_download_command_list(downloadlist_filename, d_input, language):
+def create_download_command_list(downloadlist_filename, runjson_input, language):
     """create a download command list file from the information in json"""
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
-            for inkey, v in d_input[category].items():
-                if v.get("mount", False):  # do not download if it will be mounted
+            for inkey, v in getattr(runjson_input, category).items():
+                if not v.mount:  # do not download if it will be mounted
                     continue
                 if inkey.startswith('file://'):
                     if language not in ['shell', 'snakemake']:
@@ -75,12 +76,10 @@ def create_download_command_list(downloadlist_filename, d_input, language):
                 else:
                     target = ''
                     target_template = INPUT_DIR + "/%s"
-                data_bucket = v["dir"]
-                profile = v.get("profile", '')
-                profile_flag = "--profile " + profile if profile else ''
-                path1 = v["path"]
-                rename1 = v.get("rename", None)
-                unzip = v.get("unzip", None)
+                data_bucket = v.dir_
+                profile_flag = "--profile " + v.profile if v.profile else ''
+                path1 = v.path
+                rename1 = v.rename
                 if not rename1:
                     rename1 = path1
                 if isinstance(path1, list):
@@ -90,20 +89,20 @@ def create_download_command_list(downloadlist_filename, d_input, language):
                                 if isinstance(path3, list):
                                     for data_file, rename4 in zip(path3, rename3):
                                         target = target_template % rename4
-                                        add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
+                                        add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
                                 else:
                                     data_file = path3
                                     target = target_template % rename3
-                                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
+                                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
                         else:
                             data_file = path2
                             target = target_template % rename2
-                            add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
+                            add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
                 else:
                     data_file = path1
                     if not target:
                         target = target_template % rename1
-                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip)
+                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
 
 
 def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
@@ -124,153 +123,54 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
         f.write(cmd.format(data_bucket, data_file, target, profile_flag))
 
 
-def file2cwlfile(filename, dir, unzip):
-    if unzip:
-        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
-    return {"class": 'File', "path": dir + '/' + filename}
-
-
-def file2wdlfile(filename, dir, unzip):
-    if unzip:
-        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
-    return dir + '/' + filename
-
-
 # create an input yml file for cwl-runner
-def create_input_for_cwl(input_yml_filename, d_input):
-    inputs = d_input.copy()
-    yml = {}
-    for category in ["Input_parameters"]:
-        for item, value in inputs[category].items():
-            yml[item] = value
-    for category in ["Input_files_data"]:
-        for item in inputs[category].keys():
-            v = inputs[category][item]
-            if v.get('mount', False):
-                input_dir = INPUT_MOUNT_DIR_PREFIX + v['dir']
-            else:
-                input_dir = INPUT_DIR
-            if 'mount' in v:
-                del v['mount']
-            del v['dir']
-            if 'profile' in v:
-                del v['profile']
-            if 'rename' in v and v['rename']:
-                if isinstance(v['rename'], list):
-                    v['path'] = v['rename'][:]
-                else:
-                    v['path'] = v['rename']
-                del v['rename']
-            if 'unzip' in v:
-                unzip = v['unzip']
-                del v['unzip']
-            else:
-                unzip = ''
-            if isinstance(v['path'], list):
-                v2 = []
-                for pi in v['path']:
-                    if isinstance(pi, list):
-                        nested = []
-                        for ppi in pi:
-                            if isinstance(ppi, list):
-                                nested.append([file2cwlfile(pppi, input_dir, unzip) for pppi in ppi])
-                            else:
-                                nested.append(file2cwlfile(ppi, input_dir, unzip))
-                        v2.append(nested)
-                    else:
-                        v2.append(file2cwlfile(pi, input_dir, unzip))
-                v = v2
-                yml[item] = v
-            else:
-                if unzip:
-                    v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                v['path'] = input_dir + '/' + v['path']
-                yml[item] = v.copy()
+def create_input_for_cwl(input_yml_filename, runjson_input):
+    yml = runjson_input.as_dict_as_cwl_input()
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
-def create_input_for_wdl(input_yml_filename, d_input):
-    inputs = d_input.copy()
-    yml = {}
-    for category in ["Input_parameters"]:
-        for item, value in inputs[category].items():
-            yml[item] = value
-    for category in ["Input_files_data"]:
-        for item in inputs[category].keys():
-            v = inputs[category][item]
-            if v.get('mount', False):
-                input_dir = INPUT_MOUNT_DIR_PREFIX + v['dir']
-            else:
-                input_dir = INPUT_DIR
-            if 'mount' in v:
-                del v['mount']
-            if 'rename' in v and v['rename']:
-                if isinstance(v['rename'], list):
-                    v['path'] = list(v['rename'])
-                else:
-                    v['path'] = v['rename']
-                del v['rename']
-            if 'unzip' in v:
-                unzip = v['unzip']
-                del v['unzip']
-            else:
-                unzip = ''
-            if isinstance(v['path'], list):
-                yml[item] = []
-                for pi in v['path']:
-                    if isinstance(pi, list):
-                        nested = []
-                        for ppi in pi:
-                            if isinstance(ppi, list):
-                                nested.append([file2wdlfile(pppi, input_dir, unzip) for pppi in ppi])
-                            else:
-                                nested.append(file2wdlfile(ppi, input_dir, unzip))
-                        yml[item].append(nested)
-                    else:
-                        yml[item].append(file2wdlfile(pi, input_dir, unzip))
-            else:
-                if unzip:
-                    v['path'] = re.match('(.+)\.{0}$'.format(unzip), v['path']).group(1)
-                yml[item] = input_dir + '/' + v['path']
+def create_input_for_wdl(input_yml_filename, runjson_input):
+    yml = runjson_input.as_dict_as_wdl_input()
     with open(input_yml_filename, 'w') as f_yml:
         json.dump(yml, f_yml, indent=4, sort_keys=True)
 
 
-def create_input_for_snakemake(input_yml_filename, d_input):
+def create_input_for_snakemake(input_yml_filename, runjson_input):
     pass  # for now assume no input yml
 
 
 # create a file that defines environmental variables
-def create_env_def_file(env_filename, d, language):
+def create_env_def_file(env_filename, runjson, language):
     # I have to use these variables after this script finishes running.
     # I didn't use os.environ + os.system('bash') because that would remove the other
     # env variables set before this script started running.
+    app = runjson.Job.App
     with open(env_filename, 'w') as f_env:
         if language == 'wdl':
-            f_env.write("export WDL_URL={}\n".format(d["Job"]["App"]["wdl_url"]))
-            f_env.write("export MAIN_WDL={}\n".format(d["Job"]["App"]["main_wdl"]))
-            f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(d["Job"]["App"]["other_wdl_files"].split(','))))
+            f_env.write("export WDL_URL={}\n".format(app.wdl_url))
+            f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))
+            f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(app.other_wdl_files.split(','))))
         elif language == 'snakemake':
-            f_env.write("export SNAKEMAKE_URL={}\n".format(d["Job"]["App"]["snakemake_url"]))
-            f_env.write("export MAIN_SNAKEMAKE={}\n".format(d["Job"]["App"]["main_snakemake"]))
-            f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(d["Job"]["App"]["other_snakemake_files"].split(','))))
-            f_env.write("export COMMAND=\"{}\"\n".format(d["Job"]["App"]["command"].replace("\"", "\\\"")))
-            f_env.write("export CONTAINER_IMAGE={}\n".format(d["Job"]["App"]["container_image"]))
+            f_env.write("export SNAKEMAKE_URL={}\n".format(app.snakemake_url))
+            f_env.write("export MAIN_SNAKEMAKE={}\n".format(app.main_snakemake))
+            f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(app.other_snakemake_files.split(','))))
+            f_env.write("export COMMAND=\"{}\"\n".format(app.command.replace("\"", "\\\"")))
+            f_env.write("export CONTAINER_IMAGE={}\n".format(app.container_image))
         elif language == 'shell':
-            f_env.write("export COMMAND=\"{}\"\n".format(d["Job"]["App"]["command"].replace("\"", "\\\"")))
-            f_env.write("export CONTAINER_IMAGE={}\n".format(d["Job"]["App"]["container_image"]))
+            f_env.write("export COMMAND=\"{}\"\n".format(app.command.replace("\"", "\\\"")))
+            f_env.write("export CONTAINER_IMAGE={}\n".format(app.container_image))
         else:  # cwl
-            f_env.write("export CWL_URL={}\n".format(d["Job"]["App"]["cwl_url"]))
-            f_env.write("export MAIN_CWL={}\n".format(d["Job"]["App"]["main_cwl"]))
-            f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(d["Job"]["App"]["other_cwl_files"].split(','))))
+            f_env.write("export CWL_URL={}\n".format(app.cwl_url))
+            f_env.write("export MAIN_CWL={}\n".format(app.main_cwl))
+            f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(app.other_cwl_files.split(','))))
         # other env variables
-        f_env.write("export OUTBUCKET={}\n".format(d["Job"]["Output"]["output_bucket_directory"]))
-        f_env.write("export PUBLIC_POSTRUN_JSON={}\n".format('1' if d["config"].get('public_postrun_json', False) else '0'))
+        f_env.write("export OUTBUCKET={}\n".format(runjson.Job.Output.output_bucket_directory))
+        f_env.write("export PUBLIC_POSTRUN_JSON={}\n".format('1' if runjson.config.public_postrun_json else '0'))
         env_preserv_str = ''
         docker_env_str = ''
-        if "Env" in d["Job"]["Input"]:
-            for ev, val in d["Job"]["Input"]["Env"].items():
+        if "Env" in runjson.Job.Input:
+            for ev, val in runjson.Job.Input.Env.items():
                 f_env.write("export {}={}\n".format(ev, val))
                 env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
                 docker_env_str = docker_env_str + "-e " + ev + " "

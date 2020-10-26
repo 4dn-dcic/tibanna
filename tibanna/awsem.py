@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
@@ -64,14 +65,25 @@ class AwsemRunJsonInput(SerializableObject):
         if Input_files_reference:
             self.Input_files_reference = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_reference.items()}
 
+    def as_dict_as_cwl_input(self):
+        d = {k: v.as_dict_as_cwl_input() for k, v in self.Input_files_data.items()}
+        d.update(self.Input_parameters)
+        return d
+
+    def as_dict_as_wdl_input(self):
+        d = {k: v.as_dict_as_wdl_input() for k, v in self.Input_files_data.items()}
+        d.update(self.Input_parameters)
+        return d
+
 
 class AwsemRunJsonInputFile(SerializableObject):
-    def __init__(self, path, profile='', rename='', unzip='', **kwargs):  # kwargs includes 'dir' and 'class'
+    def __init__(self, path, profile='', rename='', unzip='', mount=False, **kwargs):  # kwargs includes 'dir' and 'class'
         # profile and rename are missing in the old postrunjson
         self.path = path
         self.profile = profile
         self.rename = rename
         self.unzip = unzip
+        self.mount = mount
         # handling reserved name key
         self.class_ = kwargs.get('class', None)
         self.dir_ = kwargs.get('dir', None)
@@ -85,6 +97,64 @@ class AwsemRunJsonInputFile(SerializableObject):
                 d[rk] = d[rk_alt]
                 del(d[rk_alt])
         return d
+
+    def as_dict_as_cwl_input(self):
+        if self.mount:
+            input_dir = INPUT_MOUNT_DIR_PREFIX + v.dir_
+        else:
+            input_dir = INPUT_DIR
+        if self.rename:
+            if isinstance(self.rename, list):
+                path = self.rename[:]
+            else:
+                path = self.rename
+        else:
+            path = self.path
+        if isinstance(path, list):
+            d = []
+            for pi in path:
+                if isinstance(pi, list):
+                    nested = []
+                    for ppi in pi:
+                        if isinstance(ppi, list):
+                            nested.append([file2cwlfile(pppi, input_dir, self.unzip) for pppi in ppi])
+                        else:
+                            nested.append(file2cwlfile(ppi, input_dir, self.unzip))
+                    d.append(nested)
+                else:
+                    d.append(file2cwlfile(pi, input_dir, self.unzip))
+            return d
+        else:
+            return file2cwlfile(path, input_dir, self.unzip)
+
+    def as_dict_as_wdl_input():
+        if not self.mount:
+            input_dir = INPUT_MOUNT_DIR_PREFIX + v.dir_
+        else:
+            input_dir = INPUT_DIR
+        if self.rename:
+            if isinstance(self.rename, list):
+                path = list(self.rename)
+            else:
+                path = self.rename
+        else:
+            path = self.path
+        if isinstance(path, list):
+            d = []
+            for pi in path:
+                if isinstance(pi, list):
+                    nested = []
+                    for ppi in pi: 
+                        if isinstance(ppi, list):
+                            nested.append([file2wdlfile(pppi, input_dir, self.unzip) for pppi in ppi])
+                        else:
+                            nested.append(file2wdlfile(ppi, input_dir, self.unzip))
+                    d.append(nested)
+                else:
+                    d.append(file2wdlfile(pi, input_dir, self.unzip))
+            return d
+        else:
+            return file2wdlfile(path, input_dir, self.unzip)
 
 
 class AwsemRunJsonOutput(SerializableObject):
@@ -189,3 +259,15 @@ class AwsemPostRunJsonOutputFile(SerializableObject):
             d['class'] = d['class_']
             del(d['class_'])
         return d
+
+
+def file2cwlfile(filename, dirname, unzip):
+    if unzip:
+        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+    return {"class": 'File', "path": dirname + '/' + filename}
+
+
+def file2wdlfile(filename, dirname, unzip):
+    if unzip:
+        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+    return dirname + '/' + filename
