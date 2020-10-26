@@ -22,6 +22,7 @@ def test_read_md5file():
                        'anotherfile': 'd41d8cd98f00b204e9800998ecf8427e'}
     os.remove(test_md5file_name)
 
+
 def test_read_logfile_by_line():
     test_logfile_name = 'some_test_log_file'
     with open(test_logfile_name, 'w') as fo:
@@ -32,6 +33,7 @@ def test_read_logfile_by_line():
     assert next(log_content) == '3\n'
     assert next(log_content) is None
     os.remove(test_logfile_name)
+
 
 def test_parse_commands():
     def log_gen():
@@ -59,11 +61,13 @@ def test_parse_commands():
     assert commands == [['docker', 'run', '-i', 'duplexa/4dn-repliseq:v13', 'clip', 'VFL.fastq.gz'],
                         ['docker', 'run', '-i', 'duplexa/4dn-repliseq:v14', 'run-align.sh']]
 
+
 def test_create_out_meta_cwl():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
     outmeta = create_out_meta('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}, md5dict=md5dict)
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1']},
                        'arg2': {'path': 'path2', 'md5sum': md5dict['path2']}}
+
 
 def test_create_out_meta_cwl_secondary_files():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
@@ -71,14 +75,17 @@ def test_create_out_meta_cwl_secondary_files():
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1'],
                                 'secondaryFiles': [{'path': 'path2', 'md5sum': md5dict['path2']}]}}
 
+
 def test_create_out_meta_cwl_no_md5():
     outmeta = create_out_meta('cwl', {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}})
     assert outmeta == {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}
+
 
 def test_create_out_meta_cwl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
         outmeta = create_out_meta('cwl')
     assert 'execution_metadata' in str(ex)
+
 
 def test_create_out_meta_wdl():
     md5dict = {'path1': '683153f0051fef9e778ce0866cfd97e9', 'path2': 'c14105f8209836cd3b1cc1b63b906fed'}
@@ -86,18 +93,22 @@ def test_create_out_meta_wdl():
     assert outmeta == {'arg1': {'path': 'path1', 'md5sum': md5dict['path1']},
                        'arg2': {'path': 'path2', 'md5sum': md5dict['path2']}}
 
+
 def test_create_out_meta_wdl_no_md5():
     outmeta = create_out_meta('wdl', {'outputs': {'arg1': 'path1', 'arg2': 'path2'}})
     assert outmeta == {'arg1': {'path': 'path1'}, 'arg2': {'path': 'path2'}}
+
 
 def test_create_out_meta_wdl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
         outmeta = create_out_meta('wdl')
     assert 'execution_metadata' in str(ex)
 
+
 def test_create_out_meta_snakemake():
     outmeta = create_out_meta('snakemake')
     assert outmeta == {}
+
 
 def test_create_out_meta_shell():
     outmeta = create_out_meta('shell')
