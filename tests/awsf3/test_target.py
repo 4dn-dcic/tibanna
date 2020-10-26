@@ -2,8 +2,7 @@ import pytest
 from awsf3.target import (
     Target,
     SecondaryTarget,
-    SecondaryTargetList,
-    create_outmeta
+    SecondaryTargetList
 )
 from tests.awsf3.conftest import upload_test_bucket, CaptureOut
 import boto3
