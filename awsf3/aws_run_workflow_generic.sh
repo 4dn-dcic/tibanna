@@ -60,7 +60,7 @@ export LOGFILE=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
-
+export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
