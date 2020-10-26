@@ -41,7 +41,7 @@ def decode_run_json(input_json_file):
         create_input_for_cwl(input_yml_filename, runjson_input)
 
     # create a file that defines environmental variables
-    create_env_def_file(env_filename, runjson_input, language)
+    create_env_def_file(env_filename, runjson, language)
 
 
 def create_mount_command_list(mountlist_filename, runjson_input):
