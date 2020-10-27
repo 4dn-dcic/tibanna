@@ -3,7 +3,7 @@ import json
 import os
 import time
 from .target import Target, SecondaryTargetList
-from tibanna.awsem import AwsemRunJson, AwsemPostRunJsonOutput
+from tibanna.awsem import AwsemPostRunJson, AwsemPostRunJsonOutput
     
 
 def read_logfile_by_line(logfile):

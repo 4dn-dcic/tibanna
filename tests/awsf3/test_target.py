@@ -1,12 +1,15 @@
+import io
+import boto3
 import pytest
 from awsf3.target import (
     Target,
     SecondaryTarget,
     SecondaryTargetList
 )
+from tibanna.awsem import (
+    AwsemPostRunJsonOutputFile
+)
 from tests.awsf3.conftest import upload_test_bucket, CaptureOut
-import boto3
-import io
 
 
 def test_target_init():
