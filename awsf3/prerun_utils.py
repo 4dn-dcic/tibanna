@@ -51,7 +51,7 @@ def create_mount_command_list(mountlist_filename, runjson_input):
             if v.mount:
                 buckets_to_be_mounted.add(v.dir_)
     with open(mountlist_filename, 'w') as f:
-        for b in buckets_to_be_mounted:
+        for b in sorted(buckets_to_be_mounted):
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
             f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
@@ -105,7 +105,7 @@ def create_download_command_list(downloadlist_filename, runjson_input, language)
                     add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
 
 
-def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
+def add_download_cmd(data_bucket, data_file, target, profile_flag, f=None, unzip=''):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
@@ -120,7 +120,10 @@ def add_download_cmd(data_bucket, data_file, target, profile_flag, f, unzip):
             cmd4 = "bzip2 -d {2};"
             cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done;"
         cmd = cmd_template % (cmd4, cmd5)
-        f.write(cmd.format(data_bucket, data_file, target, profile_flag))
+        if f:
+            f.write(cmd.format(data_bucket, data_file, target, profile_flag))
+        else:
+            return cmd.format(data_bucket, data_file, target, profile_flag)
 
 
 # create an input yml file for cwl-runner
