@@ -1,6 +1,5 @@
 import json
 import os
-import copy
 import subprocess
 import boto3
 import re
@@ -75,9 +74,10 @@ def create_download_command_list(downloadlist_filename, runjson_input, language)
                                           profile=v.profile, f=f, unzip=v.unzip)
                 else:
                     target_template = INPUT_DIR + "/%s"
-                    rename = copy.deepcopy(v.rename)
-                    if len(flatten(rename)) == 0:
+                    if len(flatten(v.rename)) == 0:
                         rename = create_dim(v.path, empty=True)
+                    else:
+                        rename = v.rename
                     run_on_nested_arrays2(v.path, rename, add_download_cmd, data_bucket=v.dir_,
                                           profile=v.profile, f=f, unzip=v.unzip, target_template=target_template)
 
