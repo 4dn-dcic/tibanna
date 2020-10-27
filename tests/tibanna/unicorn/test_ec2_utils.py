@@ -23,7 +23,7 @@ def fun():
 
 def test_args():
     input_dict = {'args': {'input_files': {}, 'output_S3_bucket': 'somebucket', 'app_name': 'someapp'}}
-    args = Args(**input_dict['args'])
+    args = Args(**input_dict['args'], fill_default=False)
     args_dict = args.as_dict()
     assert 'input_files' in args_dict
     assert 'app_name' in args_dict
@@ -108,7 +108,7 @@ def test_args_parse_input_files_format_error():
                            'cwl_main_filename': 'main.cwl',
                            'cwl_directory_url': 'someurl',
                            'app_name': 'someapp'}}
-    args = Args(**input_dict['args'])
+    args = Args(**input_dict['args'], fill_default=False)
     with pytest.raises(MalFormattedInputJsonException) as ex:
         args.fill_default()
     assert ex
@@ -122,7 +122,7 @@ def test_args_parse_input_files_format_error2():
                            'cwl_main_filename': 'main.cwl',
                            'cwl_directory_url': 'someurl',
                            'app_name': 'someapp'}}
-    args = Args(**input_dict['args'])
+    args = Args(**input_dict['args'], fill_default=False)
     with pytest.raises(MalFormattedInputJsonException) as ex:
         args.fill_default()
     assert ex

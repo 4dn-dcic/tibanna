@@ -45,19 +45,20 @@ NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavio
 
 
 class UnicornInput(SerializableObject):
-    def __init__(self, input_dict):
+    def __init__(self, input_dict, fill_default=True):
         if 'jobid' in input_dict and input_dict.get('jobid'):
             self.jobid = input_dict.get('jobid')
         else:
             self.jobid = create_jobid()
-        self.args = Args(**input_dict['args'])  # args is a required field
-        self.cfg = Config(**input_dict['config'])  # config is a required field
+        self.args = Args(**input_dict['args'], fill_default=fill_default)  # args is a required field
+        self.cfg = Config(**input_dict['config'], fill_default=fill_default)  # config is a required field
         # add other fields too
         for field, v in input_dict.items():
             if field not in ['jobid', 'args', 'config']:
                 setattr(self, field, v)
-        # fill the default values and internally used fields
-        self.auto_fill()
+        if fill_default:
+            # fill the default values and internally used fields
+            self.auto_fill()
 
     def as_dict(self):
         d = super().as_dict()
@@ -71,9 +72,6 @@ class UnicornInput(SerializableObject):
         """
         args = self.args
         cfg = self.cfg
-        args.fill_default()
-        cfg.fill_default()
-        cfg.fill_internal()
         cfg.fill_language_options(args.language, getattr(args, 'singularity', False))
         cfg.fill_other_fields(args.app_name)
         # sanity check
@@ -107,12 +105,14 @@ class UnicornInput(SerializableObject):
 
 
 class Args(SerializableObject):
-    def __init__(self, **kwargs):
+    def __init__(self, fill_default=True, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
         for field in ['output_S3_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
+        if fill_default:
+            self.fill_default()
 
     def update(self, d):
         for k, v in d.items():
@@ -243,12 +243,15 @@ class Args(SerializableObject):
 
 
 class Config(SerializableObject):
-    def __init__(self, **kwargs):
+    def __init__(self, fill_default=True, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
         for field in ['log_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in config" % field)
+        if fill_default:
+            self.fill_default()
+            self.fill_internal()
 
     def update(self, d):
         for k, v in d.items():

@@ -18,12 +18,16 @@ class AwsemRunJson(SerializableObject):
 
 
 class AwsemRunJsonJob(SerializableObject):
-    def __init__(self, App, Input, Output, JOBID, start_time, Log):
+    def __init__(self, App, Input, Output=None, JOBID='', start_time=None, Log=None):
         self.App = AwsemRunJsonApp(**App)
         self.Input = AwsemRunJsonInput(**Input)
+        if not Output:
+            Output = {}
         self.create_Output(Output)
         self.start_time = start_time
         self.JOBID = JOBID
+        if not Log:
+            Log = {}
         self.Log = Log
 
     def create_Output(self, Output):
@@ -35,7 +39,10 @@ class AwsemRunJsonJob(SerializableObject):
 
     @property
     def start_time_as_str(self):
-        return datetime.strptime(self.start_time, AWSEM_TIME_STAMP_FORMAT)
+        if not self.start_time:
+            return ''
+        else:
+            return datetime.strptime(self.start_time, AWSEM_TIME_STAMP_FORMAT)
 
 
 class AwsemRunJsonApp(SerializableObject):
@@ -56,10 +63,16 @@ class AwsemRunJsonApp(SerializableObject):
 
 
 class AwsemRunJsonInput(SerializableObject):
-    def __init__(self, Input_files_data, Input_parameters, Secondary_files_data,
+    def __init__(self, Input_files_data=None, Input_parameters=None, Secondary_files_data=None,
                  # Input_files_reference is for older postrunjson
                  # Env is missing in older postrunjson
                  Input_files_reference=None, Env=None):
+        if not Input_files_data:
+            Input_files_data = {}
+        if not Input_parameters:
+            Input_parameters = {}
+        if not Secondary_files_data:
+            Secondary_files_data = {}
         self.Input_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Input_files_data.items()}
         self.Secondary_files_data = {k: AwsemRunJsonInputFile(**v) for k, v in Secondary_files_data.items()}
         self.Input_parameters = Input_parameters
@@ -169,10 +182,10 @@ class AwsemRunJsonInputFile(SerializableObject):
 class AwsemRunJsonOutput(SerializableObject):
     def __init__(self, output_bucket_directory=None, output_target=None,
                  secondary_output_target=None, alt_cond_output_argnames=None):
-        self.output_bucket_directory = output_bucket_directory
-        self.output_target = output_target
-        self.secondary_output_target = secondary_output_target
-        self.alt_cond_output_argnames = alt_cond_output_argnames
+        self.output_bucket_directory = output_bucket_directory or {}
+        self.output_target = output_target or {}
+        self.secondary_output_target = secondary_output_target or {}
+        self.alt_cond_output_argnames = alt_cond_output_argnames or {}
 
         for u, v in self.secondary_output_target.items():
             if not isinstance(v, list):
