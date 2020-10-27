@@ -30,6 +30,10 @@ class AwsemRunJsonJob(SerializableObject):
             Log = {}
         self.Log = Log
 
+        # format check
+        self.Input.check_input_files_key_compatibility(self.App.language)
+
+
     def create_Output(self, Output):
         self.Output = AwsemPostRunJsonOutput(**Output)
 
@@ -93,6 +97,20 @@ class AwsemRunJsonInput(SerializableObject):
         d = {k: v.as_dict_as_wdl_input(input_dir, input_mount_dir_prefix) for k, v in self.Input_files_data.items()}
         d.update(self.Input_parameters)
         return d
+
+    def check_input_files_key_compatibility(self, language):
+        for category in ["Input_files_data", "Secondary_files_data"]:
+            for inkey in getattr(self, category):
+                if inkey.startswith('file://'):
+                    if language not in ['shell', 'snakemake']:
+                        raise MalFormattedRunJsonException('input file has to be defined with argument name for CWL and WDL')
+                    target = inkey.replace('file://', '') 
+                    if not target.startswith('/data1/'):
+                        raise Exception('input target directory must be in /data1/')
+                    if not target.startswith('/data1/' + language) and \
+                        not target.startswith('/data1/input') and \
+                        not target.startswith('/data1/out'):
+                            raise Exception('input target directory must be in /data1/input, /data1/out or /data1/%s' % language)
 
 
 class AwsemRunJsonInputFile(SerializableObject):

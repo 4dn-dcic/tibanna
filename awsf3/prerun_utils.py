@@ -4,6 +4,7 @@ import subprocess
 import boto3
 import re
 from tibanna.awsem import AwsemRunJson
+from tibanna.nnested_array import run_on_nested_arrays2
 
 
 downloadlist_filename = "download_command_list.txt"
@@ -64,66 +65,71 @@ def create_download_command_list(downloadlist_filename, runjson_input, language)
                 if v.mount:  # do not download if it will be mounted
                     continue
                 if inkey.startswith('file://'):
-                    if language not in ['shell', 'snakemake']:
-                        raise Exception('input file has to be defined with argument name for CWL and WDL')
                     target = inkey.replace('file://', '')
-                    if not target.startswith('/data1/'):
-                        raise Exception('input target directory must be in /data1/')
-                    if not target.startswith('/data1/' + language) and \
-                        not target.startswith('/data1/input') and \
-                        not target.startswith('/data1/out'):
-                            raise Exception('input target directory must be in /data1/input, /data1/out or /data1/%s' % language)
+                    run_on_nested_arrays2(v.path, target, add_download_cmd, data_bucket=v.dir_,
+                                          profile=v.profile, f=f, unzip=v.unzip)
                 else:
-                    target = ''
                     target_template = INPUT_DIR + "/%s"
-                data_bucket = v.dir_
-                profile_flag = "--profile " + v.profile if v.profile else ''
-                path1 = v.path
-                rename1 = v.rename
-                if not rename1:
-                    rename1 = path1
-                if isinstance(path1, list):
-                    for path2, rename2 in zip(path1, rename1):
-                        if isinstance(path2, list):
-                            for path3, rename3 in zip(path2, rename2):
-                                if isinstance(path3, list):
-                                    for data_file, rename4 in zip(path3, rename3):
-                                        target = target_template % rename4
-                                        add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
-                                else:
-                                    data_file = path3
-                                    target = target_template % rename3
-                                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
-                        else:
-                            data_file = path2
-                            target = target_template % rename2
-                            add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
-                else:
-                    data_file = path1
-                    if not target:
-                        target = target_template % rename1
-                    add_download_cmd(data_bucket, data_file, target, profile_flag, f, v.unzip)
+                    run_on_nested_arrays2(v.path, v.rename, add_download_cmd, data_bucket=v.dir_,
+                                          profile=v.profile, f=f, unzip=v.unzip, target_template=target_template)
 
 
-def add_download_cmd(data_bucket, data_file, target, profile_flag, f=None, unzip=''):
+def add_download_cmd(data_file, rename, data_bucket, profile, f, unzip, target_template='%s'):
+    if data_file:
+        if not rename:
+            rename = data_file
+        target = target_template % rename
+        cmd = create_download_cmd(data_bucket, data_file, target, profile, unzip)
+        f.write(cmd + '\n')
+
+
+def determine_key_type(bucket, key, profile):
+    if profile:
+        s3 = boto3.session(profile_name=profile).client('s3')
+    else:
+        s3 = boto3.client('s3')
+    res = s3.list_objects_v2(Bucket=bucket, Prefix=key)
+    if 'KeyCount' not in res:
+        raise Exception("Cannot retrieve data for file s3://%s/%s" % (bucket, key))
+    elif res['KeyCount'] == 0:
+        return 'Does not exist'
+    elif res['KeyCount'] == 1 and res['Contents'][0]['Key'] == key:
+        # data_file is a single file
+        return 'File'
+    else:
+        # data_file is a folder (or a prefix)
+        return 'Prefix'
+
+
+def create_download_cmd(data_bucket, data_file, target, profile, unzip=''):
     if data_file:
         if data_file.endswith('/'):
             data_file = data_file.rstrip('/')
-        cmd_template = "if [[ -z $(aws s3 ls s3://{0}/{1}/ {3}) ]]; then aws s3 cp s3://{0}/{1} {2} {3}; %s" + \
-                       " else aws s3 cp --recursive s3://{0}/{1} {2} {3}; %s fi\n"
-        cmd4 = ''
-        cmd5 = ''
+    profile_flag = ' --profile ' + profile if profile else ''
+    format_list = [data_bucket, data_file, target, profile_flag]
+    key_type = determine_key_type(data_bucket, data_file, profile)
+    if key_type == 'Does not exist':
+        raise Exception("Cannot download file s3://%s/%s - file does not exist." % (data_bucket, data_file))
+    elif key_type == 'File':
+        download_cmd = 'aws s3 cp s3://{0}/{1} {2}{3}'.format(*format_list)
         if unzip == 'gz':
-            cmd4 = "gunzip {2};"
-            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done;"
+            unzip_cmd = 'gunzip {2}'
         elif unzip == 'bz2':
-            cmd4 = "bzip2 -d {2};"
-            cmd5 = "for f in `find {2} -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done;"
-        cmd = cmd_template % (cmd4, cmd5)
-        if f:
-            f.write(cmd.format(data_bucket, data_file, target, profile_flag))
+            unzip_cmd = 'bzip2 -d {2}'
         else:
-            return cmd.format(data_bucket, data_file, target, profile_flag)
+            unzip_cmd = ''
+        cmd = download_cmd + '; ' + unzip_cmd
+        return cmd.format(*format_list)
+    else: # key_type == 'Prefix':
+        download_cmd = 'aws s3 cp --recursive s3://{0}/{1} {2}{3}'.format(*format_list)
+        if unzip == 'gz':
+            unzip_cmd = 'for f in `find {2} -type f`; do if [[ $f =~ \\.gz$ ]]; then gunzip $f; fi; done;'
+        elif unzip == 'bz2':
+            unzip_cmd = 'for f in `find {2} -type f`; do if [[ $f =~ \\.bz2$ ]]; then bzip2 -d $f; fi; done;'
+        else:
+            unzip_cmd = ''
+        cmd = download_cmd + '; ' + unzip_cmd
+        return cmd.format(*format_list)
 
 
 # create an input yml file for cwl-runner

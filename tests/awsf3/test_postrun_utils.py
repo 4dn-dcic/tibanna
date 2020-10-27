@@ -88,7 +88,7 @@ def test_create_output_files_dict_cwl_no_md5():
 def test_create_output_files_dict_cwl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
         outmeta = create_output_files_dict('cwl')
-    assert 'execution_metadata' in str(ex)
+    assert 'execution_metadata' in str(ex.value)
 
 
 def test_create_output_files_dict_wdl():
@@ -106,7 +106,7 @@ def test_create_output_files_dict_wdl_no_md5():
 def test_create_output_files_dict_wdl_no_execution_metadata():
     with pytest.raises(Exception) as ex:
         outmeta = create_output_files_dict('wdl')
-    assert 'execution_metadata' in str(ex)
+    assert 'execution_metadata' in str(ex.value)
 
 
 def test_create_output_files_dict_snakemake():
@@ -201,7 +201,7 @@ def test_upload_to_output_target():
         s3.delete_object(Bucket=upload_test_bucket, Key=key)
         with pytest.raises(Exception) as ex:
             res = s3.get_object(Bucket=upload_test_bucket, Key=key)
-        assert 'NoSuchKey' in str(ex)
+        assert 'NoSuchKey' in str(ex.value)
 
     test_and_delete_key('somekey2')
     test_and_delete_key('somekey3.abc')

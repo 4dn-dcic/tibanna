@@ -275,7 +275,7 @@ def test_AwsemRunJsonInputFile_rename_mount_error(run_json_inputfile):
     run_json_inputfile['mount'] = True
     with pytest.raises(MalFormattedRunJsonException) as ex:
         rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
-    assert 'rename and mount' in str(ex)
+    assert 'rename and mount' in str(ex.value)
 
 
 def test_AwsemRunJsonInputFile_unzip_mount_error(run_json_inputfile):
@@ -284,7 +284,7 @@ def test_AwsemRunJsonInputFile_unzip_mount_error(run_json_inputfile):
     run_json_inputfile['mount'] = True
     with pytest.raises(MalFormattedRunJsonException) as ex:
         rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
-    assert 'unzip and mount' in str(ex)
+    assert 'unzip and mount' in str(ex.value)
 
 
 def test_AwsemRunJsonInputFile_2d_array_empty_rename_mount_no_error(run_json_inputfile):
@@ -540,3 +540,16 @@ def test_AwsemPostRunJsonOutput_alt_output_target(postrun_json_output):
     postrun_json_output['alt_cond_output_argnames'] = {'arg2': ['arg2a', 'arg2b']}
     prjo = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
     assert prjo.alt_output_target(['arg1', 'arg2b']) == {'arg1': 'target1', 'arg2b': 'target2'}
+
+
+def test_file_uri_cwl_wdl_error():
+    rji_dict = {'file:///data1/input/file1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False}}
+    runjson_input = awsem.AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        runjson_input.check_input_files_key_compatibility('cwl')
+    assert 'argument name for CWL' in str(ex.value)
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        runjson_input.check_input_files_key_compatibility('wdl')
+    assert 'argument name for CWL' in str(ex.value)
+    runjson_input.check_input_files_key_compatibility('shell')
+    runjson_input.check_input_files_key_compatibility('snakemake')

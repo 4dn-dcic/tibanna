@@ -47,7 +47,7 @@ def test_target_parse_target_value_dict_object_key_err():
     target = Target('some_bucket')
     with pytest.raises(Exception) as ex:
         target.parse_target_value({'object_key': 'some_object_key/'})
-    assert 'object_prefix' in str(ex)
+    assert 'object_prefix' in str(ex.value)
 
 
 def test_target_parse_target_value_dict_object_key_bucket():
@@ -86,14 +86,14 @@ def test_target_parse_target_value_unzip_wo_prefix():
     target = Target('some_bucket')
     with pytest.raises(Exception) as ex:
         target.parse_target_value({'unzip': True, 'object_key': 'some_object_key'})
-    assert 'prefix' in str(ex)
+    assert 'prefix' in str(ex.value)
 
 
 def test_target_parse_target_value_object_key_prefix_conflict():
     target = Target('some_bucket')
     with pytest.raises(Exception) as ex:
         target.parse_target_value({'object_prefix': 'some_dir/', 'object_key': 'some_object_key'})
-    assert 'not both' in str(ex)
+    assert 'not both' in str(ex.value)
 
 
 def test_target_parse_custom_target_str_object_key():
@@ -133,7 +133,7 @@ def test_target_parse_custom_target_null_target_value():
     with pytest.raises(Exception) as ex:
         target.parse_custom_target(target_key='file:///data1/out/somefile',
                                    target_value=None)
-    assert 'target' in str(ex)
+    assert 'target' in str(ex.value)
 
 
 def test_target_parse_cwl_target_str_object_key():
@@ -319,7 +319,7 @@ def test_upload_file():
     s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_key')
     with pytest.raises(Exception) as ex:
         res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
-    assert 'NoSuchKey' in str(ex)
+    assert 'NoSuchKey' in str(ex.value)
 
 
 def test_upload_file_prefix():
@@ -333,7 +333,7 @@ def test_upload_file_prefix():
     s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
     with pytest.raises(Exception) as ex:
         res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
-    assert 'NoSuchKey' in str(ex)
+    assert 'NoSuchKey' in str(ex.value)
 
 
 def test_upload_dir():
@@ -349,7 +349,7 @@ def test_upload_dir():
         s3.delete_object(Bucket=upload_test_bucket, Key=key)
         with pytest.raises(Exception) as ex:
             res = s3.get_object(Bucket=upload_test_bucket, Key=key)
-        assert 'NoSuchKey' in str(ex)
+        assert 'NoSuchKey' in str(ex.value)
 
     test_and_delete_key('some_test_object_prefix/file1')
     test_and_delete_key('some_test_object_prefix/file2')
@@ -370,7 +370,7 @@ def test_upload_zip():
         s3.delete_object(Bucket=upload_test_bucket, Key=key)
         with pytest.raises(Exception) as ex:
             res = s3.get_object(Bucket=upload_test_bucket, Key=key)
-        assert 'NoSuchKey' in str(ex)
+        assert 'NoSuchKey' in str(ex.value)
 
     test_and_delete_key('some_test_object_prefix/file1')
     test_and_delete_key('some_test_object_prefix/file2')
@@ -384,7 +384,7 @@ def test_upload_file_err():
     with pytest.raises(Exception) as ex:
         target.upload_to_s3()
     assert 'failed to upload output file some_test_file_that_does_not_exist' + \
-           ' to %s/whatever' % upload_test_bucket in str(ex)
+           ' to %s/whatever' % upload_test_bucket in str(ex.value)
 
 
 def test_upload_zip_not_a_zip_file_err():
@@ -394,7 +394,7 @@ def test_upload_zip_not_a_zip_file_err():
     target.unzip = True
     with pytest.raises(Exception) as ex:
         target.upload_to_s3()
-    assert 'not a zip file' in str(ex)
+    assert 'not a zip file' in str(ex.value)
 
 
 def test_upload_zip_not_a_zip_file_err2():
@@ -402,9 +402,9 @@ def test_upload_zip_not_a_zip_file_err2():
     target.source = 'some_test_file_that_does_not_exist'
     target.dest = 'some_test_object_prefix/'
     target.unzip = True
-    with pytest.raises(Exception) as ex:
+    with pytest.raises(FileNotFoundError) as ex:
         target.upload_to_s3()
-    assert 'FileNotFound' in str(ex)
+    assert 'No such file' in str(ex.value)
 
 
 def test_upload_zip_directory_conflict(capsys):
@@ -428,7 +428,7 @@ def test_upload_zip_directory_conflict(capsys):
         s3.delete_object(Bucket=upload_test_bucket, Key=key)
         with pytest.raises(Exception) as ex:
             res = s3.get_object(Bucket=upload_test_bucket, Key=key)
-        assert 'NoSuchKey' in str(ex)
+        assert 'NoSuchKey' in str(ex.value)
 
     test_and_delete_key('some_test_object_prefix/file1')
     test_and_delete_key('some_test_object_prefix/file2')

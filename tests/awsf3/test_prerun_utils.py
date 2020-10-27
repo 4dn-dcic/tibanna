@@ -4,7 +4,9 @@ from awsf3.prerun_utils import (
     create_env_def_file,
     create_mount_command_list,
     create_download_command_list,
-    add_download_cmd
+    create_download_cmd,
+    add_download_cmd,
+    determine_key_type
 )
 from tibanna.awsem import AwsemRunJson, AwsemRunJsonInput
 
@@ -200,123 +202,124 @@ def test_create_mount_command_list():
     os.remove(mountcommand_filename)
 
 
-def test_create_download_command_list_args():
+def test_create_download_command_list_args(mocker):
     dl_command_filename = 'some_dlcommand_filename'
     rji_dict = {'arg1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False},
                 'arg2': {'path': 'somefile2.gz', 'dir': 'somebucket', 'mount': False, 'unzip': 'gz'},
                 'arg3': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input, 'cwl')
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
 
-    right_content = ('if [[ -z $(aws s3 ls s3://somebucket/somefile/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile /data1/input/somefile ;  '
-                     'else aws s3 cp --recursive s3://somebucket/somefile /data1/input/somefile ;  fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket/somefile2.gz/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/somefile2.gz ; '
-                     'gunzip /data1/input/somefile2.gz; '
-                     'else aws s3 cp --recursive s3://somebucket/somefile2.gz /data1/input/somefile2.gz ; '
-                     'for f in `find /data1/input/somefile2.gz -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket2/somefile3/ ) ]]; then '
-                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/somefile3 ;  '
-                     'else aws s3 cp --recursive s3://somebucket2/somefile3 /data1/input/somefile3 ;  fi\n')
+    right_content = ('aws s3 cp s3://somebucket/somefile /data1/input/somefile; \n'
+                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/somefile2.gz; '
+                     'gunzip /data1/input/somefile2.gz\n'
+                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/somefile3; \n')
 
     assert dcfile_content == right_content
     os.remove(dl_command_filename)
 
 
-def test_create_download_command_list_args_rename():
+def test_create_download_command_list_args_rename(mocker):
     dl_command_filename = 'some_dlcommand_filename'
     rji_dict = {'arg1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False, 'rename': 'renamed_file'},
                 'arg2': {'path': 'somefile2.gz', 'dir': 'somebucket', 'mount': False, 'unzip': 'gz'},
                 'arg3': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False, 'rename': 'renamed_file2'}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input, 'cwl')
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
 
-    right_content = ('if [[ -z $(aws s3 ls s3://somebucket/somefile/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile /data1/input/renamed_file ;  '
-                     'else aws s3 cp --recursive s3://somebucket/somefile /data1/input/renamed_file ;  fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket/somefile2.gz/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/somefile2.gz ; '
-                     'gunzip /data1/input/somefile2.gz; '
-                     'else aws s3 cp --recursive s3://somebucket/somefile2.gz /data1/input/somefile2.gz ; '
-                     'for f in `find /data1/input/somefile2.gz -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket2/somefile3/ ) ]]; then '
-                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/renamed_file2 ;  '
-                     'else aws s3 cp --recursive s3://somebucket2/somefile3 /data1/input/renamed_file2 ;  fi\n')
+    right_content = ('aws s3 cp s3://somebucket/somefile /data1/input/renamed_file; \n'
+                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/somefile2.gz; '
+                     'gunzip /data1/input/somefile2.gz\n'
+                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/renamed_file2; \n')
 
     assert dcfile_content == right_content
     os.remove(dl_command_filename)
 
 
-def test_create_download_command_list_file_uri_cwl_wdl_error():
-    dl_command_filename = 'some_dlcommand_filename'
-    rji_dict = {'file:///data1/input/file1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False}}
-    runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
-    with pytest.raises(Exception) as ex:
-        create_download_command_list(dl_command_filename, runjson_input, 'cwl')
-    assert 'argument name for CWL' in str(ex)
-    with pytest.raises(Exception) as ex:
-        create_download_command_list(dl_command_filename, runjson_input, 'wdl')
-    assert 'argument name for CWL' in str(ex)
-
-
-def test_create_download_command_list_file_uri():
+def test_create_download_command_list_file_uri(mocker):
     dl_command_filename = 'some_dlcommand_filename'
     rji_dict = {'file:///data1/input/file1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False},
                 'file:///data1/input/file2.gz': {'path': 'somefile2.gz', 'dir': 'somebucket', 'mount': False, 'unzip': 'gz'},
                 'file:///data1/input/haha': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'file:///data1/input/file3': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input, 'shell')
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
 
-    right_content = ('if [[ -z $(aws s3 ls s3://somebucket/somefile/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile /data1/input/file1 ;  '
-                     'else aws s3 cp --recursive s3://somebucket/somefile /data1/input/file1 ;  fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket/somefile2.gz/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/file2.gz ; '
-                     'gunzip /data1/input/file2.gz; '
-                     'else aws s3 cp --recursive s3://somebucket/somefile2.gz /data1/input/file2.gz ; '
-                     'for f in `find /data1/input/file2.gz -type f`; do if [[ $f =~ \.gz$ ]]; then gunzip $f; fi; done; fi\n'
-                     'if [[ -z $(aws s3 ls s3://somebucket2/somefile3/ ) ]]; then '
-                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/file3 ;  '
-                     'else aws s3 cp --recursive s3://somebucket2/somefile3 /data1/input/file3 ;  fi\n')
+    right_content = ('aws s3 cp s3://somebucket/somefile /data1/input/file1; \n'
+                     'aws s3 cp s3://somebucket/somefile2.gz /data1/input/file2.gz; '
+                     'gunzip /data1/input/file2.gz\n'
+                     'aws s3 cp s3://somebucket2/somefile3 /data1/input/file3; \n')
 
     assert dcfile_content == right_content
     os.remove(dl_command_filename)
 
 
-def test_add_download_cmd_profile():
-    dl_command_filename = 'some_dlcommand_filename'
-    f = open(dl_command_filename, 'w')
-    add_download_cmd('somebucket', 'somefile', 'sometarget', '--profile user1', f, '')
-    f.close()
-
-    with open(dl_command_filename, 'r') as f:
-        dcfile_content = f.read()
-
-    right_content = ('if [[ -z $(aws s3 ls s3://somebucket/somefile/ --profile user1) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile sometarget --profile user1;  '
-                     'else aws s3 cp --recursive s3://somebucket/somefile sometarget --profile user1;  fi\n')
-
-    assert dcfile_content == right_content
+def test_create_download_cmd_unzip_bz2(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    dc_cmd = create_download_cmd('somebucket', 'somefile.bz2', 'sometarget.bz2', '', 'bz2')
+    assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.bz2 sometarget.bz2; bzip2 -d sometarget.bz2; '
 
 
-def test_add_download_cmd_unzip_bz2():
-    dcfile_content = add_download_cmd('somebucket', 'somefile.bz2', 'sometarget.bz2', '', None, 'bz2')
-    right_content = ('if [[ -z $(aws s3 ls s3://somebucket/somefile.bz2/ ) ]]; then '
-                     'aws s3 cp s3://somebucket/somefile.bz2 sometarget.bz2 ; '
-                     'bzip2 -d sometarget.bz2; '
-                     'else aws s3 cp --recursive s3://somebucket/somefile.bz2 sometarget.bz2 ; '
-                     'for f in `find sometarget.bz2 -type f`; do if [[ $f =~ \.bz2$ ]]; then bzip2 -d $f; fi; done; fi\n')
-    assert dcfile_content == right_content
+def test_create_download_cmd_unzip_bz2(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', '', 'gz')
+    assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz; gunzip sometarget.gz'
+
+
+def test_create_download_cmd_nounzip(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', '', '')
+    assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz; '
+
+
+def test_create_download_cmd_nounzip_profile(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', 'user1', '')
+    assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz --profile user1; '
+
+
+def test_create_download_cmd_unzip_bz2_dir(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'bz2')
+    assert dc_cmd == 'aws s3 cp s3://somebucket/somedir sometarget; bzip2 -d sometarget.bz2'
+    right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
+                 'for f in `find sometarget -type f`; '
+                 'do if [[ $f =~ \\.bz2$ ]]; then bzip2 $f; fi; done;')
+    assert dc_cmd == right_cmd
+
+
+def test_create_download_cmd_unzip_bz2_dir(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'gz')
+    right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
+                 'for f in `find sometarget -type f`; '
+                 'do if [[ $f =~ \\.gz$ ]]; then gunzip $f; fi; done;')
+    assert dc_cmd == right_cmd
+
+
+def test_create_download_cmd_nounzip_dir(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', '')
+    assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget; '
+
+
+def test_create_download_cmd_nounzip_profile_dir(mocker):
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', 'user1', '')
+    assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget --profile user1; '
+
+
