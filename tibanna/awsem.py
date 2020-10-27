@@ -60,7 +60,11 @@ class AwsemRunJsonApp(SerializableObject):
         self.wdl_url = wdl_url
         self.main_wdl = main_wdl
         self.other_wdl_files = other_wdl_files
-
+        self.container_image = container_image
+        self.command = command
+        self.snakemake_url = snakemake_url
+        self.main_snakemake = main_snakemake
+        self.other_snakemake_files = other_snakemake_files
 
 class AwsemRunJsonInput(SerializableObject):
     def __init__(self, Input_files_data=None, Input_parameters=None, Secondary_files_data=None,

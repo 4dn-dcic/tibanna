@@ -170,7 +170,7 @@ def create_env_def_file(env_filename, runjson, language):
         env_preserv_str = ''
         docker_env_str = ''
         if runjson.Job.Input.Env:
-            for ev, val in runjson.Job.Input.Env.items():
+            for ev, val in sorted(runjson.Job.Input.Env.items()):
                 f_env.write("export {}={}\n".format(ev, val))
                 env_preserv_str = env_preserv_str + "--preserve-environment " + ev + " "
                 docker_env_str = docker_env_str + "-e " + ev + " "

@@ -1,8 +1,0 @@
-export CWL_URL=someurl
-export MAIN_CWL=somecwl
-export CWL_FILES="othercwl1 othercwl2"
-export OUTBUCKET={}
-export PUBLIC_POSTRUN_JSON=0
-export SOME_ENV=1234
-export PRESERVED_ENV_OPTION="--preserve-environment SOME_ENV "
-export DOCKER_ENV_OPTION="-e SOME_ENV "
