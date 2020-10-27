@@ -32,7 +32,7 @@ def decode_run_json(input_json_file):
     language = runjson.Job.App.language
 
     # create a download command list file from the information in json
-    create_download_command_list(downloadlist_filename, runjson_input, language)
+    create_download_command_list(downloadlist_filename, runjson_input)
 
     # create a bucket-mounting command list file
     create_mount_command_list(mountlist_filename, runjson_input)
@@ -61,7 +61,7 @@ def create_mount_command_list(mountlist_filename, runjson_input):
             f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
-def create_download_command_list(downloadlist_filename, runjson_input, language):
+def create_download_command_list(downloadlist_filename, runjson_input):
     """create a download command list file from the information in json"""
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:

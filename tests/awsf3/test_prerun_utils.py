@@ -210,7 +210,7 @@ def test_create_download_command_list_args(mocker):
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
     mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
-    create_download_command_list(dl_command_filename, runjson_input, 'cwl')
+    create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
@@ -232,7 +232,7 @@ def test_create_download_command_list_args_rename(mocker):
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False, 'rename': 'renamed_file2'}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
     mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
-    create_download_command_list(dl_command_filename, runjson_input, 'cwl')
+    create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
@@ -254,7 +254,7 @@ def test_create_download_command_list_args_array(mocker):
                          'rename': ''}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
     mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
-    create_download_command_list(dl_command_filename, runjson_input, 'cwl')
+    create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
@@ -278,7 +278,7 @@ def test_create_download_command_list_file_uri(mocker):
                 'file:///data1/input/file3': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
     mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
-    create_download_command_list(dl_command_filename, runjson_input, 'shell')
+    create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
         dcfile_content = f.read()
