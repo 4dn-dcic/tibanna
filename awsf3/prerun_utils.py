@@ -48,7 +48,7 @@ def create_mount_command_list(mountlist_filename, runjson_input):
     buckets_to_be_mounted = set()
     for category in ["Input_files_data", "Secondary_files_data"]:
         for inkey, v in getattr(runjson_input, category).items():
-            if not v.mount:
+            if v.mount:
                 buckets_to_be_mounted.add(v.dir_)
     with open(mountlist_filename, 'w') as f:
         for b in buckets_to_be_mounted:
@@ -61,7 +61,7 @@ def create_download_command_list(downloadlist_filename, runjson_input, language)
     with open(downloadlist_filename, 'w') as f:
         for category in ["Input_files_data", "Secondary_files_data"]:
             for inkey, v in getattr(runjson_input, category).items():
-                if not v.mount:  # do not download if it will be mounted
+                if v.mount:  # do not download if it will be mounted
                     continue
                 if inkey.startswith('file://'):
                     if language not in ['shell', 'snakemake']:
