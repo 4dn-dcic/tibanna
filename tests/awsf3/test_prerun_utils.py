@@ -246,6 +246,30 @@ def test_create_download_command_list_args_rename(mocker):
     os.remove(dl_command_filename)
 
 
+def test_create_download_command_list_args_array(mocker):
+    dl_command_filename = 'some_dlcommand_filename'
+    rji_dict = {'arg1': {'path': [['somefilea', 'somefileb'], ['somefilec']], 'dir': 'somebucket', 'mount': False,
+                         'rename': [['renameda', 'renamedb'], ['renamedc']]},
+                'arg2': {'path': [['anotherfilea', 'anotherfileb'], ['anotherfilec']], 'dir': 'somebucket', 'mount': False,
+                         'rename': ''}}
+    runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    create_download_command_list(dl_command_filename, runjson_input, 'cwl')
+
+    with open(dl_command_filename, 'r') as f:
+        dcfile_content = f.read()
+
+    right_content = ('aws s3 cp s3://somebucket/somefilea /data1/input/renameda; \n'
+                     'aws s3 cp s3://somebucket/somefileb /data1/input/renamedb; \n'
+                     'aws s3 cp s3://somebucket/somefilec /data1/input/renamedc; \n'
+                     'aws s3 cp s3://somebucket/anotherfilea /data1/input/anotherfilea; \n'
+                     'aws s3 cp s3://somebucket/anotherfileb /data1/input/anotherfileb; \n'
+                     'aws s3 cp s3://somebucket/anotherfilec /data1/input/anotherfilec; \n')
+
+    assert dcfile_content == right_content
+    os.remove(dl_command_filename)
+
+
 def test_create_download_command_list_file_uri(mocker):
     dl_command_filename = 'some_dlcommand_filename'
     rji_dict = {'file:///data1/input/file1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False},

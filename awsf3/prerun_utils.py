@@ -1,10 +1,15 @@
 import json
 import os
+import copy
 import subprocess
 import boto3
 import re
 from tibanna.awsem import AwsemRunJson
-from tibanna.nnested_array import run_on_nested_arrays2
+from tibanna.nnested_array import (
+    run_on_nested_arrays2,
+    flatten,
+    create_dim
+)
 
 
 downloadlist_filename = "download_command_list.txt"
@@ -70,7 +75,10 @@ def create_download_command_list(downloadlist_filename, runjson_input, language)
                                           profile=v.profile, f=f, unzip=v.unzip)
                 else:
                     target_template = INPUT_DIR + "/%s"
-                    run_on_nested_arrays2(v.path, v.rename, add_download_cmd, data_bucket=v.dir_,
+                    rename = copy.deepcopy(v.rename)
+                    if len(flatten(rename)) == 0:
+                        rename = create_dim(v.path, empty=True)
+                    run_on_nested_arrays2(v.path, rename, add_download_cmd, data_bucket=v.dir_,
                                           profile=v.profile, f=f, unzip=v.unzip, target_template=target_template)
 
 
