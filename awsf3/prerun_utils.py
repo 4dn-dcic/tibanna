@@ -93,27 +93,36 @@ def add_download_cmd(data_file, rename, data_bucket, profile, f, unzip, target_t
 
 
 def determine_key_type(bucket, key, profile):
+    """Return values : 'File', 'Folder' or 'Does not exist'"""
     if profile:
         s3 = boto3.session(profile_name=profile).client('s3')
     else:
         s3 = boto3.client('s3')
-    res = s3.list_objects_v2(Bucket=bucket, Prefix=key)
-    if 'KeyCount' not in res:
-        raise Exception("Cannot retrieve data for file s3://%s/%s" % (bucket, key))
-    elif res['KeyCount'] == 0:
-        return 'Does not exist'
-    elif res['KeyCount'] == 1 and res['Contents'][0]['Key'] == key:
-        # data_file is a single file
-        return 'File'
+    if not key:
+        raise Exception("Cannot determine key type - no key is specified")
+    if not bucket:
+        raise Exception("Cannot determine key type - no bucket is specified")
+    if key.endswith('/'):
+        key = key.rstrip('/')
+    res = s3.list_objects_v2(Bucket=bucket, Prefix=key + '/')
+    if not 'KeyCount' in res:
+        raise Exception("Cannot determine key type - no response from S3")
+    if res['KeyCount'] == 0:
+        res2 = s3.list_objects_v2(Bucket=bucket, Prefix=key)
+        if not 'KeyCount' in res2:
+            raise Exception("Cannot determine key type - no response from S3")
+        elif res2['KeyCount'] == 0:
+            return 'Does not exist'  # key does not exist
+        # The file itself may be a prefix of another file (e.v. abc.vcf.gz vs abc.vcf.gz.tbi)
+        # but it doesn't matter.
+        else:
+            return 'File' 
     else:
-        # data_file is a folder (or a prefix)
-        return 'Prefix'
+        # data_file is a folder
+        return 'Folder'
 
 
 def create_download_cmd(data_bucket, data_file, target, profile, unzip=''):
-    if data_file:
-        if data_file.endswith('/'):
-            data_file = data_file.rstrip('/')
     profile_flag = ' --profile ' + profile if profile else ''
     format_list = [data_bucket, data_file, target, profile_flag]
     key_type = determine_key_type(data_bucket, data_file, profile)
@@ -129,7 +138,7 @@ def create_download_cmd(data_bucket, data_file, target, profile, unzip=''):
             unzip_cmd = ''
         cmd = download_cmd + '; ' + unzip_cmd
         return cmd.format(*format_list)
-    else: # key_type == 'Prefix':
+    else: # key_type == 'Folder':
         download_cmd = 'aws s3 cp --recursive s3://{0}/{1} {2}{3}'.format(*format_list)
         if unzip == 'gz':
             unzip_cmd = 'for f in `find {2} -type f`; do if [[ $f =~ \\.gz$ ]]; then gunzip $f; fi; done;'

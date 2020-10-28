@@ -317,7 +317,7 @@ def test_create_download_cmd_nounzip_profile(mocker):
 
 
 def test_create_download_cmd_unzip_bz2_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'bz2')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somedir sometarget; bzip2 -d sometarget.bz2'
     right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
@@ -327,7 +327,7 @@ def test_create_download_cmd_unzip_bz2_dir(mocker):
 
 
 def test_create_download_cmd_unzip_bz2_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'gz')
     right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
                  'for f in `find sometarget -type f`; '
@@ -336,13 +336,13 @@ def test_create_download_cmd_unzip_bz2_dir(mocker):
 
 
 def test_create_download_cmd_nounzip_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', '')
     assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget; '
 
 
 def test_create_download_cmd_nounzip_profile_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Prefix')
+    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', 'user1', '')
     assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget --profile user1; '
 
