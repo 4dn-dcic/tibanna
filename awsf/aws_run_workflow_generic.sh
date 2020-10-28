@@ -78,6 +78,7 @@ touch $LOGFILE
 exl echo "## job id: $JOBID"
 exl echo "## tibanna version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
+exl echo "## instance id: $INSTANCE_ID"
 exl echo
 exl echo "## Starting..."
 exl date
