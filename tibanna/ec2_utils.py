@@ -21,7 +21,8 @@ from .vars import (
     AMI_ID_SNAKEMAKE,
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3,
-    DYNAMODB_TABLE
+    DYNAMODB_TABLE,
+    DEFAULT_ROOT_EBS_SIZE
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -281,7 +282,7 @@ class Config(SerializableObject):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
         if not hasattr(self, 'root_ebs_size'):
-            self.root_ebs_size = 8
+            self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)

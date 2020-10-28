@@ -93,6 +93,10 @@ def PARSE_AWSEM_TIME(t_str):
 EBS_MOUNT_POINT = '/mnt/data1'
 
 
+# Default root EBS size
+DEFAULT_ROOT_EBS_SIZE = 10
+
+
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''
 RUN_TASK_LAMBDA_NAME = 'run_task_awsem'
