@@ -5,7 +5,8 @@ from tibanna.utils import (
     read_s3
 )
 from .vars import (
-    AWS_REGION
+    AWS_REGION,
+    EBS_MOUNT_POINT
 )
 # from datetime import timezone
 from datetime import datetime
@@ -253,7 +254,7 @@ class TibannaResource(object):
             MetricName='DiskSpaceUtilization',
             Dimensions=[
                 {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': '/data1'},
+                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
                 {'Name': 'Filesystem', 'Value': self.filesystem}
             ],
             Period=60,
@@ -271,7 +272,7 @@ class TibannaResource(object):
             MetricName='DiskSpaceUsed',
             Dimensions=[
                 {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': '/data1'},
+                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
                 {'Name': 'Filesystem', 'Value': self.filesystem}
             ],
             Period=60,
@@ -305,11 +306,11 @@ class TibannaResource(object):
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             fo.write(self.create_html() % (instance_type,
-                             str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
+                             str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB), EBS_MOUNT_POINT,
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
-                             str(self.max_disk_space_utilization_percent),
+                             str(self.max_disk_space_utilization_percent), EBS_MOUNT_POINT,
                              '---', # cost placeholder for now
-                             str(self.start), str(self.end), str(self.end - self.start)
+                             str(self.start), str(self.end), str(self.end - self.start), EBS_MOUNT_POINT, EBS_MOUNT_POINT
                             )
                     )
         return(filename)
@@ -339,10 +340,10 @@ class TibannaResource(object):
         # writing
         with open(filename, 'w') as fo:
             fo.write(cls.create_html() % (instance,
-                             d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
-                             d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
+                             d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'], EBS_MOUNT_POINT,
+                             d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'], EBS_MOUNT_POINT,
                              cost,
-                             str(starttime), str(endtime), str(endtime-starttime)
+                             str(starttime), str(endtime), str(endtime-starttime), EBS_MOUNT_POINT, EBS_MOUNT_POINT
                             )
                     )
         if upload_new:
@@ -557,7 +558,7 @@ class TibannaResource(object):
                         <td class="center">%s</td>
                       </tr>
                       <tr>
-                        <td class="left">Maximum Disk Used (/data1) [Gb]</td>
+                        <td class="left">Maximum Disk Used (%s) [Gb]</td>
                         <td class="center">%s</td>
                       </tr>
                       <tr>
@@ -569,7 +570,7 @@ class TibannaResource(object):
                         <td class="center">%s</td>
                       </tr>
                       <tr>
-                        <td class="left">Maximum Disk Utilization (/data1) [%%]</td>
+                        <td class="left">Maximum Disk Utilization (%s) [%%]</td>
                         <td class="center">%s</td>
                       </tr>
                       <tr>
@@ -600,7 +601,7 @@ class TibannaResource(object):
                         <div class="legend-wrapper">
                             <div class="legend"> <p class="data-name"><span class="key-dot cpu"></span>CPU Utilization</p> </div>
                             <div class="legend"> <p class="data-name"><span class="key-dot mem"></span>Memory Utilization</p> </div>
-                            <div class="legend"> <p class="data-name"><span class="key-dot disk"></span>Disk Utilization (/data1)</p> </div>
+                            <div class="legend"> <p class="data-name"><span class="key-dot disk"></span>Disk Utilization (%s)</p> </div>
                         </div>
                       </div></br></br>
                     <div class="header">
@@ -612,7 +613,7 @@ class TibannaResource(object):
                     </div>
                       <div id="chart_min_mem"> </div>
                     <div class="header">
-                      <h2>Disk Usage (/data1)</h2>
+                      <h2>Disk Usage (%s)</h2>
                     </div>
                       <div id="chart_disk"> </div>
                   </section>

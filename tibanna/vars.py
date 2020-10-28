@@ -89,6 +89,10 @@ def PARSE_AWSEM_TIME(t_str):
   return t.replace(tzinfo=tzutc())
 
 
+# EBS mount path for cloudwatch metric collection
+EBS_MOUNT_POINT = '/mnt/data1'
+
+
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''
 RUN_TASK_LAMBDA_NAME = 'run_task_awsem'
