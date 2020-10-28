@@ -70,6 +70,7 @@ def create_download_command_list(downloadlist_filename, runjson_input):
                     continue
                 if inkey.startswith('file://'):
                     target = inkey.replace('file://', '')
+                    print("key %s will be downloaded to target %s" % (v.path, inkey))
                     run_on_nested_arrays2(v.path, target, add_download_cmd, data_bucket=v.dir_,
                                           profile=v.profile, f=f, unzip=v.unzip)
                 else:
