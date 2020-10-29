@@ -45,19 +45,6 @@ RUN apt-get update -y \
     && apt-cache policy docker-ce \
     && apt-get install -y docker-ce
 
-# python packages
-RUN pip install boto3==1.15 awscli==1.18.152 urllib3==1.25 botocore==1.18.11
-RUN pip install psutil==5.7.3
-RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
-
-# goofys
-RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
-
-# awsf scripts
-COPY aws_run_workflow_generic.sh .
-RUN chmod +x aws_run_workflow_generic.sh
-RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
-
 # singularity
 RUN wget https://golang.org/dl/go1.15.3.linux-amd64.tar.gz && \
     tar -xzf go1.15.3.linux-amd64.tar.gz && \
@@ -77,9 +64,22 @@ RUN export SINGULARITY_VERSION=3.3.0 && \
     rm -rf singularity && \
     mv singularity2 singularity
 
+# goofys
+RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
+
+# python packages
+RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11
+RUN pip install psutil==5.7.3
+RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
+
 # cromwell
 RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \
     ln -s cromwell-53.1.jar cromwell.jar
+
+# awsf scripts
+COPY aws_run_workflow_generic.sh .
+RUN chmod +x aws_run_workflow_generic.sh
+RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
 
 # supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
