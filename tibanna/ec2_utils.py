@@ -22,7 +22,8 @@ from .vars import (
     AMI_ID_CWL_V1,
     AMI_ID_CWL_DRAFT3,
     DYNAMODB_TABLE,
-    DEFAULT_ROOT_EBS_SIZE
+    DEFAULT_ROOT_EBS_SIZE,
+    TIBANNA_AWSF_DIR
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -288,7 +289,7 @@ class Config(SerializableObject):
         # fill internally-used fields (users cannot specify these fields)
         # script url
         self.script_url = 'https://raw.githubusercontent.com/' + \
-            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/awsf/'
+            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/' + TIBANNA_AWSF_DIR + '/'
         self.json_bucket = self.log_bucket
 
     def fill_language_options(self, language='cwl_draft3', singularity=False):

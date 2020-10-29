@@ -32,7 +32,8 @@ if not AWS_REGION:
 
 # Tibanna AMI info
 AMI_PER_REGION = {
-    'us-east-1': 'ami-0f06a8358d41c4b9c',
+    # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
+    'us-east-1': 'ami-06f7122e89cfbf219',
     'ap-south-1' : 'ami-09d95d9217d0cf385',
     'ap-northeast-2' : 'ami-0c41548ca349c7a24',
     'ap-southeast-1' : 'ami-05ed988e6e239f8ab',
@@ -61,6 +62,10 @@ AMI_ID_SNAKEMAKE = AMI_ID
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
+if AWS_REGION == 'us-east-1':
+    TIBANNA_AWSF_DIR = 'awsf3'
+else:
+    TIBANNA_AWSF_DIR = 'awsf'
 
 # Tibanna roles
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', 'S3_access')
