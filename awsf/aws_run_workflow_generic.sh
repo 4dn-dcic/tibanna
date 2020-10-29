@@ -95,11 +95,12 @@ if [ ! -z $PASSWORD ]; then
 fi
 
 
-###  mount the EBS volume to the EBS_DIR
+###  mount the EBS volume to the EBS_DIR (This has changed and only works with the new ubuntu 20.04 AMI)
 exl echo
 exl echo "## Mounting EBS"
 exl lsblk $TMPLOGFILE
-export EBS_DEVICE=/dev/$(lsblk | tail -1 | cut -f1 -d' ')
+exl export ROOT_EBS=$(lsblk -o PKNAME | tail +2 | awk '$1!=""')
+exl export EBS_DEVICE=/dev/$(lsblk -o TYPE,KNAME | tail +2 | grep disk | grep -v $ROOT_EBS | cut -f2 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir /mnt/$EBS_DIR
 exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
