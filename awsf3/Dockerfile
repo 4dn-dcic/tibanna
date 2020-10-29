@@ -1,43 +1,54 @@
-FROM 4dndcic/ubuntu16.04-miniconda-python36-docker:v1
+FROM ubuntu:20.04
 MAINTAINER Soo Lee (duplexa@gmail.com)
 
 # general updates & installing necessary Linux components
-RUN apt-get update -y && apt-get install -y \
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+RUN apt update -y && apt upgrade -y &&  apt install -y \
+    apt-transport-https \
     bzip2 \
+    ca-certificates \
     curl \
     fuse \
     gcc \
     g++ \
     git \
     less \
-    libncurses-dev \
+    locales \
     make \
+    python3 \
+    python3-pip \
     time \
     unzip \
     vim \
     wget \
-    zlib1g-dev \
-    liblz4-tool \
-    libbz2-dev \
-    liblzma-dev \
-    locales \
-    autoconf \
-    autogen \
-    autotools-dev \
-    automake \
+    software-properties-common \
+    build-essential \
+    libssl-dev \
+    uuid-dev \
+    libgpgme11-dev \
+    squashfs-tools \
+    libseccomp-dev \
     pkg-config \
-    yasm
+    openjdk-8-jre-headless
+
+RUN ln -s /usr/bin/python3.8 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR /usr/local/bin
 
-# python 3.6
-RUN conda install python=3.6.8 && \
-    conda clean -a -y -f
+# docker inside docker
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && apt-key fingerprint 0EBFCD88 \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+RUN apt-get update -y \
+    && apt-cache policy docker-ce \
+    && apt-get install -y docker-ce
 
 # python packages
-RUN pip install --use-feature=2020-resolver boto3==1.15 awscli==1.18.152 urllib3==1.22 botocore==1.18.11
-RUN conda uninstall --force ruamel_yaml  # version conflict with cwltool
-RUN pip install --use-feature=2020-resolver schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
+RUN pip install boto3==1.15 awscli==1.18.152 urllib3==1.25 botocore==1.18.11
+RUN pip install psutil==5.7.3
+RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
 
 # goofys
 RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
@@ -46,6 +57,29 @@ RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
 COPY aws_run_workflow_generic.sh .
 RUN chmod +x aws_run_workflow_generic.sh
 RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
+
+# singularity
+RUN wget https://golang.org/dl/go1.15.3.linux-amd64.tar.gz && \
+    tar -xzf go1.15.3.linux-amd64.tar.gz && \
+    rm go1.15.3.linux-amd64.tar.gz
+RUN export SINGULARITY_VERSION=3.3.0 && \
+    export PATH=/usr/local/bin/go/bin/:$PATH && \
+    wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz && \
+    tar -xzf singularity-${SINGULARITY_VERSION}.tar.gz && \
+    rm singularity-${SINGULARITY_VERSION}.tar.gz && \
+    cd singularity && \
+    ./mconfig && \
+    make -C ./builddir && \
+    make -C ./builddir install && \
+    cd .. && \
+    rm -rf go && \
+    mv singularity/singularity singularity2 && \
+    rm -rf singularity && \
+    mv singularity2 singularity
+
+# cromwell
+RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \
+    ln -s cromwell-53.1.jar cromwell.jar
 
 # supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"

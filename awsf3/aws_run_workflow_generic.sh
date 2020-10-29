@@ -99,6 +99,16 @@ fi
 exl echo
 exl echo "## AWSF Docker container created"
 
+# docker start
+service docker start
+
+# versions of various tools
+exl echo "## $(docker --version)"
+exl echo "## $(python --version)"
+exl echo "## $(pip --version)"
+exl echo "## $(cwltool --version)"
+exl echo "## $(java -jar cromwell.jar --version)"
+exl echo "## Singularity version $(singularity --version)"
 
 # create subdirectories
 exl mkdir -p $LOCAL_INPUT_DIR
@@ -136,10 +146,6 @@ echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOG
 echo "*/1 * * * * send_log" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
 cd $cwd0
-
-
-# docker start
-service docker start
 
 
 ### log into ECR if necessary
