@@ -142,7 +142,7 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
+docker run --privileged --net host -v /var/lib/docker:/var/lib/docker:rw -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
 
 
 ### self-terminate
