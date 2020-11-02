@@ -145,12 +145,12 @@ exl echo "## Downloading workflow files"
 exl awsf3 download_workflow
 
 
-# set up cronjojb for top command
+# set up cronjob for top command
 cwd0=$(pwd)
 cd ~
-echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cloudwatch.jobs
-echo "*/1 * * * * send_log" >> cloudwatch.jobs
-cat cloudwatch.jobs | crontab -
+echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null" >> cron.jobs
+echo "*/1 * * * * send_log" >> cron.jobs
+cat cron.jobs | crontab -
 cd $cwd0
 
 
