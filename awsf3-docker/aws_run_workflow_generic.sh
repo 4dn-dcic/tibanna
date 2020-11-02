@@ -104,6 +104,7 @@ exl echo "## AWSF Docker container created"
 exl echo
 exl echo "## Starting docker in the AWSF container"
 exl service docker start
+exl docker info | grep "Docker Root Dir"
 
 
 # versions of various tools
