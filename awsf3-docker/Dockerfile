@@ -81,6 +81,11 @@ COPY aws_run_workflow_generic.sh .
 RUN chmod +x aws_run_workflow_generic.sh
 RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
 
+
+# Move default docker daemon location to mounted EBS
+COPY daemon.json /etc/docker/daemoj.json
+
+
 # supporting UTF-8
 RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
 ENV LC_ALL=en_US.UTF-8

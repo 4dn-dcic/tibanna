@@ -102,7 +102,7 @@ exl echo "## AWSF Docker container created"
 
 # docker start
 exl echo
-exl echo "## Starting docker in docker"
+exl echo "## Starting docker in the AWSF container"
 exl service docker start
 
 
