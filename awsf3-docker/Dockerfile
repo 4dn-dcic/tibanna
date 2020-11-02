@@ -83,7 +83,7 @@ RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary
 
 
 # Move default docker daemon location to mounted EBS
-COPY daemon.json /etc/docker/daemoj.json
+COPY daemon.json /etc/docker/daemon.json
 
 
 # supporting UTF-8
