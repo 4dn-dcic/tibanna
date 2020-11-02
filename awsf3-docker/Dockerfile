@@ -8,6 +8,7 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     apt-transport-https \
     bzip2 \
     ca-certificates \
+    cron \
     curl \
     fuse \
     gcc \
