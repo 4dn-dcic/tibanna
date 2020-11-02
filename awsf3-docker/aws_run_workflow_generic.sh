@@ -99,16 +99,21 @@ fi
 exl echo
 exl echo "## AWSF Docker container created"
 
+
 # docker start
-service docker start
+exl echo
+exl echo "## Starting docker in docker"
+exl service docker start
+
 
 # versions of various tools
+exl echo
 exl echo "## $(docker --version)"
 exl echo "## $(python --version)"
-exl echo "## $(pip --version)"
-exl echo "## $(cwltool --version)"
-exl echo "## $(java -jar cromwell.jar --version)"
-exl echo "## Singularity version $(singularity --version)"
+exl echo "## $(pip --version | cut -f1,2 -d' ')"
+exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
+exl echo "## cromwell version $(java -jar cromwell.jar --version | cut -f2 -d ' ')"
+exl echo "## $(singularity --version)"
 
 # create subdirectories
 exl mkdir -p $LOCAL_INPUT_DIR
