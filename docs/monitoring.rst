@@ -58,66 +58,30 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
 
 ::
 
-    "atac.conservative_peak": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-reproducibility_overlap/execution/glob-c12e49ae1deb87ae04019b575ae1ffe9/conservative_peak.narrowPeak.bb"
-    }
-    [2019-02-04 17:09:59,15] [info] WorkflowManagerActor WorkflowActor-14efe06b-a010-42c9-be0f-82f33f4d877c is in a terminal state: WorkflowSucceededState
-    [2019-02-04 17:10:41,23] [info] SingleWorkflowRunnerActor workflow finished with status 'Succeeded'.
-    {
-      "outputs": {
-        "atac.optimal_peak": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-reproducibility_overlap/execution/glob-6150deffcc38df7a1bcd007f08a547cd/optimal_peak.narrowPeak.bb",
-        "atac.sig_fc": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-macs2_pooled/execution/glob-8876d8ced974dc46a0c7a4fac20a3a95/4DNFIZYWOA3Y.pooled.fc.signal.bigwig",
-        "atac.report": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-qc_report/execution/glob-eae855c82d0f7e2185388856e7b2cc7b/qc.html",
-        "atac.first_ta": null,
-        "atac.qc_json": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-qc_report/execution/glob-3440f922973abb7a616aaf203e0db08b/qc.json",
-        "atac.conservative_peak": "/data1/wdl/cromwell-executions/atac/14efe06b-a010-42c9-be0f-82f33f4d877c/call-reproducibility_overlap/execution/glob-c12e49ae1deb87ae04019b575ae1ffe9/conservative_peak.narrowPeak.bb"
-      },
-      "id": "14efe06b-a010-42c9-be0f-82f33f4d877c"
-    }
-    [2019-02-04 17:10:43,02] [info] SingleWorkflowRunnerActor writing metadata to /data1/out/lSbkdVIQ6VtX.log.json
-    [2019-02-04 17:10:43,03] [info] Workflow polling stopped
-    [2019-02-04 17:10:43,04] [info] Shutting down WorkflowStoreActor - Timeout = 5 seconds
-    [2019-02-04 17:10:43,05] [info] Shutting down WorkflowLogCopyRouter - Timeout = 5 seconds
-    [2019-02-04 17:10:43,05] [info] Shutting down JobExecutionTokenDispenser - Timeout = 5 seconds
-    [2019-02-04 17:10:43,05] [info] JobExecutionTokenDispenser stopped
-    [2019-02-04 17:10:43,06] [info] Aborting all running workflows.
-    [2019-02-04 17:10:43,06] [info] WorkflowStoreActor stopped
-    [2019-02-04 17:10:43,06] [info] WorkflowLogCopyRouter stopped
-    [2019-02-04 17:10:43,06] [info] Shutting down WorkflowManagerActor - Timeout = 3600 seconds
-    [2019-02-04 17:10:43,06] [info] WorkflowManagerActor All workflows finished
-    [2019-02-04 17:10:43,06] [info] WorkflowManagerActor stopped
-    [2019-02-04 17:10:43,06] [info] Connection pools shut down
-    [2019-02-04 17:10:43,06] [info] Shutting down SubWorkflowStoreActor - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,06] [info] Shutting down JobStoreActor - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,06] [info] Shutting down CallCacheWriteActor - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,06] [info] SubWorkflowStoreActor stopped
-    [2019-02-04 17:10:43,06] [info] Shutting down ServiceRegistryActor - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,06] [info] Shutting down DockerHashActor - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,06] [info] Shutting down IoProxy - Timeout = 1800 seconds
-    [2019-02-04 17:10:43,07] [info] KvWriteActor Shutting down: 0 queued messages to process
-    [2019-02-04 17:10:43,07] [info] WriteMetadataActor Shutting down: 0 queued messages to process
-    [2019-02-04 17:10:43,07] [info] CallCacheWriteActor Shutting down: 0 queued messages to process
-    [2019-02-04 17:10:43,07] [info] CallCacheWriteActor stopped
-    [2019-02-04 17:10:43,07] [info] DockerHashActor stopped
-    [2019-02-04 17:10:43,07] [info] IoProxy stopped
-    [2019-02-04 17:10:43,07] [info] ServiceRegistryActor stopped
-    [2019-02-04 17:10:43,07] [info] JobStoreActor stopped
-    [2019-02-04 17:10:43,08] [info] Database closed
-    [2019-02-04 17:10:43,08] [info] Stream materializer shut down
-    [2019-02-04 17:10:43,08] [info] WDL HTTP import resolver closed
-    Mon Feb  4 17:10:44 UTC 2019
-    total 228K
-    -rw-r--r-- 1 root   root 144K Feb  4 17:10 lSbkdVIQ6VtX.log.json
-    -rw-r--r-- 1 root   root    0 Feb  4 17:10 lSbkdVIQ6VtX.md5sum.txt
-    -rwxr-xr-x 1 ubuntu root  78K Feb  4 17:10 lSbkdVIQ6VtX.log
-    Filesystem      Size  Used Avail Use% Mounted on
-    udev             16G     0   16G   0% /dev
-    tmpfs           3.1G  8.5M  3.1G   1% /run
-    /dev/nvme0n1p1  7.7G  5.9G  1.9G  76% /
-    tmpfs            16G     0   16G   0% /dev/shm
-    tmpfs           5.0M     0  5.0M   0% /run/lock
-    tmpfs            16G     0   16G   0% /sys/fs/cgroup
-    /dev/nvme1n1     90G  8.4G   77G  10% /data1
+    ## job id: OiHYCN1QoEiP
+    ## tibanna version: 0.19.0
+    ## awsf image: duplexa/tibanna-awsf:pre
+    ## instance id: i-0e28e3b5a6c042226
+    ## instance region:
+    ## log bucket: tibanna-output
+    ## workflow language: cwl_v1
+    
+    ## Starting...
+    Tue Nov  3 20:47:19 UTC 2020
 
+    ...
+
+    
+    ## Running CWL/WDL/Snakemake/Shell commands
+    
+    Operating System: Ubuntu 20.04.1 LTS (containerized)
+    Docker Root Dir: /mnt/data1/docker
+    CPUs: 16
+    Total Memory: 40.18GiB
+
+    ...
+
+    
 
 To Download the log file manually, the following command also works.
 
@@ -125,6 +89,59 @@ To Download the log file manually, the following command also works.
 ::
 
     aws s3 cp s3://<tibanna_lob_bucket_name>/<jobid>.log .
+
+
+Top and Top_latest
+##################
+
+
+As of version 1.0.0, the top command output is sent to ``<jobid>.top`` and ``<jobid>.top_latest`` in the log bucket. The top command output used to be mixed in the log file (``<jobid>.log``) in previous versions. With ``tibanna log`` command and option ``-t`` (all top output) and ``-T`` (latest only), one can print out the top command output from the running instance. The data is collected at 1-minute intervals and only while the command is running (e.g. not while the input data are downloaded to the EC2 instance or ssh is being configured etc).
+
+Below is an example command and the output, executed twice with a 1-minute interval. In this example, the user can see that around 20:49:01, ``unpigz`` was running and around 20:50:01, many ``java`` processes were running (they depend on the command / workflow).
+
+::
+
+    tibanna log -j OiHYCN1QoEiP -T
+
+::
+
+    top - 20:49:01 up 1 min,  0 users,  load average: 2.11, 0.75, 0.27
+    Tasks:  15 total,   2 running,  13 sleeping,   0 stopped,   0 zombie
+    %Cpu(s): 13.1 us,  6.4 sy,  0.0 ni, 80.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+    MiB Mem :  41139.5 total,  32216.5 free,    675.9 used,   8247.1 buff/cache
+    MiB Swap:      0.0 total,      0.0 free,      0.0 used.  39951.0 avail Mem 
+    
+        PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+         54 root      20   0 2928856 102488  48260 S 186.7   0.2   0:44.95 dockerd
+        858 root      20   0   28904   1228   1128 R 153.3   0.0   0:09.18 unpigz
+        859 root      20   0 1673140  80084  44464 S  46.7   0.2   0:02.91 exe
+          1 root      20   0    7104   3692   3348 S   0.0   0.0   0:00.02 run.sh
+         94 root      20   0 1781488  45328  25740 S   0.0   0.1   0:00.12 contain+
+        319 root      20   0 1792992  14660   9056 S   0.0   0.0   0:00.10 goofys-+
+        325 root      20   0 1571284  14136   9080 S   0.0   0.0   0:00.08 goofys-+
+        382 root      20   0    6812   2076   1868 S   0.0   0.0   0:00.00 cron
+    
+::
+    
+    tibanna log -j OiHYCN1QoEiP -T
+
+::
+    
+    top - 20:50:01 up 2 min,  0 users,  load average: 18.06, 4.84, 1.67
+    Tasks:  45 total,   1 running,  44 sleeping,   0 stopped,   0 zombie
+    %Cpu(s): 93.6 us,  6.4 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+    MiB Mem :  41139.5 total,  16099.9 free,  16978.6 used,   8061.1 buff/cache
+    MiB Swap:      0.0 total,      0.0 free,      0.0 used.  23657.1 avail Mem 
+    
+        PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
+       2085 root      20   0 7984200   1.1g  31356 S 253.3   2.8   0:28.85 java
+       2114 root      20   0 7984200   1.2g  31512 S 206.7   2.9   0:25.40 java
+       2095 root      20   0 7984200   1.2g  31328 S 186.7   3.0   0:24.46 java
+       2208 root      20   0 7984200   1.1g  31356 S 133.3   2.8   0:27.61 java
+       2121 root      20   0 7984200   1.2g  31480 S 120.0   2.9   0:26.81 java
+       2189 root      20   0 7984200   1.2g  31372 S 120.0   3.0   0:30.18 java
+       2122 root      20   0 7984200   1.1g  31232 S 100.0   2.8   0:28.88 java
+       2148 root      20   0 7984200   1.0g  31284 S 100.0   2.5   0:29.71 java
 
 
 Postrun.json
