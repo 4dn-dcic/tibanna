@@ -81,7 +81,16 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
 
     ...
 
-    
+
+    INFO /usr/local/bin/cwltool 3.0.20201017180608
+    INFO Resolved 'workflow_gatk-GenotypeGVCFs_plus_vcf-integrity-check.cwl' to 'file:///mnt/data1/cwl/workflow_gatk-GenotypeGVCFs_plus_vcf-integrity-check.cwl'
+    INFO [workflow ] start
+    INFO [workflow ] starting step gatk-GenotypeGVCFs
+    INFO [step gatk-GenotypeGVCFs] start
+
+    ... 
+
+ 
 
 To Download the log file manually, the following command also works.
 
