@@ -87,7 +87,7 @@ exl echo "## job id: $JOBID"
 exl echo "## tibanna version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
 exl echo "## instance id: $INSTANCE_ID"
-exl echo "## instance region: $INSTANCE_REION"
+exl echo "## instance region: $INSTANCE_REGION"
 exl echo "## log bucket: $LOGBUCKET"
 exl echo "## workflow language: $LANGUAGE"
 exl echo

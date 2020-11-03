@@ -55,7 +55,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
     secondaryFiles is added only if the language is cwl.
     execution_metadata is a dictionary read from wdl/cwl execution log json file.
     md5dict is a dictionary with key=file path, value=md5sum (optional)."""
-    if language in ['cwl', 'wdl'] and not execution_metadata:
+    if language in ['cwl', 'cwl_v1', 'cwl-draft3', 'wdl'] and not execution_metadata:
         raise Exception("execution_metadata is required for cwl/wdl.")
     out_meta = dict()
     if language == 'wdl':
@@ -64,7 +64,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
                 out_meta[argname] = {'path': outfile}
     elif language == 'snakemake' or language == 'shell':
         out_meta = {}
-    else:
+    else:  # cwl, cwl_v1, cwl-draft3
         # read cwl output json file
         out_meta = execution_metadata
 

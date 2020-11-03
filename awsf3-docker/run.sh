@@ -248,7 +248,7 @@ send_log
 exl echo
 exl echo "## Calculating md5sum of output files"
 exl date
-md5sum $LOCAL_OUTDIR/* | grep -v "$LOGFILE" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
+md5sum $LOCAL_OUTDIR/* | grep -v "$JOBID" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
 exl cat $MD5FILE
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time
@@ -279,20 +279,7 @@ fi
 
 exl echo
 exl echo "## Uploading output files to S3"
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  LANGUAGE_OPTION='-L wdl'
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  LANGUAGE_OPTION='-L snakemake'
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  LANGUAGE_OPTION='-L shell'
-else
-  LANGUAGE_OPTION=
-fi
-exl awsf3 upload_output_update_json -i $RUN_JSON_FILE_NAME -e $LOGJSONFILE -l $LOGFILE -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME $LANGUAGE_OPTION
-mv $POSTRUN_JSON_FILE_NAME $RUN_JSON_FILE_NAME
+exl awsf3 upload_output_update_json -i $RUN_JSON_FILE_NAME -e $LOGJSONFILE -l $LOGFILE -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
 send_log
  
 ### updating status
@@ -308,7 +295,7 @@ export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
 # update postrun json
-exl awsf3 update_postrun_json -i $RUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
+exl awsf3 update_postrun_json -i $POSTRUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
 
 # send postrun json to s3
 exl echo
