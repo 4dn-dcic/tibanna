@@ -99,7 +99,7 @@ EBS_MOUNT_POINT = '/mnt/data1'
 
 
 # Default root EBS size
-DEFAULT_ROOT_EBS_SIZE = 10
+DEFAULT_ROOT_EBS_SIZE = 8
 
 
 SFN_TYPE = 'unicorn'
