@@ -90,6 +90,19 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
 
     ... 
 
+
+    22:12:34.599 WARN  InbreedingCoeff - Annotation will not be calculated, must provide at least 10 samples
+    22:12:34.599 WARN  InbreedingCoeff - Annotation will not be calculated, must provide at least 10 samples
+    22:12:34.600 WARN  InbreedingCoeff - Annotation will not be calculated, must provide at least 10 samples
+    22:12:34.601 WARN  InbreedingCoeff - Annotation will not be calculated, must provide at least 10 samples
+    22:12:35.852 INFO  ProgressMeter -      chr14:106769920             50.4              79043000        1567469.6
+    22:12:36.890 INFO  ProgressMeter -      chr14:106882957             50.4              79071726        1567501.5
+    22:12:36.890 INFO  ProgressMeter - Traversal complete. Processed 79071726 total variants in 50.4 minutes.
+    22:12:36.999 INFO  GenotypeGVCFs - Shutting down engine
+    [November 3, 2020 10:12:37 PM UTC] org.broadinstitute.hellbender.tools.walkers.GenotypeGVCFs done. Elapsed time: 50.48 minutes.
+    Runtime.totalMemory()=1915224064
+    Using GATK jar /miniconda3/share/gatk4-4.1.2.0-1/gatk-package-4.1.2.0-local.jar
+    
  
 
 To Download the log file manually, the following command also works.
