@@ -7,12 +7,11 @@ export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION=
-export TIBANNA_VERSION=
 export STATUS=0
 export LOGBUCKET=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -I INSTANCE_ID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
+    echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -I INSTANCE_ID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
     echo "-i JOBID : awsem job id (required)"
     echo "-R INSTANCE_REGION: region of the current EC2 instance (required)"
     echo "-I INSTANCE_ID: ID of the current EC2 instance (required)"
@@ -24,10 +23,9 @@ printHelpAndExit() {
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
-    echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:R:I:j:l:S:L:a:s:r:gV:" opt; do
+while getopts "i:R:I:j:l:S:L:a:s:r:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         R) export INSTANCE_REGION=$OPTARG;;  # region of the current EC2 instance
@@ -40,7 +38,6 @@ while getopts "i:R:I:j:l:S:L:a:s:r:gV:" opt; do
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION=--singularity;;  # use singularity
-        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -159,9 +156,7 @@ exl awsf3 download_workflow
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
-if [[ ! -z "$TIBANNA_VERSION" && "$TIBANNA_VERSION" > '0.18' ]]; then
-  exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
-fi
+exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 send_log
 
 ### download data & reference files from s3
