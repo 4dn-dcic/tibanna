@@ -61,6 +61,7 @@ export LOGFILE=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export TOPFILE=$LOCAL_OUTDIR/$JOBID.top  # now top command output goes to a separate file
+export TOPLATESTFILE=$LOCAL_OUTDIR/$JOBID.top_latest  # this one includes only the latest top command output
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 
@@ -193,7 +194,7 @@ send_log
 exl echo
 exl echo "## Setting up and starting cron job for top commands"
 exl service cron start
-echo "*/1 * * * * /usr/local/bin/top.sh -l $LOGBUCKET -T $TOPFILE" | crontab -
+echo "*/1 * * * * /usr/local/bin/top.sh -l $LOGBUCKET -t $TOPFILE -T $TOPLATESTFILE" | crontab -
 exl crontab -l
 
 ### run command
