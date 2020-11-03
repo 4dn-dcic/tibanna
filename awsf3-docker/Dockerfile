@@ -79,7 +79,8 @@ RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromw
 
 # awsf scripts
 COPY run.sh .
-RUN chmod +x run.sh
+COPY top.sh .
+RUN chmod +x run.sh top.sh
 RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
 
 # Move default docker daemon location to mounted EBS

@@ -162,14 +162,6 @@ exl echo "## Downloading workflow files"
 exl awsf3 download_workflow
 
 
-# set up cronjob for top command
-cwd0=$(pwd)
-cd ~
-echo "*/1 * * * * LOGBUCKET=$LOGBUCKET; LOGFILE=$LOGFILE; ERRFILE=$ERRFILE; STATUS=$STATUS; exl top -b -n 1 | head -15; exl du -h $LOCAL_INPUT_DIR/; exl du -h $LOCAL_WF_TMPDIR*/; exl du -h $LOCAL_OUTDIR/; send_log" >> cron.jobs
-cat cron.jobs | crontab -
-cd $cwd0
-
-
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
@@ -203,6 +195,15 @@ exl ls -lh $EBS_DIR
 exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
 send_log
+
+
+# set up cronjob for top command
+cwd0=$(pwd)
+cd ~
+echo "*/1 * * * * top.sh -l $LOGBUCKET -S $STATUS -L $LOGFILE -E $ERRFILE" >> cron.jobs
+cat cron.jobs | crontab -
+cd $cwd0
+
 
 ### run command
 exl echo
