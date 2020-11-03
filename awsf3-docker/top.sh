@@ -21,6 +21,7 @@ while getopts "l:S:L:E:" opt; do
 done
 
 
+echo "LOGFILE=$LOGFILE"
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
@@ -37,8 +38,9 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; export STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; exit $ERRCODE; fi; }  ## usage: handle_error <error_code>
 
+# head of a command - for avoiding a pipe
+head_command() { $@ | head -15; }
 
-
-exl top -b -n 1 | head -15
+exl echo
+exl head_command top -b -n 1
 send_log
-
