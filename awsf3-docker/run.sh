@@ -207,9 +207,15 @@ cd $cwd0
 
 ### run command
 exl echo
+exl echo "## Docker information (selected)"
+exl echo $(docker info | grep "Operating System")
+exl echo $(docker info | grep "Docker Root Dir")
+exl echo $(docker info | grep "CPUs")
+exl echo $(docker info | grep "Total Memory")
+exl echo
 exl echo "## Running CWL/WDL/Snakemake/Shell commands"
 exl echo "current directory="$(pwd)
-exl docker info | grep "Docker Root Dir"
+exl echo
 send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
@@ -233,11 +239,13 @@ then
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
-    # older version of cwltoolthat works with draft3
+    # older version of cwltool that works with draft3
+    exl echo
+    exl echo "## switching to an older version of cwltool that supports draft3"
     pip uninstall -y cwltool
     git clone https://github.com/SooLee/cwltool
     cd cwltool
-    git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
+    exl git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
     python setup.py install
     cd $LOCAL_WFDIR
   fi
