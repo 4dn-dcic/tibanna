@@ -209,6 +209,7 @@ exl echo
 exl echo "## Running CWL/WDL/Snakemake/Shell commands"
 exl echo "current directory="$(pwd)
 exl docker info | grep "Docker Root Dir"
+send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
 mkdir -p $LOCAL_WF_TMPDIR
