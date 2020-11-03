@@ -78,6 +78,14 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; exit $ERRCODE; fi; }  ## usage: handle_error <error_code>
 
+# export functions
+export -f exl
+export -f exlj
+export -f exle
+export -f exlo
+export -f send_log
+export -f send_error
+export -f handle_error
 
 # make sure log bucket is defined
 if [ -z "$LOGBUCKET" ]; then
@@ -158,7 +166,7 @@ exl awsf3 download_workflow
 # set up cronjob for top command
 cwd0=$(pwd)
 cd ~
-echo "*/1 * * * * top -b | head -15 >> $LOGFILE; du -h $LOCAL_INPUT_DIR/ >> $LOGFILE; du -h $LOCAL_WF_TMPDIR*/ >> $LOGFILE; du -h $LOCAL_OUTDIR/ >> $LOGFILE; send_log" >> cron.jobs
+echo "*/1 * * * * exl top -b -n 1 | head -15; exl du -h $LOCAL_INPUT_DIR/; exl du -h $LOCAL_WF_TMPDIR*/; exl du -h $LOCAL_OUTDIR/; send_log" >> cron.jobs
 cat cron.jobs | crontab -
 cd $cwd0
 
