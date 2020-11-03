@@ -9,6 +9,7 @@ export REGION=
 export SINGULARITY_OPTION=
 export TIBANNA_VERSION=
 export STATUS=0
+export LOGBUCKET=
 
 printHelpAndExit() {
     echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -I INSTANCE_ID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
@@ -63,17 +64,26 @@ export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 
 # function that executes a command and collecting log
-exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
-exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one separates stdout to json as well.
-exle(){ $@ >> /dev/null 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
-exlo(){ $@ 2>> /dev/null >> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
-
+exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
+exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; $ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; handle_error $ERRCODE; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one separates stdout to json as well.
+exle(){ $@ >> /dev/null 2>> $LOGFILE; handle_error $?; } ## usage: exle command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
+exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
-send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
+send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_error (no argument)
+
+# function that handles errors - this function calls send_error and send_log
+handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; exit $ERRCODE; fi; }  ## usage: handle_error <error_code>
+
+
+# make sure log bucket is defined
+if [ -z "$LOGBUCKET" ]; then
+    exl echo "Error: log bucket not defined"
+    send_error 1;
+fi
 
 
 # EBS_DIR cannot be directly mounted to docker container since it's already a mount point for EBS,
@@ -173,10 +183,8 @@ send_log
 ### mount input buckets
 exl echo
 exl echo "## Mounting input S3 buckets"
-exl date
 exl cat $MOUNT_COMMAND_FILE
 exle source $MOUNT_COMMAND_FILE
-exl date
 send_log
 
 ### just some more logging
@@ -202,15 +210,15 @@ then
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
-  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
-  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE;
+  handle_error $?
   LOGJSONFILE='-'  # no file
 elif [[ $LANGUAGE == 'shell' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
   exl echo "docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c \"$COMMAND\""
-  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE;
-  if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi;
+  docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE;
+  handle_error $?
   LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]

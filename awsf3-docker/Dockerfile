@@ -78,10 +78,9 @@ RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromw
     ln -s cromwell-53.1.jar cromwell.jar
 
 # awsf scripts
-COPY aws_run_workflow_generic.sh .
-RUN chmod +x aws_run_workflow_generic.sh
+COPY run.sh .
+RUN chmod +x run.sh
 RUN pip install git+https://github.com/4dn-dcic/tibanna@dict_target  # temporary branch
-
 
 # Move default docker daemon location to mounted EBS
 COPY daemon.json /etc/docker/daemon.json

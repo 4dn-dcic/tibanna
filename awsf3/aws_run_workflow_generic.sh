@@ -54,24 +54,32 @@ export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 
 
-# first create an output bucket/directory
-touch $JOBID.job_started
-aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
-
 # function that executes a command and collecting log
-exl(){ $@ >> $LOGFILE 2>> $LOGFILE; ERRCODE=$?; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 -a ! -z "$LOGBUCKET" ]; then send_error; fi; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong and if LOGBUCKET has already been defined, send error to s3.
+exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
-send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
+send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
 
 # function that sends error file to s3 to notify something went wrong.
-send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }
+send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_error (no argument)
 
+# function that handles errors - this function calls send_error and send_log
+handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; shutdown -h $SHUTDOWN_MIN; fi; }  ## usage: handle_error <error_code>
 
 ### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
 export LOGFILE=$LOGFILE1
 cd /home/ubuntu/
 touch $LOGFILE 
+
+# make sure log bucket is defined
+if [ -z "$LOGBUCKET" ]; then
+    exl echo "Error: log bucket not defined"  # just add this message to the log file, which may help debugging by ssh
+    shutdown -h $SHUTDOWN_MIN
+fi
+
+### send job start message to S3
+touch $JOBID.job_started
+aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 ### start logging
 ### env
@@ -79,6 +87,9 @@ exl echo "## job id: $JOBID"
 exl echo "## tibanna version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
 exl echo "## instance id: $INSTANCE_ID"
+exl echo "## instance region: $INSTANCE_REION"
+exl echo "## log bucket: $LOGBUCKET"
+exl echo "## workflow language: $LANGUAGE"
 exl echo
 exl echo "## Starting..."
 exl date
@@ -142,12 +153,12 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE aws_run_workflow_generic.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
-
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS -V $TIBANNA_VERSION 
+handle_error $?
 
 ### self-terminate
 # (option 1)  ## This is the easiest if the 'shutdown behavior' set to 'terminate' for the instance at launch.
-sudo shutdown -h $SHUTDOWN_MIN 
+shutdown -h $SHUTDOWN_MIN 
 # (option 2)  ## This works only if the instance is given a proper permission (This is more standard but I never actually got it to work)
 #id=$(ec2-metadata -i|cut -d' ' -f2)
 #aws ec2 terminate-instances --instance-ids $id
