@@ -24,10 +24,8 @@ exl(){ $@ > $TOPLATESTFILE; cat $TOPLATESTFILE >> $TOPFILE; } ## usage: exl comm
 # function that sends log to s3
 send_log(){  /usr/local/bin/aws s3 cp $TOPFILE s3://$LOGBUCKET; /usr/local/bin/aws s3 cp $TOPLATESTFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
-# head of a command - for avoiding a pipe
-head_command() { $@ | head -15; }
+# head of a command - for avoiding a pipe, also give some margin
+head_command() { echo; $@ | head -15; echo; }
 
-exl echo
 exl head_command top -b -n 1
-exl echo
 send_log
