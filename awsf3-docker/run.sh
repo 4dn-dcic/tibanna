@@ -60,6 +60,7 @@ export ENV_FILE=env_command_list.txt
 export LOGFILE=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
+export TOPFILE=$LOCAL_OUTDIR/$JOBID.top  # now top command output goes to a separate file
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 
@@ -78,14 +79,6 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; export STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; exit $ERRCODE; fi; }  ## usage: handle_error <error_code>
 
-# export functions
-export -f exl
-export -f exlj
-export -f exle
-export -f exlo
-export -f send_log
-export -f send_error
-export -f handle_error
 
 # make sure log bucket is defined
 if [ -z "$LOGBUCKET" ]; then
@@ -196,25 +189,20 @@ exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
 send_log
 
-
 # set up cronjob for top command
-cwd0=$(pwd)
-cd ~
-echo "*/1 * * * * top.sh -l $LOGBUCKET -S $STATUS -L $LOGFILE -E $ERRFILE" >> cron.jobs
-cat cron.jobs | crontab -
-cd $cwd0
-
+exl echo
+exl echo "## Setting up cron job for top commands"
+echo "*/1 * * * * top.sh -l $LOGBUCKET -T $TOPFILE" | crontab -
+exl crontab -l
 
 ### run command
 exl echo
-exl echo "## Docker information (selected)"
+exl echo "## Running CWL/WDL/Snakemake/Shell commands"
+exl echo
 exl echo $(docker info | grep "Operating System")
 exl echo $(docker info | grep "Docker Root Dir")
 exl echo $(docker info | grep "CPUs")
 exl echo $(docker info | grep "Total Memory")
-exl echo
-exl echo "## Running CWL/WDL/Snakemake/Shell commands"
-exl echo "current directory="$(pwd)
 exl echo
 send_log
 cwd0=$(pwd)
@@ -223,6 +211,7 @@ mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
   exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+  handle_error $?
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
