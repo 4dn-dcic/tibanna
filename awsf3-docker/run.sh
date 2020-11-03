@@ -191,8 +191,9 @@ send_log
 
 # set up cronjob for top command
 exl echo
-exl echo "## Setting up cron job for top commands"
-echo "*/1 * * * * top.sh -l $LOGBUCKET -T $TOPFILE" | crontab -
+exl echo "## Setting up and starting cron job for top commands"
+exl service cron start
+echo "*/1 * * * * /usr/local/bin/top.sh -l $LOGBUCKET -T $TOPFILE" | crontab -
 exl crontab -l
 
 ### run command

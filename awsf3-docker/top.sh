@@ -20,7 +20,7 @@ done
 exl(){ $@ >> $TOPFILE 2>> $TOPFILE; } ## usage: exl command
 
 # function that sends log to s3
-send_log(){  aws s3 cp $TOPFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
+send_log(){  /usr/local/bin/aws s3 cp $TOPFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
 # head of a command - for avoiding a pipe
 head_command() { $@ | head -15; }
