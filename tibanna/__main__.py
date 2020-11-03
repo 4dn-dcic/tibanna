@@ -331,7 +331,8 @@ def list_sfns(numbers=False):
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
         runjson=False, postrunjson=False, top=False, top_latest=False):
     """print execution log, run json (-r), postrun json (-p) or top (-t) for a job"""
-    print(API().log(exec_arn, job_id, exec_name, sfn, runjson=runjson, postrunjson=postrunjson, top=top, top=top_latest))
+    print(API().log(exec_arn, job_id, exec_name, sfn, runjson=runjson, postrunjson=postrunjson,
+                    top=top, top_latest=top_latest))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
