@@ -426,11 +426,17 @@ class API(object):
             else:
                 break
 
-    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None, postrunjson=False, runjson=False, logbucket=None, quiet=False):
+    def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None,
+            postrunjson=False, runjson=False, top=False, top_latest=False,
+            logbucket=None, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
             suffix = '.run.json'
+        elif top:
+            suffix = '.top'
+        elif top_latest:
+            suffix = '.top_latest'
         else:
             suffix = '.log'
         if not sfn:
