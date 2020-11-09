@@ -2,6 +2,11 @@ import boto3
 from .utils import printlog
 
 
+def item2dict(item):
+    '''convert a dynamoDB-style item to a regular dictionary'''
+    return {k: list(v.values())[0] for k, v in item.items()}
+
+
 def does_dynamo_table_exist(tablename):
     try:
         res = boto3.client('dynamodb').describe_table(

@@ -258,7 +258,9 @@ class API(object):
             ddinfo = self.info(job_id)
             if not ddinfo:
                 raise Exception("Can't find exec_arn from the job_id")
-            exec_arn = ddinfo.get('exec_arn', '')
+            exec_name = ddinfo.get('Execution Name', '')
+            sfn = ddinfo.get('Step Function', '')
+            exec_arn = EXECUTION_ARN(exec_name, sfn)
             if not exec_arn:
                 raise Exception("Can't find exec_arn from the job_id")
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
@@ -271,7 +273,9 @@ class API(object):
             ddinfo = self.info(job_id)
             if not ddinfo:
                 raise Exception("Can't find exec_arn from the job_id")
-            exec_arn = ddinfo.get('exec_arn', '')
+            exec_name = ddinfo.get('Execution Name', '')
+            sfn = ddinfo.get('Step Function', '')
+            exec_arn = EXECUTION_ARN(exec_name, sfn)
             if not exec_arn:
                 raise Exception("Can't find exec_arn from the job_id")
         sts = boto3.client('stepfunctions', region_name=AWS_REGION)
@@ -307,22 +311,7 @@ class API(object):
         if 'Items' in ddres:
             try:
                 dditem = ddres['Items'][0]
-                exec_name = dditem['Execution Name']['S']
-                sfn = dditem['Step Function']['S']
-                exec_arn = EXECUTION_ARN(exec_name, sfn)
-                if 'instance_id' in dditem:
-                    instance_id = dditem['instance_id']['S']
-                else:
-                    instance_id = ''
-                if 'Log Bucket' in dditem:
-                    logbucket = dditem['Log Bucket']['S']
-                else:
-                    logbucket = ''
-                return {'exec_name': exec_name,
-                        'exec_arn': exec_arn,
-                        'step_function': sfn,
-                        'instance_id': instance_id,
-                        'log_bucket': logbucket}
+                return dd_utils.item2dict(dditem)
             except Exception as e:
                 printlog("Warning: dynamoDB fields not found: %s" % e)
                 return None
@@ -448,17 +437,11 @@ class API(object):
         elif job_id:
             if not logbucket:
                 # first try dynanmodb to get logbucket
-                ddres = dict()
                 try:
-                    dd = boto3.client('dynamodb')
-                    ddres = dd.query(TableName=DYNAMODB_TABLE,
-                                     KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                               'ComparisonOperator': 'EQ'}})
+                    logbucket = self.info(job_id)['Log Bucket']
                 except Exception as e:
                     pass
-                if 'Items' in ddres:
-                    logbucket = ddres['Items'][0]['Log Bucket']['S']
-                else:
+                if not logbucket:
                     # search through executions to get logbucket
                     stateMachineArn = STEP_FUNCTION_ARN(sfn)
                     try:
@@ -498,20 +481,17 @@ class API(object):
             return(res_s3['Body'].read().decode('utf-8', 'backslashreplace'))
         return None
 
-    def stat(self, sfn=None, status=None, verbose=False, n=None):
+    def stat(self, sfn=None, status=None, verbose=False, n=None, job_ids=None):
         """print out executions with details (-v)
         status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
+        or specify a list of job ids
         """
-        if not sfn:
-            sfn = self.default_stepfunction_name
-        args = {
-            'stateMachineArn': STEP_FUNCTION_ARN(sfn),
-            'maxResults': 100
-        }
-        if status:
-            args['statusFilter'] = status
-        res = dict()
-        client = boto3.client('stepfunctions')
+        if n and job_ids:
+            raise Exception("n and job_id filters do not work together.")
+        if sfn and job_ids:
+            raise Exception("Please do not specify sfn when job_ids are specified.")
+        if status and job_ids:
+            raise Exception("Status filter cannot be specified when job_ids are specified.")
         if verbose:
             print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name',
                                                                       'start_time', 'stop_time',
@@ -520,59 +500,92 @@ class API(object):
                                                                       'password'))
         else:
             print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
-        res = client.list_executions(**args)
+        client = boto3.client('stepfunctions')
         ec2 = boto3.client('ec2')
-        k = 0
-        while True:
-            if n and k == n:
-                break
-            if 'executions' not in res or not res['executions']:
-                break
-            for exc in res['executions']:
+
+        def parse_exec_desc_and_ec2_desc(exec_arn, verbose):
+            # collecting execution stats
+            exec_desc = client.describe_execution(executionArn=exec_arn)
+
+            # getting info from execution description
+            exec_desc = client.describe_execution(executionArn=exec_arn)
+            job_id = json.loads(exec_desc['input']).get('jobid', 'no jobid')
+            status = exec_desc['status']
+            name = exec_desc['name']
+            start_time = exec_desc['startDate'].strftime("%Y-%m-%d %H:%M")
+            if 'stopDate' in exec_desc:
+                stop_time = exec_desc['stopDate'].strftime("%Y-%m-%d %H:%M")
+            else:
+                stop_time = ''
+
+            # collect instance stats
+            ec2_desc = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+
+            # getting info from ec2 description
+            if ec2_desc['Reservations']:
+                ec2_desc_inst = ec2_desc['Reservations'][0]['Instances'][0]
+                instance_status = ec2_desc_inst['State']['Name']
+                instance_id = ec2_desc_inst['InstanceId']
+                instance_type = ec2_desc_inst['InstanceType']
+                if instance_status not in ['terminated', 'shutting-down']:
+                    instance_ip = ec2_desc_inst.get('PublicIpAddress', '-')
+                    keyname = ec2_desc_inst.get('KeyName', '-')
+                    password = json.loads(exec_desc['input'])['config'].get('password', '-')
+                else:
+                    instance_ip = '-'
+                    keyname = '-'
+                    password = '-'
+            else:
+                instance_status = '-'
+                instance_id = '-'
+                instance_type = '-'
+                instance_ip = '-'
+                keyname = '-'
+                password = '-'
+
+            parsed_stat = (job_id, status, name, start_time, stop_time,
+                           instance_id, instance_type, instance_status,
+                           instance_ip, keyname, password)
+            if verbose:
+                print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(*parsed_stat))
+            else:
+                print("{}\t{}\t{}\t{}\t{}".format(*parsed_stat[0:5]))
+
+        if job_ids:
+            for job_id in job_ids:
+                dd_info = self.info(job_id)
+                if 'Execution Name' not in dd_info:
+                    raise Exception("Cannot find execution name for job ID %s" % job_id)
+                if 'Step Function' not in dd_info:
+                    raise Exception("Cannot find step function for job ID %s" % job_id)
+                exec_arn = EXECUTION_ARN(dd_info['Execution Name'], dd_info['Step Function'])
+                parse_exec_desc_and_ec2_desc(exec_arn, verbose)
+        else:
+            if not sfn:
+                sfn = self.default_stepfunction_name
+            args = {
+                'stateMachineArn': STEP_FUNCTION_ARN(sfn),
+                'maxResults': 100
+            }
+            if status:
+                args['statusFilter'] = status
+            res = dict()
+            res = client.list_executions(**args)
+            k = 0
+            while True:
                 if n and k == n:
                     break
-                k = k + 1
-                desc = client.describe_execution(executionArn=exc['executionArn'])
-                jobid = json.loads(desc['input']).get('jobid', 'no jobid')
-                status = exc['status']
-                name = exc['name']
-                start_time = exc['startDate'].strftime("%Y-%m-%d %H:%M")
-                if 'stopDate' in exc:
-                    stop_time = exc['stopDate'].strftime("%Y-%m-%d %H:%M")
+                if 'executions' not in res or not res['executions']:
+                    break
+                for exc in res['executions']:
+                    if n and k == n:
+                        break
+                    k = k + 1
+                    parse_exec_desc_and_ec2_desc(exc['executionArn'], verbose)
+                if 'nextToken' in res:
+                    res = client.list_executions(nextToken=res['nextToken'], **args)
                 else:
-                    stop_time = ''
-                if verbose:
-                    # collect instance stats
-                    res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + jobid]}])
-                    if res['Reservations']:
-                        instance_status = res['Reservations'][0]['Instances'][0]['State']['Name']
-                        instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-                        instance_type = res['Reservations'][0]['Instances'][0]['InstanceType']
-                        if instance_status not in ['terminated', 'shutting-down']:
-                            instance_ip = res['Reservations'][0]['Instances'][0].get('PublicIpAddress', '-')
-                            keyname = res['Reservations'][0]['Instances'][0].get('KeyName', '-')
-                            password = json.loads(desc['input'])['config'].get('password', '-')
-                        else:
-                            instance_ip = '-'
-                            keyname = '-'
-                            password = '-'
-                    else:
-                        instance_status = '-'
-                        instance_id = '-'
-                        instance_type = '-'
-                        instance_ip = '-'
-                        keyname = '-'
-                        password = '-'
-                    print_template = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}"
-                    print(print_template.format(jobid, status, name, start_time, stop_time,
-                                                instance_id, instance_type, instance_status,
-                                                instance_ip, keyname, password))
-                else:
-                    print("{}\t{}\t{}\t{}\t{}".format(jobid, status, name, start_time, stop_time))
-            if 'nextToken' in res:
-                res = client.list_executions(nextToken=res['nextToken'], **args)
-            else:
-                break
+                    break
 
     def list_sfns(self, numbers=False):
         """list all step functions, optionally with a summary (-n)"""

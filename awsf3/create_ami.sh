@@ -2,15 +2,12 @@
 
 # basic updates and installation
 apt update
-apt install -y \
-    awscli \
-    apt-transport-https \
+apt install -y awscli
+apt install -y unzip libwww-perl libdatetime-perl  # cloudwatch metrics
+apt install -y apt-transport-https \
     ca-certificates \
     curl \
-    software-properties-common \
-    libwww-perl \
-    libdatetime-perl \
-    unzip
+    software-properties-common  # docker
 
 # install docker
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -

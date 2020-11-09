@@ -5,6 +5,7 @@ CLI for tibanna package
 # -*- coding: utf-8 -*-
 import argparse
 import inspect
+import json
 from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .core import API
@@ -29,6 +30,7 @@ class Subcommands(object):
             'kill_all': 'kill all the running jobs on a step function',
             'list_sfns': 'list all step functions, optionally with a summary (-n)',
             'log': 'print execution log or postrun json for a job',
+            'info': 'print out information about a job',
             'rerun': 'rerun a specific job',
             'rerun_many': 'rerun all the jobs that failed after a given time point',
             'run_workflow': 'run a workflow',
@@ -63,8 +65,7 @@ class Subcommands(object):
             'stat':
                 [{'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-t", "--status"],
                   'help': "filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
                  {'flag': ["-l", "--long"],
@@ -72,7 +73,11 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-n", "--nlines"],
                   'help': "number of lines to print",
-                  'type': int}],
+                  'type': int},
+                 {'flag': ["-j", "--job-ids"],
+                  'nargs': '+',
+                  'help': "job ids of the specific jobs to display, separated by space. " +
+                          "This option cannot be combined with --nlines(-n), --status(-t) or --sfn(-s)"}],
             'kill':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to kill"},
@@ -107,6 +112,9 @@ class Subcommands(object):
                   'help': "print out top file (log file containing top command output) instead", 'action': "store_true"},
                  {'flag': ["-T", "--top-latest"],
                   'help': "print out the latest content of the top file", 'action': "store_true"}],
+            'info':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"}],
             'add_user':
                 [{'flag': ["-u", "--user"],
                   'help': "user to add to a Tibanna usergroup"},
@@ -345,6 +353,10 @@ def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     API().kill(exec_arn, job_id, sfn)
 
 
+def info(job_id):
+    """prints out information about a job"""
+    print(json.dumps(API().info(job_id), indent=True))
+
 def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
           instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
           overwrite_input_extra=None, key_name=None, name=None):
@@ -378,11 +390,11 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
                      overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
-def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines=None):
+def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines=None, job_ids=None):
     """print out executions with details
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
-    API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
+    API().stat(sfn=sfn, status=status, verbose=long, n=nlines, job_ids=job_ids)
 
 
 def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False,
