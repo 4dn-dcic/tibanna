@@ -16,11 +16,7 @@ from .vars import (
     S3_ACCESS_ARN,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
-    AMI_ID_WDL,
-    AMI_ID_SHELL,
-    AMI_ID_SNAKEMAKE,
-    AMI_ID_CWL_V1,
-    AMI_ID_CWL_DRAFT3,
+    AMI_ID,
     DYNAMODB_TABLE,
     DEFAULT_ROOT_EBS_SIZE,
     TIBANNA_AWSF_DIR
@@ -294,19 +290,9 @@ class Config(SerializableObject):
 
     def fill_language_options(self, language='cwl_draft3', singularity=False):
         """fill in ami_id and language fields (these are also internal)"""
-        if language == 'wdl':
-            self.ami_id = AMI_ID_WDL
-        elif language == 'shell':
-            self.ami_id = AMI_ID_SHELL
-        elif language == 'snakemake':
-            self.ami_id = AMI_ID_SNAKEMAKE
-        else:  # cwl
-            if language in ['cwl', 'cwl_v1']:  # 'cwl' means 'cwl_v1'
-                self.ami_id = AMI_ID_CWL_V1
-            else:
-                self.ami_id = AMI_ID_CWL_DRAFT3
-            if singularity:  # applied to only cwl though it is pretty useless
-                self.singularity = True
+        self.ami_id = AMI_ID
+        if singularity:
+            self.singularity = True
         self.language = language
 
     def fill_other_fields(self, app_name=''):

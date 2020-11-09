@@ -90,20 +90,6 @@ fi
 ln -s /mnt/$EBS_DIR $EBS_DIR
 
 
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/wdl
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/snakemake
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/shell
-else
-  export LOCAL_WFDIR=$EBS_DIR/cwl
-fi
-
-
 # log the first message from the container
 exl echo
 exl echo "## AWSF Docker container created"
@@ -125,6 +111,19 @@ exl echo "## cromwell version $(java -jar cromwell.jar --version | cut -f2 -d ' 
 exl echo "## $(singularity --version)"
 
 # create subdirectories
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/shell
+else
+  export LOCAL_WFDIR=$EBS_DIR/cwl
+fi
+
 exl mkdir -p $LOCAL_INPUT_DIR
 exl mkdir -p $LOCAL_WFDIR
 

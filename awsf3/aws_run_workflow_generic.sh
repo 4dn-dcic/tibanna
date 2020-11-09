@@ -118,6 +118,8 @@ exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
 exl ln -s /mnt/$EBS_DIR $EBS_DIR
 exl chown -R ubuntu $EBS_DIR
 exl chmod -R +x $EBS_DIR
+exl echo "Mounting finished."
+exl echo "Data EBS file system: $EBS_DEVICE"
 
 
 ### create local outdir under the mounted ebs directory and move log file into that output directory
@@ -131,8 +133,6 @@ exl echo
 exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
 cd ~
-apt-get update
-apt-get install -y unzip libwww-perl libdatetime-perl
 curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip -O
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs

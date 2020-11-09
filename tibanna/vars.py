@@ -33,7 +33,7 @@ if not AWS_REGION:
 # Tibanna AMI info
 AMI_PER_REGION = {
     # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
-    'us-east-1': 'ami-06f7122e89cfbf219',
+    'us-east-1': 'ami-02ae7b71d31f3a24e',
     'ap-south-1' : 'ami-09d95d9217d0cf385',
     'ap-northeast-2' : 'ami-0c41548ca349c7a24',
     'ap-southeast-1' : 'ami-05ed988e6e239f8ab',
@@ -53,11 +53,6 @@ AMI_PER_REGION = {
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 if not AMI_ID:
     raise Exception("AMI for region %s is not supported" % AWS_REGION)
-AMI_ID_CWL_V1 = AMI_ID
-AMI_ID_CWL_DRAFT3 = AMI_ID
-AMI_ID_WDL = AMI_ID
-AMI_ID_SHELL = AMI_ID
-AMI_ID_SNAKEMAKE = AMI_ID
 
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
