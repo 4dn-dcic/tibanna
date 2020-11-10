@@ -638,11 +638,10 @@ class Execution(object):
         str += "JSON_BUCKET_NAME={}\n".format(cfg.json_bucket)
         str += "LOGBUCKET={}\n".format(cfg.log_bucket)
         str += "SCRIPT_URL={}\n".format(cfg.script_url)
-        str += "LANGUAGE={}\n".format(cfg.language)
         str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
         str += "chmod +x $RUN_SCRIPT\n"
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
-        str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL -L $LANGUAGE"
+        str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET"
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:

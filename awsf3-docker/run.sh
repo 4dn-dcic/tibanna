@@ -1,6 +1,5 @@
 #!/bin/bash
 shopt -s extglob
-export LANGUAGE=cwl_draft3
 export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
@@ -14,20 +13,18 @@ printHelpAndExit() {
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-S STATUS: inherited status environment variable, if any"
-    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
     exit "$1"
 }
-while getopts "i:j:l:S:L:a:s:r:g" opt; do
+while getopts "i:j:l:S:a:s:r:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         S) export STATUS=$OPTARG;;  # inherited STATUS env
-        L) export LANGUAGE=$OPTARG;;  # workflow language
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
@@ -107,23 +104,6 @@ exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
 exl echo "## cromwell version $(java -jar cromwell.jar --version | cut -f2 -d ' ')"
 exl echo "## $(singularity --version)"
 
-# create subdirectories
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/wdl
-elif [[ $LANGUAGE == 'snakemake' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/snakemake
-elif [[ $LANGUAGE == 'shell' ]]
-then
-  export LOCAL_WFDIR=$EBS_DIR/shell
-else
-  export LOCAL_WFDIR=$EBS_DIR/cwl
-fi
-
-exl mkdir -p $LOCAL_INPUT_DIR
-exl mkdir -p $LOCAL_WFDIR
-
 
 # set additional profile
 echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
@@ -137,9 +117,23 @@ exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
 
-
-# setting additional env variables
+# setting additional env variables including LANGUAGE and language-related envs.
 exl source $ENV_FILE
+
+# create subdirectories
+if [[ $LANGUAGE == 'wdl' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/wdl
+elif [[ $LANGUAGE == 'snakemake' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/snakemake
+elif [[ $LANGUAGE == 'shell' ]]
+then
+  export LOCAL_WFDIR=$EBS_DIR/shell
+else
+  export LOCAL_WFDIR=$EBS_DIR/cwl
+fi
+exl mkdir -p $LOCAL_WFDIR
 send_log
 
 
@@ -159,6 +153,7 @@ send_log
 exl echo
 exl echo "## Downloading data & reference files from S3"
 exl date 
+exl mkdir -p $LOCAL_INPUT_DIR
 exl cat $DOWNLOAD_COMMAND_FILE
 exle source $DOWNLOAD_COMMAND_FILE 
 exl date
@@ -191,10 +186,11 @@ echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -
 exl echo
 exl echo "## Running CWL/WDL/Snakemake/Shell commands"
 exl echo
-exl echo $(docker info | grep "Operating System")
-exl echo $(docker info | grep "Docker Root Dir")
-exl echo $(docker info | grep "CPUs")
-exl echo $(docker info | grep "Total Memory")
+exl echo "## workflow language: $LANGUAGE"
+exl echo "## $(docker info | grep 'Operating System')"
+exl echo "## $(docker info | grep 'Docker Root Dir')"
+exl echo "## $(docker info | grep 'CPUs')"
+exl echo "## $(docker info | grep 'Total Memory')"
 exl echo
 send_log
 cwd0=$(pwd)

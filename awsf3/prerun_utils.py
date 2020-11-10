@@ -174,6 +174,7 @@ def create_env_def_file(env_filename, runjson, language):
     # env variables set before this script started running.
     app = runjson.Job.App
     with open(env_filename, 'w') as f_env:
+        f_env.write("export LANGUAGE={}\n".format(app.language))
         if language == 'wdl':
             f_env.write("export WDL_URL={}\n".format(app.wdl_url))
             f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))

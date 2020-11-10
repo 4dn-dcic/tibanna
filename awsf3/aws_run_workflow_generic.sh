@@ -1,7 +1,6 @@
 #!/bin/bash
 shopt -s extglob
 export SHUTDOWN_MIN=now
-export LANGUAGE=cwl_draft3
 export PASSWORD=
 export ACCESS_KEY=
 export SECRET_KEY=
@@ -16,7 +15,6 @@ printHelpAndExit() {
     echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
-    echo "-L LANGUAGE : workflow language ('cwl_draft3', 'cwl_v1', 'wdl', 'snakemake', or 'shell') (default cwl_draft3)"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
@@ -25,14 +23,12 @@ printHelpAndExit() {
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:m:j:l:L:u:p:a:s:r:gV:" opt; do
+while getopts "i:m:j:l:p:a:s:r:gV:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
-        L) export LANGUAGE=$OPTARG;;  # workflow language
-        u) ;;  # deprecated SCRIPT_URL option - keep it for now so that we don't get a nonexisting option error for old lambdas.
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
@@ -83,16 +79,15 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 ### start logging
 ### env
 exl echo "## job id: $JOBID"
-exl echo "## tibanna version: $TIBANNA_VERSION"
-exl echo "## awsf image: $AWSF_IMAGE"
-exl echo "## ami id: $(ec2metadata --ami-id)"
 exl echo "## instance type: $(ec2metadata --instance-type)"
 exl echo "## instance id: $(ec2metadata --instance-id)"
 exl echo "## instance region: $INSTANCE_REGION"
+exl echo "## tibanna lambda version: $TIBANNA_VERSION"
+exl echo "## awsf image: $AWSF_IMAGE"
+exl echo "## ami id: $(ec2metadata --ami-id)"
 exl echo "## availability zone: $(ec2metadata --availability-zone)"
 exl echo "## security groups: $(ec2metadata --security-groups)"
 exl echo "## log bucket: $LOGBUCKET"
-exl echo "## workflow language: $LANGUAGE"
 exl echo "## shutdown min: $SHUTDOWN_MIN"
 exl echo
 exl echo "## Starting..."
@@ -158,7 +153,7 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
 ### self-terminate
