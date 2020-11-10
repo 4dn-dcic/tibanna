@@ -33,3 +33,4 @@ head_command() { echo; $@ | head -15; echo; }
 extp head_command top -b -n 1
 send_top
 send_log
+

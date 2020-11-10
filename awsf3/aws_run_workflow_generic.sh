@@ -50,7 +50,6 @@ export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 
 
@@ -86,10 +85,15 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 exl echo "## job id: $JOBID"
 exl echo "## tibanna version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
-exl echo "## instance id: $INSTANCE_ID"
+exl echo "## ami id: $(ec2metadata --ami-id)"
+exl echo "## instance type: $(ec2metadata --instance-type)"
+exl echo "## instance id: $(ec2metadata --instance-id)"
 exl echo "## instance region: $INSTANCE_REGION"
+exl echo "## availability zone: $(ec2metadata --availability-zone)"
+exl echo "## security groups: $(ec2metadata --security-groups)"
 exl echo "## log bucket: $LOGBUCKET"
 exl echo "## workflow language: $LANGUAGE"
+exl echo "## shutdown min: $SHUTDOWN_MIN"
 exl echo
 exl echo "## Starting..."
 exl date
@@ -133,6 +137,7 @@ exl echo
 exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
 cd ~
+apt install -y unzip libwww-perl libdatetime-perl
 curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip -O
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
@@ -153,7 +158,7 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -R $INSTANCE_REGION -I $INSTANCE_ID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -L $LANGUAGE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
 ### self-terminate

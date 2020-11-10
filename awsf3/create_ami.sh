@@ -3,7 +3,6 @@
 # basic updates and installation
 apt update
 apt install -y awscli
-apt install -y unzip libwww-perl libdatetime-perl  # cloudwatch metrics
 apt install -y apt-transport-https \
     ca-certificates \
     curl \

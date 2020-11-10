@@ -28,6 +28,8 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     software-properties-common \
     build-essential \
     libssl-dev \
+    libwww-perl \
+    libdatetime-perl \
     uuid-dev \
     libgpgme11-dev \
     squashfs-tools \
@@ -74,6 +76,7 @@ RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
 RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11
 RUN pip install psutil==5.7.3
 RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
+RUN pip install ec2metadata==2.0.1
 
 # cromwell
 RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \

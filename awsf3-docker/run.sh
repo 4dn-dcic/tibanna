@@ -1,7 +1,5 @@
 #!/bin/bash
 shopt -s extglob
-export INSTANCE_REGION=
-export INSTANCE_ID=
 export LANGUAGE=cwl_draft3
 export ACCESS_KEY=
 export SECRET_KEY=
@@ -11,10 +9,8 @@ export STATUS=0
 export LOGBUCKET=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -R INSTANCE_REGION -I INSTANCE_ID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
+    echo "Usage: ${0##*/} -i JOBID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
     echo "-i JOBID : awsem job id (required)"
-    echo "-R INSTANCE_REGION: region of the current EC2 instance (required)"
-    echo "-I INSTANCE_ID: ID of the current EC2 instance (required)"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-S STATUS: inherited status environment variable, if any"
@@ -25,11 +21,9 @@ printHelpAndExit() {
     echo "-g : use singularity"
     exit "$1"
 }
-while getopts "i:R:I:j:l:S:L:a:s:r:g" opt; do
+while getopts "i:j:l:S:L:a:s:r:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
-        R) export INSTANCE_REGION=$OPTARG;;  # region of the current EC2 instance
-        I) export INSTANCE_ID=$OPTARG;;  # ID of the current EC2 instance
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         S) export STATUS=$OPTARG;;  # inherited STATUS env
@@ -59,6 +53,8 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export TOPFILE=$LOCAL_OUTDIR/$JOBID.top  # now top command output goes to a separate file
 export TOPLATESTFILE=$LOCAL_OUTDIR/$JOBID.top_latest  # this one includes only the latest top command output
+export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
+export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 
@@ -93,7 +89,8 @@ ln -s /mnt/$EBS_DIR $EBS_DIR
 # log the first message from the container
 exl echo
 exl echo "## AWSF Docker container created"
-
+exl echo "## instance id: $INSTANCE_ID"
+exl echo "## instance region: $INSTANCE_REGION"
 
 # docker start
 exl echo
