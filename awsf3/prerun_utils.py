@@ -75,7 +75,7 @@ def create_download_command_list(downloadlist_filename, runjson_input):
                                           profile=v.profile, f=f, unzip=v.unzip)
                 else:
                     target_template = INPUT_DIR + "/%s"
-                    if len(flatten(v.rename)) == 0:
+                    if not v.rename or len(flatten(v.rename)) == 0:
                         rename = create_dim(v.path, empty=True)
                     else:
                         rename = v.rename

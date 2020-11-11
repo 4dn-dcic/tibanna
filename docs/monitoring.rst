@@ -119,6 +119,8 @@ Top and Top_latest
 
 As of version 1.0.0, the top command output is sent to ``<jobid>.top`` and ``<jobid>.top_latest`` in the log bucket. The top command output used to be mixed in the log file (``<jobid>.log``) in previous versions. With ``tibanna log`` command and option ``-t`` (all top output) and ``-T`` (latest only), one can print out the top command output from the running instance. The data is collected at 1-minute intervals and only while the command is running (e.g. not while the input data are downloaded to the EC2 instance or ssh is being configured etc).
 
+To use this feature, the tibanna unicorn must be deployed with tibanna >= 1.0.0 and the locally installed version must be >= 1.0.0 as well.
+
 Below is an example command and the output, executed twice with a 1-minute interval. In this example, the user can see that around 20:49:01, ``unpigz`` was running and around 20:50:01, many ``java`` processes were running (they depend on the command / workflow).
 
 ::
