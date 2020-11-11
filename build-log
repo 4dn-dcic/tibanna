@@ -1,4 +1,4 @@
-Sending build context to Docker daemon  20.48kB
+Sending build context to Docker daemon  20.99kB
 Step 1/27 : FROM ubuntu:20.04
  ---> d70eaf7277ea
 Step 2/27 : MAINTAINER Soo Lee (duplexa@gmail.com)
@@ -53,54 +53,54 @@ Step 18/27 : RUN wget https://github.com/broadinstitute/cromwell/releases/downlo
  ---> Using cache
  ---> e0c212df7e04
 Step 19/27 : COPY run.sh .
- ---> 003d0e5dbf4c
+ ---> Using cache
+ ---> ced3d52d08e5
 Step 20/27 : COPY cron.sh .
- ---> fbdc60529b67
+ ---> Using cache
+ ---> 691ad07e9aea
 Step 21/27 : RUN chmod +x run.sh cron.sh
- ---> Running in 8dc48fa67fe6
-Removing intermediate container 8dc48fa67fe6
- ---> 5a55624b76eb
+ ---> Using cache
+ ---> 8027c2c8bb7d
 Step 22/27 : ARG version
- ---> Running in 1497962f8308
-Removing intermediate container 1497962f8308
- ---> 72a17205ceea
+ ---> Using cache
+ ---> 6c20af94b2a7
 Step 23/27 : RUN pip install tibanna==$version
- ---> Running in 94b2ddb366a8
-Collecting tibanna==1.0.0b6
-  Downloading tibanna-1.0.0b6-py3-none-any.whl (90 kB)
-Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b6) (1.18.11)
-Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b6) (2.22.0)
+ ---> Running in 3dd7919c2a0e
+Collecting tibanna==1.0.0b7
+  Downloading tibanna-1.0.0b7-py3-none-any.whl (95 kB)
 Collecting python-lambda-4dn==0.12.3
   Downloading python_lambda_4dn-0.12.3-py2.py3-none-any.whl (11 kB)
-Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b6) (1.15.0)
-Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b6) (1.25.8)
 Collecting Benchmark-4dn>=0.5.8
   Downloading Benchmark_4dn-0.5.15-py3-none-any.whl (26 kB)
-Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b6) (0.10.0)
-Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b6) (2.8.1)
-Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b6) (0.15.2)
-Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b6) (0.3.3)
-Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b6) (1.14.0)
+Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b7) (1.15.0)
+Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b7) (1.18.11)
+Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b7) (2.22.0)
+Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b7) (1.25.8)
+Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b7) (0.15.2)
+Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b7) (0.10.0)
+Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b7) (0.3.3)
+Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b7) (2.8.1)
+Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b7) (1.14.0)
 Installing collected packages: python-lambda-4dn, Benchmark-4dn, tibanna
-Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b6
-Removing intermediate container 94b2ddb366a8
- ---> 828a59d4b6c6
+Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b7
+Removing intermediate container 3dd7919c2a0e
+ ---> 05ad7f593f20
 Step 24/27 : COPY daemon.json /etc/docker/daemon.json
- ---> a16cabeaa6a5
+ ---> 35b59db495f0
 Step 25/27 : RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
- ---> Running in cccf51650387
+ ---> Running in 9f1629c8578a
 Generating locales (this might take a while)...
   en_US.UTF-8... done
 Generation complete.
-Removing intermediate container cccf51650387
- ---> 234e041e54e8
+Removing intermediate container 9f1629c8578a
+ ---> 1be6db815a6c
 Step 26/27 : ENV LC_ALL=en_US.UTF-8
- ---> Running in d8489fbe5a9e
-Removing intermediate container d8489fbe5a9e
- ---> 72fb152fa951
+ ---> Running in dad527d11e4a
+Removing intermediate container dad527d11e4a
+ ---> 1395fe52c792
 Step 27/27 : CMD ["bash"]
- ---> Running in 05cdfc24ea76
-Removing intermediate container 05cdfc24ea76
- ---> efb284218edc
-Successfully built efb284218edc
+ ---> Running in d695bedd3db0
+Removing intermediate container d695bedd3db0
+ ---> ff56002894d3
+Successfully built ff56002894d3
 Successfully tagged duplexa/tibanna-awsf:pre
