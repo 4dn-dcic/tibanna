@@ -1,7 +1,6 @@
 FROM ubuntu:20.04
 MAINTAINER Soo Lee (duplexa@gmail.com)
 
-ARG version
 
 # general updates & installing necessary Linux components
 ENV DEBIAN_FRONTEND=noninteractive
@@ -86,6 +85,7 @@ RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromw
 COPY run.sh .
 COPY cron.sh .
 RUN chmod +x run.sh cron.sh
+ARG version
 RUN pip install tibanna==$version
 
 # Move default docker daemon location to mounted EBS
