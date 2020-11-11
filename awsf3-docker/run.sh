@@ -102,7 +102,7 @@ exl echo "## $(python --version)"
 exl echo "## $(pip --version | cut -f1,2 -d' ')"
 exl echo "## tibanna awsf3 version $(tibanna --version | cut -f2 -d' ')"
 exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
-exl echo "## cromwell version $(java -jar cromwell.jar --version | cut -f2 -d ' ')"
+exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ')"
 exl echo "## $(singularity --version)"
 
 
@@ -206,7 +206,7 @@ cd $LOCAL_WFDIR
 mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl' ]]
 then
-  exl java -jar ~ubuntu/cromwell/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+  exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
   handle_error $?
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
