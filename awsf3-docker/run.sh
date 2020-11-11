@@ -100,6 +100,7 @@ exl echo
 exl echo "## $(docker --version)"
 exl echo "## $(python --version)"
 exl echo "## $(pip --version | cut -f1,2 -d' ')"
+exl echo "## tibanna awsf3 version $(tibanna --version | cut -f2 -d' ')"
 exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
 exl echo "## cromwell version $(java -jar cromwell.jar --version | cut -f2 -d ' ')"
 exl echo "## $(singularity --version)"
@@ -117,8 +118,10 @@ exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
 
+
 # setting additional env variables including LANGUAGE and language-related envs.
 exl source $ENV_FILE
+
 
 # create subdirectories
 if [[ $LANGUAGE == 'wdl' ]]
@@ -149,6 +152,7 @@ exl echo "## Logging into ECR"
 exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 send_log
 
+
 ### download data & reference files from s3
 exl echo
 exl echo "## Downloading data & reference files from S3"
@@ -159,12 +163,14 @@ exle source $DOWNLOAD_COMMAND_FILE
 exl date
 send_log 
 
+
 ### mount input buckets
 exl echo
 exl echo "## Mounting input S3 buckets"
 exl cat $MOUNT_COMMAND_FILE
 exle source $MOUNT_COMMAND_FILE
 send_log
+
 
 ### just some more logging
 exl echo
@@ -176,11 +182,13 @@ exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
 send_log
 
+
 # set up cronjob for top command
 exl echo
 exl echo "## Setting up and starting cron job for top commands"
 exl service cron start
 echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE" | crontab -
+
 
 ### run command
 exl echo
