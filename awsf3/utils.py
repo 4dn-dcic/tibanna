@@ -405,7 +405,7 @@ def save_total_sizes():
 
 def update_postrun_json_final(json_old, json_new, logfile):
     """Update postrun json with status, time stamps, parsed commands,
-    input/tmp/output sizes""
+    input/tmp/output sizes"""
     prj = read_postrun_json(json_old)
     
     # add commands
@@ -427,7 +427,7 @@ def upload_postrun_json(jsonfile):
     prj = read_postrun_json(json_old)
     bucket = prj.Job.log_bucket_directory
     dest = prj.Job.JOBID + '.postrun.json'
-    if runjson.config.public_postrun_json:
+    if prj.config.public_postrun_json:
         acl = 'public-read'
     else:
         acl = 'private'
