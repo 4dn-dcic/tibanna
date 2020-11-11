@@ -127,7 +127,7 @@ class AwsemRunJsonInputFile(SerializableObject):
 
         # field compatibility check
         errmsg = "Incompatible input for file %s: %s and mount cannot be used together."
-        if len(flatten(self.rename))>0 and self.mount:
+        if self.rename and len(flatten(self.rename))>0 and self.mount:  # the second condition covers e.g. []
             raise MalFormattedRunJsonException(errmsg % (self.path, 'rename'))
         if self.unzip and self.mount:
             raise MalFormattedRunJsonException(errmsg % (self.path, 'unzip'))
