@@ -58,13 +58,17 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
 
 ::
 
-    ## job id: OiHYCN1QoEiP
-    ## tibanna version: 0.19.0
+    ## job id: tvfZLFlt3PBz
+    ## instance type: t3.micro
+    ## instance id: i-0be6e6be5723ecd24
+    ## instance region: us-east-1
+    ## tibanna lambda version: 1.0.0b3
     ## awsf image: duplexa/tibanna-awsf:pre
-    ## instance id: i-0e28e3b5a6c042226
-    ## instance region:
-    ## log bucket: tibanna-output
-    ## workflow language: cwl_v1
+    ## ami id: ami-0a7ddfc7e412ab6e0
+    ## availability zone: us-east-1f
+    ## security groups: default
+    ## log bucket: my-tibanna-test-bucket
+    ## shutdown min: 30
     
     ## Starting...
     Tue Nov  3 20:47:19 UTC 2020
@@ -74,10 +78,11 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
     
     ## Running CWL/WDL/Snakemake/Shell commands
     
-    Operating System: Ubuntu 20.04.1 LTS (containerized)
-    Docker Root Dir: /mnt/data1/docker
-    CPUs: 16
-    Total Memory: 40.18GiB
+    ## workflow language: wdl
+    ## Operating System: Ubuntu 20.04.1 LTS (containerized)
+    ## Docker Root Dir: /mnt/data1/docker
+    ## CPUs: 16
+    ## Total Memory: 40.18GiB
 
     ...
 
