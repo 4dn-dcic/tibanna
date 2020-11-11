@@ -33,7 +33,7 @@ if not AWS_REGION:
 # Tibanna AMI info
 AMI_PER_REGION = {
     # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
-    'us-east-1': 'ami-02ae7b71d31f3a24e',
+    'us-east-1': 'ami-0a7ddfc7e412ab6e0',
     'ap-south-1' : 'ami-09d95d9217d0cf385',
     'ap-northeast-2' : 'ami-0c41548ca349c7a24',
     'ap-southeast-1' : 'ami-05ed988e6e239f8ab',
