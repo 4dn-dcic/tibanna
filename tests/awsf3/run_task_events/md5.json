@@ -1,0 +1,125 @@
+{
+  "jobid": "T1dScyWtr3aG",
+  "args": {
+    "app_name": "md5",
+    "app_version": "0.2.6",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/pipelines-cwl/0.2.6/cwl_awsem_v1/",
+    "cwl_main_filename": "md5.cwl",
+    "cwl_child_filenames": [],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": "",
+    "cwl_version": "v1",
+    "input_parameters": {},
+    "additional_benchmarking_parameters": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
+    "output_target": {
+      "report": "6802fdf3-8094-407b-8e67-b2bce19cfe82/report251286369838"
+    },
+    "secondary_output_target": {},
+    "input_files": {
+      "input_file": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgap-wfoutput",
+        "rename": "",
+        "unzip": "",
+        "mount": false,
+        "object_key": "4bd46ae0-9e85-42d1-b61d-924b8d14a590/GAPFICJTMTXJ.vcf.gz.tbi",
+        "format_if_extra": "vcf_gz_tbi"
+      }
+    },
+    "secondary_files": {},
+    "custom_errors": [],
+    "input_env": {},
+    "alt_cond_output_argnames": {},
+    "language": "cwl_v1",
+    "singularity": false,
+    "cwl_directory_local": "",
+    "dependency": {}
+  },
+  "input_files": [
+    {
+      "workflow_argument_name": "input_file",
+      "bucket_name": "elasticbeanstalk-fourfront-cgap-wfoutput",
+      "uuid": "4bd46ae0-9e85-42d1-b61d-924b8d14a590",
+      "object_key": "GAPFICJTMTXJ.vcf.gz.tbi",
+      "mount": false,
+      "format_if_extra": "vcf_gz_tbi"
+    }
+  ],
+  "workflow_uuid": "c77a117b-9a58-477e-aaa5-291a109a99f6",
+  "output_bucket": "elasticbeanstalk-fourfront-cgap-wfoutput",
+  "parameters": [],
+  "additional_benchmarking_parameters": {},
+  "output_files": [],
+  "push_error_to_end": true,
+  "_tibanna": {
+    "run_id": "GAPFICJTMTXJ.vcf.gz.tbi",
+    "env": "fourfront-cgap",
+    "url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_zebra_tmp_md5:validate_GAPFICJTMTXJ-3a9f107e-8844-4048-b5ab-f6a8da78e21b",
+    "run_type": "md5",
+    "run_name": "validate_GAPFICJTMTXJ-3a9f107e-8844-4048-b5ab-f6a8da78e21b",
+    "exec_arn": "arn:aws:states:us-east-1:643366669028:execution:tibanna_zebra_tmp_md5:validate_GAPFICJTMTXJ-3a9f107e-8844-4048-b5ab-f6a8da78e21b"
+  },
+  "ff_meta": {
+    "institution": "828cd4fe-ebb0-4b36-a94a-d2e3a36cc989",
+    "project": "12a92962-8265-4fc0-b2f8-cf14f05db58b",
+    "awsem_app_name": "md5",
+    "awsem_job_id": "T1dScyWtr3aG",
+    "run_status": "started",
+    "uuid": "6802fdf3-8094-407b-8e67-b2bce19cfe82",
+    "workflow": "c77a117b-9a58-477e-aaa5-291a109a99f6",
+    "run_platform": "AWSEM",
+    "run_url": "https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_zebra_tmp_md5:validate_GAPFICJTMTXJ-3a9f107e-8844-4048-b5ab-f6a8da78e21b",
+    "title": "md5 0.2.6 run 2020-10-22 21:52:42.580241",
+    "input_files": [
+      {
+        "workflow_argument_name": "input_file",
+        "value": "4bd46ae0-9e85-42d1-b61d-924b8d14a590",
+        "ordinal": 1,
+        "dimension": "0",
+        "format_if_extra": "vcf_gz_tbi"
+      }
+    ],
+    "output_files": [
+      {
+        "workflow_argument_name": "report",
+        "type": "Output report file"
+      }
+    ],
+    "parameters": []
+  },
+  "pf_meta": [],
+  "config": {
+    "ebs_size": 10,
+    "ebs_type": "gp2",
+    "ebs_iops": "",
+    "shutdown_min": "now",
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "run_name": "validate_GAPFICJTMTXJ-3a9f107e-8844-4048-b5ab-f6a8da78e21b",
+    "overwrite_input_extra": false,
+    "public_postrun_json": true,
+    "email": false,
+    "instance_type": "t3.micro",
+    "EBS_optimized": true,
+    "cpu": "",
+    "password": "",
+    "spot_duration": "",
+    "availability_zone": "",
+    "security_group": "",
+    "subnet": "",
+    "mem": 0,
+    "spot_instance": false,
+    "behavior_on_capacity_limit": "fail",
+    "cloudwatch_dashboard": false,
+    "root_ebs_size": 8,
+    "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf/",
+    "json_bucket": "tibanna-output",
+    "ami_id": "ami-0f06a8358d41c4b9c",
+    "language": "cwl_v1",
+    "job_tag": "md5",
+    "instance_id": "i-0144007ff5d10eec4",
+    "instance_ip": "34.237.75.79",
+    "start_time": "20201022-21:52:48-UTC"
+  }
+}

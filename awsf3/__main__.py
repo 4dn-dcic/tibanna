@@ -6,7 +6,7 @@ CLI for tibanna awsf3 package
 import argparse
 import inspect
 from tibanna._version import __version__  # for now use the same version as tibanna
-from . import prerun_utils, postrun_utils
+from . import utils, utils
 
 
 PACKAGE_NAME = 'awsf3'
@@ -22,8 +22,11 @@ class Subcommands(object):
         return {
             'decode_run_json': 'decode run json',
             'download_workflow': 'download workflow files',
-            'upload_output_update_json': 'upload output and update json json',
-            'update_postrun_json': 'update postrun json'
+            'update_postrun_json_init': 'update json json with instance ID and file system',
+            'upload_postrun_json': 'upload postrun json file',
+            'upload_output': 'upload output files',
+            'update_postrun_json_output': 'update json json with output paths/target/md5',
+            'update_postrun_json_final': 'update postrun json with status, time stamp etc'
         }
 
     @property
@@ -33,17 +36,24 @@ class Subcommands(object):
                 [{'flag': ["-i", "--input-run-json"], 'help': "input run json file"}],
             'download_workflow':
                 [],
-            'upload_output_update_json':
-                [{'flag': ["-i", "--input-run-json"], 'help': "input run json file"},
+            'update_postrun_json_init':
+                [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
+                 {'flag': ["-o", "--output-json"], 'help': "output postrun json file"}],
+            'update_postrun_json_output':
+                [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
                  {'flag': ["-e", "--execution-metadata-file"],
                   'help': "execution metadata file (output json of cwltool / cromwell)"},
-                 {'flag': ["-l", "--logfile"], 'help': "Tibanna awsem log file"},
                  {'flag': ["-m", "--md5file"], 'help': "text file storing md5 values for output files"},
-                 {'flag': ["-o", "--output-json-file"], 'help': "output postrun json file"},
+                 {'flag': ["-o", "--output-json"], 'help': "output postrun json file"},
                  {'flag': ["-L", "--language"], 'help': "language", 'default': "cwl-draft3"}],
-            'update_postrun_json':
-                [{'flag': ["-i", "--input-run-json"], 'help': "input run json file"},
-                 {'flag': ["-o", "--output-json-file"], 'help': "output postrun json file"}],
+            'upload_postrun_json':
+                [{'flag': ["-i", "--input-json"], 'help': "input postrun json file to upload to s3"}],
+            'upload_output':
+                [{'flag': ["-i", "--input-json"], 'help': "input postrun json file w/ output paths/target info"}],
+            'update_postrun_json_final':
+                [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
+                 {'flag': ["-o", "--output-json"], 'help': "output postrun json file"},
+                 {'flag': ["-l", "--logfile"], 'help': "Tibanna awsem log file"}],
         }
 
 
@@ -55,12 +65,24 @@ def download_workflow():
     prerun_utils.download_workflow()
 
 
-def upload_output_update_json(input_run_json, execution_metadata_file, logfile, md5file, output_json_file, language):
-    postrun_utils.upload_output_update_json(input_run_json, execution_metadata_file, logfile, md5file, output_json_file, language)
+def update_postrun_json_init(input_json, output_json):
+    postrun_utils.update_postrun_json_init(input_json, output_json)
 
 
-def update_postrun_json(input_run_json, output_json_file):
-    postrun_utils.update_postrun_json(input_run_json, output_json_file)
+def update_postrun_json_output(input_json, execution_metadata_file, md5file, output_json, language):
+    utils.update_postrun_json_output(input_json, execution_metadata_file, md5file, output_json, language)
+
+
+def upload_postrun_json(input_json):
+    utils.upload_postrun_json(input_json)
+
+
+def upload_output(input_json):
+    utils.upload_output(input_json)
+
+
+def update_postrun_json_final(input_json, output_json, logfile):
+    utils.update_postrun_json_final(input_json, output_json, logfile)
 
 
 def main(Subcommands=Subcommands):

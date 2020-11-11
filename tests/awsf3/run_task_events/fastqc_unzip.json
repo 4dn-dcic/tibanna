@@ -1,0 +1,43 @@
+{
+  "config": {
+    "ebs_size": 10,
+    "ebs_type": "gp2",
+    "ebs_iops": "",
+    "instance_type": "t3.small",
+    "shutdown_min": 0,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "public_postrun_json": true,
+    "email": false
+  },
+  "jobid": "tyzA7bsM21IE",
+  "args": {
+    "app_name": "fastqc",
+    "app_version": "v2",
+    "cwl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/docker-fastqc/v2/cwl/",
+    "cwl_main_filename": "fastqc.cwl",
+    "cwl_child_filenames": "",
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": "",
+    "cwl_version": "v1",
+    "input_parameters": {},
+    "additional_benchmarking_parameters": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "output_target": {
+      "report_zip": {"output_prefix": "test_zip", "unzip": true}
+    },
+    "secondary_output_target": {},
+    "input_files": {
+      "input_fastq": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgap-files",
+        "rename": "",
+        "unzip": "",
+        "mount": true,
+        "object_key": "9ec06a34-ec71-4e92-8a0c-8107bcb6912a/GAPFIV4YX618.fastq.gz"
+      }
+    },
+    "secondary_files": {},
+    "custom_errors": []
+  }
+}

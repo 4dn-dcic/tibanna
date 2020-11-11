@@ -153,7 +153,7 @@ export PROFILE_OPTIONS_TO_PASS=
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
 fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
 ### self-terminate

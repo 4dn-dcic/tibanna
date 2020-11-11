@@ -8,10 +8,11 @@ export STATUS=0
 export LOGBUCKET=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -j JSON_BUCKET_NAME -l LOGBUCKET [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
+    echo "Usage: ${0##*/} -i JOBID -j JSON_BUCKET_NAME -l LOGBUCKET -f EBS_DEVICE [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
     echo "-i JOBID : awsem job id (required)"
     echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
+    echo "-f EBS_DEVICE : file system (/dev/xxxx) for data EBS"
     echo "-S STATUS: inherited status environment variable, if any"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
@@ -19,11 +20,12 @@ printHelpAndExit() {
     echo "-g : use singularity"
     exit "$1"
 }
-while getopts "i:j:l:S:a:s:r:g" opt; do
+while getopts "i:j:l:f:S:a:s:r:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        f) export EBS_DEVICE=$OPTARG;;  # file system (/dev/xxxx) for data EBS
         S) export STATUS=$OPTARG;;  # inherited STATUS env
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
@@ -117,6 +119,11 @@ exl cd /home/ubuntu/
 exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
+
+
+### add instance ID and file system to postrun json and upload to s3
+exl awsf3 update_postrun_json_init -i $RUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
+exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 
 
 # setting additional env variables including LANGUAGE and language-related envs.
@@ -274,7 +281,9 @@ fi
 
 exl echo
 exl echo "## Uploading output files to S3"
-exl awsf3 upload_output_update_json -i $RUN_JSON_FILE_NAME -e $LOGJSONFILE -l $LOGFILE -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
+exl awsf3 update_postrun_json_output -i $POSTRUN_JSON_FILE_NAME -e $LOGJSONFILE -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
+exl awsf3 upload_output -i $POSTRUN_JSON_FILE_NAME
+exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 send_log
  
 ### updating status
@@ -289,18 +298,9 @@ export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
 export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
 
-# update postrun json
-exl awsf3 update_postrun_json -i $POSTRUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME
-
-# send postrun json to s3
-exl echo
-exl echo "## Uploading postrun json file"
-if [[ $PUBLIC_POSTRUN_JSON == '1' ]]
-then
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME --acl public-read
-else
-  exle aws s3 cp $POSTRUN_JSON_FILE_NAME s3://$LOGBUCKET/$POSTRUN_JSON_FILE_NAME
-fi
+# update & upload postrun json
+exl awsf3 update_postrun_json_final -i $POSTRUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME -l $LOGFILE
+exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 
 # send the final log
 exl echo

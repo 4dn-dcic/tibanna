@@ -3,12 +3,19 @@ import os
 import subprocess
 import boto3
 import re
-from tibanna.awsem import AwsemRunJson
+import time
+from tibanna.awsem import (
+    AwsemRunJson,
+    AwsemPostRunJson,
+    AwsemPostRunJsonOutput
+)
 from tibanna.nnested_array import (
     run_on_nested_arrays2,
     flatten,
     create_dim
 )
+from .target import Target, SecondaryTargetList
+from . import log
 
 
 downloadlist_filename = "download_command_list.txt"
@@ -193,8 +200,6 @@ def create_env_def_file(env_filename, runjson, language):
             f_env.write("export MAIN_CWL={}\n".format(app.main_cwl))
             f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(app.other_cwl_files.split(','))))
         # other env variables
-        f_env.write("export OUTBUCKET={}\n".format(runjson.Job.Output.output_bucket_directory))
-        f_env.write("export PUBLIC_POSTRUN_JSON={}\n".format('1' if runjson.config.public_postrun_json else '0'))
         env_preserv_str = ''
         docker_env_str = ''
         if runjson.Job.Input.Env:
@@ -257,3 +262,174 @@ def download_workflow():
                 targetdir = re.sub('[^/]+$', '', target)
                 subprocess.call(["mkdir", "-p", targetdir])
             s3.download_file(Bucket=bucket_name, Key=key, Filename=target)
+    
+
+def read_md5file(md5file):
+    with open(md5file, 'r') as md5_f:
+        md5dict = dict()
+        for line in md5_f:
+            a = line.split()
+            path = a[1]
+            md5sum = a[0]
+            md5dict[path] = md5sum
+    return md5dict
+
+
+def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=None):
+    """create a dictionary that contains 'path', 'secondaryFiles', 'md5sum' with argnames as keys.
+    For snakemake and shell, returns an empty dictionary (execution_metadata not required).
+    secondaryFiles is added only if the language is cwl.
+    execution_metadata is a dictionary read from wdl/cwl execution log json file.
+    md5dict is a dictionary with key=file path, value=md5sum (optional)."""
+    if language in ['cwl', 'cwl_v1', 'cwl-draft3', 'wdl'] and not execution_metadata:
+        raise Exception("execution_metadata is required for cwl/wdl.")
+    out_meta = dict()
+    if language == 'wdl':
+        for argname, outfile in execution_metadata['outputs'].items():
+            if outfile:
+                out_meta[argname] = {'path': outfile}
+    elif language == 'snakemake' or language == 'shell':
+        out_meta = {}
+    else:  # cwl, cwl_v1, cwl-draft3
+        # read cwl output json file
+        out_meta = execution_metadata
+
+    # add md5
+    if not md5dict:
+        md5dict = {}
+    for of, ofv in out_meta.items():
+        if ofv['path'] in md5dict:
+            ofv['md5sum'] = md5dict[ofv['path']]
+        if 'secondaryFiles' in ofv:
+            for sf in ofv['secondaryFiles']:
+                if sf['path'] in md5dict:
+                    sf['md5sum'] = md5dict[sf['path']]
+
+    return out_meta
+
+
+def read_postrun_json(jsonfile):
+    # read old json file
+    with open(jsonfile, 'r') as json_f:
+        prj = AwsemPostRunJson(**json.load(json_f))
+    return prj
+
+
+def format_postrun_json(prj):
+    return json.dumps(prj.as_dict(), indent=4, sort_keys=True)
+
+
+def write_postrun_json(jsonfile, prj):
+    with open(jsonfile, 'w') as f:
+        f.write(format_postrun_json(prj))
+
+
+def update_postrun_json_init(json_old, json_new):
+    """Update postrun json with just instance ID and filesystem"""
+    # read old json file
+    prj = read_postrun_json(json_old_f)
+
+    # simply add instance ID and file system
+    prj.Job.instance_id = os.getenv('INSTANCE_ID')
+    prj.Job.filesystem = os.getenv('EBS_DEVICE')
+
+    # write to new json file
+    write_postrun_json(json_new, prj)
+
+
+def update_postrun_json_output(json_old, execution_metadata_file, md5file, json_new, language='cwl-draft3'):
+    """Update postrun json with output files"""
+    # read old json file and prepare postrunjson skeleton
+    prj = read_postrun_json(json_old_f)
+
+    # read md5 file
+    md5dict = read_md5file(md5file)
+
+    # read execution metadata file
+    with open(execution_metadata_file, 'r') as f:
+        execution_metadata = json.load(f)
+    output_files = create_output_files_dict(language, execution_metadata, md5dict)
+
+    # create output files for postrun json
+    prj.Job.Output.add_output_files(output_files)
+
+    # write to new json file
+    write_postrun_json(json_new, prj)
+
+
+def upload_output(postrunjson):
+    prj = read_postrun_json(postrunjson)
+    # parsing output_target and uploading output files to output target
+    upload_to_output_target(prj.Job.Output)
+
+
+def upload_to_output_target(prj_out):
+    # parsing output_target and uploading output files to output target
+    output_bucket = prj_out.output_bucket_directory
+    output_argnames = prj_out.output_files.keys()
+    output_target = prj_out.alt_output_target(output_argnames)
+
+    for k in output_target:
+        target = Target(output_bucket)
+
+        # 'file://' output targets
+        target.parse_custom_target(k, output_target[k])
+        if target.is_valid:
+            target.upload_to_s3()
+        else:
+            # legitimate CWL/WDL output targets
+            target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
+            if target.is_valid:
+                target.upload_to_s3()
+                prj_out.output_files[k].add_target(target.dest)
+    
+                # upload secondary files
+                secondary_output_files = prj_out.output_files[k].secondaryFiles
+                if secondary_output_files:
+                    stlist = SecondaryTargetList(output_bucket)
+                    stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
+                    stlist.reorder_by_source([sf.path for sf in secondary_output_files])
+                    for st in stlist.secondary_targets:
+                        st.upload_to_s3()
+                    for i, sf in enumerate(secondary_output_files):
+                        sf.add_target(stlist.secondary_targets[i].dest)
+            else:
+                raise Exception("Failed to upload to output target %s" % k)
+
+
+def save_total_sizes():
+    os.environ['INPUTSIZE'] = subprocess.getoutput('du -csh /data1/input| tail -1 | cut -f1')
+    os.environ['TEMPSIZE'] = subprocess.getoutput('du -csh /data1/tmp*| tail -1 | cut -f1')
+    os.environ['OUTPUTSIZE'] = subprocess.getoutput('du -csh /data1/out| tail -1 | cut -f1')
+
+
+def update_postrun_json_final(json_old, json_new, logfile):
+    """Update postrun json with status, time stamps, parsed commands,
+    input/tmp/output sizes""
+    prj = read_postrun_json(json_old)
+    
+    # add commands
+    log_content = log.read_logfile_by_line(logfile)
+    prj.add_commands(log.parse_commands(log_content))
+
+    # add end time, status, instance_id
+    prj.Job.end_time = time.strftime("%Y%m%d-%H:%M:%S-%Z")
+    prj.Job.status = os.getenv('JOB_STATUS')
+    prj.Job.total_input_size = os.getenv('INPUTSIZE')
+    prj.Job.total_tmp_size = os.getenv('TEMPSIZE')
+    prj.Job.total_output_size = os.getenv('OUTPUTSIZE')
+    
+    # write to new json file
+    write_postrun_json(json_new, prj)
+
+
+def upload_postrun_json(jsonfile):
+    prj = read_postrun_json(json_old)
+    bucket = prj.Job.log_bucket_directory
+    dest = prj.Job.JOBID + '.postrun.json'
+    if runjson.config.public_postrun_json:
+        acl = 'public-read'
+    else:
+        acl = 'private'
+    s3 = boto3.client('s3')
+    s3.put_object(ACL=acl, Body=format_postrun_json(prj).encode('utf-8'), Bucket=bucket, Key=dest)
