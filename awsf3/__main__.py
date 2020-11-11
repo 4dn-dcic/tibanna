@@ -6,7 +6,7 @@ CLI for tibanna awsf3 package
 import argparse
 import inspect
 from tibanna._version import __version__  # for now use the same version as tibanna
-from . import utils, utils
+from . import utils
 
 
 PACKAGE_NAME = 'awsf3'
@@ -58,15 +58,15 @@ class Subcommands(object):
 
 
 def decode_run_json(input_run_json):
-    prerun_utils.decode_run_json(input_run_json)
+    utils.decode_run_json(input_run_json)
 
 
 def download_workflow():
-    prerun_utils.download_workflow()
+    utils.download_workflow()
 
 
 def update_postrun_json_init(input_json, output_json):
-    postrun_utils.update_postrun_json_init(input_json, output_json)
+    utils.update_postrun_json_init(input_json, output_json)
 
 
 def update_postrun_json_output(input_json, execution_metadata_file, md5file, output_json, language):
