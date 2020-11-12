@@ -279,8 +279,8 @@ class AwsemPostRunJson(AwsemRunJson):
         if log:
             self.log = log
 
-    def add_commands(self, commands):
-        self.commands = commands
+    def add_commands(self, command):
+        self.command = command
 
     def create_Job(self, Job, strict=True):
         self.Job = AwsemPostRunJsonJob(**Job, strict=strict)
