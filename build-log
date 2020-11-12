@@ -65,42 +65,42 @@ Step 22/27 : ARG version
  ---> Using cache
  ---> 6c20af94b2a7
 Step 23/27 : RUN pip install tibanna==$version
- ---> Running in 7ed74e3c5968
-Collecting tibanna==1.0.0b10
-  Downloading tibanna-1.0.0b10-py3-none-any.whl (95 kB)
-Collecting python-lambda-4dn==0.12.3
-  Downloading python_lambda_4dn-0.12.3-py2.py3-none-any.whl (11 kB)
-Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b10) (1.18.11)
-Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b10) (1.25.8)
-Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b10) (2.22.0)
+ ---> Running in 7491800127b5
+Collecting tibanna==1.0.0b11
+  Downloading tibanna-1.0.0b11-py3-none-any.whl (96 kB)
+Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b11) (1.15.0)
+Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b11) (1.25.8)
 Collecting Benchmark-4dn>=0.5.8
   Downloading Benchmark_4dn-0.5.15-py3-none-any.whl (26 kB)
-Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b10) (1.15.0)
-Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b10) (0.15.2)
-Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b10) (0.10.0)
-Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b10) (2.8.1)
-Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b10) (0.3.3)
-Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b10) (1.14.0)
-Installing collected packages: python-lambda-4dn, Benchmark-4dn, tibanna
-Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b10
-Removing intermediate container 7ed74e3c5968
- ---> e4a1ecdb6c9a
+Collecting python-lambda-4dn==0.12.3
+  Downloading python_lambda_4dn-0.12.3-py2.py3-none-any.whl (11 kB)
+Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b11) (1.18.11)
+Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b11) (2.22.0)
+Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b11) (0.10.0)
+Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b11) (0.3.3)
+Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b11) (0.15.2)
+Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b11) (2.8.1)
+Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b11) (1.14.0)
+Installing collected packages: Benchmark-4dn, python-lambda-4dn, tibanna
+Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b11
+Removing intermediate container 7491800127b5
+ ---> 49347a94f9a5
 Step 24/27 : COPY daemon.json /etc/docker/daemon.json
- ---> f419987a8e42
+ ---> 98076c75dbb9
 Step 25/27 : RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
- ---> Running in 28d829bc8cb1
+ ---> Running in 6be742aa363b
 Generating locales (this might take a while)...
   en_US.UTF-8... done
 Generation complete.
-Removing intermediate container 28d829bc8cb1
- ---> 934c7316e3b2
+Removing intermediate container 6be742aa363b
+ ---> fb3629c414e6
 Step 26/27 : ENV LC_ALL=en_US.UTF-8
- ---> Running in 0df16a70aa3d
-Removing intermediate container 0df16a70aa3d
- ---> 18c628fd039d
+ ---> Running in f6f24217f306
+Removing intermediate container f6f24217f306
+ ---> e13cab275405
 Step 27/27 : CMD ["bash"]
- ---> Running in 97845f31bf7a
-Removing intermediate container 97845f31bf7a
- ---> 6817af12678c
-Successfully built 6817af12678c
+ ---> Running in 70d293563355
+Removing intermediate container 70d293563355
+ ---> 039aefd52fef
+Successfully built 039aefd52fef
 Successfully tagged duplexa/tibanna-awsf:pre
