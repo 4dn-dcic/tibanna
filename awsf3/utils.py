@@ -425,7 +425,7 @@ def update_postrun_json_final(json_old, json_new, logfile):
 
 def upload_postrun_json(jsonfile):
     prj = read_postrun_json(jsonfile)
-    bucket = prj.Job.log_bucket_directory
+    bucket = prj.Job.Log.log_bucket_directory
     dest = prj.Job.JOBID + '.postrun.json'
     if prj.config.public_postrun_json:
         acl = 'public-read'
