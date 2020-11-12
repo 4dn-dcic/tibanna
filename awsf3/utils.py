@@ -417,6 +417,7 @@ def update_postrun_json_final(json_old, json_new, logfile=None):
 def postrun_json_final(prj, logfile=None):
     # add commands
     if logfile:
+        print("parsing commands from log file...")
         log_content = log.read_logfile_by_line(logfile)
         prj.update(commands=log.parse_commands(log_content))
     # add end time, status, instance_id
