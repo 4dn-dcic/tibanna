@@ -17,7 +17,7 @@ def parse_commands(log_content):
     line = next(log_content)
     while(line):
         line = line.strip('\n')
-        if line.startswith('[job') and line.endswith('docker \\'):
+        if '[job' in line and line.endswith('docker \\'):
             line = 'docker \\'  # remove the other stuff
             in_command = True
         if in_command:
