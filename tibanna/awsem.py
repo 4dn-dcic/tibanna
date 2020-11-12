@@ -43,12 +43,11 @@ class AwsemRunJsonJob(SerializableObject):
         self.JOBID = JOBID
         if not Log:
             Log = {}
-        self.Log = Log
+        self.Log = AwsemRunJsonLog(**Log)
 
         # format check
         if self.App:
             self.Input.check_input_files_key_compatibility(self.App.language)
-
 
     def create_Output(self, Output):
         self.Output = AwsemPostRunJsonOutput(**Output)
@@ -63,6 +62,11 @@ class AwsemRunJsonJob(SerializableObject):
             return ''
         else:
             return datetime.strptime(self.start_time, AWSEM_TIME_STAMP_FORMAT)
+
+
+class AwsemRunJsonLog(SerializableObject):
+    def __init__(self, log_bucket_directory=None):
+        self.log_bucket_directory = log_bucket_directory
 
 
 class AwsemRunJsonApp(SerializableObject):
