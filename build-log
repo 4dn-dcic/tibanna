@@ -53,54 +53,19 @@ Step 18/27 : RUN wget https://github.com/broadinstitute/cromwell/releases/downlo
  ---> Using cache
  ---> e0c212df7e04
 Step 19/27 : COPY run.sh .
+ ---> Using cache
  ---> b740b69c5867
 Step 20/27 : COPY cron.sh .
+ ---> Using cache
  ---> 1eb993ba8888
 Step 21/27 : RUN chmod +x run.sh cron.sh
- ---> Running in 1600d9e8d00b
-Removing intermediate container 1600d9e8d00b
+ ---> Using cache
  ---> 3966bec4b89e
 Step 22/27 : ARG version
- ---> Running in ab4758e8a4d2
-Removing intermediate container ab4758e8a4d2
+ ---> Using cache
  ---> 067070e180d4
 Step 23/27 : RUN pip install tibanna==$version
- ---> Running in d0c82b19a299
-Collecting tibanna==1.0.0b11
-  Downloading tibanna-1.0.0b11-py3-none-any.whl (96 kB)
-Collecting python-lambda-4dn==0.12.3
-  Downloading python_lambda_4dn-0.12.3-py2.py3-none-any.whl (11 kB)
-Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b11) (1.25.8)
-Collecting Benchmark-4dn>=0.5.8
-  Downloading Benchmark_4dn-0.5.15-py3-none-any.whl (26 kB)
-Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b11) (2.22.0)
-Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b11) (1.18.11)
-Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b11) (1.15.0)
-Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b11) (0.15.2)
-Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b11) (0.10.0)
-Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b11) (2.8.1)
-Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b11) (0.3.3)
-Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b11) (1.14.0)
-Installing collected packages: python-lambda-4dn, Benchmark-4dn, tibanna
-Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b11
-Removing intermediate container d0c82b19a299
- ---> fc3b1b7c61ae
-Step 24/27 : COPY daemon.json /etc/docker/daemon.json
- ---> 3f7119757f7c
-Step 25/27 : RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
- ---> Running in 7b16b4bdf95e
-Generating locales (this might take a while)...
-  en_US.UTF-8... done
-Generation complete.
-Removing intermediate container 7b16b4bdf95e
- ---> 2020407815a5
-Step 26/27 : ENV LC_ALL=en_US.UTF-8
- ---> Running in 73604df98059
-Removing intermediate container 73604df98059
- ---> 760a37ecc717
-Step 27/27 : CMD ["bash"]
- ---> Running in c4edf25cbf67
-Removing intermediate container c4edf25cbf67
- ---> fe895fa1cd6b
-Successfully built fe895fa1cd6b
-Successfully tagged duplexa/tibanna-awsf:pre
+ ---> Running in 5c80a6ee8661
+[91mERROR: Could not find a version that satisfies the requirement tibanna==1.0.0b12 (from versions: 0.8.0b1, 0.8.0b2, 0.8.0b3, 0.8.0b4, 0.8.0b5, 0.8.0, 0.8.1, 0.8.2, 0.8.3, 0.8.4, 0.8.5, 0.8.6, 0.8.7, 0.8.8, 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, 0.9.5b1, 0.9.5, 0.9.6b1, 0.9.6, 0.9.7b1, 0.9.7, 0.10.0, 0.10.1, 0.10.2, 0.11.0, 0.11.1, 0.11.2, 0.11.3, 0.12.0, 0.12.1, 0.13.1, 0.14.1, 0.15.0b0, 0.15.0, 0.15.1, 0.15.2, 0.15.3, 0.15.4, 0.15.5, 0.15.6, 0.15.7b0, 0.16.0, 0.17.0b0, 0.17.0b1, 0.17.0b2, 0.17.0b3, 0.17.0b4, 0.17.0b5, 0.17.0b6, 0.17.0, 0.17.1, 0.17.2b1, 0.17.2b2, 0.17.2, 0.17.3, 0.18.0, 0.18.1, 0.18.2, 0.18.3, 1.0.0b1, 1.0.0b2, 1.0.0b3, 1.0.0b4, 1.0.0b5, 1.0.0b6, 1.0.0b7, 1.0.0b8, 1.0.0b9, 1.0.0b10, 1.0.0b11)
+[0m[91mERROR: No matching distribution found for tibanna==1.0.0b12
+[0m
