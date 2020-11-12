@@ -418,13 +418,13 @@ def postrun_json_final(prj_job, logfile=None):
     # add commands
     if logfile:
         log_content = log.read_logfile_by_line(logfile)
-        prj_job.update(commands=log.parse_commands(log_content))
+        prj_job.update(command=log.parse_commands(log_content))
     # add end time, status, instance_id
-    prj_job.update(end_time = time.strftime("%Y%m%d-%H:%M:%S-%Z"))
-    prj_job.update(status = os.getenv('JOB_STATUS'))
-    prj_job.update(total_input_size = os.getenv('INPUTSIZE'))
-    prj_job.update(total_tmp_size = os.getenv('TEMPSIZE'))
-    prj_job.update(total_output_size = os.getenv('OUTPUTSIZE'))
+    prj_job.update(end_time=time.strftime("%Y%m%d-%H:%M:%S-%Z"))
+    prj_job.update(status=os.getenv('JOB_STATUS'))
+    prj_job.update(total_input_size=os.getenv('INPUTSIZE'))
+    prj_job.update(total_tmp_size=os.getenv('TEMPSIZE'))
+    prj_job.update(total_output_size=os.getenv('OUTPUTSIZE'))
     
 
 def upload_postrun_json(jsonfile):
