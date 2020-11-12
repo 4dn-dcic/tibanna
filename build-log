@@ -53,54 +53,54 @@ Step 18/27 : RUN wget https://github.com/broadinstitute/cromwell/releases/downlo
  ---> Using cache
  ---> e0c212df7e04
 Step 19/27 : COPY run.sh .
- ---> Using cache
- ---> b740b69c5867
+ ---> b2577506a16d
 Step 20/27 : COPY cron.sh .
- ---> Using cache
- ---> 1eb993ba8888
+ ---> 2c25cb244066
 Step 21/27 : RUN chmod +x run.sh cron.sh
- ---> Using cache
- ---> 3966bec4b89e
+ ---> Running in 97a5b114ae34
+Removing intermediate container 97a5b114ae34
+ ---> 95ec6522efff
 Step 22/27 : ARG version
- ---> Using cache
- ---> 067070e180d4
+ ---> Running in 98ee6f3ad8c0
+Removing intermediate container 98ee6f3ad8c0
+ ---> 6a04826c9050
 Step 23/27 : RUN pip install tibanna==$version
- ---> Running in 6c81015d6f05
+ ---> Running in 9437cb5566cc
 Collecting tibanna==1.0.0b17
   Downloading tibanna-1.0.0b17-py3-none-any.whl (96 kB)
-Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b17) (1.25.8)
-Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b17) (2.22.0)
 Requirement already satisfied: botocore>=1.12.1 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b17) (1.18.11)
 Requirement already satisfied: boto3>=1.9.0 in /usr/local/lib/python3.8/dist-packages (from tibanna==1.0.0b17) (1.15.0)
-Collecting Benchmark-4dn>=0.5.8
-  Downloading Benchmark_4dn-0.5.15-py3-none-any.whl (26 kB)
 Collecting python-lambda-4dn==0.12.3
   Downloading python_lambda_4dn-0.12.3-py2.py3-none-any.whl (11 kB)
-Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b17) (2.8.1)
+Requirement already satisfied: requests>=2.22.0 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b17) (2.22.0)
+Requirement already satisfied: urllib3>=1.24 in /usr/lib/python3/dist-packages (from tibanna==1.0.0b17) (1.25.8)
+Collecting Benchmark-4dn>=0.5.8
+  Downloading Benchmark_4dn-0.5.15-py3-none-any.whl (26 kB)
 Requirement already satisfied: jmespath<1.0.0,>=0.7.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b17) (0.10.0)
+Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /usr/local/lib/python3.8/dist-packages (from botocore>=1.12.1->tibanna==1.0.0b17) (2.8.1)
 Requirement already satisfied: s3transfer<0.4.0,>=0.3.0 in /usr/local/lib/python3.8/dist-packages (from boto3>=1.9.0->tibanna==1.0.0b17) (0.3.3)
 Requirement already satisfied: docutils>=0.14 in /usr/local/lib/python3.8/dist-packages (from python-lambda-4dn==0.12.3->tibanna==1.0.0b17) (0.15.2)
 Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil<3.0.0,>=2.1->botocore>=1.12.1->tibanna==1.0.0b17) (1.14.0)
-Installing collected packages: Benchmark-4dn, python-lambda-4dn, tibanna
+Installing collected packages: python-lambda-4dn, Benchmark-4dn, tibanna
 Successfully installed Benchmark-4dn-0.5.15 python-lambda-4dn-0.12.3 tibanna-1.0.0b17
-Removing intermediate container 6c81015d6f05
- ---> 7553ed5760a6
+Removing intermediate container 9437cb5566cc
+ ---> 3c5f85da20fc
 Step 24/27 : COPY daemon.json /etc/docker/daemon.json
- ---> 4cd978fa6e1d
+ ---> 93aad81d6ebd
 Step 25/27 : RUN locale-gen "en_US.UTF-8" && update-locale LC_ALL="en_US.UTF-8"
- ---> Running in c069f11277ed
+ ---> Running in 03e40b9ec76c
 Generating locales (this might take a while)...
   en_US.UTF-8... done
 Generation complete.
-Removing intermediate container c069f11277ed
- ---> ce9918a50772
+Removing intermediate container 03e40b9ec76c
+ ---> 0440a281820c
 Step 26/27 : ENV LC_ALL=en_US.UTF-8
- ---> Running in cfa68d31a28f
-Removing intermediate container cfa68d31a28f
- ---> c2e086f605eb
+ ---> Running in 84a00d191452
+Removing intermediate container 84a00d191452
+ ---> eda586ff1562
 Step 27/27 : CMD ["bash"]
- ---> Running in 348022b9498f
-Removing intermediate container 348022b9498f
- ---> fe0e14b09108
-Successfully built fe0e14b09108
+ ---> Running in 13c874ef1328
+Removing intermediate container 13c874ef1328
+ ---> 7c8d37bb5986
+Successfully built 7c8d37bb5986
 Successfully tagged duplexa/tibanna-awsf:pre
