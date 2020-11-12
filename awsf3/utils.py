@@ -327,7 +327,7 @@ def write_postrun_json(jsonfile, prj):
 def update_postrun_json_init(json_old, json_new):
     """Update postrun json with just instance ID and filesystem"""
     # read old json file
-    prj = read_postrun_json(json_old_f)
+    prj = read_postrun_json(json_old)
 
     # simply add instance ID and file system
     prj.Job.instance_id = os.getenv('INSTANCE_ID')
@@ -340,7 +340,7 @@ def update_postrun_json_init(json_old, json_new):
 def update_postrun_json_output(json_old, execution_metadata_file, md5file, json_new, language='cwl-draft3'):
     """Update postrun json with output files"""
     # read old json file and prepare postrunjson skeleton
-    prj = read_postrun_json(json_old_f)
+    prj = read_postrun_json(json_old)
 
     # read md5 file
     md5dict = read_md5file(md5file)
@@ -424,7 +424,7 @@ def update_postrun_json_final(json_old, json_new, logfile):
 
 
 def upload_postrun_json(jsonfile):
-    prj = read_postrun_json(json_old)
+    prj = read_postrun_json(jsonfile)
     bucket = prj.Job.log_bucket_directory
     dest = prj.Job.JOBID + '.postrun.json'
     if prj.config.public_postrun_json:
