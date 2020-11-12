@@ -408,18 +408,19 @@ def update_postrun_json_final(json_old, json_new, logfile=None):
     input/tmp/output sizes"""
     prj = read_postrun_json(json_old)
     
-    postrun_json_final(prj.Job, logfile=logfile)
+    postrun_json_final(prj, logfile=logfile)
     
     # write to new json file
     write_postrun_json(json_new, prj)
 
 
-def postrun_json_final(prj_job, logfile=None):
+def postrun_json_final(prj, logfile=None):
     # add commands
     if logfile:
         log_content = log.read_logfile_by_line(logfile)
-        prj_job.update(command=log.parse_commands(log_content))
+        prj.update(commands=log.parse_commands(log_content))
     # add end time, status, instance_id
+    prj_job = prj.Job
     prj_job.update(end_time=time.strftime("%Y%m%d-%H:%M:%S-%Z"))
     prj_job.update(status=os.getenv('JOB_STATUS'))
     prj_job.update(total_input_size=os.getenv('INPUTSIZE'))

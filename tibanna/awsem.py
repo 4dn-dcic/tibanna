@@ -16,9 +16,7 @@ class AwsemRunJson(SerializableObject):
         if not Job:
             Job = {}
         self.create_Job(Job, strict=strict)
-        if not config:
-            config = {}
-        self.config = Config(**config)
+        self.config = Config(**config) if config else None
 
     def create_Job(self, Job, strict=True):
         self.Job = AwsemRunJsonJob(**Job, strict=strict)

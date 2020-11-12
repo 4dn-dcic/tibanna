@@ -27,7 +27,7 @@ from tibanna.awsem import (
     AwsemRunJson,
     AwsemRunJsonInput,
     AwsemPostRunJsonOutput,
-    AwsemPostRunJsonJob
+    AwsemPostRunJson
 )
 from tests.awsf3.conftest import upload_test_bucket
 
@@ -230,7 +230,7 @@ def test_create_download_command_list_args(mocker):
                 'arg3': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
@@ -252,7 +252,7 @@ def test_create_download_command_list_args_rename(mocker):
                 'arg3': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'arg4': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False, 'rename': 'renamed_file2'}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
@@ -274,7 +274,7 @@ def test_create_download_command_list_args_array(mocker):
                 'arg2': {'path': [['anotherfilea', 'anotherfileb'], ['anotherfilec']], 'dir': 'somebucket', 'mount': False,
                          'rename': ''}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
@@ -298,7 +298,7 @@ def test_create_download_command_list_file_uri(mocker):
                 'file:///data1/input/haha': {'path': 'whatever', 'dir': 'mount_this_bucket', 'mount': True},
                 'file:///data1/input/file3': {'path': 'somefile3', 'dir': 'somebucket2', 'mount': False}}
     runjson_input = AwsemRunJsonInput(**{'Input_files_data': rji_dict})
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     create_download_command_list(dl_command_filename, runjson_input)
 
     with open(dl_command_filename, 'r') as f:
@@ -314,31 +314,31 @@ def test_create_download_command_list_file_uri(mocker):
 
 
 def test_create_download_cmd_unzip_bz2(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     dc_cmd = create_download_cmd('somebucket', 'somefile.bz2', 'sometarget.bz2', '', 'bz2')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.bz2 sometarget.bz2; bzip2 -d sometarget.bz2; '
 
 
 def test_create_download_cmd_unzip_bz2(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', '', 'gz')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz; gunzip sometarget.gz'
 
 
 def test_create_download_cmd_nounzip(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', '', '')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz; '
 
 
 def test_create_download_cmd_nounzip_profile(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='File')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='File')
     dc_cmd = create_download_cmd('somebucket', 'somefile.gz', 'sometarget.gz', 'user1', '')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somefile.gz sometarget.gz --profile user1; '
 
 
 def test_create_download_cmd_unzip_bz2_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'bz2')
     assert dc_cmd == 'aws s3 cp s3://somebucket/somedir sometarget; bzip2 -d sometarget.bz2'
     right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
@@ -348,7 +348,7 @@ def test_create_download_cmd_unzip_bz2_dir(mocker):
 
 
 def test_create_download_cmd_unzip_bz2_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', 'gz')
     right_cmd = ('aws s3 cp --recursive s3://somebucket/somedir sometarget; '
                  'for f in `find sometarget -type f`; '
@@ -357,13 +357,13 @@ def test_create_download_cmd_unzip_bz2_dir(mocker):
 
 
 def test_create_download_cmd_nounzip_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', '', '')
     assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget; '
 
 
 def test_create_download_cmd_nounzip_profile_dir(mocker):
-    mocker.patch('awsf3.prerun_utils.determine_key_type', return_value='Folder')
+    mocker.patch('awsf3.utils.determine_key_type', return_value='Folder')
     dc_cmd = create_download_cmd('somebucket', 'somedir', 'sometarget', 'user1', '')
     assert dc_cmd == 'aws s3 cp --recursive s3://somebucket/somedir sometarget --profile user1; '
 
@@ -477,9 +477,9 @@ def test_postrun_json_final():
     os.environ['TEMPSIZE'] = '56M'
     os.environ['OUTPUTSIZE'] = '78K'
 
-    prj_job = AwsemPostRunJsonJob(**{"App": {"App_name": "repliseq-parta"}, "JOBID": "alw3r78v3"}, strict=False)
-    postrun_json_final(prj_job)
-    d_job = prj_job.as_dict()
+    prj = AwsemPostRunJson(**{"Job": {"App": {"App_name": "repliseq-parta"}, "JOBID": "alw3r78v3"}}, strict=False)
+    postrun_json_final(prj)
+    d_job = prj.Job.as_dict()
 
     for k in ['end_time', 'status', 'instance_id', 'total_input_size',
               'total_tmp_size', 'total_output_size', 'App', 'JOBID']:
