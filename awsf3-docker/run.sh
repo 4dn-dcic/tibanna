@@ -275,11 +275,13 @@ if [[ $LANGUAGE == 'wdl' ]]
 then
   exl echo
   exl echo "## Uploading WDL log files to S3"
+  cwd0=$(pwd)
   cd $LOCAL_WFDIR
   find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
 -name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
 | xargs tar -zcvf debug.tar.gz
   exle aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+  cd $cwd0
 fi
 
 exl echo
