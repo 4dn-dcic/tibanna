@@ -9,17 +9,32 @@ from .nnested_array import flatten
 
 
 class AwsemRunJson(SerializableObject):
-    def __init__(self, Job, config):
-        self.create_Job(Job)
+    def __init__(self, Job=None, config=None, strict=True):
+        if strict:
+            if not Job or not config:
+                raise MalFormattedPostRunJsonException("Job and config are required fields.")
+        if not Job:
+            Job = {}
+        self.create_Job(Job, strict=strict)
+        if not config:
+            config = {}
         self.config = Config(**config)
 
-    def create_Job(self, Job):
-        self.Job = AwsemRunJsonJob(**Job)
+    def create_Job(self, Job, strict=True):
+        self.Job = AwsemRunJsonJob(**Job, strict=strict)
 
 
 class AwsemRunJsonJob(SerializableObject):
-    def __init__(self, App, Input, Output=None, JOBID='', start_time=None, Log=None):
+    def __init__(self, App=None, Input=None, Output=None, JOBID='',
+                 start_time=None, Log=None, strict=True):
+        if strict:
+            if not App or not Input or not Output or not JOBID:
+                raise MalFormattedRunJsonException
+        if not App:
+            App = {}
         self.App = AwsemRunJsonApp(**App)
+        if not Input:
+            Input = {}
         self.Input = AwsemRunJsonInput(**Input)
         if not Output:
             Output = {}
@@ -31,7 +46,8 @@ class AwsemRunJsonJob(SerializableObject):
         self.Log = Log
 
         # format check
-        self.Input.check_input_files_key_compatibility(self.App.language)
+        if self.App:
+            self.Input.check_input_files_key_compatibility(self.App.language)
 
 
     def create_Output(self, Output):
@@ -249,8 +265,11 @@ class AwsemRunJsonOutput(SerializableObject):
 
 
 class AwsemPostRunJson(AwsemRunJson):
-    def __init__(self, Job, config, commands=None,log=None):
-        super().__init__(Job, config)
+    def __init__(self, Job=None, config=None, commands=None,log=None, strict=True):
+        if strict:
+            if not Job or not config:
+                raise MalFormattedPostRunJsonException("Job and config are required fields.")
+        super().__init__(Job, config, strict=strict)
         if commands:
             self.commands = commands
         if log:
@@ -259,21 +278,22 @@ class AwsemPostRunJson(AwsemRunJson):
     def add_commands(self, commands):
         self.commands = commands
 
-    def add_filesystem(self, filesystem):
-        self.Job.add_filesystem(filesystem)
-
-    def create_Job(self, Job):
-        self.Job = AwsemPostRunJsonJob(**Job)
+    def create_Job(self, Job, strict=True):
+        self.Job = AwsemPostRunJsonJob(**Job, strict=strict)
 
 
 class AwsemPostRunJsonJob(AwsemRunJsonJob):
-    def __init__(self, App, Input, Output, JOBID,
-                 start_time, end_time=None, status=None, Log=None,
+    def __init__(self, App=None, Input=None, Output=None, JOBID='',
+                 start_time=None, end_time=None, status=None, Log=None,
                  total_input_size=None, total_output_size=None, total_tmp_size=None,
                  # older postrunjsons don't have these fields
                  filesystem='', instance_id='',
-                 Metrics=None):
-        super().__init__(App, Input, Output, JOBID, start_time, Log)
+                 Metrics=None, strict=True):
+        if strict:
+            if not App or not Input or not Output or not JOBID or not start_time:
+                errmsg = "App, Input, Output, JOBID and start_time are required fields"
+                raise MalFormattedPostRunJsonException(errmsg)
+        super().__init__(App, Input, Output, JOBID, start_time, Log, strict=strict)
         self.end_time = end_time
         self.status = status
         self.filesystem = filesystem

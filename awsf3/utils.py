@@ -403,25 +403,29 @@ def save_total_sizes():
     os.environ['OUTPUTSIZE'] = subprocess.getoutput('du -csh /data1/out| tail -1 | cut -f1')
 
 
-def update_postrun_json_final(json_old, json_new, logfile):
+def update_postrun_json_final(json_old, json_new, logfile=None):
     """Update postrun json with status, time stamps, parsed commands,
     input/tmp/output sizes"""
     prj = read_postrun_json(json_old)
     
-    # add commands
-    log_content = log.read_logfile_by_line(logfile)
-    prj.add_commands(log.parse_commands(log_content))
-
-    # add end time, status, instance_id
-    prj.Job.end_time = time.strftime("%Y%m%d-%H:%M:%S-%Z")
-    prj.Job.status = os.getenv('JOB_STATUS')
-    prj.Job.total_input_size = os.getenv('INPUTSIZE')
-    prj.Job.total_tmp_size = os.getenv('TEMPSIZE')
-    prj.Job.total_output_size = os.getenv('OUTPUTSIZE')
+    postrun_json_final(prj.Job, logfile=logfile)
     
     # write to new json file
     write_postrun_json(json_new, prj)
 
+
+def postrun_json_final(prj_job, logfile=None):
+    # add commands
+    if logfile:
+        log_content = log.read_logfile_by_line(logfile)
+        prj_job.update(commands=log.parse_commands(log_content))
+    # add end time, status, instance_id
+    prj_job.update(end_time = time.strftime("%Y%m%d-%H:%M:%S-%Z"))
+    prj_job.update(status = os.getenv('JOB_STATUS'))
+    prj_job.update(total_input_size = os.getenv('INPUTSIZE'))
+    prj_job.update(total_tmp_size = os.getenv('TEMPSIZE'))
+    prj_job.update(total_output_size = os.getenv('OUTPUTSIZE'))
+    
 
 def upload_postrun_json(jsonfile):
     prj = read_postrun_json(jsonfile)
