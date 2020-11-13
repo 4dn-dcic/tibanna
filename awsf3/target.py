@@ -31,11 +31,18 @@ class Target(object):
         else:
             return False
 
+    @property
+    def is_custom_target(self, target_key):
+        if target_key.startswith('file://'):
+            return True
+        else:
+            return False
+
     def parse_custom_target(self, target_key, target_value):
         """takes a key-value pair from output_target, parses the content.
         This function only handles custom cases where the key starts with file://
         (not valid CWL/WDL targets)"""
-        if target_key.startswith('file://'):
+        if self.is_custom_target(target_key):
             self.source = target_key.replace('file://', '')
             if not target_value:
                 raise Exception("output_target missing for target %s" % target_key)
@@ -44,11 +51,12 @@ class Target(object):
     def parse_cwl_target(self, target_key, target_value, prj_output_files):
         """takes a key-value pair from output_target, parses the content.
         prj_output_files is a dictionary that contains {<argname>: <AwsemPostRunJsonOutputFile object>"""
-        self.source = prj_output_files[target_key].path
-        if target_value:
-            self.parse_target_value(target_value)
-        else:
-            self.dest = self.source_name  # do not change file name
+        if not self.is_custom_target(target_key):
+            self.source = prj_output_files[target_key].path
+            if target_value:
+                self.parse_target_value(target_value)
+            else:
+                self.dest = self.source_name  # do not change file name
 
     def parse_target_value(self, target_value):
         """target value can be a dictionary with following keys: object_key, bucket_name, object_prefix, unzip.

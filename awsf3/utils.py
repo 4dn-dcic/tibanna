@@ -373,9 +373,12 @@ def upload_to_output_target(prj_out):
         target = Target(output_bucket)
 
         # 'file://' output targets
-        target.parse_custom_target(k, output_target[k])
-        if target.is_valid:
-            target.upload_to_s3()
+        if target.is_custom_target(k):
+            target.parse_custom_target(k, output_target[k])
+            if target.is_valid:
+                target.upload_to_s3()
+            else:
+                raise Exception("Invalid target %s -> %s: failed to upload" % k, output_target[k])
         else:
             # legitimate CWL/WDL output targets
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
