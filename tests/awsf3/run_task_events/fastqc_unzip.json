@@ -25,7 +25,10 @@
     "additional_benchmarking_parameters": {},
     "output_S3_bucket": "soos-4dn-bucket",
     "output_target": {
-      "report_zip": {"output_prefix": "test_zip", "unzip": true}
+      "report_zip": {
+        "object_prefix": "test_zip",
+        "unzip": true
+      }
     },
     "secondary_output_target": {},
     "input_files": {
