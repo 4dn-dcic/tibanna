@@ -220,14 +220,12 @@ then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
   docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE;
   handle_error $?
-  LOGJSONFILE='-'  # no file
 elif [[ $LANGUAGE == 'shell' ]]
 then
   exl echo "running $COMMAND in docker image $CONTAINER_IMAGE..."
   exl echo "docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c \"$COMMAND\""
   docker run --privileged -v $EBS_DIR:$EBS_DIR:rw -w $LOCAL_WFDIR $DOCKER_ENV_OPTION $CONTAINER_IMAGE sh -c "$COMMAND" >> $LOGFILE 2>> $LOGFILE;
   handle_error $?
-  LOGJSONFILE='-'  # no file
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
@@ -286,7 +284,14 @@ fi
 
 exl echo
 exl echo "## Uploading output files to S3"
-exl awsf3 update_postrun_json_output -i $POSTRUN_JSON_FILE_NAME -e $LOGJSONFILE -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
+elif [[ $LANGUAGE == 'snakemake' || $LANGUAGE == 'shell' ]]
+then
+    # no log json file is produced
+    export LOGJSON_OPTION = ''
+else
+    export LOGJSON_OPTION = '-e $LOGJSONFILE'
+fi
+exl awsf3 update_postrun_json_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
 exl awsf3 upload_output -i $POSTRUN_JSON_FILE_NAME
 exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 send_log
