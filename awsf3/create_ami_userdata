@@ -19,3 +19,4 @@ apt update # update again with an updated repository
 apt install -y docker-ce  # installing docker-ce
 usermod -aG docker ubuntu  # making it available for non-root user ubuntu
 
+reboot
