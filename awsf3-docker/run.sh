@@ -284,7 +284,7 @@ fi
 
 exl echo
 exl echo "## Uploading output files to S3"
-elif [[ $LANGUAGE == 'snakemake' || $LANGUAGE == 'shell' ]]
+if [[ $LANGUAGE == 'snakemake' || $LANGUAGE == 'shell' ]]
 then
     # no log json file is produced
     export LOGJSON_OPTION = ''
