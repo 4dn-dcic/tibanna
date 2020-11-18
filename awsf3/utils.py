@@ -374,15 +374,19 @@ def upload_to_output_target(prj_out):
 
         # 'file://' output targets
         if target.is_custom_target(k):
+            print("processing custom (path-based) target %s" % k)
             target.parse_custom_target(k, output_target[k])
             if target.is_valid:
+                print("Target is valid. Uploading..")
                 target.upload_to_s3()
             else:
                 raise Exception("Invalid target %s -> %s: failed to upload" % k, output_target[k])
         else:
             # legitimate CWL/WDL output targets
+            print("processing argument-based target %s" % k)
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
             if target.is_valid:
+                print("Target is valid. Uploading..")
                 target.upload_to_s3()
                 prj_out.output_files[k].add_target(target.dest)
     
