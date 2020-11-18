@@ -31,7 +31,6 @@ class Target(object):
         else:
             return False
 
-    @property
     def is_custom_target(self, target_key):
         if target_key.startswith('file://'):
             return True
