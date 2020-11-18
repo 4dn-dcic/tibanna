@@ -346,8 +346,11 @@ def update_postrun_json_output(json_old, execution_metadata_file, md5file, json_
     md5dict = read_md5file(md5file)
 
     # read execution metadata file
-    with open(execution_metadata_file, 'r') as f:
-        execution_metadata = json.load(f)
+    if execution_metadata_file:
+        with open(execution_metadata_file, 'r') as f:
+            execution_metadata = json.load(f)
+    else:
+        execution_metadata = None
     output_files = create_output_files_dict(language, execution_metadata, md5dict)
 
     # create output files for postrun json
