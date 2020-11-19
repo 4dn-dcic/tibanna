@@ -145,7 +145,7 @@ Snakemake-specific
 :container_image:
     - This is a required field.
     - It is highly recommended to use the official Snakemake Docker image
-      (``quay.io/snakemake/snakemake``)
+      (``snakemake/snakemake``)
 
 :command:
     - This is a required field.

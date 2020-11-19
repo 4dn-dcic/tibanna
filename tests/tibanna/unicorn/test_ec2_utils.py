@@ -225,7 +225,7 @@ def test_execution_mem_cpu():
                            'snakemake_main_filename': 'Snakefile',
                            'snakemake_directory_url': 'someurl',
                            'command': 'snakemake',
-                           'container_image': 'quay.io/snakemake/snakemake'},
+                           'container_image': 'snakemake/snakemake'},
                   'config': {'log_bucket': 'tibanna-output', 'mem': 1, 'cpu': 1}}
     execution = Execution(input_dict)
     unicorn_dict = execution.input_dict
@@ -437,7 +437,7 @@ def test_execution_missing_field5():
                            'output_S3_bucket': 'somebucket',
                            'snakemake_main_filename': 'Snakefile',
                            'snakemake_directory_url': 'someurl',
-                           'container_image': 'quay.io/snakemake/snakemake'},
+                           'container_image': 'snakemake/snakemake'},
                   'config': {'log_bucket': 'tibanna-output', 'mem': 1, 'cpu': 1}}
     with pytest.raises(MissingFieldInInputJsonException) as ex:
         Execution(input_dict)

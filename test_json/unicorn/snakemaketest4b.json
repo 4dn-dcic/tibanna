@@ -6,7 +6,7 @@
     "command": "snakemake",
     "snakemake_main_filename": "Snakefile",
     "snakemake_directory_local": "tests/files/snakemake4/",
-    "container_image": "quay.io/snakemake/snakemake",
+    "container_image": "snakemake/snakemake",
     "output_target": {},
     "secondary_output_target": {},
     "secondary_files": {},

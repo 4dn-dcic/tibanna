@@ -6,7 +6,7 @@
     "command": "snakemake step2 step3",
     "snakemake_main_filename": "Snakefile",
     "snakemake_directory_local": "tests/files/snakemake2b/",
-    "container_image": "quay.io/snakemake/snakemake",
+    "container_image": "snakemake/snakemake",
     "output_target": {
       "file:///data1/snakemake/lalala": "snakemake-test-output-lalala",
       "file:///data1/snakemake/lalalala": "snakemake-test-output-lalalala"
