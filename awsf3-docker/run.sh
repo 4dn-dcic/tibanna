@@ -287,9 +287,9 @@ exl echo "## Uploading output files to S3"
 if [[ $LANGUAGE == 'snakemake' || $LANGUAGE == 'shell' ]]
 then
     # no log json file is produced
-    export LOGJSON_OPTION = ''
+    export LOGJSON_OPTION=''
 else
-    export LOGJSON_OPTION = '-e $LOGJSONFILE'
+    export LOGJSON_OPTION='-e $LOGJSONFILE'
 fi
 exl awsf3 update_postrun_json_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
 exl awsf3 upload_output -i $POSTRUN_JSON_FILE_NAME

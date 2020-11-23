@@ -34,7 +34,8 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     squashfs-tools \
     libseccomp-dev \
     pkg-config \
-    openjdk-8-jre-headless
+    openjdk-8-jre-headless \
+    nodejs
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 RUN ln -s /usr/bin/pip3 /usr/bin/pip
