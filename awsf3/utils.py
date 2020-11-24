@@ -363,8 +363,7 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
     write_postrun_json(json_new, prj)
 
 
-def upload_output(postrunjson):
-    prj = read_postrun_json(postrunjson)
+def upload_output(prj):
     # parsing output_target and uploading output files to output target
     upload_to_output_target(prj.Job.Output)
 
