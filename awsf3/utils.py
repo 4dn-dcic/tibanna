@@ -337,7 +337,7 @@ def update_postrun_json_init(json_old, json_new):
     write_postrun_json(json_new, prj)
 
 
-def update_postrun_json_output(json_old, execution_metadata_file, md5file, json_new, language='cwl-draft3'):
+def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new, language='cwl-draft3'):
     """Update postrun json with output files"""
     # read old json file and prepare postrunjson skeleton
     prj = read_postrun_json(json_old)
@@ -355,6 +355,9 @@ def update_postrun_json_output(json_old, execution_metadata_file, md5file, json_
 
     # create output files for postrun json
     prj.Job.Output.add_output_files(output_files)
+
+    # upload output to S3 (this also updates postrun json)
+    upload_output(prj)
 
     # write to new json file
     write_postrun_json(json_new, prj)

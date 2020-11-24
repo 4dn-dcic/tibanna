@@ -291,8 +291,7 @@ then
 else
     export LOGJSON_OPTION="-e $LOGJSONFILE"
 fi
-exl awsf3 update_postrun_json_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
-exl awsf3 upload_output -i $POSTRUN_JSON_FILE_NAME
+exl awsf3 update_postrun_json_upload_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
 exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 send_log
  

@@ -24,8 +24,7 @@ class Subcommands(object):
             'download_workflow': 'download workflow files',
             'update_postrun_json_init': 'update json json with instance ID and file system',
             'upload_postrun_json': 'upload postrun json file',
-            'upload_output': 'upload output files',
-            'update_postrun_json_output': 'update json json with output paths/target/md5',
+            'update_postrun_json_upload_output': 'update json json with output paths/target/md5 and upload outupt',
             'update_postrun_json_final': 'update postrun json with status, time stamp etc'
         }
 
@@ -39,7 +38,7 @@ class Subcommands(object):
             'update_postrun_json_init':
                 [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
                  {'flag': ["-o", "--output-json"], 'help': "output postrun json file"}],
-            'update_postrun_json_output':
+            'update_postrun_json_upload_output':
                 [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
                  {'flag': ["-e", "--execution-metadata-file"],
                   'help': "execution metadata file (output json of cwltool / cromwell)"},
@@ -48,8 +47,6 @@ class Subcommands(object):
                  {'flag': ["-L", "--language"], 'help': "language", 'default': "cwl-draft3"}],
             'upload_postrun_json':
                 [{'flag': ["-i", "--input-json"], 'help': "input postrun json file to upload to s3"}],
-            'upload_output':
-                [{'flag': ["-i", "--input-json"], 'help': "input postrun json file w/ output paths/target info"}],
             'update_postrun_json_final':
                 [{'flag': ["-i", "--input-json"], 'help': "input run/postrun json file"},
                  {'flag': ["-o", "--output-json"], 'help': "output postrun json file"},
@@ -69,16 +66,12 @@ def update_postrun_json_init(input_json, output_json):
     utils.update_postrun_json_init(input_json, output_json)
 
 
-def update_postrun_json_output(input_json, execution_metadata_file, md5file, output_json, language):
-    utils.update_postrun_json_output(input_json, execution_metadata_file, md5file, output_json, language)
+def update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language):
+    utils.update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language)
 
 
 def upload_postrun_json(input_json):
     utils.upload_postrun_json(input_json)
-
-
-def upload_output(input_json):
-    utils.upload_output(input_json)
 
 
 def update_postrun_json_final(input_json, output_json, logfile):
