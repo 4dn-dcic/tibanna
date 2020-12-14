@@ -645,7 +645,7 @@ class Execution(object):
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
         str += " -l $LOGBUCKET"
         str += " -V {version}".format(version=__version__)
-        str += " -A {awsf_image}".format(awsf_image=self.awsf_image)
+        str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:
