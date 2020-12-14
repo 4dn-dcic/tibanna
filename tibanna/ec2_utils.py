@@ -19,7 +19,8 @@ from .vars import (
     AMI_ID,
     DYNAMODB_TABLE,
     DEFAULT_ROOT_EBS_SIZE,
-    TIBANNA_AWSF_DIR
+    TIBANNA_AWSF_DIR,
+    DEFAULT_AWSF_IMAGE
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -266,7 +267,7 @@ class Config(SerializableObject):
         if not hasattr(self, "ebs_size"):
             self.ebs_size = 0  # unspecified by default
         if not hasattr(self, "ebs_type"):
-            self.ebs_type = 'gp2'
+            self.ebs_type = 'gp3'
         if not hasattr(self, "shutdown_min"):
             self.shutdown_min = 'now'
         if not hasattr(self, "spot_instance"):
@@ -280,6 +281,8 @@ class Config(SerializableObject):
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
         if not hasattr(self, 'root_ebs_size'):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
+        if not hasattr(self, 'awsf_image'):
+            self.awsf_image = DEFAULT_AWSF_IMAGE
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
@@ -635,20 +638,20 @@ class Execution(object):
         str += "JOBID={}\n".format(self.jobid)
         str += "RUN_SCRIPT=aws_run_workflow_generic.sh\n"
         str += "SHUTDOWN_MIN={}\n".format(cfg.shutdown_min)
-        str += "JSON_BUCKET_NAME={}\n".format(cfg.json_bucket)
         str += "LOGBUCKET={}\n".format(cfg.log_bucket)
         str += "SCRIPT_URL={}\n".format(cfg.script_url)
         str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
         str += "chmod +x $RUN_SCRIPT\n"
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
-        str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET"
+        str += " -l $LOGBUCKET"
+        str += " -V {version}".format(version=__version__)
+        str += " -A {awsf_image}".format(awsf_image=self.awsf_image)
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:
             str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
         if hasattr(cfg, 'singularity') and cfg.singularity:
             str += " -g"
-        str += " -V {version}".format(version=__version__)
         str += "\n"
         print(str)
         return(str)
@@ -680,7 +683,7 @@ class Execution(object):
                                               {'DeviceName': '/dev/sda1',
                                                'Ebs': {'DeleteOnTermination': True,
                                                        'VolumeSize': self.cfg.root_ebs_size,
-                                                       'VolumeType': 'gp2'}}]})
+                                                       'VolumeType': 'gp3'}}]})
         if self.cfg.ebs_iops:    # io1 type, specify iops
             largs["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops
         if self.cfg.ebs_size >= 16000:

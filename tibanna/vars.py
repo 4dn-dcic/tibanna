@@ -3,6 +3,7 @@ import boto3
 import sys
 from datetime import datetime
 from dateutil.tz import tzutc
+from ._version import __version__
 
 
 if boto3.session.Session().get_credentials() is None:
@@ -96,6 +97,8 @@ EBS_MOUNT_POINT = '/mnt/data1'
 # Default root EBS size
 DEFAULT_ROOT_EBS_SIZE = 8
 
+# Default awsf image
+DEFAULT_AWSF_IMAGE = '4dndcic/tibanna-awsf:' + __version__
 
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''

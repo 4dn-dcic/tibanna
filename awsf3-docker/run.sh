@@ -1,35 +1,24 @@
 #!/bin/bash
 shopt -s extglob
-export ACCESS_KEY=
-export SECRET_KEY=
-export REGION=
 export SINGULARITY_OPTION=
 export STATUS=0
 export LOGBUCKET=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -j JSON_BUCKET_NAME -l LOGBUCKET -f EBS_DEVICE [-S STATUS] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
+    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -f EBS_DEVICE [-S STATUS] [-g]"
     echo "-i JOBID : awsem job id (required)"
-    echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-f EBS_DEVICE : file system (/dev/xxxx) for data EBS"
     echo "-S STATUS: inherited status environment variable, if any"
-    echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
-    echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
-    echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
     exit "$1"
 }
-while getopts "i:j:l:f:S:a:s:r:g" opt; do
+while getopts "i:l:f:S:g" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
-        j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         f) export EBS_DEVICE=$OPTARG;;  # file system (/dev/xxxx) for data EBS
         S) export STATUS=$OPTARG;;  # inherited STATUS env
-        a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
-        s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
-        r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION=--singularity;;  # use singularity
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
@@ -84,6 +73,8 @@ fi
 # so mount /mnt/data1/ instead and create a symlink.
 ln -s /mnt/$EBS_DIR $EBS_DIR
 
+# Transferring profile info
+ln -s /home/ubuntu/.aws /root/.aws
 
 # log the first message from the container
 exl echo
@@ -108,15 +99,11 @@ exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version 
 exl echo "## $(singularity --version)"
 
 
-# set additional profile
-echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
-
-
 # getting run.json file
 exl echo
 exl echo "## Downloading and parsing run.json file"
 exl cd /home/ubuntu/
-exl aws s3 cp s3://$JSON_BUCKET_NAME/$RUN_JSON_FILE_NAME .
+exl aws s3 cp s3://$LOGBUCKET/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
 

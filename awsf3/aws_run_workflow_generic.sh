@@ -1,40 +1,40 @@
 #!/bin/bash
 shopt -s extglob
+export TIBANNA_VERSION=
+export AWSF_IMAGE=
 export SHUTDOWN_MIN=now
 export PASSWORD=
 export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION_TO_PASS=
-export TIBANNA_VERSION=
-export AWSF_IMAGE=duplexa/tibanna-awsf:pre
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID [-m SHUTDOWN_MIN] -j JSON_BUCKET_NAME -l LOGBUCKET [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-V VERSION]"
+    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g]"
     echo "-i JOBID : awsem job id (required)"
-    echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
-    echo "-j JSON_BUCKET_NAME : bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
+    echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
+    echo "-A AWSF_IMAGE : docker image name for awsf3 (e.g. 4dn-dcic/tibanna-awsf3:1.0.0)"
+    echo "-m SHUTDOWN_MIN : Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging. (default 'now')"
     echo "-p PASSWORD : Password for ssh connection for user ec2-user (if not set, no password-based ssh)"
     echo "-a ACCESS_KEY : access key for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
-    echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
     exit "$1"
 }
-while getopts "i:m:j:l:p:a:s:r:gV:" opt; do
+while getopts "i:m:l:p:a:s:r:gV:A:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
-        m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
-        j) export JSON_BUCKET_NAME=$OPTARG;;  # bucket for sending run.json file. This script gets run.json file from this bucket. e.g.: 4dn-aws-pipeline-run-json
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
+        A) export AWSF_IMAGE=$OPTARG;;  # docker image name for awsf3 (e.g. 4dn-dcic/tibanna-awsf3:1.0.0)
+        m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
         p) export PASSWORD=$OPTARG ;;  # Password for ssh connection for user ec2-user
         a) export ACCESS_KEY=$OPTARG;;  # access key for certain s3 bucket access
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
-        V) export TIBANNA_VERSION=$OPTARG;;  # version of tibanna used in the run_task lambda that launched this instance
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -66,11 +66,22 @@ export LOGFILE=$LOGFILE1
 cd /home/ubuntu/
 touch $LOGFILE 
 
+
 # make sure log bucket is defined
 if [ -z "$LOGBUCKET" ]; then
-    exl echo "Error: log bucket not defined"  # just add this message to the log file, which may help debugging by ssh
-    shutdown -h $SHUTDOWN_MIN
+    exl echo "Error: log bucket not defined";  # just add this message to the log file, which may help debugging by ssh
+    shutdown -h $SHUTDOWN_MIN;
 fi
+# tibanna version and awsf image should also be defined
+if [ -z "$TIBANNA_VERSION" ]; then
+    exl echo "Error: tibanna lambda version is not defined";
+    handle_error;
+fi
+if [ -z "$AWSF_IMAGE" ]; then
+    exl echo "Error: awsf docker image is not defined";
+    handle_error;
+fi
+
 
 ### send job start message to S3
 touch $JOBID.job_started
@@ -140,20 +151,21 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 cat cloudwatch.jobs | crontab -
 cd $cwd0
 
+# set additional profile
+if [ -z $REGION ]; then
+  export REGION=$INSTANCE_REGION
+fi
+if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
+  echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
+fi
+
 # send log before starting docker
 exl echo
 exl echo "## Running dockerized awsf scripts"
 send_log
 
 # run dockerized awsf scripts
-if [ -z $REGION ]; then
-  export REGION=$INSTANCE_REGION
-fi
-export PROFILE_OPTIONS_TO_PASS=
-if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
-  export PROFILE_OPTIONS_TO_PASS="-a $ACCESS_KEY -s $SECRET_KEY -r $REGION"
-fi
-docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -j $JSON_BUCKET_NAME -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $PROFILE_OPTIONS_TO_PASS $SINGULARITY_OPTION_TO_PASS
+docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S STATUS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
 ### self-terminate
