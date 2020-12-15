@@ -30,7 +30,7 @@ send_log(){  /usr/local/bin/aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: sen
 # add margin to a command
 space_command() { echo; $@; echo; }
 
-extp space_command top -b -n 1 -i -c
+extp space_command top -b -n 1 -i -c -w512
 send_top
 send_log
 
