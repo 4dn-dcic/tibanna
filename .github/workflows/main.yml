@@ -54,7 +54,7 @@ jobs:
           invoke test --no-flake
           
       - name: QA (awsf)
-        if: $ {{ matrix.python_version == '2.7' }}
+        if: ${{ matrix.python_version == '2.7' }}
         env:
           AWS_ACCOUNT_NUMBER: 643366669028
           TIBANNA_AWS_REGION: us-east-1
