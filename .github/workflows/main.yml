@@ -1,0 +1,63 @@
+# Build for Tibanna
+
+name: CI
+
+# Controls when the action will run. 
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python_version: [2.7, 3.6]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Install Deps
+        run: |
+          pip install six
+          python setup.py install
+          pip install -U -r requirements-test.txt
+          
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      
+      - name: QA (unit)
+        if: ${{ matrix.python_version == '3.6' }}
+        env:
+          AWS_ACCOUNT_NUMBER: 643366669028  # XXX: should this really be here? Its already in .travis.yml so no use omitting now...
+          TIBANNA_AWS_REGION: us-east-1
+          AWS_S3_ROLE_NAME: S3_access
+        run: |
+          invoke test --no-flake
+          
+      - name: QA (awsf)
+        if: $ {{ matrix.python_version == '2.7' }}
+        env:
+          AWS_ACCOUNT_NUMBER: 643366669028
+          TIBANNA_AWS_REGION: us-east-1
+          AWS_S3_ROLE_NAME: S3_access
+        run: |
+          ./tests/awsf/test.sh
