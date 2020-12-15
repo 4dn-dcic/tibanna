@@ -22,6 +22,9 @@ class Top(object):
 
     """
 
+    # These commands are excluded from top analysis
+    exclude_list = ['top', 'docker', 'dockerd', 'cron', 'containerd', 'goofys-latest, cwltool']
+
     def __init__(self, contents):
         self.processes = dict()
         self.timestamps = []
@@ -52,7 +55,7 @@ class Top(object):
     def should_skip_process(self, process):
         """if the process should be skipped (excluded) return True.
         e.g. the top command itself is excluded."""
-        if process.command.split()[0] == 'top':
+        if process.command.split()[0] in self.exclude_list:
             return True
         return False
 
