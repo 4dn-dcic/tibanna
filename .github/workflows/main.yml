@@ -46,18 +46,10 @@ jobs:
       
       - name: QA (unit)
         if: ${{ matrix.python_version == '3.6' }}
-        env:
-          AWS_ACCOUNT_NUMBER: 643366669028  # XXX: should this really be here? Its already in .travis.yml so no use omitting now...
-          TIBANNA_AWS_REGION: us-east-1
-          AWS_S3_ROLE_NAME: S3_access
         run: |
           invoke test --no-flake
           
       - name: QA (awsf)
         if: ${{ matrix.python_version == '2.7' }}
-        env:
-          AWS_ACCOUNT_NUMBER: 643366669028
-          TIBANNA_AWS_REGION: us-east-1
-          AWS_S3_ROLE_NAME: S3_access
         run: |
           ./tests/awsf/test.sh
