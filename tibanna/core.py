@@ -413,7 +413,7 @@ class API(object):
 
     def log(self, exec_arn=None, job_id=None, exec_name=None, sfn=None,
             postrunjson=False, runjson=False, top=False, top_latest=False,
-            logbucket=None, quiet=False):
+            inputjson=False, logbucket=None, quiet=False):
         if postrunjson:
             suffix = '.postrun.json'
         elif runjson:
@@ -422,6 +422,8 @@ class API(object):
             suffix = '.top'
         elif top_latest:
             suffix = '.top_latest'
+        elif inputjson:
+            suffix = '.input.json'
         else:
             suffix = '.log'
         if not sfn:
@@ -633,7 +635,7 @@ class API(object):
             input_json_template['_tibanna']['run_name'] = input_json_template['_tibanna']['run_name'][:-36]
             input_json_template['config']['run_name'] = input_json_template['_tibanna']['run_name']
 
-    def rerun(self, exec_arn, sfn=None,
+    def rerun(self, exec_arn=None, job_id=None, sfn=None,
               override_config=None, app_name_filter=None,
               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
               overwrite_input_extra=None, key_name=None, name=None):
@@ -644,10 +646,13 @@ class API(object):
         then rerun only if it matches app_name
         """
         if not sfn:
-            sfn = self.default_stepfunction_name
-        client = boto3.client('stepfunctions')
-        res = client.describe_execution(executionArn=exec_arn)
-        input_json_template = json.loads(res['input'])
+            sfn = self.default_stepfunction_name  # this is a target sfn
+        if not exec_arn and job_id:
+            input_json_template = json.loads(self.log(job_id=job_id, inputjson=True))
+        else:
+            client = boto3.client('stepfunctions')
+            res = client.describe_execution(executionArn=exec_arn)
+            input_json_template = json.loads(res['input'])
         # filter by app_name
         if app_name_filter:
             if 'app_name' not in input_json_template:

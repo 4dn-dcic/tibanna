@@ -27,10 +27,10 @@ extp(){ $@ > $TOPLATESTFILE; cat $TOPLATESTFILE >> $TOPFILE; } ## usage: extp co
 send_top(){  /usr/local/bin/aws s3 cp $TOPFILE s3://$LOGBUCKET; /usr/local/bin/aws s3 cp $TOPLATESTFILE s3://$LOGBUCKET; }  ## usage: send_top (no argument)
 send_log(){  /usr/local/bin/aws s3 cp $LOGFILE s3://$LOGBUCKET; }  ## usage: send_log (no argument)
 
-# head of a command - for avoiding a pipe, also give some margin
+# add margin to a command
 space_command() { echo; $@; echo; }
 
-extp space_command top -b -n 1 -i -c -w 20000
+extp space_command top -b -n 1 -i -c
 send_top
 send_log
 

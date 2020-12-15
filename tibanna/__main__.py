@@ -130,6 +130,8 @@ class Subcommands(object):
             'rerun':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to rerun"},
+                 {'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to rerun (alternative to --exec-arn/-e)"},
                  {'flag': ["-s", "--sfn"],
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
@@ -357,11 +359,11 @@ def info(job_id):
     """prints out information about a job"""
     print(json.dumps(API().info(job_id), indent=True))
 
-def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
+def rerun(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
           instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
           overwrite_input_extra=None, key_name=None, name=None):
     """ rerun a specific job"""
-    API().rerun(exec_arn, sfn=sfn,
+    API().rerun(exec_arn=exec_arn, job_id=job_id, sfn=sfn,
                 app_name_filter=app_name_filter, instance_type=instance_type, shutdown_min=shutdown_min,
                 ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
                 overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)

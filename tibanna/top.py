@@ -2,7 +2,7 @@ class Top(object):
     """class TopSeries stores the information of a series of top commands
 
     ::
-        top -b -n1 [-i] [-c -w 20000]
+        top -b -n1 [-i] [-c]
 
     over short intervals to monitor the same set of processes over time. 
 
