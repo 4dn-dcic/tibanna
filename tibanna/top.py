@@ -23,7 +23,7 @@ class Top(object):
     """
 
     # These commands are excluded from top analysis
-    exclude_list = ['top', 'docker', 'dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool']
+    exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool']
 
     def __init__(self, contents):
         self.processes = dict()
