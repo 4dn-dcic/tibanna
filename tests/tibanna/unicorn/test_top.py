@@ -1,4 +1,6 @@
+import os
 from tibanna import top
+
 
 top_contents = """
 
@@ -24,6 +26,7 @@ KiB Swap:        0 total,        0 free,        0 used. 10002531+avail Mem
 16962 root      20   0 36.456g 0.011t  19372 S  92.8  9.9 125:11.21 java -jar somejar.jar
 17919 ubuntu    20   0   40676   3828   3144 R   5.2  0.0   0:00.01 top -b -n1 -c -i -w 10000
 """
+
 
 def test_top():
     top1 = top.Top(top_contents)
@@ -66,3 +69,73 @@ def test_top():
     assert top1.total_cpu_per_command('bwa mem') == 70.0 + 0
     assert top1.total_mem_per_command('java -jar somejar.jar') == 8.9 + 9.9
     assert top1.total_mem_per_command('bwa mem') == 13.0 + 0
+
+def test_write_to_tsv():
+    top1 = top.Top(top_contents)
+    test_tsv_file = 'some_tsv_file'
+    top1.write_to_csv(test_tsv_file, delimiter='\t', base=1)
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 3
+    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[1] == '1\t93.8\t70.0'
+    assert lines[2] == '2\t92.8\t0'
+
+    top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', colname_for_timestamps='intervals', base=1)
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 3
+    assert lines[0] == 'intervals\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[1] == '1\t8.9\t13.0'
+    assert lines[2] == '2\t9.9\t0'
+
+    top1.timestamps[1] = '18:57:37'  # 2 minute interval
+    top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', base=0, timestamp_start='18:54:37')
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 5
+    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[1] == '0\t0\t0'
+    assert lines[2] == '1\t8.9\t13.0'
+    assert lines[3] == '2\t0\t0'
+    assert lines[4] == '3\t9.9\t0'
+
+    top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', base=1, timestamp_start='18:56:37', timestamp_end='18:58:37')
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 4
+    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[1] == '1\t0\t0'
+    assert lines[2] == '2\t9.9\t0'
+    assert lines[3] == '3\t0\t0'
+
+    top1.write_to_csv(test_tsv_file, metric='mem', base=1, timestamp_start='18:54:37', timestamp_end='18:56:37')
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 4
+    assert lines[0] == 'timepoints,\"java -jar somejar.jar\",\"bwa mem\"'
+    assert lines[1] == '1,0,0'
+    assert lines[2] == '2,8.9,13.0'
+    assert lines[3] == '3,0,0'
+
+    top1.write_to_csv(test_tsv_file, metric='mem', base=1, timestamp_start='18:53:02', timestamp_end='18:56:22')
+    with open(test_tsv_file) as f:
+        content = f.read()
+    lines = content.splitlines()
+    assert len(lines) == 5
+    assert lines[0] == 'timepoints,\"java -jar somejar.jar\",\"bwa mem\"'
+    assert lines[1] == '1,0,0'
+    assert lines[2] == '2,0,0'
+    assert lines[3] == '3,8.9,13.0'
+    assert lines[4] == '4,0,0'
+
+    os.remove(test_tsv_file)
+
+def test_wrap_in_double_quotes():
+    haha = top.Top.wrap_in_double_quotes('haha')
+    assert haha == '"haha"'

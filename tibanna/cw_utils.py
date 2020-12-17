@@ -481,6 +481,9 @@ class TibannaResource(object):
                   width: 85%%;
                   background-color: #2C6088;
                 }
+                .barplot_legend {
+                  height: 2000px;
+                }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
                     fill: none;
@@ -616,6 +619,12 @@ class TibannaResource(object):
                       <h2>Disk Usage (/data1)</h2>
                     </div>
                       <div id="chart_disk"> </div>
+                    <div class="header">
+                      <h2>CPU and Memory Usage Per Process (from Top command)</h2>
+                    </div>
+                      <div id="bar_chart_cpu"> </div>
+                      <div id="bar_chart_mem"> </div>
+                      <div id="bar_chart_mem_legend" class="barplot_legend"> </div>
                   </section>
                 </body>
                 <!-- Load in the d3 library -->
@@ -842,6 +851,141 @@ class TibannaResource(object):
                       .style("text-anchor", "middle")
                       .text(axis_label);
                 }
+                var barplot_colors = ['black', 'red', 'green', 'blue', 'magenta', 'yellow', 'cyan',
+                                      'pink', 'mediumslateblue', 'olive', 'maroon', 'navy', 'orange',
+                                      'gray', 'deepskyblue', 'tan', 'mediumvioletred', 'darkgreen',
+                                      'plum', 'salmon', 'lightgrey', 'palegreen', 'lightyellow', 'indigo',
+                                      'teal', 'deeppink', 'rosybrown', 'cornflowerblue']
+                function bar_plot(data_array, div, axis_label) {
+                  // Get div dimensions
+                  var div_width = document.getElementById(div).offsetWidth
+                    , div_height = document.getElementById(div).offsetHeight;
+                  // Use the margin convention practice
+                  var margin = {top: 20, right: 150, bottom: 100, left: 150}
+                    , width = div_width - margin.left - margin.right // Use the window's width
+                    , height = div_height - margin.top - margin.bottom; // Use the window's height
+                  // The number of datapoints
+                  var n_data = data_array[0].length;
+                  var n = 0
+                  if (n_data < 5) {
+                    n = 5
+                  } else {
+                    n = n_data
+                  }
+                  // number of different colors (also number of columns to visualize together)
+                  var n_cols = data_array.length
+                  // sum for each timepoint, to calculate y scale
+                  sum_array = d3.range(n_data).map(function(d) { 
+                      var sum = 0
+                      for( col=0; col<n_cols; col++) sum += data_array[col][d]
+                      return sum
+                  })
+                  // X scale will use the index of our data
+                  var xScale = d3.scaleLinear()
+                      .domain([0, n]) // input
+                      .range([0, width])  // output
+                  // Y scale will use the randomly generate number
+                  var yScale = d3.scaleLinear()
+                      .domain([0, d3.max(sum_array)]) // input
+                      .range([height, 0]); // output
+                  // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
+                  // Add the SVG to the page
+                  var svg = d3.select("#" + div).append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                  // Add the X gridlines
+                  svg.append("g")
+                      .attr("class", "grid")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(make_x_gridlines(xScale, n)
+                          .tickSize(-height)
+                          .tickFormat("")
+                      )
+                  // Add the Y gridlines
+                  svg.append("g")
+                      .attr("class", "grid")
+                      .call(make_y_gridlines(yScale, d3.max(sum_array))
+                          .tickSize(-width)
+                          .tickFormat("")
+                      )
+                  // Call the x axis in a group tag
+                  svg.append("g")
+                      .attr("class", "x axis")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+                  // Call the y axis in a group tag
+                  svg.append("g")
+                      .attr("class", "y axis")
+                      .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+                  // Add rectangles, bind the data
+                  var data_array_cum = data_array  // dimension and index 0 should be the same
+                  for( var col=0; col<n_cols; col++) {
+                      if(col == 0) {
+                          data_array_cum[col] = d3.range(n_data).map(function(d) { return data_array[col][d] })
+                          var dataset = d3.range(n_data).map(function(d) { return {"prev_y": 0, "y": data_array_cum[col][d]} })
+                      }
+                      if(col > 0) {
+                          data_array_cum[col] = d3.range(n_data).map(function(d) { return data_array_cum[col-1][d] + data_array[col][d] })
+                          var dataset = d3.range(n_data).map(function(d) { return {"prev_y": data_array_cum[col-1][d], "y": data_array_cum[col][d]} })
+                      }
+                      //var dataset = d3.range(n_data).map(function(d) { return {"dy": data_array[col][d], "y": data_array_cum[col][d]} })
+                      svg.selectAll(".bar")
+                          .data(dataset)
+                          .enter()
+                          .append('rect')
+                          .attr("class", "bar" + col)
+                          .attr("fill", barplot_colors[col])
+                          .attr('x', function(d, i) { return xScale(i) + xScale(1) - xScale(0.4); })
+                          .attr('y', function(d) { return yScale(d.y); })
+                          .attr('height', function(d) { return yScale(d.prev_y) - yScale(d.y); })
+                          .attr('width', xScale(0.8));
+                  }
+                  svg.append("text")
+                      .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - margin.bottom / 2) + ")")
+                      .style("text-anchor", "middle")
+                      .text("Time [min]");
+                  svg.append("text")
+                      .attr("transform", "rotate(-90)")
+                      .attr("y", 0 - margin.left + margin.left / 2)
+                      .attr("x",0 - (height / 2))
+                      .attr("dy", "1em")
+                      .style("text-anchor", "middle")
+                      .text(axis_label);
+                }
+                function bar_plot_legend(legend_text, div) {
+                  // Get div dimensions
+                  var div_width = document.getElementById(div).offsetWidth
+                    , div_height = document.getElementById(div).offsetHeight;
+                  // Use the margin convention practice
+                  var margin = {top: 20, right: 150, bottom: 100, left: 150}
+                    , width = div_width - margin.left - margin.right // Use the window's width
+                    , height = div_height - margin.top - margin.bottom; // Use the window's height
+                  // number of different colors (also number of columns to visualize together)
+                  var n_cols = legend_text.length
+                  // Add the SVG to the page
+                  var svg = d3.select("#" + div).append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                  for( var col=0; col<n_cols; col++) {
+                      var legend_y = 20 * col
+                      var legend_symbol_radius = 5
+                      // legend text
+                      svg.append("text")
+                          .attr("transform", "translate(" + 2 * legend_symbol_radius + 5 + " ," + legend_y + ")")
+                          .attr("text-anchor", "left")
+                          .text(legend_text[col])
+                      // legend circles with colors
+                      svg.append("circle")
+                          .attr("cy", legend_y - legend_symbol_radius)
+                          .attr("cx", legend_symbol_radius)
+                          .attr("r", legend_symbol_radius)
+                          .style("fill", barplot_colors[col])
+                  }
+                }
                 /* Reading data and Plotting */
                 d3.tsv("metrics.tsv").then(function(data) {
                     return data.map(function(d){
@@ -886,6 +1030,36 @@ class TibannaResource(object):
                     return data_array;
                   }).then(function(d_a){
                     percent_plot(d_a, 'chart_percent');
+                });
+                d3.tsv("top_cpu.tsv").then(function(data) {
+                    var data_array = [];
+                    var columns = data.columns
+                    columns.shift()
+                    for ( col=0; col<columns.length; col++){
+                        data_array[col] = []
+                        data.forEach(function(d) {
+                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
+                              data_array[col].push(parseFloat(d[columns[col]]));
+                            }
+                        });
+                    }
+                    bar_plot(data_array, 'bar_chart_cpu', 'Total CPU (%%) [100%% = 1 CPU]');
+                    //bar_plot_legend(columns, 'bar_chart_cpu_legend');  // share legend with bar_chart_mem
+                });
+                d3.tsv("top_mem.tsv").then(function(data) {
+                    var data_array = [];
+                    var columns = data.columns
+                    columns.shift()
+                    for ( col=0; col<columns.length; col++){
+                        data_array[col] = []
+                        data.forEach(function(d) {
+                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
+                              data_array[col].push(parseFloat(d[columns[col]]));
+                            }
+                        });
+                    }
+                    bar_plot(data_array, 'bar_chart_mem', 'Total Mem (%% total available memory)');
+                    bar_plot_legend(columns, 'bar_chart_mem_legend');
                 });
                 </script>\
             """
