@@ -5,6 +5,7 @@ class Top(object):
     """class TopSeries stores the information of a series of top commands
 
     ::
+        echo -n 'Timestamp: '; date +%F-%H:%M:%S
         top -b -n1 [-i] [-c]
 
     over short intervals to monitor the same set of processes over time. 
@@ -13,6 +14,7 @@ class Top(object):
 
     ::
 
+        Timestamp: 2020-12-18-18:55:37
         top - 18:55:37 up 4 days,  2:37,  0 users,  load average: 5.59, 5.28, 5.76
         Tasks:   7 total,   1 running,   6 sleeping,   0 stopped,   0 zombie
         %Cpu(s):  6.6 us,  0.1 sy,  0.0 ni, 93.2 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
@@ -26,10 +28,13 @@ class Top(object):
     """
 
     # assume this format for top output
-    timestamp_format = '%H:%M:%S'
+    timestamp_format = '%Y-%m-%d-%H:%M:%S'
 
     # These commands are excluded from top analysis
-    exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool']
+    # Currently only 1- or 2-word prefixes work.
+    exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool',
+                    '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim', '/usr/bin/python3 /bin/unattended-upgrade',
+                    '/usr/bin/python3 /usr/local/bin/awsf3', ]
 
     def __init__(self, contents):
         self.processes = dict()
@@ -38,12 +43,12 @@ class Top(object):
         self.cpus = dict()
         self.mems = dict()
         self.parse_contents(contents)
-        self.digest()
+        #self.digest()
 
     def parse_contents(self, contents):
         is_in_table = False
         for line in contents.splitlines():
-            if line.startswith('top'):
+            if line.startswith('Timestamp:'):
                 timestamp = line.split()[2]
                 continue
             if line.lstrip().startswith('PID'):
@@ -58,14 +63,33 @@ class Top(object):
                 if not self.should_skip_process(process):
                     self.processes[timestamp].append(Process(line))
 
+    @classmethod
+    def first_words(cls, string, n_words):
+        """returns first n words of a string
+        e.g. first_words('abc def ghi', 2) ==> 'abc def'
+        """
+        words = string.split()
+        return ' '.join(words[0:min(n_words, len(words))])
+
+    @classmethod
+    def first_characters(cls, string, n_letters):
+        """returns first n letters of a string
+        e.g. first_words('abc def ghi', 2) ==> 'ab'
+        """
+        letters = list(string)
+        return ''.join(letters[0:min(n_letters, len(letters))])
+
     def should_skip_process(self, process):
         """if the process should be skipped (excluded) return True.
         e.g. the top command itself is excluded."""
-        if process.command.split()[0] in self.exclude_list:
+        if self.first_words(process.command, 1) in self.exclude_list:
+            return True
+        elif self.first_words(process.command, 2) in self.exclude_list:
             return True
         return False
 
-    def digest(self):
+    def digest(self, max_n_commands=16):
+        self.commands = self.get_collapsed_commands(max_n_commands)
         self.nTimepoints = len(self.processes)
         timestamp_ind = 0
         for timestamp in sorted(self.processes):
@@ -73,15 +97,84 @@ class Top(object):
             self.timestamps.append(timestamp)
             # commands (rows)
             for process in self.processes[timestamp]:
-                command = process.command
-                if command not in self.commands:
-                    self.commands.append(command)
+                command = self.convert_command_to_collapsed_command(process.command, self.commands)
+                if command not in self.cpus:
                     self.cpus[command] = [0] * self.nTimepoints
                     self.mems[command] = [0] * self.nTimepoints
                 self.cpus[command][timestamp_ind] += process.cpu
                 self.mems[command][timestamp_ind] += process.mem
             timestamp_ind += 1
         self.sort_commands()
+
+    def convert_command_to_collapsed_command(self, cmd, collapsed_commands):
+        if collapsed_commands == 'all_commands':  # collapsed to one command
+            return 'all_commands'
+        elif cmd in collapsed_commands:  # not collapsed
+            return cmd
+        else:  # collapsed to prefix
+            all_prefixes = [_ for _ in collapsed_commands if cmd.startswith(_)]
+            longest_prefix = sorted(all_prefixes, key=lambda x: len(x), reverse=True)[0]
+            return longest_prefix
+
+    def get_collapsed_commands(self, max_n_commands):
+        """If the number of commands exceeds max_n_commands,
+        return a collapsed set of commands
+        that consists of prefixes of commands so that
+        the total number is within max_n_commands.
+        First decide the number of words from the beginning of the commands
+        to collapse commands that start with the same words, i.e.
+        find the maximum number of words that makes the number of unique commands to be
+        bounded by max_n_commands.
+        If using only the first word is not sufficient, go down to the characters of
+        the first word. If that's still not sufficient, collapse all of them into a single
+        command ('all_commands')
+        """
+
+        all_commands = set()
+        for timestamp in self.processes:
+            all_commands.update(set([pr.command for pr in self.processes[timestamp]]))
+
+        if len(all_commands) <= max_n_commands:
+            # no need to collapse
+            return list(all_commands)
+
+        # decide the number of words from the beginning of the commands
+        # to collapse commands starting with the same words
+        all_cmd_lengths = [len(cmd.split()) for cmd in all_commands]  # number of words per command
+        max_cmd_length = max(all_cmd_lengths)
+        min_cmd_length = min(all_cmd_lengths)
+        collapsed_len = max_cmd_length - 1
+        n_commands = len(all_commands)
+        while(n_commands > max_n_commands and collapsed_len > 1):
+            reduced_commands = set()
+            for cmd in all_commands:
+                reduced_commands.add(self.first_words(cmd, collapsed_len))
+            n_commands = len(reduced_commands)
+            collapsed_len -= 1
+
+        # went down to the first words but still too many commands - start splitting characters then
+        if n_commands > max_n_commands:
+            all_cmd_lengths = [len(cmd.split()[0]) for cmd in all_commands]  # number of characters of the first word
+            max_cmd_length = max(all_cmd_lengths)
+            min_cmd_length = min(all_cmd_lengths)
+            collapsed_len = max_cmd_length - 1
+            while(n_commands > max_n_commands and collapsed_len > 1):
+                reduced_commands = set()
+                for cmd in all_commands:
+                    reduced_commands.add(self.first_characters(cmd.split()[0], collapsed_len))
+                n_commands = len(reduced_commands)
+                collapsed_len -= 1
+
+        if n_commands > max_n_commands:
+            return ['all_commands']
+        else:
+            # extend reduced commands that don't need to be reduced
+            for r_cmd in list(reduced_commands):  # wrap in list so that we can remove elements in the loop
+                uniq_cmds = [cmd for cmd in all_commands if cmd.startswith(r_cmd)]
+                if len(uniq_cmds) == 1:
+                    reduced_commands.remove(r_cmd)
+                    reduced_commands.add(uniq_cmds[0])
+            return reduced_commands
 
     def total_cpu_per_command(self, command):
         return sum([v for v in self.cpus[command]])
@@ -148,9 +241,9 @@ class Top(object):
         dt_start = cls.as_datetime(timestamp_start)
         # negative numbers are not supported by timedelta, so do each case separately
         if dt > dt_start:
-            return int((dt - dt_start).seconds / 60)
+            return round((dt - dt_start).seconds / 60)
         else:
-            return -int((dt_start - dt).seconds / 60)
+            return round((dt_start - dt).seconds / 60)
 
     def timestamps_as_minutes(self, timestamp_start):
         """convert self.timestamps to a list of minutes since timestamp_start

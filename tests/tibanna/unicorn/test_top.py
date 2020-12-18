@@ -28,6 +28,19 @@ KiB Swap:        0 total,        0 free,        0 used. 10002531+avail Mem
 """
 
 
+def test_get_collapsed_commands():
+    top1 = top.Top(top_contents)
+
+    # no need to collapse (not too many commands)
+    collapsed_commands = top1.get_collapsed_commands(max_n_commands=16)
+    assert set(collapsed_commands) == set(['java -jar somejar.jar', 'bwa mem'])
+
+    top1.processes['18:56:37'][0].command = 'java -jar some_other_jar.jar'
+    collapsed_commands = top1.get_collapsed_commands(max_n_commands=16)
+    assert set(collapsed_commands) == set(['java -jar somejar.jar', 'bwa mem', 'java -jar some_other_jar.jar'])
+    collapsed_commands = top1.get_collapsed_commands(max_n_commands=2)
+    assert set(collapsed_commands) == set(['java -jar', 'bwa mem'])
+
 def test_top():
     top1 = top.Top(top_contents)
     print(top1.as_dict())
