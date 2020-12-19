@@ -10,7 +10,13 @@ class Top(object):
 
     over short intervals to monitor the same set of processes over time. 
 
-    An example input content looks like
+    An example input content looks like below, or a series of these.
+    The initialization works at any time interval and can be used as a generic
+    class, but the class is designed for the output of a regular top commands above
+    run at about 1-minute intervals, which is performed by awsf3 on an AWSEM instance
+    through cron jobs. (some can be skipped but there should be no more than 1 per minute).
+    This top output can be obtained through ``tibanna log -j <job_id> -t`` or through
+    API ``API().log(job_id=<job_id>, top=True)``.
 
     ::
 
@@ -25,31 +31,60 @@ class Top(object):
           712 root      20   0 36.464g 8.223g  19572 S 100.0  6.6 125:55.12 java -Xmx32g -Xms32g -jar juicer_tools.jar addNorm -w 1000 -d -F out.hic
           17919 ubuntu    20   0   40676   3828   3144 R   6.2  0.0   0:00.01 top -b -n1 -c -i -w 10000
 
+    The default timestamp from top output does not contain dates, which can screw up multi-day processes
+    which is common for bioinformatics pipelines. So, an extra timestamp is added before each top command.
+
+    To parse top output content, simply create an object. This will create processes attribute,
+    which is a raw parsed result organized by time stamps.
+
+    ::
+
+        top = Top(top_output_content)
+
+    To reorganize the contents by commands, run digest. By default, the max number of commands is 16,
+    and if there are more than 16 unique commands, they will be collapsed into prefixes.
+
+    ::
+
+        top.digest()
+
+    To write a csv / tsv file organized by both timestamps (rows) and commands (columns),
+    use :func: write_to_csv.
+
+    ::
+
+        top.write_to_csv(...)
+
     """
 
-    # assume this format for top output
+    # assume this format for timestamp
     timestamp_format = '%Y-%m-%d-%H:%M:%S'
 
-    # These commands are excluded from top analysis
+    # These commands are excluded when parsing the top output
     # Currently only 1- or 2-word prefixes work.
     exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool',
                     '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim', '/usr/bin/python3 /bin/unattended-upgrade',
                     '/usr/bin/python3 /usr/local/bin/awsf3', ]
 
     def __init__(self, contents):
+        """initialization parsed top output content and
+        creates processes which is a dictionary with timestamps as keys
+        and a list of Process class objects as a value.
+        It also creates empty attributes timestamps, commands, cpus and mems
+        which can be filled through method :func: digest.
+        """
         self.processes = dict()
         self.timestamps = []
         self.commands = []
         self.cpus = dict()
         self.mems = dict()
         self.parse_contents(contents)
-        #self.digest()
 
     def parse_contents(self, contents):
         is_in_table = False
         for line in contents.splitlines():
             if line.startswith('Timestamp:'):
-                timestamp = line.split()[2]
+                timestamp = line.split()[1]
                 continue
             if line.lstrip().startswith('PID'):
                 is_in_table = True
@@ -63,33 +98,22 @@ class Top(object):
                 if not self.should_skip_process(process):
                     self.processes[timestamp].append(Process(line))
 
-    @classmethod
-    def first_words(cls, string, n_words):
-        """returns first n words of a string
-        e.g. first_words('abc def ghi', 2) ==> 'abc def'
-        """
-        words = string.split()
-        return ' '.join(words[0:min(n_words, len(words))])
-
-    @classmethod
-    def first_characters(cls, string, n_letters):
-        """returns first n letters of a string
-        e.g. first_words('abc def ghi', 2) ==> 'ab'
-        """
-        letters = list(string)
-        return ''.join(letters[0:min(n_letters, len(letters))])
-
-    def should_skip_process(self, process):
-        """if the process should be skipped (excluded) return True.
-        e.g. the top command itself is excluded."""
-        if self.first_words(process.command, 1) in self.exclude_list:
-            return True
-        elif self.first_words(process.command, 2) in self.exclude_list:
-            return True
-        return False
-
     def digest(self, max_n_commands=16):
+        """Fills in timestamps, commands, cpus and mems attributes
+        from processes attribute.
+        :param max_n_commands: When the number of unique commands exceeds
+        this value, they are collapsed into unique prefixes.
+        The commands are sorted by the total cpus in reverse order
+        (the first command consumed the most cpu)
+        """
+        # Reinitializat these so that you get the same results if you run it twice
+        self.timestamps = []
+        self.commands = []
+        self.cpus = dict()
+        self.mems = dict()
+        # First fill in commands from commands in processes (and collapse if needed.)
         self.commands = self.get_collapsed_commands(max_n_commands)
+        # Fill in timestamps, cpus and mems from processes, matching collapsed commands.
         self.nTimepoints = len(self.processes)
         timestamp_ind = 0
         for timestamp in sorted(self.processes):
@@ -97,24 +121,16 @@ class Top(object):
             self.timestamps.append(timestamp)
             # commands (rows)
             for process in self.processes[timestamp]:
-                command = self.convert_command_to_collapsed_command(process.command, self.commands)
+                # find a matching collapsed command (i.e. command prefix) and use that as command.
+                command = Top.convert_command_to_collapsed_command(process.command, self.commands)
                 if command not in self.cpus:
                     self.cpus[command] = [0] * self.nTimepoints
                     self.mems[command] = [0] * self.nTimepoints
                 self.cpus[command][timestamp_ind] += process.cpu
                 self.mems[command][timestamp_ind] += process.mem
             timestamp_ind += 1
+        # sort commands according to total cpu
         self.sort_commands()
-
-    def convert_command_to_collapsed_command(self, cmd, collapsed_commands):
-        if collapsed_commands == 'all_commands':  # collapsed to one command
-            return 'all_commands'
-        elif cmd in collapsed_commands:  # not collapsed
-            return cmd
-        else:  # collapsed to prefix
-            all_prefixes = [_ for _ in collapsed_commands if cmd.startswith(_)]
-            longest_prefix = sorted(all_prefixes, key=lambda x: len(x), reverse=True)[0]
-            return longest_prefix
 
     def get_collapsed_commands(self, max_n_commands):
         """If the number of commands exceeds max_n_commands,
@@ -128,6 +144,8 @@ class Top(object):
         If using only the first word is not sufficient, go down to the characters of
         the first word. If that's still not sufficient, collapse all of them into a single
         command ('all_commands')
+        After the collapse, commands that are unique to a collapsed prefix are
+        extended back to the original command.
         """
 
         all_commands = set()
@@ -148,7 +166,7 @@ class Top(object):
         while(n_commands > max_n_commands and collapsed_len > 1):
             reduced_commands = set()
             for cmd in all_commands:
-                reduced_commands.add(self.first_words(cmd, collapsed_len))
+                reduced_commands.add(Top.first_words(cmd, collapsed_len))
             n_commands = len(reduced_commands)
             collapsed_len -= 1
 
@@ -161,7 +179,7 @@ class Top(object):
             while(n_commands > max_n_commands and collapsed_len > 1):
                 reduced_commands = set()
                 for cmd in all_commands:
-                    reduced_commands.add(self.first_characters(cmd.split()[0], collapsed_len))
+                    reduced_commands.add(Top.first_characters(cmd.split()[0], collapsed_len))
                 n_commands = len(reduced_commands)
                 collapsed_len -= 1
 
@@ -175,18 +193,6 @@ class Top(object):
                     reduced_commands.remove(r_cmd)
                     reduced_commands.add(uniq_cmds[0])
             return reduced_commands
-
-    def total_cpu_per_command(self, command):
-        return sum([v for v in self.cpus[command]])
-
-    def total_mem_per_command(self, command):
-        return sum([v for v in self.mems[command]])
-
-    def sort_commands(self, by='cpu'):
-        if by == 'cpu':
-            self.commands = sorted(self.commands, key=lambda x: self.total_cpu_per_command(x), reverse=True)
-        elif by == 'mem':
-            self.commands = sorted(self.commands, key=lambda x: self.total_mem_per_command(x), reverse=True)
 
     def write_to_csv(self, csv_file, metric='cpu', delimiter=',', colname_for_timestamps='timepoints',
                      timestamp_start=None, timestamp_end=None, base=0):
@@ -214,7 +220,7 @@ class Top(object):
         last_minute = self.as_minutes(timestamp_end, timestamp_start)
         with open(csv_file, 'w') as fo:
             # header
-            fo.write(delimiter.join([colname_for_timestamps] + [self.wrap_in_double_quotes(cmd) for cmd in self.commands]))
+            fo.write(delimiter.join([colname_for_timestamps] + [Top.wrap_in_double_quotes(cmd) for cmd in self.commands]))
             fo.write('\n')
             # contents
             # skip timepoints earlier than timestamp_start
@@ -229,6 +235,48 @@ class Top(object):
                 else:
                     fo.write(delimiter.join([str(clock_shifted)] + ['0' for cmd in self.commands]))  # add 0 for timepoints not reported
                 fo.write('\n')
+
+    def should_skip_process(self, process):
+        """A predicate function to check if the process should be skipped (excluded).
+        It returns True if the input process should be skipped.
+        e.g. the top command itself is excluded, as well as docker, awsf3, cwltool, etc.
+        the list to be excluded is in self.exclude_list.
+        It compares either first word or first two words only.
+        Kernel threads (single-word commands wrapped in bracket (e.g. [perl]) are also excluded.
+        """
+        first_word = Top.first_words(process.command, 1)
+        first_two_words = Top.first_words(process.command, 2)
+        if first_word in self.exclude_list:
+            return True
+        elif first_two_words in self.exclude_list:
+            return True
+        if first_word.startswith('[') and first_word.endswith(']'):
+            return True
+        return False
+
+    @staticmethod
+    def convert_command_to_collapsed_command(cmd, collapsed_commands):
+        if collapsed_commands == 'all_commands':  # collapsed to one command
+            return 'all_commands'
+        elif cmd in collapsed_commands:  # not collapsed
+            return cmd
+        else:  # collapsed to prefix
+            all_prefixes = [_ for _ in collapsed_commands if cmd.startswith(_)]
+            longest_prefix = sorted(all_prefixes, key=lambda x: len(x), reverse=True)[0]
+            return longest_prefix
+
+    def total_cpu_per_command(self, command):
+        return sum([v for v in self.cpus[command]])
+
+    def total_mem_per_command(self, command):
+        return sum([v for v in self.mems[command]])
+
+    def sort_commands(self, by='cpu'):
+        """sort self.commands by total cpu (default) or mem in reverse order."""
+        if by == 'cpu':
+            self.commands = sorted(self.commands, key=lambda x: self.total_cpu_per_command(x), reverse=True)
+        elif by == 'mem':
+            self.commands = sorted(self.commands, key=lambda x: self.total_mem_per_command(x), reverse=True)
 
     @classmethod
     def as_minutes(cls, timestamp, timestamp_start):
@@ -255,15 +303,27 @@ class Top(object):
     def as_datetime(cls, timestamp):
         return datetime.datetime.strptime(timestamp, cls.timestamp_format)
 
-    @property
-    def timestamps_as_datetime(self):
-        return [self.as_datetime(ts) for ts in self.timestamps]
-
-    @classmethod
-    def wrap_in_double_quotes(cls, string):
+    @staticmethod
+    def wrap_in_double_quotes(string):
         """wrap a given string with double quotes (e.g. haha -> "haha")
         """
         return '\"' + string + '\"'
+
+    @staticmethod
+    def first_words(string, n_words):
+        """returns first n words of a string
+        e.g. first_words('abc def ghi', 2) ==> 'abc def'
+        """
+        words = string.split()
+        return ' '.join(words[0:min(n_words, len(words))])
+
+    @staticmethod
+    def first_characters(string, n_letters):
+        """returns first n letters of a string
+        e.g. first_characters('abc def ghi', 2) ==> 'ab'
+        """
+        letters = list(string)
+        return ''.join(letters[0:min(n_letters, len(letters))])
 
     def as_dict(self):
         return self.__dict__

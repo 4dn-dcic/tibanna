@@ -1026,7 +1026,8 @@ class API(object):
         else:
             try:
                 M = self.TibannaResource(instance_id, filesystem, starttime, endtime)
-                M.plot_metrics(instance_type, directory)
+                top_content = self.log(job_id=job_id, top=True)
+                M.plot_metrics(instance_type, directory, top_content=top_content)
             except Exception as e:
                 raise MetricRetrievalException(e)
             # upload files

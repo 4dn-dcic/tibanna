@@ -4,21 +4,31 @@ from tibanna.utils import (
     upload,
     read_s3
 )
+from tibanna.top import Top
 from .vars import (
     AWS_REGION,
     EBS_MOUNT_POINT
 )
-# from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
 
-# instance_id = 'i-0167a6c2d25ce5822'
-# filesystem = "/dev/xvdb"
-# filesystem = "/dev/nvme1n1"
-
 
 class TibannaResource(object):
+    """class handling cloudwatch metrics for cpu / memory /disk space
+    and top command metrics for cpu and memory per process.
+    """
+
+    timestamp_format = '%Y-%m-%d %H:%M:%S'
+
+    @classmethod
+    def convert_timestamp_to_datetime(cls, timestamp):
+        return datetime.strptime(timestamp, cls.timestamp_format)
+
     def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
+        """All the Cloudwatch metrics are retrieved and stored at the initialization.
+        :param instance_id: e.g. 'i-0167a6c2d25ce5822'
+        :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
+        """
         self.instance_id = instance_id
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name=AWS_REGION)
@@ -59,25 +69,26 @@ class TibannaResource(object):
             max_disk_space_utilization_percent_chunks.append(self.max_disk_space_utilization())
             max_disk_space_used_GB_chunks.append(self.max_disk_space_used())
             max_ebs_read_chunks.append(self.max_ebs_read())
-        self.max_mem_used_MB = self.choose_max(max_mem_used_MB_chunks)
-        self.min_mem_available_MB = self.choose_min(min_mem_available_MB_chunks)
+        self.max_mem_used_MB = TibannaResource.choose_max(max_mem_used_MB_chunks)
+        self.min_mem_available_MB = TibannaResource.choose_min(min_mem_available_MB_chunks)
         if self.max_mem_used_MB:
             self.total_mem_MB = self.max_mem_used_MB + self.min_mem_available_MB
             self.max_mem_utilization_percent = self.max_mem_used_MB / self.total_mem_MB * 100
         else:
             self.total_mem_MB = ''
             self.max_mem_utilization_percent = ''
-        self.max_cpu_utilization_percent = self.choose_max(max_cpu_utilization_percent_chunks)
-        self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
-        self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
+        self.max_cpu_utilization_percent = TibannaResource.choose_max(max_cpu_utilization_percent_chunks)
+        self.max_disk_space_utilization_percent = TibannaResource.choose_max(max_disk_space_utilization_percent_chunks)
+        self.max_disk_space_used_GB = TibannaResource.choose_max(max_disk_space_used_GB_chunks)
         # this following one is used to detect file copying while CPU utilization is near zero
-        self.max_ebs_read_bytes = self.choose_max(max_ebs_read_chunks)
+        self.max_ebs_read_bytes = TibannaResource.choose_max(max_ebs_read_chunks)
 
-    def plot_metrics(self, instance_type, directory='.'):
+    def plot_metrics(self, instance_type, directory='.', top_content=''):
         """plot full metrics across all time chunks.
         AWS allows only 1440 data points at a time
         which corresponds to 24 hours at 1min interval,
         so we have to split them into chunks.
+        :param top_content: content of the <job_id>.top in the str format, used for plotting top metrics.
         """
         max_mem_utilization_percent_chunks_all_pts = []
         max_mem_used_MB_chunks_all_pts = []
@@ -104,6 +115,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
+        self.list_files.extend(write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
         # writing html
@@ -116,7 +128,9 @@ class TibannaResource(object):
         if lock:
             upload(None, bucket, os.path.join(prefix, 'lock'))
 
-    def choose_max(self, x):
+    @staticmethod
+    def _old_choose_max(x):
+        """see :func: choose_max"""
         M = -1
         for v in x:
             if v:
@@ -125,7 +139,9 @@ class TibannaResource(object):
             M = ""
         return(M)
 
-    def choose_min(self, x):
+    @staticmethod
+    def _old_choose_min(x):
+        """see :func: choose_min"""
         M = 10000000000
         for v in x:
             if v:
@@ -134,10 +150,30 @@ class TibannaResource(object):
             M = ""
         return(M)
 
-    def get_max(self, x):
+    @staticmethod
+    def choose_max(x):
+        """given a list of values that may include None, 0 or an empty string,
+        chooses a positive nonzero maximum. (e.g. [0,1,2,None,3] => 3)
+        if no positive nonzero value exists in the list, returns an empty string."""
+        return TibannaResource.get_max(list(filter(lambda x:x, x)))
+
+    @staticmethod
+    def choose_min(x):
+        """given a list of values that may include None, 0 or an empty string,
+        chooses a nonzero minimum. (e.g. [0,1,2,None,3] => 1)
+        if no nonzero value exists in the list, returns an empty string."""
+        return TibannaResource.get_min(list(filter(lambda x:x, x)))
+
+    @staticmethod
+    def get_max(x):
+        """given a list of values, returns maximum value,
+        but if the list is empty, returns an empty string"""
         return(max(x) if x else '')
 
-    def get_min(self, x):
+    @staticmethod
+    def get_min(x):
+        """given a list of values, returns miminim value,
+        but if the list is empty, returns an empty string"""
         return(min(x) if x else '')
 
     def as_dict(self):
@@ -163,25 +199,25 @@ class TibannaResource(object):
 
     # functions that returns only max or min (backward compatible)
     def max_memory_utilization(self):
-        return(self.get_max(self.max_memory_utilization_all_pts()))
+        return(TibannaResource.get_max(self.max_memory_utilization_all_pts()))
 
     def max_memory_used(self):
-        return(self.get_max(self.max_memory_used_all_pts()))
+        return(TibannaResource.get_max(self.max_memory_used_all_pts()))
 
     def min_memory_available(self):
-        return(self.get_min(self.min_memory_available_all_pts()))
+        return(TibannaResource.get_min(self.min_memory_available_all_pts()))
 
     def max_cpu_utilization(self):
-        return(self.get_max(self.max_cpu_utilization_all_pts()))
+        return(TibannaResource.get_max(self.max_cpu_utilization_all_pts()))
 
     def max_disk_space_utilization(self):
-        return(self.get_max(self.max_disk_space_utilization_all_pts()))
+        return(TibannaResource.get_max(self.max_disk_space_utilization_all_pts()))
 
     def max_disk_space_used(self):
-        return(self.get_max(self.max_disk_space_used_all_pts()))
+        return(TibannaResource.get_max(self.max_disk_space_used_all_pts()))
 
     def max_ebs_read(self):
-        return(self.get_max(self.max_ebs_read_used_all_pts()))
+        return(TibannaResource.get_max(self.max_ebs_read_used_all_pts()))
 
     # functions that returns all points
     def max_memory_utilization_all_pts(self):
@@ -302,7 +338,7 @@ class TibannaResource(object):
 
     # functions to create reports and html
     def write_html(self, instance_type, directory):
-        self.check_mkdir(directory)
+        check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             fo.write(self.create_html() % (instance_type,
@@ -327,14 +363,14 @@ class TibannaResource(object):
             k, v = line.split('\t')
             d.setdefault(k, v) # everything is string now
         # times into datetime objects
-        starttime = datetime.strptime(d['Start_Time'], '%Y-%m-%d %H:%M:%S')
+        starttime = cls.convert_timestamp_to_datetime(d['Start_Time'])
         try:
-            endtime = datetime.strptime(d['End_Time'], '%Y-%m-%d %H:%M:%S')
+            endtime = cls.convert_timestamp_to_datetime(d['End_Time'])
         except: # temporary fix for retrocompatibility
             if 'End_time' in d:
-                endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
+                endtime = cls.convert_timestamp_to_datetime(d['End_time'])
             else:
-                endtime = datetime.strptime(d['Time_of_Request'], '%Y-%m-%d %H:%M:%S')
+                endtime = cls.convert_timestamp_to_datetime(d['Time_of_Request'])
         cost = d['Cost'] if 'Cost' in d else '---'
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
@@ -350,8 +386,19 @@ class TibannaResource(object):
             upload(filename, bucket, prefix)
             os.remove(filename)
 
+    @staticmethod
+    def write_top_tsvs(directory, top_content):
+        check_mkdir(directory)
+        top_obj = Top(top_content)
+        top_obj.digest()
+        cpu_filename = directory + '/' + 'top_cpu.tsv'
+        mem_filename = directory + '/' + 'top_mem.tsv'
+        top1.write_to_csv(cpu_filename, delimiter='\t', metric='cpu', colname_for_timestamps='interval', base=1)
+        top1.write_to_csv(mem_filename, delimiter='\t', metric='mem', colname_for_timestamps='interval', base=1)
+        return [cpu_filename, mem_filename]
+
     def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
-        self.check_mkdir(directory)
+        check_mkdir(directory)
         filename = directory + '/' + 'metrics.tsv'
         with open(filename, 'w') as fo:
             # preparing data and writing header
@@ -383,7 +430,7 @@ class TibannaResource(object):
         return(filename)
 
     def write_metrics(self, instance_type, directory):
-        self.check_mkdir(directory)
+        check_mkdir(directory)
         filename = directory + '/' + 'metrics_report.tsv'
         with open(filename, 'w') as fo:
             fo.write('Metric\tValue\n')
@@ -398,7 +445,8 @@ class TibannaResource(object):
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
         return(filename)
 
-    def check_mkdir(self, directory):
+    @staticmethod
+    def check_mkdir(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -482,7 +530,7 @@ class TibannaResource(object):
                   background-color: #2C6088;
                 }
                 .barplot_legend {
-                  height: 2000px;
+                  height: 1000px;
                 }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
@@ -853,8 +901,8 @@ class TibannaResource(object):
                 }
                 var barplot_colors = ['black', 'red', 'green', 'blue', 'magenta', 'yellow', 'cyan',
                                       'pink', 'mediumslateblue', 'olive', 'maroon', 'navy', 'orange',
-                                      'gray', 'deepskyblue', 'tan', 'mediumvioletred', 'darkgreen',
-                                      'plum', 'salmon', 'lightgrey', 'palegreen', 'lightyellow', 'indigo',
+                                      'gray', 'deepskyblue', 'tan', 'mediumvioletred',
+                                      'plum', 'salmon', 'lightgrey', 'palegreen', 'indigo',
                                       'teal', 'deeppink', 'rosybrown', 'cornflowerblue']
                 function bar_plot(data_array, div, axis_label) {
                   // Get div dimensions
@@ -937,10 +985,10 @@ class TibannaResource(object):
                           .append('rect')
                           .attr("class", "bar" + col)
                           .attr("fill", barplot_colors[col])
-                          .attr('x', function(d, i) { return xScale(i) + xScale(1) - xScale(0.4); })
+                          .attr('x', function(d, i) { return xScale(i) + xScale(1) - xScale(0.5); })
                           .attr('y', function(d) { return yScale(d.y); })
                           .attr('height', function(d) { return yScale(d.prev_y) - yScale(d.y); })
-                          .attr('width', xScale(0.8));
+                          .attr('width', xScale(1));
                   }
                   svg.append("text")
                       .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - margin.bottom / 2) + ")")
