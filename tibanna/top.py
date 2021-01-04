@@ -291,7 +291,7 @@ class Top(object):
         if dt > dt_start:
             return round((dt - dt_start).seconds / 60)
         else:
-            return round((dt_start - dt).seconds / 60)
+            return -round((dt_start - dt).seconds / 60)
 
     def timestamps_as_minutes(self, timestamp_start):
         """convert self.timestamps to a list of minutes since timestamp_start

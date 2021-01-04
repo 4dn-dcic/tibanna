@@ -43,7 +43,7 @@ def test_top():
 
     timestamp1 = '2020-12-18-18:55:37'
     timestamp2 = '2020-12-18-18:56:37'
-    assert timetstamp1 in top1.processes
+    assert timestamp1 in top1.processes
     print(top1.processes[timestamp1])
     assert len( top1.processes[timestamp1]) == 2
     top1dict =  top1.processes[timestamp1][0].as_dict()
@@ -120,6 +120,7 @@ def test_write_to_csv():
     top1.processes['2020-12-18-18:57:37'] = top1.processes['2020-12-18-18:56:37'].copy()
     del top1.processes['2020-12-18-18:56:37']
     top1.digest()
+    print(top1.as_dict())
 
     top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', base=0, timestamp_start='2020-12-18-18:54:37')
     with open(test_tsv_file) as f:
@@ -158,10 +159,10 @@ def test_write_to_csv():
     lines = content.splitlines()
     assert len(lines) == 5
     assert lines[0] == 'timepoints,\"java -jar somejar.jar\",\"bwa mem\"'
-    assert lines[1] == '1,0,0'
-    assert lines[2] == '2,0,0'
-    assert lines[3] == '3,8.9,13.0'
-    assert lines[4] == '4,0,0'
+    assert lines[1] == '1,0,0'  # 18:53:02
+    assert lines[2] == '2,0,0'  # 18:54:02
+    assert lines[3] == '3,0,0'  # 18:55:02
+    assert lines[4] == '4,8.9,13.0'  # 18:56:02 <- 18:55:37 (first entry), 18:56:22 (end time) are rounded to this one.
 
     os.remove(test_tsv_file)
 
