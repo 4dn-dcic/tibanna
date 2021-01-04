@@ -13,7 +13,7 @@ from awsf3.utils import (
     create_output_files_dict,
     read_md5file,
     update_postrun_json_init,
-    update_postrun_json_output,
+    update_postrun_json_upload_output,
     postrun_json_final,
     upload_postrun_json,
     upload_to_output_target,
@@ -182,6 +182,7 @@ def test_create_env_def_file_snakemake():
                                     'snakemake_url': 'someurl',
                                     'main_snakemake': 'somecwl',
                                     'other_snakemake_files': 'othercwl1,othercwl2'},
+                            'JOBID': 'somejobid',
                             'Input': {},
                             'Output': {'output_bucket_directory': 'somebucket'}},
                     'config': {'log_bucket': 'somebucket'}}
