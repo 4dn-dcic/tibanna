@@ -287,6 +287,7 @@ exl echo
 exl echo "## Updating postrun json file with status, time stamp, input & output size"
 # status report should be improved.
 if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
+exl echo "JOB_STATUS=$JOB_STATUS"
 # This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
 
 ### create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
