@@ -371,8 +371,8 @@ class TibannaResource(object):
         top_obj.digest()
         cpu_filename = directory + '/' + 'top_cpu.tsv'
         mem_filename = directory + '/' + 'top_mem.tsv'
-        top1.write_to_csv(cpu_filename, delimiter='\t', metric='cpu', colname_for_timestamps='interval', base=1)
-        top1.write_to_csv(mem_filename, delimiter='\t', metric='mem', colname_for_timestamps='interval', base=1)
+        top_obj.write_to_csv(cpu_filename, delimiter='\t', metric='cpu', colname_for_timestamps='interval', base=1)
+        top_obj.write_to_csv(mem_filename, delimiter='\t', metric='mem', colname_for_timestamps='interval', base=1)
         return [cpu_filename, mem_filename]
 
     def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
