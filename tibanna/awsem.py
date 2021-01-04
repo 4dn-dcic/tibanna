@@ -3,7 +3,7 @@ import copy
 from datetime import datetime
 from .base import SerializableObject
 from .ec2_utils import Config
-from .exceptions import MalFormattedPostrunJsonException, MalFormattedRunJsonException
+from .exceptions import MalFormattedPostRunJsonException, MalFormattedRunJsonException
 from .vars import AWSEM_TIME_STAMP_FORMAT
 from .nnested_array import flatten
 
@@ -26,7 +26,7 @@ class AwsemRunJsonJob(SerializableObject):
     def __init__(self, App=None, Input=None, Output=None, JOBID='',
                  start_time=None, Log=None, strict=True):
         if strict:
-            if not App or not Input or not Output or not JOBID:
+            if App is None or Input is None or Output is None or not JOBID:
                 raise MalFormattedRunJsonException
         if not App:
             App = {}
@@ -292,7 +292,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
                  filesystem='', instance_id='',
                  Metrics=None, strict=True):
         if strict:
-            if not App or not Input or not Output or not JOBID or not start_time:
+            if App is None or Input is None or Output is None or not JOBID or start_time is None:
                 errmsg = "App, Input, Output, JOBID and start_time are required fields"
                 raise MalFormattedPostRunJsonException(errmsg)
         super().__init__(App, Input, Output, JOBID, start_time, Log, strict=strict)
@@ -367,7 +367,7 @@ class AwsemPostRunJsonOutputFile(SerializableObject):
             if isinstance(secondaryFiles, list):
                 self.secondaryFiles = [AwsemPostRunJsonOutputFile(**sf) for sf in secondaryFiles]
             else:
-                raise MalFormattedPostrunJsonException("secondaryFiles must be a list")
+                raise MalFormattedPostRunJsonException("secondaryFiles must be a list")
         else:
             self.secondaryFiles = None
         # handling reserved name key

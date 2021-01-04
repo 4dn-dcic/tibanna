@@ -69,19 +69,19 @@ class TibannaResource(object):
             max_disk_space_utilization_percent_chunks.append(self.max_disk_space_utilization())
             max_disk_space_used_GB_chunks.append(self.max_disk_space_used())
             max_ebs_read_chunks.append(self.max_ebs_read())
-        self.max_mem_used_MB = TibannaResource.choose_max(max_mem_used_MB_chunks)
-        self.min_mem_available_MB = TibannaResource.choose_min(min_mem_available_MB_chunks)
+        self.max_mem_used_MB = self.choose_max(max_mem_used_MB_chunks)
+        self.min_mem_available_MB = self.choose_min(min_mem_available_MB_chunks)
         if self.max_mem_used_MB:
             self.total_mem_MB = self.max_mem_used_MB + self.min_mem_available_MB
             self.max_mem_utilization_percent = self.max_mem_used_MB / self.total_mem_MB * 100
         else:
             self.total_mem_MB = ''
             self.max_mem_utilization_percent = ''
-        self.max_cpu_utilization_percent = TibannaResource.choose_max(max_cpu_utilization_percent_chunks)
-        self.max_disk_space_utilization_percent = TibannaResource.choose_max(max_disk_space_utilization_percent_chunks)
-        self.max_disk_space_used_GB = TibannaResource.choose_max(max_disk_space_used_GB_chunks)
+        self.max_cpu_utilization_percent = self.choose_max(max_cpu_utilization_percent_chunks)
+        self.max_disk_space_utilization_percent = self.choose_max(max_disk_space_utilization_percent_chunks)
+        self.max_disk_space_used_GB = self.choose_max(max_disk_space_used_GB_chunks)
         # this following one is used to detect file copying while CPU utilization is near zero
-        self.max_ebs_read_bytes = TibannaResource.choose_max(max_ebs_read_chunks)
+        self.max_ebs_read_bytes = self.choose_max(max_ebs_read_chunks)
 
     def plot_metrics(self, instance_type, directory='.', top_content=''):
         """plot full metrics across all time chunks.
@@ -115,7 +115,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
-        self.list_files.extend(write_top_tsvs(directory, top_content))
+        self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
         # writing html
@@ -127,28 +127,6 @@ class TibannaResource(object):
             upload(f, bucket, prefix)
         if lock:
             upload(None, bucket, os.path.join(prefix, 'lock'))
-
-    @staticmethod
-    def _old_choose_max(x):
-        """see :func: choose_max"""
-        M = -1
-        for v in x:
-            if v:
-                M = max([v, M])
-        if M == -1:
-            M = ""
-        return(M)
-
-    @staticmethod
-    def _old_choose_min(x):
-        """see :func: choose_min"""
-        M = 10000000000
-        for v in x:
-            if v:
-                M = min([v, M])
-        if M == 10000000000:
-            M = ""
-        return(M)
 
     @staticmethod
     def choose_max(x):
@@ -199,25 +177,25 @@ class TibannaResource(object):
 
     # functions that returns only max or min (backward compatible)
     def max_memory_utilization(self):
-        return(TibannaResource.get_max(self.max_memory_utilization_all_pts()))
+        return(self.get_max(self.max_memory_utilization_all_pts()))
 
     def max_memory_used(self):
-        return(TibannaResource.get_max(self.max_memory_used_all_pts()))
+        return(self.get_max(self.max_memory_used_all_pts()))
 
     def min_memory_available(self):
-        return(TibannaResource.get_min(self.min_memory_available_all_pts()))
+        return(self.get_min(self.min_memory_available_all_pts()))
 
     def max_cpu_utilization(self):
-        return(TibannaResource.get_max(self.max_cpu_utilization_all_pts()))
+        return(self.get_max(self.max_cpu_utilization_all_pts()))
 
     def max_disk_space_utilization(self):
-        return(TibannaResource.get_max(self.max_disk_space_utilization_all_pts()))
+        return(self.get_max(self.max_disk_space_utilization_all_pts()))
 
     def max_disk_space_used(self):
-        return(TibannaResource.get_max(self.max_disk_space_used_all_pts()))
+        return(self.get_max(self.max_disk_space_used_all_pts()))
 
     def max_ebs_read(self):
-        return(TibannaResource.get_max(self.max_ebs_read_used_all_pts()))
+        return(self.get_max(self.max_ebs_read_used_all_pts()))
 
     # functions that returns all points
     def max_memory_utilization_all_pts(self):
@@ -338,7 +316,7 @@ class TibannaResource(object):
 
     # functions to create reports and html
     def write_html(self, instance_type, directory):
-        check_mkdir(directory)
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         with open(filename, 'w') as fo:
             fo.write(self.create_html() % (instance_type,
@@ -388,7 +366,7 @@ class TibannaResource(object):
 
     @staticmethod
     def write_top_tsvs(directory, top_content):
-        check_mkdir(directory)
+        TibannaResource.check_mkdir(directory)
         top_obj = Top(top_content)
         top_obj.digest()
         cpu_filename = directory + '/' + 'top_cpu.tsv'
@@ -398,7 +376,7 @@ class TibannaResource(object):
         return [cpu_filename, mem_filename]
 
     def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
-        check_mkdir(directory)
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.tsv'
         with open(filename, 'w') as fo:
             # preparing data and writing header
@@ -430,7 +408,7 @@ class TibannaResource(object):
         return(filename)
 
     def write_metrics(self, instance_type, directory):
-        check_mkdir(directory)
+        self.check_mkdir(directory)
         filename = directory + '/' + 'metrics_report.tsv'
         with open(filename, 'w') as fo:
             fo.write('Metric\tValue\n')

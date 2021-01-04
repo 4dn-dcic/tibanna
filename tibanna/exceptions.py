@@ -121,7 +121,7 @@ class MalFormattedRunJsonException(Exception):
     pass
 
 
-class MalFormattedPostrunJsonException(Exception):
+class MalFormattedPostRunJsonException(Exception):
     pass
 
 

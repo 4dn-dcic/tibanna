@@ -227,7 +227,7 @@ def test_RunJsonJob(run_json_job):
     assert r.App.App_name == 'someapp'  # changing r_dict shoudn't affect r
     assert r.Input.Input_parameters['n'] == 2
     assert r.Output.output_bucket_directory == 'somebucket'
-    assert r.Log['log_bucket_directory'] == 'tibanna-output'
+    assert r.Log.log_bucket_directory == 'tibanna-output'
     assert r.JOBID == "J55BCqwHx6N5"
 
 
