@@ -212,12 +212,16 @@ class Top(object):
         :param base: default 0. If 0, minutes start with 0, if 1, minutes are 1-based (shifted by 1).
         """
         metric_array = getattr(self, metric + 's')
-        if not timestamp_start:
-            timestamp_start = self.timestamps[0]
-        if not timestamp_end:
-            timestamp_end = self.timestamps[-1]
-        timestamps_as_minutes = self.timestamps_as_minutes(timestamp_start)
-        last_minute = self.as_minutes(timestamp_end, timestamp_start)
+        if self.timestamps:
+            if not timestamp_start:
+                timestamp_start = self.timestamps[0]
+            if not timestamp_end:
+                timestamp_end = self.timestamps[-1]
+            timestamps_as_minutes = self.timestamps_as_minutes(timestamp_start)
+            last_minute = self.as_minutes(timestamp_end, timestamp_start)
+        else:  # default when timestamps is not available (empty object)
+            timestamps_as_minutes = range(0, 5)
+            last_minute = 5
         with open(csv_file, 'w') as fo:
             # header
             fo.write(delimiter.join([colname_for_timestamps] + [Top.wrap_in_double_quotes(cmd) for cmd in self.commands]))

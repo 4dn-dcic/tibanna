@@ -284,19 +284,19 @@ send_log
  
 ### updating status
 exl echo
-exl echo "## Updating postrun json file with status, time stamp, input & output size"
-# status report should be improved.
+exl echo "## Checking the job status (0 means success)"
 ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
 if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi
 exl echo "JOB_STATUS=$JOB_STATUS"
 # This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
 
-### create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
+# update & upload postrun json
+exl echo
+exl echo "## Updating postrun json file with status, time stamp, input & output size"
+# create a postrun.json file that contains the information in the run.json file and additional information (status, stop_time)
 export INPUTSIZE=$(du -csh /data1/input| tail -1 | cut -f1)
 export TEMPSIZE=$(du -csh /data1/tmp*| tail -1 | cut -f1)
 export OUTPUTSIZE=$(du -csh /data1/out| tail -1 | cut -f1)
-
-# update & upload postrun json
 exl awsf3 update_postrun_json_final -i $POSTRUN_JSON_FILE_NAME -o $POSTRUN_JSON_FILE_NAME -l $LOGFILE
 exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 
