@@ -1,5 +1,0 @@
-export LANGUAGE=None
-export COMMAND="com1;com2"
-export CONTAINER_IMAGE=someimage
-export PRESERVED_ENV_OPTION=""
-export DOCKER_ENV_OPTION=""
