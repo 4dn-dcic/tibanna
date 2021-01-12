@@ -103,13 +103,14 @@ class Top(object):
                 if not self.should_skip_process(process):
                     self.processes[timestamp].append(Process(line))
 
-    def digest(self, max_n_commands=16):
+    def digest(self, max_n_commands=16, sort_by='alphabetical'):
         """Fills in timestamps, commands, cpus and mems attributes
         from processes attribute.
         :param max_n_commands: When the number of unique commands exceeds
         this value, they are collapsed into unique prefixes.
-        The commands are sorted by the total cpus in reverse order
-        (the first command consumed the most cpu)
+        :sort_by: alphabetical|cpu|mem The commands are by default sorted
+        alphabetically, but optionally can be sorted by total cpus or total
+        mem (in reverser order) (e.g. the first command consumed the most cpu)
         """
         # Reinitializat these so that you get the same results if you run it twice
         self.timestamps = []
@@ -135,7 +136,7 @@ class Top(object):
                 self.mems[command][timestamp_ind] += process.mem
             timestamp_ind += 1
         # sort commands according to total cpu
-        self.sort_commands()
+        self.sort_commands(by=sort_by)
 
     def get_collapsed_commands(self, max_n_commands):
         """If the number of commands exceeds max_n_commands,
@@ -284,11 +285,14 @@ class Top(object):
         return sum([v for v in self.mems[command]])
 
     def sort_commands(self, by='cpu'):
-        """sort self.commands by total cpu (default) or mem in reverse order."""
+        """sort self.commands by total cpu (default) or mem in reverse order,
+           or alphabetically (by='alphabetical')"""
         if by == 'cpu':
             self.commands = sorted(self.commands, key=lambda x: self.total_cpu_per_command(x), reverse=True)
         elif by == 'mem':
             self.commands = sorted(self.commands, key=lambda x: self.total_mem_per_command(x), reverse=True)
+        elif by == 'alphabetical':
+            self.commands = sorted(self.commands)
 
     @classmethod
     def as_minutes(cls, timestamp, timestamp_start):
