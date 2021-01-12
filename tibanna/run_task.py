@@ -39,7 +39,7 @@ def run_task(input_json):
       cwl_child_filenames (optional): names of the other cwl files used by main cwl file, delimited by comma
       language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
     # required for wdl
-      language: 'wdl'
+      language: 'wdl' (='wdl_draft2'), 'wdl_v1', or 'wdl_draft2'
       wdl_main_filename: main wdl file name
       wdl_directory_url: the url (http:// or s3://) in which the wdl files resides
       wdl_child_filenames (optional): names of the other wdl files used by main wdl file, delimited by comma

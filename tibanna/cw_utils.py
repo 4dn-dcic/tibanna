@@ -507,8 +507,11 @@ class TibannaResource(object):
                   width: 85%%;
                   background-color: #2C6088;
                 }
+                .barplot {
+                  height: 300px;
+                }
                 .barplot_legend {
-                  height: 1000px;
+                  height: 350px;
                 }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
@@ -646,10 +649,14 @@ class TibannaResource(object):
                     </div>
                       <div id="chart_disk"> </div>
                     <div class="header">
-                      <h2>CPU and Memory Usage Per Process (from Top command)</h2>
+                      <h2>CPU Usage Per Process (from Top command)</h2>
                     </div>
-                      <div id="bar_chart_cpu"> </div>
-                      <div id="bar_chart_mem"> </div>
+                      <div class="barplot" id="bar_chart_cpu"> </div>
+                      <div id="bar_chart_cpu_legend" class="barplot_legend"> </div>
+                    <div class="header">
+                      <h2>Memory Usage Per Process (from Top command)</h2>
+                    </div>
+                      <div class="barplot" id="bar_chart_mem"> </div>
                       <div id="bar_chart_mem_legend" class="barplot_legend"> </div>
                   </section>
                 </body>
@@ -878,10 +885,9 @@ class TibannaResource(object):
                       .text(axis_label);
                 }
                 var barplot_colors = ['black', 'red', 'green', 'blue', 'magenta', 'yellow', 'cyan',
-                                      'pink', 'mediumslateblue', 'olive', 'maroon', 'navy', 'orange',
-                                      'gray', 'deepskyblue', 'tan', 'mediumvioletred',
-                                      'plum', 'salmon', 'lightgrey', 'palegreen', 'indigo',
-                                      'teal', 'deeppink', 'rosybrown', 'cornflowerblue']
+                                      'pink', 'mediumslateblue', 'maroon', 'orange',
+                                      'gray', 'palegreen', 'mediumvioletred', 'deepskyblue',
+                                      'rosybrown', 'lightgrey', 'indigo', 'cornflowerblue']
                 function bar_plot(data_array, div, axis_label) {
                   // Get div dimensions
                   var div_width = document.getElementById(div).offsetWidth
@@ -890,6 +896,8 @@ class TibannaResource(object):
                   var margin = {top: 20, right: 150, bottom: 100, left: 150}
                     , width = div_width - margin.left - margin.right // Use the window's width
                     , height = div_height - margin.top - margin.bottom; // Use the window's height
+                  // number of different colors (also number of columns to visualize together)
+                  var n_cols = data_array.length
                   // The number of datapoints
                   var n_data = data_array[0].length;
                   var n = 0
@@ -898,8 +906,6 @@ class TibannaResource(object):
                   } else {
                     n = n_data
                   }
-                  // number of different colors (also number of columns to visualize together)
-                  var n_cols = data_array.length
                   // sum for each timepoint, to calculate y scale
                   sum_array = d3.range(n_data).map(function(d) { 
                       var sum = 0
@@ -999,9 +1005,10 @@ class TibannaResource(object):
                   for( var col=0; col<n_cols; col++) {
                       var legend_y = 20 * col
                       var legend_symbol_radius = 5
+                      var legend_x = 2 * legend_symbol_radius + 10
                       // legend text
                       svg.append("text")
-                          .attr("transform", "translate(" + 2 * legend_symbol_radius + 5 + " ," + legend_y + ")")
+                          .attr("transform", "translate(" + legend_x + " ," + legend_y + ")")
                           .attr("text-anchor", "left")
                           .text(legend_text[col])
                       // legend circles with colors
@@ -1070,7 +1077,7 @@ class TibannaResource(object):
                         });
                     }
                     bar_plot(data_array, 'bar_chart_cpu', 'Total CPU (%%) [100%% = 1 CPU]');
-                    //bar_plot_legend(columns, 'bar_chart_cpu_legend');  // share legend with bar_chart_mem
+                    bar_plot_legend(columns, 'bar_chart_cpu_legend');
                 });
                 d3.tsv("top_mem.tsv").then(function(data) {
                     var data_array = [];

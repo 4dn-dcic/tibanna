@@ -148,7 +148,7 @@ class Args(SerializableObject):
         self.parse_input_files()
         # check workflow info is there and fill in default
         errmsg_template = "field %s is required in args for language %s"
-        if self.language == 'wdl':
+        if self.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             if not hasattr(self, 'wdl_main_filename'):
                 raise MissingFieldInInputJsonException(errmsg_template % ('wdl_main_filename', self.language))
             if not hasattr(self, 'wdl_child_filenames'):
@@ -539,7 +539,7 @@ class Execution(object):
             'App_version': args.app_version,
             'language': args.language
         }
-        if args.language == 'wdl':
+        if args.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             app.update({
                 'main_wdl': args.wdl_main_filename,
                 'other_wdl_files': ','.join(args.wdl_child_filenames),
@@ -887,7 +887,7 @@ def upload_workflow_to_s3(unicorn_input):
     jobid = unicorn_input.jobid
     bucket = cfg.log_bucket
     key_prefix = jobid + '.workflow/'
-    if args.language == 'wdl':
+    if args.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
         main_wf = args.wdl_main_filename
         wf_files = args.wdl_child_filenames.copy()
         localdir = args.wdl_directory_local

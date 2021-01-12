@@ -179,7 +179,7 @@ class API(object):
             unicorn_input = UnicornInput(data)
             args = unicorn_input.args
             if args.language.startswith('cwl') and args.cwl_directory_local or \
-               args.language == 'wdl' and args.wdl_directory_local or \
+               args.language in ['wdl', 'wdl_v1', 'wdl_draft2'] and args.wdl_directory_local or \
                args.language == 'snakemake' and args.snakemake_directory_local:
                 upload_workflow_to_s3(unicorn_input)
                 data['args'] = args.as_dict()  # update args
@@ -952,8 +952,11 @@ class API(object):
         postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True, quiet=True)
         if postrunjsonstr:
             postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
-            job_complete = True
             job = postrunjson.Job
+            if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
+                job_complete = True
+            else:
+                job_complete = False
             log_bucket = postrunjson.config.log_bucket
             instance_type = postrunjson.config.instance_type or 'unknown'
         else:

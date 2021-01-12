@@ -62,8 +62,10 @@ class Top(object):
 
     # These commands are excluded when parsing the top output
     # Currently only 1- or 2-word prefixes work.
-    exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron', 'containerd', 'goofys-latest', 'cwltool',
-                    '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim', '/usr/bin/python3 /bin/unattended-upgrade',
+    exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron',
+                    'docker-untar', 'containerd', 'goofys-latest', 'cwltool',
+                    '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim',
+                    '/usr/bin/python3 /bin/unattended-upgrade',
                     '/usr/bin/python3 /usr/local/bin/awsf3', ]
 
     def __init__(self, contents):

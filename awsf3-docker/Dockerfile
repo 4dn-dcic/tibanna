@@ -78,9 +78,12 @@ RUN pip install psutil==5.7.3
 RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
 RUN pip install ec2metadata==2.0.1
 
-# cromwell
+# cromwell for WDL 1.0
 RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \
     ln -s cromwell-53.1.jar cromwell.jar
+# Old cromwell for WDL draft-2
+RUN wget https://github.com/broadinstitute/cromwell/releases/download/31/cromwell-31.jar
+RUN wget https://github.com/broadinstitute/cromwell/blob/develop/LICENSE.txt  # cromwell license
 
 # awsf scripts
 COPY run.sh .

@@ -75,7 +75,7 @@ class CheckTask(object):
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
-            log = API().log(job_id=jobid, logbucket=bucket_name)
+            log = self.API().log(job_id=jobid, logbucket=bucket_name)
             ex = eh.parse_log(log)
             if ex:
                 msg_aug = str(ex) + ". For more info - " + eh.general_awsem_check_log_msg(jobid)
@@ -191,5 +191,8 @@ class CheckTask(object):
         except Exception as e:
             raise MetricRetrievalException("error getting metrics: %s" % str(e))
         prj.Job.update(Metrics=resources.as_dict())
-        resources.plot_metrics(prj.config.instance_type, directory='/tmp/tibanna_metrics/')
-        resources.upload(bucket=prj.config.log_bucket, prefix=prj.Job.JOBID + '.metrics/')
+        self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
+                           force_upload=True, open_browser=False,
+                           endtime=prj.Job.end_time_as_str or datetime.now(),
+                           filesystem=prj.Job.filesystem,
+                           instance_id=prj.Job.instance_id)

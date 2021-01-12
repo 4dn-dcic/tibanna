@@ -45,7 +45,7 @@ def decode_run_json(input_json_file):
     create_mount_command_list(mountlist_filename, runjson_input)
 
     # create an input yml file to be used on awsem
-    if language == 'wdl':  # wdl
+    if language in ['wdl', 'wdl_v1', 'wdl_draft2']:  # wdl
         create_input_for_wdl(input_yml_filename, runjson_input)
     elif language == 'snakemake':  # snakemake
         create_input_for_snakemake(input_yml_filename, runjson_input)
@@ -182,7 +182,7 @@ def create_env_def_file(env_filename, runjson, language):
     app = runjson.Job.App
     with open(env_filename, 'w') as f_env:
         f_env.write("export LANGUAGE={}\n".format(app.language))
-        if language == 'wdl':
+        if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             f_env.write("export WDL_URL={}\n".format(app.wdl_url))
             f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(app.other_wdl_files.split(','))))
@@ -218,7 +218,7 @@ def download_workflow():
     local_wfdir = os.environ.get('LOCAL_WFDIR')
     subprocess.call(['mkdir', '-p', local_wfdir])
     
-    if language == 'wdl':
+    if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
         main_wf = os.environ.get('MAIN_WDL', '')
         wf_files = os.environ.get('WDL_FILES', '')
         wf_url = os.environ.get('WDL_URL')
@@ -284,7 +284,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
     if language in ['cwl', 'cwl_v1', 'cwl-draft3', 'wdl'] and not execution_metadata:
         raise Exception("execution_metadata is required for cwl/wdl.")
     out_meta = dict()
-    if language == 'wdl':
+    if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
         for argname, outfile in execution_metadata['outputs'].items():
             if outfile:
                 out_meta[argname] = {'path': outfile}
