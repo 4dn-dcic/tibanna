@@ -61,12 +61,15 @@ class Top(object):
     timestamp_format = '%Y-%m-%d-%H:%M:%S'
 
     # These commands are excluded when parsing the top output
-    # Currently only 1- or 2-word prefixes work.
+    # Currently only 1-, 2- or 3-word prefixes work.
     exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron',
                     'docker-untar', 'containerd', 'goofys-latest', 'cwltool',
                     '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim',
                     '/usr/bin/python3 /bin/unattended-upgrade',
-                    '/usr/bin/python3 /usr/local/bin/awsf3', ]
+                    '/usr/bin/python3 /usr/local/bin/awsf3',
+                    '/usr/bin/python3 /usr/local/bin/aws s3',
+                    'java -jar /usr/local/bin/cromwell.jar',
+                    'java -jar /usr/local/bin/cromwell-31.jar']
 
     def __init__(self, contents):
         """initialization parsed top output content and
@@ -247,14 +250,17 @@ class Top(object):
         It returns True if the input process should be skipped.
         e.g. the top command itself is excluded, as well as docker, awsf3, cwltool, etc.
         the list to be excluded is in self.exclude_list.
-        It compares either first word or first two words only.
+        It compares either first word or first two or three words only.
         Kernel threads (single-word commands wrapped in bracket (e.g. [perl]) are also excluded.
         """
         first_word = Top.first_words(process.command, 1)
         first_two_words = Top.first_words(process.command, 2)
+        first_three_words = Top.first_words(process.command, 3)
         if first_word in self.exclude_list:
             return True
         elif first_two_words in self.exclude_list:
+            return True
+        elif first_three_words in self.exclude_list:
             return True
         if first_word.startswith('[') and first_word.endswith(']'):
             return True
