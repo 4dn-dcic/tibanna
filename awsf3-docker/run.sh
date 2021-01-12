@@ -95,13 +95,8 @@ exl echo "## $(python --version)"
 exl echo "## $(pip --version | cut -f1,2 -d' ')"
 exl echo "## tibanna awsf3 version $(tibanna --version | cut -f2 -d' ')"
 exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
-if [[ $LANGUAGE == 'wdl' || $LANGUAGE == 'wdl_draft2' ]]
-then
-  exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-31.jar --version | cut -f2 -d ' ')"
-elif [[ $LANGUAGE == 'wdl_v1' ]]
-then
-  exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ')"
-fi
+exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-31.jar --version | cut -f2 -d ' ') for WDL draft2"
+exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ') for WDL v1.0"
 exl echo "## $(singularity --version)"
 
 
