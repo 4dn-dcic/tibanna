@@ -36,11 +36,13 @@ def test_create_env_def_file_cwl():
     """testing create_env_def_file with cwl option and an input Env variable"""
     envfilename = 'someenvfile'
 
-    runjson_dict = {'Job': {'App': {'cwl_url': 'someurl',
+    runjson_dict = {'Job': {'App': {'language': 'cwl_v1',
+                                    'cwl_url': 'someurl',
                                     'main_cwl': 'somecwl',
                                     'other_cwl_files': 'othercwl1,othercwl2'},
                             'Input': {'Env': {'SOME_ENV': '1234'}},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
     create_env_def_file(envfilename, runjson, 'cwl')
@@ -48,14 +50,71 @@ def test_create_env_def_file_cwl():
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export CWL_URL=someurl\n'
+    right_content = ('export LANGUAGE=cwl_v1\n'
+                     'export CWL_URL=someurl\n'
                      'export MAIN_CWL=somecwl\n'
                      'export CWL_FILES="othercwl1 othercwl2"\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export SOME_ENV=1234\n'
                      'export PRESERVED_ENV_OPTION="--preserve-environment SOME_ENV "\n'
                      'export DOCKER_ENV_OPTION="-e SOME_ENV "\n')
+
+    assert envfile_content == right_content
+    os.remove(envfilename)
+
+
+def test_create_env_def_file_wdl_v1():
+    """testing create_env_def_file with wdl option and no input Env variable"""
+    envfilename = 'someenvfile'
+
+    runjson_dict = {'Job': {'App': {'language': 'wdl_v1',
+                                    'wdl_url': 'someurl',
+                                    'main_wdl': 'somewdl',
+                                    'other_wdl_files': 'otherwdl1,otherwdl2'},
+                            'Input': {'Env': {}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
+                    'config': {'log_bucket': 'somebucket'}}
+    runjson = AwsemRunJson(**runjson_dict)
+    create_env_def_file(envfilename, runjson, 'wdl_v1')
+
+    with open(envfilename, 'r') as f:
+        envfile_content = f.read()
+
+    right_content = ('export LANGUAGE=wdl_v1\n'
+                     'export WDL_URL=someurl\n'
+                     'export MAIN_WDL=somewdl\n'
+                     'export WDL_FILES="otherwdl1 otherwdl2"\n'
+                     'export PRESERVED_ENV_OPTION=""\n'
+                     'export DOCKER_ENV_OPTION=""\n')
+
+    assert envfile_content == right_content
+    os.remove(envfilename)
+
+
+def test_create_env_def_file_wdl_draft2():
+    """testing create_env_def_file with wdl option and no input Env variable"""
+    envfilename = 'someenvfile'
+
+    runjson_dict = {'Job': {'App': {'language': 'wdl_draft2',
+                                    'wdl_url': 'someurl',
+                                    'main_wdl': 'somewdl',
+                                    'other_wdl_files': 'otherwdl1,otherwdl2'},
+                            'Input': {'Env': {}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
+                    'config': {'log_bucket': 'somebucket'}}
+    runjson = AwsemRunJson(**runjson_dict)
+    create_env_def_file(envfilename, runjson, 'wdl_draft2')
+
+    with open(envfilename, 'r') as f:
+        envfile_content = f.read()
+
+    right_content = ('export LANGUAGE=wdl_draft2\n'
+                     'export WDL_URL=someurl\n'
+                     'export MAIN_WDL=somewdl\n'
+                     'export WDL_FILES="otherwdl1 otherwdl2"\n'
+                     'export PRESERVED_ENV_OPTION=""\n'
+                     'export DOCKER_ENV_OPTION=""\n')
 
     assert envfile_content == right_content
     os.remove(envfilename)
@@ -65,11 +124,13 @@ def test_create_env_def_file_wdl():
     """testing create_env_def_file with wdl option and no input Env variable"""
     envfilename = 'someenvfile'
 
-    runjson_dict = {'Job': {'App': {'wdl_url': 'someurl',
+    runjson_dict = {'Job': {'App': {'language': 'wdl',
+                                    'wdl_url': 'someurl',
                                     'main_wdl': 'somewdl',
                                     'other_wdl_files': 'otherwdl1,otherwdl2'},
                             'Input': {'Env': {}},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
     create_env_def_file(envfilename, runjson, 'wdl')
@@ -77,11 +138,10 @@ def test_create_env_def_file_wdl():
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export WDL_URL=someurl\n'
+    right_content = ('export LANGUAGE=wdl\n'
+                     'export WDL_URL=someurl\n'
                      'export MAIN_WDL=somewdl\n'
                      'export WDL_FILES="otherwdl1 otherwdl2"\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
@@ -93,10 +153,12 @@ def test_create_env_def_file_shell():
     """testing create_env_def_file with shell option and two input Env variables"""
     envfilename = 'someenvfile'
 
-    runjson_dict = {'Job': {'App': {'command': 'com1;com2',
+    runjson_dict = {'Job': {'App': {'language': 'shell',
+                                    'command': 'com1;com2',
                                     'container_image': 'someimage'},
                             'Input': {'Env': {'ENV1': '1234', 'ENV2': '5678'}},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
     create_env_def_file(envfilename, runjson, 'shell')
@@ -104,10 +166,9 @@ def test_create_env_def_file_shell():
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export COMMAND="com1;com2"\n'
+    right_content = ('export LANGUAGE=shell\n'
+                     'export COMMAND="com1;com2"\n'
                      'export CONTAINER_IMAGE=someimage\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export ENV1=1234\n'
                      'export ENV2=5678\n'
                      'export PRESERVED_ENV_OPTION="--preserve-environment ENV1 --preserve-environment ENV2 "\n'
@@ -122,10 +183,12 @@ def test_create_env_def_file_shell2():
     envfilename = 'someenvfile'
 
     complex_command = 'echo $SOME_ENV | xargs -i echo {} > somedir/somefile'
-    runjson_dict = {'Job': {'App': {'command': complex_command,
+    runjson_dict = {'Job': {'App': {'language': 'shell',
+                                    'command': complex_command,
                                     'container_image': 'someimage'},
                             'Input': {'Env': {'SOME_ENV': '1234'}},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
     create_env_def_file(envfilename, runjson, 'shell')
@@ -133,10 +196,9 @@ def test_create_env_def_file_shell2():
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export COMMAND="echo $SOME_ENV | xargs -i echo {} > somedir/somefile"\n'
+    right_content = ('export LANGUAGE=shell\n'
+                     'export COMMAND="echo $SOME_ENV | xargs -i echo {} > somedir/somefile"\n'
                      'export CONTAINER_IMAGE=someimage\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export SOME_ENV=1234\n'
                      'export PRESERVED_ENV_OPTION="--preserve-environment SOME_ENV "\n'
                      'export DOCKER_ENV_OPTION="-e SOME_ENV "\n')
@@ -151,10 +213,12 @@ def test_create_env_def_file_shell3():
     envfilename = 'someenvfile'
 
     complex_command = 'echo "haha" > somefile; ls -1 [st]*'
-    runjson_dict = {'Job': {'App': {'command': complex_command,
+    runjson_dict = {'Job': {'App': {'language': 'shell',
+                                    'command': complex_command,
                                     'container_image': 'someimage'},
                             'Input': {'Env': {}},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
     create_env_def_file(envfilename, runjson, 'shell')
@@ -162,10 +226,9 @@ def test_create_env_def_file_shell3():
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export COMMAND="echo \\"haha\\" > somefile; ls -1 [st]*"\n'
+    right_content = ('export LANGUAGE=shell\n'
+                     'export COMMAND="echo \\"haha\\" > somefile; ls -1 [st]*"\n'
                      'export CONTAINER_IMAGE=someimage\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
@@ -177,25 +240,29 @@ def test_create_env_def_file_snakemake():
     """testing create_env_def_file with shell option and two input Env variables"""
     envfilename = 'someenvfile'
 
-    runjson_dict = {'Job': {'App': {'command': 'com1;com2',
+    runjson_dict = {'Job': {'App': {'language': 'snakemake',
+                                    'command': 'com1;com2',
                                     'container_image': 'someimage',
                                     'snakemake_url': 'someurl',
-                                    'main_snakemake': 'somecwl',
-                                    'other_snakemake_files': 'othercwl1,othercwl2'},
+                                    'main_snakemake': 'somesnakemake',
+                                    'other_snakemake_files': 'othersnakemake1,othersnakemake2'},
                             'JOBID': 'somejobid',
                             'Input': {},
-                            'Output': {'output_bucket_directory': 'somebucket'}},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
                     'config': {'log_bucket': 'somebucket'}}
     runjson = AwsemRunJson(**runjson_dict)
-    create_env_def_file(envfilename, runjson, 'shell')
+    create_env_def_file(envfilename, runjson, 'snakemake')
 
     with open(envfilename, 'r') as f:
         envfile_content = f.read()
 
-    right_content = ('export COMMAND="com1;com2"\n'
+    right_content = ('export LANGUAGE=snakemake\n'
+                     'export SNAKEMAKE_URL=someurl\n'
+                     'export MAIN_SNAKEMAKE=somesnakemake\n'
+                     'export SNAKEMAKE_FILES="othersnakemake1 othersnakemake2"\n'
+                     'export COMMAND="com1;com2"\n'
                      'export CONTAINER_IMAGE=someimage\n'
-                     'export OUTBUCKET=somebucket\n'
-                     'export PUBLIC_POSTRUN_JSON=0\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
