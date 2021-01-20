@@ -34,6 +34,7 @@ class Subcommands(object):
             'rerun': 'rerun a specific job',
             'rerun_many': 'rerun all the jobs that failed after a given time point',
             'run_workflow': 'run a workflow',
+            'run_batch_workflows': 'run many workflows in a batch',
             'setup_tibanna_env': 'set up usergroup environment on AWS.' +
                                  'This function is called automatically by deploy_tibanna or deploy_unicorn.' +
                                  'Use it only when the IAM permissions need to be reset',
@@ -58,6 +59,18 @@ class Subcommands(object):
                  {'flag': ["-B", "--do-not-open-browser"],
                   'help': "Do not open browser",
                   'action': "store_true"},
+                 {'flag': ["-S", "--sleep"],
+                  'help': "number of seconds between submission, to avoid drop-out (default 3)",
+                  'type': int,
+                  'default': 3}],
+            'run_batch_workflows':
+                [{'flag': ["-i", "--input-json-list"],
+                  'help': "list of tibanna input json files, e.g. -i input1.json -i input2.json ...",
+                  "nargs": "+"},
+                 {'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-S", "--sleep"],
                   'help': "number of seconds between submission, to avoid drop-out (default 3)",
                   'type': int,
@@ -305,6 +318,11 @@ def deploy_core(name, suffix=None, usergroup=''):
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
     """run a workflow"""
     API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, open_browser=not do_not_open_browser, verbose=True)
+
+
+def run_batch_workflows(input_json_list, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, sleep=3):
+    """run a workflow"""
+    API().run_batch_workflows(input_json_list, sfn=sfn, sleep=sleep, verbose=True)
 
 
 def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,

@@ -215,6 +215,16 @@ class API(object):
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
 
+    def run_batch_workflows(self, input_json_list, sfn=None,
+                     env=None, sleep=3, verbose=True, open_browser=True):
+        """given a list of input json, run multiple workflows"""
+        run_infos = []
+        for input_json in input_json_list:
+            run_info = self.run_workflow(input_json, env=env, sfn=sfn, slepe=sleep, verbose=verbose,
+                       open_browser=False)
+            run_infos.append(run_info)
+        return run_infos
+
     def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
         time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
