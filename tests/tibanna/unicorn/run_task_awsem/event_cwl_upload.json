@@ -1,0 +1,25 @@
+{
+  "args": {
+    "input_parameters": {},
+    "output_target": {
+      "report": "ac18f2bb-c256-40bf-9562-cdc6179d6f9a/report"
+    },
+    "secondary_output_target": {},
+    "output_S3_bucket": "somebucket",
+    "cwl_main_filename": "main.cwl",
+    "cwl_child_filenames": ["child1.cwl", "child2.cwl"],
+    "cwl_directory_local": "tests/tibanna/unicorn/run_task_awsem/cwl_upload/",
+    "input_files": {
+      "input_file": {
+        "bucket_name": "somebucket",
+        "object_key": "someinput"
+      }
+    },
+    "input_env": {"TESTENV": 1234}
+  },
+  "config": {
+    "instance_type": "t3.micro",
+    "log_bucket": "tibanna-output"
+  }
+}
+

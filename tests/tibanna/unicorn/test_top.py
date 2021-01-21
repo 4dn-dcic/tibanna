@@ -77,7 +77,7 @@ def test_digest():
     timestamp1 = '2020-12-18-18:55:37'
     timestamp2 = '2020-12-18-18:56:37'
     assert top1.timestamps == [timestamp1, timestamp2]
-    assert top1.commands == ['java -jar somejar.jar', 'bwa mem'] 
+    assert top1.commands == ['bwa mem', 'java -jar somejar.jar']  # alphabetically ordered 
     assert top1.cpus == {'java -jar somejar.jar': [93.8, 92.8], 'bwa mem': [70.0, 0]}
     assert top1.mems == {'java -jar somejar.jar': [8.9, 9.9], 'bwa mem': [13.0, 0]}
     assert top1.total_cpu_per_command('java -jar somejar.jar') == 93.8 + 92.8
@@ -103,18 +103,18 @@ def test_write_to_csv():
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 3
-    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
-    assert lines[1] == '1\t93.8\t70.0'
-    assert lines[2] == '2\t92.8\t0'
+    assert lines[0] == 'timepoints\t\"bwa mem\"\t\"java -jar somejar.jar\"'
+    assert lines[1] == '1\t70.0\t93.8'
+    assert lines[2] == '2\t0\t92.8'
 
     top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', colname_for_timestamps='intervals', base=1)
     with open(test_tsv_file) as f:
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 3
-    assert lines[0] == 'intervals\t\"java -jar somejar.jar\"\t\"bwa mem\"'
-    assert lines[1] == '1\t8.9\t13.0'
-    assert lines[2] == '2\t9.9\t0'
+    assert lines[0] == 'intervals\t\"bwa mem\"\t\"java -jar somejar.jar\"'
+    assert lines[1] == '1\t13.0\t8.9'
+    assert lines[2] == '2\t0\t9.9'
 
     # change time stamp to 2 minute interval and re-digest
     top1.processes['2020-12-18-18:57:37'] = top1.processes['2020-12-18-18:56:37'].copy()
@@ -127,20 +127,20 @@ def test_write_to_csv():
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 5
-    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[0] == 'timepoints\t\"bwa mem\"\t\"java -jar somejar.jar\"'
     assert lines[1] == '0\t0\t0'
-    assert lines[2] == '1\t8.9\t13.0'
+    assert lines[2] == '1\t13.0\t8.9'
     assert lines[3] == '2\t0\t0'
-    assert lines[4] == '3\t9.9\t0'
+    assert lines[4] == '3\t0\t9.9'
 
     top1.write_to_csv(test_tsv_file, delimiter='\t', metric='mem', base=1, timestamp_start='2020-12-18-18:56:37', timestamp_end='2020-12-18-18:58:37')
     with open(test_tsv_file) as f:
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 4
-    assert lines[0] == 'timepoints\t\"java -jar somejar.jar\"\t\"bwa mem\"'
+    assert lines[0] == 'timepoints\t\"bwa mem\"\t\"java -jar somejar.jar\"'
     assert lines[1] == '1\t0\t0'
-    assert lines[2] == '2\t9.9\t0'
+    assert lines[2] == '2\t0\t9.9'
     assert lines[3] == '3\t0\t0'
 
     top1.write_to_csv(test_tsv_file, metric='mem', base=1, timestamp_start='2020-12-18-18:54:37', timestamp_end='2020-12-18-18:56:37')
@@ -148,9 +148,9 @@ def test_write_to_csv():
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 4
-    assert lines[0] == 'timepoints,\"java -jar somejar.jar\",\"bwa mem\"'
+    assert lines[0] == 'timepoints,\"bwa mem\",\"java -jar somejar.jar\"'
     assert lines[1] == '1,0,0'
-    assert lines[2] == '2,8.9,13.0'
+    assert lines[2] == '2,13.0,8.9'
     assert lines[3] == '3,0,0'
 
     top1.write_to_csv(test_tsv_file, metric='mem', base=1, timestamp_start='2020-12-18-18:53:02', timestamp_end='2020-12-18-18:56:22')
@@ -158,11 +158,11 @@ def test_write_to_csv():
         content = f.read()
     lines = content.splitlines()
     assert len(lines) == 5
-    assert lines[0] == 'timepoints,\"java -jar somejar.jar\",\"bwa mem\"'
+    assert lines[0] == 'timepoints,\"bwa mem\",\"java -jar somejar.jar\"'
     assert lines[1] == '1,0,0'  # 18:53:02
     assert lines[2] == '2,0,0'  # 18:54:02
     assert lines[3] == '3,0,0'  # 18:55:02
-    assert lines[4] == '4,8.9,13.0'  # 18:56:02 <- 18:55:37 (first entry), 18:56:22 (end time) are rounded to this one.
+    assert lines[4] == '4,13.0,8.9'  # 18:56:02 <- 18:55:37 (first entry), 18:56:22 (end time) are rounded to this one.
 
     os.remove(test_tsv_file)
 
