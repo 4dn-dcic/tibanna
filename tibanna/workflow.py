@@ -1,8 +1,22 @@
 import json
 import yaml
+from collections import namedtuple
 from tibanna.utils import create_jobid
 from tibanna.ec2_utils import UnicornInput
 from tibanna.core import API
+
+
+StepInput = namedtuple('StepInput', ['name', 'source_step', 'name_in_source'])
+StepOutput = namedtuple('StepOutput', ['name'])
+
+
+class Step(object):
+    def __init__(self, name, main_file, inputs, outputs, child_files=None):
+        self.name = name
+        self.main_file = main_file
+        self.inputs = [StepInput(**ip) for ip in inputs]
+        self.outputs = [StepOutput(**op) for op in outputs]class Step(object):
+        self.child_files = child_files
 
 
 class Workflow(object):
@@ -12,26 +26,9 @@ class Workflow(object):
     """
     cwl = None
 
-    def __init__(self, cwlfile=None, step_groups=None, auto_group_method='each'):
-        """step_groups is a list of groups of step names to run together
-        on the same machine. e.g) step_groups=[['bwa'], ['bam_check', 'bam_qc']]
-        If not specified, step_groups is defined by default as individual steps
-        e.g.) [['bwa'], ['bam_check'], ['bam_qc']]
-        """
+    def __init__(self, cwlfile=None):
         if cwlfile:
             self.cwl = self.read_cwl(cwlfile)
-        self._step_groups = step_groups
-        self.auto_group_method = auto_group_method
-
-    @property
-    def step_groups(self):
-        if self._step_groups:
-            return self._step_groups
-        else:
-            if self.auto_group_method == 'all':
-                return [self.step_names]
-            elif self.auto_group_method == 'each':
-                return [[_] for _ in self.step_names]
 
     @property
     def inputs(self):
