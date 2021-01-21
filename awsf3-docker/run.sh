@@ -226,17 +226,9 @@ then
 else
   if [[ $LANGUAGE == 'cwl_draft3' ]]
   then
-    # older version of cwltool that works with draft3
     exl echo
-    exl echo "## switching to an older version of cwltool that supports draft3"
-    exl pip uninstall -y ruamel.yaml
-    exl pip install ruamel.yaml==0.14.12
-    pip uninstall -y cwltool
-    exl git clone https://github.com/SooLee/cwltool
-    cd cwltool
-    git checkout c7f029e304d1855996218f1c7c12ce1a5c91b8ef
-    exl python setup.py install
-    cd $LOCAL_WFDIR
+    exl echo "Error: CWL draft3 is no longer supported. Please switch to v1"
+    handle_error 1
   fi
   exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
   handle_error $?

@@ -281,7 +281,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
     secondaryFiles is added only if the language is cwl.
     execution_metadata is a dictionary read from wdl/cwl execution log json file.
     md5dict is a dictionary with key=file path, value=md5sum (optional)."""
-    if language in ['cwl', 'cwl_v1', 'cwl-draft3', 'wdl'] and not execution_metadata:
+    if language in ['cwl', 'cwl_v1', 'wdl'] and not execution_metadata:
         raise Exception("execution_metadata is required for cwl/wdl.")
     out_meta = dict()
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
@@ -290,7 +290,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
                 out_meta[argname] = {'path': outfile}
     elif language == 'snakemake' or language == 'shell':
         out_meta = {}
-    else:  # cwl, cwl_v1, cwl-draft3
+    else:  # cwl, cwl_v1
         # read cwl output json file
         out_meta = execution_metadata
 
@@ -337,7 +337,7 @@ def update_postrun_json_init(json_old, json_new):
     write_postrun_json(json_new, prj)
 
 
-def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new, language='cwl-draft3'):
+def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new, language='cwl_v1'):
     """Update postrun json with output files"""
     # read old json file and prepare postrunjson skeleton
     prj = read_postrun_json(json_old)

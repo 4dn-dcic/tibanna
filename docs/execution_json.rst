@@ -82,7 +82,7 @@ CWL-specific
     - An array of all the other cwl files that are called by the main cwl file. If the main CWL file is of 'workflow' type, the other CWL files corresponding to steps or subworkflows should be listed here.
 
 :cwl_version:
-    - either ``v1`` or ``draft-3``
+    - either ``v1`` or ``draft-3`` (starting with tibanna version 1.0.0, ``draft-3`` is no longer supported.)
 
 :singularity:
     - This option uses Singularity to run Docker images internally (slower). This option does NOT support native Singularity images, since CWL does not support native Singularity images.
@@ -200,7 +200,7 @@ Other pipeline-related fields
     - Version of the pipeline/app, for the user to keep in track.
 
 :language:
-    - 'cwl_v1', 'cwl_draft3' or 'wdl'
+    - 'cwl_v1', 'cwl_draft3' (tibanna < 1.0.0 only) or 'wdl' (='wdl_draft2' for backward compatibility) or 'wdl_draft2' or 'wdl_v1' (tibanna >=1.0.0)
     - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 

@@ -29,7 +29,8 @@ from .exceptions import (
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException,
     DependencyStillRunningException,
-    DependencyFailedException
+    DependencyFailedException,
+    UnsupportedCWLVersionException
 )
 from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
@@ -131,15 +132,15 @@ class Args(SerializableObject):
             if not hasattr(self, field):
                 setattr(self, field, '')
         # if language and cwl_version is not specified,
-        # by default it is cwl_draft3
+        # by default it is cwl_v1
         if not hasattr(self, 'language'):
             if not hasattr(self, 'cwl_version'):
-                self.cwl_version = 'draft3'
-                self.language = 'cwl_draft3'
+                self.cwl_version = 'v1'
+                self.language = 'cwl_v1'
             elif self.cwl_version == 'v1':
                 self.language = 'cwl_v1'
             elif self.cwl_version == 'draft3':
-                self.language = 'cwl_draft3'
+                raise UnsupportedCWLVersionException
             if not hasattr(self, 'singularity'):
                 self.singularity = False
         if not hasattr(self, 'app_name'):
@@ -291,7 +292,7 @@ class Config(SerializableObject):
             TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/' + TIBANNA_AWSF_DIR + '/'
         self.json_bucket = self.log_bucket
 
-    def fill_language_options(self, language='cwl_draft3', singularity=False):
+    def fill_language_options(self, language='cwl_v1', singularity=False):
         """fill in ami_id and language fields (these are also internal)"""
         self.ami_id = AMI_ID
         if singularity:

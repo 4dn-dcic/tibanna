@@ -35,9 +35,9 @@ def run_task(input_json):
     # required for cwl
       cwl_main_filename: main cwl file name
       cwl_directory_url: the url (http:// or s3://) in which the cwl files resides
-      cwl_version: the version of cwl (either 'draft3' or 'v1')
+      cwl_version: the version of cwl (now only 'v1' is supported)
       cwl_child_filenames (optional): names of the other cwl files used by main cwl file, delimited by comma
-      language (optional for cwl): 'cwl_v1' or 'cwl_draft3'
+      language (optional for cwl): now only 'cwl_v1' is supported
     # required for wdl
       language: 'wdl' (='wdl_draft2'), 'wdl_v1', or 'wdl_draft2'
       wdl_main_filename: main wdl file name

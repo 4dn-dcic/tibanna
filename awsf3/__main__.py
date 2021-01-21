@@ -44,7 +44,7 @@ class Subcommands(object):
                   'help': "execution metadata file (output json of cwltool / cromwell)"},
                  {'flag': ["-m", "--md5file"], 'help': "text file storing md5 values for output files"},
                  {'flag': ["-o", "--output-json"], 'help': "output postrun json file"},
-                 {'flag': ["-L", "--language"], 'help': "language", 'default': "cwl-draft3"}],
+                 {'flag': ["-L", "--language"], 'help': "language", 'default': "cwl_v1"}],
             'upload_postrun_json':
                 [{'flag': ["-i", "--input-json"], 'help': "input postrun json file to upload to s3"}],
             'update_postrun_json_final':

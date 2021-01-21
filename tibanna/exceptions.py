@@ -127,3 +127,11 @@ class MalFormattedPostRunJsonException(Exception):
 
 class MetricRetrievalException(Exception):
     pass
+
+
+class UnsupportedCWLVersionException(Exception):
+    def __init__(self, message=None):
+        if not message:
+            message = "CWL draft3 is no longer supported. Please switched to v1"
+        super().__init__(message)
+
