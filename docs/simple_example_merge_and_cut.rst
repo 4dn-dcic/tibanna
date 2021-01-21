@@ -151,7 +151,7 @@ To run the pipeline on a specific input file using Tibanna, we need to create an
 Job description for CWL
 #######################
     
-    The example job description for CWL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge_cwl_input.json.
+    The example job description for CWL is shown below and it can also be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge_and_cut/merge_and_cut_cwl_input.json.
    
     ::
 
@@ -182,22 +182,17 @@ Job description for CWL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
-            "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": "now",
-            "instance_type": "t2.micro",
-            "ebs_type": "io1",
+            "EBS_optimized": true,
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         } 
    
  
     The json file specifies the input double-nested file array ("smallfiles"), matching the name in CWL. The output file will be renamed to ``some_sub_dirname/my_first_merged_and_cut_file`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url). Note that child CWL files are also specified in this case (``"cwl_child_filenames": ["merge.cwl", "paste.cwl", "cat.cwl", "cut.cwl"]``).
     
-    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
+    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t3.micro`` which comes with 1 CPU and 1GB memory.
     
     
 Job description for WDL
@@ -236,15 +231,10 @@ Job description for WDL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
-            "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": 30,
-            "instance_type": "t2.micro",
-            "ebs_type": "io1",
+            "EBS_optimized": true,
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         }   
 

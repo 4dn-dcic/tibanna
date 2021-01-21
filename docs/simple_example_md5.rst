@@ -224,7 +224,7 @@ Job description for CWL
           "config": {
             "ebs_size": 10,
             "EBS_optimized": false,
-            "instance_type": "t2.micro",
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
             "log_bucket": "my-tibanna-test-bucket"
           }
@@ -233,7 +233,7 @@ Job description for CWL
     
     The json file specifies the input with ``gzfile``, matching the name in CWL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url).
     
-    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
+    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t3.micro`` which comes with 1 CPU and 1GB memory.
     
     
 Job description for WDL
@@ -270,7 +270,7 @@ Job description for WDL
           "config": {
             "ebs_size": 10,
             "EBS_optimized": false,
-            "instance_type": "t2.micro",
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
             "log_bucket": "my-tibanna-test-bucket"
           }
@@ -279,7 +279,7 @@ Job description for WDL
     
     The json file specifies the input with ``md5.md5_step.gzfile``, matching the name in WDL. In this example it is ``somefastqfile.fastq.gz`` on bucket ``my-tibanna-test-input-bucket``. The output file will be renamed to ``some_sub_dirname/my_first_md5_report`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the WDL file with ``wdl_filename`` and its url with ``wdl_directory_url``. Note that the file name itself is not included in the url).
     
-    The config field is identical to the CWL input json. In ``config``, we specify that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
+    The config field is identical to the CWL input json. In ``config``, we specify that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t3.micro`` which comes with 1 CPU and 1GB memory.
 
 
 
@@ -316,7 +316,7 @@ Job description for shell
           },
           "config": {
             "ebs_size": 10,
-            "instance_type": "t2.micro",
+            "instance_type": "t3.micro",
             "EBS_optimized": false,
             "password": "whateverpasswordworks",
             "log_bucket": "my-tibanna-test-bucket"

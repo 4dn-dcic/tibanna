@@ -65,7 +65,7 @@ class Subcommands(object):
                   'default': 3}],
             'run_batch_workflows':
                 [{'flag': ["-i", "--input-json-list"],
-                  'help': "list of tibanna input json files, e.g. -i input1.json -i input2.json ...",
+                  'help': "list of tibanna input json files, e.g. -i input1.json [input2.json] [...]",
                   "nargs": "+"},
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +

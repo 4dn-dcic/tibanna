@@ -220,7 +220,7 @@ class API(object):
         """given a list of input json, run multiple workflows"""
         run_infos = []
         for input_json in input_json_list:
-            run_info = self.run_workflow(input_json, env=env, sfn=sfn, slepe=sleep, verbose=verbose,
+            run_info = self.run_workflow(input_json, env=env, sfn=sfn, sleep=sleep, verbose=verbose,
                        open_browser=False)
             run_infos.append(run_info)
         return run_infos

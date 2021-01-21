@@ -22,14 +22,9 @@
   },
   "config": {
     "ebs_size": 10,
-    "json_bucket": "my-tibanna-test-bucket",
-    "EBS_optimized": false,
-    "ebs_iops": 500,
-    "shutdown_min": 30,
-    "instance_type": "t2.micro",
-    "ebs_type": "io1",
+    "EBS_optimized": true,
+    "instance_type": "t3.micro",
     "password": "whateverpasswordworks",
-    "log_bucket": "my-tibanna-test-bucket",
-    "key_name": ""
+    "log_bucket": "my-tibanna-test-bucket"
   }
 }

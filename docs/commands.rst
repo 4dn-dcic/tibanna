@@ -24,11 +24,386 @@ To check Tibanna version,
 
 
 
-Basic_commands
-++++++++++++++
+Non-admin user commands
++++++++++++++++++++++++
 
-Admin only
-##########
+The following commands can be used by a non-admin user, as long as the user belongs to the right user group.
+
+
+run_workflow
+------------
+
+To run workflow
+
+::
+
+    tibanna run_workflow --input-json=<input_json_file> [<options>]
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
+  -j JOBID, --jobid JOBID             specify a user-defined job id (randomly generated if
+                                      not specified)
+  -B, --do-not-open-browser           Do not open browser
+  -S SLEEP, --sleep SLEEP             Number of seconds between submission, to avoid drop-
+                                      out (default 3)
+
+
+run_batch_workflows
+-------------------
+
+To run multiple workflows in a batch. This command does not open browser and job ids are
+always automatically assigned.
+
+::
+
+    tibanna run_workflow -i <input_json_file> [<input_json_file2>] [...] [<options>]
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
+  -S SLEEP, --sleep SLEEP             Number of seconds between submission, to avoid drop-
+                                      out (default 3)
+
+
+
+stat
+----
+
+To check status of workflows,
+
+::
+
+    tibanna stat [<options>]
+
+
+**Options**
+
+::
+
+  -t|--status=<status>                  filter by run status (all runs if not specified).
+                                        Status must be one of the following values:
+                                        RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
+
+  -s|--sfn=<stepfunctionname>           An example step function name may be
+                                        'tibanna_unicorn_defaut_3978'. If not specified, default
+                                        value is taken from environmental variable
+                                        TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                        variable is not set, it uses name 'tibanna_pony' (4dn
+                                        default, works only for 4dn).
+
+  -n|--nlines=<number_of_lines>         print out only the first n lines
+
+  -j|--job-ids <job_id> [<job_id2>] ... job ids of the specific jobs to display, separated by
+                                        space. This option cannot be combined with
+                                        --nlines(-n), --status(-t) or --sfn(-s)
+
+
+The output is a table (an example below)
+
+::
+
+    jobid	status	name	start_time	stop_time
+    2xPih7reR6FM	RUNNING md5	2018-08-15 17:45	2018-08-15 17:50
+    3hbkJB3hv92S	SUCCEEDED	hicprocessingbam	2018-08-15 16:04	2018-08-15 16:09
+    UlkvH3gbBBA2	FAILED	repliseq-parta	2018-08-09 18:26	2018-08-09 19:01
+    j7hvisheBV27	SUCCEEDED	bwa-mem	2018-08-09 18:44	2018-08-09 18:59
+
+
+log
+---
+
+To check the log or postrun json (summary) of a workflow run
+
+::
+
+    tibanna log --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
+
+or
+
+::
+
+    tibanna log --exec-name=<exec_name> --sfn=<stepfunctionname> [<options>]
+
+
+**Options**
+
+::
+
+  -p|--postrunjson      The -p option streams out a postrun json file instead of a log file.
+                        A postrun json file is available only after the run finishes.
+                        It contains the summary of the job including input, output, EC2 config and
+                        Cloudwatch metrics on memory/CPU/disk space.
+
+  -r|--runjson          print out run json instead, which is the json file tibanna sends to the instance
+                        before the run starts.
+
+  -t, --top             print out top file (log file containing top command
+                        output) instead. This top file contains all the top batch command output
+                        at a 1-minute interval.
+
+  -T, --top-latest      print out the latest content of the top file. This one contains only the latest
+                        top command output (latest 1-minute interval).
+
+
+rerun
+-----
+
+
+To rerun a failed job with the same input json
+
+::
+
+    tibanna rerun --exec-arn=<execution_arn>|--job-id=<jobid>|--exec-name=<execution_name> [<options>]
+
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
+                                      Not necessary to rerun by ``exec-arn``.
+                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
+                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
+
+  -i|--instance-type=<instance_type>  Override instance type for the rerun
+
+  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+
+  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
+
+  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
+
+  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
+
+  -k|--key-name=<key_name>            Override key name for the rerun
+
+  -n|--name=<run_name>                Override run name for the rerun
+
+  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
+
+
+rerun_many
+----------
+
+To rerun many jobs that failed after a certain time point
+
+::
+
+    tibanna rerun_many [<options>]
+
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
+
+  -D|--stopdate=<stopdate>            e.g. '14Feb2018'
+
+  -H|--stophour=<stophour>            e.g. 14 (24-hour format, same as system time zone by default)
+
+  -M|--stopminute=<stopminute>        e.g. 30 (default 0)
+
+  -r|--sleeptime=<sleeptime>          seconds between reruns (eefault 5)
+
+  -o|--offset=<offset>                offset between AWS time zone and system time zone (default 0)
+                                      e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
+                                      time zone, offset must be 5.
+
+  -t|--status=<status>                filter by status. default 'FAILED', i.e. rerun only failed
+                                      jobs
+
+  -i|--instance-type=<instance_type>  Override instance type for the rerun
+
+  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
+
+  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
+
+  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
+
+  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
+
+  -k|--key-name=<key_name>            Override key name for the rerun
+
+  -n|--name=<run_name>                Override run name for the rerun
+
+  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
+
+
+**Example**
+
+::
+
+  tibanna rerun_many --stopdate=14Feb2018 --stophour=15
+
+
+This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
+
+
+kill
+----
+
+To kill a specific job through its execution arn or a jobid
+
+::
+
+    tibanna kill --exec-arn=<execution_arn>|--job-id=<jobid>
+
+
+If the execution id or job id is not found in the current RUNNING executions (e.g. the execution has already been aborted), then  only the EC2 instance will be terminated.
+
+
+
+**Example**
+
+For example, let's say we run the following job by mistake.
+
+::
+
+    $ tibanna run_workflow --input-json=fastqc.json
+
+The following message is printed out
+
+::
+
+    about to start run fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    response from aws was:
+    {u'startDate': datetime.datetime(2018, 10, 11, 20, 15, 0, 71000, tzinfo=tzlocal()), 'ResponseMetadata': {'RetryAttempts': 0, 'HTTPStatusCode': 200, 'RequestId': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'HTTPHeaders': {'x-amzn-requestid': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'content-length': '161', 'content-type': 'application/x-amz-json-1.0'}}, u'executionArn': u'arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293'}
+    url to view status:
+    https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+    JOBID jLeL6vMbhL63 submitted
+    EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+
+
+To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (it can also be found on the Step Function Console)
+
+
+::
+
+    $ tibanna kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
+
+or
+
+::
+
+    $ tibanna kill --job-id jLeL6vMbhL63
+
+
+
+kill_all
+--------
+
+To kill all currently running jobs for a given step function
+
+::
+
+    tibanna kill_all
+
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
+
+list_sfns
+---------
+
+To list all step functions
+
+::
+
+    tibanna list_sfns [-n]
+
+**Options**
+
+::
+
+    -n      show stats of the number of jobs for per status (using this option could slow down the
+            process)
+
+plot_metrics
+------------
+
+To collect, save and visualize the resources metrics from Cloud Watch
+
+::
+
+  tibanna plot_metrics --job-id=<jobid> [<options>]
+
+**Options**
+
+::
+
+  -s|--sfn=<stepfunctionname>         An example step function name may be
+                                      'tibanna_unicorn_defaut_3978'. If not specified, default
+                                      value is taken from environmental variable
+                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                      variable is not set, it uses name 'tibanna_pony' (4dn
+                                      default, works only for 4dn).
+
+  -f|--force-upload                   This flag force the upload of the metrics reports
+                                      to the S3 bucket, even if there is a lock (upload
+                                      is blocked by default by the lock)
+
+  -u|--update-html-only               This flag specify to only update the html file
+                                      for metrics visualization,
+                                      metrics reports are not updated
+
+  -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
+                                      after it has been created/updated
+
+  -i|--instance-id=<instance_id>      Manually provide instance ID in case Tibanna somehow
+                                      can't find the information. This field is not required normally.
+  
+
+cost
+----
+
+To retrieve the cost and update the metrics report file created with plot_metrics
+
+::
+
+ tibanna cost --job-id=<jobid> [<options>]
+
+**Options**
+
+::
+
+ -s|--sfn=<stepfunctionname>         An example step function name may be
+                                     'tibanna_unicorn_defaut_3978'. If not specified, default
+                                     value is taken from environmental variable
+                                     TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                     variable is not set, it uses name 'tibanna_pony' (4dn
+                                     default, works only for 4dn).
+
+ -u|--update-tsv                     Update with the cost the tsv file that stores metrics
+                                     information on the S3 bucket
+
+
+Admin only commands
++++++++++++++++++++
 
 The following commands require admin previlege to one's AWS account.
 
@@ -160,349 +535,6 @@ To remove Tibanna components on AWS.
 
 
 
-Non-admin
-#########
-
-The following commands can be used by a non-admin user, as long as the user belongs to the right user group.
-
-
-run_workflow
-------------
-
-To run workflow
-
-::
-
-    tibanna run_workflow --input-json=<input_json_file> [<options>]
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         An example step function name may be
-                                      'tibanna_unicorn_defaut_3978'. If not specified, default
-                                      value is taken from environmental variable
-                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
-  -j JOBID, --jobid JOBID             specify a user-defined job id (randomly generated if
-                                      not specified)
-  -B, --do-not-open-browser           Do not open browser
-  -S SLEEP, --sleep SLEEP             Number of seconds between submission, to avoid drop-
-                                      out (default 3)
-
-
-stat
-----
-
-To check status of workflows,
-
-::
-
-    tibanna stat [<options>]
-
-
-**Options**
-
-::
-
-  -t|--status=<status>                filter by run status (all runs if not specified).
-                                      Status must be one of the following values:
-                                      RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED
-
-  -s|--sfn=<stepfunctionname>         An example step function name may be
-                                      'tibanna_unicorn_defaut_3978'. If not specified, default
-                                      value is taken from environmental variable
-                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                      variable is not set, it uses name 'tibanna_pony' (4dn
-                                      default, works only for 4dn).
-
-  -n|--nlines<number_of_lines>        print out only the first n lines
-
-
-
-The output is a table (an example below)
-
-::
-
-    jobid	status	name	start_time	stop_time
-    2xPih7reR6FM	RUNNING md5	2018-08-15 17:45	2018-08-15 17:50
-    3hbkJB3hv92S	SUCCEEDED	hicprocessingbam	2018-08-15 16:04	2018-08-15 16:09
-    UlkvH3gbBBA2	FAILED	repliseq-parta	2018-08-09 18:26	2018-08-09 19:01
-    j7hvisheBV27	SUCCEEDED	bwa-mem	2018-08-09 18:44	2018-08-09 18:59
-
-log
----
-
-To check the log or postrun json (summary) of a workflow run
-
-::
-
-    tibanna log --exec-arn=<stepfunctionrun_arn>|--job-id=<jobid> [<options>]
-
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                      Not necessary to rerun by ``exec-arn``.
-                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
-
-  -p|--postrunjson                    The -p option streams out a postrun json file instead of a log file.
-                                      A postrun json file is available only after the run finishes.
-                                      It contains the summary of the job including input, output, EC2 config and
-                                      Cloudwatch metrics on memory/CPU/disk space.
-
-
-rerun
------
-
-
-To rerun a failed job with the same input json
-
-::
-
-    tibanna rerun --exec-arn=<execution_arn>|--job-id=<jobid>|--exec-name=<execution_name> [<options>]
-
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                      Not necessary to rerun by ``exec-arn``.
-                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
-
-  -i|--instance-type=<instance_type>  Override instance type for the rerun
-
-  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
-
-  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
-
-  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
-
-  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
-
-  -k|--key-name=<key_name>            Override key name for the rerun
-
-  -n|--name=<run_name>                Override run name for the rerun
-
-  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
-
-
-rerun_many
-----------
-
-To rerun many jobs that failed after a certain time point
-
-::
-
-    tibanna rerun_many [<options>]
-
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         An example step function name may be
-                                      'tibanna_unicorn_defaut_3978'. If not specified, default
-                                      value is taken from environmental variable
-                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                      variable is not set, it uses name 'tibanna_pony' (4dn
-                                      default, works only for 4dn).
-
-  -D|--stopdate=<stopdate>            e.g. '14Feb2018'
-
-  -H|--stophour=<stophour>            e.g. 14 (24-hour format, same as system time zone by default)
-
-  -M|--stopminute=<stopminute>        e.g. 30 (default 0)
-
-  -r|--sleeptime=<sleeptime>          seconds between reruns (eefault 5)
-
-  -o|--offset=<offset>                offset between AWS time zone and system time zone (default 0)
-                                      e.g. if 17:00 by AWS time zone corresponds to 12:00 by system
-                                      time zone, offset must be 5.
-
-  -t|--status=<status>                filter by status. default 'FAILED', i.e. rerun only failed
-                                      jobs
-
-  -i|--instance-type=<instance_type>  Override instance type for the rerun
-
-  -d|--shutdown-min=<shutdown_min>    Override shutdown minutes for the rerun
-
-  -b|--ebs-size=<ebs_size>            Override EBS size for the rerun
-
-  -T|--ebs-type=<ebs_size>            Override EBS type for the rerun
-
-  -p|--ebs-iops=<ebs_iops>            Override EBS IOPS for the rerun
-
-  -k|--key-name=<key_name>            Override key name for the rerun
-
-  -n|--name=<run_name>                Override run name for the rerun
-
-  -a|--appname-filter=<appname>       Rerun only if the app name matches the specified app name.
-
-
-**Example**
-
-::
-
-  tibanna rerun_many --stopdate=14Feb2018 --stophour=15
-
-
-This example will rerun all the jobs of default step function that failed after 3pm on Feb 14 2018.
-
-
-kill
-----
-
-To kill a specific job through its execution arn or a jobid
-
-::
-
-    tibanna kill --exec-arn=<execution_arn>
-
-or
-
-::
-
-    tibanna kill --job-id=<jobid> --sfn=<stepfunctionname>
-
-
-If ``jobid`` is specified but not ``stepfunctionname``, then by default it assumes ``TIBANNA_DEFAULT_STEP_FUNCTION_NAME``. If the job id is not found in the executions on the default or specified step function, then  only the EC2 instance will be terminated and the step function status may still be RUNNING.
-
-
-
-**Example**
-
-For example, let's say we run the following job by mistake.
-
-::
-
-    $ tibanna run_workflow --input-json=fastqc.json
-
-The following message is printed out
-
-::
-
-    about to start run fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-    response from aws was:
-    {u'startDate': datetime.datetime(2018, 10, 11, 20, 15, 0, 71000, tzinfo=tzlocal()), 'ResponseMetadata': {'RetryAttempts': 0, 'HTTPStatusCode': 200, 'RequestId': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'HTTPHeaders': {'x-amzn-requestid': '54664dcc-cd92-11e8-a2c0-51ce6ca6c6ea', 'content-length': '161', 'content-type': 'application/x-amz-json-1.0'}}, u'executionArn': u'arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293'}
-    url to view status:
-    https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-    JOBID jLeL6vMbhL63 submitted
-    EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-    Couldn't get a file descriptor referring to the console
-
-
-To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (it can also be found on the Step Function Console)
-
-
-::
-
-    $ tibanna kill --exec-arn=arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-
-
-
-kill_all
---------
-
-To kill all currently running jobs for a given step function
-
-::
-
-    tibanna kill_all
-
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         An example step function name may be
-                                      'tibanna_unicorn_defaut_3978'. If not specified, default
-                                      value is taken from environmental variable
-                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                      variable is not set, it uses name 'tibanna_pony' (4dn
-                                      default, works only for 4dn).
-
-list_sfns
----------
-
-To list all step functions
-
-::
-
-    tibanna list_sfns [-n]
-
-**Options**
-
-::
-
-    -n      show stats of the number of jobs for per status (using this option could slow down the
-            process)
-
-plot_metrics
-------------
-
-To collect, save and visualize the resources metrics from Cloud Watch
-
-::
-
-  tibanna plot_metrics --job-id=<jobid> [<options>]
-
-**Options**
-
-::
-
-  -s|--sfn=<stepfunctionname>         An example step function name may be
-                                      'tibanna_unicorn_defaut_3978'. If not specified, default
-                                      value is taken from environmental variable
-                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                      variable is not set, it uses name 'tibanna_pony' (4dn
-                                      default, works only for 4dn).
-
-  -f|--force-upload                   This flag force the upload of the metrics reports
-                                      to the S3 bucket, even if there is a lock (upload
-                                      is blocked by default by the lock)
-
-  -u|--update-html-only               This flag specify to only update the html file
-                                      for metrics visualization,
-                                      metrics reports are not updated
-
-  -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
-                                      after it has been created/updated
-
-  -i|--instance-id=<instance_id>      Manually provide instance ID in case Tibanna somehow
-                                      can't find the information. This field is not required normally.
-  
-
-cost
-----
-
-To retrieve the cost and update the metrics report file created with plot_metrics
-
-::
-
- tibanna cost --job-id=<jobid> [<options>]
-
-**Options**
-
-::
-
- -s|--sfn=<stepfunctionname>         An example step function name may be
-                                     'tibanna_unicorn_defaut_3978'. If not specified, default
-                                     value is taken from environmental variable
-                                     TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
-                                     variable is not set, it uses name 'tibanna_pony' (4dn
-                                     default, works only for 4dn).
-
- -u|--update-tsv                     Update with the cost the tsv file that stores metrics
-                                     information on the S3 bucket
-
-
-Admin only
-##########
 
 setup_tibanna_env
 -----------------
@@ -539,45 +571,3 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
                                            (this way postrunjson and metrics reports will
                                            not be public)
 
-
-Additional commands for tibanna_4dn
-+++++++++++++++++++++++++++++++++++
-
-
-``tibanna_4dn`` is a 4dn extension of ``tibanna``. All the subcommands of ``tibanna`` can also be used by ``tibanna_4dn``. In addition, ``tibanna_4dn`` supports additional 4dn-specific subcommands.
-
-
-::
-
-    tibanna_4dn <subcommand> <args...>
-
-
-deploy_pony
------------
-
-
-This function deploys tibanna pony (4dn extension of tibanna).
-You need the following environmental variables set on your local machine from which you're deploying a pony.
-
-::
-
-    export S3_ENCRYPT_KEY=<4dn_s3_encryption_key>
-
-To create an instance of tibanna (step function + lambdas)
-
-::
-
-    tibanna_4dn deploy_pony [--suffix=<suffixname>] [--usergroup=<usergroup>]
-    # (use suffix for development version)
-    # example <suffixname> : dev
-    # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the `tibanna setup_tibanna_env` command..
-
-
-example
-
-::
-
-    tibanna_4dn deploy_pony --suffix=dev2
-
-
-The above command will create a step function named tibanna_pony_dev2 that uses a set of lambdas with suffix _dev2, and deploys these lambdas.
