@@ -230,7 +230,7 @@ else
     exl echo
     exl echo "## switching to an older version of cwltool that supports draft3"
     exl pip uninstall -y ruamel.yaml
-    exl pip install ruamel.yaml==0.14
+    exl pip install ruamel.yaml==0.14.12
     pip uninstall -y cwltool
     exl git clone https://github.com/SooLee/cwltool
     cd cwltool
