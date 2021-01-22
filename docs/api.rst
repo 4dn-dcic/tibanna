@@ -224,7 +224,8 @@ To run workflow
 run_batch_workflows
 -------------------
 
-To run multiple workflows in a batch. This command does not open browser and job ids are always automatically assigned.
+To run multiple workflows in a batch. This function does not open browser and job ids are
+always automatically assigned. This function is available for Tibanna versions >= ``1.0.0``.
 
 ::
 
@@ -269,7 +270,8 @@ To check status of workflows,
 
   n=<number_of_lines>            print out only the first n lines
 
-  job_ids=<list_of_job_ids>      filter by a list of job ids
+  job_ids=<list_of_job_ids>      filter by a list of job ids. This option is
+                                 available only for version >= ``1.0.0``.
 
 
 The output is a table (an example below)
@@ -302,13 +304,13 @@ To check the log or postrun json (summary) of a workflow run
                                  Cloudwatch metrics on memory/CPU/disk space.
 
   runjson=<True|False>           prints out run json instead, which is the json file tibanna sends to the instance
-                                 before the run starts.
+                                 before the run starts. (new in ``1.0.0``)
 
   top=<True|False>               prints out top file (log file containing top command output) instead. This top file
-                                 contains all the top batch command output at a 1-minute interval.
+                                 contains all the top batch command output at a 1-minute interval. (new in ``1.0.0``)
 
   top_latest=<True|False>        prints out the latest content of the top file. This one contains only the latest
-                                 top command output (latest 1-minute interval).
+                                 top command output (latest 1-minute interval). (new in ``1.0.0``)
 
 
 rerun

@@ -15,7 +15,7 @@ General stats
 
 ::
 
-    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-l] [-n <number_of_lines>]
+    tibanna stat [--sfn=<stepfunctioname>] [--status=RUNNING|SUCCEEDED|FAILED|TIMED_OUT|ABORTED] [-l] [-n <number_of_lines>] [-j <job_id> [<job_id2>] [...]]
 
 The output is a table (an example below)
 
@@ -56,14 +56,16 @@ Using your job ID, you can also check your S3 bucket to see if you can find a fi
     tibanna log --job-id=lSbkdVIQ6VtX | tail  -60
 
 
+The output looks as below for version ``1.0.0`` or higher (much better organized / formatted than older version logs).
+
 ::
 
     ## job id: tvfZLFlt3PBz
     ## instance type: t3.micro
     ## instance id: i-0be6e6be5723ecd24
     ## instance region: us-east-1
-    ## tibanna lambda version: 1.0.0b3
-    ## awsf image: duplexa/tibanna-awsf:pre
+    ## tibanna lambda version: 1.0.0
+    ## awsf image: duplexa/tibanna-awsf:1.0.0
     ## ami id: ami-0a7ddfc7e412ab6e0
     ## availability zone: us-east-1f
     ## security groups: default
@@ -122,9 +124,9 @@ Top and Top_latest
 ##################
 
 
-As of version 1.0.0, the top command output is sent to ``<jobid>.top`` and ``<jobid>.top_latest`` in the log bucket. The top command output used to be mixed in the log file (``<jobid>.log``) in previous versions. With ``tibanna log`` command and option ``-t`` (all top output) and ``-T`` (latest only), one can print out the top command output from the running instance. The data is collected at 1-minute intervals and only while the command is running (e.g. not while the input data are downloaded to the EC2 instance or ssh is being configured etc).
+As of version ``1.0.0``, the top command output is sent to ``<jobid>.top`` and ``<jobid>.top_latest`` in the log bucket. The top command output used to be mixed in the log file (``<jobid>.log``) in previous versions. With ``tibanna log`` command and option ``-t`` (all top output) and ``-T`` (latest only), one can print out the top command output from the running instance. The data is collected at 1-minute intervals and only while the command is running (e.g. not while the input data are downloaded to the EC2 instance or ssh is being configured etc).
 
-To use this feature, the tibanna unicorn must be deployed with tibanna >= 1.0.0 and the locally installed version must be >= 1.0.0 as well.
+To use this feature, the tibanna unicorn must be deployed with tibanna >= ``1.0.0`` and the locally installed version must be >= ``1.0.0`` as well.
 
 Below is an example command and the output, executed twice with a 1-minute interval. In this example, the user can see that around 20:49:01, ``unpigz`` was running and around 20:50:01, many ``java`` processes were running (they depend on the command / workflow).
 
@@ -134,6 +136,7 @@ Below is an example command and the output, executed twice with a 1-minute inter
 
 ::
 
+    Timestamp: 2021-01-20-20:49:01
     top - 20:49:01 up 1 min,  0 users,  load average: 2.11, 0.75, 0.27
     Tasks:  15 total,   2 running,  13 sleeping,   0 stopped,   0 zombie
     %Cpu(s): 13.1 us,  6.4 sy,  0.0 ni, 80.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
@@ -149,6 +152,9 @@ Below is an example command and the output, executed twice with a 1-minute inter
         319 root      20   0 1792992  14660   9056 S   0.0   0.0   0:00.10 goofys-+
         325 root      20   0 1571284  14136   9080 S   0.0   0.0   0:00.08 goofys-+
         382 root      20   0    6812   2076   1868 S   0.0   0.0   0:00.00 cron
+
+
+If we run the command again in ~1 min, we may get a different snapshot. This way, we can monitor in near-real time what kind of programs are running and how much resources they are using.
     
 ::
     
@@ -156,6 +162,7 @@ Below is an example command and the output, executed twice with a 1-minute inter
 
 ::
     
+    Timestamp: 2021-01-20-20:50:01
     top - 20:50:01 up 2 min,  0 users,  load average: 18.06, 4.84, 1.67
     Tasks:  45 total,   1 running,  44 sleeping,   0 stopped,   0 zombie
     %Cpu(s): 93.6 us,  6.4 sy,  0.0 ni,  0.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
@@ -178,6 +185,7 @@ Postrun.json
 
 Once the job is finished, you should be able to find the ``<jobid>.postrun.json`` file as well. This file can be viewed likewise using the ``tibanna log`` command, but with the ``-p`` option. The postrun json file contains the summary of the run, including the input / output / EC2 configuration and Cloudwatch metrics for memory/CPU/disk space usage.
 
+Starting version ``1.0.0``, you can get an incomplete postrun.json before the job is finished, in addition to a complete postrun.json that you get at the end of the run. The incomplete postrun.json will not have the metrics, job status, end time, etc, but will include instance ID and file system.
 
 ::
 
@@ -461,10 +469,15 @@ By default the command will retrieve the data from cloud watch, and creates seve
   - a metrics_report.tsv containing the average statistics and other information about the EC2 instance
   - a metrics.html report for visualization
 
-All the files are eventually uploaded to a folder named <jobid>.metrics inside the log S3 bucket specified for tibanna output.
+All the files are eventually uploaded to a folder named ``<jobid>.metrics`` inside the log S3 bucket specified for tibanna output.
 To visualize the html report the URL structure is: ``https://<log-bucket>.s3.amazonaws.com/<jobid>.metrics/metrics.html``
 
-**Basic Command**
+Starting with ``1.0.0``, the metrics plot will include per-process CPU and memory profiles retrived from the top command reports at a 1-minute interval. Additional files `top_cpu.tsv` and `top_mem.tsv` will also be created under the same folder ``<jobid>.metrics``.
+
+
+
+Basic Command
+#############
 
 ::
 
@@ -490,15 +503,20 @@ To visualize the html report the URL structure is: ``https://<log-bucket>.s3.ama
   -B|--do-not-open-browser            Do not open the browser to visualize the metrics html
                                       after it has been created/updated
 
+  -e|--endtime=<end_time>             Endtime (default job end time if the job has finished
+                                      or the current time)
+  -i|--instance-id=<instance_id>      Manually provide instance_id if somehow tibanna fails
+                                      to retrieve the info
+
 When metrics are collected for a run that is complete, a lock file is automatically created inside the same folder. The command will not update the metrics files if a lock file is present. To override this behavior the ``--force-upload`` flag allows to upload the metrics files ignoring the lock.
 The ``--update-html-only`` allows to only update the metrics.html file without modifying the other tsv files.
 By default the command will open the html report in the browser for visualization when execution is complete, ``--do-not-open-browser`` can be added to prevent this behavior.
 
 
-Metrics collected
-#################
+Summary metrics collected as a table
+####################################
 
-The metrics that are collected are:
+Some summary metrics are collected and shown in the table of at the beginning of the metrics report. They are:
 
   - EC2 Instance type
 ----
