@@ -23,6 +23,176 @@ To check Tibanna version,
     tibanna -v
 
 
+Admin only commands
++++++++++++++++++++
+
+The following commands require admin previlege to one's AWS account.
+
+deploy_unicorn
+--------------
+
+
+To create an instance of tibanna unicorn (step function + lambdas)
+
+::
+
+    tibanna deploy_unicorn [<options>]
+
+
+**Options**
+
+
+::
+
+  -b|--buckets=<bucket1,bucket2,...>       List of buckets to use for tibanna runs.
+                                           The associated lambda functions, EC2
+                                           instances and user group will be given
+                                           permission to these buckets.
+
+  -S|--no-setup                            Skip setup buckets/permissions and just
+                                           redeploy tibanna step function and lambdas.
+                                           This is useful when upgrading the existing
+                                           tibanna that's already set up.
+
+  -E|--no-setenv                           Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+                                           environmental variable in your bashrc.
+
+  -s|--suffix=<suffixname>                 Using suffix helps deploying various dev-version
+                                           tibanna. The step function and lambda functions
+                                           will have the suffix. Having a different suffix
+                                           does not create a new user group with a different
+                                           permission (for this purpose use --usergroup).
+
+  -g|--usergroup=<usergroup>               Tibanna usergroup to share the permission to access
+                                           buckets and run jobs
+
+  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
+                                           (this way postrunjson and metrics reports will
+                                           not be public)
+
+
+Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
+
+
+deploy_core
+-----------
+
+Deploy/update only a single lambda function
+
+::
+
+    tibanna deploy_core -n <lambda_name> [<options>]
+
+
+where ``<lambda_name>`` would be either ``run_task_awsem`` or `check_task_awsem``.
+
+
+**Options**
+
+
+::
+
+  -s|--suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
+                                      The step function and lambda functions will have the suffix.
+
+  -g|--usergroup=<usergroup>          Tibanna usergroup to share the permission to access
+                                      buckets and run jobs
+
+
+users
+-----
+
+To list users
+
+::
+
+    tibanna users
+
+
+add_user
+--------
+
+To add users to a tibanna user group
+
+::
+
+    tibanna add_user -u <user> -g <usergroup>
+
+
+
+cleanup
+-------
+
+To remove Tibanna components on AWS.
+
+::
+
+    tibanna cleanup -g <usergroup> ... 
+
+
+**Options**
+
+
+::
+
+
+  -s|--suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added
+                                      here. The step function and lambda functions will have the
+                                      suffix at the end.
+
+  -E|--do-not-ignore-errors           By default, if any of the components does not exist (e.g.
+                                      already removed), it does not throw an error and keeps on
+                                      to remove the other components. Using this option turns off
+                                      this feature and will throw an error.
+
+  -G|--do-not-remove-iam-group        if set, it does not remove the IAM permissions. This option
+                                      is recommended if various suffices are used to share the
+                                      same usergroup.
+
+  -p|--purge-history                  if set, remove all the job logs and other job-related files
+                                      from S3 bucket and dynamoDB. Please use with caution.
+
+  -q|--quiet                          run quietly
+
+
+
+
+setup_tibanna_env
+-----------------
+
+- Advanced user only
+
+To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
+
+
+::
+
+    tibanna setup_tibanna_env <options>
+
+
+**Options**
+
+::
+
+  -g|--usergroup-tag=<usergrouptag>        an identifier for a usergroup that shares
+                                           a tibanna permission
+
+  -R|--no-randomize                        do not add a random number to generate a
+                                           usergroup name (e.g. the usergroup name used
+                                           will be identical to the one specified using
+                                           the ``--usergrou-tag`` option.  By default,
+                                           a random number will be added at the end
+                                           (e.g. default_2721).
+
+  -b|--buckets=<bucket_list>               A comma-delimited list of bucket names - the
+                                           buckets to which Tibanna needs access to
+                                           through IAM role (input, output, log).
+
+  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
+                                           (this way postrunjson and metrics reports will
+                                           not be public)
+
+
 
 Non-admin user commands
 +++++++++++++++++++++++
@@ -62,7 +232,7 @@ always automatically assigned.
 
 ::
 
-    tibanna run_workflow -i <input_json_file> [<input_json_file2>] [...] [<options>]
+    tibanna run_batch_workflows -i <input_json_file> [<input_json_file2>] [...] [<options>]
 
 **Options**
 
@@ -148,11 +318,11 @@ or
   -r|--runjson          print out run json instead, which is the json file tibanna sends to the instance
                         before the run starts.
 
-  -t, --top             print out top file (log file containing top command
+  -t|--top              prints out top file (log file containing top command
                         output) instead. This top file contains all the top batch command output
                         at a 1-minute interval.
 
-  -T, --top-latest      print out the latest content of the top file. This one contains only the latest
+  -T|--top-latest       prints out the latest content of the top file. This one contains only the latest
                         top command output (latest 1-minute interval).
 
 
@@ -160,21 +330,16 @@ rerun
 -----
 
 
-To rerun a failed job with the same input json
+To rerun a failed job with the same input json on a specific step function.
 
 ::
 
-    tibanna rerun --exec-arn=<execution_arn>|--job-id=<jobid>|--exec-name=<execution_name> [<options>]
+    tibanna rerun --exec-arn=<execution_arn>|--job-id=<jobid> --sfn=<target_stepfunction_name> [<options>]
 
 
 **Options**
 
 ::
-
-  -s|--sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                      Not necessary to rerun by ``exec-arn``.
-                                      Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                      An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
   -i|--instance-type=<instance_type>  Override instance type for the rerun
 
@@ -401,173 +566,4 @@ To retrieve the cost and update the metrics report file created with plot_metric
  -u|--update-tsv                     Update with the cost the tsv file that stores metrics
                                      information on the S3 bucket
 
-
-Admin only commands
-+++++++++++++++++++
-
-The following commands require admin previlege to one's AWS account.
-
-deploy_unicorn
---------------
-
-
-To create an instance of tibanna unicorn (step function + lambdas)
-
-::
-
-    tibanna deploy_unicorn [<options>]
-
-
-**Options**
-
-
-::
-
-  -b|--buckets=<bucket1,bucket2,...>       List of buckets to use for tibanna runs.
-                                           The associated lambda functions, EC2
-                                           instances and user group will be given
-                                           permission to these buckets.
-
-  -S|--no-setup                            Skip setup buckets/permissions and just
-                                           redeploy tibanna step function and lambdas.
-                                           This is useful when upgrading the existing
-                                           tibanna that's already set up.
-
-  -E|--no-setenv                           Do not overwrite TIBANNA_DEFAULT_STEP_FUNCTION_NAME
-                                           environmental variable in your bashrc.
-
-  -s|--suffix=<suffixname>                 Using suffix helps deploying various dev-version
-                                           tibanna. The step function and lambda functions
-                                           will have the suffix. Having a different suffix
-                                           does not create a new user group with a different
-                                           permission (for this purpose use --usergroup).
-
-  -g|--usergroup=<usergroup>               Tibanna usergroup to share the permission to access
-                                           buckets and run jobs
-
-  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
-                                           (this way postrunjson and metrics reports will
-                                           not be public)
-
-
-Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
-
-
-deploy_core
------------
-
-Deploy/update only a single lambda function
-
-::
-
-    tibanna deploy_core -n <lambda_name> [<options>]
-
-
-where ``<lambda_name>`` would be either ``run_task_awsem`` or `check_task_awsem``.
-
-
-**Options**
-
-
-::
-
-  -s|--suffix=<suffixname>            Using suffix helps deploying various dev-version tibanna.
-                                      The step function and lambda functions will have the suffix.
-
-  -g|--usergroup=<usergroup>          Tibanna usergroup to share the permission to access
-                                      buckets and run jobs
-
-
-users
------
-
-To list users
-
-::
-
-    tibanna users
-
-
-add_user
---------
-
-To add users to a tibanna user group
-
-::
-
-    tibanna add_user -u <user> -g <usergroup>
-
-
-
-cleanup
--------
-
-To remove Tibanna components on AWS.
-
-::
-
-    tibanna cleanup -g <usergroup> ... 
-
-
-**Options**
-
-
-::
-
-
-  -s|--suffix=<suffixname>            If suffix was used to deploy a tibanna, it should be added
-                                      here. The step function and lambda functions will have the
-                                      suffix at the end.
-
-  -E|--do-not-ignore-errors           By default, if any of the components does not exist (e.g.
-                                      already removed), it does not throw an error and keeps on
-                                      to remove the other components. Using this option turns off
-                                      this feature and will throw an error.
-
-  -G|--do-not-remove-iam-group        if set, it does not remove the IAM permissions. This option
-                                      is recommended if various suffices are used to share the
-                                      same usergroup.
-
-  -p|--purge-history                  if set, remove all the job logs and other job-related files
-                                      from S3 bucket and dynamoDB. Please use with caution.
-
-  -q|--quiet                          run quietly
-
-
-
-
-setup_tibanna_env
------------------
-
-- Advanced user only
-
-To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
-
-
-::
-
-    tibanna setup_tibanna_env <options>
-
-
-**Options**
-
-::
-
-  -g|--usergroup-tag=<usergrouptag>        an identifier for a usergroup that shares
-                                           a tibanna permission
-
-  -R|--no-randomize                        do not add a random number to generate a
-                                           usergroup name (e.g. the usergroup name used
-                                           will be identical to the one specified using
-                                           the ``--usergrou-tag`` option.  By default,
-                                           a random number will be added at the end
-                                           (e.g. default_2721).
-
-  -b|--buckets=<bucket_list>               A comma-delimited list of bucket names - the
-                                           buckets to which Tibanna needs access to
-                                           through IAM role (input, output, log).
-
-  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
-                                           (this way postrunjson and metrics reports will
-                                           not be public)
 
