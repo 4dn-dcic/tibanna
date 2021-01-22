@@ -533,7 +533,20 @@ Some summary metrics are collected and shown in the table of at the beginning of
 html report example
 ###################
 
-.. image:: images/report.png
+
+.. image:: images/metrics_plot_01.png
+
+.. image:: images/metrics_plot_02.png
+
+.. image:: images/metrics_plot_03.png
+
+.. image:: images/metrics_plot_04.png
+
+.. image:: images/metrics_plot_05.png
+
+.. image:: images/metrics_plot_06.png
+
+.. image:: images/metrics_plot_07.png
 
 
 cost
