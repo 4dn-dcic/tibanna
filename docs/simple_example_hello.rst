@@ -36,7 +36,7 @@ This json can be found at https://github.com/4dn-dcic/tibanna/blob/master/exampl
           "config": {
             "ebs_size": 10,
             "instance_type": "t3.micro",
-            "EBS_optimized": false,
+            "EBS_optimized": true,
             "password": "whateverpasswordworks",
             "log_bucket": "my-tibanna-test-bucket"
           }       

@@ -4,7 +4,6 @@ import boto3
 import json
 import time
 import copy
-import logging
 import importlib
 import shutil
 import subprocess
@@ -13,6 +12,7 @@ from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from uuid import uuid4, UUID
 from types import ModuleType
+from . import create_logger
 from .vars import (
     _tibanna,
     AWS_ACCOUNT_NUMBER,
@@ -35,7 +35,6 @@ from .vars import (
 )
 from .utils import (
     _tibanna_settings,
-    printlog,
     create_jobid,
     does_key_exist,
     read_s3,
@@ -57,8 +56,7 @@ from . import dd_utils
 
 
 # logger
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
+logger = create_logger(__name__)
 
 
 UNICORN_LAMBDAS = ['run_task_awsem', 'check_task_awsem']
@@ -186,7 +184,7 @@ class API(object):
         # submit job as an execution
         aws_input = json.dumps(data)
         if verbose:
-            print("about to start run %s" % run_name)
+            logger.info("about to start run %s" % run_name)
         # trigger the step function to run
         try:
             response = client.start_execution(
@@ -202,15 +200,15 @@ class API(object):
         data[_tibanna]['response'] = response
         if verbose:
             # print some info
-            print("response from aws was: \n %s" % response)
-            print("url to view status:")
-            print(data[_tibanna]['url'])
-            print("JOBID %s submitted" % data['jobid'])
-            print("EXECUTION ARN = %s" % data[_tibanna]['exec_arn'])
+            logger.info("response from aws was: \n %s" % response)
+            logger.info("url to view status:")
+            logger.info(data[_tibanna]['url'])
+            logger.info("JOBID %s submitted" % data['jobid'])
+            logger.info("EXECUTION ARN = %s" % data[_tibanna]['exec_arn'])
             if 'cloudwatch_dashboard' in data['config'] and data['config']['cloudwatch_dashboard']:
                 cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
-                print("Cloudwatch Dashboard = %s" % cw_db_url)
+                logger.info("Cloudwatch Dashboard = %s" % cw_db_url)
             if open_browser and shutil.which('open') is not None:
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
@@ -233,7 +231,7 @@ class API(object):
             res = dydb.describe_table(TableName=DYNAMODB_TABLE)
         except Exception as e:
             if verbose:
-                printlog("Not adding to dynamo table: %s" % e)
+                logger.info("Not adding to dynamo table: %s" % e)
             return
         try:
             response = dydb.put_item(
@@ -257,7 +255,7 @@ class API(object):
                 }
             )
             if verbose:
-                printlog(response)
+                logger.info("Successfully put item to dynamoDB: " + str(response))
         except Exception as e:
             raise(e)
 
@@ -306,7 +304,7 @@ class API(object):
                                                        'ComparisonOperator': 'EQ'}})
             return ddres
         except Exception as e:
-            printlog("Warning: dynamoDB entry not found: %s" % e)
+            logger.warning("DynamoDB entry not found: %s" % e)
             return None
 
     def info(self, job_id):
@@ -323,10 +321,10 @@ class API(object):
                 dditem = ddres['Items'][0]
                 return dd_utils.item2dict(dditem)
             except Exception as e:
-                printlog("Warning: dynamoDB fields not found: %s" % e)
+                logger.warning("DynamoDB fields not found: %s" % e)
                 return None
         else:
-            printlog("Warning: dynamoDB Items field not found:")
+            logger.warning("DynamoDB Items field not found:")
             return None
 
     def kill(self, exec_arn=None, job_id=None, sfn=None):
@@ -343,25 +341,25 @@ class API(object):
                             if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
                                 continue
                             if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
-                                printlog("terminating EC2 instance")
+                                logger.info("terminating EC2 instance")
                                 response = i.terminate()
-                                printlog(response)
+                                logger.info("Successfully terminated instance: " + str(response))
                                 terminated = True
                                 break
                         if terminated:
                             break
-                printlog("terminating step function execution")
+                logger.info("terminating step function execution")
                 resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-                printlog(resp_sf)
+                logger.info("Successfully terminated step function execution: " + str(resp_sf))
         elif job_id:
             ec2 = boto3.client('ec2')
             res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
             if not res['Reservations']:
                 raise("instance not available - if you just submitted the job, try again later")
             instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
-            printlog("terminating EC2 instance")
+            logger.info("terminating EC2 instance")
             resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
-            printlog(resp_term)
+            logger.info("Successfully terminated instance: " + str(resp_term))
             # first try dynanmodb to get logbucket
             ddres = dict()
             try:
@@ -377,7 +375,7 @@ class API(object):
                 exec_arn = EXECUTION_ARN(exec_name, sfn)
             else:
                 if not sfn:
-                    printlog("Can't stop step function because step function name is not given.")
+                    logger.warning("Can't stop step function because step function name is not given.")
                     return None
                 stateMachineArn = STEP_FUNCTION_ARN(sfn)
                 res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
@@ -399,9 +397,9 @@ class API(object):
                         break
                 if not exec_arn:
                     raise Exception("can't find the execution")
-            printlog("terminating step function execution")
+            logger.info("terminating step function execution")
             resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-            printlog(resp_sf)
+            logger.info("Successfully terminated step function execution: " + str(resp_sf))
 
     def kill_all(self, sfn=None):
         """killing all the running jobs"""
@@ -484,8 +482,8 @@ class API(object):
         except Exception as e:
             if 'NoSuchKey' in str(e):
                 if not quiet:
-                    printlog("log/postrunjson file is not ready yet. " +
-                             "Wait a few seconds/minutes and try again.")
+                    logger.info("log/postrunjson file is not ready yet. " +
+                                "Wait a few seconds/minutes and try again.")
                 return ''
             else:
                 raise e
@@ -719,8 +717,6 @@ class API(object):
         sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
         k = 0
         for exc in sflist['executions']:
-            print(exc['stopDate'].replace(tzinfo=None))
-            print(stoptime_in_datetime)
             if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
                 k = k + 1
                 self.rerun(exc['executionArn'], sfn=sfn,
@@ -767,14 +763,14 @@ class API(object):
             else:
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
-        print('name=%s' % name)
+        logger.info('name=%s' % name)
         if name in [self.run_task_lambda, self.check_task_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
                 role_arn = role_arn_prefix + tibanna_iam.role_name(name)
             else:
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-            print("role_arn=" + role_arn)
+            logger.info("role_arn=" + role_arn)
             extra_config['Role'] = role_arn
         if usergroup and suffix:
             function_name_suffix = usergroup + '_' + suffix
@@ -793,7 +789,7 @@ class API(object):
         if name not in self.do_not_delete:
             try:
                 boto3.client('lambda').get_function(FunctionName=full_function_name)
-                print("deleting existing lambda")
+                logger.info("deleting existing lambda")
                 boto3.client('lambda').delete_function(FunctionName=full_function_name)
             except Exception as e:
                 if 'Function not found' in str(e):
@@ -806,7 +802,7 @@ class API(object):
 
     def deploy_core(self, name, suffix=None, usergroup=''):
         """deploy/update lambdas only"""
-        print("preparing for deploy...")
+        logger.info("preparing for deploy...")
         if name == 'all':
             names = self.lambda_names
         elif name == 'unicorn':
@@ -821,15 +817,15 @@ class API(object):
         """set up usergroup environment on AWS
         This function is called automatically by deploy_tibanna or deploy_unicorn
         Use it only when the IAM permissions need to be reset"""
-        print("setting up tibanna usergroup environment on AWS...")
+        logger.info("setting up tibanna usergroup environment on AWS...")
         if not AWS_ACCOUNT_NUMBER or not AWS_REGION:
-            print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+            logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
             exit(1)
         if not buckets:
-            print("WARNING: Without setting buckets (using --buckets)," +
-                  "Tibanna would have access to only public buckets." +
-                  "To give permission to Tibanna for private buckets," +
-                  "use --buckets=<bucket1>,<bucket2>,...")
+            logger.warning("Without setting buckets (using --buckets)," +
+                           "Tibanna would have access to only public buckets." +
+                           "To give permission to Tibanna for private buckets," +
+                           "use --buckets=<bucket1>,<bucket2>,...")
             time.sleep(2)
         if buckets:
             bucket_names = buckets.split(',')
@@ -838,11 +834,11 @@ class API(object):
         if bucket_names and not do_not_delete_public_access_block:
             client = boto3.client('s3')
             for b in bucket_names:
-                printlog("Deleting public access block for bucket %s" % b)
+                logger.info("Deleting public access block for bucket %s" % b)
                 response = client.delete_public_access_block(Bucket=b)
         tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
-        print("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
+        logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
@@ -857,12 +853,12 @@ class API(object):
                             do_not_delete_public_access_block=do_not_delete_public_access_block)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
-        print("creating a new step function... %s" % step_function_name)
+        logger.info("creating a new step function... %s" % step_function_name)
         if setenv:
             os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
-        print("deploying lambdas...")
+        logger.info("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
@@ -911,7 +907,7 @@ class API(object):
                             aws_acc=AWS_ACCOUNT_NUMBER,
                             usergroup=None):
         if not aws_acc or not region_name:
-            print("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
+            logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
             exit(1)
         # create a step function definition object
         sfndef = self.StepFunction(dev_suffix, region_name, aws_acc, usergroup)
@@ -929,11 +925,11 @@ class API(object):
                 # get ARN from the error and format as necessary
                 exc_str = str(e)
                 if 'State Machine Already Exists:' not in exc_str:
-                    print('Cannot delete state machine. Exiting...' % exc_str)
+                    logger.error('Cannot delete state machine. Exiting...' % exc_str)
                     raise(e)
                 sfn_arn = exc_str.split('State Machine Already Exists:')[-1].strip().strip("''")
-                print('Step function with name %s already exists!' % sfndef.sfn_name)
-                print('Updating the state machine...')
+                logger.info('Step function with name %s already exists!' % sfndef.sfn_name)
+                logger.info('Updating the state machine...')
                 try:
                     sfn.update_state_machine(
                         stateMachineArn=sfn_arn,
@@ -941,7 +937,7 @@ class API(object):
                         roleArn=sfndef.sfn_role_arn
                     )
                 except Exception as e:
-                    print('Error updating state machine %s' % str(e))
+                    logger.error('Error updating state machine %s' % str(e))
                     raise(e)
             except Exception as e:
                 raise(e)
@@ -984,8 +980,8 @@ class API(object):
         if self.check_metrics_plot(job_id, log_bucket) and \
            self.check_metrics_lock(job_id, log_bucket) and \
            not force_upload:
-            printlog("Metrics plot is already on S3 bucket.")
-            printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+            logger.info("Metrics plot is already on S3 bucket.")
+            logger.info('metrics url= ' + METRICS_URL(log_bucket, job_id))
             # open metrics html in browser
             if open_browser:
                 webbrowser.open(METRICS_URL(log_bucket, job_id))
@@ -1048,7 +1044,7 @@ class API(object):
             # clean up uploaded files
             for f in M.list_files:
                 os.remove(f)
-        printlog('metrics url= ' + METRICS_URL(log_bucket, job_id))
+        logger.info('metrics url= ' + METRICS_URL(log_bucket, job_id))
         # open metrics html in browser
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
@@ -1089,7 +1085,7 @@ class API(object):
                 upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
                 os.remove('metrics_report.tsv')
             else:
-                printlog("cost already in the tsv file. not updating")
+                logger.info("cost already in the tsv file. not updating")
         return cost
 
     def does_dynamo_table_exist(self, tablename):
@@ -1109,7 +1105,7 @@ class API(object):
 
     def create_dynamo_table(self, tablename, keyname):
         if self.does_dynamo_table_exist(tablename):
-            print("dynamodb table %s already exists. skip creating db" % tablename)
+            logger.info("dynamodb table %s already exists. skip creating db" % tablename)
         else:
             response = boto3.client('dynamodb').create_table(
                 TableName=tablename,
@@ -1150,8 +1146,8 @@ class API(object):
         def handle_error(errmsg):
             if ignore_errors:
                 if verbose:
-                    printlog(errmsg)
-                    printlog("continue to remove the other components")
+                    logger.warning(errmsg)
+                    logger.info("continue to remove the other components")
             else:
                 raise Exception(errmsg)
 
@@ -1164,7 +1160,7 @@ class API(object):
         # delete step function
         sfn = 'tibanna_' + self.sfn_type + lambda_suffix
         if verbose:
-            printlog("deleting step function %s" % sfn)
+            logger.info("deleting step function %s" % sfn)
         try:
             boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
         except Exception as e:
@@ -1173,7 +1169,7 @@ class API(object):
         lambda_client = boto3.client('lambda')
         for lmb in self.lambda_names:
             if verbose:
-                printlog("deleting lambda functions %s" % lmb + lambda_suffix)
+                logger.info("deleting lambda functions %s" % lmb + lambda_suffix)
             try:
                 lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
             except Exception as e:
@@ -1181,12 +1177,12 @@ class API(object):
         # delete IAM policies, roles and groups
         if not do_not_remove_iam_group:
             if verbose:
-                printlog("deleting IAM permissions %s" % sfn)
+                logger.info("deleting IAM permissions %s" % sfn)
             iam = self.IAM(user_group_name)
             iam.delete_tibanna_iam(verbose=verbose, ignore_errors=ignore_errors)
         if purge_history:
             if verbose:
-                printlog("deleting all job files and history")
+                logger.info("deleting all job files and history")
             item_list = dd_utils.get_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, 'Step Function', sfn, ['Log Bucket'])
             for item in item_list:
                 jobid = item[DYNAMODB_KEYNAME]
@@ -1196,14 +1192,14 @@ class API(object):
                     except Exception as e:
                         if 'NoSuchBucket' in str(e):
                             if verbose:
-                                printlog("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
+                                logger.info("log bucket %s missing... skip job %s" % (item['Log Bucket'], jobid))
                             continue
                     if verbose:
-                        printlog("deleting %d job files for job %s" % (len(keylist), jobid))
+                        logger.info("deleting %d job files for job %s" % (len(keylist), jobid))
                     delete_keys(keylist, item['Log Bucket'])
                 else:
                     if verbose:
-                        printlog("log bucket info missing.. skip job %s" % jobid)
+                        logger.info("log bucket info missing.. skip job %s" % jobid)
             dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list, verbose=verbose)
         if verbose:
-            printlog("Finished cleaning")
+            logger.info("Finished cleaning")

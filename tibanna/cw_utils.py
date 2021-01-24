@@ -1,16 +1,19 @@
 import boto3, os
-from tibanna.utils import (
-    printlog,
+from . import create_logger
+from .utils import (
     upload,
     read_s3
 )
-from tibanna.top import Top
+from .top import Top
 from .vars import (
     AWS_REGION,
     EBS_MOUNT_POINT
 )
 from datetime import datetime
 from datetime import timedelta
+
+
+logger = create_logger(__name__)
 
 
 class TibannaResource(object):
@@ -39,7 +42,7 @@ class TibannaResource(object):
             nTimeChunks = round(nTimeChunks) + 1
         else:
             nTimeChunks = round(nTimeChunks)
-        print("Spliting run time into %s chunks" % str(nTimeChunks))
+        logger.info("Spliting run time into %s chunks" % str(nTimeChunks))
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
         self.start = starttime.replace(microsecond=0) # initial starttime for the window requested
@@ -122,7 +125,7 @@ class TibannaResource(object):
         self.list_files.append(self.write_html(instance_type, directory))
 
     def upload(self, bucket, prefix='', lock=True):
-        printlog(str(self.list_files))
+        logger.debug("list_files: " + str(self.list_files))
         for f in self.list_files:
             upload(f, bucket, prefix)
         if lock:
@@ -156,7 +159,7 @@ class TibannaResource(object):
 
     def as_dict(self):
         d = self.__dict__.copy()
-        printlog(d)
+        logger.debug("original dict: " + str(d))
         del(d['client'])
         del(d['starttimes'])
         del(d['endtimes'])

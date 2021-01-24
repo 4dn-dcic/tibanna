@@ -2,11 +2,11 @@
 import boto3
 import json
 import copy
+from . import create_logger
 from .cw_utils import TibannaResource
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from .utils import (
-    printlog,
     does_key_exist,
     read_s3
 )
@@ -27,6 +27,9 @@ from .core import API
 
 
 RESPONSE_JSON_CONTENT_INCLUSION_LIMIT = 30000  # strictly it is 32,768 but just to be safe.
+
+
+logger = create_logger(__name__)
 
 
 def check_task(input_json):
@@ -71,7 +74,7 @@ class CheckTask(object):
             try:
                 self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             except Exception as e:
-                printlog("error handling postrun json %s" % str(e))
+                logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
@@ -104,7 +107,7 @@ class CheckTask(object):
                 ec2_state = res['Reservations'][0]['Instances'][0]['State']['Name']
                 if ec2_state in ['stopped', 'shutting-down', 'terminated']:
                     errmsg = "EC2 is terminated unintendedly for job %s - please rerun." % jobid
-                    printlog(errmsg)
+                    logger.error(errmsg)
                     raise EC2UnintendedTerminationException(errmsg)
 
             # check CPU utilization for the past hour
@@ -142,7 +145,7 @@ class CheckTask(object):
                         "Nothing has been running for the past hour for job %s,"
                         "but cannot terminate the instance - cpu utilization (%s) : %s"
                     ) %  (jobid, str(cpu), str(e))
-                    printlog(errmsg)
+                    logger.error(errmsg)
                     raise EC2IdleException(errmsg)
 
     def handle_postrun_json(self, bucket_name, jobid, input_json, public_read=False):
@@ -154,8 +157,8 @@ class CheckTask(object):
         prj = AwsemPostRunJson(**postrunjsoncontent)
         prj.Job.update(instance_id=input_json['config'].get('instance_id', ''))
         self.handle_metrics(prj)
-        printlog("inside funtion handle_postrun_json")
-        printlog("content=\n" + json.dumps(prj.as_dict(), indent=4))
+        logger.debug("inside funtion handle_postrun_json")
+        logger.debug("content=\n" + json.dumps(prj.as_dict(), indent=4))
         # upload postrun json file back to s3
         acl = 'public-read' if public_read else 'private'
         try:

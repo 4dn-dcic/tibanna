@@ -49,7 +49,7 @@ AMI_PER_REGION = {
     'sa-east-1': 'ami-06f63076e5a4fa510',
     'us-east-2': 'ami-0691eb4caeced8412',
     'us-west-1': 'ami-009aab2c590a01210',
-    'us-west-2': 'ami-05bcbe2628605a628'
+    'us-west-2': 'ami-07c59ed4484710392'
 }
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 if not AMI_ID:

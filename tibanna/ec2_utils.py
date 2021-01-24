@@ -6,8 +6,8 @@ import logging
 import boto3
 import copy
 import re
+from . import create_logger
 from .utils import (
-    printlog,
     does_key_exist,
     create_jobid
 )
@@ -38,10 +38,11 @@ from ._version import __version__
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
 from Benchmark.byteformat import B2GB
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
+
+
+logger = create_logger(__name__)
 
 
 class UnicornInput(SerializableObject):
@@ -442,7 +443,7 @@ class Execution(object):
             else:
                 size = get_file_size(f['object_key'], bucket)
             input_size_in_bytes.update({str(argname): size})
-        print({"input_size_in_bytes": input_size_in_bytes})
+        logger.debug(str({"input_size_in_bytes": input_size_in_bytes}))
         return input_size_in_bytes
 
     def get_benchmarking(self, input_size_in_bytes):
@@ -518,7 +519,7 @@ class Execution(object):
                             # change behavior as well,
                             # to avoid 'retry_without_spot works only with spot' error in the next round
                             self.cfg.behavior_on_capacity_limit = 'fail'
-                            printlog("trying without spot...")
+                            logger.info("trying without spot...")
                             return 'continue'
                 else:
                     raise Exception("failed to launch instance for job %s: %s" % (self.jobid, str(e)))
@@ -654,7 +655,7 @@ class Execution(object):
         if hasattr(cfg, 'singularity') and cfg.singularity:
             str += " -g"
         str += "\n"
-        print(str)
+        logger.debug("userdata: \n" + str)
         return(str)
 
     @property
@@ -940,12 +941,12 @@ def get_file_size(key, bucket, size_in_gb=False):
     default returns file size in bytes,
     unless size_in_gb = True
     '''
-    printlog("getting file or subfoler size")
+    logger.info("getting file or subfoler size")
     meta = does_key_exist(bucket, key)
     if not meta:
         try:
             size = 0
-            printlog("trying to get total size of the prefix")
+            logger.info("trying to get total size of the prefix")
             for item in get_all_objects_in_prefix(bucket, key):
                 size += item['Size']
         except:

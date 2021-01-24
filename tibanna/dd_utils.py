@@ -1,5 +1,8 @@
 import boto3
-from .utils import printlog
+from . import create_logger
+
+
+logger = create_logger(__name__)
 
 
 def item2dict(item):
@@ -25,7 +28,7 @@ def does_dynamo_table_exist(tablename):
 
 def create_dynamo_table(tablename, keyname):
     if does_dynamo_table_exist(tablename):
-        print("dynamodb table %s already exists. skip creating db" % tablename)
+        logger.info("dynamodb table %s already exists. skip creating db" % tablename)
     else:
         response = boto3.client('dynamodb').create_table(
             TableName=tablename,
@@ -92,4 +95,4 @@ def delete_items(table_name, primary_key, item_list, verbose=True):
             Key={primary_key: {'S': item[primary_key]}}
         )
     if verbose:
-        printlog("%d entries deleted from dynamodb." % len(item_list))
+        logger.info("%d entries deleted from dynamodb." % len(item_list))
