@@ -47,8 +47,8 @@ AMI_PER_REGION = {
     'eu-west-3': 'ami-02f01bb8e27345b00',
     'eu-north-1': 'ami-06cff15ceaadf54ca',
     'sa-east-1': 'ami-06f63076e5a4fa510',
-    'us-east-2': 'ami-0691eb4caeced8412',
-    'us-west-1': 'ami-009aab2c590a01210',
+    'us-east-2': 'ami-0b44d62b891fb789b',
+    'us-west-1': 'ami-0e1e2593b3a0d1893',
     'us-west-2': 'ami-07c59ed4484710392'
 }
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
@@ -58,10 +58,7 @@ if not AMI_ID:
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
 TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
-if AWS_REGION == 'us-east-1':
-    TIBANNA_AWSF_DIR = 'awsf3'
-else:
-    TIBANNA_AWSF_DIR = 'awsf'
+TIBANNA_AWSF_DIR = 'awsf3'
 
 # Tibanna roles
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', 'S3_access')
