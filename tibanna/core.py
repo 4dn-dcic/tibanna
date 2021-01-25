@@ -46,6 +46,7 @@ from .ec2_utils import (
     UnicornInput,
     upload_workflow_to_s3
 )
+from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .stepfunction import StepFunctionUnicorn
 from .awsem import AwsemRunJson, AwsemPostRunJson
@@ -1203,3 +1204,20 @@ class API(object):
             dd_utils.delete_items(DYNAMODB_TABLE, DYNAMODB_KEYNAME, item_list, verbose=verbose)
         if verbose:
             logger.info("Finished cleaning")
+
+    def create_ami_for_tibanna(self, build_from_scratch=True, source_image_to_copy_from=None, source_image_region=None,
+                               ubuntu_base_image=None, make_public=False):
+        args = dict()
+        if build_from_scratch:
+            # build from ubuntu 20.04 image and user data
+            if ubuntu_base_image:
+                args.update({'base_image': ubuntu_base_image})
+        else:
+            # copy an existing image
+            if source_image_to_copy_from:
+                args.update({'base_image': source_image_to_copy_from})
+            if source_image_region:
+                args.update({'base_region': source_image_region})
+
+        return AMI(**args).create_ami_for_tibanna(make_public=make_public)
+
