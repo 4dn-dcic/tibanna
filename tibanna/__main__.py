@@ -5,6 +5,7 @@ CLI for tibanna package
 # -*- coding: utf-8 -*-
 import argparse
 import inspect
+import json
 from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .core import API
@@ -29,9 +30,11 @@ class Subcommands(object):
             'kill_all': 'kill all the running jobs on a step function',
             'list_sfns': 'list all step functions, optionally with a summary (-n)',
             'log': 'print execution log or postrun json for a job',
+            'info': 'print out information about a job',
             'rerun': 'rerun a specific job',
             'rerun_many': 'rerun all the jobs that failed after a given time point',
             'run_workflow': 'run a workflow',
+            'run_batch_workflows': 'run many workflows in a batch',
             'setup_tibanna_env': 'set up usergroup environment on AWS.' +
                                  'This function is called automatically by deploy_tibanna or deploy_unicorn.' +
                                  'Use it only when the IAM permissions need to be reset',
@@ -39,7 +42,8 @@ class Subcommands(object):
             'users': 'list all users along with their associated tibanna user groups',
             'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists',
             'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes',
-            'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups'
+            'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups',
+            'create_ami': 'create tibanna ami (Most users do not need this - tibanna AMIs are publicly available.)'
         }
 
     @property
@@ -60,11 +64,22 @@ class Subcommands(object):
                   'help': "number of seconds between submission, to avoid drop-out (default 3)",
                   'type': int,
                   'default': 3}],
-            'stat':
-                [{'flag': ["-s", "--sfn"],
+            'run_batch_workflows':
+                [{'flag': ["-i", "--input-json-list"],
+                  'help': "list of tibanna input json files, e.g. -i input1.json [input2.json] [...]",
+                  "nargs": "+"},
+                 {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-S", "--sleep"],
+                  'help': "number of seconds between submission, to avoid drop-out (default 3)",
+                  'type': int,
+                  'default': 3}],
+            'stat':
+                [{'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-t", "--status"],
                   'help': "filter by status; 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'"},
                  {'flag': ["-l", "--long"],
@@ -72,7 +87,11 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-n", "--nlines"],
                   'help': "number of lines to print",
-                  'type': int}],
+                  'type': int},
+                 {'flag': ["-j", "--job-ids"],
+                  'nargs': '+',
+                  'help': "job ids of the specific jobs to display, separated by space. " +
+                          "This option cannot be combined with --nlines(-n), --status(-t) or --sfn(-s)"}],
             'kill':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to kill"},
@@ -99,8 +118,17 @@ class Subcommands(object):
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-r", "--runjson"],
+                  'help': "print out run json instead", 'action': "store_true"},
                  {'flag': ["-p", "--postrunjson"],
-                  'help': "print out postrun json instead", 'action': "store_true"}],
+                  'help': "print out postrun json instead", 'action': "store_true"},
+                 {'flag': ["-t", "--top"],
+                  'help': "print out top file (log file containing top command output) instead", 'action': "store_true"},
+                 {'flag': ["-T", "--top-latest"],
+                  'help': "print out the latest content of the top file", 'action': "store_true"}],
+            'info':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"}],
             'add_user':
                 [{'flag': ["-u", "--user"],
                   'help': "user to add to a Tibanna usergroup"},
@@ -116,6 +144,8 @@ class Subcommands(object):
             'rerun':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to rerun"},
+                 {'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to rerun (alternative to --exec-arn/-e)"},
                  {'flag': ["-s", "--sfn"],
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
@@ -275,7 +305,25 @@ class Subcommands(object):
                   'help': "quiet"},
                  {'flag': ["-E", "--do-not-ignore-errors"],
                   'action': 'store_true',
-                  'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}]
+                  'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}],
+            'create_ami':
+                [{'flag': ["-p", "--make-public"],
+                  'help': "Make the Tibanna AMI public (most users do not need this)",
+                  'action': 'store_true'},
+                 {'flag': ["-B", "--build-from-scratch"],
+                  'help': "Build a new AMI starting from Ubuntu base image. " +
+                          "This option will launch an instance for creating the new image " +
+                          "as opposed to simply copying an existing Tibanna image.",
+                  'action': 'store_true'},
+                 {'flag': ["-I", "--source-image-to-copy-from"],
+                  'help': "The ID of the image to copy (e.g. 'ami-0a7ddfc7e412ab6e0' which is a default public Tibanna image " +
+                          "for us-east-1). To use this option, turn off option -B."},
+                 {'flag': ["-R", "--source-image-region"],
+                  'help': "The region of the image to copy (e.g. 'us-east-1' if source image to copy from is 'ami-0a7ddfc7e412ab6e0'). " +
+                          "To use this option, turn off option -B."},
+                 {'flag': ["-U", "--ubuntu-base-image"],
+                  'help': "The ID of the Ubuntu 20.04 image to build from (e.g. 'ami-0885b1f6bd170450c' for us-east-1). " +
+                          "To use this option, turn on the option -B."}]
         }
 
 
@@ -289,6 +337,11 @@ def deploy_core(name, suffix=None, usergroup=''):
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
     """run a workflow"""
     API().run_workflow(input_json, sfn=sfn, jobid=jobid, sleep=sleep, open_browser=not do_not_open_browser, verbose=True)
+
+
+def run_batch_workflows(input_json_list, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, sleep=3):
+    """run a workflow"""
+    API().run_batch_workflows(input_json_list, sfn=sfn, sleep=sleep, verbose=True)
 
 
 def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
@@ -322,9 +375,11 @@ def list_sfns(numbers=False):
     API().list_sfns(numbers=numbers)
 
 
-def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, postrunjson=False):
-    """print execution log or postrun json (-p) for a job"""
-    print(API().log(exec_arn, job_id, exec_name, sfn, postrunjson))
+def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+        runjson=False, postrunjson=False, top=False, top_latest=False):
+    """print execution log, run json (-r), postrun json (-p) or top (-t) for a job"""
+    print(API().log(exec_arn, job_id, exec_name, sfn, runjson=runjson, postrunjson=postrunjson,
+                    top=top, top_latest=top_latest))
 
 
 def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
@@ -337,11 +392,15 @@ def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     API().kill(exec_arn, job_id, sfn)
 
 
-def rerun(exec_arn, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
+def info(job_id):
+    """prints out information about a job"""
+    print(json.dumps(API().info(job_id), indent=True))
+
+def rerun(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
           instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
           overwrite_input_extra=None, key_name=None, name=None):
     """ rerun a specific job"""
-    API().rerun(exec_arn, sfn=sfn,
+    API().rerun(exec_arn=exec_arn, job_id=job_id, sfn=sfn,
                 app_name_filter=app_name_filter, instance_type=instance_type, shutdown_min=shutdown_min,
                 ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
                 overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
@@ -370,11 +429,11 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
                      overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
 
 
-def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines=None):
+def stat(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, status=None, long=False, nlines=None, job_ids=None):
     """print out executions with details
     status can be one of 'RUNNING'|'SUCCEEDED'|'FAILED'|'TIMED_OUT'|'ABORTED'
     """
-    API().stat(sfn=sfn, status=status, verbose=long, n=nlines)
+    API().stat(sfn=sfn, status=status, verbose=long, n=nlines, job_ids=job_ids)
 
 
 def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=False, update_html_only=False,
@@ -392,6 +451,13 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
 def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):
     API().cleanup(user_group_name=usergroup, suffix=suffix, do_not_remove_iam_group=do_not_remove_iam_group,
                   ignore_errors=not do_not_ignore_errors, purge_history=purge_history, verbose=not quiet)
+
+
+def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
+               ubuntu_base_image=None):
+    print(API().create_ami(make_public=make_public, build_from_scratch=build_from_scratch,
+                           source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
+                           ubuntu_base_image=ubuntu_base_image))
 
 
 def main(Subcommands=Subcommands):

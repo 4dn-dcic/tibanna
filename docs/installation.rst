@@ -11,7 +11,7 @@ Installing Tibanna package
 Tibanna works with the following Python and pip versions.
 
 - Python 3.6
-- Pip 9, 10, 18 or 19
+- Pip 9, 10, 18, 19, 20
 
 
 Install Tibanna on your local machine or server from which you want to send commands to run workflows.
@@ -41,6 +41,15 @@ Alternatively, use ``git clone`` followed by ``setup.py``
     cd tibanna
     python setup.py install
 
+
+Starting version ``1.0.0``, there is also a Docker image that contains the same version of tibanna as the image tag. This image is used on the EC2 AWSEM instances and not for a local use. The image contains many other things including Docker, Singularity, Cromwell, cwltool, etc. in addition to Tibanna and therefore not recommended, but in case the above two somehow didn't work in your environment, and if you have Docker, you could try:
+
+::
+
+    docker run -it 4dndcic/tibanna-awsf:1.0.0 bash
+    # You could use a different version tag instead of 1.0.0
+    # you can also mount your local directories and files as needed.
+ 
 
 AWS configuration
 -----------------

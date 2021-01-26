@@ -21,11 +21,9 @@ Example
     API().run_workflow(input_json='myrun.json')  # json file or dictionary object
 
 
-Basic_commands
-++++++++++++++
+Admin only commands
++++++++++++++++++++
 
-Admin only
-##########
 
 The following commands require admin previlege to one's AWS account.
 
@@ -152,8 +150,48 @@ To remove Tibanna components on AWS.
   verbose=<True|False>           Verbose if True. (default False)
 
 
-Non-admin
-#########
+
+setup_tibanna_env
+-----------------
+
+- Advanced user only
+
+To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
+
+
+::
+
+    API().setup_tibanna_env(...)
+
+
+**Options**
+
+::
+
+  usergroup_tag=<usergrouptag>        an identifier for a usergroup that shares
+                                      a tibanna permission
+
+  no_randomize                        If set True, Tibanna does not add a random
+                                      number to generate a usergroup name (e.g. the
+                                      usergroup name used will be identical to the
+                                      one specified using the ``usergrou_tag`` option.
+                                      By default, a random number will be added at the
+                                      end (e.g. default_2721). Default False.
+
+  buckets=<bucket_list>               A comma-delimited list of bucket names - the
+                                      buckets to which Tibanna needs access to
+                                      through IAM role (input, output, log).
+
+  do_not_delete_public_access_block   If set True, Tibanna does not delete public
+                                      access block from the specified buckets
+                                      (this way postrunjson and metrics reports will
+                                      not be public). Default False.
+
+
+
+
+Non-admin commands
+++++++++++++++++++
 
 The following commands can be used by a non-admin user, as long as the user belongs to the right user group.
 
@@ -183,6 +221,30 @@ To run workflow
                                  out (default 3)
 
 
+run_batch_workflows
+-------------------
+
+To run multiple workflows in a batch. This function does not open browser and job ids are
+always automatically assigned. This function is available for Tibanna versions >= ``1.0.0``.
+
+::
+
+    API().run_batch_workflows(input_json_list=<list_of_input_json_files_or_dicts>, ...)
+
+
+**Options**
+
+::
+
+  sfn=<stepfunctionname>         An example step function name may be
+                                 'tibanna_unicorn_defaut_3978'. If not specified, default
+                                 value is taken from environmental variable
+                                 TIBANNA_DEFAULT_STEP_FUNCTION_NAME.
+  sleep=<SLEEP>                  Number of seconds between submission, to avoid drop-
+                                 out (default 3)
+
+
+
 stat
 ----
 
@@ -208,6 +270,8 @@ To check status of workflows,
 
   n=<number_of_lines>            print out only the first n lines
 
+  job_ids=<list_of_job_ids>      filter by a list of job ids. This option is
+                                 available only for version >= ``1.0.0``.
 
 
 The output is a table (an example below)
@@ -234,36 +298,35 @@ To check the log or postrun json (summary) of a workflow run
 
 ::
 
-  sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                 Not necessary to rerun by ``exec-arn``.
-                                 Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                 An example step function name may be 'tibanna_unicorn_defaut_3978'.
-
-  postrunjson                    The postrunjson option streams out a postrun json file instead of a log file.
+  postrunjson=<True|False>       The postrunjson option streams out a postrun json file instead of a log file.
                                  A postrun json file is available only after the run finishes.
                                  It contains the summary of the job including input, output, EC2 config and
                                  Cloudwatch metrics on memory/CPU/disk space.
+
+  runjson=<True|False>           prints out run json instead, which is the json file tibanna sends to the instance
+                                 before the run starts. (new in ``1.0.0``)
+
+  top=<True|False>               prints out top file (log file containing top command output) instead. This top file
+                                 contains all the top batch command output at a 1-minute interval. (new in ``1.0.0``)
+
+  top_latest=<True|False>        prints out the latest content of the top file. This one contains only the latest
+                                 top command output (latest 1-minute interval). (new in ``1.0.0``)
 
 
 rerun
 -----
 
 
-To rerun a failed job with the same input json
+To rerun a failed job with the same input json on a specific step function.
 
 ::
 
-    API().rerun(exec_arn=<execution_arn>|job_id=<jobid>|exec_name=<execution_name>, ...)
+    API().rerun(exec_arn=<execution_arn>|job_id=<jobid>, sfn=<target_stepfunction_name>, ...)
 
 
 **Options**
 
 ::
-
-  sfn=<stepfunctionname>         By default, TIBANNA_DEFAULT_STEP_FUNCTION_NAME (environmental variable).
-                                 Not necessary to rerun by ``exec-arn``.
-                                 Specify this to rerun by ``job-id`` instead of ``exec-arn`` on a non-default step function.
-                                 An example step function name may be 'tibanna_unicorn_defaut_3978'.
 
   instance_type=<instance_type>  Override instance type for the rerun
 
@@ -383,7 +446,6 @@ The following message is printed out
     https://console.aws.amazon.com/states/home?region=us-east-1#/executions/details/arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
     JOBID jLeL6vMbhL63 submitted
     EXECUTION ARN = arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293
-    Couldn't get a file descriptor referring to the console
 
 
 To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (it can also be found on the Step Function Console)
@@ -392,6 +454,12 @@ To kill this job, use the execution arn in the above message ('EXECUTION_ARN') (
 ::
 
     API().kill(exec_arn='arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default3537:fastqc_85ba7f41-daf5-4f82-946f-06d31d0cd293')
+
+or
+
+::
+
+   API().kill(job_id='jLeL6vMbhL63')
 
 
 
@@ -497,93 +565,3 @@ To retrieve the cost and update the metrics report file created with plot_metric
  update_tsv                         This flag specify to update with cost the tsv file that
                                     stores metrics information on the S3 bucket
 
-
-
-Admin only
-##########
-
-setup_tibanna_env
------------------
-
-- Advanced user only
-
-To set up environment on AWS without deploying tibanna, use `tibanna setup_tibanna_env`.
-
-
-::
-
-    API().setup_tibanna_env(...)
-
-
-**Options**
-
-::
-
-  usergroup_tag=<usergrouptag>        an identifier for a usergroup that shares
-                                      a tibanna permission
-
-  no_randomize                        If set True, Tibanna does not add a random
-                                      number to generate a usergroup name (e.g. the
-                                      usergroup name used will be identical to the
-                                      one specified using the ``usergrou_tag`` option.
-                                      By default, a random number will be added at the
-                                      end (e.g. default_2721). Default False.
-
-  buckets=<bucket_list>               A comma-delimited list of bucket names - the
-                                      buckets to which Tibanna needs access to
-                                      through IAM role (input, output, log).
-
-  do_not_delete_public_access_block   If set True, Tibanna does not delete public
-                                      access block from the specified buckets
-                                      (this way postrunjson and metrics reports will
-                                      not be public). Default False.
-
-
-Additional commands for tibanna_4dn
-+++++++++++++++++++++++++++++++++++
-
-
-``tibanna_4dn`` is a 4dn extension of ``tibanna``. All the subcommands of ``tibanna`` can also be used by ``tibanna_4dn``. In addition, ``tibanna_4dn`` supports additional 4dn-specific subcommands.
-
-
-General Usage
-
-::
-
-    from tibanna_4dn.core import API
-    API().method(...)
-
-
-In ``tibanna_4dn``, ``TIBANNA_DEFAULT_STEP_FUNCTION_NAME`` is set to `tibanna_pony` unless specified by the user.
-
-
-
-deploy_pony
------------
-
-
-This function deploys tibanna pony (4dn extension of tibanna).
-You need the following environmental variables set on your local machine from which you're deploying a pony.
-
-::
-
-    export S3_ENCRYPT_KEY=<4dn_s3_encryption_key>
-
-To create an instance of tibanna (step function + lambdas)
-
-::
-
-    API().deploy_pony(suffix=<suffixname>, usergroup=<usergroup>)
-    # (use suffix for development version)
-    # example <suffixname> : dev
-    # <usergroup> : a AWS user group that share permission to tibanna and the associated buckets given by the setup_tibanna_env command.
-
-
-example
-
-::
-
-    API().deploy_pony(suffix='dev2')
-
-
-The above command will create a step function named tibanna_pony_dev2 that uses a set of lambdas with suffix _dev2, and deploys these lambdas.

@@ -56,7 +56,7 @@ CWL
     Since this is a multi-step pipeline, we use three CWL files, ``merge.cwl`` (master workflow CWL) and two other CWL files ``paste.cwl`` and ``cat.cwl`` that are called by ``merge.cwl``.
     
     These CWL files can be found at https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/merge.cwl, https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/paste.cwl and https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/merge/cat.cwl.
-    To use your own CWL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above.
+    To use your own CWL file, you'll need to make sure it is accessible via HTTP so Tibanna can download it with ``wget``: If you're using github, you could use raw.githubusercontent.com like the link above. Alternatively, you can have tham as a local file and provide ``cwl_directory_local`` instead of ``cwl_directory_url``.
    
     The following is ``merge.cwl``. It is of class 'workflow' and defines inputs, outputs and steps. For the other two CWL files (``paste.cwl`` and ``cat.cwl``), see the links above.
 
@@ -195,21 +195,16 @@ Job description for CWL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
-            "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": 30,
-            "instance_type": "t2.micro",
-            "ebs_type": "io1",
+            "EBS_optimized": true,
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         } 
     
     The json file specifies the input nested file array ("smallfiles") (``[["smallfile1", "smallfile2"], ["smallfile3", "smallfile4"]]``), matching the name in CWL. The output file will be renamed to ``some_sub_dirname/my_first_merged_file`` in a bucket named ``my-tibanna-test-bucket``. In the input json, we specify the CWL file with ``cwl_main_filename`` and its url with ``cwl_directory_url``. Note that the file name itself is not included in the url). Note that child CWL files are also specified in this case (``"cwl_child_filenames": ["paste.cwl", "cat.cwl"]``).
     
-    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t2.micro`` which comes with 1 CPU and 1GB memory.
+    We also specified in ``config``, that we need 10GB space total (``ebs_size``) and we're going to run an EC2 instance (VM) of type ``t3.micro`` which comes with 1 CPU and 1GB memory.
     
     
 Job description for WDL
@@ -245,15 +240,10 @@ Job description for WDL
           },
           "config": {
             "ebs_size": 10,
-            "json_bucket": "my-tibanna-test-bucket",
-            "EBS_optimized": false,
-            "ebs_iops": 500,
-            "shutdown_min": 30,
-            "instance_type": "t2.micro",
-            "ebs_type": "io1",
+            "EBS_optimized": true,
+            "instance_type": "t3.micro",
             "password": "whateverpasswordworks",
-            "log_bucket": "my-tibanna-test-bucket",
-            "key_name": ""
+            "log_bucket": "my-tibanna-test-bucket"
           }
         } 
     

@@ -1,6 +1,7 @@
 import pytest
 import copy
 from tibanna import awsem
+from tibanna.exceptions import MalFormattedRunJsonException
 
 
 @pytest.fixture
@@ -10,7 +11,8 @@ def run_json_inputfile():
             "dir": "somebucket",
             "path": "somefilepath",
             "profile": "",
-            "rename": ""
+            "unzip": "",
+            "mount": False
     }
 
 
@@ -24,21 +26,21 @@ def run_json_input():
               "dir": "dir1",
               "path": "path1",
               "profile": "",
-              "rename": ""
+              "unzip": ""
             },
             "input_bam": {
               "class": "File",
               "dir": "dir2",
               "path": "path2",
               "profile": "",
-              "rename": ""
+              "unzip": ""
             },
             "restrict_frags": {
               "class": "File",
               "dir": "dir3",
               "path": "path3",
               "profile": "",
-              "rename": ""
+              "unzip": ""
             },
         },
         "Secondary_files_data": {},
@@ -225,7 +227,7 @@ def test_RunJsonJob(run_json_job):
     assert r.App.App_name == 'someapp'  # changing r_dict shoudn't affect r
     assert r.Input.Input_parameters['n'] == 2
     assert r.Output.output_bucket_directory == 'somebucket'
-    assert r.Log['log_bucket_directory'] == 'tibanna-output'
+    assert r.Log.log_bucket_directory == 'tibanna-output'
     assert r.JOBID == "J55BCqwHx6N5"
 
 
@@ -250,21 +252,48 @@ def test_RunJsonInputFile(run_json_inputfile):
     assert r.dir_ == 'somebucket'
     assert r.path == 'somefilepath'
     assert r.profile == ''
-    assert r.rename == ''
+    assert r.unzip == ''
     assert r.unzip == ''
     r_dict = r.as_dict()
     assert 'class' in r_dict
     assert 'dir' in r_dict
     assert 'path' in r_dict
     assert 'profile' in r_dict
-    assert 'rename' in r_dict
+    assert 'unzip' in r_dict
     assert 'unzip' in r_dict
     assert r_dict['class'] == 'File'
     assert r_dict['dir'] == 'somebucket'
     assert r_dict['path'] == 'somefilepath'
     assert r_dict['profile'] == ''
-    assert r_dict['rename'] == ''
     assert r_dict['unzip'] == ''
+    assert r_dict['unzip'] == ''
+
+
+def test_AwsemRunJsonInputFile_rename_mount_error(run_json_inputfile):
+    # rename and mount cannot be used together
+    run_json_inputfile['rename'] = 'somerenamedpath'
+    run_json_inputfile['mount'] = True
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    assert 'rename and mount' in str(ex.value)
+
+
+def test_AwsemRunJsonInputFile_unzip_mount_error(run_json_inputfile):
+    # unzip and mount cannot be used together
+    run_json_inputfile['unzip'] = 'gz'
+    run_json_inputfile['mount'] = True
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    assert 'unzip and mount' in str(ex.value)
+
+
+def test_AwsemRunJsonInputFile_2d_array_empty_rename_mount_no_error(run_json_inputfile):
+    # rename is not nul but should not raise an error
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    run_json_inputfile['rename'] = [[], []]
+    run_json_inputfile['mount'] = True
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    assert rj_infile.rename == [[], []]
 
 
 def test_RunJsonInput(run_json_input):
@@ -282,3 +311,245 @@ def test_RunJsonApp(run_json_app):
     assert r_dict['App_name'] == 'someapp'
     r_dict['App_version'] = 'lalala'
     assert r.App_version == 'v1.0'  # changing r_dict shouldn't affect r
+
+
+def test_file2cwlfile():
+    cwlfile = awsem.file2cwlfile('somedir/somefile', 'parentdir', '')
+    assert cwlfile == {'path': 'parentdir/somedir/somefile', 'class': 'File'}
+
+
+def test_file2wdlfile():
+    wdlfile = awsem.file2wdlfile('somedir/somefile', 'parentdir', '')
+    assert wdlfile == 'parentdir/somedir/somefile'
+
+
+def test_file2cwlfile_unzip():
+    cwlfile = awsem.file2cwlfile('somedir/somefile.gz', 'parentdir', 'gz')
+    assert cwlfile == {'path': 'parentdir/somedir/somefile', 'class': 'File'}
+
+
+def test_file2cwlfile_unzip2():
+    cwlfile = awsem.file2cwlfile('somedir/somefile.bz2', 'parentdir', 'bz2')
+    assert cwlfile == {'path': 'parentdir/somedir/somefile', 'class': 'File'}
+
+
+def test_file2cwlfile_unzip3():
+    cwlfile = awsem.file2cwlfile('somedir/somefile.gz', 'parentdir/', '')
+    assert cwlfile == {'path': 'parentdir/somedir/somefile.gz', 'class': 'File'}
+
+
+def test_file2wdlfile_unzip():
+    wdlfile = awsem.file2wdlfile('somedir/somefile.gz', 'parentdir', 'gz')
+    assert wdlfile == 'parentdir/somedir/somefile'
+
+
+def test_file2wdlfile_unzip2():
+    wdlfile = awsem.file2wdlfile('somedir/somefile.bz2', 'parentdir', 'bz2')
+    assert wdlfile == 'parentdir/somedir/somefile'
+
+
+def test_file2wdlfile_unzip2():
+    wdlfile = awsem.file2wdlfile('somedir/somefile.bz2', 'parentdir/', '')
+    assert wdlfile == 'parentdir/somedir/somefile.bz2'
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_input(run_json_inputfile):
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == {'path': '/data1/input/somefilepath', 'class': 'File'}
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_input_mount(run_json_inputfile):
+    run_json_inputfile['mount'] = True
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == {'path': '/data1/input-mounted-somebucket/somefilepath', 'class': 'File'}
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_rename(run_json_inputfile):
+    run_json_inputfile['rename'] = 'somerenamedpath'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == {'path': '/data1/input/somerenamedpath', 'class': 'File'}
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_input(run_json_inputfile):
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == '/data1/input/somefilepath'
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_input_mount(run_json_inputfile):
+    run_json_inputfile['mount'] = True
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == '/data1/input-mounted-somebucket/somefilepath'
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_rename(run_json_inputfile):
+    run_json_inputfile['rename'] = 'somerenamedpath'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == '/data1/input/somerenamedpath'
+
+
+def test_AwsemRunJsonInput_as_dict_as_cwl_input(run_json_input):
+    rj_in = awsem.AwsemRunJsonInput(**run_json_input)
+    cwlinput = rj_in.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == {'n': 2,
+                        'chromsize': {'path': '/data1/input/path1', 'class': 'File'},
+                        'input_bam': {'path': '/data1/input/path2', 'class': 'File'},         
+                        'restrict_frags': {'path': '/data1/input/path3', 'class': 'File'}}
+
+
+def test_AwsemRunJsonInput_as_dict_as_wdl_input(run_json_input):
+    rj_in = awsem.AwsemRunJsonInput(**run_json_input)
+    wdlinput = rj_in.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == {'n': 2,
+                        'chromsize': '/data1/input/path1',
+                        'input_bam': '/data1/input/path2',
+                        'restrict_frags': '/data1/input/path3'}
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_array(run_json_inputfile):
+    run_json_inputfile['path'] = ['path1', 'path2']
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [{'path': '/data1/input/path1', 'class': 'File'},
+                        {'path': '/data1/input/path2', 'class': 'File'}]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_2d_array(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [[{'path': '/data1/input/path1', 'class': 'File'},
+                         {'path': '/data1/input/path2', 'class': 'File'}],
+                        [{'path': '/data1/input/path3', 'class': 'File'},
+                         {'path': '/data1/input/path4', 'class': 'File'}]]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_2d_array_rename(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    run_json_inputfile['rename'] = [['renamed1', 'renamed2'], ['renamed3', 'renamed4']]
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [[{'path': '/data1/input/renamed1', 'class': 'File'},
+                         {'path': '/data1/input/renamed2', 'class': 'File'}],
+                        [{'path': '/data1/input/renamed3', 'class': 'File'},
+                         {'path': '/data1/input/renamed4', 'class': 'File'}]]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_2d_array_unzip(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1.gz', 'path2.gz'], ['path3.gz', 'path4.gz']]
+    run_json_inputfile['unzip'] = 'gz'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [[{'path': '/data1/input/path1', 'class': 'File'},
+                         {'path': '/data1/input/path2', 'class': 'File'}],
+                        [{'path': '/data1/input/path3', 'class': 'File'},
+                         {'path': '/data1/input/path4', 'class': 'File'}]]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_2d_array_unzip2(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1.bz2', 'path2.bz2'], ['path3.bz2', 'path4.bz2']]
+    run_json_inputfile['unzip'] = 'bz2'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [[{'path': '/data1/input/path1', 'class': 'File'},
+                         {'path': '/data1/input/path2', 'class': 'File'}],
+                        [{'path': '/data1/input/path3', 'class': 'File'},
+                         {'path': '/data1/input/path4', 'class': 'File'}]]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_cwl_2d_array_mount(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    run_json_inputfile['mount'] = True
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    cwlinput = rj_infile.as_dict_as_cwl_input('/data1/input/', '/data1/input-mounted-')
+    assert cwlinput == [[{'path': '/data1/input-mounted-somebucket/path1', 'class': 'File'},
+                         {'path': '/data1/input-mounted-somebucket/path2', 'class': 'File'}],
+                        [{'path': '/data1/input-mounted-somebucket/path3', 'class': 'File'},
+                         {'path': '/data1/input-mounted-somebucket/path4', 'class': 'File'}]]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_array(run_json_inputfile):
+    run_json_inputfile['path'] = ['path1', 'path2']
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == ['/data1/input/path1',
+                        '/data1/input/path2']
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == [['/data1/input/path1',
+                         '/data1/input/path2'],
+                        ['/data1/input/path3',
+                         '/data1/input/path4']]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array_rename(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    run_json_inputfile['rename'] = [['renamed1', 'renamed2'], ['renamed3', 'renamed4']]
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == [['/data1/input/renamed1',
+                         '/data1/input/renamed2'],
+                        ['/data1/input/renamed3',
+                         '/data1/input/renamed4']]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array_unzip(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1.gz', 'path2.gz'], ['path3.gz', 'path4.gz']]
+    run_json_inputfile['unzip'] = 'gz'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == [['/data1/input/path1',
+                         '/data1/input/path2'],
+                        ['/data1/input/path3',
+                         '/data1/input/path4']]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array_unzip2(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1.bz2', 'path2.bz2'], ['path3.bz2', 'path4.bz2']]
+    run_json_inputfile['unzip'] = 'bz2'
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == [['/data1/input/path1',
+                         '/data1/input/path2'],
+                        ['/data1/input/path3',
+                         '/data1/input/path4']]
+
+
+def test_AwsemRunJsonInputFile_as_dict_as_wdl_2d_array_mount(run_json_inputfile):
+    run_json_inputfile['path'] = [['path1', 'path2'], ['path3', 'path4']]
+    run_json_inputfile['mount'] = True
+    rj_infile = awsem.AwsemRunJsonInputFile(**run_json_inputfile)
+    wdlinput = rj_infile.as_dict_as_wdl_input('/data1/input/', '/data1/input-mounted-')
+    assert wdlinput == [['/data1/input-mounted-somebucket/path1',
+                         '/data1/input-mounted-somebucket/path2'],
+                        ['/data1/input-mounted-somebucket/path3',
+                         '/data1/input-mounted-somebucket/path4']]
+
+
+def test_AwsemPostRunJsonOutput_alt_output_target(postrun_json_output):
+    postrun_json_output['output_target'] = {'arg1': 'target1', 'arg2': 'target2'}
+    postrun_json_output['alt_cond_output_argnames'] = {'arg2': ['arg2a', 'arg2b']}
+    prjo = awsem.AwsemPostRunJsonOutput(**postrun_json_output)
+    assert prjo.alt_output_target(['arg1', 'arg2b']) == {'arg1': 'target1', 'arg2b': 'target2'}
+
+
+def test_file_uri_cwl_wdl_error():
+    rji_dict = {'file:///data1/input/file1': {'path': 'somefile', 'dir': 'somebucket', 'mount': False}}
+    runjson_input = awsem.AwsemRunJsonInput(**{'Input_files_data': rji_dict})
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        runjson_input.check_input_files_key_compatibility('cwl')
+    assert 'argument name for CWL' in str(ex.value)
+    with pytest.raises(MalFormattedRunJsonException) as ex:
+        runjson_input.check_input_files_key_compatibility('wdl')
+    assert 'argument name for CWL' in str(ex.value)
+    runjson_input.check_input_files_key_compatibility('shell')
+    runjson_input.check_input_files_key_compatibility('snakemake')

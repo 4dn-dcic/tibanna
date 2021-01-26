@@ -40,9 +40,9 @@ Example job description for CWL
         }
       },
       "config": {
-        "instance_type": "t2.micro",
+        "instance_type": "t3.micro",
         "ebs_size": 10,
-        "EBS_optimized": false,
+        "EBS_optimized": true,
         "log_bucket": "montys-log-bucket"
       }
     }
@@ -82,7 +82,7 @@ CWL-specific
     - An array of all the other cwl files that are called by the main cwl file. If the main CWL file is of 'workflow' type, the other CWL files corresponding to steps or subworkflows should be listed here.
 
 :cwl_version:
-    - either ``v1`` or ``draft-3``
+    - either ``v1`` or ``draft-3`` (starting with tibanna version ``1.0.0``, ``draft-3`` is no longer supported.)
 
 :singularity:
     - This option uses Singularity to run Docker images internally (slower). This option does NOT support native Singularity images, since CWL does not support native Singularity images.
@@ -95,6 +95,7 @@ WDL-specific
 
 :language:
     - This field must be set to ``wdl`` to run a WDL pipeline.
+    - To run an old version (draft2) of WDL, set it to ``wdl_draft2``. This will direct Tibanna to specifically use an older version of Cromwell. Some draft2 WDLs may be supported by the later version of Cromwell. Use the ``wdl_draft2`` option only if the old WDL does not work with the later version of Cromwell.
 
 :wdl_directory_url:
     - <url_that_contains_wdl_file(s)>
@@ -145,7 +146,7 @@ Snakemake-specific
 :container_image:
     - This is a required field.
     - It is highly recommended to use the official Snakemake Docker image
-      (``quay.io/snakemake/snakemake``)
+      (``snakemake/snakemake``)
 
 :command:
     - This is a required field.
@@ -200,7 +201,7 @@ Other pipeline-related fields
     - Version of the pipeline/app, for the user to keep in track.
 
 :language:
-    - 'cwl_v1', 'cwl_draft3' or 'wdl'
+    - 'cwl_v1', 'cwl_draft3' (tibanna < ``1.0.0`` only) or 'wdl' (='wdl_v1' for backward compatibility) or 'wdl_draft2' or 'wdl_v1' (tibanna >= ``1.0.0``)
     - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 
@@ -323,9 +324,6 @@ Output target specification
     - key can be a source file path (to be used inside container run environment) starting with
       ``file://`` instead of CWL/WDL argument name.
 
-      - It is highly recommended to stick to using only argument names for CWL/WDL for pipeline
-        reproducibility, since they are already clearly defined in CWL/WDL (especially for CWL).
-
     - (e.g.
 
     ::
@@ -333,6 +331,48 @@ Output target specification
         {
           "file:///data1/out/some_random_output.txt": "output/some_random_output.txt"
         }
+
+    - It is highly recommended to stick to using only argument names for CWL/WDL for pipeline
+      reproducibility, since they are already clearly defined in CWL/WDL (especially for CWL).
+
+    - Starting with version ``1.0.0``, a dictionary format is also accepted for individual target, with keys ``object_key`` ``bucket_name``, ``object_prefix`` and/or  ``unzip``. For a regular file output, ``object_key`` and ``bucket_name`` can be used. The use of ``bucket_name`` here allows using a different output bucket for specific output files. For a directory, ``object_prefix`` can be used instead which will be used as if it is the directory name on S3. ``object_prefix`` may or may not have the trailing ``\``. ``unzip`` is boolean (either ``true`` or ``false``) and can be applied to a case when the output file is a ``zip`` file and you want the content to be extracted into a directory on an S3 bucket.
+
+    - (e.g.
+
+    ::
+
+        {
+            "out_pairsam": { 
+               "object_key": "output/renamed_pairsam_file"
+            }
+        }
+
+    ::
+
+        {
+            "out_pairsam": { 
+               "object_key": "output/renamed_pairsam_file",
+               "bucket" : "some_different_bucket"
+            }
+        }
+
+    ::
+
+        {
+            "some_output_as_dir": {
+                "object_prefix": "some_dir_output/",
+                "bucket": "some_different_bucket"
+            }
+        }
+
+    ::
+
+        {
+           "out_zip": {
+              "object_prefix": "zip_output/",
+              "unzip": true
+        }
+
 
 
 :secondary_output_target:
@@ -448,19 +488,25 @@ The ``config`` field describes execution configuration.
 :root_ebs_size:
     - <root_ebs_size_in_gb>
     - default 8
-    - Tibanna uses two separate EBS volumes, one for docker image, another for data. Most of the times, the 8GB
-      root EBS that is used for docker images has enough space. However, if the docker image is larger than 5GB
-      or if multiple large docker images are used together, one may consider increasing root ebs size. Any directory
-      that is used inside a docker image (e.g. ``/tmp`` when running in the ``shell`` mode) that is not mounted
-      from the data EBS could also cause a ``no space left in device`` error on the root EBS volume. It is
-      recommended to use a directory under ``/data1`` as a temp directory when running in the ``shell`` mode, which
-      is mounted from data EBS.
+    - For versions < ``1.0.0``, Tibanna uses two separate EBS volumes, one for docker image, another for data.
+      Most of the times, the 8GB root EBS that is used for docker images has enough space. However, if the
+      docker image is larger than 5GB or if multiple large docker images are used together, one may consider
+      increasing root ebs size. Any directory that is used inside a docker image (e.g. ``/tmp`` when running
+      in the ``shell`` mode) that is not mounted from the data EBS could also cause a ``no space left in device``
+      error on the root EBS volume. It is recommended to use a directory under ``/data1`` as a temp directory
+      when running in the ``shell`` mode, which is mounted from data EBS.
     - This field is supported in version ``0.9.0`` or higher. If an older version has been used, redeploy
       ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` or higher, as below.
     
       ::
 
           tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
+
+    - For versions >= ``1.0.0``, this field is no longer needed (though still supported) since the docker image
+      also uses the data EBS and not the root EBS starting ``1.0.0``. This means for a large docker image, it is
+      recommended to increase ``ebs_size`` rather than ``root_ebs_size``. It takes effect only if ``run_task_awsem``
+      is redeployed as above. For consistency, when you redeploy ``run_task_awsem`` from version < ``1.0.0`` to
+      version >= ``1.0.0``, it is also recommended to redeploy ``check_task_awsem`` with the same version.
 
 
 :shutdown_min:
@@ -485,8 +531,8 @@ The ``config`` field describes execution configuration.
     - optional (default: unset)
 
 :ebs_type:
-    - type of EBS (either ``gp2`` or ``io1``)
-    - optional (default: gp2)
+    - type of EBS (e.g. ``gp3``, ``gp2``, ``io1``)
+    - optional (default: gp3 (version >= ``1.0.0``) or gp2 (version < ``1.0.0``))
 
 :cloudwatch_dashboard:
     - **This option is now depricated.**

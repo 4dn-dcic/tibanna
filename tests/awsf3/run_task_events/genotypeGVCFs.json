@@ -1,0 +1,98 @@
+{
+  "config": {
+    "instance_type": "c5n.4xlarge",
+    "ebs_size": "1.5x",
+    "root_ebs_size": 15,
+    "EBS_optimized": true,
+    "spot_instance": false,
+    "log_bucket": "tibanna-output",
+    "key_name": "4dn-encode",
+    "public_postrun_json": true,
+    "behavior_on_capacity_limit": "wait_and_retry",
+    "run_name": "workflow_gatk-GenotypeGVCFs-check_GAPFIP42679E-638e86bc-7670-4bf1-85d7-1642450f",
+    "shutdown_min": "now",
+    "overwrite_input_extra": false,
+    "email": false
+  },
+  "jobid": "OiHYCN1QoEiP",
+  "args": {
+    "app_name": "workflow_gatk-GenotypeGVCFs-check",
+    "app_version": "v17",
+    "cwl_directory_url": "https://raw.githubusercontent.com/dbmi-bgm/cgap-pipeline/v17/cwl",
+    "cwl_main_filename": "workflow_gatk-GenotypeGVCFs_plus_vcf-integrity-check.cwl",
+    "cwl_child_filenames": [
+      "gatk-GenotypeGVCFs.cwl",
+      "vcf-integrity-check.cwl"
+    ],
+    "wdl_directory_url": "",
+    "wdl_main_filename": "",
+    "wdl_child_filenames": "",
+    "cwl_version": "v1",
+    "input_parameters": {},
+    "additional_benchmarking_parameters": {},
+    "output_S3_bucket": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+    "output_target": {
+      "vcf": "test/test.vcf.gz",
+      "vcf-check": "test/vcf-check-test"
+    },
+    "secondary_output_target": {
+      "vcf": [
+        "test/test.vcf.gz.tbi"
+      ]
+    },
+    "input_files": {
+      "chromosomes": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-files",
+        "rename": "",
+        "unzip": "",
+        "mount": false,
+        "object_key": "a1d504ee-a313-4064-b6ae-65fed9738980/GAPFIGJVJDUY.txt"
+      },
+      "input_gvcf": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+        "rename": "",
+        "unzip": "",
+        "mount": false,
+        "object_key": "1b690f4b-e9ec-4a3a-a3ea-5499fd9b7623/GAPFIP42679E.gvcf.gz"
+      },
+      "known-sites-snp": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-files",
+        "rename": "",
+        "unzip": "",
+        "mount": false,
+        "object_key": "8ed35691-0af4-467a-adbc-81eb088549f0/GAPFI4LJRN98.vcf.gz"
+      },
+      "reference": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-files",
+        "rename": "",
+        "unzip": "",
+        "mount": false,
+        "object_key": "1936f246-22e1-45dc-bb5c-9cfd55537fe7/GAPFIXRDPDK5.fa"
+      }
+    },
+    "secondary_files": {
+      "input_gvcf": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+        "rename": "",
+        "mount": false,
+        "object_key": "1b690f4b-e9ec-4a3a-a3ea-5499fd9b7623/GAPFIP42679E.gvcf.gz.tbi"
+      },
+      "known-sites-snp": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-files",
+        "rename": "",
+        "mount": false,
+        "object_key": "8ed35691-0af4-467a-adbc-81eb088549f0/GAPFI4LJRN98.vcf.gz.tbi"
+      },
+      "reference": {
+        "bucket_name": "elasticbeanstalk-fourfront-cgapwolf-files",
+        "rename": "",
+        "mount": false,
+        "object_key": [
+          "1936f246-22e1-45dc-bb5c-9cfd55537fe7/GAPFIXRDPDK5.dict",
+          "1936f246-22e1-45dc-bb5c-9cfd55537fe7/GAPFIXRDPDK5.fa.fai"
+        ]
+      }
+    },
+    "custom_errors": []
+  }
+}

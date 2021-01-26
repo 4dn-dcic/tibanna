@@ -1,23 +1,37 @@
 import boto3, os
-from tibanna.utils import (
-    printlog,
+from . import create_logger
+from .utils import (
     upload,
     read_s3
 )
+from .top import Top
 from .vars import (
-    AWS_REGION
+    AWS_REGION,
+    EBS_MOUNT_POINT
 )
-# from datetime import timezone
 from datetime import datetime
 from datetime import timedelta
 
-# instance_id = 'i-0167a6c2d25ce5822'
-# filesystem = "/dev/xvdb"
-# filesystem = "/dev/nvme1n1"
+
+logger = create_logger(__name__)
 
 
 class TibannaResource(object):
+    """class handling cloudwatch metrics for cpu / memory /disk space
+    and top command metrics for cpu and memory per process.
+    """
+
+    timestamp_format = '%Y-%m-%d %H:%M:%S'
+
+    @classmethod
+    def convert_timestamp_to_datetime(cls, timestamp):
+        return datetime.strptime(timestamp, cls.timestamp_format)
+
     def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
+        """All the Cloudwatch metrics are retrieved and stored at the initialization.
+        :param instance_id: e.g. 'i-0167a6c2d25ce5822'
+        :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
+        """
         self.instance_id = instance_id
         self.filesystem = filesystem
         self.client = boto3.client('cloudwatch', region_name=AWS_REGION)
@@ -28,7 +42,7 @@ class TibannaResource(object):
             nTimeChunks = round(nTimeChunks) + 1
         else:
             nTimeChunks = round(nTimeChunks)
-        print("Spliting run time into %s chunks" % str(nTimeChunks))
+        logger.info("Spliting run time into %s chunks" % str(nTimeChunks))
         self.starttimes = [starttime + timedelta(days=k) for k in range(0, nTimeChunks)]
         self.endtimes = [starttime + timedelta(days=k+1) for k in range(0, nTimeChunks)]
         self.start = starttime.replace(microsecond=0) # initial starttime for the window requested
@@ -72,11 +86,12 @@ class TibannaResource(object):
         # this following one is used to detect file copying while CPU utilization is near zero
         self.max_ebs_read_bytes = self.choose_max(max_ebs_read_chunks)
 
-    def plot_metrics(self, instance_type, directory='.'):
+    def plot_metrics(self, instance_type, directory='.', top_content=''):
         """plot full metrics across all time chunks.
         AWS allows only 1440 data points at a time
         which corresponds to 24 hours at 1min interval,
         so we have to split them into chunks.
+        :param top_content: content of the <job_id>.top in the str format, used for plotting top metrics.
         """
         max_mem_utilization_percent_chunks_all_pts = []
         max_mem_used_MB_chunks_all_pts = []
@@ -103,45 +118,48 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
+        self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
         # writing html
         self.list_files.append(self.write_html(instance_type, directory))
 
     def upload(self, bucket, prefix='', lock=True):
-        printlog(str(self.list_files))
+        logger.debug("list_files: " + str(self.list_files))
         for f in self.list_files:
             upload(f, bucket, prefix)
         if lock:
             upload(None, bucket, os.path.join(prefix, 'lock'))
 
-    def choose_max(self, x):
-        M = -1
-        for v in x:
-            if v:
-                M = max([v, M])
-        if M == -1:
-            M = ""
-        return(M)
+    @staticmethod
+    def choose_max(x):
+        """given a list of values that may include None, 0 or an empty string,
+        chooses a positive nonzero maximum. (e.g. [0,1,2,None,3] => 3)
+        if no positive nonzero value exists in the list, returns an empty string."""
+        return TibannaResource.get_max(list(filter(lambda x:x, x)))
 
-    def choose_min(self, x):
-        M = 10000000000
-        for v in x:
-            if v:
-                M = min([v, M])
-        if M == 10000000000:
-            M = ""
-        return(M)
+    @staticmethod
+    def choose_min(x):
+        """given a list of values that may include None, 0 or an empty string,
+        chooses a nonzero minimum. (e.g. [0,1,2,None,3] => 1)
+        if no nonzero value exists in the list, returns an empty string."""
+        return TibannaResource.get_min(list(filter(lambda x:x, x)))
 
-    def get_max(self, x):
+    @staticmethod
+    def get_max(x):
+        """given a list of values, returns maximum value,
+        but if the list is empty, returns an empty string"""
         return(max(x) if x else '')
 
-    def get_min(self, x):
+    @staticmethod
+    def get_min(x):
+        """given a list of values, returns miminim value,
+        but if the list is empty, returns an empty string"""
         return(min(x) if x else '')
 
     def as_dict(self):
         d = self.__dict__.copy()
-        printlog(d)
+        logger.debug("original dict: " + str(d))
         del(d['client'])
         del(d['starttimes'])
         del(d['endtimes'])
@@ -253,7 +271,7 @@ class TibannaResource(object):
             MetricName='DiskSpaceUtilization',
             Dimensions=[
                 {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': '/data1'},
+                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
                 {'Name': 'Filesystem', 'Value': self.filesystem}
             ],
             Period=60,
@@ -271,7 +289,7 @@ class TibannaResource(object):
             MetricName='DiskSpaceUsed',
             Dimensions=[
                 {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': '/data1'},
+                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
                 {'Name': 'Filesystem', 'Value': self.filesystem}
             ],
             Period=60,
@@ -326,14 +344,14 @@ class TibannaResource(object):
             k, v = line.split('\t')
             d.setdefault(k, v) # everything is string now
         # times into datetime objects
-        starttime = datetime.strptime(d['Start_Time'], '%Y-%m-%d %H:%M:%S')
+        starttime = cls.convert_timestamp_to_datetime(d['Start_Time'])
         try:
-            endtime = datetime.strptime(d['End_Time'], '%Y-%m-%d %H:%M:%S')
+            endtime = cls.convert_timestamp_to_datetime(d['End_Time'])
         except: # temporary fix for retrocompatibility
             if 'End_time' in d:
-                endtime = datetime.strptime(d['End_time'], '%Y-%m-%d %H:%M:%S')
+                endtime = cls.convert_timestamp_to_datetime(d['End_time'])
             else:
-                endtime = datetime.strptime(d['Time_of_Request'], '%Y-%m-%d %H:%M:%S')
+                endtime = cls.convert_timestamp_to_datetime(d['Time_of_Request'])
         cost = d['Cost'] if 'Cost' in d else '---'
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
@@ -348,6 +366,17 @@ class TibannaResource(object):
         if upload_new:
             upload(filename, bucket, prefix)
             os.remove(filename)
+
+    @staticmethod
+    def write_top_tsvs(directory, top_content):
+        TibannaResource.check_mkdir(directory)
+        top_obj = Top(top_content)
+        top_obj.digest()
+        cpu_filename = directory + '/' + 'top_cpu.tsv'
+        mem_filename = directory + '/' + 'top_mem.tsv'
+        top_obj.write_to_csv(cpu_filename, delimiter='\t', metric='cpu', colname_for_timestamps='interval', base=1)
+        top_obj.write_to_csv(mem_filename, delimiter='\t', metric='mem', colname_for_timestamps='interval', base=1)
+        return [cpu_filename, mem_filename]
 
     def write_tsv(self, directory, **kwargs): # kwargs, key: (chunks_all_pts, interval), interval is 1 or 5 min
         self.check_mkdir(directory)
@@ -397,7 +426,8 @@ class TibannaResource(object):
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
         return(filename)
 
-    def check_mkdir(self, directory):
+    @staticmethod
+    def check_mkdir(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
@@ -479,6 +509,12 @@ class TibannaResource(object):
                   height: auto;
                   width: 85%%;
                   background-color: #2C6088;
+                }
+                .barplot {
+                  height: 300px;
+                }
+                .barplot_legend {
+                  height: 350px;
                 }
                 /* Style the lines by removing the fill and applying a stroke */
                 .line {
@@ -615,6 +651,16 @@ class TibannaResource(object):
                       <h2>Disk Usage (/data1)</h2>
                     </div>
                       <div id="chart_disk"> </div>
+                    <div class="header">
+                      <h2>CPU Usage Per Process (from Top command)</h2>
+                    </div>
+                      <div class="barplot" id="bar_chart_cpu"> </div>
+                      <div id="bar_chart_cpu_legend" class="barplot_legend"> </div>
+                    <div class="header">
+                      <h2>Memory Usage Per Process (from Top command)</h2>
+                    </div>
+                      <div class="barplot" id="bar_chart_mem"> </div>
+                      <div id="bar_chart_mem_legend" class="barplot_legend"> </div>
                   </section>
                 </body>
                 <!-- Load in the d3 library -->
@@ -841,6 +887,141 @@ class TibannaResource(object):
                       .style("text-anchor", "middle")
                       .text(axis_label);
                 }
+                var barplot_colors = ['black', 'red', 'green', 'blue', 'magenta', 'yellow', 'cyan',
+                                      'pink', 'mediumslateblue', 'maroon', 'orange',
+                                      'gray', 'palegreen', 'mediumvioletred', 'deepskyblue',
+                                      'rosybrown', 'lightgrey', 'indigo', 'cornflowerblue']
+                function bar_plot(data_array, div, axis_label) {
+                  // Get div dimensions
+                  var div_width = document.getElementById(div).offsetWidth
+                    , div_height = document.getElementById(div).offsetHeight;
+                  // Use the margin convention practice
+                  var margin = {top: 20, right: 150, bottom: 100, left: 150}
+                    , width = div_width - margin.left - margin.right // Use the window's width
+                    , height = div_height - margin.top - margin.bottom; // Use the window's height
+                  // number of different colors (also number of columns to visualize together)
+                  var n_cols = data_array.length
+                  // The number of datapoints
+                  var n_data = data_array[0].length;
+                  var n = 0
+                  if (n_data < 5) {
+                    n = 5
+                  } else {
+                    n = n_data
+                  }
+                  // sum for each timepoint, to calculate y scale
+                  sum_array = d3.range(n_data).map(function(d) { 
+                      var sum = 0
+                      for( col=0; col<n_cols; col++) sum += data_array[col][d]
+                      return sum
+                  })
+                  // X scale will use the index of our data
+                  var xScale = d3.scaleLinear()
+                      .domain([0, n]) // input
+                      .range([0, width])  // output
+                  // Y scale will use the randomly generate number
+                  var yScale = d3.scaleLinear()
+                      .domain([0, d3.max(sum_array)]) // input
+                      .range([height, 0]); // output
+                  // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
+                  // Add the SVG to the page
+                  var svg = d3.select("#" + div).append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                  // Add the X gridlines
+                  svg.append("g")
+                      .attr("class", "grid")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(make_x_gridlines(xScale, n)
+                          .tickSize(-height)
+                          .tickFormat("")
+                      )
+                  // Add the Y gridlines
+                  svg.append("g")
+                      .attr("class", "grid")
+                      .call(make_y_gridlines(yScale, d3.max(sum_array))
+                          .tickSize(-width)
+                          .tickFormat("")
+                      )
+                  // Call the x axis in a group tag
+                  svg.append("g")
+                      .attr("class", "x axis")
+                      .attr("transform", "translate(0," + height + ")")
+                      .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+                  // Call the y axis in a group tag
+                  svg.append("g")
+                      .attr("class", "y axis")
+                      .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+                  // Add rectangles, bind the data
+                  var data_array_cum = data_array  // dimension and index 0 should be the same
+                  for( var col=0; col<n_cols; col++) {
+                      if(col == 0) {
+                          data_array_cum[col] = d3.range(n_data).map(function(d) { return data_array[col][d] })
+                          var dataset = d3.range(n_data).map(function(d) { return {"prev_y": 0, "y": data_array_cum[col][d]} })
+                      }
+                      if(col > 0) {
+                          data_array_cum[col] = d3.range(n_data).map(function(d) { return data_array_cum[col-1][d] + data_array[col][d] })
+                          var dataset = d3.range(n_data).map(function(d) { return {"prev_y": data_array_cum[col-1][d], "y": data_array_cum[col][d]} })
+                      }
+                      //var dataset = d3.range(n_data).map(function(d) { return {"dy": data_array[col][d], "y": data_array_cum[col][d]} })
+                      svg.selectAll(".bar")
+                          .data(dataset)
+                          .enter()
+                          .append('rect')
+                          .attr("class", "bar" + col)
+                          .attr("fill", barplot_colors[col])
+                          .attr('x', function(d, i) { return xScale(i) + xScale(1) - xScale(0.5); })
+                          .attr('y', function(d) { return yScale(d.y); })
+                          .attr('height', function(d) { return yScale(d.prev_y) - yScale(d.y); })
+                          .attr('width', xScale(1));
+                  }
+                  svg.append("text")
+                      .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom - margin.bottom / 2) + ")")
+                      .style("text-anchor", "middle")
+                      .text("Time [min]");
+                  svg.append("text")
+                      .attr("transform", "rotate(-90)")
+                      .attr("y", 0 - margin.left + margin.left / 2)
+                      .attr("x",0 - (height / 2))
+                      .attr("dy", "1em")
+                      .style("text-anchor", "middle")
+                      .text(axis_label);
+                }
+                function bar_plot_legend(legend_text, div) {
+                  // Get div dimensions
+                  var div_width = document.getElementById(div).offsetWidth
+                    , div_height = document.getElementById(div).offsetHeight;
+                  // Use the margin convention practice
+                  var margin = {top: 20, right: 150, bottom: 100, left: 150}
+                    , width = div_width - margin.left - margin.right // Use the window's width
+                    , height = div_height - margin.top - margin.bottom; // Use the window's height
+                  // number of different colors (also number of columns to visualize together)
+                  var n_cols = legend_text.length
+                  // Add the SVG to the page
+                  var svg = d3.select("#" + div).append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                  for( var col=0; col<n_cols; col++) {
+                      var legend_y = 20 * col
+                      var legend_symbol_radius = 5
+                      var legend_x = 2 * legend_symbol_radius + 10
+                      // legend text
+                      svg.append("text")
+                          .attr("transform", "translate(" + legend_x + " ," + legend_y + ")")
+                          .attr("text-anchor", "left")
+                          .text(legend_text[col])
+                      // legend circles with colors
+                      svg.append("circle")
+                          .attr("cy", legend_y - legend_symbol_radius)
+                          .attr("cx", legend_symbol_radius)
+                          .attr("r", legend_symbol_radius)
+                          .style("fill", barplot_colors[col])
+                  }
+                }
                 /* Reading data and Plotting */
                 d3.tsv("metrics.tsv").then(function(data) {
                     return data.map(function(d){
@@ -885,6 +1066,36 @@ class TibannaResource(object):
                     return data_array;
                   }).then(function(d_a){
                     percent_plot(d_a, 'chart_percent');
+                });
+                d3.tsv("top_cpu.tsv").then(function(data) {
+                    var data_array = [];
+                    var columns = data.columns
+                    columns.shift()
+                    for ( col=0; col<columns.length; col++){
+                        data_array[col] = []
+                        data.forEach(function(d) {
+                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
+                              data_array[col].push(parseFloat(d[columns[col]]));
+                            }
+                        });
+                    }
+                    bar_plot(data_array, 'bar_chart_cpu', 'Total CPU (%%) [100%% = 1 CPU]');
+                    bar_plot_legend(columns, 'bar_chart_cpu_legend');
+                });
+                d3.tsv("top_mem.tsv").then(function(data) {
+                    var data_array = [];
+                    var columns = data.columns
+                    columns.shift()
+                    for ( col=0; col<columns.length; col++){
+                        data_array[col] = []
+                        data.forEach(function(d) {
+                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
+                              data_array[col].push(parseFloat(d[columns[col]]));
+                            }
+                        });
+                    }
+                    bar_plot(data_array, 'bar_chart_mem', 'Total Mem (%% total available memory)');
+                    bar_plot_legend(columns, 'bar_chart_mem_legend');
                 });
                 </script>\
             """

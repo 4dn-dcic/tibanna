@@ -1,10 +1,10 @@
 import random
 import string
-import logging
 import boto3
 import os
 import mimetypes
 from uuid import uuid4, UUID
+from . import create_logger
 from .vars import (
     _tibanna,
     EXECUTION_ARN,
@@ -12,12 +12,7 @@ from .vars import (
 )
 
 
-LOG = logging.getLogger(__name__)
-
-
-def printlog(message):
-    print(message)
-    LOG.info(message)
+logger = create_logger(__name__)
 
 
 def _tibanna_settings(settings_patch=None, force_inplace=False, env=''):
@@ -83,7 +78,7 @@ def create_jobid():
 
 def read_s3(bucket, object_name):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
-    printlog(str(response))
+    logger.debug("response_from_read_s3:" +  str(response))
     return response['Body'].read().decode('utf-8', 'backslashreplace')
 
 
@@ -112,7 +107,7 @@ def upload(filepath, bucket, prefix='', public=True):
     if filepath:
         dirname, filename = os.path.split(filepath)
         key = os.path.join(prefix, filename)
-        printlog("filepath=%s, filename=%s, key=%s" % (filepath, filename, key))
+        logger.debug("filepath=%s, filename=%s, key=%s" % (filepath, filename, key))
         content_type = mimetypes.guess_type(filename)[0]
         if content_type is None:
             content_type = 'binary/octet-stream'

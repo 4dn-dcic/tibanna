@@ -1,6 +1,7 @@
 import boto3
 import json
 import random
+from . import create_logger
 from .vars import (
     DYNAMODB_TABLE,
     AWS_ACCOUNT_NUMBER,
@@ -9,7 +10,9 @@ from .vars import (
     RUN_TASK_LAMBDA_NAME,
     CHECK_TASK_LAMBDA_NAME
 )
-from .utils import printlog
+
+
+logger = create_logger(__name__)
 
 
 class IAM(object):
@@ -127,7 +130,7 @@ class IAM(object):
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
                                         'desc_stepfunction', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
-                                          'termination']
+                                          'termination', 'dynamodb']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
@@ -324,7 +327,8 @@ class IAM(object):
                     "Effect": "Allow",
                     "Action": [
                         "dynamodb:DescribeTable",
-                        "dynamodb:PutItem"
+                        "dynamodb:PutItem",
+                        "dynamodb:Query"
                     ],
                     "Resource": "arn:aws:dynamodb:" + self.region + ":" + self.account_id + ":table/" + DYNAMODB_TABLE
                 }
@@ -384,7 +388,7 @@ class IAM(object):
                 except Exception as e2:
                     raise Exception("Can't create role %s: %s" % (rolename, str(e2)))
         if verbose:
-            print(response)
+            logger.debug("response from create_role_robust: " + str(response))
 
     def create_empty_role_for_lambda(self, verbose=False):
         role_policy_doc_lambda = self.role_policy_document('lambda')
@@ -392,7 +396,7 @@ class IAM(object):
         try:
             self.client.get_role(RoleName=empty_role_name)
         except Exception:
-            print("creating %s", empty_role_name)
+            logger.info("creating %s", empty_role_name)
             self.create_role_robust(empty_role_name, json.dumps(role_policy_doc_lambda), verbose)
 
     def create_role_for_role_type(self, role_type, verbose=False):
@@ -402,7 +406,7 @@ class IAM(object):
         for p_arn in self.policy_arn_list_for_role(role_type):
             response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
-                print(response)
+                logger.debug("response from IAM attach_policy :" + str(response))
 
     def create_user_group(self, verbose=False):
         try:
@@ -410,7 +414,7 @@ class IAM(object):
                GroupName=self.iam_group_name
             )
             if verbose:
-                print(response)
+                logger.debug("response from IAM create_group :" + str(response))
         except Exception as e:
             if 'EntityAlreadyExists' in str(e):
                 # do not actually delete the group, just detach existing policies.
@@ -421,29 +425,29 @@ class IAM(object):
             PolicyArn='arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess'
         )
         if verbose:
-            print(response)
+            logger.debug("response from IAM attach_policy :" + str(response))
         response = group.attach_policy(
             PolicyArn='arn:aws:iam::aws:policy/AWSStepFunctionsConsoleFullAccess'
         )
         if verbose:
-            print(response)
+            logger.debug("response from IAM attach_policy :" + str(response))
         response = group.attach_policy(
             PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
         )
         if verbose:
-            print(response)
+            logger.debug("response from IAM attach_policy :" + str(response))
         response = group.attach_policy(
             PolicyArn='arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess'
         )
         if verbose:
-            print(response)
+            logger.debug("response from IAM attach_policy :" + str(response))
         custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination']
         for pn in [self.policy_name(pt) for pt in custom_policy_types]:
             response = group.attach_policy(
                 PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn
             )
             if verbose:
-                print(response)
+                logger.debug("response from IAM attach_policy :" + str(response))
 
     def create_policy_robust(self, policy_name, policy_doc, verbose=False):
         try:
@@ -452,7 +456,7 @@ class IAM(object):
                 PolicyDocument=policy_doc,
             )
             if verbose:
-                print(response)
+                logger.debug("response from IAM create_policy :" + str(response))
         except Exception as e:
             if 'EntityAlreadyExists' in str(e):
                 try:
@@ -464,7 +468,7 @@ class IAM(object):
                         PolicyDocument=policy_doc,
                     )
                     if verbose:
-                        print(response)
+                        logger.debug("response from IAM create_policy :" + str(response))
                 except Exception as e2:
                     raise Exception("Can't create policy %s : %s" % (policy_name, str(e2)))
 
@@ -505,7 +509,7 @@ class IAM(object):
         A user group shares permission for buckets, tibanna execution and logs
         """
         # create prefix that represent a single user group
-        printlog("creating iam permissions with tibanna policy prefix %s" % self.tibanna_policy_prefix)
+        logger.info("creating iam permissions with tibanna policy prefix %s" % self.tibanna_policy_prefix)
 
         # policies
         for pt in self.policy_types:
@@ -526,7 +530,7 @@ class IAM(object):
 
     def remove_role(self, rolename, verbose=False, ignore_errors=True):
         if verbose:
-            printlog("removing role %s" % rolename)
+            logger.info("removing role %s" % rolename)
         try:
             role = self.iam.Role(rolename)
             role.description
@@ -534,7 +538,7 @@ class IAM(object):
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
                     if verbose:
-                        printlog("role %s doesn't exist. skipping." % rolename)
+                        logger.info("role %s doesn't exist. skipping." % rolename)
                     return
                 else:
                     raise Exception(e)
@@ -561,14 +565,14 @@ class IAM(object):
 
     def remove_instance_profile(self, verbose=False, ignore_errors=True):
         if verbose:
-            printlog("removing instance profile %s" % self.instance_profile_name)
+            logger.info("removing instance profile %s" % self.instance_profile_name)
         try:
             res = self.client.delete_instance_profile(InstanceProfileName=self.instance_profile_name)
         except Exception as e:
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
                     if verbose:
-                        printlog("instance profile %s doesn't exist. skipping." % self.instance_profile_name)
+                        logger.info("instance profile %s doesn't exist. skipping." % self.instance_profile_name)
                     return
                 else:
                     raise Exception(e)
@@ -576,7 +580,7 @@ class IAM(object):
 
     def remove_policy(self, policy_name, verbose=False, ignore_errors=True):
         if verbose:
-            printlog("removing policy %s" % policy_name)
+            logger.info("removing policy %s" % policy_name)
         policy_arn = 'arn:aws:iam::' + self.account_id + ':policy/' + policy_name
         # first detach roles and groups and delete versions (requirements for deleting policy)
         try:
@@ -586,7 +590,7 @@ class IAM(object):
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
                     if verbose:
-                        printlog("policy %s doesn't exist. skipping." % policy_arn)
+                        logger.info("policy %s doesn't exist. skipping." % policy_arn)
                     return
                 else:
                     raise Exception(e)
@@ -622,7 +626,7 @@ class IAM(object):
 
     def delete_group(self, verbose=False, ignore_errors=True):
         if verbose:
-            printlog("removing group %s" % self.iam_group_name)
+            logger.info("removing group %s" % self.iam_group_name)
         try:
             gr = self.iam.Group(self.iam_group_name)
             gr.group_id
@@ -630,7 +634,7 @@ class IAM(object):
             if 'ResourceNotFound' in str(e) or 'NoSuchEntity' in str(e):
                 if ignore_errors:
                     if verbose:
-                        printlog("group %s doesn't exist. skipping." % self.iam_group_name)
+                        logger.info("group %s doesn't exist. skipping." % self.iam_group_name)
                     return
                 else:
                     raise Exception(e)

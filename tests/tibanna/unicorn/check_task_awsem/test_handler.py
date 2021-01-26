@@ -85,7 +85,7 @@ def test_check_task_awsem(check_task_input, s3):
     s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
     with pytest.raises(MetricRetrievalException) as excinfo:
         retval = service.handler(check_task_input_modified, '')
-    assert 'error getting metrics' in str(excinfo)
+    assert 'error getting metrics' in str(excinfo.value)
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
     s3.delete_objects(Delete={'Objects': [{'Key': postrunjson}]})
@@ -115,7 +115,7 @@ def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
     s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
     with pytest.raises(MetricRetrievalException) as excinfo:
         retval = service.handler(check_task_input_modified, '')
-    assert 'error getting metrics' in str(excinfo)
+    assert 'error getting metrics' in str(excinfo.value)
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
     s3.delete_objects(Delete={'Objects': [{'Key': postrunjson}]})

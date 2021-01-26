@@ -6,8 +6,8 @@ import logging
 import boto3
 import copy
 import re
+from . import create_logger
 from .utils import (
-    printlog,
     does_key_exist,
     create_jobid
 )
@@ -16,12 +16,11 @@ from .vars import (
     S3_ACCESS_ARN,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
-    AMI_ID_WDL,
-    AMI_ID_SHELL,
-    AMI_ID_SNAKEMAKE,
-    AMI_ID_CWL_V1,
-    AMI_ID_CWL_DRAFT3,
-    DYNAMODB_TABLE
+    AMI_ID,
+    DYNAMODB_TABLE,
+    DEFAULT_ROOT_EBS_SIZE,
+    TIBANNA_AWSF_DIR,
+    DEFAULT_AWSF_IMAGE
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -30,7 +29,8 @@ from .exceptions import (
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException,
     DependencyStillRunningException,
-    DependencyFailedException
+    DependencyFailedException,
+    UnsupportedCWLVersionException
 )
 from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
@@ -38,26 +38,28 @@ from ._version import __version__
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
 from Benchmark.byteformat import B2GB
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
 
+logger = create_logger(__name__)
+
+
 class UnicornInput(SerializableObject):
-    def __init__(self, input_dict):
+    def __init__(self, input_dict, fill_default=True):
         if 'jobid' in input_dict and input_dict.get('jobid'):
             self.jobid = input_dict.get('jobid')
         else:
             self.jobid = create_jobid()
-        self.args = Args(**input_dict['args'])  # args is a required field
-        self.cfg = Config(**input_dict['config'])  # config is a required field
+        self.args = Args(**input_dict['args'], fill_default=fill_default)  # args is a required field
+        self.cfg = Config(**input_dict['config'], fill_default=fill_default)  # config is a required field
         # add other fields too
         for field, v in input_dict.items():
             if field not in ['jobid', 'args', 'config']:
                 setattr(self, field, v)
-        # fill the default values and internally used fields
-        self.auto_fill()
+        if fill_default:
+            # fill the default values and internally used fields
+            self.auto_fill()
 
     def as_dict(self):
         d = super().as_dict()
@@ -71,9 +73,6 @@ class UnicornInput(SerializableObject):
         """
         args = self.args
         cfg = self.cfg
-        args.fill_default()
-        cfg.fill_default()
-        cfg.fill_internal()
         cfg.fill_language_options(args.language, getattr(args, 'singularity', False))
         cfg.fill_other_fields(args.app_name)
         # sanity check
@@ -107,12 +106,14 @@ class UnicornInput(SerializableObject):
 
 
 class Args(SerializableObject):
-    def __init__(self, **kwargs):
+    def __init__(self, fill_default=True, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
         for field in ['output_S3_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
+        if fill_default:
+            self.fill_default()
 
     def update(self, d):
         for k, v in d.items():
@@ -132,15 +133,15 @@ class Args(SerializableObject):
             if not hasattr(self, field):
                 setattr(self, field, '')
         # if language and cwl_version is not specified,
-        # by default it is cwl_draft3
+        # by default it is cwl_v1
         if not hasattr(self, 'language'):
             if not hasattr(self, 'cwl_version'):
-                self.cwl_version = 'draft3'
-                self.language = 'cwl_draft3'
+                self.cwl_version = 'v1'
+                self.language = 'cwl_v1'
             elif self.cwl_version == 'v1':
                 self.language = 'cwl_v1'
             elif self.cwl_version == 'draft3':
-                self.language = 'cwl_draft3'
+                raise UnsupportedCWLVersionException
             if not hasattr(self, 'singularity'):
                 self.singularity = False
         if not hasattr(self, 'app_name'):
@@ -149,7 +150,7 @@ class Args(SerializableObject):
         self.parse_input_files()
         # check workflow info is there and fill in default
         errmsg_template = "field %s is required in args for language %s"
-        if self.language == 'wdl':
+        if self.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             if not hasattr(self, 'wdl_main_filename'):
                 raise MissingFieldInInputJsonException(errmsg_template % ('wdl_main_filename', self.language))
             if not hasattr(self, 'wdl_child_filenames'):
@@ -243,12 +244,15 @@ class Args(SerializableObject):
 
 
 class Config(SerializableObject):
-    def __init__(self, **kwargs):
+    def __init__(self, fill_default=True, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
         for field in ['log_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in config" % field)
+        if fill_default:
+            self.fill_default()
+            self.fill_internal()
 
     def update(self, d):
         for k, v in d.items():
@@ -265,7 +269,7 @@ class Config(SerializableObject):
         if not hasattr(self, "ebs_size"):
             self.ebs_size = 0  # unspecified by default
         if not hasattr(self, "ebs_type"):
-            self.ebs_type = 'gp2'
+            self.ebs_type = 'gp3'
         if not hasattr(self, "shutdown_min"):
             self.shutdown_min = 'now'
         if not hasattr(self, "spot_instance"):
@@ -278,30 +282,22 @@ class Config(SerializableObject):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
         if not hasattr(self, 'root_ebs_size'):
-            self.root_ebs_size = 8
+            self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
+        if not hasattr(self, 'awsf_image'):
+            self.awsf_image = DEFAULT_AWSF_IMAGE
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
         # script url
         self.script_url = 'https://raw.githubusercontent.com/' + \
-            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/awsf/'
+            TIBANNA_REPO_NAME + '/' + TIBANNA_REPO_BRANCH + '/' + TIBANNA_AWSF_DIR + '/'
         self.json_bucket = self.log_bucket
 
-    def fill_language_options(self, language='cwl_draft3', singularity=False):
+    def fill_language_options(self, language='cwl_v1', singularity=False):
         """fill in ami_id and language fields (these are also internal)"""
-        if language == 'wdl':
-            self.ami_id = AMI_ID_WDL
-        elif language == 'shell':
-            self.ami_id = AMI_ID_SHELL
-        elif language == 'snakemake':
-            self.ami_id = AMI_ID_SNAKEMAKE
-        else:  # cwl
-            if language in ['cwl', 'cwl_v1']:  # 'cwl' means 'cwl_v1'
-                self.ami_id = AMI_ID_CWL_V1
-            else:
-                self.ami_id = AMI_ID_CWL_DRAFT3
-            if singularity:  # applied to only cwl though it is pretty useless
-                self.singularity = True
+        self.ami_id = AMI_ID
+        if singularity:
+            self.singularity = True
         self.language = language
 
     def fill_other_fields(self, app_name=''):
@@ -447,7 +443,7 @@ class Execution(object):
             else:
                 size = get_file_size(f['object_key'], bucket)
             input_size_in_bytes.update({str(argname): size})
-        print({"input_size_in_bytes": input_size_in_bytes})
+        logger.debug(str({"input_size_in_bytes": input_size_in_bytes}))
         return input_size_in_bytes
 
     def get_benchmarking(self, input_size_in_bytes):
@@ -523,7 +519,7 @@ class Execution(object):
                             # change behavior as well,
                             # to avoid 'retry_without_spot works only with spot' error in the next round
                             self.cfg.behavior_on_capacity_limit = 'fail'
-                            printlog("trying without spot...")
+                            logger.info("trying without spot...")
                             return 'continue'
                 else:
                     raise Exception("failed to launch instance for job %s: %s" % (self.jobid, str(e)))
@@ -545,7 +541,7 @@ class Execution(object):
             'App_version': args.app_version,
             'language': args.language
         }
-        if args.language == 'wdl':
+        if args.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             app.update({
                 'main_wdl': args.wdl_main_filename,
                 'other_wdl_files': ','.join(args.wdl_child_filenames),
@@ -644,23 +640,22 @@ class Execution(object):
         str += "JOBID={}\n".format(self.jobid)
         str += "RUN_SCRIPT=aws_run_workflow_generic.sh\n"
         str += "SHUTDOWN_MIN={}\n".format(cfg.shutdown_min)
-        str += "JSON_BUCKET_NAME={}\n".format(cfg.json_bucket)
         str += "LOGBUCKET={}\n".format(cfg.log_bucket)
         str += "SCRIPT_URL={}\n".format(cfg.script_url)
-        str += "LANGUAGE={}\n".format(cfg.language)
         str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
         str += "chmod +x $RUN_SCRIPT\n"
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
-        str += " -j $JSON_BUCKET_NAME -l $LOGBUCKET -u $SCRIPT_URL -L $LANGUAGE"
+        str += " -l $LOGBUCKET"
+        str += " -V {version}".format(version=__version__)
+        str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:
             str += " -a {access_key} -s {secret_key} -r {region}".format(region=AWS_REGION, **profile)
         if hasattr(cfg, 'singularity') and cfg.singularity:
             str += " -g"
-        str += " -V {version}".format(version=__version__)
         str += "\n"
-        print(str)
+        logger.debug("userdata: \n" + str)
         return(str)
 
     @property
@@ -690,7 +685,7 @@ class Execution(object):
                                               {'DeviceName': '/dev/sda1',
                                                'Ebs': {'DeleteOnTermination': True,
                                                        'VolumeSize': self.cfg.root_ebs_size,
-                                                       'VolumeType': 'gp2'}}]})
+                                                       'VolumeType': 'gp3'}}]})
         if self.cfg.ebs_iops:    # io1 type, specify iops
             largs["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops
         if self.cfg.ebs_size >= 16000:
@@ -894,7 +889,7 @@ def upload_workflow_to_s3(unicorn_input):
     jobid = unicorn_input.jobid
     bucket = cfg.log_bucket
     key_prefix = jobid + '.workflow/'
-    if args.language == 'wdl':
+    if args.language in ['wdl', 'wdl_v1', 'wdl_draft2']:
         main_wf = args.wdl_main_filename
         wf_files = args.wdl_child_filenames.copy()
         localdir = args.wdl_directory_local
@@ -946,12 +941,12 @@ def get_file_size(key, bucket, size_in_gb=False):
     default returns file size in bytes,
     unless size_in_gb = True
     '''
-    printlog("getting file or subfoler size")
+    logger.info("getting file or subfoler size")
     meta = does_key_exist(bucket, key)
     if not meta:
         try:
             size = 0
-            printlog("trying to get total size of the prefix")
+            logger.info("trying to get total size of the prefix")
             for item in get_all_objects_in_prefix(bucket, key):
                 size += item['Size']
         except:

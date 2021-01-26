@@ -27,7 +27,7 @@ def test_awsem_exception_not_enough_space_for_input():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'Not enough space for input files' in str(exec_info)
+    assert 'Not enough space for input files' in str(exec_info.value)
 
 
 def test_awsem_exception_no_space_for_docker():
@@ -39,8 +39,8 @@ def test_awsem_exception_no_space_for_docker():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'No space for docker' in str(exec_info)
-    assert 'tar.bz2: no space left' in str(exec_info)
+    assert 'No space for docker' in str(exec_info.value)
+    assert 'tar.bz2: no space left' in str(exec_info.value)
 
 
 def test_awsem_exception_no_space():
@@ -51,8 +51,8 @@ def test_awsem_exception_no_space():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'Not enough space' in str(exec_info)
-    assert '[fputs]' in str(exec_info)
+    assert 'Not enough space' in str(exec_info.value)
+    assert '[fputs]' in str(exec_info.value)
 
 
 def test_awsem_exception_cwl_missing_input():
@@ -66,8 +66,8 @@ def test_awsem_exception_cwl_missing_input():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'CWL missing input' in str(exec_info)
-    assert 'chromosomes' in str(exec_info)
+    assert 'CWL missing input' in str(exec_info.value)
+    assert 'chromosomes' in str(exec_info.value)
 
 
 def test_add_custom_errors():
@@ -83,8 +83,8 @@ def test_add_custom_errors():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'Unmatching pairs in fastq' in str(exec_info)
-    assert 'H3MVTCCXX:4:1101:1174861:0' in str(exec_info)
+    assert 'Unmatching pairs in fastq' in str(exec_info.value)
+    assert 'H3MVTCCXX:4:1101:1174861:0' in str(exec_info.value)
 
 
 def test_add_custom_errors2():
@@ -97,8 +97,8 @@ def test_add_custom_errors2():
     assert res
     with pytest.raises(AWSEMJobErrorException) as exec_info:
         raise res
-    assert 'No peak called' in str(exec_info)
-    assert '1234567890abcdefg.regionPeak.gz' in str(exec_info)
+    assert 'No peak called' in str(exec_info.value)
+    assert '1234567890abcdefg.regionPeak.gz' in str(exec_info.value)
 
 
 def test_no_matching_error():

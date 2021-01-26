@@ -44,7 +44,7 @@ def run_on_nested_arrays2(a, b, func, **param):
         return(func(a, b, **param))
 
 
-def create_dim(a, dim=''):
+def create_dim(a, dim='', empty=False):
     """create dimension array for n-nested array
     example:
     >>> create_dim([[1,2],[3,4],[5,6,[7,8],]])
@@ -53,13 +53,18 @@ def create_dim(a, dim=''):
     ''
     >>> create_dim([5,5])
     ['0', '1']
+    >>> create_dim([5,5], empty=True)
+    ['', '']
     """
     if isinstance(a, list):
         if dim:
             prefix = dim + '-'
         else:
             prefix = ''
-        return([create_dim(a_, prefix + str(i)) for i, a_ in enumerate(a)])
+        if empty:
+            return([create_dim(a_, empty=empty) for a_ in a])
+        else:
+            return([create_dim(a_, prefix + str(i)) for i, a_ in enumerate(a)])
     else:
         return(dim)
 
