@@ -1205,8 +1205,8 @@ class API(object):
         if verbose:
             logger.info("Finished cleaning")
 
-    def create_ami_for_tibanna(self, build_from_scratch=True, source_image_to_copy_from=None, source_image_region=None,
-                               ubuntu_base_image=None, make_public=False):
+    def create_ami(self, build_from_scratch=True, source_image_to_copy_from=None, source_image_region=None,
+                   ubuntu_base_image=None, make_public=False):
         args = dict()
         if build_from_scratch:
             # build from ubuntu 20.04 image and user data
