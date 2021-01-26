@@ -327,7 +327,8 @@ class IAM(object):
                     "Effect": "Allow",
                     "Action": [
                         "dynamodb:DescribeTable",
-                        "dynamodb:PutItem"
+                        "dynamodb:PutItem",
+                        "dynamodb:Query"
                     ],
                     "Resource": "arn:aws:dynamodb:" + self.region + ":" + self.account_id + ":table/" + DYNAMODB_TABLE
                 }

@@ -35,25 +35,26 @@ if not AWS_REGION:
 AMI_PER_REGION = {
     # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
     'us-east-1': 'ami-0a7ddfc7e412ab6e0',
-    'ap-south-1' : 'ami-09d95d9217d0cf385',
+    'ap-south-1' : 'ami-05d8bf32dfd849840',
     'ap-northeast-2' : 'ami-0c41548ca349c7a24',
-    'ap-southeast-1' : 'ami-05ed988e6e239f8ab',
-    'ap-southeast-2' : 'ami-08015a75aa06d5169',
-    'ap-northeast-1' : 'ami-0ca2f82fea1712d9c',
-    'ca-central-1': 'ami-0db70f7b86ac96a83',
-    'eu-central-1': 'ami-04e369eb9ff2f4f2d',
-    'eu-west-1': 'ami-02de1cc972d19b5f0',
-    'eu-west-2': 'ami-092454e8dfc2d7fa6',
-    'eu-west-3': 'ami-02f01bb8e27345b00',
-    'eu-north-1': 'ami-06cff15ceaadf54ca',
-    'sa-east-1': 'ami-06f63076e5a4fa510',
+    'ap-southeast-1' : 'ami-0000f4a22faea40cd',
+    'ap-southeast-2' : 'ami-07068475ae944838b',
+    'ap-northeast-1' : 'ami-0ee094aa0951d13af',
+    'ca-central-1': 'ami-08ffe0a93f1fe9819',
+    'eu-central-1': 'ami-07af39d28b148d1dd',
+    'eu-west-1': 'ami-0646a764fc87b0ed0',
+    'eu-west-2': 'ami-0ce9320a6d39d00ae',
+    'eu-west-3': 'ami-04f0b79f6cf2e3639',
+    'eu-north-1': 'ami-0eed0fe896c259550',
+    'sa-east-1': 'ami-05e255e0c31f92d16',
     'us-east-2': 'ami-0b44d62b891fb789b',
     'us-west-1': 'ami-0e1e2593b3a0d1893',
     'us-west-2': 'ami-07c59ed4484710392'
 }
+if AWS_REGION not in AMI_PER_REGION:
+    raise Exception("AMI for region %s is not supported." % AWS_REGION)
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
-if not AMI_ID:
-    raise Exception("AMI for region %s is not supported" % AWS_REGION)
+
 
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')

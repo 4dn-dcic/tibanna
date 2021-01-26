@@ -1211,11 +1211,12 @@ class API(object):
         if build_from_scratch:
             # build from ubuntu 20.04 image and user data
             if ubuntu_base_image:
-                args.update({'base_image': ubuntu_base_image})
+                args.update({'base_ami': ubuntu_base_image})
         else:
             # copy an existing image
+            args.update({'userdata_file': ''})
             if source_image_to_copy_from:
-                args.update({'base_image': source_image_to_copy_from})
+                args.update({'base_ami': source_image_to_copy_from})
             if source_image_region:
                 args.update({'base_region': source_image_region})
 

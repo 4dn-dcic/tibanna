@@ -22,7 +22,7 @@ class AMI(object):
             self.BASE_AMI = base_ami
         if base_region:
             self.BASE_REGION = base_region
-        if userdata_file:
+        if userdata_file is not None:
             self.USERDATA_FILE = userdata_file
         if ami_name:
             self.AMI_NAME = ami_name
@@ -71,7 +71,8 @@ class AMI(object):
                 res_copy = ec2.copy_image(Name=ami_name, SourceImageId=base_ami, SourceRegion=base_region)
             except:
                 raise Exception("Failed to copy image")
-    
+   
+            # I tried 5 min - it's not enough and it fails at the next step. 
             logger.info("waiting for 10min for the image to be created..")
             time.sleep(10 * 60)
     
