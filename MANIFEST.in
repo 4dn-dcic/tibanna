@@ -3,4 +3,4 @@ include LICENSE.txt
 include requirements.txt
 include requirements-test.txt
 include tibanna/lambdas/*
-include awsf3/create_ami_userdata
+include tibanna/create_ami_userdata
