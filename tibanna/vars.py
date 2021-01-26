@@ -54,7 +54,10 @@ AMI_PER_REGION = {
     'eu-west-3': 'ami-04f0b79f6cf2e3639',
     'eu-north-1': 'ami-0eed0fe896c259550',
     'sa-east-1': 'ami-05e255e0c31f92d16',
-    'me-south-1': 'ami-0d641bcc53597f070'
+    'me-south-1': 'ami-0d641bcc53597f070',
+    'af-south-1': 'ami-08a0595fe4fbe4734',
+    'ap-east-1': 'ami-06b692ca269732ef6',
+    'eu-south-1': 'ami-0ad3c42914e596f1d'
 }
 if AWS_REGION not in AMI_PER_REGION:
     logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
