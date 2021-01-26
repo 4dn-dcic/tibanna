@@ -6,7 +6,7 @@ from datetime import datetime
 from tibanna import create_logger
 
 
-logger = create_logger('tibanna ' + __name__)
+logger = create_logger(__name__)
 
 
 class AMI(object):

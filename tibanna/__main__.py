@@ -42,7 +42,8 @@ class Subcommands(object):
             'users': 'list all users along with their associated tibanna user groups',
             'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists',
             'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes',
-            'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups'
+            'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups',
+            'create_ami': 'create tibanna ami (Most users do not need this - tibanna AMIs are publicly available.)'
         }
 
     @property
@@ -305,6 +306,24 @@ class Subcommands(object):
                  {'flag': ["-E", "--do-not-ignore-errors"],
                   'action': 'store_true',
                   'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}]
+            'create_ami':
+                [{'flag': ["-p", "--make-public"],
+                  'help': "Make the Tibanna AMI public (most users do not need this)"
+                  'action': 'store_true'},
+                 {'flag': ["-B", "--build-from-scratch"],
+                  'help': "Build a new AMI starting from Ubuntu base image. " +
+                          "This option will launch an instance for creating the new image " +
+                          "as opposed to simply copying an existing Tibanna image."
+                  'action': 'store_true'},
+                 {'flag': ["-I", "--source-image-to-copy-from"],
+                  'help': "The ID of the image to copy (e.g. 'ami-0a7ddfc7e412ab6e0' which is a default public Tibanna image " +
+                          "for us-east-1). To use this option, turn off option -B."},
+                 {'flag': ["-R", "--source-image-region"],
+                  'help': "The region of the image to copy (e.g. 'us-east-1' if source image to copy from is 'ami-0a7ddfc7e412ab6e0'). " +
+                          "To use this option, turn off option -B."},
+                 {'flag': ["-U", "--ubuntu-base-image"],
+                  'help': "The ID of the Ubuntu 20.04 image to build from (e.g. 'ami-0885b1f6bd170450c' for us-east-1). " +
+                          "To use this option, turn on the option -B."}]
         }
 
 
@@ -432,6 +451,13 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
 def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):
     API().cleanup(user_group_name=usergroup, suffix=suffix, do_not_remove_iam_group=do_not_remove_iam_group,
                   ignore_errors=not do_not_ignore_errors, purge_history=purge_history, verbose=not quiet)
+
+
+def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
+               ubuntu_base_image=None):
+    API().create_ami(make_public=make_public, build_from_scracth=build_from_scratch,
+                     source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
+                     ubuntu_base_image=ubuntu_base_image)
 
 
 def main(Subcommands=Subcommands):
