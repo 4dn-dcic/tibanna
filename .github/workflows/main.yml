@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python_version: [2.7, 3.6]
+        python_version: [3.6]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -48,8 +48,3 @@ jobs:
         if: ${{ matrix.python_version == '3.6' }}
         run: |
           invoke test --no-flake
-          
-      - name: QA (awsf)
-        if: ${{ matrix.python_version == '2.7' }}
-        run: |
-          ./tests/awsf/test.sh
