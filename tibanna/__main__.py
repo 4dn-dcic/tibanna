@@ -305,15 +305,15 @@ class Subcommands(object):
                   'help': "quiet"},
                  {'flag': ["-E", "--do-not-ignore-errors"],
                   'action': 'store_true',
-                  'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}]
+                  'help': "do not ignore errors that occur due to a resource already deleted or non-existent"}],
             'create_ami':
                 [{'flag': ["-p", "--make-public"],
-                  'help': "Make the Tibanna AMI public (most users do not need this)"
+                  'help': "Make the Tibanna AMI public (most users do not need this)",
                   'action': 'store_true'},
                  {'flag': ["-B", "--build-from-scratch"],
                   'help': "Build a new AMI starting from Ubuntu base image. " +
                           "This option will launch an instance for creating the new image " +
-                          "as opposed to simply copying an existing Tibanna image."
+                          "as opposed to simply copying an existing Tibanna image.",
                   'action': 'store_true'},
                  {'flag': ["-I", "--source-image-to-copy-from"],
                   'help': "The ID of the image to copy (e.g. 'ami-0a7ddfc7e412ab6e0' which is a default public Tibanna image " +
@@ -455,9 +455,9 @@ def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=F
 
 def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
                ubuntu_base_image=None):
-    API().create_ami(make_public=make_public, build_from_scracth=build_from_scratch,
-                     source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
-                     ubuntu_base_image=ubuntu_base_image)
+    print(API().create_ami(make_public=make_public, build_from_scratch=build_from_scratch,
+                           source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
+                           ubuntu_base_image=ubuntu_base_image))
 
 
 def main(Subcommands=Subcommands):

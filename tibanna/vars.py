@@ -4,10 +4,14 @@ import sys
 from datetime import datetime
 from dateutil.tz import tzutc
 from ._version import __version__
+from . import create_logger
+
+
+logger = create_logger(__name__)
 
 
 if boto3.session.Session().get_credentials() is None:
-    print('Please provide AWS credentials.')
+    logger.info('Please provide AWS credentials.')
     sys.exit(-1)
 
 
@@ -35,6 +39,9 @@ if not AWS_REGION:
 AMI_PER_REGION = {
     # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
     'us-east-1': 'ami-0a7ddfc7e412ab6e0',
+    'us-east-2': 'ami-0b44d62b891fb789b',
+    'us-west-1': 'ami-0e1e2593b3a0d1893',
+    'us-west-2': 'ami-07c59ed4484710392',
     'ap-south-1' : 'ami-05d8bf32dfd849840',
     'ap-northeast-2' : 'ami-0c41548ca349c7a24',
     'ap-southeast-1' : 'ami-0000f4a22faea40cd',
@@ -47,12 +54,10 @@ AMI_PER_REGION = {
     'eu-west-3': 'ami-04f0b79f6cf2e3639',
     'eu-north-1': 'ami-0eed0fe896c259550',
     'sa-east-1': 'ami-05e255e0c31f92d16',
-    'us-east-2': 'ami-0b44d62b891fb789b',
-    'us-west-1': 'ami-0e1e2593b3a0d1893',
-    'us-west-2': 'ami-07c59ed4484710392'
+    'me-south-1': 'ami-0d641bcc53597f070'
 }
 if AWS_REGION not in AMI_PER_REGION:
-    raise Exception("AMI for region %s is not supported." % AWS_REGION)
+    logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 
 
