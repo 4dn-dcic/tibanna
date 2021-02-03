@@ -82,7 +82,7 @@ RUN pip install ec2metadata==2.0.1
 RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \
     ln -s cromwell-53.1.jar cromwell.jar
 # Old cromwell for WDL draft-2
-RUN wget https://github.com/broadinstitute/cromwell/releases/download/31/cromwell-31.jar
+RUN wget https://github.com/broadinstitute/cromwell/releases/download/35/cromwell-35.jar
 RUN wget https://github.com/broadinstitute/cromwell/blob/develop/LICENSE.txt  # cromwell license
 
 # awsf scripts

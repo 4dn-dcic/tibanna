@@ -95,7 +95,7 @@ exl echo "## $(python --version)"
 exl echo "## $(pip --version | cut -f1,2 -d' ')"
 exl echo "## tibanna awsf3 version $(tibanna --version | cut -f2 -d' ')"
 exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
-exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-31.jar --version | cut -f2 -d ' ') for WDL draft2"
+exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-35.jar --version | cut -f2 -d ' ') for WDL draft2"
 exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ') for WDL v1.0"
 exl echo "## $(singularity --version)"
 
@@ -189,12 +189,7 @@ echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -
 exl echo
 exl echo "## Running CWL/WDL/Snakemake/Shell commands"
 exl echo
-if [[ $LANGUAGE == 'wdl' ]]
-then
-  exl echo "## workflow language: $LANGUAGE (wdl_draft2)"
-else
-  exl echo "## workflow language: $LANGUAGE"
-fi
+exl echo "## workflow language: $LANGUAGE"
 exl echo "## $(docker info | grep 'Operating System')"
 exl echo "## $(docker info | grep 'Docker Root Dir')"
 exl echo "## $(docker info | grep 'CPUs')"
@@ -204,13 +199,14 @@ send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR  
 mkdir -p $LOCAL_WF_TMPDIR
-if [[ $LANGUAGE == 'wdl_v1' ]]
+if [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
 then
   exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
   handle_error $?
-elif [[ $LANGUAGE == 'wdl_draft2' || $LANGUAGE == 'wdl' ]]  # 'wdl' defaults to 'wdl_draft2' for backward compatibility
+elif [[ $LANGUAGE == 'wdl_draft2' ]]  # 'wdl' defaults to 'wdl_v1'
 then
-  exl java -jar /usr/local/bin/cromwell-31.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+  exl echo "## using cromwell-35 for WDL draft2"
+  exl java -jar /usr/local/bin/cromwell-35.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
   handle_error $?
 elif [[ $LANGUAGE == 'snakemake' ]]
 then
