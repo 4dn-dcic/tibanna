@@ -98,6 +98,7 @@ exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
 exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-35.jar --version | cut -f2 -d ' ') for WDL draft2"
 exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ') for WDL v1.0"
 exl echo "## $(singularity --version)"
+exl echo "## $(goofys --version 2>&1)"
 
 
 # getting run.json file
