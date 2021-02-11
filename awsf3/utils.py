@@ -65,7 +65,7 @@ def create_mount_command_list(mountlist_filename, runjson_input):
     with open(mountlist_filename, 'w') as f:
         for b in sorted(buckets_to_be_mounted):
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            f.write("goofys-latest -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+            f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
 def create_download_command_list(downloadlist_filename, runjson_input):

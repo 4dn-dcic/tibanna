@@ -69,7 +69,7 @@ class Top(object):
                     '/usr/bin/python3 /usr/local/bin/awsf3',
                     '/usr/bin/python3 /usr/local/bin/aws s3',
                     'java -jar /usr/local/bin/cromwell.jar',
-                    'java -jar /usr/local/bin/cromwell-31.jar']
+                    'java -jar /usr/local/bin/cromwell-35.jar']
 
     def __init__(self, contents):
         """initialization parsed top output content and
