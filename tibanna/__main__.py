@@ -40,8 +40,9 @@ class Subcommands(object):
                                  'Use it only when the IAM permissions need to be reset',
             'stat': 'print out executions with details',
             'users': 'list all users along with their associated tibanna user groups',
-            'plot_metrics': 'create a metrics report html and upload it to S3, or retrive one if one already exists',
+            'plot_metrics': 'create a metrics report html and upload it to S3, or retrieve one if one already exists',
             'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes',
+            'cost_estimate': 'print out the EC2/EBS estimated cost of a job - available as soon as the job finished',
             'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups',
             'create_ami': 'create tibanna ami (Most users do not need this - tibanna AMIs are publicly available.)'
         }
@@ -287,6 +288,13 @@ class Subcommands(object):
                  {'flag': ["-u", "--update-tsv"],
                   'help': "add cost to the metric tsv file on S3",
                   'action': "store_true"}],
+            'cost_estimate':
+                [{'flag': ["-j", "--job-id"],
+                  'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
+                 {'flag': ["-s", "--sfn"],
+                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
+                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
             'cleanup':
                 [{'flag': ["-g", "--usergroup"],
                   'help': "Tibanna usergroup that shares the permission to access buckets and run jobs"},
@@ -446,6 +454,10 @@ def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=Fa
 def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
+
+def cost_estimate(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+    """print out estimated cost of a specific job"""
+    print(API().cost_estimate(job_id=job_id, sfn=sfn))
 
 
 def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):

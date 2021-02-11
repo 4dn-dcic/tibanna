@@ -7,6 +7,7 @@ import boto3
 import copy
 import re
 from . import create_logger
+from datetime import datetime, timedelta
 from .utils import (
     does_key_exist,
     create_jobid
@@ -20,7 +21,8 @@ from .vars import (
     DYNAMODB_TABLE,
     DEFAULT_ROOT_EBS_SIZE,
     TIBANNA_AWSF_DIR,
-    DEFAULT_AWSF_IMAGE
+    DEFAULT_AWSF_IMAGE,
+    AWS_REGION_NAMES
 )
 from .exceptions import (
     MissingFieldInInputJsonException,
@@ -30,7 +32,8 @@ from .exceptions import (
     EC2InstanceLimitWaitException,
     DependencyStillRunningException,
     DependencyFailedException,
-    UnsupportedCWLVersionException
+    UnsupportedCWLVersionException,
+    PricingRetrievalException
 )
 from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
@@ -38,6 +41,7 @@ from ._version import __version__
 from Benchmark import run as B
 from Benchmark.classes import get_instance_types, instance_list
 from Benchmark.byteformat import B2GB
+
 NONSPOT_EC2_PARAM_LIST = ['TagSpecifications', 'InstanceInitiatedShutdownBehavior',
                           'MaxCount', 'MinCount', 'DisableApiTermination']
 
@@ -709,7 +713,7 @@ class Execution(object):
         return largs
 
     def get_instance_info(self):
-        # get public IP for the instance (This may not happen immediately)
+        # get public IP and availablity zone for the instance (This may not happen immediately)
         try:
             ec2 = boto3.client('ec2')
         except Exception as e:
@@ -721,12 +725,19 @@ class Execution(object):
                 instance_desc_log = ec2.describe_instances(InstanceIds=[self.instance_id])
                 if 'PublicIpAddress' not in instance_desc_log['Reservations'][0]['Instances'][0]:
                     instance_ip = ''
+                    availability_zone = ''
                     break
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
+                availability_zone = instance_desc_log['Reservations'][0]['Instances'][0]["Placement"]["AvailabilityZone"]
+                print("availability_zone", availability_zone)
+                logger.info("availability_zone %s" % availability_zone)
                 break
             except:
                 continue
-        return({'instance_id': self.instance_id, 'instance_ip': instance_ip, 'start_time': self.get_start_time()})
+        return({'instance_id': self.instance_id, 
+                'instance_ip': instance_ip, 
+                'availability_zone' : availability_zone,
+                'start_time': self.get_start_time()})
 
     def check_dependency(self, exec_arn=None):
         if exec_arn:
@@ -880,6 +891,192 @@ class Execution(object):
             DashboardName=dashboard_name,
             DashboardBody=json.dumps(body)
         )
+
+
+def estimate_cost(postrunjson):
+    cfg = postrunjson.config
+    job = postrunjson.Job
+    result = dict()
+    result['hasError'] = True
+    result['errorMessage'] = ''
+    result['price'] = 0.0
+    estimated_cost = 0.0
+
+    job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC')
+    job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC')
+    job_duration = (job_end - job_start).seconds / 3600.0 # in hours
+    #print(job_duration, " hours")
+
+    try:
+        pricing_client = boto3.client('pricing', region_name=AWS_REGION)
+
+        # Get EC2 spot price
+        if(cfg.spot_instance):
+            if(cfg.spot_duration):
+                raise PricingRetrievalException("Cost estimation error: Pricing with spot_duration is not supported")
+
+            ec2_client=boto3.client('ec2',region_name=AWS_REGION)
+            prices=ec2_client.describe_spot_price_history(
+                InstanceTypes=[cfg.instance_type],
+                ProductDescriptions=['Linux/UNIX'], 
+                #AvailabilityZone=AWS_REGION+'a', # We assume that prices are consistent accross availability zones
+                MaxResults=20) # Most recent price is on top
+
+            #print(prices['SpotPriceHistory'])
+
+            if(len(prices['SpotPriceHistory']) == 0):
+                raise PricingRetrievalException("Cost estimation error: Spot price could not be retrieved")
+
+            ec2_spot_price = (float)(prices['SpotPriceHistory'][0]['SpotPrice'])
+            estimated_cost = estimated_cost + ec2_spot_price * job_duration
+            #print(ec2_spot_price, estimated_cost, " ec2 spot")
+
+
+        else: # EC2 onDemand Prices
+            prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'instanceType',
+                    'Value': cfg.instance_type
+                },
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'operatingSystem',
+                    'Value': 'Linux'
+                },
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'location',
+                    'Value': AWS_REGION_NAMES[AWS_REGION]
+                },
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'preInstalledSw',
+                    'Value': 'NA'
+                },
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'capacitystatus',
+                    'Value': 'used'
+                },
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'tenancy',
+                    'Value': 'Shared'
+                },
+            ])
+            price_list = prices["PriceList"]
+
+            if(not prices["PriceList"] or len(price_list) == 0):
+                raise PricingRetrievalException("Cost estimation error: We could not retrieve EC2 prices from Amazon")
+
+            if(len(price_list) > 1):
+                raise PricingRetrievalException("Cost estimation error: EC2 prices are ambiguous")
+
+            price_item = json.loads(price_list[0])
+            terms = price_item["terms"]
+            term = list(terms["OnDemand"].values())[0]
+            price_dimension = list(term["priceDimensions"].values())[0]
+            ec2_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+            #print(ec2_ondemand_price, ec2_ondemand_price * job_duration, " ec2 on demand")
+
+            estimated_cost = estimated_cost + ec2_ondemand_price * job_duration
+
+        # Get EBS pricing
+        prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+            {
+                'Type': 'TERM_MATCH',
+                'Field': 'location',
+                'Value': AWS_REGION_NAMES[AWS_REGION]
+            },
+            {
+                'Field': 'volumeApiName',
+                'Type': 'TERM_MATCH',
+                'Value': 'gp3',
+            },
+            {
+                'Field': 'productFamily',
+                'Type': 'TERM_MATCH',
+                'Value': 'Storage',
+            },
+        ])
+        price_list = prices["PriceList"]
+
+        if(not prices["PriceList"] or len(price_list) == 0):
+            raise PricingRetrievalException("Cost estimation error: We could not retrieve EBS prices from Amazon")
+
+        if(len(price_list) > 1):
+            raise PricingRetrievalException("Cost estimation error: EBS prices are ambiguous")
+
+        price_item = json.loads(price_list[0])
+        terms = price_item["terms"]
+        term = list(terms["OnDemand"].values())[0]
+        price_dimension = list(term["priceDimensions"].values())[0]
+        gp3_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+
+
+        # add root EBS costs
+        root_ebs_cost = gp3_ondemand_price * cfg.root_ebs_size * job_duration / (24.0*30.0)
+        estimated_cost = estimated_cost + root_ebs_cost
+
+        #print(gp3_ondemand_price, root_ebs_cost, " ebs root on demand")
+
+        # add additional EBS costs
+        if(cfg.ebs_type == "gp3"):
+            add_ebs_cost = gp3_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
+            estimated_cost = estimated_cost + add_ebs_cost
+            #print(gp3_ondemand_price, add_ebs_cost, " ebs addtitional on demand")
+        else: 
+            prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'location',
+                    'Value': AWS_REGION_NAMES[AWS_REGION]
+                },
+                {
+                    'Field': 'volumeApiName',
+                    'Type': 'TERM_MATCH',
+                    'Value': cfg.ebs_type,
+                },
+                {
+                    'Field': 'productFamily',
+                    'Type': 'TERM_MATCH',
+                    'Value': 'Storage',
+                },
+            ])
+            price_list = prices["PriceList"]
+
+            if(not prices["PriceList"] or len(price_list) == 0):
+                raise PricingRetrievalException("Cost estimation error: We could not retrieve EBS prices from Amazon")
+
+            if(len(price_list) > 1):
+                raise PricingRetrievalException("Cost estimation error: EBS prices are ambiguous")
+
+            price_item = json.loads(price_list[0])
+            terms = price_item["terms"]
+            term = list(terms["OnDemand"].values())[0]
+            price_dimension = list(term["priceDimensions"].values())[0]
+            ebs_type_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+            add_ebs_cost = ebs_type_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
+            estimated_cost = estimated_cost + add_ebs_cost
+
+            #print(add_ebs_cost, " ebs addtitional on demand")
+
+        result['hasError'] = False
+        result['price'] = estimated_cost
+        return result
+    except PricingRetrievalException as msg:
+        result['errorMessage'] = msg
+        return result
+    except:
+        result['errorMessage'] = "Cost estimation error: We could not compute a cost estimate"
+        return result
+    
+
+        
 
 
 def upload_workflow_to_s3(unicorn_input):

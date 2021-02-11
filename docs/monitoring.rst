@@ -472,7 +472,7 @@ By default the command will retrieve the data from cloud watch, and creates seve
 All the files are eventually uploaded to a folder named ``<jobid>.metrics`` inside the log S3 bucket specified for tibanna output.
 To visualize the html report the URL structure is: ``https://<log-bucket>.s3.amazonaws.com/<jobid>.metrics/metrics.html``
 
-Starting with ``1.0.0``, the metrics plot will include per-process CPU and memory profiles retrived from the top command reports at a 1-minute interval. Additional files `top_cpu.tsv` and `top_mem.tsv` will also be created under the same folder ``<jobid>.metrics``.
+Starting with ``1.0.0``, the metrics plot will include per-process CPU and memory profiles retrieved from the top command reports at a 1-minute interval. Additional files `top_cpu.tsv` and `top_mem.tsv` will also be created under the same folder ``<jobid>.metrics``.
 
 
 

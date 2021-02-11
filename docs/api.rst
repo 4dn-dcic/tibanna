@@ -565,3 +565,24 @@ To retrieve the cost and update the metrics report file created with plot_metric
  update_tsv                         This flag specify to update with cost the tsv file that
                                     stores metrics information on the S3 bucket
 
+
+cost_estimate
+----
+
+Retrieve a cost estimate for a specific job. This will be available as soon as the job finished
+
+::
+
+ API().cost_estimate(job_id=<jobid>, ...)
+
+**Options**
+
+::
+
+ sfn=<stepfunctionname>             An example step function name may be
+                                    'tibanna_unicorn_defaut_3978'. If not specified, default
+                                    value is taken from environmental variable
+                                    TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
+                                    variable is not set, it uses name 'tibanna_pony' (4dn
+                                    default, works only for 4dn).
+

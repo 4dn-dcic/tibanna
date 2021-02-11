@@ -129,6 +129,10 @@ class MetricRetrievalException(Exception):
     pass
 
 
+class PricingRetrievalException(Exception):
+    pass
+
+
 class UnsupportedCWLVersionException(Exception):
     def __init__(self, message=None):
         if not message:

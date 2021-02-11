@@ -63,6 +63,27 @@ if AWS_REGION not in AMI_PER_REGION:
     logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
 AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 
+AWS_REGION_NAMES = {
+    'us-east-1': 'US East (N. Virginia)',
+    'us-east-2': 'US East (Ohio)',
+    'us-west-1': 'US West (N. California)',
+    'us-west-2': 'US West (Oregon)',
+    'ca-central-1': 'Canada (Central)',
+    'eu-north-1': 'EU (Stockholm)',
+    'eu-west-1': 'EU (Ireland)',
+    'eu-central-1': 'EU (Frankfurt)',
+    'eu-west-2': 'EU (London)',
+    'eu-west-3': 'EU (Paris)',
+    'ap-northeast-1': 'Asia Pacific (Tokyo)',
+    'ap-northeast-2': 'Asia Pacific (Seoul)',
+    'ap-northeast-3': 'Asia Pacific (Osaka-Local)',
+    'ap-southeast-1': 'Asia Pacific (Singapore)',
+    'ap-southeast-2': 'Asia Pacific (Sydney)',
+    'ap-south-1': 'Asia Pacific (Mumbai)',
+    'sa-east-1': 'South America (Sao Paulo)',  # intentionally no unicode,
+    'us-gov-west-1': 'AWS GovCloud (US)',
+    'us-gov-east-1': 'AWS GovCloud (US-East)'
+}
 
 # Tibanna repo from which awsf scripts are pulled
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')

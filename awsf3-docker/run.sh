@@ -43,8 +43,11 @@ export TOPFILE=$LOCAL_OUTDIR/$JOBID.top  # now top command output goes to a sepa
 export TOPLATESTFILE=$LOCAL_OUTDIR/$JOBID.top_latest  # this one includes only the latest top command output
 export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
+export INSTANCE_AVAILABILITY_ZONE=$(ec2metadata --availability-zone)
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
+
+
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.

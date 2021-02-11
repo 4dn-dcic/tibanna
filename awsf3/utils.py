@@ -439,7 +439,9 @@ def postrun_json_final(prj, logfile=None):
     prj_job.update(total_input_size=os.getenv('INPUTSIZE'))
     prj_job.update(total_tmp_size=os.getenv('TEMPSIZE'))
     prj_job.update(total_output_size=os.getenv('OUTPUTSIZE'))
+    prj_job.update(instance_availablity_zone=os.getenv('INSTANCE_AVAILABILITY_ZONE'))
     
+
 
 def upload_postrun_json(jsonfile):
     prj = read_postrun_json(jsonfile)

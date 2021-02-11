@@ -44,7 +44,8 @@ from .utils import (
 )
 from .ec2_utils import (
     UnicornInput,
-    upload_workflow_to_s3
+    upload_workflow_to_s3,
+    estimate_cost
 )
 from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
@@ -1037,7 +1038,8 @@ class API(object):
             try:
                 M = self.TibannaResource(instance_id, filesystem, starttime, endtime)
                 top_content = self.log(job_id=job_id, top=True)
-                M.plot_metrics(instance_type, directory, top_content=top_content)
+                cost_estimate = self.cost_estimate(job_id=job_id, sfn=sfn)
+                M.plot_metrics(instance_type, directory, top_content=top_content, cost_estimate=cost_estimate)
             except Exception as e:
                 raise MetricRetrievalException(e)
             # upload files
@@ -1049,6 +1051,30 @@ class API(object):
         # open metrics html in browser
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
+
+    def cost_estimate(self, job_id, sfn=None):
+
+        # We could just return the real cost, if it is availble - not doing this for now
+        # precise_cost = self.cost(job_id, sfn, update_tsv=False)
+        # if(precise_cost and precise_cost > 0.0):
+        #     return precise_cost
+
+        if not sfn:
+            sfn = self.default_stepfunction_name
+        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
+        if not postrunjsonstr:
+            return None
+        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+        #print(postrunjsonstr)
+
+        estimator_result = estimate_cost(postrunjson)
+
+        if(estimator_result['hasError']):
+            logger.info(estimator_result['errorMessage'])
+            return 0.0
+        
+        return estimator_result['price'] 
+
 
     def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:
@@ -1069,8 +1095,10 @@ class API(object):
                         'Granularity': 'DAILY',
                         'TimePeriod': {'Start': start_time,
                                        'End': end_time},
-                        'Metrics': ['BlendedCost']}
+                        'Metrics': ['BlendedCost'],
+                        }
         billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+
         cost = sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
