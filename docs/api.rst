@@ -569,7 +569,7 @@ To retrieve the cost and update the metrics report file created with plot_metric
 cost_estimate
 ----
 
-Retrieve a cost estimate for a specific job. This will be available as soon as the job finished. This function will return the exact cost, if they are available
+Retrieve a cost estimate for a specific job. This will be available as soon as the job finished. This function will return the exact cost, if it is available
 
 ::
 

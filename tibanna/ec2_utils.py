@@ -729,8 +729,6 @@ class Execution(object):
                     break
                 instance_ip = instance_desc_log['Reservations'][0]['Instances'][0]['PublicIpAddress']
                 availability_zone = instance_desc_log['Reservations'][0]['Instances'][0]["Placement"]["AvailabilityZone"]
-                print("availability_zone", availability_zone)
-                logger.info("availability_zone %s" % availability_zone)
                 break
             except:
                 continue
@@ -1060,10 +1058,6 @@ def cost_estimate(postrunjson):
         return 0.0
         
     
-
-        
-
-
 def upload_workflow_to_s3(unicorn_input):
     """input is a UnicornInput object"""
     args = unicorn_input.args
