@@ -42,7 +42,7 @@ class Subcommands(object):
             'users': 'list all users along with their associated tibanna user groups',
             'plot_metrics': 'create a metrics report html and upload it to S3, or retrieve one if one already exists',
             'cost': 'print out the EC2/EBS cost of a job - it may not be ready for a day after a job finishes',
-            'cost_estimate': 'print out the EC2/EBS estimated cost of a job - available as soon as the job finished',
+            'cost_estimate': 'print out the EC2/EBS estimated cost of a job - available as soon as the job finished. Returns the exact costs, if available',
             'cleanup': 'remove all tibanna component for a usergroup (and suffix) including step function, lambdas IAM groups',
             'create_ami': 'create tibanna ami (Most users do not need this - tibanna AMIs are publicly available.)'
         }

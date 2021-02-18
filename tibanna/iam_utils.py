@@ -63,7 +63,7 @@ class IAM(object):
     @property
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
-                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc']
+                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc', 'pricing']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
@@ -79,7 +79,8 @@ class IAM(object):
                     'cloudwatch_metric': 'cw_metric',
                     'cw_dashboard': 'cw_dashboard',
                     'dynamodb': 'dynamodb',
-                    'ec2_desc': 'ec2_desc'}
+                    'ec2_desc': 'ec2_desc',
+                    'pricing': 'pricing'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -98,7 +99,8 @@ class IAM(object):
                        'cloudwatch_metric': self.policy_cloudwatch_metric,
                        'cw_dashboard': self.policy_cw_dashboard,
                        'dynamodb': self.policy_dynamodb,
-                       'ec2_desc': self.policy_ec2_desc_policy}
+                       'ec2_desc': self.policy_ec2_desc_policy,
+                       'pricing': self.policy_pricing}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -130,7 +132,7 @@ class IAM(object):
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
                                         'desc_stepfunction', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
-                                          'termination', 'dynamodb']
+                                          'termination', 'dynamodb', 'pricing']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
@@ -345,7 +347,26 @@ class IAM(object):
                     "Effect": "Allow",
                     "Action": [
                         "ec2:DescribeInstances",
-                        "ec2:DescribeInstanceStatus"
+                        "ec2:DescribeInstanceStatus",
+                        "ec2:DescribeSpotPriceHistory"
+                    ],
+                    "Resource": "*"
+                }
+            ]
+        }
+        return policy
+    
+    @property
+    def policy_pricing(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "pricing:DescribeServices",
+                        "pricing:GetAttributeValues",
+                        "pricing:GetProducts"
                     ],
                     "Resource": "*"
                 }
@@ -441,7 +462,7 @@ class IAM(object):
         )
         if verbose:
             logger.debug("response from IAM attach_policy :" + str(response))
-        custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination']
+        custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination', 'pricing']
         for pn in [self.policy_name(pt) for pt in custom_policy_types]:
             response = group.attach_policy(
                 PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn

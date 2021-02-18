@@ -893,19 +893,14 @@ class Execution(object):
         )
 
 
-def estimate_cost(postrunjson):
+def cost_estimate(postrunjson):
     cfg = postrunjson.config
     job = postrunjson.Job
-    result = dict()
-    result['hasError'] = True
-    result['errorMessage'] = ''
-    result['price'] = 0.0
     estimated_cost = 0.0
 
     job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC')
     job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC')
     job_duration = (job_end - job_start).seconds / 3600.0 # in hours
-    #print(job_duration, " hours")
 
     try:
         pricing_client = boto3.client('pricing', region_name=AWS_REGION)
@@ -915,22 +910,21 @@ def estimate_cost(postrunjson):
             if(cfg.spot_duration):
                 raise PricingRetrievalException("Cost estimation error: Pricing with spot_duration is not supported")
 
+            if(not job.instance_availablity_zone):
+                raise PricingRetrievalException("Cost estimation error: Instance availability zone is not available")
+
             ec2_client=boto3.client('ec2',region_name=AWS_REGION)
             prices=ec2_client.describe_spot_price_history(
                 InstanceTypes=[cfg.instance_type],
                 ProductDescriptions=['Linux/UNIX'], 
-                #AvailabilityZone=AWS_REGION+'a', # We assume that prices are consistent accross availability zones
-                MaxResults=20) # Most recent price is on top
-
-            #print(prices['SpotPriceHistory'])
+                AvailabilityZone=job.instance_availablity_zone,
+                MaxResults=10) # Most recent price is on top
 
             if(len(prices['SpotPriceHistory']) == 0):
                 raise PricingRetrievalException("Cost estimation error: Spot price could not be retrieved")
 
             ec2_spot_price = (float)(prices['SpotPriceHistory'][0]['SpotPrice'])
             estimated_cost = estimated_cost + ec2_spot_price * job_duration
-            #print(ec2_spot_price, estimated_cost, " ec2 spot")
-
 
         else: # EC2 onDemand Prices
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
@@ -979,8 +973,6 @@ def estimate_cost(postrunjson):
             price_dimension = list(term["priceDimensions"].values())[0]
             ec2_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
 
-            #print(ec2_ondemand_price, ec2_ondemand_price * job_duration, " ec2 on demand")
-
             estimated_cost = estimated_cost + ec2_ondemand_price * job_duration
 
         # Get EBS pricing
@@ -1015,19 +1007,14 @@ def estimate_cost(postrunjson):
         price_dimension = list(term["priceDimensions"].values())[0]
         gp3_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
 
-
-
         # add root EBS costs
         root_ebs_cost = gp3_ondemand_price * cfg.root_ebs_size * job_duration / (24.0*30.0)
         estimated_cost = estimated_cost + root_ebs_cost
-
-        #print(gp3_ondemand_price, root_ebs_cost, " ebs root on demand")
 
         # add additional EBS costs
         if(cfg.ebs_type == "gp3"):
             add_ebs_cost = gp3_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + add_ebs_cost
-            #print(gp3_ondemand_price, add_ebs_cost, " ebs addtitional on demand")
         else: 
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
                 {
@@ -1063,17 +1050,15 @@ def estimate_cost(postrunjson):
             add_ebs_cost = ebs_type_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + add_ebs_cost
 
-            #print(add_ebs_cost, " ebs addtitional on demand")
-
-        result['hasError'] = False
-        result['price'] = estimated_cost
-        return result
-    except PricingRetrievalException as msg:
-        result['errorMessage'] = msg
-        return result
-    except:
-        result['errorMessage'] = "Cost estimation error: We could not compute a cost estimate"
-        return result
+        return estimated_cost
+        
+    except PricingRetrievalException as e:
+        logger.warning("Cost estimation error: %s" % e)
+        return 0.0
+    except Exception as e:
+        logger.warning("Cost estimation error: %s" % e)
+        return 0.0
+        
     
 
         

@@ -45,7 +45,7 @@ from .utils import (
 from .ec2_utils import (
     UnicornInput,
     upload_workflow_to_s3,
-    estimate_cost
+    cost_estimate
 )
 from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
@@ -1036,10 +1036,10 @@ class API(object):
             self.TibannaResource.update_html(log_bucket, job_id + '.metrics/')
         else:
             try:
-                M = self.TibannaResource(instance_id, filesystem, starttime, endtime)
-                top_content = self.log(job_id=job_id, top=True)
                 cost_estimate = self.cost_estimate(job_id=job_id, sfn=sfn)
-                M.plot_metrics(instance_type, directory, top_content=top_content, cost_estimate=cost_estimate)
+                M = self.TibannaResource(instance_id, filesystem, starttime, endtime, cost_estimate = cost_estimate)
+                top_content = self.log(job_id=job_id, top=True)
+                M.plot_metrics(instance_type, directory, top_content=top_content)
             except Exception as e:
                 raise MetricRetrievalException(e)
             # upload files
@@ -1054,26 +1054,20 @@ class API(object):
 
     def cost_estimate(self, job_id, sfn=None):
 
-        # We could just return the real cost, if it is availble - not doing this for now
-        # precise_cost = self.cost(job_id, sfn, update_tsv=False)
-        # if(precise_cost and precise_cost > 0.0):
-        #     return precise_cost
+        # We return the real cost, if it is availble
+        precise_cost = self.cost(job_id, sfn, update_tsv=False)
+        if(precise_cost and precise_cost > 0.0):
+            return precise_cost
 
         if not sfn:
             sfn = self.default_stepfunction_name
         postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
         if not postrunjsonstr:
-            return None
-        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
-        #print(postrunjsonstr)
-
-        estimator_result = estimate_cost(postrunjson)
-
-        if(estimator_result['hasError']):
-            logger.info(estimator_result['errorMessage'])
+            logger.info("Cost estimation error: postrunjson not found")
             return 0.0
-        
-        return estimator_result['price'] 
+        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+
+        return cost_estimate(postrunjson)
 
 
     def cost(self, job_id, sfn=None, update_tsv=False):

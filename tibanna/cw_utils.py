@@ -27,7 +27,7 @@ class TibannaResource(object):
     def convert_timestamp_to_datetime(cls, timestamp):
         return datetime.strptime(timestamp, cls.timestamp_format)
 
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.
         :param instance_id: e.g. 'i-0167a6c2d25ce5822'
         :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
@@ -49,7 +49,7 @@ class TibannaResource(object):
         self.end = endtime.replace(microsecond=0) # initial endtime for the window requested
         self.nTimeChunks = nTimeChunks
         self.list_files = []
-        self.cost_estimate = 0.0
+        self.cost_estimate = cost_estimate
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -87,13 +87,12 @@ class TibannaResource(object):
         # this following one is used to detect file copying while CPU utilization is near zero
         self.max_ebs_read_bytes = self.choose_max(max_ebs_read_chunks)
 
-    def plot_metrics(self, instance_type, directory='.', top_content='', cost_estimate=0.0):
+    def plot_metrics(self, instance_type, directory='.', top_content=''):
         """plot full metrics across all time chunks.
         AWS allows only 1440 data points at a time
         which corresponds to 24 hours at 1min interval,
         so we have to split them into chunks.
         :param top_content: content of the <job_id>.top in the str format, used for plotting top metrics.
-        :param cost_estimate: estimated costs for job <job_id>
         """
         max_mem_utilization_percent_chunks_all_pts = []
         max_mem_used_MB_chunks_all_pts = []
@@ -120,7 +119,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
-        self.cost_estimate = cost_estimate
+
         self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
