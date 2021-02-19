@@ -366,7 +366,8 @@ class IAM(object):
                     "Action": [
                         "pricing:DescribeServices",
                         "pricing:GetAttributeValues",
-                        "pricing:GetProducts"
+                        "pricing:GetProducts",
+                        "ce:GetCostAndUsage"
                     ],
                     "Resource": "*"
                 }
