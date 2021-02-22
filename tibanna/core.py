@@ -1117,8 +1117,16 @@ class API(object):
             # reading from metrics_report.tsv
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
-            if 'Cost' not in read_file:
-                write_file = read_file + 'Cost\t' + str(cost) + '\n'
+
+            # Remove Estimated_cost from file, because we want tp update it 
+            write_file = ""
+            for row in read_file.splitlines():
+                if("Estimated_Cost" not in row.split("\t")):
+                    write_file = write_file + row + '\n'
+
+            if 'Cost' not in write_file:
+                write_file = write_file + 'Cost\t' + str(cost) + '\n'
+                write_file = write_file + 'Estimated_Cost\t' + str(cost) + '\n'
                 # writing
                 with open('metrics_report.tsv', 'w') as fo:
                     fo.write(write_file)

@@ -906,10 +906,10 @@ def cost_estimate(postrunjson):
         # Get EC2 spot price
         if(cfg.spot_instance):
             if(cfg.spot_duration):
-                raise PricingRetrievalException("Cost estimation error: Pricing with spot_duration is not supported")
+                raise PricingRetrievalException("Pricing with spot_duration is not supported")
 
             if(not job.instance_availablity_zone):
-                raise PricingRetrievalException("Cost estimation error: Instance availability zone is not available")
+                raise PricingRetrievalException("Instance availability zone is not available. You might have to deploy a newer version of Tibanna.")
 
             ec2_client=boto3.client('ec2',region_name=AWS_REGION)
             prices=ec2_client.describe_spot_price_history(
@@ -919,7 +919,7 @@ def cost_estimate(postrunjson):
                 MaxResults=1) # Most recent price is on top
 
             if(len(prices['SpotPriceHistory']) == 0):
-                raise PricingRetrievalException("Cost estimation error: Spot price could not be retrieved")
+                raise PricingRetrievalException("Spot price could not be retrieved")
 
             ec2_spot_price = (float)(prices['SpotPriceHistory'][0]['SpotPrice'])
             estimated_cost = estimated_cost + ec2_spot_price * job_duration
@@ -960,10 +960,10 @@ def cost_estimate(postrunjson):
             price_list = prices["PriceList"]
 
             if(not prices["PriceList"] or len(price_list) == 0):
-                raise PricingRetrievalException("Cost estimation error: We could not retrieve EC2 prices from Amazon")
+                raise PricingRetrievalException("We could not retrieve EC2 prices from Amazon")
 
             if(len(price_list) > 1):
-                raise PricingRetrievalException("Cost estimation error: EC2 prices are ambiguous")
+                raise PricingRetrievalException("EC2 prices are ambiguous")
 
             price_item = json.loads(price_list[0])
             terms = price_item["terms"]
@@ -994,10 +994,10 @@ def cost_estimate(postrunjson):
         price_list = prices["PriceList"]
 
         if(not prices["PriceList"] or len(price_list) == 0):
-            raise PricingRetrievalException("Cost estimation error: We could not retrieve EBS prices from Amazon")
+            raise PricingRetrievalException("We could not retrieve EBS prices from Amazon")
 
         if(len(price_list) > 1):
-            raise PricingRetrievalException("Cost estimation error: EBS prices are ambiguous")
+            raise PricingRetrievalException("EBS prices are ambiguous")
 
         price_item = json.loads(price_list[0])
         terms = price_item["terms"]
@@ -1034,10 +1034,10 @@ def cost_estimate(postrunjson):
             price_list = prices["PriceList"]
 
             if(not prices["PriceList"] or len(price_list) == 0):
-                raise PricingRetrievalException("Cost estimation error: We could not retrieve EBS prices from Amazon")
+                raise PricingRetrievalException("We could not retrieve EBS prices from Amazon")
 
             if(len(price_list) > 1):
-                raise PricingRetrievalException("Cost estimation error: EBS prices are ambiguous")
+                raise PricingRetrievalException("EBS prices are ambiguous")
 
             price_item = json.loads(price_list[0])
             terms = price_item["terms"]
