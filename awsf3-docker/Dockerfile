@@ -70,11 +70,13 @@ RUN export SINGULARITY_VERSION=3.3.0 && \
     mv singularity2 singularity
 
 # goofys
-RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest
+# RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest  # latest is not latest
+RUN wget https://github.com/kahing/goofys/releases/download/v0.24.0/goofys && chmod +x goofys
 
 # python packages
 RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11
 RUN pip install psutil==5.7.3
+#RUN pip install schema-salad==2.7.20180514132321 cwltool==1.0.20180525185854  # old set up, doesn't work for python3
 RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
 RUN pip install ec2metadata==2.0.1
 
