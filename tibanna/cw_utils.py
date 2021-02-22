@@ -439,7 +439,9 @@ class TibannaResource(object):
                 <meta charset="utf-8">
                 <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,300i,400i,600i" rel="stylesheet"/>
                 <style type="text/css">
-                :root { font-size: 16px }
+                :root {
+                   font-size: 16px
+                }
                 body{ margin: 0; }
                 /* Basic Styling with CSS */
                 h1 {
