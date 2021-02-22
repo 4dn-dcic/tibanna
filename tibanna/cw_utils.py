@@ -22,6 +22,7 @@ class TibannaResource(object):
     """
 
     timestamp_format = '%Y-%m-%d %H:%M:%S'
+    report_title = 'Tibanna Metrics'
 
     @classmethod
     def convert_timestamp_to_datetime(cls, timestamp):
@@ -432,7 +433,7 @@ class TibannaResource(object):
             os.makedirs(directory)
 
     @classmethod
-    def create_html(cls, report_title='Tibanna Metrics'):
+    def create_html(cls):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">
@@ -1099,4 +1100,4 @@ class TibannaResource(object):
                 });
                 </script>\
             """
-        return(html.format(report_title=report_title))
+        return(html.format(report_title=cls.report_title))
