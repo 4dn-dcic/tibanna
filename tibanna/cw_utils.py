@@ -22,6 +22,7 @@ class TibannaResource(object):
     """
 
     timestamp_format = '%Y-%m-%d %H:%M:%S'
+    report_title = 'Tibanna Metrics'
 
     @classmethod
     def convert_timestamp_to_datetime(cls, timestamp):
@@ -325,7 +326,7 @@ class TibannaResource(object):
         filename = directory + '/' + 'metrics.html'
         cost_estimate = '---' if self.cost_estimate == 0.0 else "{:.5f}".format(self.cost_estimate)
         with open(filename, 'w') as fo:
-            fo.write(self.create_html() % (instance_type,
+            fo.write(self.create_html() % (self.report_title, instance_type,
                              str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
                              str(self.max_disk_space_utilization_percent),
@@ -362,7 +363,7 @@ class TibannaResource(object):
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         with open(filename, 'w') as fo:
-            fo.write(cls.create_html() % (instance,
+            fo.write(cls.create_html() % (cls.report_title, instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
@@ -446,7 +447,9 @@ class TibannaResource(object):
                 <meta charset="utf-8">
                 <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,600,700,900,300i,400i,600i" rel="stylesheet"/>
                 <style type="text/css">
-                :root { font-size: 16px }
+                :root {
+                   font-size: 16px
+                }
                 body{ margin: 0; }
                 /* Basic Styling with CSS */
                 h1 {
@@ -574,7 +577,7 @@ class TibannaResource(object):
                 <!-- Body tag is where we will append our SVG and SVG objects-->
                 <body>
                     <div class="logo">
-                      <h1>Tibanna Metrics</h1>
+                      <h1>%s</h1>
                     </div></br></br>
                   <section>
                     </br>
@@ -922,7 +925,7 @@ class TibannaResource(object):
                     n = n_data
                   }
                   // sum for each timepoint, to calculate y scale
-                  sum_array = d3.range(n_data).map(function(d) { 
+                  sum_array = d3.range(n_data).map(function(d) {
                       var sum = 0
                       for( col=0; col<n_cols; col++) sum += data_array[col][d]
                       return sum
