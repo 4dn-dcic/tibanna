@@ -432,7 +432,7 @@ class TibannaResource(object):
             os.makedirs(directory)
 
     @classmethod
-    def create_html(cls):
+    def create_html(cls, report_title='Tibanna Metrics'):
         html = """\
                 <!DOCTYPE html>
                 <meta charset="utf-8">
@@ -566,7 +566,7 @@ class TibannaResource(object):
                 <!-- Body tag is where we will append our SVG and SVG objects-->
                 <body>
                     <div class="logo">
-                      <h1>Tibanna Metrics</h1>
+                      <h1>{report_title}</h1>
                     </div></br></br>
                   <section>
                     </br>
@@ -910,7 +910,7 @@ class TibannaResource(object):
                     n = n_data
                   }
                   // sum for each timepoint, to calculate y scale
-                  sum_array = d3.range(n_data).map(function(d) { 
+                  sum_array = d3.range(n_data).map(function(d) {
                       var sum = 0
                       for( col=0; col<n_cols; col++) sum += data_array[col][d]
                       return sum
@@ -1099,4 +1099,4 @@ class TibannaResource(object):
                 });
                 </script>\
             """
-        return(html)
+        return(html.format(report_title=report_title))
