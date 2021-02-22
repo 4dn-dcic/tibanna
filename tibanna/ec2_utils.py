@@ -916,7 +916,7 @@ def cost_estimate(postrunjson):
                 InstanceTypes=[cfg.instance_type],
                 ProductDescriptions=['Linux/UNIX'], 
                 AvailabilityZone=job.instance_availablity_zone,
-                MaxResults=10) # Most recent price is on top
+                MaxResults=1) # Most recent price is on top
 
             if(len(prices['SpotPriceHistory']) == 0):
                 raise PricingRetrievalException("Cost estimation error: Spot price could not be retrieved")

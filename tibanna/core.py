@@ -1052,7 +1052,7 @@ class API(object):
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
 
-    def cost_estimate(self, job_id, sfn=None):
+    def cost_estimate(self, job_id, sfn=None, update_tsv=False):
 
         # We return the real cost, if it is availble
         precise_cost = self.cost(job_id, sfn, update_tsv=False)
@@ -1067,7 +1067,25 @@ class API(object):
             return 0.0
         postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
 
-        return cost_estimate(postrunjson)
+        cost = cost_estimate(postrunjson)
+
+        if update_tsv:
+            log_bucket = postrunjson.config.log_bucket
+            # reading from metrics_report.tsv
+            does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
+            read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
+            if 'Estimated_Cost' not in read_file:
+                write_file = read_file + 'Estimated_Cost\t' + str(cost) + '\n'
+                # writing
+                with open('metrics_report.tsv', 'w') as fo:
+                    fo.write(write_file)
+                # upload new metrics_report.tsv
+                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+                os.remove('metrics_report.tsv')
+            else:
+                logger.info("Estimates cost already in the tsv file. Not updating.")
+
+        return cost
 
 
     def cost(self, job_id, sfn=None, update_tsv=False):
