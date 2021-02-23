@@ -1083,7 +1083,7 @@ class API(object):
                 upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
                 os.remove('metrics_report.tsv')
             else:
-                logger.info("Estimates cost already in the tsv file. Not updating.")
+                logger.info("Estimated cost already in the tsv file. Not updating.")
 
         return cost
 
