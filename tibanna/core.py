@@ -1036,7 +1036,7 @@ class API(object):
             self.TibannaResource.update_html(log_bucket, job_id + '.metrics/')
         else:
             try:
-                cost_estimate = self.cost_estimate(job_id=job_id, sfn=sfn)
+                cost_estimate = self.cost_estimate(job_id=job_id)
                 M = self.TibannaResource(instance_id, filesystem, starttime, endtime, cost_estimate = cost_estimate)
                 top_content = self.log(job_id=job_id, top=True)
                 M.plot_metrics(instance_type, directory, top_content=top_content)
@@ -1052,16 +1052,14 @@ class API(object):
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
 
-    def cost_estimate(self, job_id, sfn=None, update_tsv=False):
+    def cost_estimate(self, job_id, update_tsv=False):
 
         # We return the real cost, if it is availble
-        precise_cost = self.cost(job_id, sfn, update_tsv=False)
+        precise_cost = self.cost(job_id, update_tsv=False)
         if(precise_cost and precise_cost > 0.0):
             return precise_cost
 
-        if not sfn:
-            sfn = self.default_stepfunction_name
-        postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
+        postrunjsonstr = self.log(job_id=job_id, postrunjson=True)
         if not postrunjsonstr:
             logger.info("Cost estimation error: postrunjson not found")
             return 0.0

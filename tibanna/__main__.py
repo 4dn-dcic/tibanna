@@ -291,10 +291,6 @@ class Subcommands(object):
             'cost_estimate':
                 [{'flag': ["-j", "--job-id"],
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
-                 {'flag': ["-s", "--sfn"],
-                  'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
-                          "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-u", "--update-tsv"],
                   'help': "add estimated cost to the metric tsv file on S3",
                   'action': "store_true"}],
@@ -458,9 +454,9 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
-def cost_estimate(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
+def cost_estimate(job_id, update_tsv=False):
     """print out estimated cost of a specific job"""
-    print(API().cost_estimate(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
+    print(API().cost_estimate(job_id=job_id, update_tsv=update_tsv))
 
 
 def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):

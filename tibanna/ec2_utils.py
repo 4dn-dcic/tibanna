@@ -1011,8 +1011,44 @@ def cost_estimate(postrunjson):
 
         # add additional EBS costs
         if(cfg.ebs_type == "gp3"):
-            add_ebs_cost = gp3_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
-            estimated_cost = estimated_cost + add_ebs_cost
+            gp3_storage_cost = gp3_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
+            estimated_cost = estimated_cost + gp3_storage_cost
+
+            if(cfg.ebs_iops):
+                prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+                    {
+                        'Type': 'TERM_MATCH',
+                        'Field': 'location',
+                        'Value': AWS_REGION_NAMES[AWS_REGION]
+                    },
+                    {
+                        'Field': 'volumeApiName',
+                        'Type': 'TERM_MATCH',
+                        'Value': cfg.ebs_type,
+                    },
+                    {
+                        'Field': 'productFamily',
+                        'Type': 'TERM_MATCH',
+                        'Value': 'System Operation',
+                    },
+                ])
+                price_list = prices["PriceList"]
+
+                if(not prices["PriceList"] or len(price_list) == 0):
+                    raise PricingRetrievalException("We could not retrieve EBS IOPS prices from Amazon")
+                if(len(price_list) > 1):
+                    raise PricingRetrievalException("EBS IOPS prices are ambiguous")
+
+                price_item = json.loads(price_list[0])
+                terms = price_item["terms"]
+                term = list(terms["OnDemand"].values())[0]
+                price_dimension = list(term["priceDimensions"].values())[0]
+                ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+                free_tier = 3000
+                ebs_iops_cost = ebs_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
+                estimated_cost = estimated_cost + ebs_iops_cost
+                print(ebs_iops_price, ebs_iops_cost, job_duration)
+
         else: 
             
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
