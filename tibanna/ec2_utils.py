@@ -1052,10 +1052,8 @@ def cost_estimate(postrunjson):
                 free_tier = 3000
                 ebs_iops_cost = ebs_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_iops_cost
-                print(ebs_iops_price, ebs_iops_cost, job_duration)
 
         else: 
-            
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
                 {
                     'Type': 'TERM_MATCH',
