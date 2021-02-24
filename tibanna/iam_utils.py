@@ -7,6 +7,7 @@ from .vars import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION,
     LAMBDA_TYPE,
+    SFN_TYPE,
     RUN_TASK_LAMBDA_NAME,
     CHECK_TASK_LAMBDA_NAME
 )
@@ -20,6 +21,7 @@ class IAM(object):
     account_id = AWS_ACCOUNT_NUMBER
     region = AWS_REGION
     lambda_type = LAMBDA_TYPE  # lambda_type : '' for unicorn, 'pony' for pony, 'zebra' for zebra
+    sfn_type = SFN_TYPE  # sfn type : 'unicorn' for unicorn, 'pony' for pony, 'zebra' for zebra
     run_task_lambda_name = RUN_TASK_LAMBDA_NAME
     check_task_lambda_name = CHECK_TASK_LAMBDA_NAME
 
@@ -48,6 +50,7 @@ class IAM(object):
             random_tag = str(int(random.random() * 10000))
             self.user_group_name = self.user_group_tag + '_' + random_tag
         self.tibanna_policy_prefix = self.prefix + self.user_group_name
+        self.tibanna_sfn_name = self.prefix + self.sfn_type + '_' + self.user_group_name
 
         # bucket names
         self.bucket_names = bucket_names
@@ -63,7 +66,8 @@ class IAM(object):
     @property
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
-                'desc_stepfunction', 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc', 'pricing']
+                'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
+                'executions', 'pricing']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
@@ -75,12 +79,12 @@ class IAM(object):
                     'cloudwatch': 'cloudwatchlogs',
                     'passrole': 'iam_passrole_s3',
                     'lambdainvoke': 'lambdainvoke',
-                    'desc_stepfunction': 'desc_sts',
                     'cloudwatch_metric': 'cw_metric',
                     'cw_dashboard': 'cw_dashboard',
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc',
-                    'pricing': 'pricing'}
+                    'pricing': 'pricing',
+                    'executions': 'executions'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -95,12 +99,12 @@ class IAM(object):
                        'cloudwatch': self.policy_cloudwatchlogs,
                        'passrole': self.policy_iam_passrole_s3,
                        'lambdainvoke': self.policy_lambdainvoke,
-                       'desc_stepfunction': self.policy_desc_stepfunction,
                        'cloudwatch_metric': self.policy_cloudwatch_metric,
                        'cw_dashboard': self.policy_cw_dashboard,
                        'dynamodb': self.policy_dynamodb,
                        'ec2_desc': self.policy_ec2_desc_policy,
-                       'pricing': self.policy_pricing}
+                       'pricing': self.policy_pricing,
+                       'executions': self.policy_executions}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -130,7 +134,7 @@ class IAM(object):
 
     def policy_arn_list_for_role(self, role_type):
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
-                                        'desc_stepfunction', 'cw_dashboard']
+                                        'executions', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
                                           'termination', 'dynamodb', 'pricing']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
@@ -270,18 +274,32 @@ class IAM(object):
         return policy
 
     @property
-    def policy_desc_stepfunction(self):
-        execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
-        resource = execution_arn_prefix + self.tibanna_policy_prefix + ':*'
+    def policy_executions(self):
+        execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':stateMachine:'
+        sfn_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
+        resources = [execution_arn_prefix + self.tibanna_sfn_name,
+                    sfn_arn_prefix + self.tibanna_sfn_name + ':*']
         policy = {
             "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
                     "Action": [
-                        "states:DescribeExecution"
+                        "states:StartExecution",
+                        "states:StopExecution",
+                        "states:ListExecutions",
+                        "states:DescribeExecution",
+                        "states:GetExecutionHistory",
+                        "states:DescribeStateMachineForExecution",
+                        "states:DescribeStateMachine"
                     ],
-                    "Resource": resource
+                    "Resource": resources
+                },
+                {
+                    "Sid": "VisualEditor1",
+                    "Effect": "Allow",
+                    "Action": "states:ListStateMachines",
+                    "Resource": "*"
                 }
             ]
         }
@@ -444,16 +462,6 @@ class IAM(object):
                 self.detach_policies_from_group()
         group = self.iam.Group(self.iam_group_name)
         response = group.attach_policy(
-            PolicyArn='arn:aws:iam::aws:policy/AWSStepFunctionsFullAccess'
-        )
-        if verbose:
-            logger.debug("response from IAM attach_policy :" + str(response))
-        response = group.attach_policy(
-            PolicyArn='arn:aws:iam::aws:policy/AWSStepFunctionsConsoleFullAccess'
-        )
-        if verbose:
-            logger.debug("response from IAM attach_policy :" + str(response))
-        response = group.attach_policy(
             PolicyArn='arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
         )
         if verbose:
@@ -463,7 +471,7 @@ class IAM(object):
         )
         if verbose:
             logger.debug("response from IAM attach_policy :" + str(response))
-        custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination', 'pricing']
+        custom_policy_types = ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination', 'pricing', 'executions']
         for pn in [self.policy_name(pt) for pt in custom_policy_types]:
             response = group.attach_policy(
                 PolicyArn='arn:aws:iam::' + self.account_id + ':policy/' + pn

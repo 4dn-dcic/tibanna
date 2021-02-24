@@ -679,7 +679,10 @@ class API(object):
             if shutdown_min:
                 override_config['shutdown_min'] = shutdown_min
             if ebs_size:
-                override_config['ebs_size'] = int(ebs_size)
+                if ebs_size.endswith('x'):
+                    override_config['ebs_size'] = ebs_size
+                else:
+                    override_config['ebs_size'] = int(ebs_size)
             if overwrite_input_extra:
                 override_config['overwrite_input_extra'] = overwrite_input_extra
             if key_name:
@@ -1273,4 +1276,3 @@ class API(object):
                 args.update({'base_region': source_image_region})
 
         return AMI(**args).create_ami_for_tibanna(make_public=make_public)
-

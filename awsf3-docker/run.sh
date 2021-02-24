@@ -27,8 +27,9 @@ done
 
 export RUN_JSON_FILE_NAME=$JOBID.run.json
 export POSTRUN_JSON_FILE_NAME=$JOBID.postrun.json
-export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
-export LOCAL_OUTDIR=$EBS_DIR/out  
+export EBS_DIR=/data1
+export MOUNT_DIR_PREFIX=/mnt
+export LOCAL_OUTDIR=$EBS_DIR/out
 export LOCAL_INPUT_DIR=$EBS_DIR/input  ## WARNING: also hardcoded in aws_decode_run_json.py
 export LOCAL_WF_TMPDIR=$EBS_DIR/tmp
 export MD5FILE=$JOBID.md5sum.txt
@@ -74,7 +75,7 @@ fi
 
 # EBS_DIR cannot be directly mounted to docker container since it's already a mount point for EBS,
 # so mount /mnt/data1/ instead and create a symlink.
-ln -s /mnt/$EBS_DIR $EBS_DIR
+ln -s $MOUNT_DIR_PREFIX/$EBS_DIR $EBS_DIR
 
 # Transferring profile info
 ln -s /home/ubuntu/.aws /root/.aws
@@ -155,12 +156,12 @@ send_log
 ### download data & reference files from s3
 exl echo
 exl echo "## Downloading data & reference files from S3"
-exl date 
+exl date
 exl mkdir -p $LOCAL_INPUT_DIR
 exl cat $DOWNLOAD_COMMAND_FILE
-exle source $DOWNLOAD_COMMAND_FILE 
+exle source $DOWNLOAD_COMMAND_FILE
 exl date
-send_log 
+send_log
 
 
 ### mount input buckets
@@ -201,7 +202,7 @@ exl echo "## $(docker info | grep 'Total Memory')"
 exl echo
 send_log
 cwd0=$(pwd)
-cd $LOCAL_WFDIR  
+cd $LOCAL_WFDIR
 mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
 then
@@ -230,13 +231,15 @@ else
     exl echo "Error: CWL draft3 is no longer supported. Please switch to v1"
     handle_error 1
   fi
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR --tmp-outdir-prefix $LOCAL_WF_TMPDIR --tmpdir-prefix $LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
+  # To prevent this, use the original directory name here.
+  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $MOUNT_DIR_PREFIX$LOCAL_OUTDIR --tmp-outdir-prefix $MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR --tmpdir-prefix $MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
   handle_error $?
 fi
 cd $cwd0
 exl echo
 exl echo "Finished running the command/workflow"
-send_log 
+send_log
 
 ### copy output files to s3
 exl echo
@@ -285,14 +288,14 @@ fi
 exl awsf3 update_postrun_json_upload_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
 exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 send_log
- 
+
 ### updating status
 exl echo
 exl echo "## Checking the job status (0 means success)"
 ## if STATUS is 21,0,0,1 JOB_STATUS is 21,0,0,1. If STATUS is 0,0,0,0,0,0, JOB_STATUS is 0.
 if [ $(echo $STATUS| sed 's/0//g' | sed 's/,//g') ]; then export JOB_STATUS=$STATUS ; else export JOB_STATUS=0; fi
 exl echo "JOB_STATUS=$JOB_STATUS"
-# This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME. 
+# This env variable (JOB_STATUS) will be read by aws_update_run_json.py and the result will go into $POSTRUN_JSON_FILE_NAME.
 
 # update & upload postrun json
 exl echo
