@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import boto3
+import botocore
 import json
 import time
 import copy
@@ -1107,7 +1108,12 @@ class API(object):
                                        'End': end_time},
                         'Metrics': ['BlendedCost'],
                         }
-        billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+        
+        try:
+            billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+        except botocore.exceptions.ClientError as e:
+            logger.warning("%s. Please try to deploy the latest version of Tibanna." % e)
+            return 0.0
 
         cost = sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
         if update_tsv:

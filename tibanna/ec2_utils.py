@@ -4,8 +4,10 @@ import time
 import os
 import logging
 import boto3
+import botocore
 import copy
 import re
+from packaging import version
 from . import create_logger
 from datetime import datetime, timedelta
 from .utils import (
@@ -973,7 +975,10 @@ def cost_estimate(postrunjson):
 
             estimated_cost = estimated_cost + ec2_ondemand_price * job_duration
 
+
         # Get EBS pricing
+        ebs_root_type = 'gp2' if version.parse(__version__) < version.parse("1.0.0") else 'gp3'
+
         prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
             {
                 'Type': 'TERM_MATCH',
@@ -983,7 +988,7 @@ def cost_estimate(postrunjson):
             {
                 'Field': 'volumeApiName',
                 'Type': 'TERM_MATCH',
-                'Value': 'gp3',
+                'Value': ebs_root_type,
             },
             {
                 'Field': 'productFamily',
@@ -1164,7 +1169,10 @@ def cost_estimate(postrunjson):
                 estimated_cost = estimated_cost + ebs_iops_cost
 
         return estimated_cost
-        
+    
+    except botocore.exceptions.ClientError as e:
+        logger.warning("Cost estimation error: %s. Please try to deploy the latest version of Tibanna." % e)
+        return 0.0
     except PricingRetrievalException as e:
         logger.warning("Cost estimation error: %s" % e)
         return 0.0

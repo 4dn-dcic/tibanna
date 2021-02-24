@@ -547,7 +547,8 @@ To collect, save and visualize the resources metrics from Cloud Watch
 cost
 ----
 
-To retrieve the cost and update the metrics report file created with plot_metrics
+To retrieve the cost and update the metrics report file created with plot_metrics. The cost is typically available 24 hours after the job finished.
+This function is available to non-admin users from version 1.0.5.
 
 ::
 
@@ -563,6 +564,23 @@ To retrieve the cost and update the metrics report file created with plot_metric
                                      TIBANNA_DEFAULT_STEP_FUNCTION_NAME. If the environmental
                                      variable is not set, it uses name 'tibanna_pony' (4dn
                                      default, works only for 4dn).
+
+ -u|--update-tsv                     Update with the cost the tsv file that stores metrics
+                                     information on the S3 bucket
+
+cost_estimate
+----
+
+To retrieve cost estimates and update the metrics report file created with plot_metrics. In contrast to the exact costs, the estimated costs are available immediately after the job has completed.
+This function requires a (deployed) Tibanna version >=1.0.5.
+
+::
+
+ tibanna cost_estimate --job-id=<jobid> [<options>]
+
+**Options**
+
+::
 
  -u|--update-tsv                     Update with the cost the tsv file that stores metrics
                                      information on the S3 bucket
