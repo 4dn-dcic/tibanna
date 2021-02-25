@@ -893,7 +893,7 @@ class Execution(object):
         )
 
 
-def cost_estimate(postrunjson):
+def cost_estimate(postrunjson, ebs_root_type = "gp3"):
     cfg = postrunjson.config
     job = postrunjson.Job
     estimated_cost = 0.0
@@ -977,7 +977,6 @@ def cost_estimate(postrunjson):
 
 
         # Get EBS pricing
-        ebs_root_type = 'gp2' if version.parse(__version__) < version.parse("1.0.0") else 'gp3'
 
         prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
             {

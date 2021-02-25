@@ -1067,9 +1067,13 @@ class API(object):
         if not postrunjsonstr:
             logger.info("Cost estimation error: postrunjson not found")
             return 0.0
-        postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
+        postrunjsonobj = json.loads(postrunjsonstr)
+        postrunjson = AwsemPostRunJson(**postrunjsonobj)
+        
+        # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
+        ebs_root_type = 'gp3' if 'awsf_image' in postrunjsonobj['config'] else 'gp2'
 
-        cost = cost_estimate(postrunjson)
+        cost = cost_estimate(postrunjson, ebs_root_type)
 
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
