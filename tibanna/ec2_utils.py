@@ -7,7 +7,6 @@ import boto3
 import botocore
 import copy
 import re
-from packaging import version
 from . import create_logger
 from datetime import datetime, timedelta
 from .utils import (
