@@ -892,7 +892,14 @@ class Execution(object):
         )
 
 
-def cost_estimate(postrunjson, ebs_root_type = "gp3"):
+def cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = None):
+    """
+    aws_price_overwrite can be used to overwrite the prices obtained from AWS (e.g. ec2 spot price).
+    This allows historical cost estimates. It is also used for testing. It is a dictionary with keys:
+    ec2_spot_price, ec2_ondemand_price, ebs_root_storage_price, ebs_gp3_iops_price, ebs_storage_price,
+    ebs_io1_iops_price, ebs_io2_iops_prices
+    """
+
     cfg = postrunjson.config
     job = postrunjson.Job
     estimated_cost = 0.0
@@ -923,9 +930,14 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
                 raise PricingRetrievalException("Spot price could not be retrieved")
 
             ec2_spot_price = (float)(prices['SpotPriceHistory'][0]['SpotPrice'])
+
+            if((aws_price_overwrite is not None) and 'ec2_spot_price' in aws_price_overwrite):
+                ec2_spot_price = aws_price_overwrite['ec2_spot_price']
+
             estimated_cost = estimated_cost + ec2_spot_price * job_duration
 
         else: # EC2 onDemand Prices
+
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
                 {
                     'Type': 'TERM_MATCH',
@@ -971,6 +983,10 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
             term = list(terms["OnDemand"].values())[0]
             price_dimension = list(term["priceDimensions"].values())[0]
             ec2_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+            
+
+            if((aws_price_overwrite is not None) and 'ec2_ondemand_price' in aws_price_overwrite):
+                ec2_ondemand_price = aws_price_overwrite['ec2_ondemand_price']
 
             estimated_cost = estimated_cost + ec2_ondemand_price * job_duration
 
@@ -1006,16 +1022,19 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
         terms = price_item["terms"]
         term = list(terms["OnDemand"].values())[0]
         price_dimension = list(term["priceDimensions"].values())[0]
-        gp3_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+        ebs_root_storage_price = (float)(price_dimension['pricePerUnit']["USD"])
+        
+        if((aws_price_overwrite is not None) and 'ebs_root_storage_price' in aws_price_overwrite):
+            ebs_root_storage_price = aws_price_overwrite['ebs_root_storage_price']
 
         # add root EBS costs
-        root_ebs_cost = gp3_ondemand_price * cfg.root_ebs_size * job_duration / (24.0*30.0)
+        root_ebs_cost = ebs_root_storage_price * cfg.root_ebs_size * job_duration / (24.0*30.0)
         estimated_cost = estimated_cost + root_ebs_cost
 
         # add additional EBS costs
         if(cfg.ebs_type == "gp3"):
-            gp3_storage_cost = gp3_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
-            estimated_cost = estimated_cost + gp3_storage_cost
+            ebs_storage_cost = ebs_root_storage_price * cfg.ebs_size * job_duration / (24.0*30.0)
+            estimated_cost = estimated_cost + ebs_storage_cost
 
             if(cfg.ebs_iops):
                 prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
@@ -1046,9 +1065,13 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
                 terms = price_item["terms"]
                 term = list(terms["OnDemand"].values())[0]
                 price_dimension = list(term["priceDimensions"].values())[0]
-                ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+                ebs_gp3_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+                if((aws_price_overwrite is not None) and 'ebs_gp3_iops_price' in aws_price_overwrite):
+                    ebs_gp3_iops_price = aws_price_overwrite['ebs_gp3_iops_price']
+
                 free_tier = 3000
-                ebs_iops_cost = ebs_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
+                ebs_iops_cost = ebs_gp3_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_iops_cost
 
         else: 
@@ -1081,9 +1104,12 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
             terms = price_item["terms"]
             term = list(terms["OnDemand"].values())[0]
             price_dimension = list(term["priceDimensions"].values())[0]
-            ebs_type_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
+            ebs_storage_price = (float)(price_dimension['pricePerUnit']["USD"])
 
-            add_ebs_cost = ebs_type_ondemand_price * cfg.ebs_size * job_duration / (24.0*30.0)
+            if((aws_price_overwrite is not None) and 'ebs_storage_price' in aws_price_overwrite):
+                ebs_storage_price = aws_price_overwrite['ebs_storage_price']
+
+            add_ebs_cost = ebs_storage_price * cfg.ebs_size * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + add_ebs_cost
 
             # Add IOPS prices for io1
@@ -1116,8 +1142,12 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
                 terms = price_item["terms"]
                 term = list(terms["OnDemand"].values())[0]
                 price_dimension = list(term["priceDimensions"].values())[0]
-                ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
-                ebs_iops_cost = ebs_iops_price * cfg.ebs_iops * job_duration / (24.0*30.0)
+                ebs_io1_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+                if((aws_price_overwrite is not None) and 'ebs_io1_iops_price' in aws_price_overwrite):
+                    ebs_io1_iops_price = aws_price_overwrite['ebs_io1_iops_price']
+
+                ebs_iops_cost = ebs_io1_iops_price * cfg.ebs_iops * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_iops_cost
 
             elif (cfg.ebs_type == "io2" and cfg.ebs_iops):
@@ -1143,24 +1173,27 @@ def cost_estimate(postrunjson, ebs_root_type = "gp3"):
                 if(len(price_list) != 3):
                     raise PricingRetrievalException("EBS prices for io2 are incomplete")
 
-                io2_iops_prices = []
+                ebs_io2_iops_prices = []
                 for price_entry in price_list:
                     price_item = json.loads(price_entry)
                     terms = price_item["terms"]
                     term = list(terms["OnDemand"].values())[0]
                     price_dimension = list(term["priceDimensions"].values())[0]
                     ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
-                    io2_iops_prices.append(ebs_iops_price)
-                io2_iops_prices.sort(reverse=True)
+                    ebs_io2_iops_prices.append(ebs_iops_price)
+                ebs_io2_iops_prices.sort(reverse=True)
+
+                if((aws_price_overwrite is not None) and 'ebs_io2_iops_prices' in aws_price_overwrite):
+                    ebs_io2_iops_prices = aws_price_overwrite['ebs_io2_iops_prices']
 
                 # Pricing tiers are currently hardcoded. There wasn't a simple way to extract them from the pricing information
                 tier0 = 32000
                 tier1 = 64000
 
                 ebs_iops_cost = (
-                    io2_iops_prices[0] * min(cfg.ebs_iops, tier0) + # Portion below 32000 IOPS
-                    io2_iops_prices[1] * min(max(cfg.ebs_iops - tier0, 0), tier1 - tier0) + # Portion between 32001 and 64000 IOPS
-                    io2_iops_prices[2] * max(cfg.ebs_iops - tier1, 0) # Portion above 64000 IOPS
+                    ebs_io2_iops_prices[0] * min(cfg.ebs_iops, tier0) + # Portion below 32000 IOPS
+                    ebs_io2_iops_prices[1] * min(max(cfg.ebs_iops - tier0, 0), tier1 - tier0) + # Portion between 32001 and 64000 IOPS
+                    ebs_io2_iops_prices[2] * max(cfg.ebs_iops - tier1, 0) # Portion above 64000 IOPS
                     ) * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_iops_cost
 
