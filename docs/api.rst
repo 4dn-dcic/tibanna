@@ -565,9 +565,6 @@ To retrieve the cost and update the metrics report file created with plot_metric
  update_tsv                         This flag specifies wether to update the cost in the tsv file that
                                     stores metrics information on the S3 bucket
 
- overwrite_cost_estimate_in_tsv     This flag specifies whether the cost estimate in the tsv should be overwritten
-                                    with the exact cost. Only has an effect, if update_tsv is set.
-
 
 cost_estimate
 ----

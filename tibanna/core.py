@@ -1058,7 +1058,7 @@ class API(object):
 
     def cost_estimate(self, job_id, update_tsv=False):
 
-        # We return the real cost, if it is availble
+        # We return the real cost, if it is availble, but don't automatically update the Cost row in the tsv
         precise_cost = self.cost(job_id, update_tsv=False)
         if(precise_cost and precise_cost > 0.0):
             return precise_cost
@@ -1080,21 +1080,26 @@ class API(object):
             # reading from metrics_report.tsv
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
-            if 'Estimated_Cost' not in read_file:
-                write_file = read_file + 'Estimated_Cost\t' + str(cost) + '\n'
-                # writing
-                with open('metrics_report.tsv', 'w') as fo:
-                    fo.write(write_file)
-                # upload new metrics_report.tsv
-                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
-                os.remove('metrics_report.tsv')
-            else:
-                logger.info("Estimated cost already in the tsv file. Not updating.")
+
+            write_file = ""
+            for row in read_file.splitlines():
+                # Remove Estimated_Cost from file, since we want to update it
+                if("Estimated_Cost" not in row.split("\t")):
+                    write_file = write_file + row + '\n'
+
+            write_file = write_file + 'Estimated_Cost\t' + str(cost) + '\n'
+
+            # writing
+            with open('metrics_report.tsv', 'w') as fo:
+                fo.write(write_file)
+            # upload new metrics_report.tsv
+            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+            os.remove('metrics_report.tsv')
 
         return cost
 
 
-    def cost(self, job_id, sfn=None, update_tsv=False, overwrite_cost_estimate_in_tsv=False):
+    def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:
             sfn = self.default_stepfunction_name
         postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
@@ -1129,35 +1134,20 @@ class API(object):
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
 
-            estimated_cost_row = ""
-            is_cost_in_tsv = False
             write_file = ""
             for row in read_file.splitlines():
-                # Remove Estimated_Cost from file, we might want to update it 
-                if("Estimated_Cost" not in row.split("\t")):
+                # Remove Cost from file, since we want to update it
+                if("Cost" not in row.split("\t")):
                     write_file = write_file + row + '\n'
-                else:
-                    estimated_cost_row = row
-                
-                if("Cost" in row.split("\t")):
-                    is_cost_in_tsv = True
 
-            if(overwrite_cost_estimate_in_tsv):
-                write_file = write_file + 'Estimated_Cost\t' + str(cost) + '\n'
-            else:
-                write_file = write_file + estimated_cost_row + '\n'
+            write_file = write_file + 'Cost\t' + str(cost) + '\n'
 
-            if not is_cost_in_tsv:
-                write_file = write_file + 'Cost\t' + str(cost) + '\n'
-
-                # writing
-                with open('metrics_report.tsv', 'w') as fo:
-                    fo.write(write_file)
-                # upload new metrics_report.tsv
-                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
-                os.remove('metrics_report.tsv')
-            else:
-                logger.info("cost already in the tsv file. not updating")
+            #writing
+            with open('metrics_report.tsv', 'w') as fo:
+                fo.write(write_file)
+            # upload new metrics_report.tsv
+            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+            os.remove('metrics_report.tsv')
 
         return cost
 
