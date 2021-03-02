@@ -624,7 +624,7 @@ class TibannaResource(object):
                         <td class="center">%s</td>
                       </tr>
                       <tr>
-                        <td class="left">Cost (estimated)</td>
+                        <td class="left">Cost (estimated) (USD)</td>
                         <td class="center">%s</td>
                       </tr>
                     </table>

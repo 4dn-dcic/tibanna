@@ -1094,7 +1094,7 @@ class API(object):
         return cost
 
 
-    def cost(self, job_id, sfn=None, update_tsv=False):
+    def cost(self, job_id, sfn=None, update_tsv=False, overwrite_cost_estimate_in_tsv=False):
         if not sfn:
             sfn = self.default_stepfunction_name
         postrunjsonstr = self.log(job_id=job_id, sfn=sfn, postrunjson=True)
@@ -1129,15 +1129,27 @@ class API(object):
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
 
-            # Remove Estimated_cost from file, because we want tp update it 
+            estimated_cost_row = ""
+            is_cost_in_tsv = False
             write_file = ""
             for row in read_file.splitlines():
+                # Remove Estimated_Cost from file, we might want to update it 
                 if("Estimated_Cost" not in row.split("\t")):
                     write_file = write_file + row + '\n'
+                else:
+                    estimated_cost_row = row
+                
+                if("Cost" in row.split("\t")):
+                    is_cost_in_tsv = True
 
-            if 'Cost' not in write_file:
-                write_file = write_file + 'Cost\t' + str(cost) + '\n'
+            if(overwrite_cost_estimate_in_tsv):
                 write_file = write_file + 'Estimated_Cost\t' + str(cost) + '\n'
+            else:
+                write_file = write_file + estimated_cost_row + '\n'
+
+            if not is_cost_in_tsv:
+                write_file = write_file + 'Cost\t' + str(cost) + '\n'
+
                 # writing
                 with open('metrics_report.tsv', 'w') as fo:
                     fo.write(write_file)
@@ -1146,6 +1158,7 @@ class API(object):
                 os.remove('metrics_report.tsv')
             else:
                 logger.info("cost already in the tsv file. not updating")
+
         return cost
 
     def does_dynamo_table_exist(self, tablename):

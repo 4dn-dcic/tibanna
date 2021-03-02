@@ -285,6 +285,9 @@ class Subcommands(object):
                   'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
                  {'flag': ["-u", "--update-tsv"],
                   'help': "add cost to the metric tsv file on S3",
+                  'action': "store_true"},
+                 {'flag': ["-o", "--overwrite-cost-estimate-in-tsv"],
+                  'help': "overwrite cost estimate in the tsv file",
                   'action': "store_true"}],
             'cost_estimate':
                 [{'flag': ["-j", "--job-id"],
@@ -448,9 +451,9 @@ def plot_metrics(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, force_upload=Fa
                        endtime=endtime, open_browser=not do_not_open_browser, instance_id=instance_id)
 
 
-def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
+def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False, overwrite_cost_estimate_in_tsv=False):
     """print out cost of a specific job"""
-    print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
+    print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv, overwrite_cost_estimate_in_tsv=overwrite_cost_estimate_in_tsv))
 
 def cost_estimate(job_id, update_tsv=False):
     """print out estimated cost of a specific job"""
