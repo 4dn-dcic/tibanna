@@ -1,0 +1,119 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "",
+            "App_version": "",
+            "language": "cwl_v1",
+            "cwl_url": "https://raw.githubusercontent.com/alexander-veit/tibanna-workflows/main",
+            "main_cwl": "md5.cwl",
+            "other_cwl_files": ""
+        },
+        "Input": {
+            "Input_files_data": {
+                "gzfile": {
+                    "path": "input/alg1.png.gz",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": "",
+                    "mount": "",
+                    "class": "File",
+                    "dir": "aveit-tibanna-test"
+                }
+            },
+            "Secondary_files_data": {},
+            "Input_parameters": {},
+            "Env": {}
+        },
+        "Output": {
+            "output_bucket_directory": "aveit-tibanna-test",
+            "output_target": {
+                "report": "output/my_first_md5_report"
+            },
+            "secondary_output_target": {},
+            "alt_cond_output_argnames": {},
+            "Output files": {
+                "report": {
+                    "path": "/data1/out/report",
+                    "target": "output/my_first_md5_report",
+                    "basename": "report",
+                    "checksum": "sha1$d237002c1956532ffb9117972f3a98cd1344df56",
+                    "location": "file:///data1/out/report",
+                    "md5sum": "45ad098a40814f1e7792b4e17b5f74d0",
+                    "size": 66,
+                    "class": "File"
+                }
+            }
+        },
+        "start_time": "20210301-16:58:05-UTC",
+        "JOBID": "NgN7IOBXjgRH",
+        "Log": {
+            "log_bucket_directory": "aveit-tibanna-test-log"
+        },
+        "end_time": "20210301-17:03:58-UTC",
+        "status": "0",
+        "filesystem": "/dev/nvme1n1",
+        "instance_id": "i-01769a822e5dbb407",
+        "instance_availablity_zone": "us-east-1b",
+        "total_input_size": "12K",
+        "total_output_size": "36K",
+        "total_tmp_size": "20K",
+        "Metrics": {
+            "cost_estimate": 0.004384172839506173,
+            "max_mem_used_MB": 713.4609375,
+            "min_mem_available_MB": 3163.0390625,
+            "total_mem_MB": 3876.5,
+            "max_mem_utilization_percent": 18.404770733909455,
+            "max_cpu_utilization_percent": 69.0,
+            "max_disk_space_utilization_percent": 1.0498987095511,
+            "max_disk_space_used_GB": 0.205371856689453,
+            "max_ebs_read_bytes": 69936332.8
+        }
+    },
+    "config": {
+        "EBS_optimized": true,
+        "ami_id": "ami-0a7ddfc7e412ab6e0",
+        "availability_zone": "",
+        "awsf_image": "aveit/tibanna-awsf:1.0.3.dev4",
+        "behavior_on_capacity_limit": "fail",
+        "cloudwatch_dashboard": false,
+        "cpu": "",
+        "ebs_iops": "",
+        "ebs_size": 20,
+        "ebs_type": "gp3",
+        "instance_type": "t3.small",
+        "job_tag": "",
+        "json_bucket": "aveit-tibanna-test-log",
+        "key_name": "",
+        "language": "cwl_v1",
+        "log_bucket": "aveit-tibanna-test-log",
+        "mem": 0,
+        "password": "",
+        "public_postrun_json": false,
+        "root_ebs_size": 8,
+        "run_name": "t3_medium_nonspot",
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/",
+        "security_group": "",
+        "shutdown_min": "now",
+        "spot_duration": "",
+        "spot_instance": true,
+        "subnet": ""
+    },
+    "commands": [
+        [
+            "docker",
+            "    run",
+            "    -i",
+            "    --mount=type=bind,source=/mnt/data1/tmp4jntok73,target=/OVwPJQ",
+            "    --mount=type=bind,source=/mnt/data1/tmp3s4rl0wc,target=/tmp",
+            "    --mount=type=bind,source=/data1/input/input/alg1.png.gz,target=/var/lib/cwl/stg59f7da6f-1d44-4615-abd3-b46c2ceefcf1/alg1.png.gz,readonly",
+            "    --workdir=/OVwPJQ",
+            "    --rm",
+            "    --env=TMPDIR=/tmp",
+            "    --env=HOME=/OVwPJQ",
+            "    --cidfile=/data1/tmpvfaxztjn/20210301170033-764000.cid",
+            "    aveit/md5:v2",
+            "    run.sh",
+            "    /var/lib/cwl/stg59f7da6f-1d44-4615-abd3-b46c2ceefcf1/alg1.png.gz"
+        ]
+    ]
+}

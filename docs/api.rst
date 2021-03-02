@@ -562,6 +562,23 @@ To retrieve the cost and update the metrics report file created with plot_metric
                                     variable is not set, it uses name 'tibanna_pony' (4dn
                                     default, works only for 4dn).
 
- update_tsv                         This flag specify to update with cost the tsv file that
+ update_tsv                         This flag specifies wether to update the cost in the tsv file that
+                                    stores metrics information on the S3 bucket
+
+
+cost_estimate
+----
+
+Retrieve a cost estimate for a specific job. This will be available as soon as the job finished. This function will return the exact cost, if it is available
+
+::
+
+ API().cost_estimate(job_id=<jobid>, ...)
+
+**Options**
+
+::
+
+ update_tsv                         This flag specifies wether to update the cost in the tsv file that
                                     stores metrics information on the S3 bucket
 

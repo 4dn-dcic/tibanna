@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import boto3
+import botocore
 import json
 import time
 import copy
@@ -44,7 +45,8 @@ from .utils import (
 )
 from .ec2_utils import (
     UnicornInput,
-    upload_workflow_to_s3
+    upload_workflow_to_s3,
+    cost_estimate
 )
 from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
@@ -1038,7 +1040,8 @@ class API(object):
             self.TibannaResource.update_html(log_bucket, job_id + '.metrics/')
         else:
             try:
-                M = self.TibannaResource(instance_id, filesystem, starttime, endtime)
+                cost_estimate = self.cost_estimate(job_id=job_id)
+                M = self.TibannaResource(instance_id, filesystem, starttime, endtime, cost_estimate = cost_estimate)
                 top_content = self.log(job_id=job_id, top=True)
                 M.plot_metrics(instance_type, directory, top_content=top_content)
             except Exception as e:
@@ -1052,6 +1055,49 @@ class API(object):
         # open metrics html in browser
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
+
+    def cost_estimate(self, job_id, update_tsv=False):
+
+        # We return the real cost, if it is availble, but don't automatically update the Cost row in the tsv
+        precise_cost = self.cost(job_id, update_tsv=False)
+        if(precise_cost and precise_cost > 0.0):
+            return precise_cost
+
+        postrunjsonstr = self.log(job_id=job_id, postrunjson=True)
+        if not postrunjsonstr:
+            logger.info("Cost estimation error: postrunjson not found")
+            return 0.0
+        postrunjsonobj = json.loads(postrunjsonstr)
+        postrunjson = AwsemPostRunJson(**postrunjsonobj)
+        
+        # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
+        ebs_root_type = 'gp3' if 'awsf_image' in postrunjsonobj['config'] else 'gp2'
+
+        cost = cost_estimate(postrunjson, ebs_root_type)
+
+        if update_tsv:
+            log_bucket = postrunjson.config.log_bucket
+            # reading from metrics_report.tsv
+            does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
+            read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
+
+            write_file = ""
+            for row in read_file.splitlines():
+                # Remove Estimated_Cost from file, since we want to update it
+                if("Estimated_Cost" not in row.split("\t")):
+                    write_file = write_file + row + '\n'
+
+            write_file = write_file + 'Estimated_Cost\t' + str(cost) + '\n'
+
+            # writing
+            with open('metrics_report.tsv', 'w') as fo:
+                fo.write(write_file)
+            # upload new metrics_report.tsv
+            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+            os.remove('metrics_report.tsv')
+
+        return cost
+
 
     def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:
@@ -1072,24 +1118,37 @@ class API(object):
                         'Granularity': 'DAILY',
                         'TimePeriod': {'Start': start_time,
                                        'End': end_time},
-                        'Metrics': ['BlendedCost']}
-        billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+                        'Metrics': ['BlendedCost'],
+                        }
+        
+        try:
+            billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
+        except botocore.exceptions.ClientError as e:
+            logger.warning("%s. Please try to deploy the latest version of Tibanna." % e)
+            return 0.0
+
         cost = sum([float(_['Total']['BlendedCost']['Amount']) for _ in billingres['ResultsByTime']])
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
             # reading from metrics_report.tsv
             does_key_exist(log_bucket, job_id + '.metrics/metrics_report.tsv')
             read_file = read_s3(log_bucket, os.path.join(job_id + '.metrics/', 'metrics_report.tsv'))
-            if 'Cost' not in read_file:
-                write_file = read_file + 'Cost\t' + str(cost) + '\n'
-                # writing
-                with open('metrics_report.tsv', 'w') as fo:
-                    fo.write(write_file)
-                # upload new metrics_report.tsv
-                upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
-                os.remove('metrics_report.tsv')
-            else:
-                logger.info("cost already in the tsv file. not updating")
+
+            write_file = ""
+            for row in read_file.splitlines():
+                # Remove Cost from file, since we want to update it
+                if("Cost" not in row.split("\t")):
+                    write_file = write_file + row + '\n'
+
+            write_file = write_file + 'Cost\t' + str(cost) + '\n'
+
+            #writing
+            with open('metrics_report.tsv', 'w') as fo:
+                fo.write(write_file)
+            # upload new metrics_report.tsv
+            upload('metrics_report.tsv', log_bucket, job_id + '.metrics/')
+            os.remove('metrics_report.tsv')
+
         return cost
 
     def does_dynamo_table_exist(self, tablename):

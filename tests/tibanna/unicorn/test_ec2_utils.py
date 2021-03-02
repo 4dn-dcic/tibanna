@@ -4,7 +4,8 @@ from tibanna.ec2_utils import (
     Config,
     Execution,
     upload_workflow_to_s3,
-    get_file_size
+    get_file_size,
+    cost_estimate
 )
 from tibanna.utils import create_jobid
 from tibanna.exceptions import (
@@ -13,8 +14,11 @@ from tibanna.exceptions import (
     EC2InstanceLimitException,
     EC2InstanceLimitWaitException
 )
+from tibanna.awsem import AwsemRunJson, AwsemPostRunJson
 import boto3
 import pytest
+import os
+import json
 
 
 def fun():
@@ -763,3 +767,80 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
                       Delete={'Objects': [{'Key': jobid + '.workflow/main.cwl'},
                                           {'Key': jobid + '.workflow/child1.cwl'},
                                           {'Key': jobid + '.workflow/child2.cwl'}]})
+
+
+def test_ec2_cost_estimate_missing_availablity_zone():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "no_availability_zone.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    assert cost_estimate(postrunjson) == 0.0
+
+
+def test_ec2_cost_estimate_medium_nonspot():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "medium_nonspot.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    aws_price_overwrite = {
+        'ec2_ondemand_price': 0.0416, 'ebs_root_storage_price': 0.08
+        } 
+    estimate = cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    assert estimate == 0.004384172839506173
+
+
+def test_ec2_cost_estimate_small_spot():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "small_spot.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    aws_price_overwrite = {
+        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08
+        } 
+    estimate = cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    assert estimate == 0.0009326172839506175
+
+
+def test_ec2_cost_estimate_small_spot_gp3_iops():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "small_spot_gp3_iops.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    aws_price_overwrite = {
+        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_gp3_iops_price': 0.005
+        } 
+    estimate = cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    assert estimate == 0.0012730879629629633
+
+
+def test_ec2_cost_estimate_small_spot_io2_iops():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "small_spot_io2_iops.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    aws_price_overwrite = {
+        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_storage_price': 0.125, 'ebs_io2_iops_prices': [0.065, 0.0455, 0.03185]
+        } 
+    estimate = cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    assert estimate == 0.029224481481481476
+    

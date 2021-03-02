@@ -325,13 +325,14 @@ def write_postrun_json(jsonfile, prj):
 
 
 def update_postrun_json_init(json_old, json_new):
-    """Update postrun json with just instance ID and filesystem"""
+    """Update postrun json with just instance ID, filesystem and availability zone"""
     # read old json file
     prj = read_postrun_json(json_old)
 
-    # simply add instance ID and file system
+    # simply add instance ID, file system and availability zone
     prj.Job.instance_id = os.getenv('INSTANCE_ID')
     prj.Job.filesystem = os.getenv('EBS_DEVICE')
+    prj.Job.instance_availablity_zone = os.getenv('INSTANCE_AVAILABILITY_ZONE')
 
     # write to new json file
     write_postrun_json(json_new, prj)
@@ -440,6 +441,7 @@ def postrun_json_final(prj, logfile=None):
     prj_job.update(total_tmp_size=os.getenv('TEMPSIZE'))
     prj_job.update(total_output_size=os.getenv('OUTPUTSIZE'))
     
+
 
 def upload_postrun_json(jsonfile):
     prj = read_postrun_json(jsonfile)

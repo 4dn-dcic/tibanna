@@ -28,7 +28,7 @@ class TibannaResource(object):
     def convert_timestamp_to_datetime(cls, timestamp):
         return datetime.strptime(timestamp, cls.timestamp_format)
 
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow()):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.
         :param instance_id: e.g. 'i-0167a6c2d25ce5822'
         :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
@@ -50,6 +50,7 @@ class TibannaResource(object):
         self.end = endtime.replace(microsecond=0) # initial endtime for the window requested
         self.nTimeChunks = nTimeChunks
         self.list_files = []
+        self.cost_estimate = cost_estimate
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -119,6 +120,7 @@ class TibannaResource(object):
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
         }
+
         self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
@@ -322,12 +324,14 @@ class TibannaResource(object):
     def write_html(self, instance_type, directory):
         self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
+        cost_estimate = '---' if self.cost_estimate == 0.0 else "{:.5f}".format(self.cost_estimate)
         with open(filename, 'w') as fo:
             fo.write(self.create_html() % (self.report_title, instance_type,
                              str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
                              str(self.max_disk_space_utilization_percent),
                              '---', # cost placeholder for now
+                             cost_estimate, 
                              str(self.start), str(self.end), str(self.end - self.start)
                             )
                     )
@@ -354,6 +358,8 @@ class TibannaResource(object):
             else:
                 endtime = cls.convert_timestamp_to_datetime(d['Time_of_Request'])
         cost = d['Cost'] if 'Cost' in d else '---'
+        estimated_cost = (float)(d['Estimated_Cost']) if 'Estimated_Cost' in d else 0.0
+        estimated_cost = str(estimated_cost) if estimated_cost > 0.0 else '---'
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         with open(filename, 'w') as fo:
@@ -361,6 +367,7 @@ class TibannaResource(object):
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
+                             estimated_cost,
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
                     )
@@ -425,6 +432,7 @@ class TibannaResource(object):
             fo.write('Start_Time' + '\t' + str(self.start) + '\n')
             fo.write('End_Time' + '\t' + str(self.end) + '\n')
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
+            fo.write('Estimated_Cost' + '\t' + str(self.cost_estimate) + '\n')
         return(filename)
 
     @staticmethod
@@ -613,6 +621,10 @@ class TibannaResource(object):
                       </tr>
                       <tr>
                         <td class="left">Cost</td>
+                        <td class="center">%s</td>
+                      </tr>
+                      <tr>
+                        <td class="left">Cost (estimated) (USD)</td>
                         <td class="center">%s</td>
                       </tr>
                     </table>

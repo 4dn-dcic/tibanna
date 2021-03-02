@@ -356,18 +356,18 @@ You will see the list of users.
     monty	
 
 
-This command will print out the list of users.
+The following command will add a user to a specific user group.
 
 ::
 
-    tibanna add_users --user=<user> --group=<usergroup>
+    tibanna add_user --user=<user> --usergroup=<usergroup>
 
 
 For example, if you have a user named ``monty`` and you want to give permission to this user to user Tibanna ``lalala``. This will give this user permission to run and monitor the workflow, access the buckets that Tibanna usergroup ``lalala``  was given access to through ``tibanna deploy_unicorn --buckets=<b1>,<b2>,...``
 
 ::
 
-    tibanna add_users --user=monty --group=lalala
+    tibanna add_user --user=monty --usergroup=lalala
 
 
 Check users again.
