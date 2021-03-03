@@ -48,6 +48,7 @@ from .ec2_utils import (
     upload_workflow_to_s3,
     cost_estimate
 )
+from .job import Job
 from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .stepfunction import StepFunctionUnicorn
@@ -264,71 +265,16 @@ class API(object):
 
     def check_status(self, exec_arn=None, job_id=None):
         '''checking status of an execution.
-        It works only if the execution info is still in the step function.'''
-        if not exec_arn and job_id:
-            ddinfo = self.info(job_id)
-            if not ddinfo:
-                raise Exception("Can't find exec_arn from the job_id")
-            exec_name = ddinfo.get('Execution Name', '')
-            sfn = ddinfo.get('Step Function', '')
-            exec_arn = EXECUTION_ARN(exec_name, sfn)
-            if not exec_arn:
-                raise Exception("Can't find exec_arn from the job_id")
-        sts = boto3.client('stepfunctions', region_name=AWS_REGION)
-        return sts.describe_execution(executionArn=exec_arn)['status']
+        return Job(exec_arn=exec_arn, job_id=job_id).check_status()
 
     def check_output(self, exec_arn=None, job_id=None):
         '''checking status of an execution first and if it's success, get output.
         It works only if the execution info is still in the step function.'''
-        if not exec_arn and job_id:
-            ddinfo = self.info(job_id)
-            if not ddinfo:
-                raise Exception("Can't find exec_arn from the job_id")
-            exec_name = ddinfo.get('Execution Name', '')
-            sfn = ddinfo.get('Step Function', '')
-            exec_arn = EXECUTION_ARN(exec_name, sfn)
-            if not exec_arn:
-                raise Exception("Can't find exec_arn from the job_id")
-        sts = boto3.client('stepfunctions', region_name=AWS_REGION)
-        if self.check_status(exec_arn) == 'SUCCEEDED':
-            desc = sts.describe_execution(executionArn=exec_arn)
-            if 'output' in desc:
-                return json.loads(desc['output'])
-            else:
-                return None
-
-    def get_dd(self, job_id):
-        '''return raw content from dynamodb for a given job id'''
-        ddres = dict()
-        try:
-            dd = boto3.client('dynamodb')
-            ddres = dd.query(TableName=DYNAMODB_TABLE,
-                             KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                       'ComparisonOperator': 'EQ'}})
-            return ddres
-        except Exception as e:
-            logger.warning("DynamoDB entry not found: %s" % e)
-            return None
+        return Job(exec_arn=exec_arn, job_id=job_id).check_output()
 
     def info(self, job_id):
         '''returns content from dynamodb for a given job id in a dictionary form'''
-        ddres = self.get_dd(job_id)
-        return self.get_info_from_dd(ddres)
-
-    def get_info_from_dd(self, ddres):
-        '''converts raw content from dynamodb to a dictionary form'''
-        if not ddres:
-            return None
-        if 'Items' in ddres:
-            try:
-                dditem = ddres['Items'][0]
-                return dd_utils.item2dict(dditem)
-            except Exception as e:
-                logger.warning("DynamoDB fields not found: %s" % e)
-                return None
-        else:
-            logger.warning("DynamoDB Items field not found:")
-            return None
+        return Job.info(job_id)
 
     def kill(self, exec_arn=None, job_id=None, sfn=None):
         sf = boto3.client('stepfunctions')
