@@ -200,7 +200,7 @@ class API(object):
         except Exception as e:
             raise(e)
         # adding execution info to dynamoDB for fast search by awsem job id
-        self.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
+        Job.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
         data[_tibanna]['response'] = response
         if verbose:
             # print some info
@@ -226,42 +226,6 @@ class API(object):
                        open_browser=False)
             run_infos.append(run_info)
         return run_infos
-
-    def add_to_dydb(self, awsem_job_id, execution_name, sfn, logbucket, verbose=True):
-        time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
-        dydb = boto3.client('dynamodb', region_name=AWS_REGION)
-        try:
-            # first check the table exists
-            res = dydb.describe_table(TableName=DYNAMODB_TABLE)
-        except Exception as e:
-            if verbose:
-                logger.info("Not adding to dynamo table: %s" % e)
-            return
-        try:
-            response = dydb.put_item(
-                TableName=DYNAMODB_TABLE,
-                Item={
-                    'Job Id': {
-                        'S': awsem_job_id
-                    },
-                    'Execution Name': {
-                        'S': execution_name
-                    },
-                    'Step Function': {
-                        'S': sfn
-                    },
-                    'Log Bucket': {
-                        'S': logbucket
-                    },
-                    'Time Stamp': {
-                        'S': time_stamp
-                    }
-                }
-            )
-            if verbose:
-                logger.info("Successfully put item to dynamoDB: " + str(response))
-        except Exception as e:
-            raise(e)
 
     def check_status(self, exec_arn=None, job_id=None):
         """checking status of an execution.
