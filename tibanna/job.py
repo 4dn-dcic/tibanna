@@ -16,18 +16,18 @@ logger = create_logger(__name__)
 class Jobs(object):
 
     @staticmethod
-    def status(job_ids, exec_arns):
+    def status(job_ids=None, exec_arns=None):
         res = dict()
         statuses = dict()
-        if job_id: 
+        if job_ids: 
             for j in job_ids:
                 statuses.update({j: Job(job_id=j).check_status()})
-        if exec_arn:
+        if exec_arns:
             for arn in exec_arns:
                 statuses.append({arn: Job(exec_arn=arn).check_status()})
-        res['succeeded_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'SUCCEEDED'}
-        res['failed_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'FAILED'}
-        res['running_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'RUNNING'}
+        res['completed_jobs'] = [job for job, status in iter(statuses.items()) if status == 'SUCCEEDED']
+        res['failed_jobs'] = [job for job, status in iter(statuses.items()) if status == 'FAILED']
+        res['running_jobs'] = [job for job, status in iter(statuses.items()) if status == 'RUNNING']
         return res
 
 

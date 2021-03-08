@@ -1,8 +1,35 @@
-from tibanna.job import Job
+from tibanna.job import Job, Jobs
 from tibanna.utils import create_jobid
 from tibanna import dd_utils
 from tibanna.vars import DYNAMODB_TABLE, EXECUTION_ARN
 import mock
+
+
+def test_jobs_status_completed():
+    with mock.patch('tibanna.job.Job.check_status', return_value='SUCCEEDED'):
+        res = Jobs.status(job_ids=['jid1', 'jid2', 'jid3'])
+    assert len(res) == 3
+    assert res['completed_jobs'] == ['jid1', 'jid2', 'jid3']
+    assert res['running_jobs'] == []
+    assert res['failed_jobs'] == []
+
+
+def test_jobs_status_running():
+    with mock.patch('tibanna.job.Job.check_status', return_value='RUNNING'):
+        res = Jobs.status(job_ids=['jid1', 'jid2', 'jid3'])
+    assert len(res) == 3
+    assert res['running_jobs'] == ['jid1', 'jid2', 'jid3']
+    assert res['failed_jobs'] == []
+    assert res['completed_jobs'] == []
+
+
+def test_jobs_status_failed():
+    with mock.patch('tibanna.job.Job.check_status', return_value='FAILED'):
+        res = Jobs.status(job_ids=['jid1', 'jid2', 'jid3'])
+    assert len(res) == 3
+    assert res['running_jobs'] == []
+    assert res['failed_jobs'] == ['jid1', 'jid2', 'jid3']
+    assert res['completed_jobs'] == []
 
 
 def test_describe_exec():
