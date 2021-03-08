@@ -747,9 +747,9 @@ class Execution(object):
         """
         job_statuses = Jobs.status(job_ids=job_id, exec_arns=exec_arn)
         if job_statuses['failed_jobs']:
-            raise DependencyFailedException("A Job that this job is dependent on failed: %s" % ','.join(job_statuses['failed_jobs'])
+            raise DependencyFailedException("A Job that this job is dependent on failed: %s" % ','.join(job_statuses['failed_jobs']))
         if job_statuses['running_jobs']:
-            raise DependencyStillRunningException("Dependency is still running: %s" % ','.join(job_statuses['running_jobs'])
+            raise DependencyStillRunningException("Dependency is still running: %s" % ','.join(job_statuses['running_jobs']))
 
     def add_instance_id_to_dynamodb(self):
         dd = boto3.client('dynamodb')

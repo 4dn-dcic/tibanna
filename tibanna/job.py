@@ -1,9 +1,16 @@
 import boto3
+from datetime import datetime
+from . import create_logger
+from tibanna import dd_utils
 from .vars import (
     EXECUTION_ARN,
     AWS_REGION,
     DYNAMODB_TABLE
 )
+
+
+# logger
+logger = create_logger(__name__)
 
 
 class Jobs(object):
@@ -18,20 +25,22 @@ class Jobs(object):
         if exec_arn:
             for arn in exec_arns:
                 statuses.append({arn: Job(exec_arn=arn).check_status()})
-        res['succeeded_jobs'] = [for job, status in iter(statuses.items()) if status == 'SUCCEEDED']
-        res['failed_jobs'] = [for job, status in iter(statuses.items()) if status == 'FAILED']
-        res['running_jobs'] = [for job, status in iter(statuses.items()) if status == 'RUNNING']
+        res['succeeded_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'SUCCEEDED'}
+        res['failed_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'FAILED'}
+        res['running_jobs'] = {job: status for job, status in iter(statuses.items()) if status == 'RUNNING'}
         return res
 
 
 class Job(object):
 
-    def __init__(self, job_id=None, exec_arn=None):
+    def __init__(self, job_id=None, exec_arn=None, sfn=None):
         if not job_id and not exec_arn:
             raise Exception("Provide either through job id or execution arn to retrieve a job.")
         self.job_id = job_id
         self.exec_arn = exec_arn
+        self.sfn = sfn  # only for old tibanna
         self.exec_desc = None
+        self.log_bucket = None
 
     def check_status(self):
         '''checking status of an execution.
@@ -50,17 +59,23 @@ class Job(object):
                 return None
 
     def update_exec_desc(self):
+        """sfn is needed only for old tibanna
+        """
         if not self.exec_desc:
             self.update_exec_arn_from_job_id()
             self.exec_desc = self.describe_exec(self.exec_arn)
 
     def update_exec_arn_from_job_id(self):
         if self.job_id and not self.exec_arn:
-            self.exec_arn = self.get_exec_arn_from_job_id(self.job_id)
+            try:
+                self.exec_arn = self.get_exec_arn_from_job_id(self.job_id)
+            except Exception as e:
+                if sfn:
+                    self.exec_arn = self.get_exec_arn_from_job_id_and_sfn_wo_dd(self.job_id, sfn=self.sfn)
 
     @classmethod
     def get_exec_arn_from_job_id(cls, job_id):
-        ddinfo = cls.info()
+        ddinfo = cls.info(job_id)
         if not ddinfo:
             raise Exception("Can't find exec_arn from the job_id")
         exec_name = ddinfo.get('Execution Name', '')
@@ -69,6 +84,34 @@ class Job(object):
         if not exec_arn:
             raise Exception("Can't find exec_arn from the job_id")
         return exec_arn
+
+    @staticmethod
+    def get_exec_arn_from_job_id_and_sfn_wo_dd(job_id, sfn):
+        """This is for old tibanna that did not use dyndmoDB.
+        We're keeping it just for backward compatibility.
+        Basically searching through all executions in a given sfn to
+        find the execution that matches the job ID.
+        Very slow.
+        """
+        stateMachineArn = STEP_FUNCTION_ARN(sfn)
+        try:
+            sf = boto3.client("stepfuntions", region_name=AWS_REGION)
+            res = sf.list_executions(stateMachineArn=stateMachineArn)
+            while True:
+                if 'executions' not in res or not res['executions']:
+                    break
+                breakwhile = False
+                for exc in res['executions']:
+                    desc = sf.describe_execution(executionArn=exc['executionArn'])
+                    if job_id == str(json.loads(desc['input'])['jobid']):
+                        return exc['executionArn']
+                if 'nextToken' in res:
+                    res = sf.list_executions(nextToken=res['nextToken'],
+                                             stateMachineArn=stateMachineArn)
+                else:
+                    break
+        except:
+            raise Exception("Cannot retrieve job. Try again later.")
 
     @classmethod
     def info(cls, job_id):
@@ -110,3 +153,41 @@ class Job(object):
         else:
             logger.warning("DynamoDB Items field not found:")
             return None
+
+    @staticmethod
+    def add_to_dd(job_id, execution_name, sfn, logbucket, verbose=True):
+        time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
+        dydb = boto3.client('dynamodb', region_name=AWS_REGION)
+        try:
+            # first check the table exists
+            res = dydb.describe_table(TableName=DYNAMODB_TABLE)
+        except Exception as e:
+            if verbose:
+                logger.info("Not adding to dynamo table: %s" % e)
+            return
+        try:
+            response = dydb.put_item(
+                TableName=DYNAMODB_TABLE,
+                Item={
+                    'Job Id': {
+                        'S': job_id
+                    },
+                    'Execution Name': {
+                        'S': execution_name
+                    },
+                    'Step Function': {
+                        'S': sfn
+                    },
+                    'Log Bucket': {
+                        'S': logbucket
+                    },
+                    'Time Stamp': {
+                        'S': time_stamp
+                    }
+                }
+            )
+            if verbose:
+                logger.info("Successfully put item to dynamoDB: " + str(response))
+        except Exception as e:
+            raise(e)
+

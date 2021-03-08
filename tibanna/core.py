@@ -264,12 +264,14 @@ class API(object):
             raise(e)
 
     def check_status(self, exec_arn=None, job_id=None):
-        '''checking status of an execution.
+        """checking status of an execution.
+        """
         return Job(exec_arn=exec_arn, job_id=job_id).check_status()
 
     def check_output(self, exec_arn=None, job_id=None):
-        '''checking status of an execution first and if it's success, get output.
-        It works only if the execution info is still in the step function.'''
+        """checking status of an execution first and if it's success, get output.
+        It works only if the execution info is still in the step function.
+        """
         return Job(exec_arn=exec_arn, job_id=job_id).check_output()
 
     def info(self, job_id):
