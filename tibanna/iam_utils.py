@@ -9,7 +9,8 @@ from .vars import (
     LAMBDA_TYPE,
     SFN_TYPE,
     RUN_TASK_LAMBDA_NAME,
-    CHECK_TASK_LAMBDA_NAME
+    CHECK_TASK_LAMBDA_NAME,
+    UPDATE_COST_LAMBDA_NAME
 )
 
 
@@ -24,6 +25,7 @@ class IAM(object):
     sfn_type = SFN_TYPE  # sfn type : 'unicorn' for unicorn, 'pony' for pony, 'zebra' for zebra
     run_task_lambda_name = RUN_TASK_LAMBDA_NAME
     check_task_lambda_name = CHECK_TASK_LAMBDA_NAME
+    update_cost_lambda_name = UPDATE_COST_LAMBDA_NAME
 
     def __init__(self, user_group_tag, bucket_names='', no_randomize=True):
         """policy prefix for user group
@@ -35,7 +37,7 @@ class IAM(object):
           prefix : tibanna_ / tibanna_pony_
         """
         # lambda names
-        self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name]
+        self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name, self.update_cost_lambda_name]
         if self.lambda_type:
             self.prefix = 'tibanna_' + self.lambda_type + '_'
         else:
@@ -137,13 +139,16 @@ class IAM(object):
                                         'executions', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
                                           'termination', 'dynamodb', 'pricing']
+        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
                    self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] +
                                               ['arn:aws:iam::aws:policy/AmazonEC2FullAccess'],
-                   self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types]}
+                   self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types],
+                   self.update_cost_lambda_name: [self.policy_arn(_) for _ in update_cost_custom_policy_types]}
+                   
         if role_type not in arnlist:
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
         return arnlist[role_type]

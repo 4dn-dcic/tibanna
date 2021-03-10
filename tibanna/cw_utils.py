@@ -2,7 +2,8 @@ import boto3, os
 from . import create_logger
 from .utils import (
     upload,
-    read_s3
+    read_s3,
+    put_object_s3
 )
 from .top import Top
 from .vars import (
@@ -339,9 +340,6 @@ class TibannaResource(object):
 
     @classmethod
     def update_html(cls, bucket, prefix, directory='.', upload_new=True):
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-        filename = directory + '/' + 'metrics.html'
         # reading tabel parameters from metrics_report.tsv
         read_file = read_s3(bucket, os.path.join(prefix, 'metrics_report.tsv'))
         d = {} # read the values into d
@@ -362,18 +360,15 @@ class TibannaResource(object):
         estimated_cost = str(estimated_cost) if estimated_cost > 0.0 else '---'
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
-        with open(filename, 'w') as fo:
-            fo.write(cls.create_html() % (cls.report_title, instance,
+        html_content = cls.create_html() % (cls.report_title, instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
                              estimated_cost,
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
-                    )
-        if upload_new:
-            upload(filename, bucket, prefix)
-            os.remove(filename)
+        s3_key = os.path.join(prefix, 'metrics.html')
+        put_object_s3(content=html_content, key=s3_key, bucket=bucket)
 
     @staticmethod
     def write_top_tsvs(directory, top_content):

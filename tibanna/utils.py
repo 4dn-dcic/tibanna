@@ -122,6 +122,22 @@ def upload(filepath, bucket, prefix='', public=True):
             s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private')
 
 
+def put_object_s3(content, key, bucket, public=True):
+    if public:
+        acl='public-read'
+    else:
+        acl='private'
+    s3 = boto3.client('s3')
+    content_type = mimetypes.guess_type(key)[0]
+    if content_type is None:
+        content_type = 'binary/octet-stream'
+    try:
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=key, ACL=acl, ContentType=content_type)
+    except Exception as e:
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=key, ACL='private', ContentType=content_type)
+
+
+
 def retrieve_all_keys(prefix, bucket):
     s3 = boto3.client('s3')
     ContinuationToken=''
