@@ -85,7 +85,7 @@ class StepFunctionCostUpdater(object):
         state_defs = {
             "Wait": {
             "Type": "Wait",
-            "Seconds": 21600,
+            "Seconds": 21600, # Check every 6h
             "Next": "UpdateCostAwsem"
             },
             "UpdateCostAwsem": {
