@@ -70,19 +70,21 @@ class Job(object):
             try:
                 self.exec_arn = self.get_exec_arn_from_job_id(self.job_id)
             except Exception as e:
-                if sfn:
+                if self.sfn:
                     self.exec_arn = self.get_exec_arn_from_job_id_and_sfn_wo_dd(self.job_id, sfn=self.sfn)
+                else:
+                    raise e
 
     @classmethod
     def get_exec_arn_from_job_id(cls, job_id):
         ddinfo = cls.info(job_id)
         if not ddinfo:
-            raise Exception("Can't find exec_arn from the job_id")
+            raise Exception("Can't find dynamoDB entry for job_id %s" % job_id)
         exec_name = ddinfo.get('Execution Name', '')
+        if not exec_name:
+            raise Exception("Can't find exec_name from dynamoDB for job_id %s" % job_id)
         sfn = ddinfo.get('Step Function', '')
         exec_arn = EXECUTION_ARN(exec_name, sfn)
-        if not exec_arn:
-            raise Exception("Can't find exec_arn from the job_id")
         return exec_arn
 
     @staticmethod

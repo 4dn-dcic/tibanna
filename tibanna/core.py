@@ -200,7 +200,7 @@ class API(object):
         except Exception as e:
             raise(e)
         # adding execution info to dynamoDB for fast search by awsem job id
-        Job.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
+        Job.add_to_dd(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
         data[_tibanna]['response'] = response
         if verbose:
             # print some info

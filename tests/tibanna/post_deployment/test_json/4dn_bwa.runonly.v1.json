@@ -19,12 +19,12 @@
     "cwl_version": "v1",
     "input_files": {
       "fastq1": {
-        "bucket_name": "4dn-tool-evaluation-files",
-        "object_key": "GM12878_SRR1658581_1pc_1_R1.fastq.h10000"
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "tibanna-test/human.10k.R1.fastq.gz"
       },
       "fastq2": {
-        "bucket_name": "4dn-tool-evaluation-files",
-        "object_key": "GM12878_SRR1658581_1pc_1_R2.fastq.h10000"
+        "bucket_name": "soos-4dn-bucket",
+        "object_key": "tibanna-test/human.10k.R2.fastq.gz"
       },
       "bwa_index": {
         "bucket_name": "elasticbeanstalk-fourfront-webdev-files",
