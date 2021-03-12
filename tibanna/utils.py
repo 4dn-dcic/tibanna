@@ -3,6 +3,7 @@ import string
 import boto3
 import os
 import mimetypes
+import json
 from uuid import uuid4, UUID
 from . import create_logger
 from .vars import (
@@ -153,3 +154,40 @@ def delete_keys(keylist, bucket):
             }
         )
         i_curr = i_next
+
+def handle_lifecycle_configuration(data):
+    client = boto3.client("s3")
+    args = data['args']
+
+    configuration_keys = ['log_bucket_lifecyle_configuration', 'output_bucket_lifecyle_configuration']
+    buckets = [data['config']['log_bucket'], args['output_S3_bucket']]
+
+    for configuration_key, bucket in zip(configuration_keys,buckets):
+        if(configuration_key in args):
+            bucket_configuration = json.dumps(args[configuration_key]).replace("%JOBID%", data['jobid'])
+            bucket_configuration = json.loads(bucket_configuration)
+            mode = bucket_configuration['mode']
+            aws_config = bucket_configuration['aws_config']
+
+            try:
+                if mode == 'add':
+                    response = client.get_bucket_lifecycle_configuration(Bucket=bucket)
+                    old_rules = response['Rules']
+                    aws_config['Rules'] = aws_config['Rules'] + old_rules
+            except Exception as e:
+                if 'NoSuchLifecycleConfiguration' in str(e):
+                    # This happens when there are no configurations in the bucket
+                    pass
+                else:
+                    logger.warning("Could not get lifecycle configuration. %s" % str(e))
+
+            try:
+                client.put_bucket_lifecycle_configuration(
+                        Bucket=bucket, LifecycleConfiguration=aws_config
+                    )
+            except Exception as e:
+                logger.warning("Could not add lifecycle configuration to bucket. %s" % str(e))
+
+    
+    
+

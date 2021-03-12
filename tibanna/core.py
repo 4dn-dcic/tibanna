@@ -41,7 +41,8 @@ from .utils import (
     read_s3,
     upload,
     retrieve_all_keys,
-    delete_keys
+    delete_keys,
+    handle_lifecycle_configuration
 )
 from .ec2_utils import (
     UnicornInput,
@@ -184,6 +185,9 @@ class API(object):
                args.language == 'snakemake' and args.snakemake_directory_local:
                 upload_workflow_to_s3(unicorn_input)
                 data['args'] = args.as_dict()  # update args
+
+            handle_lifecycle_configuration(data)
+        
         # submit job as an execution
         aws_input = json.dumps(data)
         if verbose:
