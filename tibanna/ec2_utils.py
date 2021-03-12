@@ -286,6 +286,8 @@ class Config(SerializableObject):
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+        if not hasattr(self, 'encrypt_s3_upload'):
+            self.encrypt_s3_upload = False
         if not hasattr(self, 'root_ebs_size'):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
         if not hasattr(self, 'awsf_image'):

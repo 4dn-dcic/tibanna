@@ -275,13 +275,14 @@ def read_md5file(md5file):
     return md5dict
 
 
-def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=None):
+def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=None, strict=True):
     """create a dictionary that contains 'path', 'secondaryFiles', 'md5sum' with argnames as keys.
     For snakemake and shell, returns an empty dictionary (execution_metadata not required).
     secondaryFiles is added only if the language is cwl.
     execution_metadata is a dictionary read from wdl/cwl execution log json file.
-    md5dict is a dictionary with key=file path, value=md5sum (optional)."""
-    if language in ['cwl', 'cwl_v1', 'wdl'] and not execution_metadata:
+    md5dict is a dictionary with key=file path, value=md5sum (optional).
+    if strict is set False, then it does not check executio_metadata exists for cwl/wdl."""
+    if language in ['cwl', 'cwl_v1', 'wdl'] and not execution_metadata and strict:
         raise Exception("execution_metadata is required for cwl/wdl.")
     out_meta = dict()
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
@@ -338,13 +339,16 @@ def update_postrun_json_init(json_old, json_new):
     write_postrun_json(json_new, prj)
 
 
-def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new, language='cwl_v1'):
-    """Update postrun json with output files"""
+def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new,
+                                      language='cwl_v1', strict=True, upload=True):
+    """Update postrun json with output files.
+    if strict is set false, it does not check execution metadata is required for cwl/wdl."""
     # read old json file and prepare postrunjson skeleton
     prj = read_postrun_json(json_old)
 
     # read md5 file
     md5dict = read_md5file(md5file)
+    print(md5dict)
 
     # read execution metadata file
     if execution_metadata_file:
@@ -352,13 +356,15 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
             execution_metadata = json.load(f)
     else:
         execution_metadata = None
-    output_files = create_output_files_dict(language, execution_metadata, md5dict)
+    output_files = create_output_files_dict(language, execution_metadata, md5dict, strict=strict)
+    print(output_files)
 
     # create output files for postrun json
     prj.Job.Output.add_output_files(output_files)
 
     # upload output to S3 (this also updates postrun json)
-    upload_output(prj)
+    if upload:
+        upload_output(prj)
 
     # write to new json file
     write_postrun_json(json_new, prj)
@@ -440,16 +446,28 @@ def postrun_json_final(prj, logfile=None):
     prj_job.update(total_input_size=os.getenv('INPUTSIZE'))
     prj_job.update(total_tmp_size=os.getenv('TEMPSIZE'))
     prj_job.update(total_output_size=os.getenv('OUTPUTSIZE'))
-    
 
 
 def upload_postrun_json(jsonfile):
     prj = read_postrun_json(jsonfile)
     bucket = prj.Job.Log.log_bucket_directory
     dest = prj.Job.JOBID + '.postrun.json'
+    if '/' in bucket:
+        bucket_dirs = bucket.split('/')
+        bucket = bucket_dirs.pop(0)
+        prefix = '/'.join(bucket_dirs)
+        dest = prefix + '/' + dest
     if prj.config.public_postrun_json:
         acl = 'public-read'
     else:
         acl = 'private'
     s3 = boto3.client('s3')
-    s3.put_object(ACL=acl, Body=format_postrun_json(prj).encode('utf-8'), Bucket=bucket, Key=dest)
+    upload_arg = {
+        "Body": format_postrun_json(prj).encode('utf-8'),
+        "Bucket": bucket,
+        "Key": dest,
+        "ACL": acl
+    }
+    if prj.config.encrypt_s3_upload:
+        upload_arg.update({"ServerSideEncryption": "aws:kms"})
+    s3.put_object(**upload_arg)
