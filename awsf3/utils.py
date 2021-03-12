@@ -372,10 +372,10 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
 
 def upload_output(prj):
     # parsing output_target and uploading output files to output target
-    upload_to_output_target(prj.Job.Output)
+    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload)
 
 
-def upload_to_output_target(prj_out):
+def upload_to_output_target(prj_out, encrypt_s3_upload=False):
     # parsing output_target and uploading output files to output target
     output_bucket = prj_out.output_bucket_directory
     output_argnames = prj_out.output_files.keys()
@@ -390,7 +390,7 @@ def upload_to_output_target(prj_out):
             target.parse_custom_target(k, output_target[k])
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3()
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
             else:
                 raise Exception("Invalid target %s -> %s: failed to upload" % k, output_target[k])
         else:
@@ -399,7 +399,7 @@ def upload_to_output_target(prj_out):
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3()
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
                 prj_out.output_files[k].add_target(target.dest)
     
                 # upload secondary files
@@ -409,7 +409,7 @@ def upload_to_output_target(prj_out):
                     stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
                     stlist.reorder_by_source([sf.path for sf in secondary_output_files])
                     for st in stlist.secondary_targets:
-                        st.upload_to_s3()
+                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
                     for i, sf in enumerate(secondary_output_files):
                         sf.add_target(stlist.secondary_targets[i].dest)
             else:

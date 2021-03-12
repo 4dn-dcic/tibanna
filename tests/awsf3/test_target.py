@@ -433,3 +433,80 @@ def test_upload_zip_directory_conflict(capsys):
     test_and_delete_key('some_test_object_prefix/file1')
     test_and_delete_key('some_test_object_prefix/file2')
     test_and_delete_key('some_test_object_prefix/dir1/file1')
+
+
+def test_upload_file_encrypt_s3_upload():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_file_to_upload'
+    target.dest = 'some_test_object_key'
+    target.upload_to_s3(encrypt_s3_upload=True)
+    s3 = boto3.client('s3')
+    res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert res['Body'].read().decode('utf-8') == 'abcd\n'
+    res = s3.head_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    with pytest.raises(Exception) as ex:
+        res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_key')
+    assert 'NoSuchKey' in str(ex.value)
+
+
+def test_upload_file_prefix_encrypt_s3_upload():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_file_to_upload'
+    target.dest = 'some_test_object_prefix/'
+    target.upload_to_s3(encrypt_s3_upload=True)
+    s3 = boto3.client('s3')
+    res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    assert res['Body'].read().decode('utf-8') == 'abcd\n'
+    res = s3.head_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    s3.delete_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    with pytest.raises(Exception) as ex:
+        res = s3.get_object(Bucket=upload_test_bucket, Key='some_test_object_prefix/tests/awsf3/test_files/some_test_file_to_upload')
+    assert 'NoSuchKey' in str(ex.value)
+
+
+def test_upload_dir_encrypt_s3_upload():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_test_dir_to_upload'  # has two files and one subdir
+    target.dest = 'some_test_object_prefix/'
+    target.upload_to_s3(encrypt_s3_upload=True)
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        res = s3.head_object(Bucket=upload_test_bucket, Key=key)
+        assert res['ServerSideEncryption'] == 'aws:kms'
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex.value)
+
+    test_and_delete_key('some_test_object_prefix/file1')
+    test_and_delete_key('some_test_object_prefix/file2')
+    test_and_delete_key('some_test_object_prefix/dir1/file1')
+
+
+def test_upload_zip_encrypt_s3_upload():
+    target = Target(upload_test_bucket)
+    target.source = 'tests/awsf3/test_files/some_zip_file_to_upload.zip'  # has two files and one subdir
+    target.dest = 'some_test_object_prefix/'
+    target.unzip = True
+    target.upload_to_s3(encrypt_s3_upload=True)
+    s3 = boto3.client('s3')
+
+    def test_and_delete_key(key):
+        res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert res['Body'].read()
+        res = s3.head_object(Bucket=upload_test_bucket, Key=key)
+        assert res['ServerSideEncryption'] == 'aws:kms'
+        s3.delete_object(Bucket=upload_test_bucket, Key=key)
+        with pytest.raises(Exception) as ex:
+            res = s3.get_object(Bucket=upload_test_bucket, Key=key)
+        assert 'NoSuchKey' in str(ex.value)
+
+    test_and_delete_key('some_test_object_prefix/file1')
+    test_and_delete_key('some_test_object_prefix/file2')
+    test_and_delete_key('some_test_object_prefix/dir1/file1')

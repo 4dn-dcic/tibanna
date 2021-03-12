@@ -651,3 +651,62 @@ def test_update_postrun_json_upload_output():
         d = json.load(f)
     print(d)
     assert 'md5sum' in d['Job']['Output']['Output files']['vcf']
+
+
+def test_upload_output():
+    prjfile = "tests/awsf3/postrunjson/testJob-ABC.postrun.json"
+    with open(prjfile, 'r') as f:
+        d = json.load(f)
+    prj = AwsemPostRunJson(**d)
+    upload_output(prj)
+
+    # get the results to check
+    s3 = boto3.client('s3')
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload')
+    assert 'ServerSideEncryption' not in res
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload2')
+    assert 'ServerSideEncryption' not in res
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload3.abc')
+    assert 'ServerSideEncryption' not in res
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
+    assert 'ServerSideEncryption' not in res
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
+    assert 'ServerSideEncryption' not in res
+    
+    # clean up
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload2')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload3.abc')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file2')
+
+
+def test_upload_output_encrypt_s3_upload():
+    prjfile = "tests/awsf3/postrunjson/testJob-ABC.postrun.json"
+    with open(prjfile, 'r') as f:
+        d = json.load(f)
+    d['config']['encrypt_s3_upload'] = True
+    prj = AwsemPostRunJson(**d)
+    upload_output(prj)
+
+    # get the results to check
+    s3 = boto3.client('s3')
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload2')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload3.abc')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    res = s3.head_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
+    assert res['ServerSideEncryption'] == 'aws:kms'
+    
+    # clean up
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload2')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_test_file_to_upload3.abc')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
+    s3.delete_object(Bucket="soos-4dn-bucket", Key='tibanna-test/some_zip_file_to_upload/file2')
