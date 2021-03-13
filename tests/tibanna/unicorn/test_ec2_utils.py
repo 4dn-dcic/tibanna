@@ -1,3 +1,9 @@
+import boto3
+import pytest
+import os
+import json
+import mock
+from tibanna.job import Jobs
 from tibanna.ec2_utils import (
     UnicornInput,
     Args,
@@ -12,13 +18,11 @@ from tibanna.exceptions import (
     MissingFieldInInputJsonException,
     MalFormattedInputJsonException,
     EC2InstanceLimitException,
-    EC2InstanceLimitWaitException
+    EC2InstanceLimitWaitException,
+    DependencyStillRunningException,
+    DependencyFailedException
 )
 from tibanna.awsem import AwsemRunJson, AwsemPostRunJson
-import boto3
-import pytest
-import os
-import json
 
 
 def fun():
@@ -936,3 +940,28 @@ def test_ec2_cost_estimate_small_spot_io2_iops():
     estimate = cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.029224481481481476
     
+
+def test_check_dependency():
+    job_statuses = {
+        'running_jobs': ['jid1', 'jid2'],
+        'failed_jobs': []
+    }
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
+        with pytest.raises(DependencyStillRunningException) as exec_info:
+            Execution.check_dependency(job_id=['jid1', 'jid2'])
+    assert 'still running' in str(exec_info.value)
+    assert 'jid1' in str(exec_info.value)
+    assert 'jid2' in str(exec_info.value)
+
+
+def test_check_dependency_failed():
+    job_statuses = {
+        'running_jobs': ['jid1'],
+        'failed_jobs': ['jid2']
+    }
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
+        with pytest.raises(DependencyFailedException) as exec_info:
+            Execution.check_dependency(job_id=['jid1', 'jid2'])
+    assert 'failed' in str(exec_info.value)
+    assert 'jid1' not in str(exec_info.value)
+    assert 'jid2' in str(exec_info.value)

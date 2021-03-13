@@ -25,6 +25,7 @@ from .vars import (
     DEFAULT_AWSF_IMAGE,
     AWS_REGION_NAMES
 )
+from .job import Jobs
 from .exceptions import (
     MissingFieldInInputJsonException,
     MalFormattedInputJsonException,
@@ -755,15 +756,17 @@ class Execution(object):
                 'availability_zone' : availability_zone,
                 'start_time': self.get_start_time()})
 
-    def check_dependency(self, exec_arn=None):
-        if exec_arn:
-            client = boto3.client('stepfunctions', region_name=AWS_REGION)
-            for arn in exec_arn:
-                res = client.describe_execution(executionArn=arn)
-                if res['status'] == 'RUNNING':
-                    raise DependencyStillRunningException("Dependency is still running: %s" % arn)
-                elif res['status'] == 'FAILED':
-                    raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
+    @staticmethod
+    def check_dependency(exec_arn=None, job_id=None):
+        """take a list of exec_arns and/or a list of job_ids
+        and raise DependencyFailedException if any of these failed
+        or raise DependencyStillRunningException if any of these are running.
+        """
+        job_statuses = Jobs.status(job_ids=job_id, exec_arns=exec_arn)
+        if job_statuses['failed_jobs']:
+            raise DependencyFailedException("A Job that this job is dependent on failed: %s" % ','.join(job_statuses['failed_jobs']))
+        if job_statuses['running_jobs']:
+            raise DependencyStillRunningException("Dependency is still running: %s" % ','.join(job_statuses['running_jobs']))
 
     def add_instance_id_to_dynamodb(self):
         dd = boto3.client('dynamodb')
