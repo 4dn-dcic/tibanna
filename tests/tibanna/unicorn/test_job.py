@@ -3,6 +3,19 @@ from tibanna.utils import create_jobid
 from tibanna import dd_utils
 from tibanna.vars import DYNAMODB_TABLE, EXECUTION_ARN
 import mock
+import boto3
+
+
+def test_stepfunction_exists():
+    assert Job.stepfunction_exists('haha') is False
+
+
+def test_stepfunction_exists2():
+    """this test will fail is there is no step function deployed on aws"""
+    sf = boto3.client('stepfunctions')
+    res= sf.list_state_machines()
+    sfn_name = res['stateMachines'][0]['name']  # some existing step function
+    assert Job.stepfunction_exists(sfn_name) is True
 
 
 def test_jobs_status_completed():

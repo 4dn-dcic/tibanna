@@ -70,6 +70,11 @@ To create an instance of tibanna unicorn (step function + lambdas)
                                            (this way postrunjson and metrics reports will
                                            not be public)
 
+-C|--deploy-costupdater                    Deploys an additional step function that will periodically 
+                                           check, if the cost for a workflow run can be retrieved from AWS.
+                                           If it is available, it will automatically update the
+                                           metrics report.
+
 
 Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
 

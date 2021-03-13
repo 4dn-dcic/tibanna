@@ -131,6 +131,7 @@ SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''
 RUN_TASK_LAMBDA_NAME = 'run_task_awsem'
 CHECK_TASK_LAMBDA_NAME = 'check_task_awsem'
+UPDATE_COST_LAMBDA_NAME = 'update_cost_awsem'
 
 
 # step function and execution ARN generators

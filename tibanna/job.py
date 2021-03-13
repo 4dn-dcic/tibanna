@@ -3,6 +3,7 @@ from datetime import datetime
 from . import create_logger
 from tibanna import dd_utils
 from .vars import (
+    STEP_FUNCTION_ARN,
     EXECUTION_ARN,
     AWS_REGION,
     DYNAMODB_TABLE
@@ -41,6 +42,12 @@ class Job(object):
         self.sfn = sfn  # only for old tibanna
         self.exec_desc = None
         self.log_bucket = None
+        self.costupdater_exec_arn = None
+        self.costupdater_exec_desc = None
+
+    def check_costupdater_status(self):
+        self.update_costupdater_exec_desc()
+        return self.costupdater_exec_desc['status']
 
     def check_status(self):
         '''checking status of an execution.
@@ -65,6 +72,16 @@ class Job(object):
             self.update_exec_arn_from_job_id()
             self.exec_desc = self.describe_exec(self.exec_arn)
 
+    def update_costupdater_exec_desc(self):
+        if not self.costupdater_exec_desc:
+            self.update_costupdater_exec_arn_from_job_id()
+            self.costupdater_exec_desc = self.describe_exec(self.costupdater_exec_arn)
+
+    def update_costupdater_exec_arn_from_job_id(self):
+        if not self.costupdater_exec_arn:
+            self.costupdater_exec_arn = self.get_costupdater_exec_arn_from_job_id(self.job_id)
+        # older tibanna does not have cost updater so we don't need to try the old way of doing it without dd.
+
     def update_exec_arn_from_job_id(self):
         if self.job_id and not self.exec_arn:
             try:
@@ -74,6 +91,31 @@ class Job(object):
                     self.exec_arn = self.get_exec_arn_from_job_id_and_sfn_wo_dd(self.job_id, sfn=self.sfn)
                 else:
                     raise e
+
+    @staticmethod
+    def stepfunction_exists(sfn_name):
+        sf = boto3.client('stepfunctions')
+        try:
+            sf.describe_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn_name))
+            return True
+        except Exception as e:
+            if "State Machine Does Not Exist" in str(e):
+                return False
+
+    @classmethod
+    def get_costupdater_exec_arn_from_job_id(cls, job_id):
+        ddinfo = cls.info(job_id)
+        if not ddinfo:
+            raise Exception("Can't find dynamoDB entry for job_id %s" % job_id)
+        exec_name = ddinfo.get('Execution Name', '')
+        if not exec_name:
+            raise Exception("Can't find exec_name from dynamoDB for job_id %s" % job_id)
+        sfn = ddinfo.get('Step Function', '')
+        if not cls.stepfunction_exists(sfn + "_costupdater"):
+            raise Exception("Costupdater step function does not exist." + 
+                            "To use costupdater, upgrade your tibanna to >=1.1 and redeploy with -C option!")
+        exec_arn = EXECUTION_ARN(exec_name, sfn + "_costupdater")
+        return exec_arn
 
     @classmethod
     def get_exec_arn_from_job_id(cls, job_id):

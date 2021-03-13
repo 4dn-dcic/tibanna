@@ -247,12 +247,10 @@ send_log
 exl echo
 exl echo "## Calculating md5sum of output files"
 exl date
+touch $MD5FILE
 if [[ $LANGUAGE == 'cwl_v1' ]]
 then
     exl md5sum $LOCAL_OUTDIR_CWL/* | grep -v "$JOBID" >> $MD5FILE ;  ## exclude log file, to avoid confusion
-elif [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
-then
-    exl md5sum $LOCAL_OUTDIR_WDL/* >> $MD5FILE ;  # log file is not in this directory for wdl
 fi
 exl cat $MD5FILE
 mv $MD5FILE $LOCAL_OUTDIR
