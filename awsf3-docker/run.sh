@@ -47,7 +47,9 @@ export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export INSTANCE_AVAILABILITY_ZONE=$(ec2metadata --availability-zone)
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
-
+export LOCAL_OUTDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_OUTDIR
+export LOCAL_OUTDIR_WDL=/data1/wdl/cromwell-executions/
+export LOCAL_WF_TMPDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR
 
 
 # function that executes a command and collecting log
@@ -203,7 +205,6 @@ exl echo
 send_log
 cwd0=$(pwd)
 cd $LOCAL_WFDIR
-mkdir -p $LOCAL_WF_TMPDIR
 if [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
 then
   exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
@@ -233,7 +234,8 @@ else
   fi
   # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
   # To prevent this, use the original directory name here.
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $MOUNT_DIR_PREFIX$LOCAL_OUTDIR --tmp-outdir-prefix $MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR --tmpdir-prefix $MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  mkdir -p $LOCAL_WF_TMPDIR_CWL
+  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
   handle_error $?
 fi
 cd $cwd0
@@ -245,7 +247,13 @@ send_log
 exl echo
 exl echo "## Calculating md5sum of output files"
 exl date
-md5sum $MOUNT_DIR_PREFIX$LOCAL_OUTDIR/* | grep -v "$JOBID" >> $MD5FILE ;  ## calculate md5sum for output files (except log file, to avoid confusion)
+if [[ $LANGUAGE == 'cwl_v1' ]]
+then
+    exl md5sum $LOCAL_OUTDIR_CWL/* | grep -v "$JOBID" >> $MD5FILE ;  ## exclude log file, to avoid confusion
+elif [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
+then
+    exl md5sum $LOCAL_OUTDIR_WDL/* >> $MD5FILE ;  # log file is not in this directory for wdl
+fi
 exl cat $MD5FILE
 mv $MD5FILE $LOCAL_OUTDIR
 exl date ## done time

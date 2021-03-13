@@ -265,7 +265,7 @@ class Config(SerializableObject):
 
     def fill_default(self):
         # use benchmark or not
-        if not hasattr(self, 'instance_type') or (not hasattr(self, 'cpu') and hasattr(self, 'mem')):
+        if not hasattr(self, 'instance_type') and (not hasattr(self, 'cpu') or not hasattr(self, 'mem')):
             self.use_benchmark = True
         elif not hasattr(self, 'ebs_size'):
             self.use_benchmark = True 
@@ -333,7 +333,7 @@ class Execution(object):
         self.user_specified_ebs_size = self.cfg.ebs_size
         # get benchmark if available
         self.input_size_in_bytes = self.get_input_size_in_bytes()
-        if self.use_benchmark:
+        if self.cfg.use_benchmark:
             self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
         self.init_instance_type_list()
         self.update_config_instance_type()
@@ -636,12 +636,19 @@ class Execution(object):
         logger.info("jsonbody=\n" + jsonbody)
         # copy the json file to the s3 bucket
         logger.info("json_bucket = " + self.cfg.json_bucket)
+        upload_args = {
+            'Body': jsonbody.encode('utf-8'),
+            'Bucket': self.cfg.json_bucket,
+            'Key': jsonkey
+        }
+        if self.cfg.encrypt_s3_upload:
+            upload_args.update({'ServerSideEncryption': 'aws:kms'})
         try:
             s3 = boto3.client('s3')
         except Exception as e:
             raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
         try:
-            s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
+            s3.put_object(**upload_args)
         except Exception as e:
             raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(e)))
 
@@ -1243,10 +1250,15 @@ def upload_workflow_to_s3(unicorn_input):
         localdir = args.cwl_directory_local
     wf_files.append(main_wf)
     localdir = localdir.rstrip('/')
+    # encrypted s3 upload
+    extra_args = {}
+    if cfg.encrypt_s3_upload:
+        extra_args.update({"ServerSideEncryption": "aws:kms"})
+    s3 = boto3.client('s3')
     for wf_file in wf_files:
         source = localdir + '/' + wf_file
         target = key_prefix + wf_file
-        boto3.client('s3').upload_file(source, bucket, target)
+        s3.upload_file(source, bucket, target, ExtraArgs=extra_args)
     url = "s3://%s/%s" % (bucket, key_prefix)
     if args.language == 'wdl':
         args.wdl_directory_url = url
