@@ -282,7 +282,7 @@ def create_output_files_dict(language='cwl', execution_metadata=None, md5dict=No
     execution_metadata is a dictionary read from wdl/cwl execution log json file.
     md5dict is a dictionary with key=file path, value=md5sum (optional).
     if strict is set False, then it does not check executio_metadata exists for cwl/wdl."""
-    if language in ['cwl', 'cwl_v1', 'wdl'] and not execution_metadata and strict:
+    if language in ['cwl', 'cwl_v1', 'wdl', 'wdl_v1', 'wdl_draft2'] and not execution_metadata and strict:
         raise Exception("execution_metadata is required for cwl/wdl.")
     out_meta = dict()
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:

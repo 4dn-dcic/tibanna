@@ -264,6 +264,13 @@ class Config(SerializableObject):
             setattr(self, k, v)
 
     def fill_default(self):
+        # use benchmark or not
+        if not hasattr(self, 'instance_type') or (not hasattr(self, 'cpu') and hasattr(self, 'mem')):
+            self.use_benchmark = True
+        elif not hasattr(self, 'ebs_size'):
+            self.use_benchmark = True 
+        else:
+            self.use_benchmark = False
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
                       'spot_duration', 'availability_zone', 'security_group', 'subnet']:
@@ -326,7 +333,8 @@ class Execution(object):
         self.user_specified_ebs_size = self.cfg.ebs_size
         # get benchmark if available
         self.input_size_in_bytes = self.get_input_size_in_bytes()
-        self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
+        if self.use_benchmark:
+            self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
         self.init_instance_type_list()
         self.update_config_instance_type()
         self.update_config_ebs_size()
