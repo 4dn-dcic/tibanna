@@ -137,7 +137,6 @@ def put_object_s3(content, key, bucket, public=True):
         s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=key, ACL='private', ContentType=content_type)
 
 
-
 def retrieve_all_keys(prefix, bucket):
     s3 = boto3.client('s3')
     ContinuationToken=''
