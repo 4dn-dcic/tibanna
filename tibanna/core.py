@@ -32,7 +32,8 @@ from .vars import (
     SFN_TYPE,
     LAMBDA_TYPE,
     RUN_TASK_LAMBDA_NAME,
-    CHECK_TASK_LAMBDA_NAME
+    CHECK_TASK_LAMBDA_NAME,
+    UPDATE_COST_LAMBDA_NAME
 )
 from .utils import (
     _tibanna_settings,
@@ -40,6 +41,7 @@ from .utils import (
     does_key_exist,
     read_s3,
     upload,
+    put_object_s3,
     retrieve_all_keys,
     delete_keys
 )
@@ -56,6 +58,7 @@ from .pricing_utils import (
 from .ami import AMI
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .stepfunction import StepFunctionUnicorn
+from .stepfunction_cost_updater import StepFunctionCostUpdater
 from .awsem import AwsemRunJson, AwsemPostRunJson
 from .exceptions import (
     MetricRetrievalException
@@ -83,8 +86,10 @@ class API(object):
 
     @property
     def lambda_names(self):
-        return [mod for mod in dir(self.lambdas_module)
-                if isinstance(getattr(self.lambdas_module, mod), ModuleType)]
+        lambdas = [mod for mod in dir(self.lambdas_module)
+            if isinstance(getattr(self.lambdas_module, mod), ModuleType)]
+        lambdas.remove('update_cost_awsem') # We remove update_cost_awsem, as this typically treated separately
+        return lambdas
 
     @property
     def tibanna_packages(self):
@@ -92,6 +97,7 @@ class API(object):
         return [tibanna]
 
     StepFunction = StepFunctionUnicorn
+    StepFunctionCU = StepFunctionCostUpdater
     default_stepfunction_name = TIBANNA_DEFAULT_STEP_FUNCTION_NAME
     default_env = ''
     sfn_type = SFN_TYPE
@@ -99,6 +105,7 @@ class API(object):
 
     run_task_lambda = RUN_TASK_LAMBDA_NAME
     check_task_lambda = CHECK_TASK_LAMBDA_NAME
+    update_cost_lambda = UPDATE_COST_LAMBDA_NAME
 
     @property
     def UNICORN_LAMBDAS(self):
@@ -203,6 +210,28 @@ class API(object):
             time.sleep(sleep)
         except Exception as e:
             raise(e)
+
+        # trigger the cost updater step function to run
+        try:
+            costupdater_input = {
+                "sfn_arn": data[_tibanna]['exec_arn'],
+                "log_bucket": data['config']['log_bucket'],
+                "job_id": data['jobid'],
+                "aws_region": AWS_REGION
+            }
+            costupdater_input = json.dumps(costupdater_input)
+            response = client.start_execution(
+                stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
+                name=run_name,
+                input=costupdater_input,
+            )
+            time.sleep(sleep)
+        except Exception as e:
+            if 'StateMachineDoesNotExist' in str(e):
+                pass # Tibanna was probably deployed without the cost updater
+            else:
+                raise e
+
         # adding execution info to dynamoDB for fast search by awsem job id
         self.add_to_dydb(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
         data[_tibanna]['response'] = response
@@ -267,7 +296,7 @@ class API(object):
         except Exception as e:
             raise(e)
 
-    def check_status(self, exec_arn=None, job_id=None):
+    def check_status(self, exec_arn=None, job_id=None, sfn_type="unicorn"):
         '''checking status of an execution.
         It works only if the execution info is still in the step function.'''
         if not exec_arn and job_id:
@@ -276,6 +305,8 @@ class API(object):
                 raise Exception("Can't find exec_arn from the job_id")
             exec_name = ddinfo.get('Execution Name', '')
             sfn = ddinfo.get('Step Function', '')
+            if sfn_type == "costupdater":
+                sfn = sfn + "_costupdater"
             exec_arn = EXECUTION_ARN(exec_name, sfn)
             if not exec_arn:
                 raise Exception("Can't find exec_arn from the job_id")
@@ -775,7 +806,7 @@ class API(object):
                 extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
         # add role
         logger.info('name=%s' % name)
-        if name in [self.run_task_lambda, self.check_task_lambda]:
+        if name in [self.run_task_lambda, self.check_task_lambda, self.update_cost_lambda]:
             role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
             if usergroup:
                 role_arn = role_arn_prefix + tibanna_iam.role_name(name)
@@ -783,6 +814,7 @@ class API(object):
                 role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
             logger.info("role_arn=" + role_arn)
             extra_config['Role'] = role_arn
+
         if usergroup and suffix:
             function_name_suffix = usergroup + '_' + suffix
         elif suffix:
@@ -791,6 +823,7 @@ class API(object):
             function_name_suffix = usergroup
         else:
             function_name_suffix = ''
+
         # first delete the existing function to avoid the weird AWS KMS lambda error
         function_name_prefix = getattr(self.lambdas_module, name).config.get('function_name')
         if function_name_suffix:
@@ -805,6 +838,7 @@ class API(object):
             except Exception as e:
                 if 'Function not found' in str(e):
                     pass
+
         aws_lambda.deploy_function(lambda_fxn_module,
                                    function_name_suffix=function_name_suffix,
                                    package_objects=self.tibanna_packages,
@@ -853,7 +887,8 @@ class API(object):
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
-                       buckets='', setenv=False, do_not_delete_public_access_block=False):
+                       buckets='', setenv=False, do_not_delete_public_access_block=False,
+                       deploy_costupdater=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -865,21 +900,32 @@ class API(object):
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
+
+        if(deploy_costupdater):
+            step_function_cu_name = self.create_stepfunction(suffix, usergroup=usergroup, sfn_type="CostUpdater")
+            logger.info("creating a new step function... %s" % step_function_cu_name)
+
         if setenv:
             os.environ['TIBANNA_DEFAULT_STEP_FUNCTION_NAME'] = step_function_name
             with open(os.getenv('HOME') + "/.bashrc", "a") as outfile:  # 'a' stands for "append"
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
+
         logger.info("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup)
+
+        if(deploy_costupdater):
+            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup)
+
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False):
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False, deploy_costupdater = False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
-                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+                            do_not_delete_public_access_block=do_not_delete_public_access_block,
+                            deploy_costupdater=deploy_costupdater)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
@@ -916,12 +962,16 @@ class API(object):
     def create_stepfunction(self, dev_suffix=None,
                             region_name=AWS_REGION,
                             aws_acc=AWS_ACCOUNT_NUMBER,
-                            usergroup=None):
+                            usergroup=None,
+                            sfn_type="Unicorn"):
         if not aws_acc or not region_name:
             logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
             exit(1)
         # create a step function definition object
-        sfndef = self.StepFunction(dev_suffix, region_name, aws_acc, usergroup)
+        if(sfn_type == "CostUpdater"):
+            sfndef = self.StepFunctionCU(dev_suffix, region_name, aws_acc, usergroup)
+        else:
+            sfndef = self.StepFunction(dev_suffix, region_name, aws_acc, usergroup)
         # if this encouters an existing step function with the same name, delete
         sfn = boto3.client('stepfunctions', region_name=region_name)
         retries = 12  # wait 10 seconds between retries for total of 120s
@@ -1172,7 +1222,7 @@ class API(object):
             lambda_suffix = '_' + user_group_name + '_' + suffix
         else:
             lambda_suffix = '_' + user_group_name
-        # delete step function
+        # delete step functions
         sfn = 'tibanna_' + self.sfn_type + lambda_suffix
         if verbose:
             logger.info("deleting step function %s" % sfn)
@@ -1180,6 +1230,16 @@ class API(object):
             boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn))
         except Exception as e:
             handle_error("Failed to cleanup step function: %s" % str(e))
+
+        sfn_costupdater = 'tibanna_' + self.sfn_type + lambda_suffix + '_costupdater'
+        if verbose:
+            logger.info("deleting step function %s" % sfn_costupdater)
+        try:
+            # This does not produce an exception, if the step function does not exist
+            boto3.client('stepfunctions').delete_state_machine(stateMachineArn=STEP_FUNCTION_ARN(sfn_costupdater))
+        except Exception as e:
+            handle_error("Failed to cleanup step function: %s" % str(e))
+
         # delete lambdas
         lambda_client = boto3.client('lambda')
         for lmb in self.lambda_names:
@@ -1189,6 +1249,14 @@ class API(object):
                 lambda_client.delete_function(FunctionName=lmb + lambda_suffix)
             except Exception as e:
                 handle_error("Failed to cleanup lambda: %s" % str(e))
+
+        if verbose:
+            logger.info("deleting lambda functions %s" % self.update_cost_lambda + lambda_suffix)
+        try:
+            lambda_client.delete_function(FunctionName=self.update_cost_lambda  + lambda_suffix)
+        except Exception as e:
+            handle_error("Failed to cleanup lambda: %s" % str(e))
+
         # delete IAM policies, roles and groups
         if not do_not_remove_iam_group:
             if verbose:
