@@ -10,8 +10,8 @@ from .utils import (
     does_key_exist,
     read_s3
 )
-from .ec2_utils import (
-    cost_estimate
+from .pricing_utils import (
+    get_cost_estimate
 )
 from .awsem import (
     AwsemPostRunJson
@@ -190,7 +190,7 @@ class CheckTask(object):
 
     def handle_metrics(self, prj):
         try:
-            estimate = cost_estimate(prj)
+            estimate = get_cost_estimate(prj)
             resources = self.TibannaResource(prj.Job.instance_id,
                                              prj.Job.filesystem,
                                              prj.Job.start_time_as_str,
