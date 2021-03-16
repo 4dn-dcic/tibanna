@@ -431,8 +431,12 @@ def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate
         # Remove Estimated_Cost and Estimated_Cost_Type from file, since we want to update it
         if("Estimated_Cost" in row.split("\t") or "Estimated_Cost_Type" in row.split("\t")):
             continue
+        if("Cost" in row.split("\t") and cost_estimate_type=="actual cost"):
+            continue
         write_file = write_file + row + '\n'
 
+    if(cost_estimate_type=="actual cost"):
+        write_file = write_file + 'Cost\t' + str(cost_estimate) + '\n'
     write_file = write_file + 'Estimated_Cost\t' + str(cost_estimate) + '\n'
     write_file = write_file + 'Estimated_Cost_Type\t' + cost_estimate_type + '\n'
     put_object_s3(content=write_file, key=s3_key, bucket=log_bucket)
