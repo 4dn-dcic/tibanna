@@ -29,7 +29,7 @@ class TibannaResource(object):
     def convert_timestamp_to_datetime(cls, timestamp):
         return datetime.strptime(timestamp, cls.timestamp_format)
 
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0, cost_estimate_type = "NA"):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.
         :param instance_id: e.g. 'i-0167a6c2d25ce5822'
         :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
@@ -52,6 +52,7 @@ class TibannaResource(object):
         self.nTimeChunks = nTimeChunks
         self.list_files = []
         self.cost_estimate = cost_estimate
+        self.cost_estimate_type = cost_estimate_type
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -332,7 +333,7 @@ class TibannaResource(object):
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
                              str(self.max_disk_space_utilization_percent),
                              '---', # cost placeholder for now
-                             cost_estimate, 
+                             cost_estimate, self.cost_estimate_type,
                              str(self.start), str(self.end), str(self.end - self.start)
                             )
                     )
@@ -358,13 +359,14 @@ class TibannaResource(object):
         cost = d['Cost'] if 'Cost' in d else '---'
         estimated_cost = (float)(d['Estimated_Cost']) if 'Estimated_Cost' in d else 0.0
         estimated_cost = str(estimated_cost) if estimated_cost > 0.0 else '---'
+        cost_estimate_type = d['Estimated_Cost_Type'] if 'Estimated_Cost_Type' in d else "NA"
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         html_content = cls.create_html() % (cls.report_title, instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
-                             estimated_cost,
+                             estimated_cost, cost_estimate_type,
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
         s3_key = os.path.join(prefix, 'metrics.html')
@@ -428,6 +430,7 @@ class TibannaResource(object):
             fo.write('End_Time' + '\t' + str(self.end) + '\n')
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
             fo.write('Estimated_Cost' + '\t' + str(self.cost_estimate) + '\n')
+            fo.write('Estimated_Cost_Type' + '\t' + str(self.cost_estimate_type) + '\n')
         return(filename)
 
     @staticmethod
@@ -620,7 +623,7 @@ class TibannaResource(object):
                       </tr>
                       <tr>
                         <td class="left">Cost (estimated) (USD)</td>
-                        <td class="center">%s</td>
+                        <td class="center">%s (%s)</td>
                       </tr>
                     </table>
                     </br></br>
