@@ -359,13 +359,14 @@ class TibannaResource(object):
         cost = d['Cost'] if 'Cost' in d else '---'
         estimated_cost = (float)(d['Estimated_Cost']) if 'Estimated_Cost' in d else 0.0
         estimated_cost = str(estimated_cost) if estimated_cost > 0.0 else '---'
+        cost_estimate_type = d['Estimated_Cost_Type'] if 'Estimated_Cost_Type' in d else "NA"
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
         # writing
         html_content = cls.create_html() % (cls.report_title, instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
-                             estimated_cost,
+                             estimated_cost, cost_estimate_type,
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
         s3_key = os.path.join(prefix, 'metrics.html')
@@ -429,6 +430,7 @@ class TibannaResource(object):
             fo.write('End_Time' + '\t' + str(self.end) + '\n')
             fo.write('Instance_Type' + '\t' + instance_type + '\n')
             fo.write('Estimated_Cost' + '\t' + str(self.cost_estimate) + '\n')
+            fo.write('Estimated_Cost_Type' + '\t' + str(self.cost_estimate_type) + '\n')
         return(filename)
 
     @staticmethod

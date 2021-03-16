@@ -10,9 +10,6 @@ from .utils import (
     does_key_exist,
     read_s3
 )
-from .pricing_utils import (
-    get_cost_estimate
-)
 from .awsem import (
     AwsemPostRunJson
 )
@@ -190,13 +187,11 @@ class CheckTask(object):
 
     def handle_metrics(self, prj):
         try:
-            estimate, cost_estimate_type = get_cost_estimate(prj)
             resources = self.TibannaResource(prj.Job.instance_id,
                                              prj.Job.filesystem,
                                              prj.Job.start_time_as_str,
-                                             prj.Job.end_time_as_str or datetime.now(),
-                                             cost_estimate = estimate,
-                                             cost_estimate_type=cost_estimate_type)
+                                             prj.Job.end_time_as_str or datetime.now())
+
         except Exception as e:
             raise MetricRetrievalException("error getting metrics: %s" % str(e))
         prj.Job.update(Metrics=resources.as_dict())

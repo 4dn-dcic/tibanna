@@ -1012,6 +1012,9 @@ class API(object):
             try:
                 # We don't want to recompute the cost estimate - we take it from the tsv
                 cost_estimate, cost_estimate_type = get_cost_estimate_from_tsv(log_bucket, job_id)
+                if(cost_estimate == 0.0): # Cost estimate is not yet in tsv -> compute it
+                    cost_estimate, cost_estimate_type = self.cost_estimate(job_id=job_id)
+
                 M = self.TibannaResource(instance_id, filesystem, starttime, endtime, cost_estimate = cost_estimate, cost_estimate_type=cost_estimate_type)
                 top_content = self.log(job_id=job_id, top=True)
                 M.plot_metrics(instance_type, directory, top_content=top_content)
@@ -1031,7 +1034,7 @@ class API(object):
         postrunjsonstr = self.log(job_id=job_id, postrunjson=True)
         if not postrunjsonstr:
             logger.info("Cost estimation error: postrunjson not found")
-            return 0.0
+            return 0.0, "NA"
         postrunjsonobj = json.loads(postrunjsonstr)
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
@@ -1041,7 +1044,7 @@ class API(object):
         if(precise_cost and precise_cost > 0.0):
             if update_tsv:
                 update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
-            return precise_cost
+            return precise_cost, "actual cost"
 
         # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
         ebs_root_type = 'gp3' if 'awsf_image' in postrunjsonobj['config'] else 'gp2'
@@ -1050,7 +1053,7 @@ class API(object):
 
         if update_tsv:
             update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type)
-        return cost_estimate
+        return cost_estimate, cost_estimate_type
 
     def cost(self, job_id, sfn=None, update_tsv=False):
         if not sfn:

@@ -458,7 +458,8 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
 
 def cost_estimate(job_id, update_tsv=False):
     """print out estimated cost of a specific job"""
-    print(API().cost_estimate(job_id=job_id, update_tsv=update_tsv))
+    cost_estimate, cost_estimate_type = API().cost_estimate(job_id=job_id, update_tsv=update_tsv)
+    print(f'{cost_estimate} ({cost_estimate_type})')
 
 
 def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=False, do_not_ignore_errors=False, quiet=False):

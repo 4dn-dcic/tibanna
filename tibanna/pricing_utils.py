@@ -391,13 +391,18 @@ def get_cost_estimate_from_tsv(log_bucket, job_id):
     if(does_key_exist(log_bucket, s3_key) == False):
         return cost_estimate, cost_estimate_type
     
-    read_file = read_s3(log_bucket, s3_key)
-    for row in read_file.splitlines():
-        line = row.split("\t")
-        if(line[0] == "Estimated_Cost"):
-            cost_estimate = int(line[1])
-        if(line[0] == "Estimated_Cost_Type"):
-            cost_estimate_type = line[1]
+    try:
+        read_file = read_s3(log_bucket, s3_key)
+        for row in read_file.splitlines():
+            line = row.split("\t")
+            if(line[0] == "Estimated_Cost"):
+                cost_estimate = float(line[1])
+            if(line[0] == "Estimated_Cost_Type"):
+                cost_estimate_type = line[1]
+    except Exception as e:
+        logger.warning("Could not get cost estimate from tsv: %s" % e)
+        pass
+
     return cost_estimate, cost_estimate_type
 
 
@@ -410,6 +415,16 @@ def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate
 
     # reading from metrics_report.tsv
     read_file = read_s3(log_bucket, s3_key)
+
+    # get the current estimate type in the file
+    for row in read_file.splitlines():
+        line = row.split("\t")
+        if(line[0] == "Estimated_Cost_Type"):
+            current_cost_estimate_type = line[1]
+
+    if(cost_estimate_type=="retrospective estimate" and (current_cost_estimate_type=="immediate estimate" or current_cost_estimate_type=="actual cost") ):
+        logger.warning("There already is a probably more accurate estimate in the tsv. Not updating.")
+        return
 
     write_file = ""
     for row in read_file.splitlines():
