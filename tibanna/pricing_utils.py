@@ -71,7 +71,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
 
     if(job.end_time == None):
         logger.warning("job.end_time not available. Cannot calculate estimated cost.")
-        return 0.0
+        return 0.0, "NA"
 
     job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC')
     job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC')
@@ -366,20 +366,42 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                     ) * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_iops_cost
 
-        return estimated_cost
+        time_since_run = (datetime.utcnow() - job_end).total_seconds() / (3600 * 24) # days
+        estimation_type = "retrospective estimate" if time_since_run > 10 else "immediate estimate"
+
+        return estimated_cost, estimation_type
     
     except botocore.exceptions.ClientError as e:
         logger.warning("Cost estimation error: %s. Please try to deploy the latest version of Tibanna." % e)
-        return 0.0
+        return 0.0, "NA"
     except PricingRetrievalException as e:
         logger.warning("Cost estimation error: %s" % e)
-        return 0.0
+        return 0.0, "NA"
     except Exception as e:
         logger.warning("Cost estimation error: %s" % e)
-        return 0.0
+        return 0.0, "NA"
         
 
-def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate):
+def get_cost_estimate_from_tsv(log_bucket, job_id):
+
+    s3_key = os.path.join(job_id + '.metrics/', 'metrics_report.tsv')
+    cost_estimate = 0.0
+    cost_estimate_type = "NA"
+
+    if(does_key_exist(log_bucket, s3_key) == False):
+        return cost_estimate, cost_estimate_type
+    
+    read_file = read_s3(log_bucket, s3_key)
+    for row in read_file.splitlines():
+        line = row.split("\t")
+        if(line[0] == "Estimated_Cost"):
+            cost_estimate = int(line[1])
+        if(line[0] == "Estimated_Cost_Type"):
+            cost_estimate_type = line[1]
+    return cost_estimate, cost_estimate_type
+
+
+def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type):
 
     s3_key = os.path.join(job_id + '.metrics/', 'metrics_report.tsv')
 
@@ -391,11 +413,13 @@ def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate):
 
     write_file = ""
     for row in read_file.splitlines():
-        # Remove Estimated_Cost from file, since we want to update it
-        if("Estimated_Cost" not in row.split("\t")):
-            write_file = write_file + row + '\n'
+        # Remove Estimated_Cost and Estimated_Cost_Type from file, since we want to update it
+        if("Estimated_Cost" in row.split("\t") or "Estimated_Cost_Type" in row.split("\t")):
+            continue
+        write_file = write_file + row + '\n'
 
     write_file = write_file + 'Estimated_Cost\t' + str(cost_estimate) + '\n'
+    write_file = write_file + 'Estimated_Cost_Type\t' + cost_estimate_type + '\n'
     put_object_s3(content=write_file, key=s3_key, bucket=log_bucket)
 
 

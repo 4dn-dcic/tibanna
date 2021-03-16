@@ -780,7 +780,8 @@ def test_ec2_cost_estimate_missing_availablity_zone():
 
     postrunjsonobj = json.loads(postrunjsonstr)
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
-    assert get_cost_estimate(postrunjson) == 0.0
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson)
+    assert estimate == 0.0
 
 
 def test_ec2_cost_estimate_medium_nonspot():
@@ -795,7 +796,7 @@ def test_ec2_cost_estimate_medium_nonspot():
     aws_price_overwrite = {
         'ec2_ondemand_price': 0.0416, 'ebs_root_storage_price': 0.08
         } 
-    estimate = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.004384172839506173
 
 
@@ -811,7 +812,7 @@ def test_ec2_cost_estimate_small_spot():
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08
         } 
-    estimate = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.0009326172839506175
 
 
@@ -827,7 +828,7 @@ def test_ec2_cost_estimate_small_spot_gp3_iops():
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_gp3_iops_price': 0.005
         } 
-    estimate = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.0012730879629629633
 
 
@@ -843,6 +844,6 @@ def test_ec2_cost_estimate_small_spot_io2_iops():
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_storage_price': 0.125, 'ebs_io2_iops_prices': [0.065, 0.0455, 0.03185]
         } 
-    estimate = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.029224481481481476
     

@@ -29,7 +29,7 @@ class TibannaResource(object):
     def convert_timestamp_to_datetime(cls, timestamp):
         return datetime.strptime(timestamp, cls.timestamp_format)
 
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0, cost_estimate_type = "NA"):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.
         :param instance_id: e.g. 'i-0167a6c2d25ce5822'
         :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"
@@ -52,6 +52,7 @@ class TibannaResource(object):
         self.nTimeChunks = nTimeChunks
         self.list_files = []
         self.cost_estimate = cost_estimate
+        self.cost_estimate_type = cost_estimate_type
         self.get_metrics(nTimeChunks)
 
     def get_metrics(self, nTimeChunks=1):
@@ -332,7 +333,7 @@ class TibannaResource(object):
                              str(self.max_mem_utilization_percent), str(self.max_cpu_utilization_percent),
                              str(self.max_disk_space_utilization_percent),
                              '---', # cost placeholder for now
-                             cost_estimate, 
+                             cost_estimate, self.cost_estimate_type,
                              str(self.start), str(self.end), str(self.end - self.start)
                             )
                     )
@@ -620,7 +621,7 @@ class TibannaResource(object):
                       </tr>
                       <tr>
                         <td class="left">Cost (estimated) (USD)</td>
-                        <td class="center">%s</td>
+                        <td class="center">%s (%s)</td>
                       </tr>
                     </table>
                     </br></br>
