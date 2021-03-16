@@ -817,7 +817,7 @@ class API(object):
         logger.info("creating a new step function... %s" % step_function_name)
 
         if(deploy_costupdater):
-            step_function_cu_name = self.create_stepfunction(suffix, usergroup=usergroup, sfn_type="CostUpdater")
+            step_function_cu_name = self.create_stepfunction(suffix, usergroup=usergroup, costupdater=True)
             logger.info("creating a new step function... %s" % step_function_cu_name)
 
         if setenv:
@@ -878,12 +878,12 @@ class API(object):
                             region_name=AWS_REGION,
                             aws_acc=AWS_ACCOUNT_NUMBER,
                             usergroup=None,
-                            sfn_type="Unicorn"):
+                            costupdater=False):
         if not aws_acc or not region_name:
             logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
             exit(1)
         # create a step function definition object
-        if(sfn_type == "CostUpdater"):
+        if(costupdater):
             sfndef = self.StepFunctionCU(dev_suffix, region_name, aws_acc, usergroup)
         else:
             sfndef = self.StepFunction(dev_suffix, region_name, aws_acc, usergroup)
