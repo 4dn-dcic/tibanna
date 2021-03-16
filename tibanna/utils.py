@@ -93,7 +93,7 @@ def does_key_exist(bucket, object_name, quiet=False):
     return file_metadata
 
 
-def upload(filepath, bucket, prefix='', public=True):
+def upload(filepath, bucket, prefix='', public=True, encrypt_s3_upload=False):
     """upload a file to S3 under a prefix.
     The original directory structure is removed
     and only the filename is preserved.
@@ -104,6 +104,10 @@ def upload(filepath, bucket, prefix='', public=True):
     else:
         acl='private'
     s3 = boto3.client('s3')
+    if encrypt_s3_upload:
+        upload_extra_args = {'ServerSideEncryption': 'aws:kms'}
+    else:
+        upload_extra_args = {}
     if filepath:
         dirname, filename = os.path.split(filepath)
         key = os.path.join(prefix, filename)
@@ -111,15 +115,40 @@ def upload(filepath, bucket, prefix='', public=True):
         content_type = mimetypes.guess_type(filename)[0]
         if content_type is None:
             content_type = 'binary/octet-stream'
+        upload_extra_args.update({'ContentType': content_type})
         try:
-            s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': acl, 'ContentType': content_type})
+            upload_extra_args.update({'ACL': acl})
+            s3.upload_file(filepath, bucket, key, ExtraArgs=upload_extra_args)
         except Exception as e:
-            s3.upload_file(filepath, bucket, key, ExtraArgs={'ACL': 'private', 'ContentType': content_type})
+            upload_extra_args.update({'ACL': 'private'})
+            s3.upload_file(filepath, bucket, key, ExtraArgs=upload_extra_args)
     else:
         try:
-            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl)
+            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL=acl, **upload_extra_args)
         except Exception as e:
-            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private')
+            s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private', **upload_extra_args)
+
+
+def put_object_s3(content, key, bucket, public=True, encrypt_s3_upload=False):
+    if public:
+        acl='public-read'
+    else:
+        acl='private'
+    s3 = boto3.client('s3')
+    content_type = mimetypes.guess_type(key)[0]
+    if content_type is None:
+        content_type = 'binary/octet-stream'
+    if encrypt_s3_upload:
+        upload_extra_args = {"ServerSideEncryption": "aws:kms"}
+    else:
+        upload_extra_args = {}
+    try:
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=key, ACL=acl,
+                      ContentType=content_type, **upload_extra_args)
+    except Exception as e:
+        s3.put_object(Body=content.encode('utf-8'), Bucket=bucket, Key=key, ACL='private',
+                      ContentType=content_type, **upload_extra_args)
+
 
 
 def put_object_s3(content, key, bucket, public=True):

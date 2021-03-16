@@ -1,0 +1,149 @@
+{
+    "Job": {
+        "App": {
+            "App_name": "workflow_dbSNP_ID_fixer-check",
+            "App_version": "v21",
+            "cwl_url": "https://raw.githubusercontent.com/dbmi-bgm/cgap-pipeline/v21/cwl",
+            "language": "cwl_v1",
+            "main_cwl": "workflow_parallel_dbSNP_ID_fixer_plus_vcf-integrity-check.cwl",
+            "other_cwl_files": "parallel_dbSNP_ID_fixer.cwl,vcf-integrity-check.cwl"
+        },
+        "Input": {
+            "Env": {},
+            "Input_files_data": {
+                "dbSNP_ref_vcf": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-cgapwolf-files",
+                    "mount": true,
+                    "path": "aa542c8e-b31c-4cff-b2d4-aa4037bb913c/GAPFIF4JKLTH.vcf.gz",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": ""
+                },
+                "input_vcf": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+                    "mount": true,
+                    "path": "6b82a145-3dba-452e-9648-1bb81b0d7b1d/GAPFIF3KTGCP.vcf.gz",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": ""
+                },
+                "region_file": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-cgapwolf-files",
+                    "mount": true,
+                    "path": "1c07a3aa-e2a3-498c-b838-15991c4a2f28/GAPFIBGEOI72.txt",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": ""
+                }
+            },
+            "Input_parameters": {},
+            "Secondary_files_data": {
+                "dbSNP_ref_vcf": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-cgapwolf-files",
+                    "mount": true,
+                    "path": "aa542c8e-b31c-4cff-b2d4-aa4037bb913c/GAPFIF4JKLTH.vcf.gz.tbi",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": ""
+                },
+                "input_vcf": {
+                    "class": "File",
+                    "dir": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+                    "mount": true,
+                    "path": "6b82a145-3dba-452e-9648-1bb81b0d7b1d/GAPFIF3KTGCP.vcf.gz.tbi",
+                    "profile": "",
+                    "rename": "",
+                    "unzip": ""
+                }
+            }
+        },
+        "JOBID": "GBPtlqb2rFGH",
+        "Log": {
+            "log_bucket_directory": "tibanna-output"
+        },
+        "Output": {
+            "Output files": {
+                "vcf": {
+                    "basename": "fixed_GAPFIF3KTGCP.vcf.gz",
+                    "checksum": "sha1$c2a428e01f90887b335b215300ea00828f4a73a1",
+                    "class": "File",
+                    "location": "file:///mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz",
+                    "md5sum": "80e0c0fad26272a96ef95e9362ff7419",
+                    "path": "/mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz",
+                    "secondaryFiles": [
+                        {
+                            "basename": "fixed_GAPFIF3KTGCP.vcf.gz.tbi",
+                            "checksum": "sha1$920e56345b7e31ab44413d9c792b6b6324e7cdea",
+                            "class": "File",
+                            "location": "file:///mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz.tbi",
+                            "md5sum": "56c95ec070f143c565744527150e6101",
+                            "path": "/mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz.tbi",
+                            "size": 2187181
+                        }
+                    ],
+                    "size": 1723376222
+                },
+                "vcf-check": {
+                    "basename": "integrity_check",
+                    "checksum": "sha1$8296f8ccff8a4fad99be5d3d71175134d84e2621",
+                    "class": "File",
+                    "location": "file:///mnt/data1/out/integrity_check",
+                    "md5sum": "475bff046ae43cc36f4edb68f5a35350",
+                    "path": "/mnt/data1/out/integrity_check",
+                    "size": 14
+                }
+            },
+            "alt_cond_output_argnames": {},
+            "output_bucket_directory": "elasticbeanstalk-fourfront-cgapwolf-wfoutput",
+            "output_target": {
+                "vcf": "2a6b9f05-2287-4cb2-be82-3bf6eff5f7be/GAPFIE8ISBQK.vcf.gz",
+                "vcf-check": "f18573ed-7aee-49d8-94c0-5d8ffef1b313/vcf-check553202857276"
+            },
+            "secondary_output_target": {
+                "vcf": [
+                    "2a6b9f05-2287-4cb2-be82-3bf6eff5f7be/GAPFIE8ISBQK.vcf.gz.tbi"
+                ]
+            }
+        },
+        "filesystem": "",
+        "instance_availablity_zone": "",
+        "instance_id": "",
+        "start_time": "20210312-14:04:23-UTC"
+    },
+    "config": {
+        "EBS_optimized": true,
+        "ami_id": "ami-0a7ddfc7e412ab6e0",
+        "availability_zone": "",
+        "awsf_image": "4dndcic/tibanna-awsf:1.0.5",
+        "behavior_on_capacity_limit": "wait_and_retry",
+        "cloudwatch_dashboard": false,
+        "cpu": "",
+        "ebs_iops": "",
+        "ebs_size": 45,
+        "ebs_type": "gp3",
+        "email": false,
+        "encrypt_s3_upload": false,
+        "instance_type": "c5n.4xlarge",
+        "job_tag": "workflow_dbSNP_ID_fixer-check",
+        "json_bucket": "tibanna-output",
+        "key_name": "",
+        "language": "cwl_v1",
+        "log_bucket": "tibanna-output",
+        "mem": 0,
+        "overwrite_input_extra": false,
+        "password": "",
+        "public_postrun_json": false,
+        "root_ebs_size": 8,
+        "run_name": "run_workflow_dbSNP_ID_fixer-check-bcc2009d-f1b0-4629-824c-ae7d0565e256",
+        "script_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/",
+        "security_group": "",
+        "shutdown_min": "now",
+        "spot_duration": "",
+        "spot_instance": true,
+        "subnet": ""
+    }
+}

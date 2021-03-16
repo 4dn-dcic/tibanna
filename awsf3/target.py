@@ -108,13 +108,16 @@ class Target(object):
             yield {'name': content_file_name, 'content': z.open(content_file_name).read()}
         yield None
 
-    def upload_to_s3(self):
+    def upload_to_s3(self, encrypt_s3_upload=False):
         """upload target to s3, source can be either a file or a directory."""
         if not self.is_valid:
             raise Exception('Upload Error: source / dest must be specified first')
         if not self.s3:
             self.s3 = boto3.client('s3')
         err_msg = "failed to upload output file %s to %s. %s"
+        upload_extra_args = {}
+        if encrypt_s3_upload:
+            upload_extra_args = {'ServerSideEncryption': 'aws:kms'}
         if os.path.isdir(self.source):
             print("source " + self.source + " is a directory")
             print("uploading output directory %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
@@ -132,7 +135,7 @@ class Target(object):
                     print("source_f=" + source_f)
                     print("dest_f=" + dest_f)
                     try:
-                        self.s3.upload_file(source_f, self.bucket, dest_f)
+                        self.s3.upload_file(source_f, self.bucket, dest_f, ExtraArgs=upload_extra_args)
                     except Exception as e:
                         raise Exception(err_msg % (source_f, self.bucket + '/' + dest_f, str(e)))
         elif self.unzip:
@@ -153,6 +156,8 @@ class Target(object):
                                    'Key': self.dest + arcfile['name'],
                                    'Body': arcfile['content'],
                                    'ContentType': content_type}
+                if encrypt_s3_upload:
+                    put_object_args.update(upload_extra_args)
                 try:
                     print("Putting object %s to %s in bucket %s" % (arcfile['name'], self.dest + arcfile['name'], self.bucket))
                     self.s3.put_object(**put_object_args)
@@ -166,13 +171,13 @@ class Target(object):
                 dest = os.path.join(self.dest, self.source_name)
                 print("uploading output source %s to %s in bucket %s" % (self.source, dest, self.bucket))
                 try:
-                    self.s3.upload_file(self.source, self.bucket, dest)
+                    self.s3.upload_file(self.source, self.bucket, dest, ExtraArgs=upload_extra_args)
                 except Exception as e:
                     raise Exception(err_msg % (self.source, self.bucket + '/' + dest, str(e)))
             else:
                 try:
                     print("uploading output source %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
-                    self.s3.upload_file(self.source, self.bucket, self.dest)
+                    self.s3.upload_file(self.source, self.bucket, self.dest, ExtraArgs=upload_extra_args)
                 except Exception as e:
                     raise Exception(err_msg % (self.source, self.bucket + '/' + self.dest, str(e)))
 

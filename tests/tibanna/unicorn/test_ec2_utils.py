@@ -1,3 +1,9 @@
+import boto3
+import pytest
+import os
+import json
+import mock
+from tibanna.job import Jobs
 from tibanna.ec2_utils import (
     UnicornInput,
     Args,
@@ -14,13 +20,11 @@ from tibanna.exceptions import (
     MissingFieldInInputJsonException,
     MalFormattedInputJsonException,
     EC2InstanceLimitException,
-    EC2InstanceLimitWaitException
+    EC2InstanceLimitWaitException,
+    DependencyStillRunningException,
+    DependencyFailedException
 )
 from tibanna.awsem import AwsemRunJson, AwsemPostRunJson
-import boto3
-import pytest
-import os
-import json
 
 
 def fun():
@@ -265,6 +269,42 @@ def test_execution_benchmark():
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
+
+
+def test_execution_benchmark_app_name_but_w_instance_type_ebs(run_task_awsem_event_wdl_md5_do_not_use_benchmark):
+    execution = Execution(run_task_awsem_event_wdl_md5_do_not_use_benchmark)
+
+
+def test_execution_benchmark_app_name_but_w_nonmatching_inputarg(run_task_awsem_event_wdl_md5_benchmark_error):
+    cfg = Config(**run_task_awsem_event_wdl_md5_benchmark_error['config'])
+    assert cfg.use_benchmark == True
+    with pytest.raises(Exception) as exec_info:
+        execution = Execution(run_task_awsem_event_wdl_md5_benchmark_error)
+    assert 'Benchmarking not working' in str(exec_info.value)
+
+
+def test_config_use_benchmark():
+    """user specified instance type and ebs_size, so do not use benchmark"""
+    cfg = Config(log_bucket='somebucket', instance_type='t2.micro', ebs_size=10)
+    assert cfg.use_benchmark == False
+
+
+def test_config_use_benchmark2():
+    """ebs_size is missing, so use benchmark"""
+    cfg = Config(log_bucket='somebucket', instance_type='t2.micro')
+    assert cfg.use_benchmark == True
+
+
+def test_config_use_benchmark3():
+    """instance type is missing, so use benchmark"""
+    cfg = Config(log_bucket='somebucket', ebs_size='2x')
+    assert cfg.use_benchmark == True
+
+
+def test_config_use_benchmark4():
+    """instance type is missing, but cpu/mem are given so do not use benchmark"""
+    cfg = Config(log_bucket='somebucket', cpu=2, mem=2, ebs_size=20)
+    assert cfg.use_benchmark == False
 
 
 def test_get_file_size():
@@ -544,6 +584,30 @@ def test_upload_run_json():
     s3 = boto3.client('s3')
     res = s3.get_object(Bucket=log_bucket, Key=jobid + '.run.json')
     assert res
+    res = s3.head_object(Bucket=log_bucket, Key=jobid + '.run.json')
+    assert 'ServerSideEncryption' not in res
+    # clean up afterwards
+    s3.delete_objects(Bucket=log_bucket,
+                      Delete={'Objects': [{'Key': jobid + '.run.json'}]})
+
+
+def test_upload_run_json_encrypt_s3_upload():
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
+                             'encrypt_s3_upload': True},
+                  'jobid': jobid}
+    somejson = {'haha': 'lala'}
+    execution = Execution(input_dict)
+    execution.upload_run_json(somejson)
+    s3 = boto3.client('s3')
+    res = s3.get_object(Bucket=log_bucket, Key=jobid + '.run.json')
+    assert res
+    res = s3.head_object(Bucket=log_bucket, Key=jobid + '.run.json')
+    assert res['ServerSideEncryption'] == 'aws:kms'
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,
                       Delete={'Objects': [{'Key': jobid + '.run.json'}]})
@@ -763,6 +827,12 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     assert res1
     assert res2
     assert res3
+    res1 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/main.cwl')
+    res2 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child1.cwl')
+    res3 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child2.cwl')
+    assert 'ServerSideEncryption' not in res1
+    assert 'ServerSideEncryption' not in res2
+    assert 'ServerSideEncryption' not in res3
     assert unicorn_input.args.cwl_directory_url == 's3://tibanna-output/' + jobid + '.workflow/'
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,
@@ -771,6 +841,32 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
                                           {'Key': jobid + '.workflow/child2.cwl'}]})
 
 
+def test_upload_workflow_to_s3_encrypt_s3_upload(run_task_awsem_event_cwl_upload):
+    jobid = create_jobid()
+    run_task_awsem_event_cwl_upload['jobid'] = jobid
+    log_bucket = run_task_awsem_event_cwl_upload['config']['log_bucket']
+    run_task_awsem_event_cwl_upload['config']['encrypt_s3_upload'] = True
+    unicorn_input = UnicornInput(run_task_awsem_event_cwl_upload)
+    upload_workflow_to_s3(unicorn_input)
+    s3 = boto3.client('s3')
+    res1 = s3.get_object(Bucket=log_bucket, Key=jobid + '.workflow/main.cwl')
+    res2 = s3.get_object(Bucket=log_bucket, Key=jobid + '.workflow/child1.cwl')
+    res3 = s3.get_object(Bucket=log_bucket, Key=jobid + '.workflow/child2.cwl')
+    assert res1
+    assert res2
+    assert res3
+    res1 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/main.cwl')
+    res2 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child1.cwl')
+    res3 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child2.cwl')
+    assert res1["ServerSideEncryption"] == 'aws:kms'
+    assert res2["ServerSideEncryption"] == 'aws:kms'
+    assert res3["ServerSideEncryption"] == 'aws:kms'
+    assert unicorn_input.args.cwl_directory_url == 's3://tibanna-output/' + jobid + '.workflow/'
+    # clean up afterwards
+    s3.delete_objects(Bucket=log_bucket,
+                      Delete={'Objects': [{'Key': jobid + '.workflow/main.cwl'},
+                                          {'Key': jobid + '.workflow/child1.cwl'},
+                                          {'Key': jobid + '.workflow/child2.cwl'}]})
 def test_ec2_cost_estimate_missing_availablity_zone():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     file_name = "no_availability_zone.postrun.json"
@@ -847,3 +943,28 @@ def test_ec2_cost_estimate_small_spot_io2_iops():
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.029224481481481476
     
+
+def test_check_dependency():
+    job_statuses = {
+        'running_jobs': ['jid1', 'jid2'],
+        'failed_jobs': []
+    }
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
+        with pytest.raises(DependencyStillRunningException) as exec_info:
+            Execution.check_dependency(job_id=['jid1', 'jid2'])
+    assert 'still running' in str(exec_info.value)
+    assert 'jid1' in str(exec_info.value)
+    assert 'jid2' in str(exec_info.value)
+
+
+def test_check_dependency_failed():
+    job_statuses = {
+        'running_jobs': ['jid1'],
+        'failed_jobs': ['jid2']
+    }
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
+        with pytest.raises(DependencyFailedException) as exec_info:
+            Execution.check_dependency(job_id=['jid1', 'jid2'])
+    assert 'failed' in str(exec_info.value)
+    assert 'jid1' not in str(exec_info.value)
+    assert 'jid2' in str(exec_info.value)

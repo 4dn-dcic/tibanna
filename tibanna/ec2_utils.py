@@ -25,6 +25,7 @@ from .vars import (
     DEFAULT_AWSF_IMAGE,
     AWS_REGION_NAMES
 )
+from .job import Jobs
 from .exceptions import (
     MissingFieldInInputJsonException,
     MalFormattedInputJsonException,
@@ -264,6 +265,13 @@ class Config(SerializableObject):
             setattr(self, k, v)
 
     def fill_default(self):
+        # use benchmark or not
+        if not hasattr(self, 'instance_type') and (not hasattr(self, 'cpu') or not hasattr(self, 'mem')):
+            self.use_benchmark = True
+        elif not hasattr(self, 'ebs_size'):
+            self.use_benchmark = True 
+        else:
+            self.use_benchmark = False
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
                       'spot_duration', 'availability_zone', 'security_group', 'subnet']:
@@ -286,6 +294,8 @@ class Config(SerializableObject):
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+        if not hasattr(self, 'encrypt_s3_upload'):
+            self.encrypt_s3_upload = False
         if not hasattr(self, 'root_ebs_size'):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
         if not hasattr(self, 'awsf_image'):
@@ -324,7 +334,8 @@ class Execution(object):
         self.user_specified_ebs_size = self.cfg.ebs_size
         # get benchmark if available
         self.input_size_in_bytes = self.get_input_size_in_bytes()
-        self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
+        if self.cfg.use_benchmark:
+            self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
         self.init_instance_type_list()
         self.update_config_instance_type()
         self.update_config_ebs_size()
@@ -626,12 +637,19 @@ class Execution(object):
         logger.info("jsonbody=\n" + jsonbody)
         # copy the json file to the s3 bucket
         logger.info("json_bucket = " + self.cfg.json_bucket)
+        upload_args = {
+            'Body': jsonbody.encode('utf-8'),
+            'Bucket': self.cfg.json_bucket,
+            'Key': jsonkey
+        }
+        if self.cfg.encrypt_s3_upload:
+            upload_args.update({'ServerSideEncryption': 'aws:kms'})
         try:
             s3 = boto3.client('s3')
         except Exception as e:
             raise Exception("boto3 client error: Failed to connect to s3 : %s" % str(e))
         try:
-            s3.put_object(Body=jsonbody.encode('utf-8'), Bucket=self.cfg.json_bucket, Key=jsonkey)
+            s3.put_object(**upload_args)
         except Exception as e:
             raise Exception("boto3 client error: Failed to upload run.json %s to s3: %s" % (jsonkey, str(e)))
 
@@ -738,15 +756,17 @@ class Execution(object):
                 'availability_zone' : availability_zone,
                 'start_time': self.get_start_time()})
 
-    def check_dependency(self, exec_arn=None):
-        if exec_arn:
-            client = boto3.client('stepfunctions', region_name=AWS_REGION)
-            for arn in exec_arn:
-                res = client.describe_execution(executionArn=arn)
-                if res['status'] == 'RUNNING':
-                    raise DependencyStillRunningException("Dependency is still running: %s" % arn)
-                elif res['status'] == 'FAILED':
-                    raise DependencyFailedException("A Job that this job is dependent on failed: %s" % arn)
+    @staticmethod
+    def check_dependency(exec_arn=None, job_id=None):
+        """take a list of exec_arns and/or a list of job_ids
+        and raise DependencyFailedException if any of these failed
+        or raise DependencyStillRunningException if any of these are running.
+        """
+        job_statuses = Jobs.status(job_ids=job_id, exec_arns=exec_arn)
+        if job_statuses['failed_jobs']:
+            raise DependencyFailedException("A Job that this job is dependent on failed: %s" % ','.join(job_statuses['failed_jobs']))
+        if job_statuses['running_jobs']:
+            raise DependencyStillRunningException("Dependency is still running: %s" % ','.join(job_statuses['running_jobs']))
 
     def add_instance_id_to_dynamodb(self):
         dd = boto3.client('dynamodb')
@@ -915,10 +935,15 @@ def upload_workflow_to_s3(unicorn_input):
         localdir = args.cwl_directory_local
     wf_files.append(main_wf)
     localdir = localdir.rstrip('/')
+    # encrypted s3 upload
+    extra_args = {}
+    if cfg.encrypt_s3_upload:
+        extra_args.update({"ServerSideEncryption": "aws:kms"})
+    s3 = boto3.client('s3')
     for wf_file in wf_files:
         source = localdir + '/' + wf_file
         target = key_prefix + wf_file
-        boto3.client('s3').upload_file(source, bucket, target)
+        s3.upload_file(source, bucket, target, ExtraArgs=extra_args)
     url = "s3://%s/%s" % (bucket, key_prefix)
     if args.language == 'wdl':
         args.wdl_directory_url = url

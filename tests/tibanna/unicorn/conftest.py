@@ -8,34 +8,44 @@ def pytest_runtest_setup(item):
     print("Running lambda tests for: ", item)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_data():
     return get_event_file_for('run_task_awsem')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_omit_fields():
     return get_event_file_for('run_task_awsem', event_file='event_omit_fields.json')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_omit_fields2():
     return get_event_file_for('run_task_awsem', event_file='event_omit_fields2.json')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_data2():
     return get_event_file_for('run_task_awsem', event_file='event_repliseq.json')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_data_chipseq():
     return get_event_file_for('run_task_awsem', event_file='event_chipseq.json')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def run_task_awsem_event_cwl_upload():
     return get_event_file_for('run_task_awsem', event_file='event_cwl_upload.json')
+
+
+@pytest.fixture()
+def run_task_awsem_event_wdl_md5_benchmark_error():
+    return get_event_file_for('run_task_awsem', event_file='event_wdl_md5_benchmark_error.json')
+
+
+@pytest.fixture()
+def run_task_awsem_event_wdl_md5_do_not_use_benchmark():
+    return get_event_file_for('run_task_awsem', event_file='event_wdl_md5_do_not_use_benchmark.json')
 
 
 def get_test_json(file_name):
