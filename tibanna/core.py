@@ -89,7 +89,8 @@ class API(object):
     def lambda_names(self):
         lambdas = [mod for mod in dir(self.lambdas_module)
             if isinstance(getattr(self.lambdas_module, mod), ModuleType)]
-        lambdas.remove('update_cost_awsem') # We remove update_cost_awsem, as this typically treated separately
+        # We remove update_cost_awsem, as this typically treated separately
+        lambdas.remove(self.update_cost_lambda)
         return lambdas
 
     @property
