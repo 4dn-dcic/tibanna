@@ -35,7 +35,7 @@ def deploy_sfn1_to_region2():
 
 def deploy_sfn2_to_region2():
     os.environ['AWS_DEFAULT_REGION'] = REGION2
-    buckets = 'tibanna-output,elasticbeanstalk-fourfront-webdev-files,4dn-tool-evaluation-files'
+    buckets = 'tibanna-output,elasticbeanstalk-fourfront-webdev-files,soos-4dn-bucket'
     API().deploy_unicorn(suffix=DEV_SUFFIX, buckets=buckets, usergroup=DEV_GROUP_SUFFIX + '2')
 
 

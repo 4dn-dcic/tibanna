@@ -1,0 +1,29 @@
+{
+    "vcf": {
+        "location": "file:///mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz",
+        "basename": "fixed_GAPFIF3KTGCP.vcf.gz",
+        "class": "File",
+        "checksum": "sha1$c2a428e01f90887b335b215300ea00828f4a73a1",
+        "size": 1723376222,
+        "secondaryFiles": [
+            {
+                "basename": "fixed_GAPFIF3KTGCP.vcf.gz.tbi",
+                "location": "file:///mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz.tbi",
+                "class": "File",
+                "checksum": "sha1$920e56345b7e31ab44413d9c792b6b6324e7cdea",
+                "size": 2187181,
+                "path": "/mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz.tbi"
+            }
+        ],
+        "path": "/mnt/data1/out/fixed_GAPFIF3KTGCP.vcf.gz"
+    },
+    "vcf-check": {
+        "location": "file:///mnt/data1/out/integrity_check",
+        "basename": "integrity_check",
+        "class": "File",
+        "checksum": "sha1$8296f8ccff8a4fad99be5d3d71175134d84e2621",
+        "size": 14,
+        "path": "/mnt/data1/out/integrity_check"
+    }
+}
+

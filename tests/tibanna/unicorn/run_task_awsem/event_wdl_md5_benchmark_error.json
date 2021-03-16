@@ -1,0 +1,26 @@
+{
+  "args": {
+    "app_name": "md5",
+    "app_version": "v2",
+    "language": "wdl",
+    "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/tibanna/master/examples/md5",
+    "wdl_main_filename": "md5.wdl",
+    "wdl_child_filenames": [],
+    "input_files": {
+      "md5.md5_step.gzfile": {
+        "bucket_name": "my-tibanna-test-input-bucket",
+        "object_key": "somefastqfile.fastq.gz"
+      }
+    },
+    "secondary_files": {},
+    "input_parameters": {},
+    "output_S3_bucket": "my-tibanna-test-bucket",
+    "output_target": {
+      "md5.md5_step.report": "some_sub_dirname/my_first_md5_report"
+    },
+    "secondary_output_target": {}
+  },
+  "config": {
+    "log_bucket": "my-tibanna-test-bucket"
+  }
+}
