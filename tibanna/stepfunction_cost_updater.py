@@ -1,33 +1,8 @@
-from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
+from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER, SFN_TYPE
 
 
 class StepFunctionCostUpdater(object):
-    lambda_error_retry_condition = {
-        "ErrorEquals": [ "Lambda.ServiceException",
-                         "Lambda.AWSLambdaException",
-                         "Lambda.SdkClientException",
-                         "Lambda.ResourceNotFoundException"],
-        "IntervalSeconds": 60,
-        "MaxAttempts": 6,
-        "BackoffRate": 2
-    }
-
-    sfn_run_task_retry_conditions = [
-        {
-            "ErrorEquals": ["DependencyStillRunningException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 10000,
-            "BackoffRate": 1.0
-        },
-        {
-            "ErrorEquals": ["EC2InstanceLimitWaitException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 1008,  # 1 wk
-            "BackoffRate": 1.0
-        },
-        lambda_error_retry_condition
-    ]
-
+    sfn_type = SFN_TYPE
 
     def __init__(self,
                  dev_suffix=None,
@@ -59,7 +34,7 @@ class StepFunctionCostUpdater(object):
 
     @property
     def sfn_name(self):
-        return 'tibanna_unicorn' + self.lambda_suffix + '_costupdater'
+        return 'tibanna_' + self.sfn_type + self.lambda_suffix + '_costupdater'
 
     @property
     def iam(self):
@@ -85,7 +60,7 @@ class StepFunctionCostUpdater(object):
         state_defs = {
             "Wait": {
             "Type": "Wait",
-            "Seconds": 21600, # Check every 6h
+            "Seconds": 43200, # Check every 12h
             "Next": "UpdateCostAwsem"
             },
             "UpdateCostAwsem": {
