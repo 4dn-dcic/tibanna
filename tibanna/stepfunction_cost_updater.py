@@ -4,16 +4,6 @@ from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER, SFN_TYPE
 class StepFunctionCostUpdater(object):
     sfn_type = SFN_TYPE
 
-    lambda_error_retry_condition = {
-        "ErrorEquals": [ "Lambda.ServiceException",
-                         "Lambda.AWSLambdaException",
-                         "Lambda.SdkClientException",
-                         "Lambda.ResourceNotFoundException"],
-        "IntervalSeconds": 60,
-        "MaxAttempts": 6,
-        "BackoffRate": 2
-    }
-
     def __init__(self,
                  dev_suffix=None,
                  region_name=AWS_REGION,
@@ -70,7 +60,7 @@ class StepFunctionCostUpdater(object):
         state_defs = {
             "Wait": {
             "Type": "Wait",
-            "Seconds": 21600, # Check every 6h
+            "Seconds": 43200, # Check every 12h
             "Next": "UpdateCostAwsem"
             },
             "UpdateCostAwsem": {
