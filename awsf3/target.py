@@ -17,6 +17,7 @@ class Target(object):
         self.bucket = output_bucket
         self.dest = ''
         self.unzip = False
+        self.tag = None
         self.s3 = None  # boto3 client
 
     @property
@@ -68,6 +69,10 @@ class Target(object):
                 self.unzip = True
             if 'bucket_name' in target_value:  # this allows using different output buckets
                 self.bucket = target_value['bucket_name']
+            if 'tag' in target_value:  # adds object-level tags to the output files
+                if ':' not in target_value['tag']:
+                    raise Exception("The tag must be of the form Key:Value")
+                self.tag = target_value['tag']
             if 'object_prefix' in target_value:
                 if 'object_key' in target_value:
                     raise Exception("Specify either object_key or object_prefix, but not both in output_target")
@@ -118,6 +123,9 @@ class Target(object):
         upload_extra_args = {}
         if encrypt_s3_upload:
             upload_extra_args = {'ServerSideEncryption': 'aws:kms'}
+        if self.tag is not None:
+            tag_dict = self.tag.split(':')
+            upload_extra_args.update({'Metadata': {tag_dict[0]: tag_dict[1]}})
         if os.path.isdir(self.source):
             print("source " + self.source + " is a directory")
             print("uploading output directory %s to %s in bucket %s" % (self.source, self.dest, self.bucket))

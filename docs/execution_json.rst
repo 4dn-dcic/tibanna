@@ -335,7 +335,7 @@ Output target specification
     - It is highly recommended to stick to using only argument names for CWL/WDL for pipeline
       reproducibility, since they are already clearly defined in CWL/WDL (especially for CWL).
 
-    - Starting with version ``1.0.0``, a dictionary format is also accepted for individual target, with keys ``object_key`` ``bucket_name``, ``object_prefix`` and/or  ``unzip``. For a regular file output, ``object_key`` and ``bucket_name`` can be used. The use of ``bucket_name`` here allows using a different output bucket for specific output files. For a directory, ``object_prefix`` can be used instead which will be used as if it is the directory name on S3. ``object_prefix`` may or may not have the trailing ``\``. ``unzip`` is boolean (either ``true`` or ``false``) and can be applied to a case when the output file is a ``zip`` file and you want the content to be extracted into a directory on an S3 bucket.
+    - Starting with version ``1.0.0``, a dictionary format is also accepted for individual target, with keys ``object_key`` ``bucket_name``, ``object_prefix`` and/or  ``unzip``. For a regular file output, ``object_key`` and ``bucket_name`` can be used. The use of ``bucket_name`` here allows using a different output bucket for specific output files. For a directory, ``object_prefix`` can be used instead which will be used as if it is the directory name on S3. ``object_prefix`` may or may not have the trailing ``/``. ``unzip`` is boolean (either ``true`` or ``false``) and can be applied to a case when the output file is a ``zip`` file and you want the content to be extracted into a directory on an S3 bucket.
 
     - (e.g.
 
@@ -352,7 +352,7 @@ Output target specification
         {
             "out_pairsam": { 
                "object_key": "output/renamed_pairsam_file",
-               "bucket" : "some_different_bucket"
+               "bucket_name" : "some_different_bucket"
             }
         }
 
@@ -361,7 +361,7 @@ Output target specification
         {
             "some_output_as_dir": {
                 "object_prefix": "some_dir_output/",
-                "bucket": "some_different_bucket"
+                "bucket_name": "some_different_bucket"
             }
         }
 
