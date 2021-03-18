@@ -373,6 +373,15 @@ Output target specification
               "unzip": true
         }
 
+    - One or multiple tags can be automatically added to each ouput file by specifying the ``tag`` key. In the following example, two (object-level) tags are added to the result file. Note that the tag-set must be encoded as URL Query parameters. In case the ``unzip`` key is specified in addition to the ``tag`` key, each file in the output directory will be tagged.
+
+    ::
+
+        {
+           "out_zip": {
+              "object_key": "result.txt",
+              "tag": "Key1=Value1&Key2=Value2"
+        }
 
 
 :secondary_output_target:

@@ -70,8 +70,6 @@ class Target(object):
             if 'bucket_name' in target_value:  # this allows using different output buckets
                 self.bucket = target_value['bucket_name']
             if 'tag' in target_value:  # adds object-level tags to the output files
-                if ':' not in target_value['tag']:
-                    raise Exception("The tag must be of the form Key:Value")
                 self.tag = target_value['tag']
             if 'object_prefix' in target_value:
                 if 'object_key' in target_value:
@@ -124,8 +122,8 @@ class Target(object):
         if encrypt_s3_upload:
             upload_extra_args = {'ServerSideEncryption': 'aws:kms'}
         if self.tag is not None:
-            tag_dict = self.tag.split(':')
-            upload_extra_args.update({'Metadata': {tag_dict[0]: tag_dict[1]}})
+            upload_extra_args.update({'Tagging': self.tag})
+            print("Tagging:", self.tag)
         if os.path.isdir(self.source):
             print("source " + self.source + " is a directory")
             print("uploading output directory %s to %s in bucket %s" % (self.source, self.dest, self.bucket))
@@ -164,7 +162,7 @@ class Target(object):
                                    'Key': self.dest + arcfile['name'],
                                    'Body': arcfile['content'],
                                    'ContentType': content_type}
-                if encrypt_s3_upload:
+                if encrypt_s3_upload or (self.tag is not None):
                     put_object_args.update(upload_extra_args)
                 try:
                     print("Putting object %s to %s in bucket %s" % (arcfile['name'], self.dest + arcfile['name'], self.bucket))

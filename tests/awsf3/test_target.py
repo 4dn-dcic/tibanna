@@ -81,6 +81,11 @@ def test_target_parse_target_value_unzip():
     assert target.bucket == 'some_bucket'
     assert target.unzip is True
 
+def test_target_parse_target_value_tag():
+    target = Target('some_bucket')
+    target.parse_target_value({'tag': 'Key1=Name1'})
+    assert target.tag == 'Key1=Name1'
+
 
 def test_target_parse_target_value_unzip_wo_prefix():
     target = Target('some_bucket')
