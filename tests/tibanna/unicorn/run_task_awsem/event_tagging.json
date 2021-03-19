@@ -1,0 +1,34 @@
+{
+  "args": {
+    "app_name": "shell-test",
+    "input_parameters": {},
+    "language": "shell",
+    "command": "\\$ECHO_COMMAND \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
+    "container_image": "ubuntu:16.04",
+    "output_target": {
+      "file:///data1/out/shell-test-output": {
+            "object_key": "shell-test-output2",
+            "tag": "Name=shell-test-output&Type=processed_file"
+        }
+    },
+    "secondary_output_target": {},
+    "secondary_files": {},
+    "output_S3_bucket": "soos-4dn-bucket",
+    "app_version": "5",
+    "input_files": {
+        "file:///data1/shell/somefile": "s3://soos-4dn-bucket/hg38.blacklist.bed.gz"
+    },
+    "input_parameters": {
+    },
+    "input_env": {
+        "ECHO_COMMAND": "echo"
+    }
+  },
+  "config": {
+    "mem": 2,
+    "cpu": 1,
+    "ebs_size": 10,
+    "EBS_optimized": false,
+    "log_bucket": "tibanna-output"
+  }
+}

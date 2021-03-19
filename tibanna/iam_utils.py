@@ -183,7 +183,8 @@ class IAM(object):
                         "s3:PutObject",
                         "s3:GetObject",
                         "s3:DeleteObject",
-                        "s3:PutObjectAcl"
+                        "s3:PutObjectAcl",
+                        "s3:PutObjectTagging"
                     ],
                     "Resource": resource_list_objects
                 }

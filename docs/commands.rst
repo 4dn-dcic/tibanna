@@ -577,6 +577,7 @@ cost_estimate
 ----
 
 To retrieve cost estimates and update the metrics report file created with plot_metrics. In contrast to the exact costs, the estimated costs are available immediately after the job has completed.
+The cost estimate will also indicate if it is an immediate estimate (i.e., the exact cost is not yet available), the actual cost or the retrospective estimate (i.e., the exact cost is not available anymore). In case the estimate returns the actual cost and the `-u` parameter is set, the cost row in the metrics file will be automatically updated.
 This function requires a (deployed) Tibanna version >=1.0.6.
 
 ::
