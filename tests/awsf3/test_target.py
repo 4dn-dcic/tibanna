@@ -228,7 +228,8 @@ def test_target_as_dict():
     assert target.as_dict() == {'source': 'some_source',
                                 'dest': 'some_dest',
                                 'bucket': 'some_bucket',
-                                'unzip': False}
+                                'unzip': False,
+                                'tag': None}
 
 
 def test_secondary_target_is_matched():
