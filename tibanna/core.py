@@ -601,7 +601,7 @@ class API(object):
     def rerun(self, exec_arn=None, job_id=None, sfn=None,
               override_config=None, app_name_filter=None,
               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
-              overwrite_input_extra=None, key_name=None, name=None):
+              overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
         """rerun a specific job
         override_config : dictionary for overriding config (keys are the keys inside config)
             e.g. override_config = { 'instance_type': 't2.micro' }
@@ -645,6 +645,10 @@ class API(object):
                     override_config['ebs_iops'] = ''
             if ebs_iops:
                 override_config['ebs_iops'] = ebs_iops
+            if use_spot:
+                override_config['spot_instance'] = True
+            if do_not_use_spot:
+                override_config['spot_instance'] = False
         if override_config:
             for k, v in iter(override_config.items()):
                 input_json_template['config'][k] = v
@@ -654,7 +658,7 @@ class API(object):
                    stopminute=0, offset=0, sleeptime=5, status='FAILED',
                    override_config=None, app_name_filter=None,
                    instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
-                   overwrite_input_extra=None, key_name=None, name=None):
+                   overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
         """Reruns step function jobs that failed after a given time point
         (stopdate, stophour (24-hour format), stopminute)
         By default, stophour should be the same as your system time zone.
@@ -681,7 +685,8 @@ class API(object):
                            override_config=override_config, app_name_filter=app_name_filter,
                            instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
                            ebs_type=ebs_type, ebs_iops=ebs_iops,
-                           overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name)
+                           overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
+                           use_spot=use_spot, do_not_use_spot=do_not_use_spot)
                 time.sleep(sleeptime)
 
     def env_list(self, name):
