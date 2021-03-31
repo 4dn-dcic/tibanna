@@ -79,6 +79,7 @@ class UnicornInput(SerializableObject):
         """
         args = self.args
         cfg = self.cfg
+        args.fill_default()
         cfg.fill_language_options(args.language, getattr(args, 'singularity', False))
         cfg.fill_other_fields(args.app_name)
         # sanity check
@@ -118,8 +119,8 @@ class Args(SerializableObject):
         for field in ['output_S3_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
-        if fill_default:
-            self.fill_default()
+        #if fill_default:
+        #    self.fill_default()
 
     def update(self, d):
         for k, v in d.items():
