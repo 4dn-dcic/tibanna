@@ -79,13 +79,14 @@ class UnicornInput(SerializableObject):
         """
         args = self.args
         cfg = self.cfg
+        args.fill_default()
         cfg.fill_language_options(args.language, getattr(args, 'singularity', False))
         cfg.fill_other_fields(args.app_name)
         # sanity check
         if args.app_name and args.app_name in B.app_name_function_map:
             pass  # use benchmarking
         else:
-            if not cfg.ebs_size:  # unset (set to 0)
+            if not cfg.ebs_size or cfg.ebs_size < 10:  # unset (set to 0) or <10GB
                 cfg.ebs_size = 10  # if not set by user or benchmark, just use 10GB as default
             if not cfg.EBS_optimized:  # either false or unset
                 cfg.EBS_optimized = False  # False by default so t2 instances can be used
@@ -118,8 +119,8 @@ class Args(SerializableObject):
         for field in ['output_S3_bucket']:
             if not hasattr(self, field):
                 raise MissingFieldInInputJsonException("field %s is required in args" % field)
-        if fill_default:
-            self.fill_default()
+        #if fill_default:
+        #    self.fill_default()
 
     def update(self, d):
         for k, v in d.items():
@@ -300,6 +301,10 @@ class Config(SerializableObject):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
         if not hasattr(self, 'awsf_image'):
             self.awsf_image = DEFAULT_AWSF_IMAGE
+        if not hasattr(self, 'mem_as_is'):  # if false, add 1GB overhead
+            self.mem_as_is = False
+        if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
+            self.ebs_size_as_is = False
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
@@ -372,7 +377,11 @@ class Execution(object):
                                             'EBS_optimized': False})
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
-            list0 = get_instance_types(self.cfg.cpu, self.cfg.mem, instance_list(exclude_t=False))
+            if self.cfg.mem_as_is:
+                mem = self.cfg.mem
+            else:
+                mem = self.cfg.mem + 1
+            list0 = get_instance_types(self.cfg.cpu, mem, instance_list(exclude_t=False))
             nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
             instance_type_dlist.extend(nonredundant_list)
         # user specifically wanted EBS_optimized instances
@@ -420,7 +429,7 @@ class Execution(object):
         except:
             return None
 
-    def auto_calculate_ebs_size(self):
+    def update_config_ebs_size(self):
         """if ebs_size is in the format of e.g. '3x', it updates the size
         to be total input size times three. If the value is lower than 10GB,
         keep 10GB"""
@@ -435,13 +444,13 @@ class Execution(object):
                 self.cfg.ebs_size = round(self.cfg.ebs_size) + 1
             else:
                 self.cfg.ebs_size = round(self.cfg.ebs_size)
-            if self.cfg.ebs_size < 10:
-                self.cfg.ebs_size = 10
-
-    def update_config_ebs_size(self):
-        self.auto_calculate_ebs_size()  # if in the format of '3x'
         if not self.user_specified_ebs_size:  # use benchmark only if not set by user
             self.cfg.ebs_size = self.benchmark['ebs_size']
+        if not self.cfg.ebs_size_as_is:
+            self.cfg.ebs_size += 5  # account for docker image size
+        if self.cfg.ebs_size < 10:
+            self.cfg.ebs_size = 10
+
 
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
