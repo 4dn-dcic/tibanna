@@ -243,7 +243,7 @@ def test_execution_mem_cpu():
     assert 'args' in unicorn_dict
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
-    assert unicorn_dict['config']['instance_type'] == 't3.micro'
+    assert unicorn_dict['config']['instance_type'] == 't3.small'
 
 
 def test_execution_benchmark():
@@ -265,7 +265,7 @@ def test_execution_benchmark():
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
     assert unicorn_dict['config']['instance_type'] == 't3.micro'
-    assert unicorn_dict['config']['ebs_size'] == 10
+    assert unicorn_dict['config']['ebs_size'] == 15
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
@@ -397,7 +397,7 @@ def test_update_config_ebs_size():
     execution = Execution(input_dict)
     execution.input_size_in_bytes = execution.get_input_size_in_bytes()
     execution.update_config_ebs_size()
-    assert execution.cfg.ebs_size == 10
+    assert execution.cfg.ebs_size == 15
     # cleanup afterwards
     s3.delete_objects(Bucket='tibanna-output',
                       Delete={'Objects': [{'Key': randomstr}]})
@@ -415,7 +415,8 @@ def test_update_config_ebs_size2():
                            'app_name': 'md5',
                            'cwl_main_filename': 'md5.cwl',
                            'cwl_directory_url': 'someurl'},
-                  'config': {'log_bucket': 'tibanna-output', 'ebs_size': '5000000000x'}}
+                  'config': {'log_bucket': 'tibanna-output', 'ebs_size': '5000000000x',
+                             'ebs_size_as_is': True}}
     execution = Execution(input_dict)
     execution.input_size_in_bytes = execution.get_input_size_in_bytes()
     execution.update_config_ebs_size()
@@ -629,7 +630,7 @@ def test_launch_args():
     launch_args = execution.launch_args
     print(launch_args)
     assert launch_args
-    assert 't3.micro' in str(launch_args)
+    assert 't3.small' in str(launch_args)
     assert 'InstanceMarketOptions' in str(launch_args)
 
 
@@ -694,7 +695,7 @@ def test_ec2_exception_coordinator4():
                            'cwl_main_filename': 'md5.cwl',
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
-                             'spot_instance': True,
+                             'spot_instance': True, 'mem_as_is': True,
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
@@ -779,7 +780,7 @@ def test_ec2_exception_coordinator8():
                            'cwl_main_filename': 'md5.cwl',
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': log_bucket, 'instance_type': 't2.micro',
-                             'mem': 1, 'cpu': 1,
+                             'mem': 1, 'cpu': 1, 'mem_as_is': True,
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
@@ -803,7 +804,7 @@ def test_ec2_exception_coordinator9():
                            'cwl_main_filename': 'md5.cwl',
                            'cwl_directory_url': 'someurl'},
                   'config': {'log_bucket': log_bucket,
-                             'mem': 2, 'cpu': 1,
+                             'mem': 2, 'cpu': 1, 'mem_as_is': True,
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
