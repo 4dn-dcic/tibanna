@@ -144,6 +144,7 @@
         "shutdown_min": "now",
         "spot_duration": "",
         "spot_instance": true,
-        "subnet": ""
+        "subnet": "",
+        "use_benchmark": false
     }
 }

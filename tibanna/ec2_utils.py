@@ -86,7 +86,7 @@ class UnicornInput(SerializableObject):
         if args.app_name and args.app_name in B.app_name_function_map:
             pass  # use benchmarking
         else:
-            if not cfg.ebs_size:  # unset (set to 0)
+            if not cfg.ebs_size or cfg.ebs_size < 10:  # unset (set to 0) or <10GB
                 cfg.ebs_size = 10  # if not set by user or benchmark, just use 10GB as default
             if not cfg.EBS_optimized:  # either false or unset
                 cfg.EBS_optimized = False  # False by default so t2 instances can be used
