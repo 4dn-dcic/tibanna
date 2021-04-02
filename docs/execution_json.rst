@@ -501,7 +501,7 @@ The ``config`` field describes execution configuration.
 :ebs_size_as_is:
     - <true|false>
     - If true, the value set in ``ebs_size`` is used as it is. If false, 5GB is added
-      by default, to accommodate the disk usage of the house-keeping processes and the docker image/containers.
+      by default, to accommodate the disk usage of house-keeping processes and docker image/containers.
     - This field is available for >=1.2.0
 
 :EBS_optimized:
