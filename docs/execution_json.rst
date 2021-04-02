@@ -128,7 +128,7 @@ Shell command-specific
     - <Docker image name>
 
 :command:
-    - <shell command to be executed inside the Docker container> 
+    - <shell command to be executed inside the Docker container>
     - a pair of nested double quotes are allowed
     - (e.g.
 
@@ -342,7 +342,7 @@ Output target specification
     ::
 
         {
-            "out_pairsam": { 
+            "out_pairsam": {
                "object_key": "output/renamed_pairsam_file"
             }
         }
@@ -350,7 +350,7 @@ Output target specification
     ::
 
         {
-            "out_pairsam": { 
+            "out_pairsam": {
                "object_key": "output/renamed_pairsam_file",
                "bucket_name" : "some_different_bucket"
             }
@@ -424,7 +424,7 @@ Dependency specification
 
     ::
 
-        { 
+        {
             "exec_arn": ["arn:aws:states:us-east-1:643366669028:execution:tibanna_unicorn_default_7927:md5_test"]
         }
 
@@ -446,7 +446,7 @@ Custom error handling
         [
             {
                  "error_type": "Unmatching pairs in fastq"
-                 "pattern": "paired reads have different names: .+", 
+                 "pattern": "paired reads have different names: .+",
                  "multiline": False
             }
         ]
@@ -471,6 +471,14 @@ The ``config`` field describes execution configuration.
     - <memory_in_gb>
     - required is Benchmark is not available for a given workflow and if ``instance_type`` is not specified.
     - ``mem`` specifies memory requirement - instance_type is auto-determined based on ``mem`` and ``cpu``.
+    - Starting version 1.2.0, 1GB is added to mem when choosing an instance type by default. To turn off This
+      automatic increase in memory, set ``mem_as_is`` to be ``true``.
+
+:mem_as_is:
+    - <true|false>
+    - If true, the value set in ``mem`` is used as it is when choosing an instance type. If false, 1GB is added
+      by default, to accommodate the memory consumption of the house-keeping processes.
+    - This field is available for >=1.2.0
 
 :cpu:
     - <number_of_cores>
@@ -481,12 +489,20 @@ The ``config`` field describes execution configuration.
 :ebs_size:
     - <ebs_size_in_gb>
     - The EBS volume size used for data (input, output, or any intermediary files). This volume is mounted as
-      ``/data1`` on the EC2 instance and as ``/data1`` inside Docker image when running in the ``shell`` or 
+      ``/data1`` on the EC2 instance and as ``/data1`` inside Docker image when running in the ``shell`` or
       ``snakemake`` mode.
     - 10 is minimum acceptable value.
     - set as 10 if not specified and if Benchmark is not available for a given workflow.
     - It can be provided in the format of ``<s>x`` (e.g. ``3x``, ``5.5x``) to request ``<s>`` times total input size.
       (or 10 is smaller than 10)
+    - Starting version 1.2.0, 5GB is added to ebs_size by default. To turn off This automatic increase in EBS size,
+      set ``ebs_size_as_is`` to be ``true``.
+
+:ebs_size_as_is:
+    - <true|false>
+    - If true, the value set in ``ebs_size`` is used as it is. If false, 5GB is added
+      by default, to accommodate the disk usage of the house-keeping processes and the docker image/containers.
+    - This field is available for >=1.2.0
 
 :EBS_optimized:
     - <ebs_optimized> ``true``, ``false`` or '' (blank)
@@ -506,7 +522,7 @@ The ``config`` field describes execution configuration.
       when running in the ``shell`` mode, which is mounted from data EBS.
     - This field is supported in version ``0.9.0`` or higher. If an older version has been used, redeploy
       ``run_task_awsem`` to enable this feature, after installing ``0.9.0`` or higher, as below.
-    
+
       ::
 
           tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
@@ -535,7 +551,7 @@ The ``config`` field describes execution configuration.
     - The key pair should be an existing key pair and anyone with the key pair ``.pem`` file and the ip address of the EC2 instance can ssh into the machine.
     - optional (default : no key-based ssh)
 
-:ebs_iops: 
+:ebs_iops:
     - IOPS of the io1 type EBS
     - optional (default: unset)
 
@@ -594,7 +610,5 @@ The ``config`` field describes execution configuration.
       ``run_task_awsem`` to enable this feature, after installing ``0.15.6`` or higher, as below.
 
       ::
-      
+
           tibanna deploy_core -n run_task_awsem -g <usergroup> [-s <suffix>]
-
-
