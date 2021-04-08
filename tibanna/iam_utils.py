@@ -284,7 +284,9 @@ class IAM(object):
         execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':stateMachine:'
         sfn_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
         resources = [execution_arn_prefix + self.tibanna_sfn_name,
-                    sfn_arn_prefix + self.tibanna_sfn_name + ':*']
+                    execution_arn_prefix + self.tibanna_sfn_name + '_costupdater',
+                    sfn_arn_prefix + self.tibanna_sfn_name + ':*',
+                    sfn_arn_prefix + self.tibanna_sfn_name + '_costupdater:*']
         policy = {
             "Version": "2012-10-17",
             "Statement": [
