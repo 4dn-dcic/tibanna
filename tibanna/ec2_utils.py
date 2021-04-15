@@ -720,6 +720,11 @@ class Execution(object):
                                                        'VolumeType': 'gp3'}}]})
         if self.cfg.ebs_iops:    # io1 type, specify iops
             largs["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops
+        if self.cfg.ebs_throughput and self.cfg.ebs_type == 'gp3':
+            if self.cfg.ebs_throughput < 125 or self.cfg.ebs_throughput > 1000:
+                message = "Invalid EBS throughput. Specify a value between 125 and 1000."
+                raise EC2LaunchException(message)
+            largs["BlockDeviceMappings"][0]["Ebs"]['Throughput'] = self.cfg.ebs_throughput
         if self.cfg.ebs_size >= 16000:
             message = "EBS size limit (16TB) exceeded: (attempted size: %s)" % self.cfg.ebs_size
             raise EC2LaunchException(message)
