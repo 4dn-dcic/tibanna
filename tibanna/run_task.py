@@ -14,6 +14,7 @@ def run_task(input_json):
       ebs_size: EBS storage size in GB
       ebs_type: EBS storage type (available values: gp2, io1, st1, sc1, standard (default: io1)
       ebs_iops: EBS storage IOPS
+      ebs_throughput: EBS throughput for GP3 types
       password: password for ssh connection for user ec2-user
       EBS_optimized: Use this flag if the instance type is EBS-optimized (default: EBS-optimized)
       shutdown_min: Number of minutes before shutdown after the jobs are finished. (default now)

@@ -274,7 +274,7 @@ class Config(SerializableObject):
         else:
             self.use_benchmark = False
         # fill in default
-        for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'password', 'key_name',
+        for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'ebs_throughput', 'password', 'key_name',
                       'spot_duration', 'availability_zone', 'security_group', 'subnet']:
             if not hasattr(self, field):
                 setattr(self, field, '')

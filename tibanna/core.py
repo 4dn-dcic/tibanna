@@ -600,7 +600,7 @@ class API(object):
 
     def rerun(self, exec_arn=None, job_id=None, sfn=None,
               override_config=None, app_name_filter=None,
-              instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+              instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None, ebs_throughput=None,
               overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
         """rerun a specific job
         override_config : dictionary for overriding config (keys are the keys inside config)
@@ -645,6 +645,8 @@ class API(object):
                     override_config['ebs_iops'] = ''
             if ebs_iops:
                 override_config['ebs_iops'] = ebs_iops
+            if ebs_throughput and ebs_type == 'gp3':
+                override_config['ebs_throughput'] = ebs_throughput
             if use_spot:
                 override_config['spot_instance'] = True
             if do_not_use_spot:
@@ -657,7 +659,7 @@ class API(object):
     def rerun_many(self, sfn=None, stopdate='13Feb2018', stophour=13,
                    stopminute=0, offset=0, sleeptime=5, status='FAILED',
                    override_config=None, app_name_filter=None,
-                   instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+                   instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None, ebs_throughput=None,
                    overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
         """Reruns step function jobs that failed after a given time point
         (stopdate, stophour (24-hour format), stopminute)
@@ -684,7 +686,7 @@ class API(object):
                 self.rerun(exc['executionArn'], sfn=sfn,
                            override_config=override_config, app_name_filter=app_name_filter,
                            instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
-                           ebs_type=ebs_type, ebs_iops=ebs_iops,
+                           ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
                            overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
                            use_spot=use_spot, do_not_use_spot=do_not_use_spot)
                 time.sleep(sleeptime)
