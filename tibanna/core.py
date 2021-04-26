@@ -645,7 +645,7 @@ class API(object):
                     override_config['ebs_iops'] = ''
             if ebs_iops:
                 override_config['ebs_iops'] = ebs_iops
-            if ebs_throughput and ebs_type == 'gp3':
+            if ebs_throughput:
                 override_config['ebs_throughput'] = ebs_throughput
             if use_spot:
                 override_config['spot_instance'] = True
