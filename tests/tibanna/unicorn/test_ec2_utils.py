@@ -923,10 +923,25 @@ def test_ec2_cost_estimate_small_spot_gp3_iops():
     postrunjsonobj = json.loads(postrunjsonstr)
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
-        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_gp3_iops_price': 0.005
+        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_iops_price': 0.005
         } 
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.0012730879629629633
+
+def test_ec2_cost_estimate_small_spot_gp3_iops_throughput():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_name = "small_spot_gp3_iops_throughput.postrun.json"
+    file_name = os.path.join(dir_path, '..', '..', '..', 'test_json', 'unicorn', file_name)
+    with open(file_name, 'r') as file:
+        postrunjsonstr = file.read().replace('\n', '')
+
+    postrunjsonobj = json.loads(postrunjsonstr)
+    postrunjson = AwsemPostRunJson(**postrunjsonobj)
+    aws_price_overwrite = {
+        'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_iops_price': 0.005, 'ebs_throughput_price': 0.04
+        } 
+    estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
+    assert estimate == 0.001681652777777778
 
 
 def test_ec2_cost_estimate_small_spot_io2_iops():

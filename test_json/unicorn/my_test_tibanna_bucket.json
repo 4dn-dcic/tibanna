@@ -18,6 +18,7 @@
   },
   "config": {
     "run_name": "md5-public-test",
-    "log_bucket": "my-tibanna-test-bucket"
+    "log_bucket": "my-tibanna-test-bucket",
+    "ebs_throughput": 300
   }
 }

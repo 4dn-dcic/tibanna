@@ -78,6 +78,7 @@
         "cloudwatch_dashboard": false,
         "cpu": "",
         "ebs_iops": "",
+        "ebs_throughput": "",
         "ebs_size": 20,
         "ebs_type": "gp3",
         "instance_type": "t3.small",

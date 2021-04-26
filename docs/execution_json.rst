@@ -552,11 +552,15 @@ The ``config`` field describes execution configuration.
     - optional (default : no key-based ssh)
 
 :ebs_iops:
-    - IOPS of the io1 type EBS
+    - IOPS of the io1, io2 or gp3 type EBS
+    - optional (default: unset)
+
+:ebs_throughput:
+    - Provisioned throughput of the gp3 type EBS (MiB/s). Must be an integer betweem 125 and 1000.
     - optional (default: unset)
 
 :ebs_type:
-    - type of EBS (e.g. ``gp3``, ``gp2``, ``io1``)
+    - type of EBS (e.g. ``gp3``, ``gp2``, ``io1``, ``io2``)
     - optional (default: gp3 (version >= ``1.0.0``) or gp2 (version < ``1.0.0``))
 
 :cloudwatch_dashboard:

@@ -61,8 +61,8 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
     """
     aws_price_overwrite can be used to overwrite the prices obtained from AWS (e.g. ec2 spot price).
     This allows historical cost estimates. It is also used for testing. It is a dictionary with keys:
-    ec2_spot_price, ec2_ondemand_price, ebs_root_storage_price, ebs_gp3_iops_price, ebs_storage_price,
-    ebs_io1_iops_price, ebs_io2_iops_prices
+    ec2_spot_price, ec2_ondemand_price, ebs_root_storage_price, ebs_storage_price,
+    ebs_iops_price (gp3, io1), ebs_io2_iops_prices, ebs_throughput_price
     """
 
     cfg = postrunjson.config
@@ -205,7 +205,8 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
             ebs_storage_cost = ebs_root_storage_price * cfg.ebs_size * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + ebs_storage_cost
 
-            if(cfg.ebs_iops):
+            # Add throughput
+            if(cfg.ebs_throughput):
                 prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
                     {
                         'Type': 'TERM_MATCH',
@@ -220,28 +221,30 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                     {
                         'Field': 'productFamily',
                         'Type': 'TERM_MATCH',
-                        'Value': 'System Operation',
+                        'Value': 'Provisioned Throughput',
                     },
                 ])
                 price_list = prices["PriceList"]
 
                 if(not prices["PriceList"] or len(price_list) == 0):
-                    raise PricingRetrievalException("We could not retrieve EBS IOPS prices from Amazon")
+                    raise PricingRetrievalException("We could not retrieve EBS throughput prices from Amazon")
+
                 if(len(price_list) > 1):
-                    raise PricingRetrievalException("EBS IOPS prices are ambiguous")
+                    raise PricingRetrievalException("EBS throughput prices are ambiguous")
 
                 price_item = json.loads(price_list[0])
                 terms = price_item["terms"]
                 term = list(terms["OnDemand"].values())[0]
                 price_dimension = list(term["priceDimensions"].values())[0]
-                ebs_gp3_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+                ebs_throughput_price = (float)(price_dimension['pricePerUnit']["USD"])/1000 # unit: mbps
+                
+                if((aws_price_overwrite is not None) and 'ebs_throughput_price' in aws_price_overwrite):
+                    ebs_throughput_price = aws_price_overwrite['ebs_throughput_price']
 
-                if((aws_price_overwrite is not None) and 'ebs_gp3_iops_price' in aws_price_overwrite):
-                    ebs_gp3_iops_price = aws_price_overwrite['ebs_gp3_iops_price']
-
-                free_tier = 3000
-                ebs_iops_cost = ebs_gp3_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
-                estimated_cost = estimated_cost + ebs_iops_cost
+                free_tier = 125
+                ebs_throughput_cost = ebs_throughput_price * max(cfg.ebs_throughput - free_tier, 0) * job_duration / (24.0*30.0)
+                print(ebs_throughput_cost)
+                estimated_cost = estimated_cost + ebs_throughput_cost
 
         else: 
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
@@ -281,90 +284,96 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
             add_ebs_cost = ebs_storage_price * cfg.ebs_size * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + add_ebs_cost
 
-            # Add IOPS prices for io1
-            if(cfg.ebs_type == "io1" and cfg.ebs_iops):
-                prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
-                    {
-                        'Type': 'TERM_MATCH',
-                        'Field': 'location',
-                        'Value': AWS_REGION_NAMES[AWS_REGION]
-                    },
-                    {
-                        'Field': 'volumeApiName',
-                        'Type': 'TERM_MATCH',
-                        'Value': cfg.ebs_type,
-                    },
-                    {
-                        'Field': 'productFamily',
-                        'Type': 'TERM_MATCH',
-                        'Value': 'System Operation',
-                    },
-                ])
-                price_list = prices["PriceList"]
+        ## IOPS PRICING
+        # Add IOPS prices for io1 or gp3
+        if( (cfg.ebs_type == "io1" or cfg.ebs_type == "gp3") and cfg.ebs_iops):
+            prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'location',
+                    'Value': AWS_REGION_NAMES[AWS_REGION]
+                },
+                {
+                    'Field': 'volumeApiName',
+                    'Type': 'TERM_MATCH',
+                    'Value': cfg.ebs_type,
+                },
+                {
+                    'Field': 'productFamily',
+                    'Type': 'TERM_MATCH',
+                    'Value': 'System Operation',
+                },
+            ])
+            price_list = prices["PriceList"]
 
-                if(not prices["PriceList"] or len(price_list) == 0):
-                    raise PricingRetrievalException("We could not retrieve EBS prices from Amazon")
-                if(len(price_list) > 1):
-                    raise PricingRetrievalException("EBS prices are ambiguous")
+            if(not prices["PriceList"] or len(price_list) == 0):
+                raise PricingRetrievalException("We could not retrieve EBS prices from Amazon")
+            if(len(price_list) > 1):
+                raise PricingRetrievalException("EBS prices are ambiguous")
 
-                price_item = json.loads(price_list[0])
+            price_item = json.loads(price_list[0])
+            terms = price_item["terms"]
+            term = list(terms["OnDemand"].values())[0]
+            price_dimension = list(term["priceDimensions"].values())[0]
+            ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+
+            if((aws_price_overwrite is not None) and 'ebs_iops_price' in aws_price_overwrite):
+                ebs_iops_price = aws_price_overwrite['ebs_iops_price']
+
+            if cfg.ebs_type == "gp3":
+                free_tier = 3000
+                ebs_iops_cost = ebs_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
+            else:
+                ebs_iops_cost = ebs_iops_price * cfg.ebs_iops * job_duration / (24.0*30.0)
+            
+            estimated_cost = estimated_cost + ebs_iops_cost
+
+        elif (cfg.ebs_type == "io2" and cfg.ebs_iops):
+            prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
+                {
+                    'Type': 'TERM_MATCH',
+                    'Field': 'location',
+                    'Value': AWS_REGION_NAMES[AWS_REGION]
+                },
+                {
+                    'Field': 'volumeApiName',
+                    'Type': 'TERM_MATCH',
+                    'Value': cfg.ebs_type,
+                },
+                {
+                    'Field': 'productFamily',
+                    'Type': 'TERM_MATCH',
+                    'Value': 'System Operation',
+                },
+            ])
+            price_list = prices["PriceList"]
+
+            if(len(price_list) != 3):
+                raise PricingRetrievalException("EBS prices for io2 are incomplete")
+
+            ebs_io2_iops_prices = []
+            for price_entry in price_list:
+                price_item = json.loads(price_entry)
                 terms = price_item["terms"]
                 term = list(terms["OnDemand"].values())[0]
                 price_dimension = list(term["priceDimensions"].values())[0]
-                ebs_io1_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+                ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
+                ebs_io2_iops_prices.append(ebs_iops_price)
+            ebs_io2_iops_prices.sort(reverse=True)
 
-                if((aws_price_overwrite is not None) and 'ebs_io1_iops_price' in aws_price_overwrite):
-                    ebs_io1_iops_price = aws_price_overwrite['ebs_io1_iops_price']
+            if((aws_price_overwrite is not None) and 'ebs_io2_iops_prices' in aws_price_overwrite):
+                ebs_io2_iops_prices = aws_price_overwrite['ebs_io2_iops_prices']
 
-                ebs_iops_cost = ebs_io1_iops_price * cfg.ebs_iops * job_duration / (24.0*30.0)
-                estimated_cost = estimated_cost + ebs_iops_cost
+            # Pricing tiers are currently hardcoded. There wasn't a simple way to extract them from the pricing information
+            tier0 = 32000
+            tier1 = 64000
 
-            elif (cfg.ebs_type == "io2" and cfg.ebs_iops):
-                prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
-                    {
-                        'Type': 'TERM_MATCH',
-                        'Field': 'location',
-                        'Value': AWS_REGION_NAMES[AWS_REGION]
-                    },
-                    {
-                        'Field': 'volumeApiName',
-                        'Type': 'TERM_MATCH',
-                        'Value': cfg.ebs_type,
-                    },
-                    {
-                        'Field': 'productFamily',
-                        'Type': 'TERM_MATCH',
-                        'Value': 'System Operation',
-                    },
-                ])
-                price_list = prices["PriceList"]
-
-                if(len(price_list) != 3):
-                    raise PricingRetrievalException("EBS prices for io2 are incomplete")
-
-                ebs_io2_iops_prices = []
-                for price_entry in price_list:
-                    price_item = json.loads(price_entry)
-                    terms = price_item["terms"]
-                    term = list(terms["OnDemand"].values())[0]
-                    price_dimension = list(term["priceDimensions"].values())[0]
-                    ebs_iops_price = (float)(price_dimension['pricePerUnit']["USD"])
-                    ebs_io2_iops_prices.append(ebs_iops_price)
-                ebs_io2_iops_prices.sort(reverse=True)
-
-                if((aws_price_overwrite is not None) and 'ebs_io2_iops_prices' in aws_price_overwrite):
-                    ebs_io2_iops_prices = aws_price_overwrite['ebs_io2_iops_prices']
-
-                # Pricing tiers are currently hardcoded. There wasn't a simple way to extract them from the pricing information
-                tier0 = 32000
-                tier1 = 64000
-
-                ebs_iops_cost = (
-                    ebs_io2_iops_prices[0] * min(cfg.ebs_iops, tier0) + # Portion below 32000 IOPS
-                    ebs_io2_iops_prices[1] * min(max(cfg.ebs_iops - tier0, 0), tier1 - tier0) + # Portion between 32001 and 64000 IOPS
-                    ebs_io2_iops_prices[2] * max(cfg.ebs_iops - tier1, 0) # Portion above 64000 IOPS
-                    ) * job_duration / (24.0*30.0)
-                estimated_cost = estimated_cost + ebs_iops_cost
+            ebs_iops_cost = (
+                ebs_io2_iops_prices[0] * min(cfg.ebs_iops, tier0) + # Portion below 32000 IOPS
+                ebs_io2_iops_prices[1] * min(max(cfg.ebs_iops - tier0, 0), tier1 - tier0) + # Portion between 32001 and 64000 IOPS
+                ebs_io2_iops_prices[2] * max(cfg.ebs_iops - tier1, 0) # Portion above 64000 IOPS
+                ) * job_duration / (24.0*30.0)
+            estimated_cost = estimated_cost + ebs_iops_cost
 
         time_since_run = (datetime.utcnow() - job_end).total_seconds() / (3600 * 24) # days
         estimation_type = "retrospective estimate" if time_since_run > 10 else "immediate estimate"

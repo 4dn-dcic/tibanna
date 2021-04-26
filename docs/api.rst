@@ -338,6 +338,8 @@ To rerun a failed job with the same input json on a specific step function.
 
   ebs_iops=<ebs_iops>            Override EBS IOPS for the rerun
 
+  ebs_throughput=<ebs_throughput>            Override EBS GP3 throughput for the rerun
+
   key_name=<key_name>            Override key name for the rerun
 
   name=<run_name>                Override run name for the rerun
@@ -388,6 +390,8 @@ To rerun many jobs that failed after a certain time point
   ebs_type=<ebs_size>            Override EBS type for the rerun
 
   ebs_iops=<ebs_iops>            Override EBS IOPS for the rerun
+
+  ebs_throughput=<ebs_throughput>            Override EBS GP3 throughput for the rerun
 
   key_name=<key_name>            Override key name for the rerun
 

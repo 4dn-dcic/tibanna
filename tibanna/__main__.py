@@ -163,6 +163,8 @@ class Subcommands(object):
                   'help': "use a specified ebs type for the rerun (gp2 vs io1)"},
                  {'flag': ["-p", "--ebs-iops"],
                   'help': "use a specified ebs iops for the rerun"},
+                 {'flag': ["-w", "--ebs-throughput"],
+                  'help': "use a specified ebs throughput (for gp3 type EBS) for the rerun"},
                  {'flag': ["-k", "--key-name"],
                   'help': "use a specified key name for the rerun"},
                  {'flag': ["-n", "--name"],
@@ -214,6 +216,8 @@ class Subcommands(object):
                   'help': "use a specified ebs type for the rerun (gp2 vs io1)"},
                  {'flag': ["-p", "--ebs-iops"],
                   'help': "use a specified ebs iops for the rerun"},
+                 {'flag': ["-w", "--ebs-throughput"],
+                  'help': "use a specified ebs throughput (for gp3 type EBS) for the rerun"},
                  {'flag': ["-k", "--key-name"],
                   'help': "use a specified key name for the rerun"},
                  {'flag': ["-n", "--name"],
@@ -419,19 +423,19 @@ def info(job_id):
 
 
 def rerun(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, app_name_filter=None,
-          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+          instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None, ebs_throughput=None,
           overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
     """ rerun a specific job"""
     API().rerun(exec_arn=exec_arn, job_id=job_id, sfn=sfn,
                 app_name_filter=app_name_filter, instance_type=instance_type, shutdown_min=shutdown_min,
-                ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
                 overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
                 use_spot=use_spot, do_not_use_spot=do_not_use_spot)
 
 
 def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', stophour=13,
                stopminute=0, offset=0, sleeptime=5, status='FAILED', app_name_filter=None,
-               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None,
+               instance_type=None, shutdown_min=None, ebs_size=None, ebs_type=None, ebs_iops=None, ebs_throughput=None,
                overwrite_input_extra=None, key_name=None, name=None, use_spot=None, do_not_use_spot=None):
     """rerun all the jobs that failed after a given time point
     filtered by the time when the run failed (stopdate, stophour (24-hour format), stopminute)
@@ -448,7 +452,7 @@ def rerun_many(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, stopdate='13Feb2018', sto
     API().rerun_many(sfn=sfn, stopdate=stopdate, stophour=stophour,
                      stopminute=stopminute, offset=offset, sleeptime=sleeptime, status=status,
                      app_name_filter=app_name_filter, instance_type=instance_type, shutdown_min=shutdown_min,
-                     ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops,
+                     ebs_size=ebs_size, ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
                      overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
                      use_spot=use_spot, do_not_use_spot=do_not_use_spot)
 

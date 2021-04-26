@@ -44,16 +44,16 @@
                 }
             }
         },
-        "start_time": "20210301-21:56:27-UTC",
+        "start_time": "20210301-16:58:05-UTC",
         "JOBID": "NgN7IOBXjgRH",
         "Log": {
             "log_bucket_directory": "aveit-tibanna-test-log"
         },
-        "end_time": "20210301-22:01:49-UTC",
+        "end_time": "20210301-17:03:58-UTC",
         "status": "0",
         "filesystem": "/dev/nvme1n1",
         "instance_id": "i-01769a822e5dbb407",
-        "instance_availablity_zone": "us-east-1f",
+        "instance_availablity_zone": "us-east-1b",
         "total_input_size": "12K",
         "total_output_size": "36K",
         "total_tmp_size": "20K",
@@ -78,9 +78,9 @@
         "cloudwatch_dashboard": false,
         "cpu": "",
         "ebs_iops": 3500,
-        "ebs_throughput": "",
+        "ebs_throughput": 200,
         "ebs_size": 20,
-        "ebs_type": "io2",
+        "ebs_type": "gp3",
         "instance_type": "t3.small",
         "job_tag": "",
         "json_bucket": "aveit-tibanna-test-log",
