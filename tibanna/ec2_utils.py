@@ -267,12 +267,14 @@ class Config(SerializableObject):
 
     def fill_default(self):
         # use benchmark or not
-        if not hasattr(self, 'instance_type') and (not hasattr(self, 'cpu') or not hasattr(self, 'mem')):
-            self.use_benchmark = True
-        elif not hasattr(self, 'ebs_size'):
-            self.use_benchmark = True 
-        else:
-            self.use_benchmark = False
+        if not hasattr(self, 'use_benchmark'):
+            if not hasattr(self, 'instance_type') and (not hasattr(self, 'cpu') or not hasattr(self, 'mem')):
+                self.use_benchmark = True
+            elif not hasattr(self, 'ebs_size'):
+                self.use_benchmark = True 
+            else:
+                self.use_benchmark = False
+        logger.debug("Config.fill_default: use_benchmark=" + str(self.use_benchmark))
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'ebs_throughput', 'password', 'key_name',
                       'spot_duration', 'availability_zone', 'security_group', 'subnet']:
@@ -341,6 +343,10 @@ class Execution(object):
         self.input_size_in_bytes = self.get_input_size_in_bytes()
         if self.cfg.use_benchmark:
             self.benchmark = self.get_benchmarking(self.input_size_in_bytes)
+            logger.debug('self.benchmark = ' + str(self.benchmark))
+        else:
+            logger.debug('self.cfg.use_benchmark = ' + str(self.cfg.use_benchmark))
+        logger.debug('self.cfg.as_dict() = ' + str(self.cfg.as_dict()))
         self.init_instance_type_list()
         self.update_config_instance_type()
         self.update_config_ebs_size()
