@@ -556,7 +556,7 @@ The ``config`` field describes execution configuration.
     - optional (default: unset)
 
 :ebs_throughput:
-    - Provisioned throughput of the gp3 type EBS (MiB/s). Must be an integer betweem 125 and 1000.
+    - Provisioned throughput of the gp3 type EBS (MiB/s). Must be an integer between 125 and 1000.
     - optional (default: unset)
 
 :ebs_type:

@@ -243,7 +243,6 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
 
                 free_tier = 125
                 ebs_throughput_cost = ebs_throughput_price * max(cfg.ebs_throughput - free_tier, 0) * job_duration / (24.0*30.0)
-                print(ebs_throughput_cost)
                 estimated_cost = estimated_cost + ebs_throughput_cost
 
         else: 
