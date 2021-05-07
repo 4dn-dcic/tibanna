@@ -86,8 +86,11 @@ class UnicornInput(SerializableObject):
         if args.app_name and args.app_name in B.app_name_function_map:
             pass  # use benchmarking
         else:
-            if not cfg.ebs_size or cfg.ebs_size < 10:  # unset (set to 0) or <10GB
+            if not cfg.ebs_size:
                 cfg.ebs_size = 10  # if not set by user or benchmark, just use 10GB as default
+            # This one below may require revisiting - At least in some cases AWS now allows <10GB EBS.
+            if isinstance(cfg.ebs_size, int) and cfg.ebs_size < 10:
+                cfg.ebs_size = 10  # if user-specified value is less than 10G, use 10GB as default
             if not cfg.EBS_optimized:  # either false or unset
                 cfg.EBS_optimized = False  # False by default so t2 instances can be used
             if cfg.mem and cfg.cpu:
@@ -274,7 +277,6 @@ class Config(SerializableObject):
                 self.use_benchmark = True 
             else:
                 self.use_benchmark = False
-        logger.debug("Config.fill_default: use_benchmark=" + str(self.use_benchmark))
         # fill in default
         for field in ['instance_type', 'EBS_optimized', 'cpu', 'ebs_iops', 'ebs_throughput', 'password', 'key_name',
                       'spot_duration', 'availability_zone', 'security_group', 'subnet']:

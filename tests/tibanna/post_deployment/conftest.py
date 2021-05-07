@@ -5,9 +5,12 @@ REGION1 = 'us-east-1'
 REGION2 = 'us-west-1'
 
 DEV_SUFFIX = 'pre'
-DEV_GROUP_SUFFIX = 'testgroup'
+DEV_GROUP_SUFFIX = 'testa'
+
+# This first one has costupdater
 DEV_SFN_REGION1 = 'tibanna_unicorn_' + DEV_GROUP_SUFFIX + '1' + '_' + DEV_SUFFIX  # deployed to us-east-1
-DEV_SFN_WITH_COSTUPDATER_REGION1 = 'tibanna_unicorn_' + DEV_GROUP_SUFFIX + '1_costupdater' + '_' + DEV_SUFFIX  # deployed to us-east-1
+
+# These two don't have costupdater
 DEV_SFN_REGION2 = 'tibanna_unicorn_' + DEV_GROUP_SUFFIX + '1' + '_' + DEV_SUFFIX  # deployed to us-west-1
 DEV_SFN2_REGION2 = 'tibanna_unicorn_' + DEV_GROUP_SUFFIX + '2' + '_' + DEV_SUFFIX  # deployed to us-west-1
 
@@ -19,13 +22,10 @@ def get_test_json(file_name):
 
 
 def deploy_sfn1_to_region1():
+    """Deploy sfn1 to region1 with cost updater"""
     os.environ['AWS_DEFAULT_REGION'] = REGION1
-    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1')
-
-
-def deploy_sfn1_with_costupdater_to_region1():
-    os.environ['AWS_DEFAULT_REGION'] = REGION1
-    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1_costupdater')
+    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1',
+                         deploy_costupdater = True)
 
 
 def deploy_sfn1_to_region2():
@@ -44,11 +44,6 @@ def cleanup_sfn1_region1():
     API().cleanup(user_group_name=DEV_GROUP_SUFFIX + '1', suffix=DEV_SUFFIX)
 
 
-def cleanup_sfn1_with_costupdater_region1():
-    os.environ['AWS_DEFAULT_REGION'] = REGION1
-    API().cleanup(user_group_name=DEV_GROUP_SUFFIX + '1_costupdater', suffix=DEV_SUFFIX)
-
-
 def cleanup_sfn1_region2():
     os.environ['AWS_DEFAULT_REGION'] = REGION2
     API().cleanup(user_group_name=DEV_GROUP_SUFFIX + '1', suffix=DEV_SUFFIX)
@@ -61,13 +56,11 @@ def cleanup_sfn2_region2():
 
 def pytest_sessionstart(session):
     deploy_sfn1_to_region1()
-    deploy_sfn1_with_costupdater_to_region1()
     deploy_sfn1_to_region2()
     deploy_sfn2_to_region2()
 
 
 def pytest_sessionfinish(session, exitstatus):
     cleanup_sfn1_region1()
-    cleanup_sfn1_with_costupdater_region1()
     cleanup_sfn1_region2()
     cleanup_sfn2_region2()

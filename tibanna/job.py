@@ -1,4 +1,5 @@
 import boto3
+import json
 from datetime import datetime
 from . import create_logger
 from tibanna import dd_utils
@@ -60,8 +61,8 @@ class Job(object):
         It works only if the execution info is still in the step function.'''
         if self.check_status() == 'SUCCEEDED':
             self.update_exec_desc()
-            if 'output' in self.desc:
-                return json.loads(self.desc['output'])
+            if 'output' in self.exec_desc:
+                return json.loads(self.exec_desc['output'])
             else:
                 return None
 
