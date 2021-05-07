@@ -18,6 +18,14 @@ def test_stepfunction_exists2():
     assert Job.stepfunction_exists(sfn_name) is True
 
 
+def test_job_check_output():
+    job = Job(job_id='jid1')
+    job.exec_desc = {'output': '{"somefield": "someoutput"}'}
+    with mock.patch('tibanna.job.Job.check_status', return_value='SUCCEEDED'):
+        res = job.check_output()
+    assert res == {'somefield': 'someoutput'}
+
+
 def test_jobs_status_completed():
     with mock.patch('tibanna.job.Job.check_status', return_value='SUCCEEDED'):
         res = Jobs.status(job_ids=['jid1', 'jid2', 'jid3'])
