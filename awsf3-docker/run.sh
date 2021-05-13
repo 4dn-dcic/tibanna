@@ -250,7 +250,8 @@ exl date
 touch $MD5FILE
 if [[ $LANGUAGE == 'cwl_v1' ]]
 then
-    exl md5sum $LOCAL_OUTDIR_CWL/* | grep -v "$JOBID" >> $MD5FILE ;  ## exclude log file, to avoid confusion
+    md5sum $LOCAL_OUTDIR_CWL/* | grep -v "$JOBID" >> $MD5FILE ;  ## exclude log file, to avoid confusion
+    handle_error $?
 fi
 exl cat $MD5FILE
 mv $MD5FILE $LOCAL_OUTDIR
