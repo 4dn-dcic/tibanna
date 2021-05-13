@@ -348,7 +348,6 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
 
     # read md5 file
     md5dict = read_md5file(md5file)
-    print(md5dict)
 
     # read execution metadata file
     if execution_metadata_file:
@@ -357,7 +356,6 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
     else:
         execution_metadata = None
     output_files = create_output_files_dict(language, execution_metadata, md5dict, strict=strict)
-    print(output_files)
 
     # create output files for postrun json
     prj.Job.Output.add_output_files(output_files)
