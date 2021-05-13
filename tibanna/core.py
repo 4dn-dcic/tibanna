@@ -803,7 +803,10 @@ class API(object):
             client = boto3.client('s3')
             for b in bucket_names:
                 logger.info("Deleting public access block for bucket %s" % b)
-                response = client.delete_public_access_block(Bucket=b)
+                try:
+                    response = client.delete_public_access_block(Bucket=b)
+                except Exception as e:
+                    logger.warning("public access block could not be deleted on bucket %s - skipping.." % b)
         tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
