@@ -158,8 +158,6 @@ class API(object):
         input_json is either a dict or a file
         accession is unique name that we be part of run id
         '''
-        if not jobid:
-            jobid = create_jobid()
         if isinstance(input_json, dict):
             data = copy.deepcopy(input_json)
         elif isinstance(input_json, str) and os.path.exists(input_json):
@@ -167,6 +165,15 @@ class API(object):
                 data = json.load(input_file)
         else:
             raise Exception("input json must be either a file or a dictionary")
+        # jobid can be specified through run_workflow option (priority),
+        # or in input_json
+        if not jobid:
+            if 'jobid' in data:
+                jobid = data['jobid']
+            else:
+                jobid = create_jobid()
+        data['jobid'] = jobid
+
         if not sfn:
             sfn = self.default_stepfunction_name
         if not env:
@@ -189,8 +196,6 @@ class API(object):
         # calculate what the url will be
         url = "%s%s" % (base_url, arn)
         data[_tibanna]['url'] = url
-        # add jobid
-        data['jobid'] = jobid
         if 'args' in data:  # unicorn-only
             unicorn_input = UnicornInput(data)
             args = unicorn_input.args
@@ -223,7 +228,7 @@ class API(object):
                 "aws_region": AWS_REGION
             }
             costupdater_input = json.dumps(costupdater_input)
-            response = client.start_execution(
+            costupdater_response = client.start_execution(
                 stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
                 name=run_name,
                 input=costupdater_input,
