@@ -1,4 +1,9 @@
-from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER, SFN_TYPE
+from .vars import (
+    AWS_REGION,
+    AWS_ACCOUNT_NUMBER,
+    SFN_TYPE
+    UPDATE_COST_LAMBDA_NAME
+)
 
 
 class StepFunctionCostUpdater(object):
@@ -65,7 +70,7 @@ class StepFunctionCostUpdater(object):
             },
             "UpdateCostAwsem": {
                 "Type": "Task",
-                "Resource": self.lambda_arn_prefix + "update_cost_awsem" + self.lambda_suffix,
+                "Resource": self.lambda_arn_prefix + UPDATE_COST_LAMBDA_NAME + self.lambda_suffix,
                 "ResultPath": "$.done",
                 "Next": "UpdateCostDone"
             },
