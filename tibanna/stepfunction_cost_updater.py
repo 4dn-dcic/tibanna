@@ -1,7 +1,7 @@
 from .vars import (
     AWS_REGION,
     AWS_ACCOUNT_NUMBER,
-    SFN_TYPE
+    SFN_TYPE,
     UPDATE_COST_LAMBDA_NAME
 )
 
