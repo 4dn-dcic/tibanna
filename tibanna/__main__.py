@@ -310,7 +310,10 @@ class Subcommands(object):
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
                  {'flag': ["-u", "--update-tsv"],
                   'help': "update estimated cost in the metric tsv file on S3",
-                  'action': "store_true"}],
+                  'action': "store_true"},
+                  {'flag': ["-f", "--force"],
+                  'action': "store_true",
+                  'help': "returns the estimate, even if the actual cost is available"}],
             'cleanup':
                 [{'flag': ["-g", "--usergroup"],
                   'help': "Tibanna usergroup that shares the permission to access buckets and run jobs"},
@@ -475,9 +478,9 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
-def cost_estimate(job_id, update_tsv=False):
+def cost_estimate(job_id, update_tsv=False, force=False):
     """print out estimated cost of a specific job"""
-    cost_estimate, cost_estimate_type = API().cost_estimate(job_id=job_id, update_tsv=update_tsv)
+    cost_estimate, cost_estimate_type = API().cost_estimate(job_id=job_id, update_tsv=update_tsv, force=force)
     print(f'{cost_estimate} ({cost_estimate_type})')
 
 

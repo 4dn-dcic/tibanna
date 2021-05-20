@@ -591,4 +591,6 @@ This function requires a (deployed) Tibanna version >=1.0.6.
  -u|--update-tsv                     Update with the cost the tsv file that stores metrics
                                      information on the S3 bucket
 
+ -f|--force                          Return the estimate, even if the actual cost is available
+
 

@@ -1046,7 +1046,7 @@ class API(object):
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
 
-    def cost_estimate(self, job_id, update_tsv=False):
+    def cost_estimate(self, job_id, update_tsv=False, force=False):
         postrunjsonstr = self.log(job_id=job_id, postrunjson=True)
         if not postrunjsonstr:
             logger.info("Cost estimation error: postrunjson not found")
@@ -1055,12 +1055,13 @@ class API(object):
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
 
-        # We return the real cost, if it is availble, but don't automatically update the Cost row in the tsv
-        precise_cost = self.cost(job_id, update_tsv=False)
-        if(precise_cost and precise_cost > 0.0):
-            if update_tsv:
-                update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
-            return precise_cost, "actual cost"
+        # We return the real cost, if it is available, but don't automatically update the Cost row in the tsv
+        if not force:
+            precise_cost = self.cost(job_id, update_tsv=False)
+            if(precise_cost and precise_cost > 0.0):
+                if update_tsv:
+                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
+                return precise_cost, "actual cost"
 
         # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
         ebs_root_type = 'gp3' if 'awsf_image' in postrunjsonobj['config'] else 'gp2'
