@@ -392,6 +392,16 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False, kms_key_id=None, e
     output_argnames = prj_out.output_files.keys()
     output_target = prj_out.alt_output_target(output_argnames)
 
+    # sorting outputs by mtime in order to upload in the right order.
+    # arbitrary order created issues with workflow managers (snakemake)
+    # because S3 does not save the modification time of uploaded objects
+    output_target = dict(
+        sorted(
+            output_target.items(),
+            key=lambda i: os.path.getmtime(i[0].replace('file://', ''))
+        )
+    )
+
     for k in output_target:
         target = Target(output_bucket)
 
