@@ -301,7 +301,7 @@ class API(object):
             ec2 = boto3.client('ec2')
             res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job.job_id]}])
             if not res['Reservations']:
-                raise("instance not available - if you just submitted the job, try again later")
+                raise Exception("instance not available - if you just submitted the job, try again later")
             instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
             logger.info("terminating EC2 instance")
             resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
