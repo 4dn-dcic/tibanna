@@ -36,15 +36,28 @@ class Jobs(object):
 class Job(object):
 
     def __init__(self, job_id=None, exec_arn=None, sfn=None):
+        """A job can be identified with either a job_id or an exec_arn.
+        For old tibanna versions (with no dynamoDB deployed),
+        a job can be identified with a job_id and sfn.
+        """
         if not job_id and not exec_arn:
             raise Exception("Provide either through job id or execution arn to retrieve a job.")
-        self.job_id = job_id
-        self.exec_arn = exec_arn
+        self._job_id = job_id
+        self._exec_arn = exec_arn
         self.sfn = sfn  # only for old tibanna
-        self.exec_desc = None
-        self.log_bucket = None
+        self._exec_desc = None
+        self._log_bucket = None
         self.costupdater_exec_arn = None
         self.costupdater_exec_desc = None
+
+        # cache for boto3 client for step function
+        self._client_sfn = None
+
+    @property
+    def client_sfn(self):
+        if not self._client_sfn:
+            self._client_sfn = boto3.client('sfn', region=AWS_REGION)
+        return self._client_sfn
 
     def check_costupdater_status(self):
         self.update_costupdater_exec_desc()
@@ -53,25 +66,98 @@ class Job(object):
     def check_status(self):
         '''checking status of an execution.
         It works only if the execution info is still in the step function.'''
-        self.update_exec_desc()
         return self.exec_desc['status']
 
     def check_output(self):
         '''checking status of an execution first and if it's success, get output.
         It works only if the execution info is still in the step function.'''
         if self.check_status() == 'SUCCEEDED':
-            self.update_exec_desc()
             if 'output' in self.exec_desc:
                 return json.loads(self.exec_desc['output'])
             else:
                 return None
 
-    def update_exec_desc(self):
+    @property
+    def exec_arn(self):
+        if self._exec_arn:
+            return self._exec_arn
+        elif self.job_id:  # figure out exec_arn frmo job_id
+            try:
+                self._exec_arn = self.get_exec_arn_from_job_id(self.job_id)
+            except Exception as e:
+                if self.sfn:
+                    self._exec_arn = self.get_exec_arn_from_job_id_and_sfn_wo_dd(self.job_id, sfn=self.sfn)
+                else:
+                    raise e
+            return self._exec_arn
+
+    @property
+    def exec_desc(self):
         """sfn is needed only for old tibanna
         """
-        if not self.exec_desc:
-            self.update_exec_arn_from_job_id()
-            self.exec_desc = self.describe_exec(self.exec_arn)
+        if not self._exec_desc:
+            self._exec_desc = self.describe_exec(self.exec_arn)
+        return self._exec_desc
+
+    @property
+    def job_id(self):
+        if not self._job_id:
+            if self.exec_arn:
+                self._job_id = self.get_job_id_from_exec_arn(self.exec_arn)
+            else:
+                raise("Can't find job_id - either provide job_id or exec_arn")
+        return self._job_id
+
+    @property
+    def log_bucket(self):
+        if not self._log_bucket:
+            if self.job_id:
+                try:
+                    # first try dynanmodb to get logbucket
+                    self._log_bucket = self.get_log_bucket_from_job_id(self.job_id)
+                except Exception as e:
+                    if self.sfn:
+                        self._log_bucket = self.get_log_bucket_from_job_id_and_sfn_wo_dd(self.job_id, self.sfn)
+            if not self._log_bucket:
+                raise Exception("Cannot retrieve log bucket.")
+        return self._log_bucket
+
+    @classmethod
+    def get_log_bucket_from_job_id(cls, job_id):
+        return cls.info(job_id)['Log Bucket']
+
+    @staticmethod
+    def get_log_bucket_from_job_id_and_sfn_wo_dd(job_id, sfn):
+        stateMachineArn = STEP_FUNCTION_ARN(sfn)
+        sf = boto3.client('stepfunctions')
+        res = sf.list_executions(stateMachineArn=stateMachineArn)
+        while True:
+            if 'executions' not in res or not res['executions']:
+                break
+            breakwhile = False
+            for exc in res['executions']:
+                desc = sf.describe_execution(executionArn=exc['executionArn'])
+                if job_id == str(json.loads(desc['input'])['jobid']):
+                    logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
+                    breakwhile = True
+                    break
+            if breakwhile:
+                break
+            if 'nextToken' in res:
+                res = sf.list_executions(nextToken=res['nextToken'],
+                                         stateMachineArn=stateMachineArn)
+            else:
+                break
+        if logbucket:
+            return logbucket
+        else:
+            raise Exception("Cannot retrieve log bucket.")
+
+    @staticmethod
+    def get_job_id_from_exec_arn(exec_arn):
+        sf = boto3.client('stepfunctions')
+        desc = sf.describe_execution(executionArn=exec_arn)
+        return str(json.loads(desc['input'])['jobid'])
 
     def update_costupdater_exec_desc(self):
         if not self.costupdater_exec_desc:
@@ -82,16 +168,6 @@ class Job(object):
         if not self.costupdater_exec_arn:
             self.costupdater_exec_arn = self.get_costupdater_exec_arn_from_job_id(self.job_id)
         # older tibanna does not have cost updater so we don't need to try the old way of doing it without dd.
-
-    def update_exec_arn_from_job_id(self):
-        if self.job_id and not self.exec_arn:
-            try:
-                self.exec_arn = self.get_exec_arn_from_job_id(self.job_id)
-            except Exception as e:
-                if self.sfn:
-                    self.exec_arn = self.get_exec_arn_from_job_id_and_sfn_wo_dd(self.job_id, sfn=self.sfn)
-                else:
-                    raise e
 
     @staticmethod
     def stepfunction_exists(sfn_name):
@@ -160,14 +236,15 @@ class Job(object):
 
     @classmethod
     def info(cls, job_id):
-        '''returns content from dynamodb for a given job id in a dictionary form'''
+        '''returns content from dynamodb for a given job id in a dictionary form.
+        returns None if the entry does not exist in dynamoDB'''
         ddres = cls.get_dd(job_id)
         return cls.get_info_from_dd(ddres)
 
     @staticmethod
     def describe_exec(exec_arn):
-        sts = boto3.client('stepfunctions', region_name=AWS_REGION)
-        return sts.describe_execution(executionArn=exec_arn)
+        sf = boto3.client('stepfunctions', region_name=AWS_REGION)
+        return sf.describe_execution(executionArn=exec_arn)
 
     @staticmethod
     def get_dd(job_id):

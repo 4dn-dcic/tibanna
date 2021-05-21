@@ -101,12 +101,20 @@ class Subcommands(object):
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-z", "--soft"],
+                  'help': "instead of directly killing the execution, " +
+                          "send abort signal to s3 so that step function can handle it",
+                  'action': "store_true"}],
             'kill_all':
                 [{'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-z", "--soft"],
+                  'help': "instead of directly killing the execution, " +
+                          "send abort signal to s3 so that step function can handle it",
+                  'action': "store_true"}],
             'log':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to log"},
@@ -407,14 +415,14 @@ def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUN
                     top=top, top_latest=top_latest))
 
 
-def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, soft=False):
     """kill all the running jobs on a step function"""
-    API().kill_all(sfn)
+    API().kill_all(sfn, soft=soft)
 
 
-def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, soft=False):
     """kill a specific job"""
-    API().kill(exec_arn, job_id, sfn)
+    API().kill(exec_arn, job_id, sfn, soft=soft)
 
 
 def info(job_id):

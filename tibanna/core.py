@@ -287,79 +287,37 @@ class API(object):
         '''returns content from dynamodb for a given job id in a dictionary form'''
         return Job.info(job_id)
 
-    def kill(self, exec_arn=None, job_id=None, sfn=None):
-        sf = boto3.client('stepfunctions')
-        if exec_arn:
-            desc = sf.describe_execution(executionArn=exec_arn)
-            if desc['status'] == 'RUNNING':
-                jobid = str(json.loads(desc['input'])['jobid'])
-                ec2 = boto3.resource('ec2')
-                terminated = None
-                for i in ec2.instances.all():
-                    if i.tags:
-                        for tag in i.tags:
-                            if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
-                                continue
-                            if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
-                                logger.info("terminating EC2 instance")
-                                response = i.terminate()
-                                logger.info("Successfully terminated instance: " + str(response))
-                                terminated = True
-                                break
-                        if terminated:
-                            break
-                logger.info("terminating step function execution")
-                resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-                logger.info("Successfully terminated step function execution: " + str(resp_sf))
-        elif job_id:
+    def kill(self, exec_arn=None, job_id=None, sfn=None, soft=False):
+        """kills a running job, identified by either execution arn (exec_arn) or
+        job_id, (or job_id and sfn, for old tibanna versions).
+        This function kills both ec2 instance and the step function.
+        if soft is set True, it will not directly kill the step function
+        but instead sends a abort signal to S3 and let the step fucntion handle
+        the signal. The abort signal handling is available for >=1.3.0.
+        """
+        job = Job(exec_arn=exec_arn, job_id=job_id, sfn=sfn)
+        if job.check_status() == 'RUNNING':
+            # kill awsem ec2 instance
             ec2 = boto3.client('ec2')
-            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job.job_id]}])
             if not res['Reservations']:
                 raise("instance not available - if you just submitted the job, try again later")
             instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
             logger.info("terminating EC2 instance")
             resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
             logger.info("Successfully terminated instance: " + str(resp_term))
-            # first try dynanmodb to get logbucket
-            ddres = dict()
-            try:
-                dd = boto3.client('dynamodb')
-                ddres = dd.query(TableName=DYNAMODB_TABLE,
-                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                           'ComparisonOperator': 'EQ'}})
-            except Exception as e:
-                pass
-            if 'Items' in ddres:
-                exec_name = ddres['Items'][0]['Execution Name']['S']
-                sfn = ddres['Items'][0]['Step Function']['S']
-                exec_arn = EXECUTION_ARN(exec_name, sfn)
+
+            if soft:
+                logger.info("sending abort signal to s3")
+                s3 = boto3.client('s3')
+                s3.put_object(Body=b'', Bucket=job.log_bucket, Key=job.job_id + '.aborted')
+                logger.info("Successfully sent abort signal")
             else:
-                if not sfn:
-                    logger.warning("Can't stop step function because step function name is not given.")
-                    return None
-                stateMachineArn = STEP_FUNCTION_ARN(sfn)
-                res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-                exec_arn = None
-                while True:
-                    if 'executions' not in res or not res['executions']:
-                        break
-                    for exc in res['executions']:
-                        desc = sf.describe_execution(executionArn=exc['executionArn'])
-                        if job_id == str(json.loads(desc['input'])['jobid']):
-                            exec_arn = exc['executionArn']
-                            break
-                    if exec_arn:
-                        break
-                    if 'nextToken' in res:
-                        res = sf.list_executions(nextToken=res['nextToken'],
-                                                 stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-                    else:
-                        break
-                if not exec_arn:
-                    raise Exception("can't find the execution")
-            logger.info("terminating step function execution")
-            resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-            logger.info("Successfully terminated step function execution: " + str(resp_sf))
+                # kill step function execution
+                logger.info("terminating step function execution")
+                sf = boto3.client('stepfunctions')
+                resp_sf = sf.stop_execution(executionArn=job.exec_arn, error="Aborted")
+                logger.info("Successfully terminated step function execution: " + str(resp_sf))
 
     def kill_all(self, sfn=None):
         """killing all the running jobs"""
@@ -399,46 +357,9 @@ class API(object):
         sf = boto3.client('stepfunctions')
         if not exec_arn and exec_name:
             exec_arn = EXECUTION_ARN(exec_name, sfn)
-        if exec_arn:
-            desc = sf.describe_execution(executionArn=exec_arn)
-            job_id = str(json.loads(desc['input'])['jobid'])
-            if not logbucket:
-                logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-        elif job_id:
-            if not logbucket:
-                # first try dynanmodb to get logbucket
-                try:
-                    logbucket = self.info(job_id)['Log Bucket']
-                except Exception as e:
-                    pass
-                if not logbucket:
-                    # search through executions to get logbucket
-                    stateMachineArn = STEP_FUNCTION_ARN(sfn)
-                    try:
-                        res = sf.list_executions(stateMachineArn=stateMachineArn)
-                        while True:
-                            if 'executions' not in res or not res['executions']:
-                                break
-                            breakwhile = False
-                            for exc in res['executions']:
-                                desc = sf.describe_execution(executionArn=exc['executionArn'])
-                                if job_id == str(json.loads(desc['input'])['jobid']):
-                                    logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                                    breakwhile = True
-                                    break
-                            if breakwhile:
-                                break
-                            if 'nextToken' in res:
-                                res = sf.list_executions(nextToken=res['nextToken'],
-                                                         stateMachineArn=stateMachineArn)
-                            else:
-                                break
-                    except:
-                        raise Exception("Cannot retrieve job. Try again later.")
-        else:
-            raise Exception("Either job_id, exec_arn or exec_name must be provided.")
+        job = Job(exec_arn=exec_arn, job_id=job_id, sfn=sfn)
         try:
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+            res_s3 = boto3.client('s3').get_object(Bucket=job.log_bucket, Key=job.job_id + suffix)
         except Exception as e:
             if 'NoSuchKey' in str(e):
                 if not quiet:
@@ -597,6 +518,8 @@ class API(object):
 
     def clear_input_json_template(self, input_json_template):
         """clear awsem template for reuse"""
+        if 'jobid' in input_json_template:
+            del input_json_template['jobid']
         if 'response' in input_json_template['_tibanna']:
             del(input_json_template['_tibanna']['response'])
         if 'run_name' in input_json_template['_tibanna'] and len(input_json_template['_tibanna']['run_name']) > 40:
