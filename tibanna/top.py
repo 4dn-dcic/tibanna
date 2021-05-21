@@ -231,9 +231,9 @@ class Top(object):
             last_minute = 5
         with open(csv_file, 'w') as fo:
             # header
-            # we have to remove any double quotes that are present in the cmd, before wrapping it in double quotes. Otherwise we 
+            # we have to escape any double quotes that are present in the cmd, before wrapping it in double quotes. Otherwise we 
             # will get incorrect column counts when creating the metrics report.
-            fo.write(delimiter.join([colname_for_timestamps] + [Top.wrap_in_double_quotes(cmd.replace('"', "'")) for cmd in self.commands]))
+            fo.write(delimiter.join([colname_for_timestamps] + [Top.wrap_in_double_quotes(cmd.replace('"', '""')) for cmd in self.commands]))
             fo.write('\n')
             # contents
             # skip timepoints earlier than timestamp_start
