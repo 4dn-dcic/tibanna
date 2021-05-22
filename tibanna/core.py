@@ -634,7 +634,7 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup=''):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA)
         """
@@ -683,20 +683,32 @@ class API(object):
             full_function_name = function_name_prefix
         if name not in self.do_not_delete:
             try:
-                boto3.client('lambda').get_function(FunctionName=full_function_name)
-                logger.info("deleting existing lambda")
-                boto3.client('lambda').delete_function(FunctionName=full_function_name)
+                if quiet:
+                    res = boto3.client('lambda').get_function(FunctionName=full_function_name)
+                    logger.info("deleting existing lambda")
+                    res = boto3.client('lambda').delete_function(FunctionName=full_function_name)
+                else:
+                    boto3.client('lambda').get_function(FunctionName=full_function_name)
+                    logger.info("deleting existing lambda")
+                    boto3.client('lambda').delete_function(FunctionName=full_function_name)
             except Exception as e:
                 if 'Function not found' in str(e):
                     pass
 
-        aws_lambda.deploy_function(lambda_fxn_module,
-                                   function_name_suffix=function_name_suffix,
-                                   package_objects=self.tibanna_packages,
-                                   requirements_fpath=requirements_fpath,
-                                   extra_config=extra_config)
+        if quiet:
+            res = aws_lambda.deploy_function(lambda_fxn_module,
+                                             function_name_suffix=function_name_suffix,
+                                             package_objects=self.tibanna_packages,
+                                             requirements_fpath=requirements_fpath,
+                                             extra_config=extra_config)
+        else:
+            aws_lambda.deploy_function(lambda_fxn_module,
+                                       function_name_suffix=function_name_suffix,
+                                       package_objects=self.tibanna_packages,
+                                       requirements_fpath=requirements_fpath,
+                                       extra_config=extra_config)
 
-    def deploy_core(self, name, suffix=None, usergroup=''):
+    def deploy_core(self, name, suffix=None, usergroup='', quiet=False):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -706,7 +718,7 @@ class API(object):
         else:
             names = [name, ]
         for name in names:
-            self.deploy_lambda(name, suffix, usergroup)
+            self.deploy_lambda(name, suffix, usergroup, quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -742,7 +754,7 @@ class API(object):
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False):
+                       deploy_costupdater=False, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -765,21 +777,22 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
 
         logger.info("deploying lambdas...")
-        self.deploy_core('all', suffix=suffix, usergroup=usergroup)
+        self.deploy_core('all', suffix=suffix, usergroup=usergroup, quiet=quiet)
 
         if(deploy_costupdater):
-            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup)
+            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup, quiet=quiet)
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False, deploy_costupdater = False):
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                       deploy_costupdater=False, quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
-                            deploy_costupdater=deploy_costupdater)
+                            deploy_costupdater=deploy_costupdater, quiet=quiet)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
