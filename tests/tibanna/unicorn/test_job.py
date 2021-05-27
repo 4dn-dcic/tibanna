@@ -4,6 +4,12 @@ from tibanna import dd_utils
 from tibanna.vars import DYNAMODB_TABLE, EXECUTION_ARN
 import mock
 import boto3
+import pytest
+
+
+@pytest.fixture
+def raise_error():
+    raise Exception()
 
 
 def test_stepfunction_exists():
@@ -20,7 +26,7 @@ def test_stepfunction_exists2():
 
 def test_job_check_output():
     job = Job(job_id='jid1')
-    job.exec_desc = {'output': '{"somefield": "someoutput"}'}
+    job._exec_desc = {'output': '{"somefield": "someoutput"}'}
     with mock.patch('tibanna.job.Job.check_status', return_value='SUCCEEDED'):
         res = job.check_output()
     assert res == {'somefield': 'someoutput'}
@@ -50,6 +56,15 @@ def test_jobs_status_failed():
     assert len(res) == 3
     assert res['running_jobs'] == []
     assert res['failed_jobs'] == ['jid1', 'jid2', 'jid3']
+    assert res['completed_jobs'] == []
+
+
+def test_jobs_status_failed_exec_arn():
+    with mock.patch('tibanna.job.Job.check_status', return_value='FAILED'):
+        res = Jobs.status(exec_arns=['ex1', 'ex2', 'ex3'])
+    assert len(res) == 3
+    assert res['running_jobs'] == []
+    assert res['failed_jobs'] == ['ex1', 'ex2', 'ex3']
     assert res['completed_jobs'] == []
 
 
@@ -102,3 +117,46 @@ def test_add_to_dd_and_info():
     assert info['Job Id'] == jobid
     assert info['Log Bucket'] == logbucket
     assert 'Time Stamp' in info
+
+
+def test_exec_arn():
+    assert Job(exec_arn='somearn').exec_arn == 'somearn'
+    with mock.patch('tibanna.job.Job.get_exec_arn_from_job_id', return_value='somearn'):
+        assert Job(job_id='somejobid').exec_arn == 'somearn'
+
+
+def test_job_id():
+    assert Job(job_id='somejobid').job_id == 'somejobid'
+    with mock.patch('tibanna.job.Job.get_job_id_from_exec_arn', return_value='somejobid'):
+        assert Job(exec_arn='somearn').job_id == 'somejobid'
+
+
+def test_log_bucket():
+    job = Job(job_id='somejobid')
+    job._log_bucket = 'somebucket'
+    assert job.log_bucket == 'somebucket'
+
+
+def test_log_bucket_from_dd():
+    job = Job(job_id='somejobid')
+    with mock.patch('tibanna.job.Job.get_log_bucket_from_job_id', return_value='somebucket'):
+        assert job.log_bucket == 'somebucket'
+
+
+def test_log_bucket_dd2():
+    job = Job(job_id='somejobid')
+    with mock.patch('tibanna.job.Job.info', return_value={'Log Bucket': 'somebucket'}):
+        assert job.log_bucket == 'somebucket'
+
+
+def test_log_bucket_no_dd():
+    job = Job(job_id='somejobid')
+    job.sfn = 'somesfn'
+    with mock.patch('tibanna.job.Job.info', return_value={}):
+        with mock.patch('tibanna.job.Job.get_log_bucket_from_job_id_and_sfn_wo_dd', return_value='somebucket'):
+            assert job.log_bucket == 'somebucket'
+
+
+def test_get_log_bucket_from_job_id():
+    with mock.patch('tibanna.job.Job.info', return_value={'job_id': 'somejobid', 'Log Bucket': 'somelogbucket'}):
+        assert Job.get_log_bucket_from_job_id(job_id='somejobid') == 'somelogbucket'

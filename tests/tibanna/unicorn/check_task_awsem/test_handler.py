@@ -3,7 +3,8 @@ from tibanna.exceptions import (
     EC2StartingException,
     StillRunningException,
     MetricRetrievalException,
-    EC2IdleException
+    EC2IdleException,
+    JobAbortedException
 )
 import pytest
 import boto3
@@ -57,6 +58,22 @@ def test_check_task_awsem_fails_if_no_job_started_for_too_long(check_task_input,
     with pytest.raises(EC2IdleException) as excinfo:
         service.handler(check_task_input_modified, '')
     assert 'Failed to find jobid' in str(excinfo.value)
+
+
+def test_check_task_awsem_aborted(check_task_input, s3):
+    jobid = 'lalala'
+    check_task_input_modified = check_task_input
+    check_task_input_modified['jobid'] = jobid
+    job_started = "%s.job_started" % jobid
+    job_aborted = "%s.aborted" % jobid
+    s3.put_object(Body=b'', Key=job_started)
+    s3.put_object(Body=b'', Key=job_aborted)
+    with pytest.raises(JobAbortedException) as excinfo:
+        service.handler(check_task_input, '')
+    assert 'aborted' in str(excinfo.value)
+    # cleanup
+    s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
+    s3.delete_objects(Delete={'Objects': [{'Key': job_aborted}]})
 
 
 @pytest.mark.webtest
