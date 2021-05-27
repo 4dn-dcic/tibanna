@@ -71,6 +71,9 @@ def test_check_task_awsem_aborted(check_task_input, s3):
     with pytest.raises(JobAbortedException) as excinfo:
         service.handler(check_task_input, '')
     assert 'aborted' in str(excinfo.value)
+    # cleanup
+    s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
+    s3.delete_objects(Delete={'Objects': [{'Key': job_aborted}]})
 
 
 @pytest.mark.webtest
