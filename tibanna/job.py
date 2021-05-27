@@ -26,7 +26,7 @@ class Jobs(object):
                 statuses.update({j: Job(job_id=j).check_status()})
         if exec_arns:
             for arn in exec_arns:
-                statuses.append({arn: Job(exec_arn=arn).check_status()})
+                statuses.update({arn: Job(exec_arn=arn).check_status()})
         res['completed_jobs'] = [job for job, status in iter(statuses.items()) if status == 'SUCCEEDED']
         res['failed_jobs'] = [job for job, status in iter(statuses.items()) if status == 'FAILED']
         res['running_jobs'] = [job for job, status in iter(statuses.items()) if status == 'RUNNING']

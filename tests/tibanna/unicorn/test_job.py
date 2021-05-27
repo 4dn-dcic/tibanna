@@ -59,6 +59,15 @@ def test_jobs_status_failed():
     assert res['completed_jobs'] == []
 
 
+def test_jobs_status_failed_exec_arn():
+    with mock.patch('tibanna.job.Job.check_status', return_value='FAILED'):
+        res = Jobs.status(exec_arns=['ex1', 'ex2', 'ex3'])
+    assert len(res) == 3
+    assert res['running_jobs'] == []
+    assert res['failed_jobs'] == ['ex1', 'ex2', 'ex3']
+    assert res['completed_jobs'] == []
+
+
 def test_describe_exec():
     exec_desc = {'vanilla': 'cinnamon'}
     with mock.patch('botocore.client.BaseClient._make_api_call', return_value=exec_desc):
