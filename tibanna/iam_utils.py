@@ -136,7 +136,9 @@ class IAM(object):
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
         return services[role_type]
 
-    def policy_arn_list_for_role(self, role_type):
+    @property
+    def policy_arn_list_for_role(self):
+        # returns a dictionary with role_type as keys
         # adding vpc access to only check_task since run_task has full ec2 access
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
                                         'executions', 'cw_dashboard']
@@ -152,9 +154,7 @@ class IAM(object):
                    self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types],
                    self.update_cost_lambda_name: [self.policy_arn(_) for _ in update_cost_custom_policy_types]}
                    
-        if role_type not in arnlist:
-            raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
-        return arnlist[role_type]
+        return arnlist
 
     @property
     def instance_profile_name(self):
@@ -472,7 +472,7 @@ class IAM(object):
         role_policy_doc = self.role_policy_document(self.role_service(role_type))
         self.create_role_robust(self.role_name(role_type), json.dumps(role_policy_doc), verbose)
         role = self.iam.Role(self.role_name(role_type))
-        for p_arn in self.policy_arn_list_for_role(role_type):
+        for p_arn in self.policy_arn_list_for_role[role_type]:
             response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
                 logger.debug("response from IAM attach_policy :" + str(response))
