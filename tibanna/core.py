@@ -658,11 +658,8 @@ class API(object):
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
-            if usergroup:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = tibanna_iam.role_name('ec2')
-            else:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
+            extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
+                = tibanna_iam.role_name('ec2')
         # add role
         logger.info('name=%s' % name)
         if name in [self.run_task_lambda, self.check_task_lambda, self.update_cost_lambda]:
@@ -716,7 +713,8 @@ class API(object):
                                        requirements_fpath=requirements_fpath,
                                        extra_config=extra_config)
 
-    def deploy_core(self, name, suffix=None, usergroup='', quiet=False):
+    def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
+                    quiet=False):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -726,7 +724,8 @@ class API(object):
         else:
             names = [name, ]
         for name in names:
-            self.deploy_lambda(name, suffix, usergroup, quiet=quiet)
+            self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
+                               quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -762,7 +761,7 @@ class API(object):
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, quiet=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -785,22 +784,26 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
 
         logger.info("deploying lambdas...")
-        self.deploy_core('all', suffix=suffix, usergroup=usergroup, quiet=quiet)
+        self.deploy_core('all', suffix=suffix, usergroup=usergroup, subnets=subnets,
+                         security_groups=security_groups, quiet=quiet)
 
         if(deploy_costupdater):
-            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup, quiet=quiet)
+            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
+                               subnets=subnets, security_groups=security_groups, quiet=quiet)
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
                        no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, quiet=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None,
+                       quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
-                            deploy_costupdater=deploy_costupdater, quiet=quiet)
+                            deploy_costupdater=deploy_costupdater, subnets=subnets,
+                            security_groups=security_groups, quiet=quiet)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
