@@ -69,7 +69,7 @@ class IAM(object):
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
                 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
-                'executions', 'pricing']
+                'executions', 'pricing', 'vpc']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
@@ -86,7 +86,8 @@ class IAM(object):
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc',
                     'pricing': 'pricing',
-                    'executions': 'executions'}
+                    'executions': 'executions',
+                    'vpc': 'vpc_access'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -106,7 +107,8 @@ class IAM(object):
                        'dynamodb': self.policy_dynamodb,
                        'ec2_desc': self.policy_ec2_desc_policy,
                        'pricing': self.policy_pricing,
-                       'executions': self.policy_executions}
+                       'executions': self.policy_executions,
+                       'vpc': self.policy_vpc_access}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -135,10 +137,11 @@ class IAM(object):
         return services[role_type]
 
     def policy_arn_list_for_role(self, role_type):
+        # adding vpc access to only check_task since run_task has full ec2 access
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
                                         'executions', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
-                                          'termination', 'dynamodb', 'pricing']
+                                          'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
@@ -200,6 +203,24 @@ class IAM(object):
                 {
                     "Effect": "Allow",
                     "Action": "ec2:TerminateInstances",
+                    "Resource": "*"
+                }
+            ]
+        }
+        return policy
+
+    @property
+    def policy_vpc_access(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "ec2:DescribeNetworkInterfaces",
+                        "ec2:CreateNetworkInterface",
+                        "ec2:AttachNetworkInterface"
+                    ],
                     "Resource": "*"
                 }
             ]

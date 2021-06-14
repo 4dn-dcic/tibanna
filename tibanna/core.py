@@ -634,9 +634,11 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup='', quiet=False):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
         """
-        deploy a single lambda using the aws_lambda.deploy_function (BETA)
+        deploy a single lambda using the aws_lambda.deploy_function (BETA).
+        subnets and security groups are lists of subnet IDs and security group IDs, in case
+        you want the lambda to be deployed into specific subnets / security groups.
         """
         import aws_lambda
         if name not in dir(self.lambdas_module):
@@ -648,6 +650,12 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
+        if subnets or security_groups:
+            extra_config['VpcConfig'] = {}
+            if subnets:
+                extra_config['VpcConfig'].update({'SubnetIds': subnets})
+            if security_groups:
+                extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             if usergroup:
