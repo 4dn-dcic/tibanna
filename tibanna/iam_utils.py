@@ -36,8 +36,6 @@ class IAM(object):
           tibanna_policy_prefix : tibanna_default_3465 / tibanna_pony_default_3465
           prefix : tibanna_ / tibanna_pony_
         """
-        # lambda names
-        self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name, self.update_cost_lambda_name]
         if self.lambda_type:
             self.prefix = 'tibanna_' + self.lambda_type + '_'
         else:
@@ -60,6 +58,10 @@ class IAM(object):
         # iam client/resource
         self.client = boto3.client('iam')
         self.iam = boto3.resource('iam')
+
+    @property
+    def lambda_names(self):
+        return [self.run_task_lambda_name, self.check_task_lambda_name, self.update_cost_lambda_name]
 
     @property
     def iam_group_name(self):
