@@ -274,7 +274,7 @@ class Subcommands(object):
                   'action': "store_true",
                   'help': "Do not delete public access block from buckets" +
                           "(this way postrunjson and metrics reports will not be public)"},
-                 {'flag': ["-n", "--subnets"],
+                 {'flag': ["-t", "--subnets"],
                   'help': "subnet IDs, separated by commas"},
                  {'flag': ["-r", "--security_groups"],
                   'help': "security groups, separated by commas"},
@@ -290,7 +290,7 @@ class Subcommands(object):
                  {'flag': ["-g", "--usergroup"],
                   'default': '',
                   'help': "Tibanna usergroup for the AWS Lambda function"},
-                 {'flag': ["-n", "--subnets"],
+                 {'flag': ["-t", "--subnets"],
                   'help': "subnet IDs, separated by commas"},
                  {'flag': ["-r", "--security_groups"],
                   'help': "security groups, separated by commas"},
