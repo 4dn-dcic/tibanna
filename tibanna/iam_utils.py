@@ -144,7 +144,7 @@ class IAM(object):
                                         'executions', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
                                           'termination', 'dynamodb', 'pricing', 'vpc']
-        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing', [vpc']
+        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing', vpc']
         arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
