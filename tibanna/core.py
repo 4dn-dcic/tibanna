@@ -759,7 +759,7 @@ class API(object):
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
         return tibanna_iam.user_group_name
 
-    def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
+    def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
                        deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
@@ -769,7 +769,8 @@ class API(object):
                             do_not_delete_public_access_block=do_not_delete_public_access_block)
             else:  # override usergroup
                 usergroup = self.setup_tibanna_env(buckets,
-                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+                            do_not_delete_public_access_block=do_not_delete_public_access_block,
+                            no_randomize=no_randomize)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
