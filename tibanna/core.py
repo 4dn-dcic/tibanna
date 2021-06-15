@@ -760,6 +760,7 @@ class API(object):
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
+                       default_usergroup_tag='default',
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
                        deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
@@ -768,7 +769,7 @@ class API(object):
                 usergroup = self.setup_tibanna_env(buckets, usergroup, True,
                             do_not_delete_public_access_block=do_not_delete_public_access_block)
             else:  # override usergroup
-                usergroup = self.setup_tibanna_env(buckets,
+                usergroup = self.setup_tibanna_env(buckets, usergroup_tag=default_usergroup_tag,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
                             no_randomize=no_randomize)
         # this function will remove existing step function on a conflict
