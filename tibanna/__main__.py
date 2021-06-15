@@ -274,13 +274,13 @@ class Subcommands(object):
                   'action': "store_true",
                   'help': "Do not delete public access block from buckets" +
                           "(this way postrunjson and metrics reports will not be public)"},
-                  'help': "minimize standard output from deployment"},
                  {'flag': ["-n", "--subnets"],
                   'help': "subnet IDs, separated by commas"},
                  {'flag': ["-r", "--security_groups"],
                   'help': "security groups, separated by commas"},
                  {'flag': ["-q", "--quiet"],
-                  'action': "store_true"},
+                  'action': "store_true",
+                  'help': "minimize standard output from deployment"}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
