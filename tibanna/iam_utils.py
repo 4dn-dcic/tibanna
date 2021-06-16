@@ -221,7 +221,8 @@ class IAM(object):
                     "Action": [
                         "ec2:DescribeNetworkInterfaces",
                         "ec2:CreateNetworkInterface",
-                        "ec2:AttachNetworkInterface"
+                        "ec2:AttachNetworkInterface",
+                        "ec2:DeleteNetworkInterface"
                     ],
                     "Resource": "*"
                 }
