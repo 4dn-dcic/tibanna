@@ -153,7 +153,8 @@ class API(object):
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
-                     env=None, jobid=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, jobid=None, sleep=3, verbose=True,
+                     open_browser=True, dryrun=False):
         '''
         input_json is either a dict or a file
         accession is unique name that we be part of run id
@@ -209,36 +210,38 @@ class API(object):
         if verbose:
             logger.info("about to start run %s" % run_name)
         # trigger the step function to run
-        try:
-            response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn),
-                name=run_name,
-                input=aws_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            raise(e)
+        response = None
+        if not dryrun:
+            try:
+                response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn),
+                    name=run_name,
+                    input=aws_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                raise(e)
 
-        # trigger the cost updater step function to run
-        try:
-            costupdater_input = {
-                "sfn_arn": data[_tibanna]['exec_arn'],
-                "log_bucket": data['config']['log_bucket'],
-                "job_id": data['jobid'],
-                "aws_region": AWS_REGION
-            }
-            costupdater_input = json.dumps(costupdater_input)
-            costupdater_response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
-                name=run_name,
-                input=costupdater_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            if 'StateMachineDoesNotExist' in str(e):
-                pass # Tibanna was probably deployed without the cost updater
-            else:
-                raise e
+            # trigger the cost updater step function to run
+            try:
+                costupdater_input = {
+                    "sfn_arn": data[_tibanna]['exec_arn'],
+                    "log_bucket": data['config']['log_bucket'],
+                    "job_id": data['jobid'],
+                    "aws_region": AWS_REGION
+                }
+                costupdater_input = json.dumps(costupdater_input)
+                costupdater_response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
+                    name=run_name,
+                    input=costupdater_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                if 'StateMachineDoesNotExist' in str(e):
+                    pass # Tibanna was probably deployed without the cost updater
+                else:
+                    raise e
 
         # adding execution info to dynamoDB for fast search by awsem job id
         Job.add_to_dd(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
@@ -254,17 +257,17 @@ class API(object):
                 cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 logger.info("Cloudwatch Dashboard = %s" % cw_db_url)
-            if open_browser and shutil.which('open') is not None:
+            if open_browser and shutil.which('open') is not None and not dryrun:
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
 
     def run_batch_workflows(self, input_json_list, sfn=None,
-                     env=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, sleep=3, verbose=True, open_browser=True, dryrun=False):
         """given a list of input json, run multiple workflows"""
         run_infos = []
         for input_json in input_json_list:
             run_info = self.run_workflow(input_json, env=env, sfn=sfn, sleep=sleep, verbose=verbose,
-                       open_browser=False)
+                       open_browser=False, dryrun=dryrun)
             run_infos.append(run_info)
         return run_infos
 
