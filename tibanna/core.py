@@ -665,14 +665,10 @@ class API(object):
                 = tibanna_iam.role_name('ec2')
         # add role
         logger.info('name=%s' % name)
-        if name in [self.run_task_lambda, self.check_task_lambda, self.update_cost_lambda]:
-            role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
-            if usergroup:
-                role_arn = role_arn_prefix + tibanna_iam.role_name(name)
-            else:
-                role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-            logger.info("role_arn=" + role_arn)
-            extra_config['Role'] = role_arn
+        role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
+        role_arn = role_arn_prefix + tibanna_iam.role_name(name)
+        logger.info("role_arn=" + role_arn)
+        extra_config['Role'] = role_arn
 
         if usergroup and suffix:
             function_name_suffix = usergroup + '_' + suffix
