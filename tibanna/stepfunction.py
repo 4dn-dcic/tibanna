@@ -83,12 +83,8 @@ class StepFunctionUnicorn(object):
 
     @property
     def sfn_role_arn(self):
-        if not self.usergroup:  # 4dn
-            sfn_role_arn = "arn:aws:iam::" + self.aws_acc + \
-                           ":role/service-role/StatesExecutionRole-" + self.region_name
-        else:
-            sfn_role_arn = "arn:aws:iam::" + self.aws_acc + ":role/" + \
-                           self.iam.role_name('stepfunction')
+        sfn_role_arn = "arn:aws:iam::" + self.aws_acc + ":role/" + \
+                       self.iam.role_name('stepfunction')
         return sfn_role_arn
 
     @property
