@@ -657,10 +657,10 @@ class API(object):
             extra_config['VpcConfig'] = {}
             if subnets:
                 extra_config['VpcConfig'].update({'SubnetIds': subnets})
-                extra_config['Environment']['Variables'].update({'SubnetIds': ','.join(subnets)})
+                extra_config['Environment']['Variables'].update({'SUBNETS': ','.join(subnets)})
             if security_groups:
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
-                extra_config['Environment']['Variables'].update({'SecurityGroupIds': ','.join(security_groups)})
+                extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
