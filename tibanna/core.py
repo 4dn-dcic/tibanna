@@ -656,7 +656,7 @@ class API(object):
         if subnets or security_groups:
             extra_config['VpcConfig'] = {}
             if not 'Environment' in extra_config:
-                extra_config['Environment']['Variables'] = {}
+                extra_config['Environment'] = {'Variables': {}}
             if subnets:
                 extra_config['VpcConfig'].update({'SubnetIds': subnets})
                 extra_config['Environment']['Variables'].update({'SUBNETS': ','.join(subnets)})
