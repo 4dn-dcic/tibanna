@@ -104,6 +104,10 @@ exl echo
 exl echo "## Starting..."
 exl date
 
+### starting security software services
+service falcon-sensor start
+service clamav-freshclam start
+
 
 ### sshd configure for password recognition
 exl echo
