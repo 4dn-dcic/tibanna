@@ -43,7 +43,8 @@ from .utils import (
     upload,
     put_object_s3,
     retrieve_all_keys,
-    delete_keys
+    delete_keys,
+    create_tibanna_suffix
 )
 from .ec2_utils import (
     UnicornInput,
@@ -674,21 +675,10 @@ class API(object):
         logger.info("role_arn=" + role_arn)
         extra_config['Role'] = role_arn
 
-        if usergroup and suffix:
-            function_name_suffix = usergroup + '_' + suffix
-        elif suffix:
-            function_name_suffix = suffix
-        elif usergroup:
-            function_name_suffix = usergroup
-        else:
-            function_name_suffix = ''
-
         # first delete the existing function to avoid the weird AWS KMS lambda error
         function_name_prefix = getattr(self.lambdas_module, name).config.get('function_name')
-        if function_name_suffix:
-            full_function_name = function_name_prefix + '_' + function_name_suffix
-        else:
-            full_function_name = function_name_prefix
+        function_name_suffix = create_tibanna_suffix(suffix, usergroup)
+        full_function_name = function_name_prefix + function_name_suffix
         if name not in self.do_not_delete:
             try:
                 if quiet:

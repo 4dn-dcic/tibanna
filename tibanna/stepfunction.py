@@ -1,4 +1,5 @@
 from .vars import AWS_REGION, AWS_ACCOUNT_NUMBER
+from .utils import create_tibanna_suffix
 
 
 class StepFunctionUnicorn(object):
@@ -56,17 +57,7 @@ class StepFunctionUnicorn(object):
 
     @property
     def lambda_suffix(self):
-        if self.usergroup:
-            if self.dev_suffix:
-                lambda_suffix = '_' + self.usergroup + '_' + self.dev_suffix
-            else:
-                lambda_suffix = '_' + self.usergroup
-        else:
-            if self.dev_suffix:
-                lambda_suffix = '_' + self.dev_suffix
-            else:
-                lambda_suffix = ''
-        return lambda_suffix
+        return create_tibanna_suffix(self.dev_suffix, self.usergroup)
 
     @property
     def lambda_arn_prefix(self):
