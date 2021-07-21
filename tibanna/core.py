@@ -629,7 +629,7 @@ class API(object):
             self.run_task_lambda: {'AMI_ID': AMI_ID,
                                    'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                    'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
-            self.check_task_lambda: {}
+            self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
             envlist[self.run_task_lambda].update({
