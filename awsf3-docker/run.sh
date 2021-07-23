@@ -124,6 +124,8 @@ exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 # setting additional env variables including LANGUAGE and language-related envs.
 exl source $ENV_FILE
 
+# temporary hardcoding
+export ENDPOINT_URL='https://bucket.vpce-027b0b8f8f2b6044f-60x9n6b2.s3.us-east-1.vpce.amazonaws.com/'
 
 # create subdirectories
 if [[ $LANGUAGE == 'wdl' || $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl_draft2' ]]
@@ -292,7 +294,7 @@ then
 else
     export LOGJSON_OPTION="-e $LOGJSONFILE"
 fi
-exl awsf3 update_postrun_json_upload_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE
+exl awsf3 update_postrun_json_upload_output -i $POSTRUN_JSON_FILE_NAME $LOGJSON_OPTION -m $LOCAL_OUTDIR/$MD5FILE -o $POSTRUN_JSON_FILE_NAME -L $LANGUAGE -u $ENDPOINT_URL
 exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 send_log
 

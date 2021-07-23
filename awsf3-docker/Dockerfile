@@ -38,7 +38,7 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     nodejs
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
+#RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR /usr/local/bin
 
@@ -54,9 +54,9 @@ RUN apt-get update -y \
 RUN wget https://golang.org/dl/go1.15.3.linux-amd64.tar.gz && \
     tar -xzf go1.15.3.linux-amd64.tar.gz && \
     rm go1.15.3.linux-amd64.tar.gz
-RUN export SINGULARITY_VERSION=3.3.0 && \
+RUN export SINGULARITY_VERSION=3.8.1 && \
     export PATH=/usr/local/bin/go/bin/:$PATH && \
-    wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-${SINGULARITY_VERSION}.tar.gz && \
+    wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz && \
     tar -xzf singularity-${SINGULARITY_VERSION}.tar.gz && \
     rm singularity-${SINGULARITY_VERSION}.tar.gz && \
     cd singularity && \

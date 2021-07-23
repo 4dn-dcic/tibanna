@@ -111,12 +111,15 @@ class Target(object):
             yield {'name': content_file_name, 'content': z.open(content_file_name).read()}
         yield None
 
-    def upload_to_s3(self, encrypt_s3_upload=False):
+    def upload_to_s3(self, encrypt_s3_upload=False, endpoint_url=None):
         """upload target to s3, source can be either a file or a directory."""
         if not self.is_valid:
             raise Exception('Upload Error: source / dest must be specified first')
         if not self.s3:
-            self.s3 = boto3.client('s3')
+            if endpoint_url:
+                self.s3 = boto3.client('s3', endpoint_url=endpoint_url)
+            else:
+                self.s3 = boto3.client('s3')
         err_msg = "failed to upload output file %s to %s. %s"
         upload_extra_args = {}
         if encrypt_s3_upload:

@@ -45,6 +45,7 @@ class Subcommands(object):
                  {'flag': ["-m", "--md5file"], 'help': "text file storing md5 values for output files"},
                  {'flag': ["-o", "--output-json"], 'help': "output postrun json file"},
                  {'flag': ["-L", "--language"], 'help': "language", 'default': "cwl_v1"}],
+                 {'flag': ["-u", "--endpoint-url"], 'help': "s3 vpc endpoint url"}],
             'upload_postrun_json':
                 [{'flag': ["-i", "--input-json"], 'help': "input postrun json file to upload to s3"}],
             'update_postrun_json_final':
@@ -66,8 +67,8 @@ def update_postrun_json_init(input_json, output_json):
     utils.update_postrun_json_init(input_json, output_json)
 
 
-def update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language):
-    utils.update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language)
+def update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language, endpoint_url):
+    utils.update_postrun_json_upload_output(input_json, execution_metadata_file, md5file, output_json, language, endpoint_url=endpoint_url)
 
 
 def upload_postrun_json(input_json):
