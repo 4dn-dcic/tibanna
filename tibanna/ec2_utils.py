@@ -487,7 +487,6 @@ class Execution(object):
                                                    'parameters': benchmark_parameters})
         except Exception as e:
             try:
-                res
                 raise Exception("Benchmarking not working. : {}".format(str(res)))
             except:
                 raise Exception("Benchmarking not working. : None. %s" % str(e))
