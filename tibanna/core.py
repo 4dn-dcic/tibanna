@@ -43,7 +43,8 @@ from .utils import (
     upload,
     put_object_s3,
     retrieve_all_keys,
-    delete_keys
+    delete_keys,
+    create_tibanna_suffix
 )
 from .ec2_utils import (
     UnicornInput,
@@ -153,7 +154,8 @@ class API(object):
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
-                     env=None, jobid=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, jobid=None, sleep=3, verbose=True,
+                     open_browser=True, dryrun=False):
         '''
         input_json is either a dict or a file
         accession is unique name that we be part of run id
@@ -209,36 +211,38 @@ class API(object):
         if verbose:
             logger.info("about to start run %s" % run_name)
         # trigger the step function to run
-        try:
-            response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn),
-                name=run_name,
-                input=aws_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            raise(e)
+        response = None
+        if not dryrun:
+            try:
+                response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn),
+                    name=run_name,
+                    input=aws_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                raise(e)
 
-        # trigger the cost updater step function to run
-        try:
-            costupdater_input = {
-                "sfn_arn": data[_tibanna]['exec_arn'],
-                "log_bucket": data['config']['log_bucket'],
-                "job_id": data['jobid'],
-                "aws_region": AWS_REGION
-            }
-            costupdater_input = json.dumps(costupdater_input)
-            costupdater_response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
-                name=run_name,
-                input=costupdater_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            if 'StateMachineDoesNotExist' in str(e):
-                pass # Tibanna was probably deployed without the cost updater
-            else:
-                raise e
+            # trigger the cost updater step function to run
+            try:
+                costupdater_input = {
+                    "sfn_arn": data[_tibanna]['exec_arn'],
+                    "log_bucket": data['config']['log_bucket'],
+                    "job_id": data['jobid'],
+                    "aws_region": AWS_REGION
+                }
+                costupdater_input = json.dumps(costupdater_input)
+                costupdater_response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
+                    name=run_name,
+                    input=costupdater_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                if 'StateMachineDoesNotExist' in str(e):
+                    pass # Tibanna was probably deployed without the cost updater
+                else:
+                    raise e
 
         # adding execution info to dynamoDB for fast search by awsem job id
         Job.add_to_dd(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
@@ -254,17 +258,17 @@ class API(object):
                 cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 logger.info("Cloudwatch Dashboard = %s" % cw_db_url)
-            if open_browser and shutil.which('open') is not None:
+            if open_browser and shutil.which('open') is not None and not dryrun:
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
 
     def run_batch_workflows(self, input_json_list, sfn=None,
-                     env=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, sleep=3, verbose=True, open_browser=True, dryrun=False):
         """given a list of input json, run multiple workflows"""
         run_infos = []
         for input_json in input_json_list:
             run_info = self.run_workflow(input_json, env=env, sfn=sfn, sleep=sleep, verbose=verbose,
-                       open_browser=False)
+                       open_browser=False, dryrun=dryrun)
             run_infos.append(run_info)
         return run_infos
 
@@ -625,7 +629,7 @@ class API(object):
             self.run_task_lambda: {'AMI_ID': AMI_ID,
                                    'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                    'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
-            self.check_task_lambda: {}
+            self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
             envlist[self.run_task_lambda].update({
@@ -634,9 +638,11 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup='', quiet=False):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
         """
-        deploy a single lambda using the aws_lambda.deploy_function (BETA)
+        deploy a single lambda using the aws_lambda.deploy_function (BETA).
+        subnets and security groups are lists of subnet IDs and security group IDs, in case
+        you want the lambda to be deployed into specific subnets / security groups.
         """
         import aws_lambda
         if name not in dir(self.lambdas_module):
@@ -648,39 +654,31 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
+        if subnets or security_groups:
+            extra_config['VpcConfig'] = {}
+            if not 'Environment' in extra_config:
+                extra_config['Environment'] = {'Variables': {}}
+            if subnets:
+                extra_config['VpcConfig'].update({'SubnetIds': subnets})
+                extra_config['Environment']['Variables'].update({'SUBNETS': ','.join(subnets)})
+            if security_groups:
+                extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
+                extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
-            if usergroup:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = tibanna_iam.role_name('ec2')
-            else:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
+            extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
+                = tibanna_iam.role_name('ec2')
         # add role
         logger.info('name=%s' % name)
-        if name in [self.run_task_lambda, self.check_task_lambda, self.update_cost_lambda]:
-            role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
-            if usergroup:
-                role_arn = role_arn_prefix + tibanna_iam.role_name(name)
-            else:
-                role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-            logger.info("role_arn=" + role_arn)
-            extra_config['Role'] = role_arn
-
-        if usergroup and suffix:
-            function_name_suffix = usergroup + '_' + suffix
-        elif suffix:
-            function_name_suffix = suffix
-        elif usergroup:
-            function_name_suffix = usergroup
-        else:
-            function_name_suffix = ''
+        role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
+        role_arn = role_arn_prefix + tibanna_iam.role_name(name)
+        logger.info("role_arn=" + role_arn)
+        extra_config['Role'] = role_arn
 
         # first delete the existing function to avoid the weird AWS KMS lambda error
         function_name_prefix = getattr(self.lambdas_module, name).config.get('function_name')
-        if function_name_suffix:
-            full_function_name = function_name_prefix + '_' + function_name_suffix
-        else:
-            full_function_name = function_name_prefix
+        function_name_suffix = create_tibanna_suffix(suffix, usergroup)
+        full_function_name = function_name_prefix + function_name_suffix
         if name not in self.do_not_delete:
             try:
                 if quiet:
@@ -708,7 +706,8 @@ class API(object):
                                        requirements_fpath=requirements_fpath,
                                        extra_config=extra_config)
 
-    def deploy_core(self, name, suffix=None, usergroup='', quiet=False):
+    def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
+                    quiet=False):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -718,7 +717,8 @@ class API(object):
         else:
             names = [name, ]
         for name in names:
-            self.deploy_lambda(name, suffix, usergroup, quiet=quiet)
+            self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
+                               quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -752,17 +752,19 @@ class API(object):
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
         return tibanna_iam.user_group_name
 
-    def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
+    def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
+                       default_usergroup_tag='default',
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, quiet=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
                 usergroup = self.setup_tibanna_env(buckets, usergroup, True,
                             do_not_delete_public_access_block=do_not_delete_public_access_block)
             else:  # override usergroup
-                usergroup = self.setup_tibanna_env(buckets,
-                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+                usergroup = self.setup_tibanna_env(buckets, usergroup_tag=default_usergroup_tag,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block,
+                            no_randomize=no_randomize)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
@@ -777,22 +779,26 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
 
         logger.info("deploying lambdas...")
-        self.deploy_core('all', suffix=suffix, usergroup=usergroup, quiet=quiet)
+        self.deploy_core('all', suffix=suffix, usergroup=usergroup, subnets=subnets,
+                         security_groups=security_groups, quiet=quiet)
 
         if(deploy_costupdater):
-            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup, quiet=quiet)
+            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
+                               subnets=subnets, security_groups=security_groups, quiet=quiet)
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
                        no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, quiet=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None,
+                       quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
-                            deploy_costupdater=deploy_costupdater, quiet=quiet)
+                            deploy_costupdater=deploy_costupdater, subnets=subnets,
+                            security_groups=security_groups, quiet=quiet)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""

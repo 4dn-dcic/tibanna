@@ -123,7 +123,7 @@ def determine_key_type(bucket, key, profile):
         # The file itself may be a prefix of another file (e.v. abc.vcf.gz vs abc.vcf.gz.tbi)
         # but it doesn't matter.
         else:
-            return 'File' 
+            return 'File'
     else:
         # data_file is a folder
         return 'Folder'
@@ -217,7 +217,7 @@ def download_workflow():
         return
     local_wfdir = os.environ.get('LOCAL_WFDIR')
     subprocess.call(['mkdir', '-p', local_wfdir])
-    
+
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
         main_wf = os.environ.get('MAIN_WDL', '')
         wf_files = os.environ.get('WDL_FILES', '')
@@ -239,10 +239,10 @@ def download_workflow():
         wf_files = [wf_files]
     wf_files.append(main_wf)
     wf_url = wf_url.rstrip('/')
-    
+
     print("main workflow file: %s" % main_wf)
     print("workflow files: " + str(wf_files))
-    
+
     s3 = boto3.client('s3')
     for wf_file in wf_files:
         target = "%s/%s" % (local_wfdir, wf_file)
@@ -262,7 +262,7 @@ def download_workflow():
                 targetdir = re.sub('[^/]+$', '', target)
                 subprocess.call(["mkdir", "-p", targetdir])
             s3.download_file(Bucket=bucket_name, Key=key, Filename=target)
-    
+
 
 def read_md5file(md5file):
     with open(md5file, 'r') as md5_f:
@@ -340,7 +340,7 @@ def update_postrun_json_init(json_old, json_new):
 
 
 def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file, json_new,
-                                      language='cwl_v1', strict=True, upload=True):
+                                      language='cwl_v1', strict=True, upload=True, endpoint_url=None):
     """Update postrun json with output files.
     if strict is set false, it does not check execution metadata is required for cwl/wdl."""
     # read old json file and prepare postrunjson skeleton
@@ -362,18 +362,18 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
 
     # upload output to S3 (this also updates postrun json)
     if upload:
-        upload_output(prj)
+        upload_output(prj, endpoint_url=endpoint_url)
 
     # write to new json file
     write_postrun_json(json_new, prj)
 
 
-def upload_output(prj):
+def upload_output(prj, endpoint_url=None):
     # parsing output_target and uploading output files to output target
-    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload)
+    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload, endpoint_url=endpoint_url)
 
 
-def upload_to_output_target(prj_out, encrypt_s3_upload=False):
+def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None):
     # parsing output_target and uploading output files to output target
     output_bucket = prj_out.output_bucket_directory
     output_argnames = prj_out.output_files.keys()
@@ -388,7 +388,7 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False):
             target.parse_custom_target(k, output_target[k])
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
             else:
                 raise Exception("Invalid target %s -> %s: failed to upload" % k, output_target[k])
         else:
@@ -397,9 +397,9 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False):
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
                 prj_out.output_files[k].add_target(target.dest)
-    
+
                 # upload secondary files
                 secondary_output_files = prj_out.output_files[k].secondaryFiles
                 if secondary_output_files:
@@ -407,7 +407,7 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False):
                     stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
                     stlist.reorder_by_source([sf.path for sf in secondary_output_files])
                     for st in stlist.secondary_targets:
-                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload)
+                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
                     for i, sf in enumerate(secondary_output_files):
                         sf.add_target(stlist.secondary_targets[i].dest)
             else:
@@ -424,9 +424,9 @@ def update_postrun_json_final(json_old, json_new, logfile=None):
     """Update postrun json with status, time stamps, parsed commands,
     input/tmp/output sizes"""
     prj = read_postrun_json(json_old)
-    
+
     postrun_json_final(prj, logfile=logfile)
-    
+
     # write to new json file
     write_postrun_json(json_new, prj)
 

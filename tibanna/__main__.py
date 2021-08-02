@@ -274,6 +274,12 @@ class Subcommands(object):
                   'action': "store_true",
                   'help': "Do not delete public access block from buckets" +
                           "(this way postrunjson and metrics reports will not be public)"},
+                 {'flag': ["-t", "--subnets"],
+                  'nargs': '+',
+                  'help': "subnet IDs"},
+                 {'flag': ["-r", "--security-groups"],
+                  'nargs': '+',
+                  'help': "security groups"},
                  {'flag': ["-q", "--quiet"],
                   'action': "store_true",
                   'help': "minimize standard output from deployment"}],
@@ -286,6 +292,12 @@ class Subcommands(object):
                  {'flag': ["-g", "--usergroup"],
                   'default': '',
                   'help': "Tibanna usergroup for the AWS Lambda function"},
+                 {'flag': ["-t", "--subnets"],
+                  'nargs': '+',
+                  'help': "subnet IDs"},
+                 {'flag': ["-r", "--security-groups"],
+                  'nargs': '+',
+                  'help': "security groups"},
                  {'flag': ["-q", "--quiet"],
                   'action': "store_true",
                   'help': "minimize standard output from deployment"}],
@@ -368,11 +380,12 @@ class Subcommands(object):
         }
 
 
-def deploy_core(name, suffix=None, usergroup='', quiet=False):
+def deploy_core(name, suffix=None, usergroup='', quiet=False, subnets=None, security_groups=None):
     """
     New method of deploying packaged lambdas (BETA)
     """
-    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup, quiet=quiet)
+    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup, subnets=subnets,
+                      security_groups=security_groups, quiet=quiet)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
@@ -396,11 +409,12 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
-                   deploy_costupdater=False, quiet=False):
+                   deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
                          usergroup=usergroup, do_not_delete_public_access_block=do_not_delete_public_access_block,
-                         deploy_costupdater=deploy_costupdater, quiet=quiet)
+                         deploy_costupdater=deploy_costupdater, subnets=subnets, security_groups=security_groups,
+                         quiet=quiet)
 
 
 def add_user(user, usergroup):

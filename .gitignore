@@ -1,3 +1,6 @@
+# virtualenv bin directory 
+*/bin/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[odc]
