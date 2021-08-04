@@ -182,6 +182,8 @@ exl echo
 exl ls -lh $EBS_DIR
 exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
+exl echo
+exl ls -lhR $LOCAL_WFDIR
 send_log
 
 
@@ -267,6 +269,8 @@ exl echo
 exl ls -lhtr $EBS_DIR/
 exl echo
 exl ls -lhtrR $LOCAL_INPUT_DIR/
+exl echo
+exl ls -lhR $LOCAL_WFDIR
 send_log
 
 # more comprehensive log for wdl
