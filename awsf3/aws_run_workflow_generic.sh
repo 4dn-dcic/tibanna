@@ -163,6 +163,7 @@ fi
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
+exl echo "Logging into ECR $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com..."
 exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 send_log
 
