@@ -54,7 +54,7 @@ export LOCAL_WF_TMPDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
-exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; $ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; handle_error $ERRCODE; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one separates stdout to json as well.
+exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; handle_error $ERRCODE; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one separates stdout to json as well.
 exle(){ $@ >> /dev/null 2>> $LOGFILE; handle_error $?; } ## usage: exle command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
 exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
 
