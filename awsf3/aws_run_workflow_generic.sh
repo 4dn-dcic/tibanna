@@ -172,6 +172,8 @@ exl echo "## Running dockerized awsf scripts"
 send_log
 
 # run dockerized awsf scripts
+exl docker pull $AWSF_IMAGE
+send_log
 docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
