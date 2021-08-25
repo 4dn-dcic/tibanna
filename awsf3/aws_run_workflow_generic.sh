@@ -47,6 +47,7 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 
 # function that executes a command and collecting log
@@ -158,6 +159,12 @@ fi
 if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 fi
+
+### log into ECR if necessary
+exl echo
+exl echo "## Logging into ECR"
+exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
+send_log
 
 # send log before starting docker
 exl echo
