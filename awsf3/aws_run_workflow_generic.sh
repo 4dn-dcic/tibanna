@@ -148,17 +148,21 @@ cd ~
 apt install -y unzip libwww-perl libdatetime-perl
 curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip -O
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
-echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
-echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
-cat cloudwatch.jobs | crontab -
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > ~/recurring.jobs
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> ~/recurring.jobs
 
 # set up cronjob to monitor AWS spot instance termination notice
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
+cd ~
 exl echo
 exl echo "## Turning on Spot instance failure detection"
 curl https://github.com/4dn-dcic/tibanna/raw/spot_failure_detection/awsf3/spot_failure_detection.sh -O
-echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID" | crontab -
-echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID" | crontab -
+chmod +x spot_failure_detection.sh
+echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
+echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
+
+# Send the collected jobs to cron
+cat recurring.jobs | crontab -
 
 cd $cwd0
 
