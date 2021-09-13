@@ -21,9 +21,13 @@ done
 sleep $SLEEP
 
 ### send spot_failure message to S3
-if [ ! -f $JOBID.$SLEEP.spot_failure ]; then
-    touch $JOBID.$SLEEP.spot_failure
-    aws s3 cp $JOBID.$SLEEP.spot_failure s3://$LOGBUCKET/$JOBID.$SLEEP.spot_failure
+if [ ! -f $JOBID.spot_failure ]; then
+    instance_action=$(ec2metadata --instance-action)
+    if [ "$instance_action" != "none" ]; 
+        touch $JOBID.spot_failure
+        echo "$instance_action" > $JOBID.spot_failure
+        aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
+    fi    
 fi
 
 #echo "$LOGBUCKET / $JOBID"
