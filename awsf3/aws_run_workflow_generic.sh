@@ -140,7 +140,7 @@ mv $LOGFILE1 $LOGFILE2
 export LOGFILE=$LOGFILE2
 
 
-# set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
+# set up cronjob for cloudwatch metrics for memory, disk space and CPU utilization
 exl echo
 exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
@@ -151,6 +151,15 @@ unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
 cat cloudwatch.jobs | crontab -
+
+# set up cronjob to monitor AWS spot instance termination notice
+# Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
+exl echo
+exl echo "## Turning on Spot instance failure detection"
+curl https://github.com/4dn-dcic/tibanna/raw/spot_failure_detection/awsf3/spot_failure_detection.sh -O
+echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID" | crontab -
+echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID" | crontab -
+
 cd $cwd0
 
 # set additional profile
