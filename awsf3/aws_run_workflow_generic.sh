@@ -156,7 +156,7 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 cd ~
 exl echo
 exl echo "## Turning on Spot instance failure detection"
-curl https://github.com/4dn-dcic/tibanna/raw/spot_failure_detection/awsf3/spot_failure_detection.sh -O
+curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
 chmod +x spot_failure_detection.sh
 echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
 echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
