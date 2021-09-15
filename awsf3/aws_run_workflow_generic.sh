@@ -158,8 +158,8 @@ exl echo
 exl echo "## Turning on Spot instance failure detection"
 curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
 chmod +x spot_failure_detection.sh
-echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
-echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID" >> ~/recurring.jobs
+echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
 
 # Send the collected jobs to cron
 cat recurring.jobs | crontab -
