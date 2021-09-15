@@ -25,7 +25,7 @@ if [ ! -f $JOBID.spot_failure ]; then
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
     # We are using IMDSv1 for performance reasons.
     status_code=`curl -s -o /dev/null -I -w "%{http_code}" http://169.254.169.254/latest/meta-data/instance-action`
-    if [ "$status_code" != "200" ]; then
+    if [ "$status_code" = "200" ]; then
         echo "Request successful"
         instance_action=`curl -s http://169.254.169.254/latest/meta-data/instance-action`
         if [ "$instance_action" != "none" ]; then
