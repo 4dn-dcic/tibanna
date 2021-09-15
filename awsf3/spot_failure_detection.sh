@@ -31,6 +31,8 @@ if [ ! -f $JOBID.spot_failure ]; then
             echo "$instance_action" > $JOBID.spot_failure
             aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
         fi    
+    else
+        echo "instance-action meta data could not be retrieved"
     fi 
     
 fi
