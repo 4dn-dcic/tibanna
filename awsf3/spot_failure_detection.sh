@@ -20,13 +20,13 @@ done
 
 sleep $SLEEP
 
-### send spot_failure message to S3
+### Send spot_failure message to S3
 if [ ! -f $JOBID.spot_failure ]; then
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
     # We are using IMDSv1 for performance reasons and simplicity.
     status_code=`curl -s -o /dev/null -I -w "%{http_code}" http://169.254.169.254/latest/meta-data/spot/instance-action`
     # This spot/instance-action is present only if the Spot Instance has been marked for hibernate, stop, or terminate.
-    # Therefore it is sufficient to check if the request was successul.
+    # Therefore, it is sufficient to check if the request was successful.
     if [ "$status_code" = "200" ]; then
         touch $JOBID.spot_failure
         aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure   
