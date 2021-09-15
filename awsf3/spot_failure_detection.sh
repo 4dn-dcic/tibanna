@@ -19,19 +19,21 @@ while getopts "s:l:j:" opt; do
 done
 
 sleep $SLEEP
-echo "sleep $SLEEP"
 
 ### send spot_failure message to S3
 if [ ! -f $JOBID.spot_failure ]; then
-    echo "file not there"
     # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
     # We are using IMDSv1 for performance reasons.
-    instance_action=`curl -s http://169.254.169.254/latest/meta-data/instance-action`
-    echo "instance action $instance_action"
-    if [ "$instance_action" != "none" ]; then
-        echo "$instance_action" > $JOBID.spot_failure
-        aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
-    fi    
+    status_code=`curl -s -o /dev/null -I -w "%{http_code}" http://169.254.169.254/latest/meta-data/instance-action`
+    if [ "$status_code" != "200" ]; then
+        echo "Request successful"
+        instance_action=`curl -s http://169.254.169.254/latest/meta-data/instance-action`
+        if [ "$instance_action" != "none" ]; then
+            echo "$instance_action" > $JOBID.spot_failure
+            aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
+        fi    
+    fi 
+    
 fi
 
 
