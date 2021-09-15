@@ -28,10 +28,9 @@ if [ ! -f $JOBID.spot_failure ]; then
     # This spot/instance-action is present only if the Spot Instance has been marked for hibernate, stop, or terminate.
     # Therefore it is sufficient to check if the request was successul.
     if [ "$status_code" = "200" ]; then
-        echo "$instance_action" > $JOBID.spot_failure
+        touch $JOBID.spot_failure
         aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure   
     fi 
-    
 fi
 
 
