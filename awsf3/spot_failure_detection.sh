@@ -28,7 +28,7 @@ if [ ! -f $JOBID.spot_failure ]; then
     # We are using IMDSv1 for performance reasons.
     instance_action=`curl -s http://169.254.169.254/latest/meta-data/instance-action`
     echo "instance action $instance_action"
-    if [ "$instance_action" != "none" ]; 
+    if [ "$instance_action" != "none" ]; then
         echo "$instance_action" > $JOBID.spot_failure
         aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
     fi    
