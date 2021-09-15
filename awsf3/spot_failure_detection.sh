@@ -11,8 +11,8 @@ printHelpAndExit() {
 while getopts "s:l:j:" opt; do
     case $opt in
         s) SLEEP=$OPTARG;;  # execution delay in seconds
-        l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
-        j) export JOBID=$OPTARG;;  # job od
+        l) LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        j) JOBID=$OPTARG;;  # job id
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -22,7 +22,9 @@ sleep $SLEEP
 
 ### send spot_failure message to S3
 if [ ! -f $JOBID.spot_failure ]; then
-    instance_action=$(ec2metadata --instance-action)
+    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
+    # We are using IMDSv1 for performance reasons.
+    instance_action=`curl -s http://169.254.169.254/latest/meta-data/instance-action`
     if [ "$instance_action" != "none" ]; 
         echo "$instance_action" > $JOBID.spot_failure
         aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure
