@@ -11,8 +11,8 @@ printHelpAndExit() {
 while getopts "s:l:j:" opt; do
     case $opt in
         s) SLEEP=$OPTARG;;  # execution delay in seconds
-        l) LOGBUCKET=$OPTARG;;  # bucket for sending log file
-        j) JOBID=$OPTARG;;  # job id
+        l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
+        j) export JOBID=$OPTARG;;  # job id
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
