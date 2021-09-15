@@ -153,8 +153,9 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 
 # set up cronjob to monitor AWS spot instance termination notice
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
-test=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION"`
-"$test" > ~/test.log
+aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" > ~/test2.log 2>&1
+#test=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION"`
+#"$test" > ~/test.log
 #test=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(json.load(sys.stdin)['SpotInstanceRequests'])"`
 
 cd ~
