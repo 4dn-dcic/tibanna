@@ -153,21 +153,19 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util -
 
 # set up cronjob to monitor AWS spot instance termination notice
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
-aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" > ~/test2.log 2>&1
-#test=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION"`
-#"$test" > ~/test.log
-#test=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(json.load(sys.stdin)['SpotInstanceRequests'])"`
-
-cd ~
-exl echo
-exl echo "## Turning on Spot instance failure detection"
-curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
-chmod +x spot_failure_detection.sh
-echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
-echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
+if [ "$is_spot_instance" = "1" ]; then
+  exl echo
+  exl echo "## Turning on Spot instance failure detection"
+  cd ~
+  curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
+  chmod +x spot_failure_detection.sh
+  echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+  echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+fi 
 
 # Send the collected jobs to cron
-cat recurring.jobs | crontab -
+cat ~/recurring.jobs | crontab -
 
 cd $cwd0
 
