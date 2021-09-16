@@ -63,6 +63,9 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; shutdown -h $SHUTDOWN_MIN; fi; }  ## usage: handle_error <error_code>
 
+# used to compare Tibanna version strings
+version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
+
 ### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
 export LOGFILE=$LOGFILE1
 cd /home/ubuntu/
@@ -151,18 +154,21 @@ unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > ~/recurring.jobs
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> ~/recurring.jobs
 
-# set up cronjob to monitor AWS spot instance termination notice
+# Set up cronjob to monitor AWS spot instance termination notice. 
+# Works only in deployed Tibanna version >1.5.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
-is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
-if [ "$is_spot_instance" = "1" ]; then
-  exl echo
-  exl echo "## Turning on Spot instance failure detection"
-  cd ~
-  curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
-  chmod +x spot_failure_detection.sh
-  echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
-  echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
-fi 
+if [ $(version $TIBANNA_VERSION) -ge $(version "1.5.1") ]; then
+  is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
+  if [ "$is_spot_instance" = "1" ]; then
+    exl echo
+    exl echo "## Turning on Spot instance failure detection"
+    cd ~
+    curl https://raw.githubusercontent.com/4dn-dcic/tibanna/spot_failure_detection/awsf3/spot_failure_detection.sh -O
+    chmod +x spot_failure_detection.sh
+    echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+    echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+  fi 
+fi
 
 # Send the collected jobs to cron
 cat ~/recurring.jobs | crontab -
