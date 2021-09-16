@@ -19,11 +19,11 @@
     "cwl_version": "v1",
     "input_files": {
       "fastq1": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": "tibanna-test/human.10k.R1.fastq.gz"
       },
       "fastq2": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": "tibanna-test/human.10k.R2.fastq.gz"
       },
       "bwa_index": {

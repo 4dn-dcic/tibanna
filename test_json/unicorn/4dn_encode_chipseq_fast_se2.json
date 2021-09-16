@@ -33,29 +33,29 @@
     "secondary_output_target": {},
     "wdl_main_filename": "chip.wdl",
     "secondary_files": {},
-    "output_S3_bucket": "soos-4dn-bucket",
+    "output_S3_bucket": "tibanna-test-bucket",
     "app_version": "dev",
     "wdl_directory_url": "https://raw.githubusercontent.com/4dn-dcic/chip-seq-pipeline2/master/",
     "input_files": {
       "chip.fastqs": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": [[["4DNFI8KTY3QD.h10M.fastq.gz"], ["4DNFI43RP96B.h10M.fastq.gz"]]]
       },
       "chip.ctl_fastqs": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": [[["4DNFIGM25CMN.h10M.fastq.gz"], ["4DNFI438ZP4U.h10M.fastq.gz"]]]
       },
       "chip.bwa_idx_tar": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "rename": "GRCh38_no_alt_analysis_set_GCA_000001405.15.fasta.tar",
         "object_key": "4DNFIZQZ39L9.bwaIndex.tar"
       },
       "chip.blacklist": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": "hg38.blacklist.bed.gz"
       },
       "chip.chrsz": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": "GRCh38_EBV.chrom.sizes"
       }
     }

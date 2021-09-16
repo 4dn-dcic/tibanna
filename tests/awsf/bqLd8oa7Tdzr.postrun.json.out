@@ -43,7 +43,7 @@
         "Output": {
             "Output files": {}, 
             "alt_cond_output_argnames": {}, 
-            "output_bucket_directory": "soos-4dn-bucket", 
+            "output_bucket_directory": "tibanna-test-bucket", 
             "output_target": {
                 "file://tests/awsf/haha": "shelltest-haha", 
                 "file://tests/awsf/mydir": "shelltest-mydir"

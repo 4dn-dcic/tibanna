@@ -8,7 +8,7 @@
     "cwl_child_filenames": [],
     "cwl_version": "v1",
     "input_parameters": {},
-    "output_S3_bucket": "soos-4dn-bucket",
+    "output_S3_bucket": "tibanna-test-bucket",
     "output_target": {
       "report": "test_report"
     },
