@@ -10,10 +10,10 @@
     },
     "secondary_output_target": {},
     "secondary_files": {},
-    "output_S3_bucket": "soos-4dn-bucket",
+    "output_S3_bucket": "tibanna-test-bucket",
     "app_version": "5",
     "input_files": {
-        "file:///data1/shell/somefile": "s3://soos-4dn-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
+        "file:///data1/shell/somefile": "s3://tibanna-test-bucket/4DNFIITTJYNR.mcool.bins.juicerformat.gz"
     },
     "input_parameters": {
     }

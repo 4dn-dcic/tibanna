@@ -6,14 +6,14 @@
     "command": "\\$ECHO_COMMAND \"haha\" > /data1/out/shell-test-output; ls -l somefile >> /data1/out/shell-test-output",
     "container_image": "ubuntu:16.04",
     "output_target": {
-      "file:///data1/out/shell-test-output": "s3://soos-4dn-bucket/shell-test-output"
+      "file:///data1/out/shell-test-output": "s3://tibanna-test-bucket/shell-test-output"
     },
     "secondary_output_target": {},
     "secondary_files": {},
-    "output_S3_bucket": "soos-4dn-bucket",
+    "output_S3_bucket": "tibanna-test-bucket",
     "app_version": "5",
     "input_files": {
-        "file:///data1/shell/somefile": "s3://soos-4dn-bucket/hg38.blacklist.bed.gz"
+        "file:///data1/shell/somefile": "s3://tibanna-test-bucket/hg38.blacklist.bed.gz"
     },
     "input_parameters": {
     },

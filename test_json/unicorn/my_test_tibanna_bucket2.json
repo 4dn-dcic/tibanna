@@ -7,7 +7,7 @@
     "cwl_version": "v1",
     "input_files": {
       "input_file": {
-        "bucket_name": "soos-4dn-bucket",
+        "bucket_name": "tibanna-test-bucket",
         "object_key": "test.txt"
       }
     },

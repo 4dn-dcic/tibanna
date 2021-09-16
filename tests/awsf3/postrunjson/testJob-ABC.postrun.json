@@ -56,7 +56,7 @@
                 }
             },
             "alt_cond_output_argnames": {},
-            "output_bucket_directory": "soos-4dn-bucket",
+            "output_bucket_directory": "tibanna-test-bucket",
             "output_target": {
                 "some_output": "tibanna-test/some_test_file_to_upload",
                 "some_output2": "tibanna-test/some_test_file_to_upload3.abc",
