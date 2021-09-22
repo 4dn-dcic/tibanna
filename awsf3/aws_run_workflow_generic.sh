@@ -202,12 +202,12 @@ send_log
 # network failures (seen frequently) - Will Sept 22 2021
 exl echo "## Pulling Docker image"
 tries=0
-until [ "$tries" -ge 3 ] do
+until [ $tries -ge 3 ]; do
   if exl_no_error docker pull $AWSF_IMAGE; then 
     exl echo "## Pull successfull on try $tries"
     break 
   else
-    tries=$((tries+1))
+    ((tries++))
     sleep 1
   fi
 done
