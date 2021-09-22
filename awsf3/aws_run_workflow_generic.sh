@@ -53,6 +53,7 @@ export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
 exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
+exl_no_error(){ $@ >> $LOGFILE 2>> $LOGFILE; ] ## same as exl but will not exit on error
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
@@ -200,11 +201,15 @@ send_log
 # network failures (seen frequently) - Will Sept 22 2021
 tries=0
 until [ "$tries" -ge 2 ] do
-  exl docker pull $AWSF_IMAGE && break
-  tries=$((tries+1))
-  sleep 1
+  if exl_no_error docker pull $AWSF_IMAGE; then 
+    break 
+  else
+    tries=$((tries+1))
+    sleep 1
+  fi
 done
 send_log
+# will fail here now if docker pull is not successful after multiple attempts
 docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 
