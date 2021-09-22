@@ -95,6 +95,7 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 ### start logging
 ### env
+exl echo "## Tibanna version: $TIBANNA_VERSION"
 exl echo "## job id: $JOBID"
 exl echo "## instance type: $(ec2metadata --instance-type)"
 exl echo "## instance id: $(ec2metadata --instance-id)"
@@ -156,9 +157,9 @@ echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-us
 echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> ~/recurring.jobs
 
 # Set up cronjob to monitor AWS spot instance termination notice. 
-# Works only in deployed Tibanna version >1.5.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`
+# Works only in deployed Tibanna version >=1.6.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
-if [ $(version $TIBANNA_VERSION) -ge $(version "1.5.1") ]; then
+if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
   is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
   if [ "$is_spot_instance" = "1" ]; then
     exl echo
@@ -200,7 +201,7 @@ send_log
 # wrap docker pull in some retry logic in case of
 # network failures (seen frequently) - Will Sept 22 2021
 tries=0
-until [ "$tries" -ge 2 ] do
+until [ "$tries" -ge 3 ] do
   if exl_no_error docker pull $AWSF_IMAGE; then 
     break 
   else

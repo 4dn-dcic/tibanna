@@ -349,7 +349,7 @@ EC2 Spot failure detection
 ##########################
 
 
-From Tibanna version 1.5.1, a cron job on the EC2 will regularly check for Spot Instance interruption notices issued by AWS (in case the workflow on a Spot instance). In such an event, the EC2 spot instance is going to be terminated by AWS and the workflow run will most likely fail. In this case Tibanna creates a file called ``<jobid>.spot_failure`` in the log bucket.
+From Tibanna version 1.6.0, a cron job on the EC2 will regularly check for Spot Instance interruption notices issued by AWS (in case the workflow on a Spot instance). In such an event, the EC2 spot instance is going to be terminated by AWS and the workflow run will most likely fail. In this case Tibanna creates a file called ``<jobid>.spot_failure`` in the log bucket.
 
 
 DEBUG tar ball
