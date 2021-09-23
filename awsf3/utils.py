@@ -185,6 +185,7 @@ def create_env_def_file(env_filename, runjson, language):
         if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             f_env.write("export WDL_URL={}\n".format(app.wdl_url))
             f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))
+            f_env.write("export WORKFLOW_ENGINE={}\n".format(app.workflow_engine))
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(app.other_wdl_files.split(','))))
         elif language == 'snakemake':
             f_env.write("export SNAKEMAKE_URL={}\n".format(app.snakemake_url))

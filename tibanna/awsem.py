@@ -70,7 +70,7 @@ class AwsemRunJsonLog(SerializableObject):
 class AwsemRunJsonApp(SerializableObject):
     def __init__(self, App_name=None, App_version=None, language=None,
                  cwl_url=None, main_cwl=None, other_cwl_files=None,
-                 wdl_url=None, main_wdl=None, other_wdl_files=None,
+                 wdl_url=None, main_wdl=None, other_wdl_files=None, workflow_engine=None,
                  container_image=None, command=None,
                  snakemake_url=None, main_snakemake=None, other_snakemake_files=None):
         self.App_name = App_name
@@ -82,6 +82,7 @@ class AwsemRunJsonApp(SerializableObject):
         self.wdl_url = wdl_url
         self.main_wdl = main_wdl
         self.other_wdl_files = other_wdl_files
+        self.workflow_engine = workflow_engine
         self.container_image = container_image
         self.command = command
         self.snakemake_url = snakemake_url
