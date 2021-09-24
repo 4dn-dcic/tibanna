@@ -15,4 +15,4 @@ export VERSION=$(python -c 'from tibanna._version import __version__; print(__ve
 export AWSF_IMAGE="aveit/tibanna-awsf:${VERSION}"
 echo $AWSF_IMAGE
 docker build -t $AWSF_IMAGE --build-arg version=$VERSION awsf3-docker/ #> $BUILD_LOG
-#docker push $AWSF_IMAGE
+docker push $AWSF_IMAGE
