@@ -139,3 +139,6 @@ class UnsupportedCWLVersionException(Exception):
             message = "CWL draft3 is no longer supported. Please switched to v1"
         super().__init__(message)
 
+
+class JobAbortedException(Exception):
+    pass

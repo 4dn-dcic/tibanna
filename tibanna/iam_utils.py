@@ -36,8 +36,6 @@ class IAM(object):
           tibanna_policy_prefix : tibanna_default_3465 / tibanna_pony_default_3465
           prefix : tibanna_ / tibanna_pony_
         """
-        # lambda names
-        self.lambda_names = [self.run_task_lambda_name, self.check_task_lambda_name, self.update_cost_lambda_name]
         if self.lambda_type:
             self.prefix = 'tibanna_' + self.lambda_type + '_'
         else:
@@ -62,6 +60,10 @@ class IAM(object):
         self.iam = boto3.resource('iam')
 
     @property
+    def lambda_names(self):
+        return [self.run_task_lambda_name, self.check_task_lambda_name, self.update_cost_lambda_name]
+
+    @property
     def iam_group_name(self):
         return self.tibanna_policy_prefix
 
@@ -69,7 +71,7 @@ class IAM(object):
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
                 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
-                'executions', 'pricing']
+                'executions', 'pricing', 'vpc']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
@@ -86,7 +88,8 @@ class IAM(object):
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc',
                     'pricing': 'pricing',
-                    'executions': 'executions'}
+                    'executions': 'executions',
+                    'vpc': 'vpc_access'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -106,7 +109,8 @@ class IAM(object):
                        'dynamodb': self.policy_dynamodb,
                        'ec2_desc': self.policy_ec2_desc_policy,
                        'pricing': self.policy_pricing,
-                       'executions': self.policy_executions}
+                       'executions': self.policy_executions,
+                       'vpc': self.policy_vpc_access}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -134,13 +138,16 @@ class IAM(object):
             raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
         return services[role_type]
 
-    def policy_arn_list_for_role(self, role_type):
+    @property
+    def policy_arn_list_for_role(self):
+        # returns a dictionary with role_type as keys
+        # adding vpc access to only check_task since run_task has full ec2 access
         run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
                                         'executions', 'cw_dashboard']
         check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
-                                          'termination', 'dynamodb', 'pricing']
-        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing']
-        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric']] +
+                                          'termination', 'dynamodb', 'pricing', 'vpc']
+        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing', 'vpc']
+        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric', 'ec2_desc']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
@@ -149,9 +156,7 @@ class IAM(object):
                    self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types],
                    self.update_cost_lambda_name: [self.policy_arn(_) for _ in update_cost_custom_policy_types]}
                    
-        if role_type not in arnlist:
-            raise Exception("role_type %s must be one of %s." % (role_type, str(self.role_types)))
-        return arnlist[role_type]
+        return arnlist
 
     @property
     def instance_profile_name(self):
@@ -200,6 +205,25 @@ class IAM(object):
                 {
                     "Effect": "Allow",
                     "Action": "ec2:TerminateInstances",
+                    "Resource": "*"
+                }
+            ]
+        }
+        return policy
+
+    @property
+    def policy_vpc_access(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "ec2:DescribeNetworkInterfaces",
+                        "ec2:CreateNetworkInterface",
+                        "ec2:AttachNetworkInterface",
+                        "ec2:DeleteNetworkInterface"
+                    ],
                     "Resource": "*"
                 }
             ]
@@ -374,7 +398,8 @@ class IAM(object):
                     "Action": [
                         "ec2:DescribeInstances",
                         "ec2:DescribeInstanceStatus",
-                        "ec2:DescribeSpotPriceHistory"
+                        "ec2:DescribeSpotPriceHistory",
+                        "ec2:DescribeSpotInstanceRequests"
                     ],
                     "Resource": "*"
                 }
@@ -451,7 +476,7 @@ class IAM(object):
         role_policy_doc = self.role_policy_document(self.role_service(role_type))
         self.create_role_robust(self.role_name(role_type), json.dumps(role_policy_doc), verbose)
         role = self.iam.Role(self.role_name(role_type))
-        for p_arn in self.policy_arn_list_for_role(role_type):
+        for p_arn in self.policy_arn_list_for_role[role_type]:
             response = role.attach_policy(PolicyArn=p_arn)
             if verbose:
                 logger.debug("response from IAM attach_policy :" + str(response))

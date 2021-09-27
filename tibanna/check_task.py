@@ -20,6 +20,7 @@ from .exceptions import (
     EC2UnintendedTerminationException,
     EC2IdleException,
     MetricRetrievalException,
+    JobAbortedException,
     AWSEMErrorHandler
 )
 from .vars import PARSE_AWSEM_TIME
@@ -53,6 +54,7 @@ class CheckTask(object):
         job_started = "%s.job_started" % jobid
         job_success = "%s.success" % jobid
         job_error = "%s.error" % jobid
+        job_aborted = "%s.aborted" % jobid
 
         public_postrun_json = self.input_json['config'].get('public_postrun_json', False)
 
@@ -68,6 +70,14 @@ class CheckTask(object):
                     pass  # most likely already terminated or never initiated
                 raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
             raise EC2StartingException("Failed to find jobid %s, ec2 is probably still booting" % jobid)
+
+        # check to see if job has been aborted (by user or admin)
+        if does_key_exist(bucket_name, job_aborted):
+            try:
+                self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
+            except Exception as e:
+                logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
+            raise JobAbortedException("job aborted")
 
         # check to see if job has error, report if so
         if does_key_exist(bucket_name, job_error):

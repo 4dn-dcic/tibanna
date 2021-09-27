@@ -54,7 +54,7 @@ export LOCAL_WF_TMPDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_WF_TMPDIR
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
-exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; $ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; handle_error $ERRCODE; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one separates stdout to json as well.
+exlj(){ $@ >> $LOGJSONFILE 2>> $LOGFILE; ERRCODE=$?; cat $LOGJSONFILE >> $LOGFILE; handle_error $ERRCODE; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one separates stdout to json as well.
 exle(){ $@ >> /dev/null 2>> $LOGFILE; handle_error $?; } ## usage: exle command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stdout. Useful for downloading/uploading files to/from s3, because it writes progress to stdout.
 exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
 
@@ -122,6 +122,7 @@ exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 
 
 # setting additional env variables including LANGUAGE and language-related envs.
+# This file is created in decode_run_json
 exl source $ENV_FILE
 
 
@@ -182,6 +183,8 @@ exl echo
 exl ls -lh $EBS_DIR
 exl echo
 exl ls -lhR $LOCAL_INPUT_DIR
+exl echo
+exl ls -lhR $LOCAL_WFDIR
 send_log
 
 
@@ -207,8 +210,19 @@ cwd0=$(pwd)
 cd $LOCAL_WFDIR
 if [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
 then
-  exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
-  handle_error $?
+  if [[ $WORKFLOW_ENGINE == 'caper' ]]
+  then
+    exl echo "## Using the Caper workflow engine"
+    exl echo "## Initializing Caper"
+    # Since we are running caper in LOCAL_WFDIR we don't need to set local-loc-dir in the caper config
+    exl caper init local
+    exl caper run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    handle_error $?
+  else # default to cromwell
+    exl echo "## Using the Cromwell workflow engine"
+    exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    handle_error $?
+  fi
 elif [[ $LANGUAGE == 'wdl_draft2' ]]  # 'wdl' defaults to 'wdl_v1'
 then
   exl echo "## using cromwell-35 for WDL draft2"
@@ -267,6 +281,8 @@ exl echo
 exl ls -lhtr $EBS_DIR/
 exl echo
 exl ls -lhtrR $LOCAL_INPUT_DIR/
+exl echo
+exl ls -lhR $LOCAL_WFDIR
 send_log
 
 # more comprehensive log for wdl

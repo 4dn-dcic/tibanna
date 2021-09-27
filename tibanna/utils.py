@@ -76,6 +76,22 @@ def create_jobid():
     return randomword(12)    # date+random_string
 
 
+def create_tibanna_suffix(suffix, usergroup):
+    if usergroup and suffix:
+        function_name_suffix = usergroup + '_' + suffix
+    elif suffix:
+        function_name_suffix = suffix
+    elif usergroup:
+        function_name_suffix = usergroup
+    else:
+        function_name_suffix = ''
+
+    if function_name_suffix:
+        return '_' + function_name_suffix
+    else:
+        return ''
+
+
 def read_s3(bucket, object_name):
     response = boto3.client('s3').get_object(Bucket=bucket, Key=object_name)
     logger.debug("response_from_read_s3:" +  str(response))

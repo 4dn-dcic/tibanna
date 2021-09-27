@@ -101,12 +101,20 @@ class Subcommands(object):
                  {'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-z", "--soft"],
+                  'help': "instead of directly killing the execution, " +
+                          "send abort signal to s3 so that step function can handle it",
+                  'action': "store_true"}],
             'kill_all':
                 [{'flag': ["-s", "--sfn"],
                   'help': "tibanna step function name (e.g. 'tibanna_unicorn_monty'); " +
                           "your current default is %s)" % TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
-                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME}],
+                  'default': TIBANNA_DEFAULT_STEP_FUNCTION_NAME},
+                 {'flag': ["-z", "--soft"],
+                  'help': "instead of directly killing the execution, " +
+                          "send abort signal to s3 so that step function can handle it",
+                  'action': "store_true"}],
             'log':
                 [{'flag': ["-e", "--exec-arn"],
                   'help': "execution arn of the specific job to log"},
@@ -265,7 +273,16 @@ class Subcommands(object):
                  {'flag': ["-P", "--do-not-delete-public-access-block"],
                   'action': "store_true",
                   'help': "Do not delete public access block from buckets" +
-                          "(this way postrunjson and metrics reports will not be public)"}],
+                          "(this way postrunjson and metrics reports will not be public)"},
+                 {'flag': ["-t", "--subnets"],
+                  'nargs': '+',
+                  'help': "subnet IDs"},
+                 {'flag': ["-r", "--security-groups"],
+                  'nargs': '+',
+                  'help': "security groups"},
+                 {'flag': ["-q", "--quiet"],
+                  'action': "store_true",
+                  'help': "minimize standard output from deployment"}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
@@ -274,7 +291,16 @@ class Subcommands(object):
                           "Lambda function, within the same usergroup"},
                  {'flag': ["-g", "--usergroup"],
                   'default': '',
-                  'help': "Tibanna usergroup for the AWS Lambda function"}],
+                  'help': "Tibanna usergroup for the AWS Lambda function"},
+                 {'flag': ["-t", "--subnets"],
+                  'nargs': '+',
+                  'help': "subnet IDs"},
+                 {'flag': ["-r", "--security-groups"],
+                  'nargs': '+',
+                  'help': "security groups"},
+                 {'flag': ["-q", "--quiet"],
+                  'action': "store_true",
+                  'help': "minimize standard output from deployment"}],
             'plot_metrics':
                 [{'flag': ["-j", "--job-id"],
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
@@ -310,7 +336,10 @@ class Subcommands(object):
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
                  {'flag': ["-u", "--update-tsv"],
                   'help': "update estimated cost in the metric tsv file on S3",
-                  'action': "store_true"}],
+                  'action': "store_true"},
+                  {'flag': ["-f", "--force"],
+                  'action': "store_true",
+                  'help': "returns the estimate, even if the actual cost is available"}],
             'cleanup':
                 [{'flag': ["-g", "--usergroup"],
                   'help': "Tibanna usergroup that shares the permission to access buckets and run jobs"},
@@ -351,11 +380,12 @@ class Subcommands(object):
         }
 
 
-def deploy_core(name, suffix=None, usergroup=''):
+def deploy_core(name, suffix=None, usergroup='', quiet=False, subnets=None, security_groups=None):
     """
     New method of deploying packaged lambdas (BETA)
     """
-    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup)
+    API().deploy_core(name=name, suffix=suffix, usergroup=usergroup, subnets=subnets,
+                      security_groups=security_groups, quiet=quiet)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
@@ -378,11 +408,13 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
-                   no_setenv=False, usergroup='', do_not_delete_public_access_block=False, deploy_costupdater = False):
+                   no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                   deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
                          usergroup=usergroup, do_not_delete_public_access_block=do_not_delete_public_access_block,
-                         deploy_costupdater=deploy_costupdater)
+                         deploy_costupdater=deploy_costupdater, subnets=subnets, security_groups=security_groups,
+                         quiet=quiet)
 
 
 def add_user(user, usergroup):
@@ -407,14 +439,14 @@ def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUN
                     top=top, top_latest=top_latest))
 
 
-def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+def kill_all(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, soft=False):
     """kill all the running jobs on a step function"""
-    API().kill_all(sfn)
+    API().kill_all(sfn, soft=soft)
 
 
-def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
+def kill(exec_arn=None, job_id=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, soft=False):
     """kill a specific job"""
-    API().kill(exec_arn, job_id, sfn)
+    API().kill(exec_arn, job_id, sfn, soft=soft)
 
 
 def info(job_id):
@@ -475,9 +507,9 @@ def cost(job_id, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, update_tsv=False):
     """print out cost of a specific job"""
     print(API().cost(job_id=job_id, sfn=sfn, update_tsv=update_tsv))
 
-def cost_estimate(job_id, update_tsv=False):
+def cost_estimate(job_id, update_tsv=False, force=False):
     """print out estimated cost of a specific job"""
-    cost_estimate, cost_estimate_type = API().cost_estimate(job_id=job_id, update_tsv=update_tsv)
+    cost_estimate, cost_estimate_type = API().cost_estimate(job_id=job_id, update_tsv=update_tsv, force=force)
     print(f'{cost_estimate} ({cost_estimate_type})')
 
 

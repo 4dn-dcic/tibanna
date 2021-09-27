@@ -43,7 +43,8 @@ from .utils import (
     upload,
     put_object_s3,
     retrieve_all_keys,
-    delete_keys
+    delete_keys,
+    create_tibanna_suffix
 )
 from .ec2_utils import (
     UnicornInput,
@@ -153,13 +154,12 @@ class API(object):
         return run_name
 
     def run_workflow(self, input_json, sfn=None,
-                     env=None, jobid=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, jobid=None, sleep=3, verbose=True,
+                     open_browser=True, dryrun=False):
         '''
         input_json is either a dict or a file
         accession is unique name that we be part of run id
         '''
-        if not jobid:
-            jobid = create_jobid()
         if isinstance(input_json, dict):
             data = copy.deepcopy(input_json)
         elif isinstance(input_json, str) and os.path.exists(input_json):
@@ -167,6 +167,15 @@ class API(object):
                 data = json.load(input_file)
         else:
             raise Exception("input json must be either a file or a dictionary")
+        # jobid can be specified through run_workflow option (priority),
+        # or in input_json
+        if not jobid:
+            if 'jobid' in data:
+                jobid = data['jobid']
+            else:
+                jobid = create_jobid()
+        data['jobid'] = jobid
+
         if not sfn:
             sfn = self.default_stepfunction_name
         if not env:
@@ -189,8 +198,6 @@ class API(object):
         # calculate what the url will be
         url = "%s%s" % (base_url, arn)
         data[_tibanna]['url'] = url
-        # add jobid
-        data['jobid'] = jobid
         if 'args' in data:  # unicorn-only
             unicorn_input = UnicornInput(data)
             args = unicorn_input.args
@@ -204,36 +211,38 @@ class API(object):
         if verbose:
             logger.info("about to start run %s" % run_name)
         # trigger the step function to run
-        try:
-            response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn),
-                name=run_name,
-                input=aws_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            raise(e)
+        response = None
+        if not dryrun:
+            try:
+                response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn),
+                    name=run_name,
+                    input=aws_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                raise(e)
 
-        # trigger the cost updater step function to run
-        try:
-            costupdater_input = {
-                "sfn_arn": data[_tibanna]['exec_arn'],
-                "log_bucket": data['config']['log_bucket'],
-                "job_id": data['jobid'],
-                "aws_region": AWS_REGION
-            }
-            costupdater_input = json.dumps(costupdater_input)
-            response = client.start_execution(
-                stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
-                name=run_name,
-                input=costupdater_input,
-            )
-            time.sleep(sleep)
-        except Exception as e:
-            if 'StateMachineDoesNotExist' in str(e):
-                pass # Tibanna was probably deployed without the cost updater
-            else:
-                raise e
+            # trigger the cost updater step function to run
+            try:
+                costupdater_input = {
+                    "sfn_arn": data[_tibanna]['exec_arn'],
+                    "log_bucket": data['config']['log_bucket'],
+                    "job_id": data['jobid'],
+                    "aws_region": AWS_REGION
+                }
+                costupdater_input = json.dumps(costupdater_input)
+                costupdater_response = client.start_execution(
+                    stateMachineArn=STEP_FUNCTION_ARN(sfn + "_costupdater"),
+                    name=run_name,
+                    input=costupdater_input,
+                )
+                time.sleep(sleep)
+            except Exception as e:
+                if 'StateMachineDoesNotExist' in str(e):
+                    pass # Tibanna was probably deployed without the cost updater
+                else:
+                    raise e
 
         # adding execution info to dynamoDB for fast search by awsem job id
         Job.add_to_dd(jobid, run_name, sfn, data['config']['log_bucket'], verbose=verbose)
@@ -249,17 +258,17 @@ class API(object):
                 cw_db_url = 'https://console.aws.amazon.com/cloudwatch/' + \
                     'home?region=%s#dashboards:name=awsem-%s' % (AWS_REGION, jobid)
                 logger.info("Cloudwatch Dashboard = %s" % cw_db_url)
-            if open_browser and shutil.which('open') is not None:
+            if open_browser and shutil.which('open') is not None and not dryrun:
                 subprocess.call(["open", data[_tibanna]['url']])
         return data
 
     def run_batch_workflows(self, input_json_list, sfn=None,
-                     env=None, sleep=3, verbose=True, open_browser=True):
+                     env=None, sleep=3, verbose=True, open_browser=True, dryrun=False):
         """given a list of input json, run multiple workflows"""
         run_infos = []
         for input_json in input_json_list:
             run_info = self.run_workflow(input_json, env=env, sfn=sfn, sleep=sleep, verbose=verbose,
-                       open_browser=False)
+                       open_browser=False, dryrun=dryrun)
             run_infos.append(run_info)
         return run_infos
 
@@ -282,79 +291,37 @@ class API(object):
         '''returns content from dynamodb for a given job id in a dictionary form'''
         return Job.info(job_id)
 
-    def kill(self, exec_arn=None, job_id=None, sfn=None):
-        sf = boto3.client('stepfunctions')
-        if exec_arn:
-            desc = sf.describe_execution(executionArn=exec_arn)
-            if desc['status'] == 'RUNNING':
-                jobid = str(json.loads(desc['input'])['jobid'])
-                ec2 = boto3.resource('ec2')
-                terminated = None
-                for i in ec2.instances.all():
-                    if i.tags:
-                        for tag in i.tags:
-                            if tag['Key'] == 'Type' and tag['Value'] != 'awsem':
-                                continue
-                            if tag['Key'] == 'Name' and tag['Value'] == 'awsem-' + jobid:
-                                logger.info("terminating EC2 instance")
-                                response = i.terminate()
-                                logger.info("Successfully terminated instance: " + str(response))
-                                terminated = True
-                                break
-                        if terminated:
-                            break
-                logger.info("terminating step function execution")
-                resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-                logger.info("Successfully terminated step function execution: " + str(resp_sf))
-        elif job_id:
+    def kill(self, exec_arn=None, job_id=None, sfn=None, soft=False):
+        """kills a running job, identified by either execution arn (exec_arn) or
+        job_id, (or job_id and sfn, for old tibanna versions).
+        This function kills both ec2 instance and the step function.
+        if soft is set True, it will not directly kill the step function
+        but instead sends a abort signal to S3 and let the step fucntion handle
+        the signal. The abort signal handling is available for >=1.3.0.
+        """
+        job = Job(exec_arn=exec_arn, job_id=job_id, sfn=sfn)
+        if job.check_status() == 'RUNNING':
+            # kill awsem ec2 instance
             ec2 = boto3.client('ec2')
-            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
+            res = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job.job_id]}])
             if not res['Reservations']:
-                raise("instance not available - if you just submitted the job, try again later")
+                raise Exception("instance not available - if you just submitted the job, try again later")
             instance_id = res['Reservations'][0]['Instances'][0]['InstanceId']
             logger.info("terminating EC2 instance")
             resp_term = ec2.terminate_instances(InstanceIds=[instance_id])
             logger.info("Successfully terminated instance: " + str(resp_term))
-            # first try dynanmodb to get logbucket
-            ddres = dict()
-            try:
-                dd = boto3.client('dynamodb')
-                ddres = dd.query(TableName=DYNAMODB_TABLE,
-                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                           'ComparisonOperator': 'EQ'}})
-            except Exception as e:
-                pass
-            if 'Items' in ddres:
-                exec_name = ddres['Items'][0]['Execution Name']['S']
-                sfn = ddres['Items'][0]['Step Function']['S']
-                exec_arn = EXECUTION_ARN(exec_name, sfn)
+
+            if soft:
+                logger.info("sending abort signal to s3")
+                s3 = boto3.client('s3')
+                s3.put_object(Body=b'', Bucket=job.log_bucket, Key=job.job_id + '.aborted')
+                logger.info("Successfully sent abort signal")
             else:
-                if not sfn:
-                    logger.warning("Can't stop step function because step function name is not given.")
-                    return None
-                stateMachineArn = STEP_FUNCTION_ARN(sfn)
-                res = sf.list_executions(stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-                exec_arn = None
-                while True:
-                    if 'executions' not in res or not res['executions']:
-                        break
-                    for exc in res['executions']:
-                        desc = sf.describe_execution(executionArn=exc['executionArn'])
-                        if job_id == str(json.loads(desc['input'])['jobid']):
-                            exec_arn = exc['executionArn']
-                            break
-                    if exec_arn:
-                        break
-                    if 'nextToken' in res:
-                        res = sf.list_executions(nextToken=res['nextToken'],
-                                                 stateMachineArn=stateMachineArn, statusFilter='RUNNING')
-                    else:
-                        break
-                if not exec_arn:
-                    raise Exception("can't find the execution")
-            logger.info("terminating step function execution")
-            resp_sf = sf.stop_execution(executionArn=exec_arn, error="Aborted")
-            logger.info("Successfully terminated step function execution: " + str(resp_sf))
+                # kill step function execution
+                logger.info("terminating step function execution")
+                sf = boto3.client('stepfunctions')
+                resp_sf = sf.stop_execution(executionArn=job.exec_arn, error="Aborted")
+                logger.info("Successfully terminated step function execution: " + str(resp_sf))
 
     def kill_all(self, sfn=None):
         """killing all the running jobs"""
@@ -394,46 +361,9 @@ class API(object):
         sf = boto3.client('stepfunctions')
         if not exec_arn and exec_name:
             exec_arn = EXECUTION_ARN(exec_name, sfn)
-        if exec_arn:
-            desc = sf.describe_execution(executionArn=exec_arn)
-            job_id = str(json.loads(desc['input'])['jobid'])
-            if not logbucket:
-                logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-        elif job_id:
-            if not logbucket:
-                # first try dynanmodb to get logbucket
-                try:
-                    logbucket = self.info(job_id)['Log Bucket']
-                except Exception as e:
-                    pass
-                if not logbucket:
-                    # search through executions to get logbucket
-                    stateMachineArn = STEP_FUNCTION_ARN(sfn)
-                    try:
-                        res = sf.list_executions(stateMachineArn=stateMachineArn)
-                        while True:
-                            if 'executions' not in res or not res['executions']:
-                                break
-                            breakwhile = False
-                            for exc in res['executions']:
-                                desc = sf.describe_execution(executionArn=exc['executionArn'])
-                                if job_id == str(json.loads(desc['input'])['jobid']):
-                                    logbucket = str(json.loads(desc['input'])['config']['log_bucket'])
-                                    breakwhile = True
-                                    break
-                            if breakwhile:
-                                break
-                            if 'nextToken' in res:
-                                res = sf.list_executions(nextToken=res['nextToken'],
-                                                         stateMachineArn=stateMachineArn)
-                            else:
-                                break
-                    except:
-                        raise Exception("Cannot retrieve job. Try again later.")
-        else:
-            raise Exception("Either job_id, exec_arn or exec_name must be provided.")
+        job = Job(exec_arn=exec_arn, job_id=job_id, sfn=sfn)
         try:
-            res_s3 = boto3.client('s3').get_object(Bucket=logbucket, Key=job_id + suffix)
+            res_s3 = boto3.client('s3').get_object(Bucket=job.log_bucket, Key=job.job_id + suffix)
         except Exception as e:
             if 'NoSuchKey' in str(e):
                 if not quiet:
@@ -592,6 +522,8 @@ class API(object):
 
     def clear_input_json_template(self, input_json_template):
         """clear awsem template for reuse"""
+        if 'jobid' in input_json_template:
+            del input_json_template['jobid']
         if 'response' in input_json_template['_tibanna']:
             del(input_json_template['_tibanna']['response'])
         if 'run_name' in input_json_template['_tibanna'] and len(input_json_template['_tibanna']['run_name']) > 40:
@@ -697,7 +629,7 @@ class API(object):
             self.run_task_lambda: {'AMI_ID': AMI_ID,
                                    'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                    'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
-            self.check_task_lambda: {}
+            self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
             envlist[self.run_task_lambda].update({
@@ -706,9 +638,11 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup=''):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
         """
-        deploy a single lambda using the aws_lambda.deploy_function (BETA)
+        deploy a single lambda using the aws_lambda.deploy_function (BETA).
+        subnets and security groups are lists of subnet IDs and security group IDs, in case
+        you want the lambda to be deployed into specific subnets / security groups.
         """
         import aws_lambda
         if name not in dir(self.lambdas_module):
@@ -720,55 +654,60 @@ class API(object):
         envs = self.env_list(name)
         if envs:
             extra_config['Environment'] = {'Variables': envs}
+        if subnets or security_groups:
+            extra_config['VpcConfig'] = {}
+            if not 'Environment' in extra_config:
+                extra_config['Environment'] = {'Variables': {}}
+            if subnets:
+                extra_config['VpcConfig'].update({'SubnetIds': subnets})
+                extra_config['Environment']['Variables'].update({'SUBNETS': ','.join(subnets)})
+            if security_groups:
+                extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
+                extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
-            if usergroup:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
-                    = tibanna_iam.role_name('ec2')
-            else:
-                extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] = 'S3_access'  # 4dn-dcic default(temp)
+            extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
+                = tibanna_iam.role_name('ec2')
         # add role
         logger.info('name=%s' % name)
-        if name in [self.run_task_lambda, self.check_task_lambda, self.update_cost_lambda]:
-            role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
-            if usergroup:
-                role_arn = role_arn_prefix + tibanna_iam.role_name(name)
-            else:
-                role_arn = role_arn_prefix + 'lambda_full_s3'  # 4dn-dcic default(temp)
-            logger.info("role_arn=" + role_arn)
-            extra_config['Role'] = role_arn
-
-        if usergroup and suffix:
-            function_name_suffix = usergroup + '_' + suffix
-        elif suffix:
-            function_name_suffix = suffix
-        elif usergroup:
-            function_name_suffix = usergroup
-        else:
-            function_name_suffix = ''
+        role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'
+        role_arn = role_arn_prefix + tibanna_iam.role_name(name)
+        logger.info("role_arn=" + role_arn)
+        extra_config['Role'] = role_arn
 
         # first delete the existing function to avoid the weird AWS KMS lambda error
         function_name_prefix = getattr(self.lambdas_module, name).config.get('function_name')
-        if function_name_suffix:
-            full_function_name = function_name_prefix + '_' + function_name_suffix
-        else:
-            full_function_name = function_name_prefix
+        function_name_suffix = create_tibanna_suffix(suffix, usergroup)
+        full_function_name = function_name_prefix + function_name_suffix
         if name not in self.do_not_delete:
             try:
-                boto3.client('lambda').get_function(FunctionName=full_function_name)
-                logger.info("deleting existing lambda")
-                boto3.client('lambda').delete_function(FunctionName=full_function_name)
+                if quiet:
+                    res = boto3.client('lambda').get_function(FunctionName=full_function_name)
+                    logger.info("deleting existing lambda")
+                    res = boto3.client('lambda').delete_function(FunctionName=full_function_name)
+                else:
+                    boto3.client('lambda').get_function(FunctionName=full_function_name)
+                    logger.info("deleting existing lambda")
+                    boto3.client('lambda').delete_function(FunctionName=full_function_name)
             except Exception as e:
                 if 'Function not found' in str(e):
                     pass
 
-        aws_lambda.deploy_function(lambda_fxn_module,
-                                   function_name_suffix=function_name_suffix,
-                                   package_objects=self.tibanna_packages,
-                                   requirements_fpath=requirements_fpath,
-                                   extra_config=extra_config)
+        if quiet:
+            res = aws_lambda.deploy_function(lambda_fxn_module,
+                                             function_name_suffix=function_name_suffix,
+                                             package_objects=self.tibanna_packages,
+                                             requirements_fpath=requirements_fpath,
+                                             extra_config=extra_config)
+        else:
+            aws_lambda.deploy_function(lambda_fxn_module,
+                                       function_name_suffix=function_name_suffix,
+                                       package_objects=self.tibanna_packages,
+                                       requirements_fpath=requirements_fpath,
+                                       extra_config=extra_config)
 
-    def deploy_core(self, name, suffix=None, usergroup=''):
+    def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
+                    quiet=False):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -778,7 +717,8 @@ class API(object):
         else:
             names = [name, ]
         for name in names:
-            self.deploy_lambda(name, suffix, usergroup)
+            self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
+                               quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -812,17 +752,19 @@ class API(object):
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
         return tibanna_iam.user_group_name
 
-    def deploy_tibanna(self, suffix=None, usergroup='', setup=False,
+    def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
+                       default_usergroup_tag='default',
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
                 usergroup = self.setup_tibanna_env(buckets, usergroup, True,
                             do_not_delete_public_access_block=do_not_delete_public_access_block)
             else:  # override usergroup
-                usergroup = self.setup_tibanna_env(buckets,
-                            do_not_delete_public_access_block=do_not_delete_public_access_block)
+                usergroup = self.setup_tibanna_env(buckets, usergroup_tag=default_usergroup_tag,
+                            do_not_delete_public_access_block=do_not_delete_public_access_block,
+                            no_randomize=no_randomize)
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
@@ -837,21 +779,26 @@ class API(object):
                 outfile.write("\nexport TIBANNA_DEFAULT_STEP_FUNCTION_NAME=%s\n" % step_function_name)
 
         logger.info("deploying lambdas...")
-        self.deploy_core('all', suffix=suffix, usergroup=usergroup)
+        self.deploy_core('all', suffix=suffix, usergroup=usergroup, subnets=subnets,
+                         security_groups=security_groups, quiet=quiet)
 
         if(deploy_costupdater):
-            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup)
+            self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
+                               subnets=subnets, security_groups=security_groups, quiet=quiet)
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False, deploy_costupdater = False):
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                       deploy_costupdater=False, subnets=None, security_groups=None,
+                       quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
-                            deploy_costupdater=deploy_costupdater)
+                            deploy_costupdater=deploy_costupdater, subnets=subnets,
+                            security_groups=security_groups, quiet=quiet)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""
@@ -1041,7 +988,7 @@ class API(object):
         if open_browser:
             webbrowser.open(METRICS_URL(log_bucket, job_id))
 
-    def cost_estimate(self, job_id, update_tsv=False):
+    def cost_estimate(self, job_id, update_tsv=False, force=False):
         postrunjsonstr = self.log(job_id=job_id, postrunjson=True)
         if not postrunjsonstr:
             logger.info("Cost estimation error: postrunjson not found")
@@ -1050,12 +997,13 @@ class API(object):
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
 
-        # We return the real cost, if it is availble, but don't automatically update the Cost row in the tsv
-        precise_cost = self.cost(job_id, update_tsv=False)
-        if(precise_cost and precise_cost > 0.0):
-            if update_tsv:
-                update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
-            return precise_cost, "actual cost"
+        # We return the real cost, if it is available, but don't automatically update the Cost row in the tsv
+        if not force:
+            precise_cost = self.cost(job_id, update_tsv=False)
+            if(precise_cost and precise_cost > 0.0):
+                if update_tsv:
+                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
+                return precise_cost, "actual cost"
 
         # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
         ebs_root_type = 'gp3' if 'awsf_image' in postrunjsonobj['config'] else 'gp2'

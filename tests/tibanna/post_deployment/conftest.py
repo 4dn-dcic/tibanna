@@ -24,18 +24,18 @@ def get_test_json(file_name):
 def deploy_sfn1_to_region1():
     """Deploy sfn1 to region1 with cost updater"""
     os.environ['AWS_DEFAULT_REGION'] = REGION1
-    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1',
+    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,tibanna-test-bucket', usergroup=DEV_GROUP_SUFFIX + '1',
                          deploy_costupdater = True)
 
 
 def deploy_sfn1_to_region2():
     os.environ['AWS_DEFAULT_REGION'] = REGION2
-    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,soos-4dn-bucket', usergroup=DEV_GROUP_SUFFIX + '1')
+    API().deploy_unicorn(suffix=DEV_SUFFIX, buckets='tibanna-output,tibanna-test-bucket', usergroup=DEV_GROUP_SUFFIX + '1')
 
 
 def deploy_sfn2_to_region2():
     os.environ['AWS_DEFAULT_REGION'] = REGION2
-    buckets = 'tibanna-output,elasticbeanstalk-fourfront-webdev-files,soos-4dn-bucket'
+    buckets = 'tibanna-output,elasticbeanstalk-fourfront-webdev-files,tibanna-test-bucket'
     API().deploy_unicorn(suffix=DEV_SUFFIX, buckets=buckets, usergroup=DEV_GROUP_SUFFIX + '2')
 
 

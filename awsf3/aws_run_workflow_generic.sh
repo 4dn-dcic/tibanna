@@ -47,10 +47,13 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
+export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 
 # function that executes a command and collecting log
 exl(){ $@ >> $LOGFILE 2>> $LOGFILE; handle_error $?; } ## usage: exl command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3.
+exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
+exl_no_error(){ $@ >> $LOGFILE 2>> $LOGFILE; } ## same as exl but will not exit on error
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
 send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
@@ -60,6 +63,9 @@ send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: 
 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; shutdown -h $SHUTDOWN_MIN; fi; }  ## usage: handle_error <error_code>
+
+# used to compare Tibanna version strings
+version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
 
 ### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
 export LOGFILE=$LOGFILE1
@@ -89,6 +95,7 @@ aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
 
 ### start logging
 ### env
+exl echo "## Tibanna version: $TIBANNA_VERSION"
 exl echo "## job id: $JOBID"
 exl echo "## instance type: $(ec2metadata --instance-type)"
 exl echo "## instance id: $(ec2metadata --instance-id)"
@@ -138,7 +145,7 @@ mv $LOGFILE1 $LOGFILE2
 export LOGFILE=$LOGFILE2
 
 
-# set up cronjojb for cloudwatch metrics for memory, disk space and CPU utilization
+# set up cronjob for cloudwatch metrics for memory, disk space and CPU utilization
 exl echo
 exl echo "## Turning on cloudwatch metrics for memory and disk space"
 cwd0=$(pwd)
@@ -146,9 +153,28 @@ cd ~
 apt install -y unzip libwww-perl libdatetime-perl
 curl https://aws-cloudwatch.s3.amazonaws.com/downloads/CloudWatchMonitoringScripts-1.2.2.zip -O
 unzip CloudWatchMonitoringScripts-1.2.2.zip && rm CloudWatchMonitoringScripts-1.2.2.zip && cd aws-scripts-mon
-echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > cloudwatch.jobs
-echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> cloudwatch.jobs
-cat cloudwatch.jobs | crontab -
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --mem-util --mem-used --mem-avail --disk-space-util --disk-space-used --disk-path=/data1/ --from-cron" > ~/recurring.jobs
+echo "*/1 * * * * ~/aws-scripts-mon/mon-put-instance-data.pl --disk-space-util --disk-space-used --disk-path=/ --from-cron" >> ~/recurring.jobs
+
+# Set up cronjob to monitor AWS spot instance termination notice. 
+# Works only in deployed Tibanna version >=1.6.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`
+# Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
+if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
+  is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
+  if [ "$is_spot_instance" = "1" ]; then
+    exl echo
+    exl echo "## Turning on Spot instance failure detection"
+    cd ~
+    curl https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/spot_failure_detection.sh -O
+    chmod +x spot_failure_detection.sh
+    echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+    echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+  fi 
+fi
+
+# Send the collected jobs to cron
+cat ~/recurring.jobs | crontab -
+
 cd $cwd0
 
 # set additional profile
@@ -159,12 +185,34 @@ if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 fi
 
+### log into ECR if necessary
+exl echo
+exl echo "## Logging into ECR"
+exl echo "Logging into ECR $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com..."
+exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
+send_log
+
 # send log before starting docker
 exl echo
 exl echo "## Running dockerized awsf scripts"
 send_log
 
 # run dockerized awsf scripts
+# wrap docker pull in some retry logic in case of
+# network failures (seen frequently) - Will Sept 22 2021
+exl echo "## Pulling Docker image"
+tries=0
+until [ $tries -ge 3 ]; do
+  if exl_no_error docker pull $AWSF_IMAGE; then 
+    exl echo "## Pull successfull on try $tries"
+    break 
+  else
+    ((tries++))
+    sleep 60
+  fi
+done
+send_log
+# will fail here now if docker pull is not successful after multiple attempts
 docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
 handle_error $?
 

@@ -21,7 +21,7 @@
         }, 
         "JOBID": "bqLd8oa7Tdz2", 
         "Log": {
-            "log_bucket_directory": "soos-4dn-bucket/tibanna-test"
+            "log_bucket_directory": "tibanna-test-bucket/tibanna-test"
         }, 
         "Output": {
             "output_bucket_directory": "elasticbeanstalk-fourfront-webdev-wfoutput", 
@@ -44,7 +44,7 @@
         "ebs_type": "io1", 
         "instance_type": "t2.xlarge", 
         "job_tag": "repliseq-parta", 
-        "json_bucket": "soos-4dn-bucket/tibanna-test",
+        "json_bucket": "tibanna-test-bucket/tibanna-test",
         "json_dir": "/tmp/json", 
         "key_name": "", 
         "launch_instance": true, 
