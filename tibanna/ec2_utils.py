@@ -169,6 +169,8 @@ class Args(SerializableObject):
                 self.wdl_directory_local = ''
             if not hasattr(self, 'wdl_directory_url'):
                 self.wdl_directory_url = ''
+            if not hasattr(self, 'workflow_engine'):
+                self.workflow_engine = 'cromwell'
             if not self.wdl_directory_local and not self.wdl_directory_url:
                 errmsg = "either %s or %s must be provided in args" % ('wdl_directory_url', 'wdl_directory_local')
                 raise MissingFieldInInputJsonException(errmsg)
@@ -578,6 +580,7 @@ class Execution(object):
                 'main_wdl': args.wdl_main_filename,
                 'other_wdl_files': ','.join(args.wdl_child_filenames),
                 'wdl_url': args.wdl_directory_url,
+                'workflow_engine': args.workflow_engine
             })
         elif args.language == 'snakemake':
             app.update({

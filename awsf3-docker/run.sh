@@ -122,6 +122,7 @@ exl awsf3 upload_postrun_json -i $POSTRUN_JSON_FILE_NAME
 
 
 # setting additional env variables including LANGUAGE and language-related envs.
+# This file is created in decode_run_json
 exl source $ENV_FILE
 
 
@@ -209,8 +210,19 @@ cwd0=$(pwd)
 cd $LOCAL_WFDIR
 if [[ $LANGUAGE == 'wdl_v1' || $LANGUAGE == 'wdl' ]]
 then
-  exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
-  handle_error $?
+  if [[ $WORKFLOW_ENGINE == 'caper' ]]
+  then
+    exl echo "## Using the Caper workflow engine"
+    exl echo "## Initializing Caper"
+    # Since we are running caper in LOCAL_WFDIR we don't need to set local-loc-dir in the caper config
+    exl caper init local
+    exl caper run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    handle_error $?
+  else # default to cromwell
+    exl echo "## Using the Cromwell workflow engine"
+    exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    handle_error $?
+  fi
 elif [[ $LANGUAGE == 'wdl_draft2' ]]  # 'wdl' defaults to 'wdl_v1'
 then
   exl echo "## using cromwell-35 for WDL draft2"

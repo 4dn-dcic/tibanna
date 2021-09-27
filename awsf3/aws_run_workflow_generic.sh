@@ -208,7 +208,7 @@ until [ $tries -ge 3 ]; do
     break 
   else
     ((tries++))
-    sleep 1
+    sleep 60
   fi
 done
 send_log
