@@ -66,6 +66,7 @@ class CheckTask(object):
             if start_time + timedelta(minutes=10) < now:
                 try:
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                    self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
                 except:
                     pass  # most likely already terminated or never initiated
                 raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
