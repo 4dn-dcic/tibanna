@@ -586,5 +586,5 @@ Retrieve a cost estimate for a specific job. This will be available as soon as t
  update_tsv                         This flag specifies wether to update the cost in the tsv file that
                                     stores metrics information on the S3 bucket
 
-force                               Return the estimate, even if the actual cost is available
+ force                              Return the estimate, even if the actual cost is available
 

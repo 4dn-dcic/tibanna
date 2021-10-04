@@ -55,9 +55,9 @@ class AwsemRunJsonJob(SerializableObject):
             setattr(self, k, v)
 
     @property
-    def start_time_as_str(self):
+    def start_time_as_datetime(self):
         if not self.start_time:
-            return ''
+            return None
         else:
             return datetime.strptime(self.start_time, AWSEM_TIME_STAMP_FORMAT)
 
@@ -311,7 +311,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
         self.Output = AwsemPostRunJsonOutput(**Output)
 
     @property
-    def end_time_as_str(self):
+    def end_time_as_datetime(self):
         try:
             return datetime.strptime(self.end_time, AWSEM_TIME_STAMP_FORMAT)
         except:
