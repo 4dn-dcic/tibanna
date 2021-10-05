@@ -208,13 +208,13 @@ class CheckTask(object):
             resources = self.TibannaResource(prj.Job.instance_id,
                                              prj.Job.filesystem,
                                              prj.Job.start_time_as_datetime,
-                                             prj.Job.end_time_as_datetime or datetime.now())
+                                             prj.Job.end_time_as_datetime)
 
         except Exception as e:
             raise MetricRetrievalException("error getting metrics: %s" % str(e))
         prj.Job.update(Metrics=resources.as_dict())
         self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
                            force_upload=True, open_browser=False,
-                           endtime=prj.Job.end_time_as_datetime or datetime.now(),
+                           endtime=prj.Job.end_time_as_datetime,
                            filesystem=prj.Job.filesystem,
                            instance_id=prj.Job.instance_id)
