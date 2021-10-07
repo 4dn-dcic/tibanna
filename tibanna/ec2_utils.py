@@ -171,6 +171,8 @@ class Args(SerializableObject):
                 self.wdl_directory_url = ''
             if not hasattr(self, 'workflow_engine'):
                 self.workflow_engine = 'cromwell'
+            if not hasattr(self, 'run_args'):
+                self.run_args = ''
             if not self.wdl_directory_local and not self.wdl_directory_url:
                 errmsg = "either %s or %s must be provided in args" % ('wdl_directory_url', 'wdl_directory_local')
                 raise MissingFieldInInputJsonException(errmsg)
@@ -203,6 +205,8 @@ class Args(SerializableObject):
                 self.cwl_directory_local = ''
             if not hasattr(self, 'cwl_directory_url'):
                 self.cwl_directory_url = ''
+            if not hasattr(self, 'run_args'):
+                self.run_args = ''
             if not self.cwl_directory_local and not self.cwl_directory_url:
                 errmsg = "either %s or %s must be provided in args" % ('cwl_directory_url', 'cwl_directory_local')
                 raise MissingFieldInInputJsonException(errmsg)
@@ -580,7 +584,8 @@ class Execution(object):
                 'main_wdl': args.wdl_main_filename,
                 'other_wdl_files': ','.join(args.wdl_child_filenames),
                 'wdl_url': args.wdl_directory_url,
-                'workflow_engine': args.workflow_engine
+                'workflow_engine': args.workflow_engine,
+                'run_args': args.run_args
             })
         elif args.language == 'snakemake':
             app.update({
@@ -600,6 +605,7 @@ class Execution(object):
                 'main_cwl': args.cwl_main_filename,
                 'other_cwl_files': ','.join(args.cwl_child_filenames),
                 'cwl_url': args.cwl_directory_url,
+                'run_args': args.run_args
             })
         pre.update({'Job': {'JOBID': jobid,
                             'App': app,

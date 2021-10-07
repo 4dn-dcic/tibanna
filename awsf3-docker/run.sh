@@ -216,11 +216,11 @@ then
     exl echo "## Initializing Caper"
     # Since we are running caper in LOCAL_WFDIR we don't need to set local-loc-dir in the caper config
     exl caper init local
-    exl caper run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    exl caper run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE $RUN_ARGS
     handle_error $?
   else # default to cromwell
     exl echo "## Using the Cromwell workflow engine"
-    exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE
+    exl java -jar /usr/local/bin/cromwell.jar run $MAIN_WDL -i $cwd0/$INPUT_YML_FILE -m $LOGJSONFILE $RUN_ARGS
     handle_error $?
   fi
 elif [[ $LANGUAGE == 'wdl_draft2' ]]  # 'wdl' defaults to 'wdl_v1'
@@ -249,7 +249,7 @@ else
   # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
   # To prevent this, use the original directory name here.
   mkdir -p $LOCAL_WF_TMPDIR_CWL
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
   handle_error $?
 fi
 cd $cwd0
