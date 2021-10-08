@@ -893,7 +893,7 @@ class API(object):
         if postrunjsonstr:
             postrunjson = AwsemPostRunJson(**json.loads(postrunjsonstr))
             job = postrunjson.Job
-            if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
+            if hasattr(job, 'end_time_as_datetime') and job.end_time_as_datetime:
                 job_complete = True
             else:
                 job_complete = False
@@ -921,10 +921,10 @@ class API(object):
                 webbrowser.open(METRICS_URL(log_bucket, job_id))
             return None
         # report not already on s3 with a lock
-        starttime = job.start_time_as_str
+        starttime = job.start_time_as_datetime
         if not endtime:
-            if hasattr(job, 'end_time_as_str') and job.end_time_as_str:
-                endtime = job.end_time_as_str
+            if hasattr(job, 'end_time_as_datetime') and job.end_time_as_datetime:
+                endtime = job.end_time_as_datetime
             else:
                 endtime = datetime.utcnow()
         if hasattr(job, 'filesystem') and job.filesystem:
