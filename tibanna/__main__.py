@@ -377,7 +377,7 @@ class Subcommands(object):
                  {'flag': ["-U", "--ubuntu-base-image"],
                   'help': "The ID of the Ubuntu 20.04 image to build from (e.g. 'ami-0885b1f6bd170450c' for us-east-1). " +
                           "To use this option, turn on the option -B."},
-                 {'flag': ["-R", "--replicate"],
+                 {'flag': ["-r", "--replicate"],
                   'help': "Enable to replicate across all regions defined by AMI_PER_REGION"}
                  ]
         }
