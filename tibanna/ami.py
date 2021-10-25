@@ -52,10 +52,10 @@ class AMI(object):
 
         return instance_id
 
-    def create_ami_for_tibanna(self, keyname=None, make_public=False):
+    def create_ami_for_tibanna(self, keyname=None, make_public=False, replicate=False):
         return self.create_ami(keyname=keyname, userdata_file=self.USERDATA_FILE,
                                base_ami=self.BASE_AMI, ami_name=self.AMI_NAME,
-                               make_public=make_public, base_region=self.BASE_REGION)
+                               make_public=make_public, base_region=self.BASE_REGION, replicate=replicate)
 
     @staticmethod
     def replicate_ami(*, ami_name, ami_id, source_region='us-east-1',

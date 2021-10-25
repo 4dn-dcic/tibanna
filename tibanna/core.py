@@ -1180,4 +1180,4 @@ class API(object):
             if source_image_region:
                 args.update({'base_region': source_image_region})
 
-        return AMI(**args).create_ami_for_tibanna(make_public=make_public)
+        return AMI(**args).create_ami_for_tibanna(make_public=make_public, replicate=replicate)
