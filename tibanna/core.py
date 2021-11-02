@@ -111,6 +111,8 @@ class API(object):
     check_task_lambda = CHECK_TASK_LAMBDA_NAME
     update_cost_lambda = UPDATE_COST_LAMBDA_NAME
 
+    ami_id = AMI_ID
+
     @property
     def UNICORN_LAMBDAS(self):
         return [self.run_task_lambda, self.check_task_lambda]
@@ -626,7 +628,7 @@ class API(object):
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
         envlist = {
-            self.run_task_lambda: {'AMI_ID': AMI_ID,
+            self.run_task_lambda: {'AMI_ID': self.ami_id,
                                    'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                    'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
             self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
