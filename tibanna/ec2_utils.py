@@ -311,7 +311,9 @@ class Config(SerializableObject):
             self.mem_as_is = False
         if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
             self.ebs_size_as_is = False
-
+        if not hasattr(self, 'ami_id'): 
+            self.ami_id = AMI_ID
+        
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
         # script url
@@ -320,8 +322,7 @@ class Config(SerializableObject):
         self.json_bucket = self.log_bucket
 
     def fill_language_options(self, language='cwl_v1', singularity=False):
-        """fill in ami_id and language fields (these are also internal)"""
-        self.ami_id = AMI_ID
+        """fill in language fields (these are also internal)"""
         if singularity:
             self.singularity = True
         self.language = language
