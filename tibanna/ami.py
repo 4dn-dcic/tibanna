@@ -107,6 +107,18 @@ class AMI(object):
         logger.info(f'Provisioned {ami_per_region}')
         return ami_per_region
 
+    @staticmethod
+    def release_ami_to_accounts(ami_id, ami_region, accounts):
+        """ Releases the given ami_id to the target AWS accounts.
+            By 'release', we mean 'the ability to launch this AMI'.
+        """
+        logger.info(f'Making {ami_id} from {ami_region} launchable from {accounts}')
+        region_session = boto3.client('ec2', region_name=ami_region)
+        region_session.modify_image_attribute(ImageId=ami_id,
+                                              LaunchPermission={
+                                                  'Add': [{'UserId': account} for account in accounts]
+                                              })
+
     @classmethod
     def create_ami(cls, keyname=None, userdata_file=USERDATA_FILE,
                    base_ami=BASE_AMI,
