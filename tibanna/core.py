@@ -315,8 +315,7 @@ class API(object):
 
             if soft:
                 logger.info("sending abort signal to s3")
-                s3 = boto3.client('s3')
-                s3.put_object(Body=b'', Bucket=job.log_bucket, Key=job.job_id + '.aborted')
+                put_object_s3(b'', job.job_id + '.aborted', job.log_bucket)
                 logger.info("Successfully sent abort signal")
             else:
                 # kill step function execution

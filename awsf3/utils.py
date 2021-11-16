@@ -371,10 +371,11 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
 
 def upload_output(prj, endpoint_url=None):
     # parsing output_target and uploading output files to output target
-    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload, endpoint_url=endpoint_url)
+    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload,
+                            kms_key_id=prj.config.kms_key_id, endpoint_url=endpoint_url)
 
 
-def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None):
+def upload_to_output_target(prj_out, encrypt_s3_upload=False, kms_key_id=None, endpoint_url=None):
     # parsing output_target and uploading output files to output target
     output_bucket = prj_out.output_bucket_directory
     output_argnames = prj_out.output_files.keys()
@@ -398,7 +399,8 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None)
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload,
+                                    kms_key_id=kms_key_id, endpoint_url=endpoint_url)
                 prj_out.output_files[k].add_target(target.dest)
 
                 # upload secondary files
@@ -408,7 +410,8 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None)
                     stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
                     stlist.reorder_by_source([sf.path for sf in secondary_output_files])
                     for st in stlist.secondary_targets:
-                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
+                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload,
+                                        kms_key_id=kms_key_id, endpoint_url=endpoint_url)
                     for i, sf in enumerate(secondary_output_files):
                         sf.add_target(stlist.secondary_targets[i].dest)
             else:
@@ -469,4 +472,6 @@ def upload_postrun_json(jsonfile):
     }
     if prj.config.encrypt_s3_upload:
         upload_arg.update({"ServerSideEncryption": "aws:kms"})
+        if prj.config.kms_key_id:
+            upload_arg['SSEKMSKeyId'] = prj.config.kms_key_id
     s3.put_object(**upload_arg)
