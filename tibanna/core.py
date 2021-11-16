@@ -33,7 +33,8 @@ from .vars import (
     LAMBDA_TYPE,
     RUN_TASK_LAMBDA_NAME,
     CHECK_TASK_LAMBDA_NAME,
-    UPDATE_COST_LAMBDA_NAME
+    UPDATE_COST_LAMBDA_NAME,
+    S3_ENCRYT_KEY_ID
 )
 from .utils import (
     _tibanna_settings,
@@ -315,7 +316,9 @@ class API(object):
 
             if soft:
                 logger.info("sending abort signal to s3")
-                put_object_s3(b'', job.job_id + '.aborted', job.log_bucket)
+                put_object_s3(b'', job.job_id + '.aborted', job.log_bucket,
+                              encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                              kms_key_id=S3_ENCRYT_KEY_ID)
                 logger.info("Successfully sent abort signal")
             else:
                 # kill step function execution
@@ -997,13 +1000,16 @@ class API(object):
         postrunjsonobj = json.loads(postrunjsonstr)
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
+        encryption = postrunjsonobj.config.encrypt_s3_upload
+        kms_key_id = postrunjsonobj.config.kms_key_id
 
         # We return the real cost, if it is available, but don't automatically update the Cost row in the tsv
         if not force:
             precise_cost = self.cost(job_id, update_tsv=False)
             if(precise_cost and precise_cost > 0.0):
                 if update_tsv:
-                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
+                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost",
+                                                encryption=encryption, kms_key_id=kms_key_id)
                 return precise_cost, "actual cost"
 
         # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
@@ -1012,7 +1018,8 @@ class API(object):
         cost_estimate, cost_estimate_type = get_cost_estimate(postrunjson, ebs_root_type)
 
         if update_tsv:
-            update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type)
+            update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type,
+                                        encryption=encryption, kms_key_id=kms_key_id)
         return cost_estimate, cost_estimate_type
 
     def cost(self, job_id, sfn=None, update_tsv=False):
@@ -1027,7 +1034,10 @@ class API(object):
 
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
-            update_cost_in_tsv(log_bucket, job_id, cost)
+            encryption = postrunjson.config.encrypt_s3_upload
+            kms_key_id = postrunjson.config.kms_key_id
+            update_cost_in_tsv(log_bucket, job_id, cost,
+                               encryption=encryption, kms_key_id=kms_key_id)
 
         return cost
 

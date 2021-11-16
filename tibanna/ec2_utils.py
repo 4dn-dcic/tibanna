@@ -301,6 +301,8 @@ class Config(SerializableObject):
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+
+        # TODO: default to env variable here?
         if not hasattr(self, 'encrypt_s3_upload'):
             self.encrypt_s3_upload = False
         if not hasattr(self, 'kms_key_id'):
