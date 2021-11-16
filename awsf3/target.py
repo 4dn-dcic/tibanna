@@ -111,7 +111,7 @@ class Target(object):
             yield {'name': content_file_name, 'content': z.open(content_file_name).read()}
         yield None
 
-    def upload_to_s3(self, encrypt_s3_upload=False, endpoint_url=None):
+    def upload_to_s3(self, encrypt_s3_upload=False, kms_key_id=None, endpoint_url=None):
         """upload target to s3, source can be either a file or a directory."""
         if not self.is_valid:
             raise Exception('Upload Error: source / dest must be specified first')
@@ -124,6 +124,8 @@ class Target(object):
         upload_extra_args = {}
         if encrypt_s3_upload:
             upload_extra_args = {'ServerSideEncryption': 'aws:kms'}
+            if kms_key_id:
+                upload_extra_args['SSEKMSKeyId'] = kms_key_id
         if self.tag is not None:
             upload_extra_args.update({'Tagging': self.tag})
             print("Tagging:", self.tag)
@@ -151,8 +153,9 @@ class Target(object):
             # unzip the content files to S3
             try:
                 zip_content = self.unzip_source()
-            except:
+            except Exception as e:
                 print("Unzipping failed: source " + self.source + " may not be a zip file")
+                raise e  # crash here instead of on iterator
             print("source " + self.source + " is a zip file. Unzipping..")
             arcfile = next(zip_content)
             while(arcfile):
