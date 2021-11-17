@@ -10,7 +10,8 @@ from .vars import (
     SFN_TYPE,
     RUN_TASK_LAMBDA_NAME,
     CHECK_TASK_LAMBDA_NAME,
-    UPDATE_COST_LAMBDA_NAME
+    UPDATE_COST_LAMBDA_NAME,
+    S3_ENCRYT_KEY_ID,
 )
 
 
@@ -76,6 +77,12 @@ class IAM(object):
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
 
+    def kms_key_arn(self):
+        _id = S3_ENCRYT_KEY_ID
+        if not _id:
+            _id = 'invalid'  # build a dummy arn in the case that we are not using KMS
+        return 'arn:aws:kms:' + self.region + ':' + self.account_id + ':key/' + _id
+
     def policy_suffix(self, policy_type):
         suffices = {'bucket': 'bucket_access',
                     'termination': 'ec2_termination',
@@ -89,7 +96,8 @@ class IAM(object):
                     'ec2_desc': 'ec2_desc',
                     'pricing': 'pricing',
                     'executions': 'executions',
-                    'vpc': 'vpc_access'}
+                    'vpc': 'vpc_access',
+                    'kms': 'kms_key_for_s3'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -110,7 +118,8 @@ class IAM(object):
                        'ec2_desc': self.policy_ec2_desc_policy,
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
-                       'vpc': self.policy_vpc_access}
+                       'vpc': self.policy_vpc_access,
+                       'kms': self.policy_kms_access}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -140,14 +149,18 @@ class IAM(object):
 
     @property
     def policy_arn_list_for_role(self):
+        """ This function specifies the permissions given to each service/lambda function. """
+        base = ['bucket']  # policies everyone needs
+        if S3_ENCRYT_KEY_ID:  # if we have a value, this key is valid and we must add perms
+            base.append('kms')
         # returns a dictionary with role_type as keys
         # adding vpc access to only check_task since run_task has full ec2 access
-        run_task_custom_policy_types = ['list', 'cloudwatch', 'passrole', 'bucket', 'dynamodb',
-                                        'executions', 'cw_dashboard']
-        check_task_custom_policy_types = ['cloudwatch_metric', 'cloudwatch', 'bucket', 'ec2_desc',
-                                          'termination', 'dynamodb', 'pricing', 'vpc']
-        update_cost_custom_policy_types = ['bucket', 'executions', 'dynamodb', 'pricing', 'vpc']
-        arnlist = {'ec2': [self.policy_arn(_) for _ in ['bucket', 'cloudwatch_metric', 'ec2_desc']] +
+        run_task_custom_policy_types = base + ['list', 'cloudwatch', 'passrole', 'dynamodb',
+                                               'executions', 'cw_dashboard']
+        check_task_custom_policy_types = base + ['cloudwatch_metric', 'cloudwatch', 'ec2_desc',
+                                                 'termination', 'dynamodb', 'pricing', 'vpc']
+        update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
+        arnlist = {'ec2': [self.policy_arn(_) for _ in base + ['cloudwatch_metric', 'ec2_desc']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
@@ -155,7 +168,7 @@ class IAM(object):
                                               ['arn:aws:iam::aws:policy/AmazonEC2FullAccess'],
                    self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types],
                    self.update_cost_lambda_name: [self.policy_arn(_) for _ in update_cost_custom_policy_types]}
-                   
+
         return arnlist
 
     @property
@@ -229,6 +242,29 @@ class IAM(object):
             ]
         }
         return policy
+
+    @property
+    def policy_kms_access(self):
+        """ Returns a dictionary representing a policy granting some limited
+            permissions needed to upload/download files to encrypted S3 buckets
+            given an S3_ENCRYPT_KEY_ID.
+        """
+        return {
+            'Version': '2012-10-17',
+            'Statement': {
+                'Effect': 'Allow',
+                'Action': [
+                    'kms:Encrypt',
+                    'kms:Decrypt',
+                    'kms:ReEncrypt*',
+                    'kms:GenerateDataKey*',
+                    'kms:DescribeKey'
+                ],
+                'Resource': [
+                    self.kms_key_arn()
+                ]
+            }
+        }
 
     @property
     def policy_list_instanceprofiles(self):
@@ -406,7 +442,7 @@ class IAM(object):
             ]
         }
         return policy
-    
+
     @property
     def policy_pricing(self):
         policy = {

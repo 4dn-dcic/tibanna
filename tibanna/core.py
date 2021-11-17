@@ -642,7 +642,8 @@ class API(object):
             )
         return envlist.get(name, '')
 
-    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None,
+                      kms_key_id=None):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA).
         subnets and security groups are lists of subnet IDs and security group IDs, in case
@@ -668,6 +669,8 @@ class API(object):
             if security_groups:
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
                 extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
+            if kms_key_id:
+                extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': kms_key_id})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
@@ -711,7 +714,7 @@ class API(object):
                                        extra_config=extra_config)
 
     def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
-                    quiet=False):
+                    quiet=False, kms_key_id=None):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -722,7 +725,7 @@ class API(object):
             names = [name, ]
         for name in names:
             self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
-                               quiet=quiet)
+                               quiet=quiet, kms_key_id=kms_key_id)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -759,7 +762,8 @@ class API(object):
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
                        default_usergroup_tag='default',
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
+                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False,
+                       kms_key_id=None):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -784,11 +788,12 @@ class API(object):
 
         logger.info("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup, subnets=subnets,
-                         security_groups=security_groups, quiet=quiet)
+                         security_groups=security_groups, quiet=quiet, kms_key_id=kms_key_id)
 
         if(deploy_costupdater):
             self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
-                               subnets=subnets, security_groups=security_groups, quiet=quiet)
+                               subnets=subnets, security_groups=security_groups, quiet=quiet,
+                               kms_key_id=kms_key_id)
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
@@ -796,13 +801,13 @@ class API(object):
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
                        no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
                        deploy_costupdater=False, subnets=None, security_groups=None,
-                       quiet=False):
+                       quiet=False, kms_key_id=None):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
                             deploy_costupdater=deploy_costupdater, subnets=subnets,
-                            security_groups=security_groups, quiet=quiet)
+                            security_groups=security_groups, quiet=quiet, kms_key_id=kms_key_id)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""

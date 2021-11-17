@@ -23,7 +23,7 @@ from .vars import (
     DEFAULT_ROOT_EBS_SIZE,
     TIBANNA_AWSF_DIR,
     DEFAULT_AWSF_IMAGE,
-    AWS_REGION_NAMES
+    S3_ENCRYT_KEY_ID,
 )
 from .job import Jobs
 from .exceptions import (
@@ -306,7 +306,11 @@ class Config(SerializableObject):
         if not hasattr(self, 'encrypt_s3_upload'):
             self.encrypt_s3_upload = False
         if not hasattr(self, 'kms_key_id'):
-            self.kms_key_id = None
+            if S3_ENCRYT_KEY_ID:
+                self.kms_key_id = S3_ENCRYT_KEY_ID
+                self.encrypt_s3_upload = True
+            else:
+                self.kms_key_id = None
         if not hasattr(self, 'root_ebs_size'):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
         if not hasattr(self, 'awsf_image'):

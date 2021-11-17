@@ -412,12 +412,13 @@ def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
                    no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
-                   deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
+                   deploy_costupdater=False, subnets=None, security_groups=None, quiet=False,
+                   kms_key_id=None):
     """deploy tibanna unicorn to AWS cloud"""
     API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
                          usergroup=usergroup, do_not_delete_public_access_block=do_not_delete_public_access_block,
                          deploy_costupdater=deploy_costupdater, subnets=subnets, security_groups=security_groups,
-                         quiet=quiet)
+                         quiet=quiet, kms_key_id=kms_key_id)
 
 
 def add_user(user, usergroup):
