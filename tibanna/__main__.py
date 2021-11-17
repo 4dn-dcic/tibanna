@@ -282,7 +282,11 @@ class Subcommands(object):
                   'help': "security groups"},
                  {'flag': ["-q", "--quiet"],
                   'action': "store_true",
-                  'help': "minimize standard output from deployment"}],
+                  'help': "minimize standard output from deployment"},
+                 {'flag': ['-K', '--kms-key-id'],
+                  'nargs': 1,
+                  'help': 'Pass a KMS key ID to deploy tibanna with KMS support'},
+            ],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
