@@ -285,8 +285,7 @@ class Subcommands(object):
                   'help': "minimize standard output from deployment"},
                  {'flag': ['-K', '--kms-key-id'],
                   'nargs': 1,
-                  'help': 'Pass a KMS key ID to deploy tibanna with KMS support'},
-            ],
+                  'help': 'Pass a KMS key ID to deploy tibanna with KMS support'}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
                   'help': "name of the lambda function to deploy (e.g. run_task_awsem)"},
@@ -304,7 +303,10 @@ class Subcommands(object):
                   'help': "security groups"},
                  {'flag': ["-q", "--quiet"],
                   'action': "store_true",
-                  'help': "minimize standard output from deployment"}],
+                  'help': "minimize standard output from deployment"},
+                 {'flag': ['-K', '--kms-key-id'],
+                  'nargs': 1,
+                  'help': 'Pass a KMS key ID to deploy tibanna with KMS support'}],
             'plot_metrics':
                 [{'flag': ["-j", "--job-id"],
                   'help': "job id of the specific job to log (alternative to --exec-arn/-e)"},
@@ -387,12 +389,13 @@ class Subcommands(object):
         }
 
 
-def deploy_core(name, suffix=None, usergroup='', quiet=False, subnets=None, security_groups=None):
+def deploy_core(name, suffix=None, usergroup='', quiet=False, subnets=None, security_groups=None,
+                kms_key_id=None):
     """
     New method of deploying packaged lambdas (BETA)
     """
     API().deploy_core(name=name, suffix=suffix, usergroup=usergroup, subnets=subnets,
-                      security_groups=security_groups, quiet=quiet)
+                      security_groups=security_groups, quiet=quiet, kms_key_id=kms_key_id)
 
 
 def run_workflow(input_json, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME, jobid='', do_not_open_browser=False, sleep=3):
