@@ -72,7 +72,7 @@ class IAM(object):
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
                 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
-                'executions', 'pricing', 'vpc']
+                'executions', 'pricing', 'vpc', 'kms']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
