@@ -181,12 +181,12 @@ class CheckTask(object):
         # upload postrun json file back to s3
         acl = 'public-read' if public_read else 'private'
         try:
-            put_object_s3(json.dumps(prj.as_dict(), indent=4).encode(), postrunjson, bucket_name,
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
                           public=True if acl == 'public-read' else False,
                           encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
                           kms_key_id=S3_ENCRYT_KEY_ID)  # defaults to None
         except Exception:  # try again no matter what
-            put_object_s3(json.dumps(prj.as_dict(), indent=4).encode(), postrunjson, bucket_name,
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
                           public=False,  # fallback to private
                           encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
                           kms_key_id=S3_ENCRYT_KEY_ID)

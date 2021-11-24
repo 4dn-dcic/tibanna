@@ -316,7 +316,7 @@ class API(object):
 
             if soft:
                 logger.info("sending abort signal to s3")
-                put_object_s3(b'', job.job_id + '.aborted', job.log_bucket,
+                put_object_s3('', job.job_id + '.aborted', job.log_bucket,
                               encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
                               kms_key_id=S3_ENCRYT_KEY_ID)
                 logger.info("Successfully sent abort signal")
@@ -1005,8 +1005,8 @@ class API(object):
         postrunjsonobj = json.loads(postrunjsonstr)
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
-        encryption = postrunjsonobj.config.encrypt_s3_upload
-        kms_key_id = postrunjsonobj.config.kms_key_id
+        encryption = postrunjson.config.encrypt_s3_upload
+        kms_key_id = postrunjson.config.kms_key_id
 
         # We return the real cost, if it is available, but don't automatically update the Cost row in the tsv
         if not force:
