@@ -714,13 +714,19 @@ class API(object):
                                        extra_config=extra_config)
 
         if kms_key_id:
+            # delete invalid pricipals first
+            self.cleanup_kms(kms_key_id)
             # adjust KMS key policy to allow this role to use s3 key
             kms_client = boto3.client('kms')
             policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+            policy = json.loads(policy['Policy'])
             for statement in policy['Statement']:
-                if statement.get('Sid', '') == 'Enable IAM Policies':
+                if statement.get('Sid', '') == 'Allow use of the key':
+                    if isinstance(statement['Principal']['AWS'], str):
+                        statement['Principal']['AWS'] = [statement['Principal']['AWS']]
                     statement['Principal']['AWS'].append(role_arn)
                     break
+            policy = json.dumps(policy)
             kms_client.put_key_policy(
                 KeyId=kms_key_id,
                 PolicyName='default',
@@ -735,12 +741,14 @@ class API(object):
         """
         kms_client = boto3.client('kms')
         policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        policy = json.loads(policy['Policy'])
         for statement in policy['Statement']:
-            if statement.get('Sid', '') == 'Enable IAM Policies':  # default
+            if statement.get('Sid', '') == 'Allow use of the key':  # default
                 iam_entities = statement['Principal'].get('AWS', [])
-                filtered_entities = list(filter(lambda s: s.startswith('AROA'), iam_entities))
+                filtered_entities = list(filter(lambda s: not s.startswith('AROA'), iam_entities))
                 statement['Principal']['AWS'] = filtered_entities
                 break
+        policy = json.dumps(policy)
         kms_client.put_key_policy(
             KeyId=kms_key_id,
             PolicyName='default',
