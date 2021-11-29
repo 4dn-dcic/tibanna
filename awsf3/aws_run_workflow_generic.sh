@@ -63,9 +63,9 @@ exl_no_error(){ $@ >> $LOGFILE 2>> $LOGFILE; } ## same as exl but will not exit 
 send_log() {
   if [ -z "$S3_ENCRYPT_KEY_ID" ];
   then
-    aws s3 cp $LOGFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID" &>/dev/null;
-  else
     aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null;
+  else
+    aws s3 cp $LOGFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID" &>/dev/null;
   fi
 }
 
@@ -75,9 +75,9 @@ send_error(){
   touch $ERRFILE;
   if [ -z "$S3_ENCRYPT_KEY_ID" ];
   then
-    aws s3 cp $ERRFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
-  else
     aws s3 cp $ERRFILE s3://$LOGBUCKET;
+  else
+    aws s3 cp $ERRFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
   fi
 }
 
@@ -87,9 +87,9 @@ send_job_started() {
   touch $JOBID.job_started;
   if [ -z "$S3_ENCRYPT_KEY_ID" ];
   then
-    aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
-  else
     aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started
+  else
+    aws s3 cp $JOBID.job_started s3://$LOGBUCKET/$JOBID.job_started --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
   fi
 }
 
