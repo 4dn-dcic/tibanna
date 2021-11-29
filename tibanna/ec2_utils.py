@@ -701,6 +701,8 @@ class Execution(object):
         str += " -l $LOGBUCKET"
         str += " -V {version}".format(version=__version__)
         str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
+        if cfg.kms_key_id:
+            str += " -k %s" % cfg.kms_key_id
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:
