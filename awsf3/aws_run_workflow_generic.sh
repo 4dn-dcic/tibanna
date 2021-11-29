@@ -199,8 +199,14 @@ if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
     cd ~
     curl https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/spot_failure_detection.sh -O
     chmod +x spot_failure_detection.sh
-    echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
-    echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+    if [ -z "$S3_ENCRYPT_KEY_ID" ];
+    then
+      echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+      echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+    else
+      echo "* * * * * ~/spot_failure_detection.sh -s 0 -l $LOGBUCKET -j $JOBID -k $S3_ENCRYPT_KEY_ID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+      echo "* * * * * ~/spot_failure_detection.sh -s 30 -l $LOGBUCKET -j $JOBID -k $S3_ENCRYPT_KEY_ID  >> /var/log/spot_failure_detection.log 2>&1" >> ~/recurring.jobs
+    fi
   fi
 fi
 
