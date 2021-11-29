@@ -713,6 +713,40 @@ class API(object):
                                        requirements_fpath=requirements_fpath,
                                        extra_config=extra_config)
 
+        if kms_key_id:
+            # adjust KMS key policy to allow this role to use s3 key
+            kms_client = boto3.client('kms')
+            policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+            for statement in policy['Statement']:
+                if statement.get('Sid', '') == 'Enable IAM Policies':
+                    statement['Principal']['AWS'].append(role_arn)
+                    break
+            kms_client.put_key_policy(
+                KeyId=kms_key_id,
+                PolicyName='default',
+                Policy=policy
+            )
+
+    @staticmethod
+    def cleanup_kms(kms_key_id):
+        """ Cleans up the KMS access policy by removing revoked IAM roles.
+            These revoked entities show up in KMS with prefix AROA. This function
+            removes those garbage values.
+        """
+        kms_client = boto3.client('kms')
+        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        for statement in policy['Statement']:
+            if statement.get('Sid', '') == 'Enable IAM Policies':  # default
+                iam_entities = statement['Principal'].get('AWS', [])
+                filtered_entities = list(filter(lambda s: s.startswith('AROA'), iam_entities))
+                statement['Principal']['AWS'] = filtered_entities
+                break
+        kms_client.put_key_policy(
+            KeyId=kms_key_id,
+            PolicyName='default',
+            Policy=policy
+        )
+
     def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
                     quiet=False, kms_key_id=None):
         """deploy/update lambdas only"""
@@ -726,6 +760,9 @@ class API(object):
         for name in names:
             self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
                                quiet=quiet, kms_key_id=kms_key_id)
+        # clean up KMS, if in use
+        if kms_key_id:
+            self.cleanup_kms(kms_key_id)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
