@@ -669,8 +669,8 @@ class API(object):
             if security_groups:
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
                 extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
-            if kms_key_id:
-                extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': kms_key_id})
+        if kms_key_id:
+            extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': kms_key_id})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
