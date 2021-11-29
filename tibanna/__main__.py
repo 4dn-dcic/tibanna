@@ -284,7 +284,6 @@ class Subcommands(object):
                   'action': "store_true",
                   'help': "minimize standard output from deployment"},
                  {'flag': ['-K', '--kms-key-id'],
-                  'nargs': 1,
                   'help': 'Pass a KMS key ID to deploy tibanna with KMS support'}],
             'deploy_core':
                 [{'flag': ["-n", "--name"],
@@ -305,7 +304,6 @@ class Subcommands(object):
                   'action': "store_true",
                   'help': "minimize standard output from deployment"},
                  {'flag': ['-K', '--kms-key-id'],
-                  'nargs': 1,
                   'help': 'Pass a KMS key ID to deploy tibanna with KMS support'}],
             'plot_metrics':
                 [{'flag': ["-j", "--job-id"],
