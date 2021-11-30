@@ -25,7 +25,7 @@ printHelpAndExit() {
     echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
     exit "$1"
 }
-while getopts "i:m:l:p:a:s:r:gV:A:k:g" opt; do
+while getopts "i:m:l:p:a:s:r:gV:A:k:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
