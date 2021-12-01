@@ -642,6 +642,52 @@ class API(object):
             )
         return envlist.get(name, '')
 
+    @staticmethod
+    def add_role_to_kms(*, kms_key_id, role_arn):
+        """ Adds role_arn to the given kms_key_id policy.
+            Note that tibanna assumes a KMS key and existing policy.
+            This function will have no effect if no policy exists with
+            the sid: 'Allow use of the key'
+        """
+        # adjust KMS key policy to allow this role to use s3 key
+        kms_client = boto3.client('kms')
+        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        policy = json.loads(policy['Policy'])
+        for statement in policy['Statement']:
+            if statement.get('Sid', '') == 'Allow use of the key':  # 4dn-cloud-infra dependency -Will Dec 1 2021
+                if isinstance(statement['Principal']['AWS'], str):
+                    statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+                statement['Principal']['AWS'].append(role_arn)
+                break
+        policy = json.dumps(policy)
+        kms_client.put_key_policy(
+            KeyId=kms_key_id,
+            PolicyName='default',
+            Policy=policy
+        )
+
+    @staticmethod
+    def cleanup_kms(kms_key_id):
+        """ Cleans up the KMS access policy by removing revoked IAM roles.
+            These revoked entities show up in KMS with prefix AROA. This function
+            removes those garbage values.
+        """
+        kms_client = boto3.client('kms')
+        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        policy = json.loads(policy['Policy'])
+        for statement in policy['Statement']:
+            if statement.get('Sid', '') == 'Allow use of the key':  # default
+                iam_entities = statement['Principal'].get('AWS', [])
+                filtered_entities = list(filter(lambda s: not s.startswith('AROA'), iam_entities))
+                statement['Principal']['AWS'] = filtered_entities
+                break
+        policy = json.dumps(policy)
+        kms_client.put_key_policy(
+            KeyId=kms_key_id,
+            PolicyName='default',
+            Policy=policy
+        )
+
     def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None,
                       kms_key_id=None):
         """
@@ -716,44 +762,7 @@ class API(object):
         if kms_key_id:
             # delete invalid pricipals first
             self.cleanup_kms(kms_key_id)
-            # adjust KMS key policy to allow this role to use s3 key
-            kms_client = boto3.client('kms')
-            policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
-            policy = json.loads(policy['Policy'])
-            for statement in policy['Statement']:
-                if statement.get('Sid', '') == 'Allow use of the key':
-                    if isinstance(statement['Principal']['AWS'], str):
-                        statement['Principal']['AWS'] = [statement['Principal']['AWS']]
-                    statement['Principal']['AWS'].append(role_arn)
-                    break
-            policy = json.dumps(policy)
-            kms_client.put_key_policy(
-                KeyId=kms_key_id,
-                PolicyName='default',
-                Policy=policy
-            )
-
-    @staticmethod
-    def cleanup_kms(kms_key_id):
-        """ Cleans up the KMS access policy by removing revoked IAM roles.
-            These revoked entities show up in KMS with prefix AROA. This function
-            removes those garbage values.
-        """
-        kms_client = boto3.client('kms')
-        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
-        policy = json.loads(policy['Policy'])
-        for statement in policy['Statement']:
-            if statement.get('Sid', '') == 'Allow use of the key':  # default
-                iam_entities = statement['Principal'].get('AWS', [])
-                filtered_entities = list(filter(lambda s: not s.startswith('AROA'), iam_entities))
-                statement['Principal']['AWS'] = filtered_entities
-                break
-        policy = json.dumps(policy)
-        kms_client.put_key_policy(
-            KeyId=kms_key_id,
-            PolicyName='default',
-            Policy=policy
-        )
+            self.add_role_to_kms(kms_key_id=kms_key_id, role_arn=role_arn)
 
     def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
                     quiet=False, kms_key_id=None):
@@ -768,9 +777,6 @@ class API(object):
         for name in names:
             self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
                                quiet=quiet, kms_key_id=kms_key_id)
-        # clean up KMS, if in use
-        if kms_key_id:
-            self.cleanup_kms(kms_key_id)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -802,6 +808,9 @@ class API(object):
         tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
+        if S3_ENCRYT_KEY_ID:
+            self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID, role_arn=tibanna_iam.iam_group_name)
+            self.cleanup_kms(S3_ENCRYT_KEY_ID)
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,

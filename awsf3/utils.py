@@ -26,7 +26,7 @@ INPUT_DIR = "/data1/input"  # data are downloaded to this directory
 INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
 
 
-def decode_run_json(input_json_file):
+def decode_run_json(input_json_file, kms_key_id=None):
     """reads a run json file and creates three text files:
     download command list file (commands to download input files from s3)
     input yml file (for cwl/wdl/snakemake run)
@@ -42,7 +42,7 @@ def decode_run_json(input_json_file):
     create_download_command_list(downloadlist_filename, runjson_input)
 
     # create a bucket-mounting command list file
-    create_mount_command_list(mountlist_filename, runjson_input)
+    create_mount_command_list(mountlist_filename, runjson_input, kms_key_id=kms_key_id)
 
     # create an input yml file to be used on awsem
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:  # wdl
@@ -56,7 +56,13 @@ def decode_run_json(input_json_file):
     create_env_def_file(env_filename, runjson, language)
 
 
-def create_mount_command_list(mountlist_filename, runjson_input):
+def create_mount_command_list(mountlist_filename, runjson_input,
+                              kms_key_id=None):
+    """ This function creates a mount point directory and starts goofys
+        with some default arguments.
+        Note that KMS key arguments are needed for the mount if encryption
+        is enabled.
+    """
     buckets_to_be_mounted = set()
     for category in ["Input_files_data", "Secondary_files_data"]:
         for inkey, v in getattr(runjson_input, category).items():
@@ -65,7 +71,10 @@ def create_mount_command_list(mountlist_filename, runjson_input):
     with open(mountlist_filename, 'w') as f:
         for b in sorted(buckets_to_be_mounted):
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+            if kms_key_id:
+                f.write("goofys -f %s %s --sse-kms=%s&\n" % (b, INPUT_MOUNT_DIR_PREFIX + b, kms_key_id))
+            else:
+                f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
 def create_download_command_list(downloadlist_filename, runjson_input):
@@ -248,7 +257,9 @@ def download_workflow():
     for wf_file in wf_files:
         target = "%s/%s" % (local_wfdir, wf_file)
         source = "%s/%s" % (wf_url, wf_file)
+
         if wf_url.startswith('http'):
+            print("downloading via wget (public file)")
             subprocess.call(["wget", "-O" + target, source])
         elif wf_url.startswith('s3'):
             wf_loc = wf_url.replace('s3://', '')
