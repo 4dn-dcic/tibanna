@@ -759,11 +759,6 @@ class API(object):
                                        requirements_fpath=requirements_fpath,
                                        extra_config=extra_config)
 
-        if kms_key_id:
-            # delete invalid pricipals first
-            self.cleanup_kms(kms_key_id)
-            self.add_role_to_kms(kms_key_id=kms_key_id, role_arn=role_arn)
-
     def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
                     quiet=False, kms_key_id=None):
         """deploy/update lambdas only"""
