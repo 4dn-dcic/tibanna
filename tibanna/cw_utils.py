@@ -8,7 +8,8 @@ from .utils import (
 from .top import Top
 from .vars import (
     AWS_REGION,
-    EBS_MOUNT_POINT
+    EBS_MOUNT_POINT,
+    S3_ENCRYT_KEY_ID
 )
 from datetime import datetime
 from datetime import timedelta
@@ -370,7 +371,11 @@ class TibannaResource(object):
                              str(starttime), str(endtime), str(endtime-starttime)
                             )
         s3_key = os.path.join(prefix, 'metrics.html')
-        put_object_s3(content=html_content, key=s3_key, bucket=bucket)
+        if S3_ENCRYT_KEY_ID:
+            put_object_s3(content=html_content, key=s3_key, bucket=bucket,
+                          encrypt_s3_upload=True, kms_key_id=S3_ENCRYT_KEY_ID)
+        else:
+            put_object_s3(content=html_content, key=s3_key, bucket=bucket)
 
     @staticmethod
     def write_top_tsvs(directory, top_content):
