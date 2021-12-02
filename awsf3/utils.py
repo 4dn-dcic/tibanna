@@ -72,7 +72,7 @@ def create_mount_command_list(mountlist_filename, runjson_input,
         for b in sorted(buckets_to_be_mounted):
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
             if kms_key_id:
-                f.write("goofys -f %s %s --sse-kms=%s&\n" % (b, INPUT_MOUNT_DIR_PREFIX + b, kms_key_id))
+                f.write("goofys --sse --sse-kms=%s -f %s %s &\n" % (kms_key_id, b, INPUT_MOUNT_DIR_PREFIX + b))
             else:
                 f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
