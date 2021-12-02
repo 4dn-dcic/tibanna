@@ -803,9 +803,9 @@ class API(object):
         tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
-        if S3_ENCRYT_KEY_ID:
-            self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID, role_arn=tibanna_iam.iam_group_name)
+        if S3_ENCRYT_KEY_ID:  # cleanup_kms first by removing revoked principals
             self.cleanup_kms(S3_ENCRYT_KEY_ID)
+            self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID, role_arn=tibanna_iam.iam_group_name)
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
