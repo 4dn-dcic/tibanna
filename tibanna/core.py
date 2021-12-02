@@ -803,9 +803,6 @@ class API(object):
         tibanna_iam = self.IAM(usergroup_tag, bucket_names, no_randomize=no_randomize)
         tibanna_iam.create_tibanna_iam(verbose=verbose)
         logger.info("Tibanna usergroup %s has been created on AWS." % tibanna_iam.user_group_name)
-        if S3_ENCRYT_KEY_ID:  # cleanup_kms first by removing revoked principals
-            self.cleanup_kms(S3_ENCRYT_KEY_ID)
-            self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID, role_arn=tibanna_iam.iam_group_name)
         return tibanna_iam.user_group_name
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
@@ -822,6 +819,13 @@ class API(object):
                 usergroup = self.setup_tibanna_env(buckets, usergroup_tag=default_usergroup_tag,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
                             no_randomize=no_randomize)
+
+        # If deploying with encryption, revoke KMS perms from previous deployment.
+        # Note that this means if you deploy while tibanna is running on an encrypted env,
+        # it will stop working! - Will Dec 2 2021
+        if kms_key_id:
+            self.cleanup_kms(kms_key_id)
+
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
@@ -843,6 +847,15 @@ class API(object):
             self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
                                subnets=subnets, security_groups=security_groups, quiet=quiet,
                                kms_key_id=kms_key_id)
+
+        # Give new roles KMS permissions
+        if kms_key_id:
+            self.cleanup_kms(kms_key_id)  # cleanup again just in case
+            tibanna_iam = self.IAM(usergroup)
+            for role_type in tibanna_iam.role_types:
+                role_name = tibanna_iam.role_name(role_type)
+                self.add_role_to_kms(kms_key_id=kms_key_id,
+                                     role_arn=f'arn:aws:iam::{tibanna_iam.account_id}:role/{role_name}')
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
