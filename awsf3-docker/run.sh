@@ -98,9 +98,9 @@ send_compressed_logs(){
 send_success(){
   if [ -z "$S3_ENCRYPT_KEY_ID" ];
   then
-    aws s3 cp $JOBID.success s3://$LOGBUCKET/;
+    aws s3 cp $JOBID.success s3://$LOGBUCKET;
   else
-    aws s3 cp $JOBID.success s3://$LOGBUCKET/; --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
+    aws s3 cp $JOBID.success s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
   fi
 }
 
