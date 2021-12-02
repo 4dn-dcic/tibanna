@@ -28,7 +28,7 @@ printHelpAndExit() {
     echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
     exit "$1"
 }
-while getopts "i:m:j:l:L:u:p:a:s:r:gV:k" opt; do
+while getopts "i:m:j:l:L:u:p:a:s:r:gV:k:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         m) export SHUTDOWN_MIN=$OPTARG;;  # Possibly user can specify SHUTDOWN_MIN to hold it for a while for debugging.
