@@ -133,9 +133,13 @@ class TibannaResource(object):
     def upload(self, bucket, prefix='', lock=True):
         logger.debug("list_files: " + str(self.list_files))
         for f in self.list_files:
-            upload(f, bucket, prefix)
+            upload(f, bucket, prefix,
+                   encrypt_s3_upload=S3_ENCRYT_KEY_ID is not None,
+                   kms_key_id=S3_ENCRYT_KEY_ID)
         if lock:
-            upload(None, bucket, os.path.join(prefix, 'lock'))
+            upload(None, bucket, os.path.join(prefix, 'lock'),
+                   encrypt_s3_upload=S3_ENCRYT_KEY_ID is not None,
+                   kms_key_id=S3_ENCRYT_KEY_ID)
 
     @staticmethod
     def choose_max(x):
