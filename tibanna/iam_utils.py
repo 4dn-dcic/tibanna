@@ -416,7 +416,8 @@ class IAM(object):
                     "Action": [
                         "dynamodb:DescribeTable",
                         "dynamodb:PutItem",
-                        "dynamodb:Query"
+                        "dynamodb:Query",
+                        "dynamodb:UpdateItem"
                     ],
                     "Resource": "arn:aws:dynamodb:" + self.region + ":" + self.account_id + ":table/" + DYNAMODB_TABLE
                 }
