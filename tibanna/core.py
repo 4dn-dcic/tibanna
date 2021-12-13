@@ -676,8 +676,10 @@ class API(object):
         policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
         policy = json.loads(policy['Policy'])
         for statement in policy['Statement']:
-            if statement.get('Sid', '') == 'Allow use of the key':  # default
+            if statement.get('Sid', '') == 'Allow use of the key' or statement.get('Sid', '') == 'Allow attachment of persistent resources':  # default
                 iam_entities = statement['Principal'].get('AWS', [])
+                if type(iam_entities) == str:
+                    iam_entities = [iam_entities]
                 filtered_entities = list(filter(lambda s: not s.startswith('AROA'), iam_entities))
                 statement['Principal']['AWS'] = filtered_entities
                 break
