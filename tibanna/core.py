@@ -667,13 +667,16 @@ class API(object):
         )
 
     @staticmethod
-    def cleanup_kms(kms_key_id):
+    def cleanup_kms():
         """ Cleans up the KMS access policy by removing revoked IAM roles.
             These revoked entities show up in KMS with prefix AROA. This function
             removes those garbage values.
         """
+        if not S3_ENCRYT_KEY_ID:
+            return
+
         kms_client = boto3.client('kms')
-        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        policy = kms_client.get_key_policy(KeyId=S3_ENCRYT_KEY_ID, PolicyName='default')
         policy = json.loads(policy['Policy'])
         for statement in policy['Statement']:
             if statement.get('Sid', '') == 'Allow use of the key' or statement.get('Sid', '') == 'Allow attachment of persistent resources':  # default
@@ -685,13 +688,12 @@ class API(object):
                 break
         policy = json.dumps(policy)
         kms_client.put_key_policy(
-            KeyId=kms_key_id,
+            KeyId=S3_ENCRYT_KEY_ID,
             PolicyName='default',
             Policy=policy
         )
 
-    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None,
-                      kms_key_id=None):
+    def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA).
         subnets and security groups are lists of subnet IDs and security group IDs, in case
@@ -717,8 +719,8 @@ class API(object):
             if security_groups:
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
                 extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
-        if kms_key_id:
-            extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': kms_key_id})
+        if S3_ENCRYT_KEY_ID:
+            extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': S3_ENCRYT_KEY_ID})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
@@ -762,7 +764,7 @@ class API(object):
                                        extra_config=extra_config)
 
     def deploy_core(self, name, suffix=None, usergroup='', subnets=None, security_groups=None,
-                    quiet=False, kms_key_id=None):
+                    quiet=False):
         """deploy/update lambdas only"""
         logger.info("preparing for deploy...")
         if name == 'all':
@@ -773,7 +775,7 @@ class API(object):
             names = [name, ]
         for name in names:
             self.deploy_lambda(name, suffix, usergroup, subnets=subnets, security_groups=security_groups,
-                               quiet=quiet, kms_key_id=kms_key_id)
+                               quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
                           do_not_delete_public_access_block=False, verbose=False):
@@ -810,8 +812,7 @@ class API(object):
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
                        default_usergroup_tag='default',
                        buckets='', setenv=False, do_not_delete_public_access_block=False,
-                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False,
-                       kms_key_id=None):
+                       deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
             if usergroup:
@@ -825,8 +826,8 @@ class API(object):
         # If deploying with encryption, revoke KMS perms from previous deployment.
         # Note that this means if you deploy while tibanna is running on an encrypted env,
         # it will stop working! - Will Dec 2 2021
-        if kms_key_id:
-            self.cleanup_kms(kms_key_id)
+        if S3_ENCRYT_KEY_ID:
+            self.cleanup_kms()
 
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
@@ -843,20 +844,19 @@ class API(object):
 
         logger.info("deploying lambdas...")
         self.deploy_core('all', suffix=suffix, usergroup=usergroup, subnets=subnets,
-                         security_groups=security_groups, quiet=quiet, kms_key_id=kms_key_id)
+                         security_groups=security_groups, quiet=quiet)
 
         if(deploy_costupdater):
             self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
-                               subnets=subnets, security_groups=security_groups, quiet=quiet,
-                               kms_key_id=kms_key_id)
+                               subnets=subnets, security_groups=security_groups, quiet=quiet)
 
         # Give new roles KMS permissions
-        if kms_key_id:
-            self.cleanup_kms(kms_key_id)  # cleanup again just in case
+        if S3_ENCRYT_KEY_ID:
+            self.cleanup_kms()  # cleanup again just in case
             tibanna_iam = self.IAM(usergroup)
             for role_type in tibanna_iam.role_types:
                 role_name = tibanna_iam.role_name(role_type)
-                self.add_role_to_kms(kms_key_id=kms_key_id,
+                self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID,
                                      role_arn=f'arn:aws:iam::{tibanna_iam.account_id}:role/{role_name}')
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
@@ -865,13 +865,13 @@ class API(object):
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
                        no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
                        deploy_costupdater=False, subnets=None, security_groups=None,
-                       quiet=False, kms_key_id=None):
+                       quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
         self.deploy_tibanna(suffix=suffix, usergroup=usergroup, setup=not no_setup,
                             buckets=buckets, setenv=not no_setenv,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
                             deploy_costupdater=deploy_costupdater, subnets=subnets,
-                            security_groups=security_groups, quiet=quiet, kms_key_id=kms_key_id)
+                            security_groups=security_groups, quiet=quiet)
 
     def add_user(self, user, usergroup):
         """add a user to a tibanna group"""

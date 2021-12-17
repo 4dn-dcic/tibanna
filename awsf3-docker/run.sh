@@ -153,7 +153,12 @@ exl echo "## Downloading and parsing run.json file"
 exl cd /home/ubuntu/
 exl aws s3 cp s3://$LOGBUCKET/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
-exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME -k $S3_ENCRYPT_KEY_ID
+if [ -z "$S3_ENCRYPT_KEY_ID" ];
+then
+  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
+else
+  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME -k $S3_ENCRYPT_KEY_ID
+fi
 
 
 ### add instance ID and file system to postrun json and upload to s3
@@ -232,7 +237,13 @@ send_log
 exl echo
 exl echo "## Setting up and starting cron job for top commands"
 exl service cron start
-echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE" -k $S3_ENCRYPT_KEY_ID | crontab -
+if [ -z "$S3_ENCRYPT_KEY_ID" ];
+then
+  echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE" | crontab -
+else
+  echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE -k $S3_ENCRYPT_KEY_ID" | crontab -
+fi
+
 
 
 ### run command
