@@ -23,7 +23,7 @@ from .vars import (
     DEFAULT_ROOT_EBS_SIZE,
     TIBANNA_AWSF_DIR,
     DEFAULT_AWSF_IMAGE,
-    AWS_REGION_NAMES
+    S3_ENCRYT_KEY_ID,
 )
 from .job import Jobs
 from .exceptions import (
@@ -276,7 +276,7 @@ class Config(SerializableObject):
             if not hasattr(self, 'instance_type') and (not hasattr(self, 'cpu') or not hasattr(self, 'mem')):
                 self.use_benchmark = True
             elif not hasattr(self, 'ebs_size'):
-                self.use_benchmark = True 
+                self.use_benchmark = True
             else:
                 self.use_benchmark = False
         # fill in default
@@ -301,8 +301,16 @@ class Config(SerializableObject):
         if not hasattr(self, 'public_postrun_json'):
             self.public_postrun_json = False
             # 4dn will use 'true' --> this will automatically be added by start_run_awsem
+
+        # TODO: default to env variable here?
         if not hasattr(self, 'encrypt_s3_upload'):
             self.encrypt_s3_upload = False
+        if not hasattr(self, 'kms_key_id'):
+            if S3_ENCRYT_KEY_ID:
+                self.kms_key_id = S3_ENCRYT_KEY_ID
+                self.encrypt_s3_upload = True
+            else:
+                self.kms_key_id = None
         if not hasattr(self, 'root_ebs_size'):
             self.root_ebs_size = DEFAULT_ROOT_EBS_SIZE
         if not hasattr(self, 'awsf_image'):
@@ -311,9 +319,9 @@ class Config(SerializableObject):
             self.mem_as_is = False
         if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
             self.ebs_size_as_is = False
-        if not hasattr(self, 'ami_id'): 
+        if not hasattr(self, 'ami_id'):
             self.ami_id = AMI_ID
-        
+
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
         # script url
@@ -664,6 +672,8 @@ class Execution(object):
         }
         if self.cfg.encrypt_s3_upload:
             upload_args.update({'ServerSideEncryption': 'aws:kms'})
+            if self.cfg.kms_key_id:
+                upload_args['SSEKMSKeyId'] = self.cfg.kms_key_id
         try:
             s3 = boto3.client('s3')
         except Exception as e:
@@ -691,6 +701,8 @@ class Execution(object):
         str += " -l $LOGBUCKET"
         str += " -V {version}".format(version=__version__)
         str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
+        if cfg.kms_key_id:
+            str += " -k %s" % cfg.kms_key_id
         if cfg.password:
             str += " -p {}".format(cfg.password)
         if profile:
@@ -776,8 +788,8 @@ class Execution(object):
                 break
             except:
                 continue
-        return({'instance_id': self.instance_id, 
-                'instance_ip': instance_ip, 
+        return({'instance_id': self.instance_id,
+                'instance_ip': instance_ip,
                 'availability_zone' : availability_zone,
                 'start_time': self.get_start_time()})
 
@@ -935,8 +947,8 @@ class Execution(object):
             DashboardName=dashboard_name,
             DashboardBody=json.dumps(body)
         )
-       
-    
+
+
 def upload_workflow_to_s3(unicorn_input):
     """input is a UnicornInput object"""
     args = unicorn_input.args

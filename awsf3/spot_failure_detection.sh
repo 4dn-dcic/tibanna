@@ -8,11 +8,12 @@ printHelpAndExit() {
     echo "-j JOBID : jobs id"
     exit "$1"
 }
-while getopts "s:l:j:" opt; do
+while getopts "s:l:j:k:" opt; do
     case $opt in
         s) SLEEP=$OPTARG;;  # execution delay in seconds
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         j) export JOBID=$OPTARG;;  # job id
+        k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -29,7 +30,13 @@ if [ ! -f $JOBID.spot_failure ]; then
     # Therefore, it is sufficient to check if the request was successful.
     if [ "$status_code" = "200" ]; then
         touch $JOBID.spot_failure
-        aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure   
+        if [ -z "$S3_ENCRYPT_KEY_ID" ];
+        then
+            aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure &>/dev/null;
+        else
+            aws s3 cp $JOBID.spot_failure s3://$LOGBUCKET/$JOBID.spot_failure --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID" &>/dev/null;
+        fi
+           
     fi 
 fi
 

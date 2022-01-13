@@ -33,7 +33,8 @@ from .vars import (
     LAMBDA_TYPE,
     RUN_TASK_LAMBDA_NAME,
     CHECK_TASK_LAMBDA_NAME,
-    UPDATE_COST_LAMBDA_NAME
+    UPDATE_COST_LAMBDA_NAME,
+    S3_ENCRYT_KEY_ID
 )
 from .utils import (
     _tibanna_settings,
@@ -315,8 +316,9 @@ class API(object):
 
             if soft:
                 logger.info("sending abort signal to s3")
-                s3 = boto3.client('s3')
-                s3.put_object(Body=b'', Bucket=job.log_bucket, Key=job.job_id + '.aborted')
+                put_object_s3('', job.job_id + '.aborted', job.log_bucket,
+                              encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                              kms_key_id=S3_ENCRYT_KEY_ID)
                 logger.info("Successfully sent abort signal")
             else:
                 # kill step function execution
@@ -640,6 +642,57 @@ class API(object):
             )
         return envlist.get(name, '')
 
+    @staticmethod
+    def add_role_to_kms(*, kms_key_id, role_arn):
+        """ Adds role_arn to the given kms_key_id policy.
+            Note that tibanna assumes a KMS key and existing policy.
+            This function will have no effect if no policy exists with
+            the sid: 'Allow use of the key'
+        """
+        # adjust KMS key policy to allow this role to use s3 key
+        kms_client = boto3.client('kms')
+        policy = kms_client.get_key_policy(KeyId=kms_key_id, PolicyName='default')
+        policy = json.loads(policy['Policy'])
+        for statement in policy['Statement']:
+            if statement.get('Sid', '') == 'Allow use of the key':  # 4dn-cloud-infra dependency -Will Dec 1 2021
+                if isinstance(statement['Principal']['AWS'], str):
+                    statement['Principal']['AWS'] = [statement['Principal']['AWS']]
+                statement['Principal']['AWS'].append(role_arn)
+                break
+        policy = json.dumps(policy)
+        kms_client.put_key_policy(
+            KeyId=kms_key_id,
+            PolicyName='default',
+            Policy=policy
+        )
+
+    @staticmethod
+    def cleanup_kms():
+        """ Cleans up the KMS access policy by removing revoked IAM roles.
+            These revoked entities show up in KMS with prefix AROA. This function
+            removes those garbage values.
+        """
+        if not S3_ENCRYT_KEY_ID:
+            return
+
+        kms_client = boto3.client('kms')
+        policy = kms_client.get_key_policy(KeyId=S3_ENCRYT_KEY_ID, PolicyName='default')
+        policy = json.loads(policy['Policy'])
+        for statement in policy['Statement']:
+            if statement.get('Sid', '') == 'Allow use of the key' or statement.get('Sid', '') == 'Allow attachment of persistent resources':  # default
+                iam_entities = statement['Principal'].get('AWS', [])
+                if type(iam_entities) == str:
+                    iam_entities = [iam_entities]
+                filtered_entities = list(filter(lambda s: not s.startswith('AROA'), iam_entities))
+                statement['Principal']['AWS'] = filtered_entities
+                break
+        policy = json.dumps(policy)
+        kms_client.put_key_policy(
+            KeyId=S3_ENCRYT_KEY_ID,
+            PolicyName='default',
+            Policy=policy
+        )
+
     def deploy_lambda(self, name, suffix, usergroup='', quiet=False, subnets=None, security_groups=None):
         """
         deploy a single lambda using the aws_lambda.deploy_function (BETA).
@@ -666,6 +719,8 @@ class API(object):
             if security_groups:
                 extra_config['VpcConfig'].update({'SecurityGroupIds': security_groups})
                 extra_config['Environment']['Variables'].update({'SECURITY_GROUPS': ','.join(security_groups)})
+        if S3_ENCRYT_KEY_ID:
+            extra_config['Environment']['Variables'].update({'S3_ENCRYPT_KEY_ID': S3_ENCRYT_KEY_ID})
         tibanna_iam = self.IAM(usergroup)
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
@@ -767,6 +822,13 @@ class API(object):
                 usergroup = self.setup_tibanna_env(buckets, usergroup_tag=default_usergroup_tag,
                             do_not_delete_public_access_block=do_not_delete_public_access_block,
                             no_randomize=no_randomize)
+
+        # If deploying with encryption, revoke KMS perms from previous deployment.
+        # Note that this means if you deploy while tibanna is running on an encrypted env,
+        # it will stop working! - Will Dec 2 2021
+        if S3_ENCRYT_KEY_ID:
+            self.cleanup_kms()
+
         # this function will remove existing step function on a conflict
         step_function_name = self.create_stepfunction(suffix, usergroup=usergroup)
         logger.info("creating a new step function... %s" % step_function_name)
@@ -787,6 +849,15 @@ class API(object):
         if(deploy_costupdater):
             self.deploy_lambda(self.update_cost_lambda, suffix=suffix, usergroup=usergroup,
                                subnets=subnets, security_groups=security_groups, quiet=quiet)
+
+        # Give new roles KMS permissions
+        if S3_ENCRYT_KEY_ID:
+            self.cleanup_kms()  # cleanup again just in case
+            tibanna_iam = self.IAM(usergroup)
+            for role_type in tibanna_iam.role_types:
+                role_name = tibanna_iam.role_name(role_type)
+                self.add_role_to_kms(kms_key_id=S3_ENCRYT_KEY_ID,
+                                     role_arn=f'arn:aws:iam::{tibanna_iam.account_id}:role/{role_name}')
 
         dd_utils.create_dynamo_table(DYNAMODB_TABLE, DYNAMODB_KEYNAME)
         return step_function_name
@@ -998,13 +1069,16 @@ class API(object):
         postrunjsonobj = json.loads(postrunjsonstr)
         postrunjson = AwsemPostRunJson(**postrunjsonobj)
         log_bucket = postrunjson.config.log_bucket
+        encryption = postrunjson.config.encrypt_s3_upload
+        kms_key_id = postrunjson.config.kms_key_id
 
         # We return the real cost, if it is available, but don't automatically update the Cost row in the tsv
         if not force:
             precise_cost = self.cost(job_id, update_tsv=False)
             if(precise_cost and precise_cost > 0.0):
                 if update_tsv:
-                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost")
+                    update_cost_estimate_in_tsv(log_bucket, job_id, precise_cost, cost_estimate_type="actual cost",
+                                                encryption=encryption, kms_key_id=kms_key_id)
                 return precise_cost, "actual cost"
 
         # awsf_image was added in 1.0.0. We use that to get the correct ebs root type
@@ -1013,7 +1087,8 @@ class API(object):
         cost_estimate, cost_estimate_type = get_cost_estimate(postrunjson, ebs_root_type)
 
         if update_tsv:
-            update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type)
+            update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type,
+                                        encryption=encryption, kms_key_id=kms_key_id)
         return cost_estimate, cost_estimate_type
 
     def cost(self, job_id, sfn=None, update_tsv=False):
@@ -1028,7 +1103,10 @@ class API(object):
 
         if update_tsv:
             log_bucket = postrunjson.config.log_bucket
-            update_cost_in_tsv(log_bucket, job_id, cost)
+            encryption = postrunjson.config.encrypt_s3_upload
+            kms_key_id = postrunjson.config.kms_key_id
+            update_cost_in_tsv(log_bucket, job_id, cost,
+                               encryption=encryption, kms_key_id=kms_key_id)
 
         return cost
 

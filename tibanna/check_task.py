@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from .utils import (
     does_key_exist,
-    read_s3
+    read_s3,
+    put_object_s3
 )
 from .awsem import (
     AwsemPostRunJson
@@ -23,7 +24,7 @@ from .exceptions import (
     JobAbortedException,
     AWSEMErrorHandler
 )
-from .vars import PARSE_AWSEM_TIME, AWSEM_TIME_STAMP_FORMAT
+from .vars import PARSE_AWSEM_TIME, AWSEM_TIME_STAMP_FORMAT, S3_ENCRYT_KEY_ID
 from .core import API
 
 
@@ -180,12 +181,16 @@ class CheckTask(object):
         # upload postrun json file back to s3
         acl = 'public-read' if public_read else 'private'
         try:
-            boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
-                                          Body=json.dumps(prj.as_dict(), indent=4).encode())
-        except Exception as e:
-            boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL='private',
-                                          Body=json.dumps(prj.as_dict(), indent=4).encode())
-        except Exception as e:
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
+                          public=True if acl == 'public-read' else False,
+                          encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                          kms_key_id=S3_ENCRYT_KEY_ID)  # defaults to None
+        except Exception:  # try again no matter what
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
+                          public=False,  # fallback to private
+                          encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                          kms_key_id=S3_ENCRYT_KEY_ID)
+        except Exception as e:  # noQA - catch anything if thrown from the second put call
             raise "error in updating postrunjson %s" % str(e)
         # add postrun json to the input json
         self.add_postrun_json(prj, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)

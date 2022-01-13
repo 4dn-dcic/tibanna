@@ -3,6 +3,7 @@ shopt -s extglob
 export SINGULARITY_OPTION=
 export STATUS=0
 export LOGBUCKET=
+export S3_ENCRYPT_KEY_ID=
 
 printHelpAndExit() {
     echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -f EBS_DEVICE [-S STATUS] [-g]"
@@ -11,15 +12,17 @@ printHelpAndExit() {
     echo "-f EBS_DEVICE : file system (/dev/xxxx) for data EBS"
     echo "-S STATUS: inherited status environment variable, if any"
     echo "-g : use singularity"
+    echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
     exit "$1"
 }
-while getopts "i:l:f:S:g" opt; do
+while getopts "i:l:f:S:gk:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
         f) export EBS_DEVICE=$OPTARG;;  # file system (/dev/xxxx) for data EBS
         S) export STATUS=$OPTARG;;  # inherited STATUS env
         g) export SINGULARITY_OPTION=--singularity;;  # use singularity
+        k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -59,10 +62,47 @@ exle(){ $@ >> /dev/null 2>> $LOGFILE; handle_error $?; } ## usage: exle command 
 exlo(){ $@ 2>> /dev/null >> $LOGFILE; handle_error $?; } ## usage: exlo command  ## ERRCODE has the error code for the command. if something is wrong, send error to s3. This one eats stderr. Useful for hiding long errors or credentials.
 
 # function that sends log to s3 (it requires LOGBUCKET to be defined, which is done by sourcing $ENV_FILE.)
-send_log(){  aws s3 cp $LOGFILE s3://$LOGBUCKET &>/dev/null; }  ## usage: send_log (no argument)
+## usage: send_log (no argument)
+send_log(){
+  if [ -z "$S3_ENCRYPT_KEY_ID" ];
+  then
+    aws s3 cp $LOGFILE s3://$LOGBUCKET;
+  else
+    aws s3 cp $LOGFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
+  fi
+}
 
 # function that sends error file to s3 to notify something went wrong.
-send_error(){  touch $ERRFILE; aws s3 cp $ERRFILE s3://$LOGBUCKET; }  ## usage: send_error (no argument)
+## usage: send_error (no argument)
+send_error(){
+  touch $ERRFILE;
+  if [ -z "$S3_ENCRYPT_KEY_ID" ];
+  then
+    aws s3 cp $ERRFILE s3://$LOGBUCKET;
+  else
+    aws s3 cp $ERRFILE s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
+  fi
+}
+
+# function that copies compressed logs to s3
+send_compressed_logs(){
+  if [ -z "$S3_ENCRYPT_KEY_ID" ];
+  then
+    exle aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz;
+  else
+    exle aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
+  fi
+}
+
+# function that copies success file to s3
+send_success(){
+  if [ -z "$S3_ENCRYPT_KEY_ID" ];
+  then
+    aws s3 cp $JOBID.success s3://$LOGBUCKET;
+  else
+    aws s3 cp $JOBID.success s3://$LOGBUCKET --sse aws:kms --sse-kms-key-id "$S3_ENCRYPT_KEY_ID";
+  fi
+}
 
 # function that handles errors - this function calls send_error and send_log
 handle_error() {  ERRCODE=$1; export STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; exit $ERRCODE; fi; }  ## usage: handle_error <error_code>
@@ -113,7 +153,12 @@ exl echo "## Downloading and parsing run.json file"
 exl cd /home/ubuntu/
 exl aws s3 cp s3://$LOGBUCKET/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
-exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
+if [ -z "$S3_ENCRYPT_KEY_ID" ];
+then
+  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
+else
+  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME -k $S3_ENCRYPT_KEY_ID
+fi
 
 
 ### add instance ID and file system to postrun json and upload to s3
@@ -192,7 +237,13 @@ send_log
 exl echo
 exl echo "## Setting up and starting cron job for top commands"
 exl service cron start
-echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE" | crontab -
+if [ -z "$S3_ENCRYPT_KEY_ID" ];
+then
+  echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE" | crontab -
+else
+  echo "*/1 * * * * /usr/local/bin/cron.sh -l $LOGBUCKET -L $LOGFILE -t $TOPFILE -T $TOPLATESTFILE -k $S3_ENCRYPT_KEY_ID" | crontab -
+fi
+
 
 
 ### run command
@@ -295,7 +346,7 @@ then
   find . -type f -name 'stdout' -or -name 'stderr' -or -name 'script' -or \
 -name '*.qc' -or -name '*.txt' -or -name '*.log' -or -name '*.png' -or -name '*.pdf' \
 | xargs tar -zcvf debug.tar.gz
-  exle aws s3 cp debug.tar.gz s3://$LOGBUCKET/$JOBID.debug.tar.gz
+  send_compressed_logs
   cd $cwd0
 fi
 
@@ -337,4 +388,4 @@ exl date
 send_log
 
 # send success message
-if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; aws s3 cp $JOBID.success s3://$LOGBUCKET/; fi
+if [ ! -z $JOB_STATUS -a $JOB_STATUS == 0 ]; then touch $JOBID.success; send_success; fi

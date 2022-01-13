@@ -101,6 +101,9 @@ TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 # default step function name
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_unicorn')
 
+# S3_ENCRYPT_KEY_ID for Tibanna output buckets
+S3_ENCRYT_KEY_ID = os.environ.get('S3_ENCRYPT_KEY_ID', None)
+
 # dynamo table (optional) for fast searching
 DYNAMODB_TABLE = 'tibanna-master'
 DYNAMODB_KEYNAME = 'Job Id'

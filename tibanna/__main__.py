@@ -9,7 +9,10 @@ import json
 from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .core import API
-from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from .vars import (
+    TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+    S3_ENCRYT_KEY_ID
+)
 
 PACKAGE_NAME = 'tibanna'
 
