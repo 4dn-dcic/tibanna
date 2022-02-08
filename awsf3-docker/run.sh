@@ -299,8 +299,9 @@ else
   fi
   # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
   # To prevent this, use the original directory name here.
+  exl echo "cwltool --enable-dev --non-strict --no-read-only --no-match-user --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE"
   mkdir -p $LOCAL_WF_TMPDIR_CWL
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
   handle_error $?
 fi
 cd $cwd0
