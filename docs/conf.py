@@ -15,6 +15,7 @@
 
 # import sys
 # import os
+from tibanna._version import __version__ 
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -47,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'tibanna'
-copyright = '2017-2019, 4DN DCIC'
+copyright = '2017-2022, 4DN DCIC'
 author = '4DN DCIC'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -67,12 +68,7 @@ def _read(*parts, **kwargs):
     return text
 
 
-def get_version():
-    version = open("../tibanna/_version.py").readlines()[-1].split()[-1].strip("\"'")
-    return version
-
-
-version = get_version()
+version = __version__
 # The full version, including alpha/beta/rc tags.
 release = version
 

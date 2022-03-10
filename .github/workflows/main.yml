@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        python_version: [3.6]
+        python_version: [3.8]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -33,9 +33,7 @@ jobs:
 
       - name: Install Deps
         run: |
-          pip install six
-          python setup.py install
-          pip install -U -r requirements-test.txt
+          make install
           
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,6 +43,6 @@ jobs:
           aws-region: us-east-1
       
       - name: QA (unit)
-        if: ${{ matrix.python_version == '3.6' }}
+        if: ${{ matrix.python_version == '3.8' }}
         run: |
           invoke test --no-flake

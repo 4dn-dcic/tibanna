@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z "$PYPI_USER" ]; then
+    echo '$PYPI_USER is not set.'
+    exit 1
+fi    
+
+if [ -z "$PYPI_PASSWORD" ]; then
+    echo '$PYPI_PASSWORD is not set.'
+    exit 1    
+fi
+
+poetry publish --no-interaction --build --username=$PYPI_USER --password=$PYPI_PASSWORD

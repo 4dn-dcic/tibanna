@@ -1,0 +1,12 @@
+[flake8]
+max-line-length = 120
+exclude =
+    .git,
+    __pycache__,
+    awsf,
+    sample_lambda_function.py,
+    notebooks,
+    dist,
+    build,
+    old,
+    .eggs

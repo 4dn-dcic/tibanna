@@ -19,6 +19,9 @@ Version updates
 
 .. _releases: https://github.com/4dn-dcic/tibanna/releases
 
+  **Mar 10, 2022** The latest version is now 2.0.0_.
+    - The default Python version for Tibanna is now 3.8. Python 3.6 is deprecated.
+
 
   **Sep 16, 2019** The latest version is now 0.9.1_.
 
@@ -288,6 +291,7 @@ Version updates
     - Killer CLIs ``invoke kill`` is available to kill specific jobs and ``invoke kill_all`` is available to kill all jobs. They terminate both the step function execution and the EC2 instances.
 
 
+.. _2.0.0: https://github.com/4dn-dcic/tibanna/releases/tag/v2.0.0
 .. _0.9.1: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.1
 .. _0.9.0: https://github.com/4dn-dcic/tibanna/releases/tag/v0.9.0
 .. _0.8.8: https://github.com/4dn-dcic/tibanna/releases/tag/v0.8.8
