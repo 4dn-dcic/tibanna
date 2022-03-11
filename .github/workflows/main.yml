@@ -48,4 +48,4 @@ jobs:
       - name: QA (unit)
         if: ${{ matrix.python_version == '3.8' }}
         run: |
-          invoke test --no-flake
+          poetry run invoke test --no-flake
