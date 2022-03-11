@@ -31,6 +31,9 @@ jobs:
         with:
           python-version: ${{ matrix.python_version }}
 
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
       - name: Install Deps
         run: |
           make install
