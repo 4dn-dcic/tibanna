@@ -205,7 +205,7 @@ Other pipeline-related fields
     - For WDL, it is a required field. For CWL, the language field can be omitted.
 
 :run_args:
-    - Optional, available for tibanna >= ``1.8.0``
+    - Optional, available for tibanna > ``1.9.1``
     - Additional command line arguments that are passed to the ``cwltool``/``cromwell.jar run``/``caper run`` commands.
 
 
