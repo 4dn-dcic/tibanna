@@ -26,7 +26,7 @@ INPUT_DIR = "/data1/input"  # data are downloaded to this directory
 INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
 
 
-def decode_run_json(input_json_file):
+def decode_run_json(input_json_file, kms_key_id=None):
     """reads a run json file and creates three text files:
     download command list file (commands to download input files from s3)
     input yml file (for cwl/wdl/snakemake run)
@@ -42,7 +42,7 @@ def decode_run_json(input_json_file):
     create_download_command_list(downloadlist_filename, runjson_input)
 
     # create a bucket-mounting command list file
-    create_mount_command_list(mountlist_filename, runjson_input)
+    create_mount_command_list(mountlist_filename, runjson_input, kms_key_id=kms_key_id)
 
     # create an input yml file to be used on awsem
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:  # wdl
@@ -56,7 +56,13 @@ def decode_run_json(input_json_file):
     create_env_def_file(env_filename, runjson, language)
 
 
-def create_mount_command_list(mountlist_filename, runjson_input):
+def create_mount_command_list(mountlist_filename, runjson_input,
+                              kms_key_id=None):
+    """ This function creates a mount point directory and starts goofys
+        with some default arguments.
+        Note that KMS key arguments are needed for the mount if encryption
+        is enabled.
+    """
     buckets_to_be_mounted = set()
     for category in ["Input_files_data", "Secondary_files_data"]:
         for inkey, v in getattr(runjson_input, category).items():
@@ -65,7 +71,10 @@ def create_mount_command_list(mountlist_filename, runjson_input):
     with open(mountlist_filename, 'w') as f:
         for b in sorted(buckets_to_be_mounted):
             f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+            if kms_key_id:
+                f.write("goofys --sse-kms %s -f %s %s &\n" % (kms_key_id, b, INPUT_MOUNT_DIR_PREFIX + b))
+            else:
+                f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
 
 
 def create_download_command_list(downloadlist_filename, runjson_input):
@@ -250,7 +259,9 @@ def download_workflow():
     for wf_file in wf_files:
         target = "%s/%s" % (local_wfdir, wf_file)
         source = "%s/%s" % (wf_url, wf_file)
+
         if wf_url.startswith('http'):
+            print("downloading via wget (public file)")
             subprocess.call(["wget", "-O" + target, source])
         elif wf_url.startswith('s3'):
             wf_loc = wf_url.replace('s3://', '')
@@ -373,10 +384,11 @@ def update_postrun_json_upload_output(json_old, execution_metadata_file, md5file
 
 def upload_output(prj, endpoint_url=None):
     # parsing output_target and uploading output files to output target
-    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload, endpoint_url=endpoint_url)
+    upload_to_output_target(prj.Job.Output, prj.config.encrypt_s3_upload,
+                            kms_key_id=prj.config.kms_key_id, endpoint_url=endpoint_url)
 
 
-def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None):
+def upload_to_output_target(prj_out, encrypt_s3_upload=False, kms_key_id=None, endpoint_url=None):
     # parsing output_target and uploading output files to output target
     output_bucket = prj_out.output_bucket_directory
     output_argnames = prj_out.output_files.keys()
@@ -400,7 +412,8 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None)
             target.parse_cwl_target(k, output_target.get(k, ''), prj_out.output_files)
             if target.is_valid:
                 print("Target is valid. Uploading..")
-                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
+                target.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload,
+                                    kms_key_id=kms_key_id, endpoint_url=endpoint_url)
                 prj_out.output_files[k].add_target(target.dest)
 
                 # upload secondary files
@@ -410,7 +423,8 @@ def upload_to_output_target(prj_out, encrypt_s3_upload=False, endpoint_url=None)
                     stlist.parse_target_values(prj_out.secondary_output_target.get(k, []))
                     stlist.reorder_by_source([sf.path for sf in secondary_output_files])
                     for st in stlist.secondary_targets:
-                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload, endpoint_url=endpoint_url)
+                        st.upload_to_s3(encrypt_s3_upload=encrypt_s3_upload,
+                                        kms_key_id=kms_key_id, endpoint_url=endpoint_url)
                     for i, sf in enumerate(secondary_output_files):
                         sf.add_target(stlist.secondary_targets[i].dest)
             else:
@@ -471,4 +485,6 @@ def upload_postrun_json(jsonfile):
     }
     if prj.config.encrypt_s3_upload:
         upload_arg.update({"ServerSideEncryption": "aws:kms"})
+        if prj.config.kms_key_id:
+            upload_arg['SSEKMSKeyId'] = prj.config.kms_key_id
     s3.put_object(**upload_arg)

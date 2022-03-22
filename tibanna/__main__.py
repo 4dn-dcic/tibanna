@@ -9,7 +9,10 @@ import json
 from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .core import API
-from .vars import TIBANNA_DEFAULT_STEP_FUNCTION_NAME
+from .vars import (
+    TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
+    S3_ENCRYT_KEY_ID
+)
 
 PACKAGE_NAME = 'tibanna'
 
@@ -376,7 +379,10 @@ class Subcommands(object):
                           "To use this option, turn off option -B."},
                  {'flag': ["-U", "--ubuntu-base-image"],
                   'help': "The ID of the Ubuntu 20.04 image to build from (e.g. 'ami-0885b1f6bd170450c' for us-east-1). " +
-                          "To use this option, turn on the option -B."}]
+                          "To use this option, turn on the option -B."},
+                 {'flag': ["-r", "--replicate"],
+                  'help': "Enable to replicate across all regions defined by AMI_PER_REGION"}
+                 ]
         }
 
 
@@ -519,10 +525,10 @@ def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=F
 
 
 def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
-               ubuntu_base_image=None):
+               ubuntu_base_image=None, replicate=False):
     print(API().create_ami(make_public=make_public, build_from_scratch=build_from_scratch,
                            source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
-                           ubuntu_base_image=ubuntu_base_image))
+                           ubuntu_base_image=ubuntu_base_image, replicate=replicate))
 
 
 def main(Subcommands=Subcommands):

@@ -36,28 +36,28 @@ if not AWS_REGION:
 
 
 # Tibanna AMI info
+# Override this mapping to use a custom AMI scheme
 AMI_PER_REGION = {
-    # new AMI based on ubuntu 20.04 works with awsf3 and it's available only for us-east-1.
-    'us-east-1': 'ami-0a7ddfc7e412ab6e0',
-    'us-east-2': 'ami-0b44d62b891fb789b',
-    'us-west-1': 'ami-0e1e2593b3a0d1893',
-    'us-west-2': 'ami-07c59ed4484710392',
-    'ap-south-1' : 'ami-05d8bf32dfd849840',
-    'ap-northeast-2' : 'ami-0c41548ca349c7a24',
-    'ap-southeast-1' : 'ami-0000f4a22faea40cd',
-    'ap-southeast-2' : 'ami-07068475ae944838b',
-    'ap-northeast-1' : 'ami-0ee094aa0951d13af',
-    'ca-central-1': 'ami-08ffe0a93f1fe9819',
-    'eu-central-1': 'ami-07af39d28b148d1dd',
-    'eu-west-1': 'ami-0646a764fc87b0ed0',
-    'eu-west-2': 'ami-0ce9320a6d39d00ae',
-    'eu-west-3': 'ami-04f0b79f6cf2e3639',
-    'eu-north-1': 'ami-0eed0fe896c259550',
-    'sa-east-1': 'ami-05e255e0c31f92d16',
-    'me-south-1': 'ami-0d641bcc53597f070',
-    'af-south-1': 'ami-08a0595fe4fbe4734',
-    'ap-east-1': 'ami-06b692ca269732ef6',
-    'eu-south-1': 'ami-0ad3c42914e596f1d'
+    'us-east-1': 'ami-06e2266f85063aabc',  # latest as of Oct 25 2021
+    'us-east-2': 'ami-03a4e3e84b6a1813d',
+    'us-west-1': 'ami-0c5e8147be760a354',
+    'us-west-2': 'ami-068589fed9c8d5950',
+    'ap-south-1': 'ami-05ef59bc4f359c93b',
+    'ap-northeast-2': 'ami-0d8618a76aece8a8e',
+    'ap-southeast-1': 'ami-0c22dc3b05714bda1',
+    'ap-southeast-2': 'ami-03dc109bbf412aac5',
+    'ap-northeast-1': 'ami-0f4c520515c41ff46',
+    'ca-central-1': 'ami-01af127710fadfe74',
+    'eu-central-1': 'ami-0887bcb1c901c1769',
+    'eu-west-1': 'ami-08db59692e4371ea6',
+    'eu-west-2': 'ami-036d3ce7a21e07012',
+    'eu-west-3': 'ami-0cad0ec4160a6b940',
+    'eu-north-1': 'ami-00a6f0f9fee951aa0',
+    'sa-east-1': 'ami-0b2164f9680f97099',
+    'me-south-1': 'ami-03479b7a590f97945',
+    'af-south-1': 'ami-080baa4ec59c456aa',
+    'ap-east-1': 'ami-0a9056eb817bc3928',
+    'eu-south-1': 'ami-0a72279e56849415e'
 }
 if AWS_REGION not in AMI_PER_REGION:
     logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
@@ -100,6 +100,9 @@ TIBANNA_PROFILE_SECRET_KEY = os.environ.get('TIBANNA_PROFILE_SECRET_KEY', '')
 
 # default step function name
 TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTION_NAME', 'tibanna_unicorn')
+
+# S3_ENCRYPT_KEY_ID for Tibanna output buckets
+S3_ENCRYT_KEY_ID = os.environ.get('S3_ENCRYPT_KEY_ID', None)
 
 # dynamo table (optional) for fast searching
 DYNAMODB_TABLE = 'tibanna-master'

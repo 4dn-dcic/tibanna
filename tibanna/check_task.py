@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from .utils import (
     does_key_exist,
-    read_s3
+    read_s3,
+    put_object_s3
 )
 from .awsem import (
     AwsemPostRunJson
@@ -23,7 +24,7 @@ from .exceptions import (
     JobAbortedException,
     AWSEMErrorHandler
 )
-from .vars import PARSE_AWSEM_TIME
+from .vars import PARSE_AWSEM_TIME, AWSEM_TIME_STAMP_FORMAT, S3_ENCRYT_KEY_ID
 from .core import API
 
 
@@ -66,6 +67,7 @@ class CheckTask(object):
             if start_time + timedelta(minutes=10) < now:
                 try:
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
+                    self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
                 except:
                     pass  # most likely already terminated or never initiated
                 raise EC2IdleException("Failed to find jobid %s, ec2 is not initializing for too long. Terminating the instance." % jobid)
@@ -108,16 +110,19 @@ class CheckTask(object):
                 res = boto3.client('ec2').describe_instances(InstanceIds=[instance_id])
             except Exception as e:
                 if 'InvalidInstanceID.NotFound' in str(e):
+                    self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json) # We need to record the end time
                     raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
                 else:
                     raise e
             if not res['Reservations']:
+                self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json) # We need to record the end time
                 raise EC2UnintendedTerminationException("EC2 is no longer found for job %s - please rerun." % jobid)
             else:
                 ec2_state = res['Reservations'][0]['Instances'][0]['State']['Name']
                 if ec2_state in ['stopped', 'shutting-down', 'terminated']:
                     errmsg = "EC2 is terminated unintendedly for job %s - please rerun." % jobid
                     logger.error(errmsg)
+                    self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json) # We need to record the end time
                     raise EC2UnintendedTerminationException(errmsg)
 
             # check CPU utilization for the past hour
@@ -144,6 +149,9 @@ class CheckTask(object):
             if not ebs_read or ebs_read < 1000:  # minimum 1kb
                 # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
                 try:
+                    bucket_name = self.input_json['config']['log_bucket']
+                    public_postrun_json = self.input_json['config'].get('public_postrun_json', False)
+                    self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json) # We need to record the end time
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
                     errmsg = (
                         "Nothing has been running for the past hour for job %s,"
@@ -166,18 +174,23 @@ class CheckTask(object):
         postrunjsoncontent = json.loads(read_s3(bucket_name, postrunjson))
         prj = AwsemPostRunJson(**postrunjsoncontent)
         prj.Job.update(instance_id=input_json['config'].get('instance_id', ''))
+        prj.Job.update(end_time=datetime.now(tzutc()).strftime(AWSEM_TIME_STAMP_FORMAT))
         self.handle_metrics(prj)
         logger.debug("inside funtion handle_postrun_json")
         logger.debug("content=\n" + json.dumps(prj.as_dict(), indent=4))
         # upload postrun json file back to s3
         acl = 'public-read' if public_read else 'private'
         try:
-            boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL=acl,
-                                          Body=json.dumps(prj.as_dict(), indent=4).encode())
-        except Exception as e:
-            boto3.client('s3').put_object(Bucket=bucket_name, Key=postrunjson, ACL='private',
-                                          Body=json.dumps(prj.as_dict(), indent=4).encode())
-        except Exception as e:
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
+                          public=True if acl == 'public-read' else False,
+                          encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                          kms_key_id=S3_ENCRYT_KEY_ID)  # defaults to None
+        except Exception:  # try again no matter what
+            put_object_s3(json.dumps(prj.as_dict(), indent=4), postrunjson, bucket_name,
+                          public=False,  # fallback to private
+                          encrypt_s3_upload=True if S3_ENCRYT_KEY_ID else False,
+                          kms_key_id=S3_ENCRYT_KEY_ID)
+        except Exception as e:  # noQA - catch anything if thrown from the second put call
             raise "error in updating postrunjson %s" % str(e)
         # add postrun json to the input json
         self.add_postrun_json(prj, input_json, RESPONSE_JSON_CONTENT_INCLUSION_LIMIT)
@@ -199,14 +212,14 @@ class CheckTask(object):
         try:
             resources = self.TibannaResource(prj.Job.instance_id,
                                              prj.Job.filesystem,
-                                             prj.Job.start_time_as_str,
-                                             prj.Job.end_time_as_str or datetime.now())
+                                             prj.Job.start_time_as_datetime,
+                                             prj.Job.end_time_as_datetime)
 
         except Exception as e:
             raise MetricRetrievalException("error getting metrics: %s" % str(e))
         prj.Job.update(Metrics=resources.as_dict())
         self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
                            force_upload=True, open_browser=False,
-                           endtime=prj.Job.end_time_as_str or datetime.now(),
+                           endtime=prj.Job.end_time_as_datetime,
                            filesystem=prj.Job.filesystem,
                            instance_id=prj.Job.instance_id)

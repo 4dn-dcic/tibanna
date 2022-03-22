@@ -36,9 +36,9 @@ def get_cost(postrunjson, job_id):
     start_time = reformat_time(job.start_time, -1)  # give more room
     if(job.end_time != None):
         end_time = reformat_time(job.end_time, 1)
-    else: 
+    else:
         end_time = datetime.utcnow() + timedelta(days=1) # give more room
-        end_time = end_time.strftime("%Y-%m-%d") 
+        end_time = end_time.strftime("%Y-%m-%d")
 
     billing_args = {'Filter': {'Tags': {'Key': 'Name', 'Values': ['awsem-' + job_id]}},
                     'Granularity': 'DAILY',
@@ -46,7 +46,7 @@ def get_cost(postrunjson, job_id):
                                     'End': end_time},
                     'Metrics': ['BlendedCost'],
                     }
-    
+
     try:
         billingres = boto3.client('ce').get_cost_and_usage(**billing_args)
     except botocore.exceptions.ClientError as e:
@@ -91,7 +91,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
             ec2_client=boto3.client('ec2',region_name=AWS_REGION)
             prices=ec2_client.describe_spot_price_history(
                 InstanceTypes=[cfg.instance_type],
-                ProductDescriptions=['Linux/UNIX'], 
+                ProductDescriptions=['Linux/UNIX'],
                 AvailabilityZone=job.instance_availablity_zone,
                 MaxResults=1) # Most recent price is on top
 
@@ -152,7 +152,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
             term = list(terms["OnDemand"].values())[0]
             price_dimension = list(term["priceDimensions"].values())[0]
             ec2_ondemand_price = (float)(price_dimension['pricePerUnit']["USD"])
-            
+
 
             if((aws_price_overwrite is not None) and 'ec2_ondemand_price' in aws_price_overwrite):
                 ec2_ondemand_price = aws_price_overwrite['ec2_ondemand_price']
@@ -192,7 +192,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
         term = list(terms["OnDemand"].values())[0]
         price_dimension = list(term["priceDimensions"].values())[0]
         ebs_root_storage_price = (float)(price_dimension['pricePerUnit']["USD"])
-        
+
         if((aws_price_overwrite is not None) and 'ebs_root_storage_price' in aws_price_overwrite):
             ebs_root_storage_price = aws_price_overwrite['ebs_root_storage_price']
 
@@ -237,7 +237,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                 term = list(terms["OnDemand"].values())[0]
                 price_dimension = list(term["priceDimensions"].values())[0]
                 ebs_throughput_price = (float)(price_dimension['pricePerUnit']["USD"])/1000 # unit: mbps
-                
+
                 if((aws_price_overwrite is not None) and 'ebs_throughput_price' in aws_price_overwrite):
                     ebs_throughput_price = aws_price_overwrite['ebs_throughput_price']
 
@@ -245,7 +245,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                 ebs_throughput_cost = ebs_throughput_price * max(cfg.ebs_throughput - free_tier, 0) * job_duration / (24.0*30.0)
                 estimated_cost = estimated_cost + ebs_throughput_cost
 
-        else: 
+        else:
             prices = pricing_client.get_products(ServiceCode='AmazonEC2', Filters=[
                 {
                     'Type': 'TERM_MATCH',
@@ -324,7 +324,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                 ebs_iops_cost = ebs_iops_price * max(cfg.ebs_iops - free_tier, 0) * job_duration / (24.0*30.0)
             else:
                 ebs_iops_cost = ebs_iops_price * cfg.ebs_iops * job_duration / (24.0*30.0)
-            
+
             estimated_cost = estimated_cost + ebs_iops_cost
 
         elif (cfg.ebs_type == "io2" and cfg.ebs_iops):
@@ -378,7 +378,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
         estimation_type = "retrospective estimate" if time_since_run > 10 else "immediate estimate"
 
         return estimated_cost, estimation_type
-    
+
     except botocore.exceptions.ClientError as e:
         logger.warning("Cost estimation error: %s. Please try to deploy the latest version of Tibanna." % e)
         return 0.0, "NA"
@@ -388,7 +388,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
     except Exception as e:
         logger.warning("Cost estimation error: %s" % e)
         return 0.0, "NA"
-        
+
 
 def get_cost_estimate_from_tsv(log_bucket, job_id):
 
@@ -398,7 +398,7 @@ def get_cost_estimate_from_tsv(log_bucket, job_id):
 
     if(does_key_exist(log_bucket, s3_key) == False):
         return cost_estimate, cost_estimate_type
-    
+
     try:
         read_file = read_s3(log_bucket, s3_key)
         for row in read_file.splitlines():
@@ -414,7 +414,7 @@ def get_cost_estimate_from_tsv(log_bucket, job_id):
     return cost_estimate, cost_estimate_type
 
 
-def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type):
+def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate_type, encryption=False, kms_key_id=None):
 
     s3_key = os.path.join(job_id + '.metrics/', 'metrics_report.tsv')
 
@@ -447,16 +447,18 @@ def update_cost_estimate_in_tsv(log_bucket, job_id, cost_estimate, cost_estimate
         write_file = write_file + 'Cost\t' + str(cost_estimate) + '\n'
     write_file = write_file + 'Estimated_Cost\t' + str(cost_estimate) + '\n'
     write_file = write_file + 'Estimated_Cost_Type\t' + cost_estimate_type + '\n'
-    put_object_s3(content=write_file, key=s3_key, bucket=log_bucket)
+    put_object_s3(content=write_file, key=s3_key, bucket=log_bucket,
+                  encrypt_s3_upload=encryption, kms_key_id=kms_key_id)
 
 
-def update_cost_in_tsv(log_bucket, job_id, cost):
+def update_cost_in_tsv(log_bucket, job_id, cost,
+                       encryption=False, kms_key_id=None):
 
     s3_key = os.path.join(job_id + '.metrics/', 'metrics_report.tsv')
 
     if(does_key_exist(log_bucket, s3_key) == False):
         return
-        
+
     # reading from metrics_report.tsv
     read_file = read_s3(log_bucket, s3_key)
 
@@ -467,4 +469,5 @@ def update_cost_in_tsv(log_bucket, job_id, cost):
             write_file = write_file + row + '\n'
 
     write_file = write_file + 'Cost\t' + str(cost) + '\n'
-    put_object_s3(content=write_file, key=s3_key, bucket=log_bucket)
+    put_object_s3(content=write_file, key=s3_key, bucket=log_bucket,
+                  encrypt_s3_upload=encryption, kms_key_id=kms_key_id)
