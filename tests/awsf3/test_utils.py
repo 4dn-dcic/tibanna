@@ -39,6 +39,7 @@ def test_create_env_def_file_cwl():
     runjson_dict = {'Job': {'App': {'language': 'cwl_v1',
                                     'cwl_url': 'someurl',
                                     'main_cwl': 'somecwl',
+                                    'run_args': '',
                                     'other_cwl_files': 'othercwl1,othercwl2'},
                             'Input': {'Env': {'SOME_ENV': '1234'}},
                             'Output': {'output_bucket_directory': 'somebucket'},
@@ -54,6 +55,7 @@ def test_create_env_def_file_cwl():
                      'export CWL_URL=someurl\n'
                      'export MAIN_CWL=somecwl\n'
                      'export CWL_FILES="othercwl1 othercwl2"\n'
+                     'export RUN_ARGS=\n'
                      'export SOME_ENV=1234\n'
                      'export PRESERVED_ENV_OPTION="--preserve-environment SOME_ENV "\n'
                      'export DOCKER_ENV_OPTION="-e SOME_ENV "\n')
@@ -70,6 +72,7 @@ def test_create_env_def_file_wdl_v1():
                                     'wdl_url': 'someurl',
                                     'main_wdl': 'somewdl',
                                     'workflow_engine': 'cromwell',
+                                    'run_args': '',
                                     'other_wdl_files': 'otherwdl1,otherwdl2'},
                             'Input': {'Env': {}},
                             'Output': {'output_bucket_directory': 'somebucket'},
@@ -85,6 +88,7 @@ def test_create_env_def_file_wdl_v1():
                      'export WDL_URL=someurl\n'
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
+                     'export RUN_ARGS=\n'
                      'export WDL_FILES="otherwdl1 otherwdl2"\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
@@ -101,6 +105,7 @@ def test_create_env_def_file_wdl_draft2():
                                     'wdl_url': 'someurl',
                                     'main_wdl': 'somewdl',
                                     'workflow_engine': 'cromwell',
+                                    'run_args': '',
                                     'other_wdl_files': 'otherwdl1,otherwdl2'},
                             'Input': {'Env': {}},
                             'Output': {'output_bucket_directory': 'somebucket'},
@@ -116,6 +121,7 @@ def test_create_env_def_file_wdl_draft2():
                      'export WDL_URL=someurl\n'
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
+                     'export RUN_ARGS=\n'
                      'export WDL_FILES="otherwdl1 otherwdl2"\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
@@ -132,6 +138,7 @@ def test_create_env_def_file_wdl():
                                     'wdl_url': 'someurl',
                                     'main_wdl': 'somewdl',
                                     'workflow_engine': 'cromwell',
+                                    'run_args': '',
                                     'other_wdl_files': 'otherwdl1,otherwdl2'},
                             'Input': {'Env': {}},
                             'Output': {'output_bucket_directory': 'somebucket'},
@@ -147,6 +154,7 @@ def test_create_env_def_file_wdl():
                      'export WDL_URL=someurl\n'
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
+                     'export RUN_ARGS=\n'
                      'export WDL_FILES="otherwdl1 otherwdl2"\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
