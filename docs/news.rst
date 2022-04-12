@@ -20,7 +20,7 @@ Version updates
 .. _releases: https://github.com/4dn-dcic/tibanna/releases
 
   **Mar 10, 2022** The latest version is now 2.0.0_.
-    - The default Python version for Tibanna is now 3.8. Python 3.6 is deprecated.
+    - The default Python version for Tibanna is now 3.8 (or 3.7). Python 3.6 is no longer supported.
 
 
   **Sep 16, 2019** The latest version is now 0.9.1_.
