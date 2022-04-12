@@ -204,6 +204,10 @@ Other pipeline-related fields
     - 'cwl_v1', 'cwl_draft3' (tibanna < ``1.0.0`` only) or 'wdl' (='wdl_v1' for backward compatibility) or 'wdl_draft2' or 'wdl_v1' (tibanna >= ``1.0.0``)
     - For WDL, it is a required field. For CWL, the language field can be omitted.
 
+:run_args:
+    - Optional, available for tibanna > ``1.9.1``
+    - Additional command line arguments that are passed to the ``cwltool``/``cromwell.jar run``/``caper run`` commands.
+
 
 Input data specification
 ########################

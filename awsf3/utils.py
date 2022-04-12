@@ -195,6 +195,7 @@ def create_env_def_file(env_filename, runjson, language):
             f_env.write("export WDL_URL={}\n".format(app.wdl_url))
             f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))
             f_env.write("export WORKFLOW_ENGINE={}\n".format(app.workflow_engine))
+            f_env.write("export RUN_ARGS={}\n".format(app.run_args))
             f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(app.other_wdl_files.split(','))))
         elif language == 'snakemake':
             f_env.write("export SNAKEMAKE_URL={}\n".format(app.snakemake_url))
@@ -209,6 +210,7 @@ def create_env_def_file(env_filename, runjson, language):
             f_env.write("export CWL_URL={}\n".format(app.cwl_url))
             f_env.write("export MAIN_CWL={}\n".format(app.main_cwl))
             f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(app.other_cwl_files.split(','))))
+            f_env.write("export RUN_ARGS={}\n".format(app.run_args))
         # other env variables
         env_preserv_str = ''
         docker_env_str = ''
