@@ -571,7 +571,7 @@ To retrieve the cost and update the metrics report file created with plot_metric
 
 
 cost_estimate
-----
+-------------
 
 Retrieve a cost estimate for a specific job. This will be available as soon as the job finished. This function will return the exact cost, if it is available. The cost estimate will also indicate if it is an immediate estimate (i.e., the exact cost is not yet available), the actual cost or the retrospective estimate (i.e., the exact cost is not available anymore). In case the estimate returns the actual cost and the `-u` parameter is set, the cost row in the metrics file will be automatically updated.
 

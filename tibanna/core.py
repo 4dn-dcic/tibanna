@@ -60,6 +60,7 @@ from .pricing_utils import (
 )
 from .job import Job
 from .ami import AMI
+from ._version import __version__
 # from botocore.errorfactory import ExecutionAlreadyExists
 from .stepfunction import StepFunctionUnicorn
 from .stepfunction_cost_updater import StepFunctionCostUpdater
@@ -725,6 +726,10 @@ class API(object):
         if name == self.run_task_lambda:
             extra_config['Environment']['Variables']['AWS_S3_ROLE_NAME'] \
                 = tibanna_iam.role_name('ec2')
+
+        # Add Tibanna version to the env variables on deploy, so that they don't have to parse the pyproject.toml
+        extra_config['Environment']['Variables']['TIBANNA_VERSION'] = __version__
+
         # add role
         logger.info('name=%s' % name)
         role_arn_prefix = 'arn:aws:iam::' + AWS_ACCOUNT_NUMBER + ':role/'

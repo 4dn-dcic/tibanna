@@ -10,7 +10,7 @@ Installing Tibanna package
 
 Tibanna works with the following Python and pip versions.
 
-- Python 3.6
+- Python 3.7, 3.8
 - Pip 9, 10, 18, 19, 20
 
 
@@ -21,7 +21,7 @@ First, create a virtual environment.
 ::
 
     # create a virtual environment
-    virtualenv -p python3.6 ~/venv/tibanna
+    virtualenv -p python3.8 ~/venv/tibanna
     source ~/venv/tibanna/bin/activate
   
 
@@ -32,14 +32,14 @@ Then, install Tibanna.
     pip install tibanna
 
 
-Alternatively, use ``git clone`` followed by ``setup.py``
+Alternatively, use ``git clone`` followed by ``make install``
 
 ::
 
    # Alternatively installing tibanna package from github repo
     git clone https://github.com/4dn-dcic/tibanna
     cd tibanna
-    python setup.py install
+    make install
 
 
 Starting version ``1.0.0``, there is also a Docker image that contains the same version of tibanna as the image tag. This image is used on the EC2 AWSEM instances and not for a local use. The image contains many other things including Docker, Singularity, Cromwell, cwltool, etc. in addition to Tibanna and therefore not recommended, but in case the above two somehow didn't work in your environment, and if you have Docker, you could try:

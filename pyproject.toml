@@ -1,0 +1,71 @@
+[tool.poetry]
+name = "tibanna"
+version = "2.0.0"
+description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
+authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
+license = "MIT"
+readme = "README.md"
+keywords = ["tibanna"]
+homepage = "http://github.com/4dn-dcic/tibanna"
+repository = "http://github.com/4dn-dcic/tibanna.git"
+packages = [
+  { include="tibanna", from="." },
+  { include="awsf3", from="." },
+]
+# The following is needed so that we can extract the version at runtime
+include = ["pyproject.toml"]
+classifiers = [
+  'License :: OSI Approved :: MIT License',
+  'Natural Language :: English',
+  'Operating System :: POSIX :: Linux',
+
+  # Specify the Python versions you support here. In particular, ensure
+  # that you indicate whether you support Python 2, Python 3 or both.
+  'Programming Language :: Python :: 3',
+  'Programming Language :: Python :: 3.7',
+  'Programming Language :: Python :: 3.8',
+]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.9"
+python-lambda-4dn = "0.12.3"
+boto3 = "^1.9.0"
+botocore = "^1.12.1"
+urllib3 = "^1.24"
+requests = "^2.22.0"
+Benchmark-4dn = "^0.5.8"
+tomlkit = "^0.10.0"
+
+[tool.poetry.dev-dependencies]
+invoke = "0.18.1"
+flake8 = "^3.9.0"
+
+# PyTest and its auxiliary support files
+pytest = "^6.0"
+pytest-cov = "^3.0.0"
+pytest-parallel = "^0.1.1"
+mock = "4.0"
+pytest-mock = "3.7"
+
+coverage = {extras = ["toml"], version = "^6.3.2"}
+
+# Docs build dependencies
+Sphinx = "^3.3.0"
+sphinx-click = "^2.5.0"
+sphinx-rtd-theme = "0.5.0"  # Do we have a good reason to pin this? -kmp 9-Nov-2020
+
+[tool.poetry.scripts]
+tibanna = "tibanna.__main__:main"
+awsf3 = "awsf3.__main__:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+omit = [".*", "*/site-packages/*", "*/__pycache__/*", "*/tests/*", "*/dist/*", "*/.eggs/*"]
+include = ["*/tibanna/*"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--cov --cov-report term --cov-fail-under 25 -rxs"

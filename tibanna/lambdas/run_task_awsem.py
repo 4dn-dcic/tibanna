@@ -8,7 +8,7 @@ config = {
     'function_handler': 'handler',
     'handler': 'service.handler',
     'region': AWS_REGION,
-    'runtime': 'python3.6',
+    'runtime': 'python3.8',
     'role': 'tibanna_lambda_init_role',
     'description': 'launch an ec2 instance',
     'timeout': 300,
