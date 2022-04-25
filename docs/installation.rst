@@ -32,7 +32,7 @@ Then, install Tibanna.
     pip install tibanna
 
 
-Alternatively, use ``git clone`` followed by ``setup.py``
+Alternatively, use ``git clone`` followed by ``make install``
 
 ::
 
