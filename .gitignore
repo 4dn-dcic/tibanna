@@ -81,6 +81,7 @@ celerybeat-schedule
 .env
 
 # virtualenv
+*env/
 venv/
 ENV/
 
@@ -104,3 +105,11 @@ notebooks/Single use scripts/Jsons/*
 # locally installed packages
 src/benchmark
 src/python-lambda
+
+# Emacs backup files
+*~
+
+# PyCharm metadata
+.idea/
+
+
