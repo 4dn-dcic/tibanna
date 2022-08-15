@@ -96,6 +96,7 @@ class IAM(object):
                     'ec2_desc': 'ec2_desc',
                     'pricing': 'pricing',
                     'executions': 'executions',
+                    'executions_desc': 'executions_desc',
                     'vpc': 'vpc_access',
                     'kms': 'kms_key_for_s3'}
         if policy_type not in suffices:
@@ -106,6 +107,7 @@ class IAM(object):
         return self.tibanna_policy_prefix + '_' + self.policy_suffix(policy_type)
 
     def policy_definition(self, policy_type):
+        # ['bucket', 'ec2_desc', 'cloudwatch_metric', 'dynamodb', 'termination', 'pricing', 'executions']
         definitions = {'bucket': self.policy_bucket_access,
                        'termination': self.policy_terminate_instances,
                        'list': self.policy_list_instanceprofiles,
@@ -118,6 +120,7 @@ class IAM(object):
                        'ec2_desc': self.policy_ec2_desc_policy,
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
+                       'executions_desc': self.policy_executions_desc,
                        'vpc': self.policy_vpc_access,
                        'kms': self.policy_kms_access}
         if policy_type not in definitions:
@@ -158,7 +161,7 @@ class IAM(object):
         run_task_custom_policy_types = base + ['list', 'cloudwatch', 'passrole', 'dynamodb',
                                                'executions', 'cw_dashboard']
         check_task_custom_policy_types = base + ['cloudwatch_metric', 'cloudwatch', 'ec2_desc',
-                                                 'termination', 'dynamodb', 'pricing', 'vpc']
+                                                 'executions_desc', 'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
         arnlist = {'ec2': [self.policy_arn(_) for _ in base + ['cloudwatch_metric', 'ec2_desc']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
@@ -355,6 +358,40 @@ class IAM(object):
                     "Action": [
                         "states:StartExecution",
                         "states:StopExecution",
+                        "states:ListExecutions",
+                        "states:DescribeExecution",
+                        "states:GetExecutionHistory",
+                        "states:DescribeStateMachineForExecution",
+                        "states:DescribeStateMachine"
+                    ],
+                    "Resource": resources
+                },
+                {
+                    "Sid": "VisualEditor1",
+                    "Effect": "Allow",
+                    "Action": "states:ListStateMachines",
+                    "Resource": "*"
+                }
+            ]
+        }
+        return policy
+
+    @property
+    def policy_executions_desc(self):
+        execution_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':stateMachine:'
+        sfn_arn_prefix = 'arn:aws:states:' + self.region + ':' + self.account_id + ':execution:'
+        # Not sure if resources is needed for just reflection or if * would be OK, but we'll go with it for now.
+        # -kmp 15-Aug-2022
+        resources = [execution_arn_prefix + self.tibanna_sfn_name,
+                    execution_arn_prefix + self.tibanna_sfn_name + '_costupdater',
+                    sfn_arn_prefix + self.tibanna_sfn_name + ':*',
+                    sfn_arn_prefix + self.tibanna_sfn_name + '_costupdater:*']
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
                         "states:ListExecutions",
                         "states:DescribeExecution",
                         "states:GetExecutionHistory",
