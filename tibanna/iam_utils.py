@@ -161,7 +161,8 @@ class IAM(object):
                                                  'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
         arnlist = {'ec2': [self.policy_arn(_) for _ in base + ['cloudwatch_metric', 'ec2_desc']] +
-                          ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'],
+                          ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'] +
+                          ['arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy'],
                    # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
                    'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
                    self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] +
