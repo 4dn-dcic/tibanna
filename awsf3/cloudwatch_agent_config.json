@@ -1,6 +1,6 @@
 {
 	"agent": {
-		"metrics_collection_interval": 60,
+		"metrics_collection_interval": 10,
 		"run_as_user": "root"
 	},
 	"metrics": {
@@ -23,7 +23,7 @@
 					"cpu_usage_user",
 					"cpu_usage_system"
 				],
-				"metrics_collection_interval": 60,
+				"metrics_collection_interval": 10,
 				"totalcpu": false
 			},
 			"disk": {
@@ -31,7 +31,7 @@
 					"used_percent",
 					"inodes_free"
 				],
-				"metrics_collection_interval": 60,
+				"metrics_collection_interval": 10,
 				"resources": [
 					"*"
 				]
@@ -40,7 +40,7 @@
 				"measurement": [
 					"io_time"
 				],
-				"metrics_collection_interval": 60,
+				"metrics_collection_interval": 10,
 				"resources": [
 					"*"
 				]
@@ -49,13 +49,13 @@
 				"measurement": [
 					"mem_used_percent"
 				],
-				"metrics_collection_interval": 60
+				"metrics_collection_interval": 10
 			},
 			"swap": {
 				"measurement": [
 					"swap_used_percent"
 				],
-				"metrics_collection_interval": 60
+				"metrics_collection_interval": 10
 			}
 		}
 	}
