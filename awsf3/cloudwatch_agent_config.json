@@ -1,6 +1,6 @@
 {
 	"agent": {
-		"metrics_collection_interval": 10,
+		"metrics_collection_interval": 60,
 		"run_as_user": "root"
 	},
 	"metrics": {
@@ -18,45 +18,56 @@
 		"metrics_collected": {
 			"cpu": {
 				"measurement": [
-					"cpu_usage_idle",
-					"cpu_usage_iowait",
-					"cpu_usage_user",
-					"cpu_usage_system"
+					"usage_idle",
+					"usage_iowait",
+					"usage_system"
 				],
-				"metrics_collection_interval": 10,
-				"totalcpu": false
+				"metrics_collection_interval": 60,
+				"totalcpu": true
 			},
 			"disk": {
 				"measurement": [
+                    "free",
+                    "total",
+                    "used",
 					"used_percent",
 					"inodes_free"
 				],
-				"metrics_collection_interval": 10,
+				"metrics_collection_interval": 60,
 				"resources": [
 					"*"
 				]
 			},
 			"diskio": {
 				"measurement": [
-					"io_time"
+					"io_time",
+                    "read_bytes",
+                    "iops_in_progress"
 				],
-				"metrics_collection_interval": 10,
+				"metrics_collection_interval": 60,
 				"resources": [
 					"*"
 				]
 			},
 			"mem": {
 				"measurement": [
-					"mem_used_percent"
+					"used_percent",
+                    "used",
+                    "available_percent",
+                    "available"
 				],
-				"metrics_collection_interval": 10
+				"metrics_collection_interval": 60
 			},
-			"swap": {
+            "net": {
 				"measurement": [
-					"swap_used_percent"
+					"bytes_sent",
+                    "bytes_recv"
 				],
-				"metrics_collection_interval": 10
-			}
+				"metrics_collection_interval": 60,
+				"resources": [
+					"*"
+				]
+			},
 		}
 	}
 }
