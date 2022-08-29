@@ -125,8 +125,6 @@ class TibannaResource(object):
             'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 1)
         }
 
-        # print(json.dumps(input_dict, indent=4))
-        # return
         self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
