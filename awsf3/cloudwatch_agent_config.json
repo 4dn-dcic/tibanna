@@ -34,7 +34,7 @@
 				],
 				"metrics_collection_interval": 60,
 				"resources": [
-					"*"
+					"/mnt/data1"
 				]
 			},
 			"diskio": {
@@ -45,7 +45,7 @@
 				],
 				"metrics_collection_interval": 60,
 				"resources": [
-					"*"
+					"/mnt/data1"
 				]
 			},
 			"mem": {
