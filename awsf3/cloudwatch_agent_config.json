@@ -11,6 +11,9 @@
 				"InstanceId"
 			]
 		],
+        "append_dimensions": {
+			"InstanceId": "${aws:InstanceId}"
+		},
 		"metrics_collected": {
 			"cpu": {
 				"measurement": [
