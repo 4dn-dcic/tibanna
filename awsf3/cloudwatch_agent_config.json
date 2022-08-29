@@ -3,7 +3,7 @@
 		"metrics_collection_interval": 60,
 		"run_as_user": "root",
         "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
-        "debug": true,
+        "debug": true
 	},
 	"metrics": {
 		"aggregation_dimensions": [
@@ -63,7 +63,7 @@
 				"resources": [
 					"*"
 				]
-			},
+			}
 		}
 	}
 }
