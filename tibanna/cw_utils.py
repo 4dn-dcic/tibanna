@@ -746,7 +746,7 @@ class TibannaResource(object):
                   var xScale = d3.scaleLinear()
                       .domain([0, n]) // input
                       .range([0, width]); // output
-                  // X scale for CPU utilization that has interval size of 5 instead of 1
+                  // X scale for CPU utilization
                   var xScale_cpu = d3.scaleLinear()
                       .domain([0, n_cpu]) // input
                       .range([0, width*(n_cpu)/(n)]); // output

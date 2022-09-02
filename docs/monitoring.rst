@@ -480,6 +480,7 @@ To visualize the html report the URL structure is: ``https://<log-bucket>.s3.ama
 
 Starting with ``1.0.0``, the metrics plot will include per-process CPU and memory profiles retrieved from the top command reports at a 1-minute interval. Additional files `top_cpu.tsv` and `top_mem.tsv` will also be created under the same folder ``<jobid>.metrics``.
 
+From version ``2.1.0``, the metrics that are send to cloud watch are defined here: ``https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json``. Note that not every metric that is available in cloud watch is displayed in the report created by ``plot_metrics``.
 
 
 Basic Command
