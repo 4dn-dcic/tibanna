@@ -1,0 +1,72 @@
+{
+	"agent": {
+		"metrics_collection_interval": 60,
+		"run_as_user": "root",
+        "logfile": "/opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log",
+        "debug": true
+	},
+	"metrics": {
+		"aggregation_dimensions": [
+			[
+				"InstanceId"
+			]
+		],
+        "append_dimensions": {
+			"InstanceId": "${aws:InstanceId}"
+		},
+		"metrics_collected": {
+			"cpu": {
+				"measurement": [
+					"usage_idle",
+					"usage_iowait",
+					"usage_system"
+				],
+				"metrics_collection_interval": 60,
+				"totalcpu": true
+			},
+			"disk": {
+				"measurement": [
+                    "free",
+                    "total",
+                    "used",
+					"used_percent",
+					"inodes_free"
+				],
+				"metrics_collection_interval": 60,
+				"resources": [
+					"/mnt/data1"
+				]
+			},
+			"diskio": {
+				"measurement": [
+					"io_time",
+                    "read_bytes",
+                    "iops_in_progress"
+				],
+				"metrics_collection_interval": 60,
+				"resources": [
+					"*"
+				]
+			},
+			"mem": {
+				"measurement": [
+					"used_percent",
+                    "used",
+                    "available_percent",
+                    "available"
+				],
+				"metrics_collection_interval": 60
+			},
+            "net": {
+				"measurement": [
+					"bytes_sent",
+                    "bytes_recv"
+				],
+				"metrics_collection_interval": 60,
+				"resources": [
+					"*"
+				]
+			}
+		}
+	}
+}

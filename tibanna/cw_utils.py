@@ -13,6 +13,7 @@ from .vars import (
 )
 from datetime import datetime
 from datetime import timedelta
+import json, math
 
 
 logger = create_logger(__name__)
@@ -121,7 +122,7 @@ class TibannaResource(object):
             'max_disk_space_used_GB': (max_disk_space_used_GB_chunks_all_pts, 1),
             'max_mem_utilization_percent': (max_mem_utilization_percent_chunks_all_pts, 1),
             'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
-            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 5)
+            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 1)
         }
 
         self.list_files.extend(self.write_top_tsvs(directory, top_content))
@@ -213,8 +214,8 @@ class TibannaResource(object):
     # functions that returns all points
     def max_memory_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='System/Linux',
-            MetricName='MemoryUtilization',
+            Namespace='CWAgent',
+            MetricName='mem_used_percent',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
@@ -229,8 +230,8 @@ class TibannaResource(object):
 
     def max_memory_used_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='System/Linux',
-            MetricName='MemoryUsed',
+            Namespace='CWAgent',
+            MetricName='mem_used',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
@@ -238,15 +239,15 @@ class TibannaResource(object):
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
-            Unit='Megabytes'
+            Unit='Bytes'
         )
-        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        pts = [(r['Maximum']/math.pow(1024, 2), r['Timestamp']) for r in res['Datapoints']] # get values in MB
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def min_memory_available_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='System/Linux',
-            MetricName='MemoryAvailable',
+            Namespace='CWAgent',
+            MetricName='mem_available',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
@@ -254,19 +255,19 @@ class TibannaResource(object):
             Statistics=['Minimum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
-            Unit='Megabytes'
+            Unit='Bytes'
         )
-        pts = [(r['Minimum'], r['Timestamp']) for r in res['Datapoints']]
+        pts = [(r['Minimum']/math.pow(1024, 2), r['Timestamp']) for r in res['Datapoints']] # get values in MB
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_cpu_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='CPUUtilization',
+            Namespace='CWAgent',
+            MetricName='cpu_usage_system',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60*5,
+            Period=60,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -277,13 +278,11 @@ class TibannaResource(object):
 
     def max_disk_space_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='System/Linux',
-            MetricName='DiskSpaceUtilization',
-            Dimensions=[
-                {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
-                {'Name': 'Filesystem', 'Value': self.filesystem}
-            ],
+            Namespace='CWAgent',
+            MetricName='disk_used_percent',
+            Dimensions=[{
+              'Name': 'InstanceId', 'Value': self.instance_id
+            }],
             Period=60,
             Statistics=['Maximum'],
             StartTime=self.starttime,
@@ -295,26 +294,24 @@ class TibannaResource(object):
 
     def max_disk_space_used_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='System/Linux',
-            MetricName='DiskSpaceUsed',
-            Dimensions=[
-                {'Name': 'InstanceId', 'Value': self.instance_id},
-                {'Name': 'MountPath', 'Value': EBS_MOUNT_POINT},
-                {'Name': 'Filesystem', 'Value': self.filesystem}
-            ],
+            Namespace='CWAgent',
+            MetricName='disk_used',
+            Dimensions=[{
+              'Name': 'InstanceId', 'Value': self.instance_id
+            }],
             Period=60,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
-            Unit='Gigabytes'
+            Unit='Bytes'
         )
-        pts = [(r['Maximum'], r['Timestamp']) for r in res['Datapoints']]
+        pts = [(r['Maximum']/math.pow(1024, 3), r['Timestamp']) for r in res['Datapoints']] # we want it in GB
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
     def max_ebs_read_used_all_pts(self):
         res = self.client.get_metric_statistics(
-            Namespace='AWS/EC2',
-            MetricName='EBSReadBytes',
+            Namespace='CWAgent',
+            MetricName='diskio_read_bytes',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
@@ -749,10 +746,10 @@ class TibannaResource(object):
                   var xScale = d3.scaleLinear()
                       .domain([0, n]) // input
                       .range([0, width]); // output
-                  // X scale for CPU utilization that has interval size of 5 instead of 1
+                  // X scale for CPU utilization
                   var xScale_cpu = d3.scaleLinear()
                       .domain([0, n_cpu]) // input
-                      .range([0, width*(n_cpu)*5/(n)]); // output
+                      .range([0, width*(n_cpu)/(n)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
                       .domain([0, 100]) // input
