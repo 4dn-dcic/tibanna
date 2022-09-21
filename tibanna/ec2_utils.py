@@ -326,6 +326,13 @@ class Config(SerializableObject):
             self.ebs_size_as_is = False
         if not hasattr(self, 'ami_id'):
             self.ami_id = AMI_ID
+        # special handling for subnet, SG if not set already pull from env
+        # values from config take priority - omit them to get these values from lambda
+        if not hasattr(self, 'subnet') and os.environ.get('SUBNETS', ''):
+            possible_subnets = os.environ['SUBNETS'].split(',')
+            self.subnet = choice(possible_subnets)  # randomly select from list
+        if not hasattr(self, 'security_group') and os.environ.get('SECURITY_GROUPS', ''):
+            self.security_group = os.environ['SECURITY_GROUPS'].split(',')[0]
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
