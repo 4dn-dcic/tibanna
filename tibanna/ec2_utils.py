@@ -7,6 +7,7 @@ import boto3
 import botocore
 import copy
 import re
+from random import choice
 from . import create_logger
 from datetime import datetime, timedelta
 from .utils import (
@@ -392,12 +393,22 @@ class Execution(object):
         instance_type_dlist = []
         # user directly specified instance type
         if instance_type:
-            if self.user_specified_EBS_optimized:
-                instance_type_dlist.append({'instance_type': instance_type,
-                                            'EBS_optimized': self.user_specified_EBS_optimized})
-            else:
-                instance_type_dlist.append({'instance_type': instance_type,
-                                            'EBS_optimized': False})
+            if isinstance(instance_type, str):
+                if self.user_specified_EBS_optimized:
+                    instance_type_dlist.append({'instance_type': instance_type,
+                                                'EBS_optimized': self.user_specified_EBS_optimized})
+                else:
+                    instance_type_dlist.append({'instance_type': instance_type,
+                                                'EBS_optimized': False})
+            elif isinstance(instance_type, list):
+                for potential_type in instance_type:
+                    if self.user_specified_EBS_optimized:
+                        instance_type_dlist.append({'instance_type': potential_type,
+                                                    'EBS_optimized': self.user_specified_EBS_optimized})
+                    else:
+                        instance_type_dlist.append({'instance_type': potential_type,
+                                                    'EBS_optimized': False})
+
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
             if self.cfg.mem_as_is:
@@ -415,7 +426,7 @@ class Execution(object):
             instance_type_dlist.append(self.benchmark)
         self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
         self.instance_type_info = {i['instance_type']: i for i in instance_type_dlist}
-        self.current_instance_type_index = 0  # choose the first one initially
+        self.current_instance_type_index = choice(range(0, len(self.instance_type_list)))  # randomly choose
 
     @property
     def current_instance_type(self):
@@ -432,9 +443,10 @@ class Execution(object):
             return ''
 
     def choose_next_instance_type(self):
-        self.current_instance_type_index += 1
-        if len(self.instance_type_list) <= self.current_instance_type_index:
-            raise Exception("No more instance type available that matches the criteria")
+        """ Previously we would start to launch jobs at index 0 and increment, but now we will randomly pick
+            from the list
+        """
+        self.current_instance_type_index = choice(range(0, len(self.instance_type_list)))
 
     def update_config_instance_type(self):
         # deal with missing fields
@@ -473,7 +485,6 @@ class Execution(object):
             self.cfg.ebs_size += 5  # account for docker image size
         if self.cfg.ebs_size < 10:
             self.cfg.ebs_size = 10
-
 
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
@@ -769,7 +780,10 @@ class Execution(object):
         if self.cfg.security_group:
             largs.update({'SecurityGroupIds': [self.cfg.security_group]})
         if self.cfg.subnet:
-            largs.update({'SubnetId': self.cfg.subnet})
+            if isinstance(self.cfg.subnet, str):
+                largs.update({'SubnetId': self.cfg.subnet})
+            elif isinstance(self.cfg.subnet, list):
+                largs.update({'SubnetId': choice(self.cfg.subnet)})  # if given multiple, pick one randomly
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs
