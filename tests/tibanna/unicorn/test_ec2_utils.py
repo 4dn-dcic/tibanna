@@ -634,6 +634,62 @@ def test_launch_args():
     assert 'InstanceMarketOptions' in str(launch_args)
 
 
+@pytest.mark.parametrize('subnets', [
+    ['subnet-000001', 'subnet-000002'], 'subnet-000001', None
+])
+def test_launch_args_subnet(subnets):
+    """test creating launch arguments with subnet array argument """
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't3.small',
+                             'spot_instance': False, 'subnet': subnets},
+                  'jobid': jobid}
+    execution = Execution(input_dict)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    launch_args = execution.launch_args
+    assert launch_args
+    if isinstance(subnets, str):
+        assert launch_args['SubnetId'] == subnets
+    elif isinstance(subnets, list):
+        assert launch_args['SubnetId'] in subnets
+    else:
+        assert 'SubnetId' not in launch_args
+
+
+@pytest.mark.parametrize('subnets', [
+    'subnet-000001,subnet-000002', 'subnet-000001'
+])
+def test_launch_args_subnet_environ(subnets):
+    """ Tests pulling in subnets from env variable """
+    old_environ = dict(os.environ)
+    os.environ.update({
+        'SUBNETS': subnets
+    })
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't3.small',
+                             'spot_instance': False},
+                  'jobid': jobid}
+    execution = Execution(input_dict)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    launch_args = execution.launch_args
+    assert launch_args
+    if isinstance(subnets, str) and ',' not in subnets:
+        assert launch_args['SubnetId'] == subnets
+    else:
+        assert launch_args['SubnetId'] in subnets
+    os.environ.clear()
+    os.environ.update(old_environ)  # ensure old state restored
+
+
 def test_launch_and_get_instance_id():
     """test dryrun of ec2 launch"""
     jobid = create_jobid()
