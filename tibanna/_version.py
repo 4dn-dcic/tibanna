@@ -2,6 +2,7 @@
 import tomlkit
 import os
 from pathlib import Path
+import semantic_version
 
 
 def _get_project_meta():
@@ -20,4 +21,8 @@ pkg_meta = _get_project_meta()
 # Lambdas are deployed with the TIBANNA_VERSION env variable and get version information from there, as
 # they can't parse the pyproject.toml. For all other use cases, fall back to the pyproject.toml version
 __version__ = os.environ.get('TIBANNA_VERSION', False) or str(pkg_meta['version'])
+
+# AWSF image version - will default to the minor version of the deployed Tibanna
+tibanna_version = semantic_version.Version(__version__)
+__awsf_image_version__ = str(semantic_version.Version(major=tibanna_version.major, minor=tibanna_version.minor, patch=0))
 
