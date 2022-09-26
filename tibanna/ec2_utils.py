@@ -433,7 +433,7 @@ class Execution(object):
             instance_type_dlist.append(self.benchmark)
         self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
         self.instance_type_info = {i['instance_type']: i for i in instance_type_dlist}
-        self.current_instance_type_index = choice(range(0, len(self.instance_type_list)))  # randomly choose
+        self.choose_next_instance_type()  # randomly choose
 
     @property
     def current_instance_type(self):
@@ -557,27 +557,30 @@ class Execution(object):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
+                error_response = str(e)
+                # No instance capacity, too many instances or incompatible subnet/instance configuration - try again
+                if ('InsufficientInstanceCapacity' in error_response or 'InstanceLimitExceeded' in error_response or
+                        'is not supported in your requested Availability Zone' in error_response):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
                                  "to change the behavior to wait_and_retry, other_instance_types," + \
-                                 "or retry_without_spot. %s" % str(e)
+                                 "or retry_without_spot. %s" % error_response
                         raise EC2InstanceLimitException(errmsg)
                     elif behavior == 'wait_and_retry':
-                        errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
+                        errmsg = "Instance limit exception - wait and retry later: %s" % error_response
                         raise EC2InstanceLimitWaitException(errmsg)
                     elif behavior == 'other_instance_types':
                         try:
                             self.choose_next_instance_type()
-                        except Exception as e2:
+                        except Exception as e2:  # should never hit now as we will continue indefinitely
                             raise EC2InstanceLimitException(str(e2))
                         self.update_config_instance_type()
                         return 'continue'
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
                             errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
-                                     "'spot_instance' : true. %s" % str(e)
+                                     "'spot_instance' : true. %s" % error_response
                             raise Exception(errmsg)
                         else:
                             self.cfg.spot_instance = False
