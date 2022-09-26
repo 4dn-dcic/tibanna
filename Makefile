@@ -5,11 +5,11 @@ clean:
 lint:
 	flake8 tibanna
 
-install: 
+install:
 	poetry install
 
 test:
-	pytest -vv
+	poetry run invoke test --no-flake
 
 retest:  # runs only failed tests from the last test run.
 	pytest -vv --last-failed

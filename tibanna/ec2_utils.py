@@ -7,6 +7,7 @@ import boto3
 import botocore
 import copy
 import re
+from random import choice
 from . import create_logger
 from datetime import datetime, timedelta
 from .utils import (
@@ -325,6 +326,13 @@ class Config(SerializableObject):
             self.ebs_size_as_is = False
         if not hasattr(self, 'ami_id'):
             self.ami_id = AMI_ID
+        # special handling for subnet, SG if not set already pull from env
+        # values from config take priority - omit them to get these values from lambda
+        if not self.subnet and os.environ.get('SUBNETS', ''):
+            possible_subnets = os.environ['SUBNETS'].split(',')
+            self.subnet = possible_subnets  # propagate all subnets here, pick one in launch_args
+        if not self.security_group and os.environ.get('SECURITY_GROUPS', ''):
+            self.security_group = os.environ['SECURITY_GROUPS'].split(',')[0]
 
     def fill_internal(self):
         # fill internally-used fields (users cannot specify these fields)
@@ -392,12 +400,22 @@ class Execution(object):
         instance_type_dlist = []
         # user directly specified instance type
         if instance_type:
-            if self.user_specified_EBS_optimized:
-                instance_type_dlist.append({'instance_type': instance_type,
-                                            'EBS_optimized': self.user_specified_EBS_optimized})
-            else:
-                instance_type_dlist.append({'instance_type': instance_type,
-                                            'EBS_optimized': False})
+            if isinstance(instance_type, str):
+                if self.user_specified_EBS_optimized:
+                    instance_type_dlist.append({'instance_type': instance_type,
+                                                'EBS_optimized': self.user_specified_EBS_optimized})
+                else:
+                    instance_type_dlist.append({'instance_type': instance_type,
+                                                'EBS_optimized': False})
+            elif isinstance(instance_type, list):
+                for potential_type in instance_type:
+                    if self.user_specified_EBS_optimized:
+                        instance_type_dlist.append({'instance_type': potential_type,
+                                                    'EBS_optimized': self.user_specified_EBS_optimized})
+                    else:
+                        instance_type_dlist.append({'instance_type': potential_type,
+                                                    'EBS_optimized': False})
+
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
             if self.cfg.mem_as_is:
@@ -415,7 +433,7 @@ class Execution(object):
             instance_type_dlist.append(self.benchmark)
         self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
         self.instance_type_info = {i['instance_type']: i for i in instance_type_dlist}
-        self.current_instance_type_index = 0  # choose the first one initially
+        self.choose_next_instance_type()  # randomly choose
 
     @property
     def current_instance_type(self):
@@ -432,9 +450,10 @@ class Execution(object):
             return ''
 
     def choose_next_instance_type(self):
-        self.current_instance_type_index += 1
-        if len(self.instance_type_list) <= self.current_instance_type_index:
-            raise Exception("No more instance type available that matches the criteria")
+        """ Previously we would start to launch jobs at index 0 and increment, but now we will randomly pick
+            from the list
+        """
+        self.current_instance_type_index = choice(range(0, len(self.instance_type_list)))
 
     def update_config_instance_type(self):
         # deal with missing fields
@@ -473,7 +492,6 @@ class Execution(object):
             self.cfg.ebs_size += 5  # account for docker image size
         if self.cfg.ebs_size < 10:
             self.cfg.ebs_size = 10
-
 
     def get_input_size_in_bytes(self):
         input_size_in_bytes = dict()
@@ -539,27 +557,30 @@ class Execution(object):
             try:
                 return func(*args, **kwargs)
             except Exception as e:
-                if 'InsufficientInstanceCapacity' in str(e) or 'InstanceLimitExceeded' in str(e):
+                error_response = str(e)
+                # No instance capacity, too many instances or incompatible subnet/instance configuration - try again
+                if ('InsufficientInstanceCapacity' in error_response or 'InstanceLimitExceeded' in error_response or
+                        'is not supported in your requested Availability Zone' in error_response):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
                                  "to change the behavior to wait_and_retry, other_instance_types," + \
-                                 "or retry_without_spot. %s" % str(e)
+                                 "or retry_without_spot. %s" % error_response
                         raise EC2InstanceLimitException(errmsg)
                     elif behavior == 'wait_and_retry':
-                        errmsg = "Instance limit exception - wait and retry later: %s" % str(e)
+                        errmsg = "Instance limit exception - wait and retry later: %s" % error_response
                         raise EC2InstanceLimitWaitException(errmsg)
                     elif behavior == 'other_instance_types':
                         try:
                             self.choose_next_instance_type()
-                        except Exception as e2:
+                        except Exception as e2:  # should never hit now as we will continue indefinitely
                             raise EC2InstanceLimitException(str(e2))
                         self.update_config_instance_type()
                         return 'continue'
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
                             errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
-                                     "'spot_instance' : true. %s" % str(e)
+                                     "'spot_instance' : true. %s" % error_response
                             raise Exception(errmsg)
                         else:
                             self.cfg.spot_instance = False
@@ -769,7 +790,10 @@ class Execution(object):
         if self.cfg.security_group:
             largs.update({'SecurityGroupIds': [self.cfg.security_group]})
         if self.cfg.subnet:
-            largs.update({'SubnetId': self.cfg.subnet})
+            if isinstance(self.cfg.subnet, str):
+                largs.update({'SubnetId': self.cfg.subnet})
+            elif isinstance(self.cfg.subnet, list):
+                largs.update({'SubnetId': choice(self.cfg.subnet)})  # if given multiple, pick one randomly
         if self.dryrun:
             largs.update({'DryRun': True})
         return largs

@@ -243,7 +243,7 @@ def test_execution_mem_cpu():
     assert 'args' in unicorn_dict
     assert 'config' in unicorn_dict
     assert 'instance_type' in unicorn_dict['config']
-    assert unicorn_dict['config']['instance_type'] == 't3.small'
+    assert 't3.small' in execution.instance_type_list  # instance_type is now randomized, so just check presence
 
 
 def test_execution_benchmark():
@@ -621,7 +621,7 @@ def test_launch_args():
     input_dict = {'args': {'output_S3_bucket': 'somebucket',
                            'cwl_main_filename': 'md5.cwl',
                            'cwl_directory_url': 'someurl'},
-                  'config': {'log_bucket': log_bucket, 'mem': 1, 'cpu': 1,
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't3.small',
                              'spot_instance': True},
                   'jobid': jobid}
     execution = Execution(input_dict)
@@ -632,6 +632,62 @@ def test_launch_args():
     assert launch_args
     assert 't3.small' in str(launch_args)
     assert 'InstanceMarketOptions' in str(launch_args)
+
+
+@pytest.mark.parametrize('subnets', [
+    ['subnet-000001', 'subnet-000002'], 'subnet-000001', None
+])
+def test_launch_args_subnet(subnets):
+    """test creating launch arguments with subnet array argument """
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't3.small',
+                             'spot_instance': False, 'subnet': subnets},
+                  'jobid': jobid}
+    execution = Execution(input_dict)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    launch_args = execution.launch_args
+    assert launch_args
+    if isinstance(subnets, str):
+        assert launch_args['SubnetId'] == subnets
+    elif isinstance(subnets, list):
+        assert launch_args['SubnetId'] in subnets
+    else:
+        assert 'SubnetId' not in launch_args
+
+
+@pytest.mark.parametrize('subnets', [
+    'subnet-000001,subnet-000002', 'subnet-000001'
+])
+def test_launch_args_subnet_environ(subnets):
+    """ Tests pulling in subnets from env variable """
+    old_environ = dict(os.environ)
+    os.environ.update({
+        'SUBNETS': subnets
+    })
+    jobid = create_jobid()
+    log_bucket = 'tibanna-output'
+    input_dict = {'args': {'output_S3_bucket': 'somebucket',
+                           'cwl_main_filename': 'md5.cwl',
+                           'cwl_directory_url': 'someurl'},
+                  'config': {'log_bucket': log_bucket, 'instance_type': 't3.small',
+                             'spot_instance': False},
+                  'jobid': jobid}
+    execution = Execution(input_dict)
+    # userdata is required before launch_args is created
+    execution.userdata = execution.create_userdata()
+    launch_args = execution.launch_args
+    assert launch_args
+    if isinstance(subnets, str) and ',' not in subnets:
+        assert launch_args['SubnetId'] == subnets
+    else:
+        assert launch_args['SubnetId'] in subnets
+    os.environ.clear()
+    os.environ.update(old_environ)  # ensure old state restored
 
 
 def test_launch_and_get_instance_id():
@@ -698,20 +754,29 @@ def test_ec2_exception_coordinator4():
                              'spot_instance': True, 'mem_as_is': True,
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
+
+    def retry_for_new_instance(previous_instance):
+        """ Try to get a new instance type different from the previous run """
+        tries = 10
+        for _ in range(tries):
+            res = execution.ec2_exception_coordinator(fun)()
+            assert res == 'continue'
+            try:
+                assert execution.cfg.instance_type != previous_instance
+                return execution.cfg.instance_type
+            except AssertionError:  # just try again
+                continue
+        raise AssertionError('Did not randomly retrieve a new instance type after 10 tries')
+
     execution = Execution(input_dict, dryrun=True)
-    assert execution.cfg.instance_type == 't3.micro'
+    assert 't3.micro' in execution.instance_type_list
     execution.userdata = execution.create_userdata()
-    res = execution.ec2_exception_coordinator(fun)()
-    assert res == 'continue'
-    assert execution.cfg.instance_type == 't2.micro'
-    res = execution.ec2_exception_coordinator(fun)()
-    assert res == 'continue'
-    assert execution.cfg.instance_type == 't3.small'
-    res = execution.ec2_exception_coordinator(fun)()
-    assert res == 'continue'
-    assert execution.cfg.instance_type == 't2.small'
+    new_instance_type = retry_for_new_instance(execution.cfg.instance_type)
+    new_instance_type2 = retry_for_new_instance(new_instance_type)
+    retry_for_new_instance(new_instance_type2)
 
 
+@pytest.mark.skip  # this test is no longer relevant as 'other_instance_types' will randomly spin forever now
 def test_ec2_exception_coordinator5():
     """ec2 exceptions with 'other_instance_types' but had only one option"""
     jobid = create_jobid()
@@ -784,15 +849,20 @@ def test_ec2_exception_coordinator8():
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
-    assert execution.cfg.instance_type == 't2.micro'
+    # this list may change as AWS releases new instances
+    possible_instance_types = ['t2.micro', 't3.micro', 't3.small', 't2.small', 't3.medium', 'm1.small', 't2.medium',
+                               'm3.medium', 't3.large', 'c5.large']
+    for instance in possible_instance_types:
+        assert instance in execution.instance_type_list
+    assert execution.cfg.instance_type in possible_instance_types
     execution.userdata = execution.create_userdata()
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
-    assert execution.cfg.instance_type == 't3.micro'
+    assert execution.cfg.instance_type in possible_instance_types
     execution.userdata = execution.create_userdata()
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
-    assert execution.cfg.instance_type == 't3.small'  # skill t2.micro since it was already tried
+    assert execution.cfg.instance_type in possible_instance_types
 
 
 def test_ec2_exception_coordinator9():
@@ -808,11 +878,16 @@ def test_ec2_exception_coordinator9():
                              'behavior_on_capacity_limit': 'other_instance_types'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
-    assert execution.cfg.instance_type == 't3.small'
+    # this list may change as AWS releases new instances
+    possible_instance_types = ['t3.small', 't2.small', 't3.medium', 't2.medium', 'm3.medium', 't3.large', 'c5.large',
+                               'm5a.large', 'm1.medium', 't2.large']
+    for instance in possible_instance_types:
+        assert instance in execution.instance_type_list
+    assert execution.cfg.instance_type in possible_instance_types
     execution.userdata = execution.create_userdata()
     res = execution.ec2_exception_coordinator(fun)()
     assert res == 'continue'
-    assert execution.cfg.instance_type == 't2.small'
+    assert execution.cfg.instance_type in possible_instance_types
 
 
 def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
@@ -892,7 +967,7 @@ def test_ec2_cost_estimate_medium_nonspot():
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
         'ec2_ondemand_price': 0.0416, 'ebs_root_storage_price': 0.08
-        } 
+        }
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.004384172839506173
 
@@ -908,7 +983,7 @@ def test_ec2_cost_estimate_small_spot():
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08
-        } 
+        }
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.0009326172839506175
 
@@ -924,7 +999,7 @@ def test_ec2_cost_estimate_small_spot_gp3_iops():
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_iops_price': 0.005
-        } 
+        }
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.0012730879629629633
 
@@ -939,7 +1014,7 @@ def test_ec2_cost_estimate_small_spot_gp3_iops_throughput():
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_iops_price': 0.005, 'ebs_throughput_price': 0.04
-        } 
+        }
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.001681652777777778
 
@@ -955,10 +1030,10 @@ def test_ec2_cost_estimate_small_spot_io2_iops():
     postrunjson = AwsemPostRunJson(**postrunjsonobj)
     aws_price_overwrite = {
         'ec2_spot_price': 0.0064, 'ebs_root_storage_price': 0.08, 'ebs_storage_price': 0.125, 'ebs_io2_iops_prices': [0.065, 0.0455, 0.03185]
-        } 
+        }
     estimate, cost_estimate_type = get_cost_estimate(postrunjson, aws_price_overwrite=aws_price_overwrite)
     assert estimate == 0.029224481481481476
-    
+
 
 def test_check_dependency():
     job_statuses = {
