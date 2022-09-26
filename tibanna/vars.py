@@ -3,7 +3,7 @@ import boto3
 import sys
 from datetime import datetime
 from dateutil.tz import tzutc
-from ._version import __version__
+from ._version import __version__, __awsf_image_version__
 from . import create_logger
 
 
@@ -127,8 +127,8 @@ EBS_MOUNT_POINT = '/mnt/data1'
 # Default root EBS size
 DEFAULT_ROOT_EBS_SIZE = 8
 
-# Default awsf image
-DEFAULT_AWSF_IMAGE = '4dndcic/tibanna-awsf:' + __version__
+# Default awsf image - will default to the minor version of the deployed Tibanna
+DEFAULT_AWSF_IMAGE = '4dndcic/tibanna-awsf:' + __awsf_image_version__
 
 SFN_TYPE = 'unicorn'
 LAMBDA_TYPE = ''

@@ -35,6 +35,7 @@ urllib3 = "^1.24"
 requests = "^2.22.0"
 Benchmark-4dn = "^0.5.8"
 tomlkit = "^0.10.0"
+semantic-version = "^2.10.0"
 
 [tool.poetry.dev-dependencies]
 invoke = "0.18.1"
