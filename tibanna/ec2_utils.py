@@ -330,7 +330,7 @@ class Config(SerializableObject):
         # values from config take priority - omit them to get these values from lambda
         if not self.subnet and os.environ.get('SUBNETS', ''):
             possible_subnets = os.environ['SUBNETS'].split(',')
-            self.subnet = choice(possible_subnets)  # randomly select from list
+            self.subnet = possible_subnets  # propagate all subnets here, pick one in launch_args
         if not self.security_group and os.environ.get('SECURITY_GROUPS', ''):
             self.security_group = os.environ['SECURITY_GROUPS'].split(',')[0]
 
