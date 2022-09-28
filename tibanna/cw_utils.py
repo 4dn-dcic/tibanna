@@ -1,3 +1,4 @@
+from re import M
 import boto3, os
 from . import create_logger
 from .utils import (
@@ -117,19 +118,19 @@ class TibannaResource(object):
             max_disk_space_used_GB_chunks_all_pts.append(self.max_disk_space_used_all_pts())
         # writing values as tsv
         input_dict ={
-            'max_mem_used_MB': (max_mem_used_MB_chunks_all_pts, 1),
-            'min_mem_available_MB': (min_mem_available_MB_chunks_all_pts, 1),
-            'max_disk_space_used_GB': (max_disk_space_used_GB_chunks_all_pts, 1),
-            'max_mem_utilization_percent': (max_mem_utilization_percent_chunks_all_pts, 1),
-            'max_disk_space_utilization_percent': (max_disk_space_utilization_percent_chunks_all_pts, 1),
-            'max_cpu_utilization_percent': (max_cpu_utilization_percent_chunks_all_pts, 1)
+            'max_mem_used_MB': max_mem_used_MB_chunks_all_pts,
+            'min_mem_available_MB': min_mem_available_MB_chunks_all_pts,
+            'max_disk_space_used_GB': max_disk_space_used_GB_chunks_all_pts,
+            'max_mem_utilization_percent': max_mem_utilization_percent_chunks_all_pts,
+            'max_disk_space_utilization_percent': max_disk_space_utilization_percent_chunks_all_pts,
+            'max_cpu_utilization_percent': max_cpu_utilization_percent_chunks_all_pts
         }
 
         self.list_files.extend(self.write_top_tsvs(directory, top_content))
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
         # writing html
-        self.list_files.append(self.write_html(instance_type, directory))
+        self.list_files.append(self.write_html(instance_type, directory, input_dict))
 
     def upload(self, bucket, prefix='', lock=True):
         logger.debug("list_files: " + str(self.list_files))
@@ -324,11 +325,105 @@ class TibannaResource(object):
         pts = [(r['Average'], r['Timestamp']) for r in res['Datapoints']]
         return[p[0] for p in sorted(pts, key=lambda x: x[1])]
 
+    
+    @staticmethod
+    def extract_metrics_data(file_contents):
+      # This function takes a file contents string and parses it column wise.
+      # It returns the header and the data in a way that can be injected into JS code
+      # `data` is a Python dict, that contains all that data for later processing
+      # outside of this function.
+      columns = []
+      columns_js = "[]"
+      data = {}
+      data_js = "[]"
+
+      is_header_line = True
+      for line in file_contents.rstrip().split('\n'):
+          if is_header_line:
+              for k,col in enumerate(line.split('\t')):
+                  columns.append(col)
+                  data[col] = []
+              is_header_line = False
+              continue
+          else:
+              for k, col in enumerate(line.split('\t')):
+                  try:
+                      float(col) # check if it's a number, still add it as string though
+                      data[columns[k]].append(col)
+                  except:
+                      continue
+
+      columns.pop(0) # Remove the 'interval' column
+      if len(columns)>0:
+          columns_js = "["+(",".join(columns))+"]"
+          data_js = "["
+          for col in columns:
+              data_js += "[" + (",".join(data[col])) + "],"
+          data_js = data_js[:-1] # remove the last ,
+          data_js += "]"
+
+      return columns_js, columns, data_js, data
+
+    @staticmethod
+    def format_metrics_tsv_data(metrics_data):
+        max_mem_used_MB = [str(k) for k in metrics_data['max_mem_used_MB']]
+        max_mem_used_MB_js = "[" + (",".join(max_mem_used_MB)) + "]"
+        min_mem_available_MB = [str(k) for k in metrics_data['min_mem_available_MB']]
+        min_mem_available_MB_js = "[" + (",".join(min_mem_available_MB)) + "]"
+        max_disk_space_used_GB = [str(k) for k in metrics_data['max_disk_space_used_GB']]
+        max_disk_space_used_GB_js = "[" + (",".join(max_disk_space_used_GB)) + "]"
+
+        max_mem_utilization_percent = [str(k) for k in metrics_data['max_mem_utilization_percent']]
+        max_mem_utilization_percent_js = "[" + (",".join(max_mem_utilization_percent)) + "]"
+        max_disk_space_utilization_percent = [str(k) for k in metrics_data['max_disk_space_utilization_percent']]
+        max_disk_space_utilization_percent_js = "[" + (",".join(max_disk_space_utilization_percent)) + "]"
+        max_cpu_utilization_percent = [str(k) for k in metrics_data['max_cpu_utilization_percent']]
+        max_cpu_utilization_percent_js = "[" + (",".join(max_cpu_utilization_percent)) + "]"
+
+        return (
+            max_mem_used_MB_js,
+            min_mem_available_MB_js,
+            max_disk_space_used_GB_js,
+            max_mem_utilization_percent_js,
+            max_disk_space_utilization_percent_js,
+            max_cpu_utilization_percent_js,
+        )
+
     # functions to create reports and html
-    def write_html(self, instance_type, directory):
+    def write_html(self, instance_type, directory, metrics):
         self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         cost_estimate = '---' if self.cost_estimate == 0.0 else "{:.5f}".format(self.cost_estimate)
+        
+        metrics_contents = ""
+        with open(directory + '/' + 'metrics.tsv') as f:
+          metrics_contents = f.read()
+        (
+            metrics_col_js,
+            metrics_col,
+            metrics_data_js,
+            metrics_data,
+        ) = self.extract_metrics_data(metrics_contents)
+        
+        (
+          max_mem_used_MB_js,
+          min_mem_available_MB_js,
+          max_disk_space_used_GB_js,
+          max_mem_utilization_percent_js,
+          max_disk_space_utilization_percent_js,
+          max_cpu_utilization_percent_js,
+        ) = self.format_metrics_tsv_data(metrics_data)
+        
+        top_cpu_contents = ""
+        with open(directory + '/' + 'top_cpu.tsv') as f:
+          top_cpu_contents = f.read()
+        cpu_columns_js, cpu_columns, cpu_data_js, cpu_data = self.extract_metrics_data(top_cpu_contents)
+
+        top_mem_contents = ""
+        with open(directory + '/' + 'top_mem.tsv') as f:
+          top_mem_contents = f.read()
+        mem_columns_js, mem_columns, mem_data_js, mem_data = self.extract_metrics_data(top_mem_contents)
+
         with open(filename, 'w') as fo:
             fo.write(self.create_html() % (self.report_title, instance_type,
                              str(self.max_mem_used_MB), str(self.min_mem_available_MB), str(self.max_disk_space_used_GB),
@@ -336,7 +431,11 @@ class TibannaResource(object):
                              str(self.max_disk_space_utilization_percent),
                              '---', # cost placeholder for now
                              cost_estimate, self.cost_estimate_type,
-                             str(self.start), str(self.end), str(self.end - self.start)
+                             str(self.start), str(self.end), str(self.end - self.start),
+                             max_mem_used_MB_js, min_mem_available_MB_js, max_disk_space_used_GB_js,
+                             max_mem_utilization_percent_js, max_disk_space_utilization_percent_js, max_cpu_utilization_percent_js,
+                             cpu_columns_js, cpu_data_js,
+                             mem_columns_js, mem_data_js
                             )
                     )
         return(filename)
@@ -363,13 +462,41 @@ class TibannaResource(object):
         estimated_cost = str(estimated_cost) if estimated_cost > 0.0 else '---'
         cost_estimate_type = d['Estimated_Cost_Type'] if 'Estimated_Cost_Type' in d else "NA"
         instance = d['Instance_Type'] if 'Instance_Type' in d else '---'
+
+        metrics_contents = read_s3(bucket, os.path.join(prefix, 'metrics.tsv'))
+        (
+            metrics_col_js,
+            cpu_metrics_col,
+            metrics_data_js,
+            metrics_data,
+        ) = TibannaResource.extract_metrics_data(metrics_contents)
+        
+        (
+          max_mem_used_MB_js,
+          min_mem_available_MB_js,
+          max_disk_space_used_GB_js,
+          max_mem_utilization_percent_js,
+          max_disk_space_utilization_percent_js,
+          max_cpu_utilization_percent_js,
+        ) = TibannaResource.format_metrics_tsv_data(metrics_data)
+
+        top_cpu_contents = read_s3(bucket, os.path.join(prefix, 'top_cpu.tsv'))
+        cpu_columns_js, cpu_columns, cpu_data_js, cpu_data = TibannaResource.extract_metrics_data(top_cpu_contents)
+
+        top_mem_contents = read_s3(bucket, os.path.join(prefix, 'top_mem.tsv'))
+        mem_columns_js, mem_columns, mem_data_js, mem_data = TibannaResource.extract_metrics_data(top_mem_contents)
+
         # writing
         html_content = cls.create_html() % (cls.report_title, instance,
                              d['Maximum_Memory_Used_Mb'], d['Minimum_Memory_Available_Mb'], d['Maximum_Disk_Used_Gb'],
                              d['Maximum_Memory_Utilization'], d['Maximum_CPU_Utilization'], d['Maximum_Disk_Utilization'],
                              cost,
                              estimated_cost, cost_estimate_type,
-                             str(starttime), str(endtime), str(endtime-starttime)
+                             str(starttime), str(endtime), str(endtime-starttime),
+                             max_mem_used_MB_js, min_mem_available_MB_js, max_disk_space_used_GB_js,
+                             max_mem_utilization_percent_js, max_disk_space_utilization_percent_js, max_cpu_utilization_percent_js,
+                             cpu_columns_js, cpu_data_js,
+                             mem_columns_js, mem_data_js
                             )
         s3_key = os.path.join(prefix, 'metrics.html')
         if S3_ENCRYT_KEY_ID:
@@ -395,20 +522,15 @@ class TibannaResource(object):
         with open(filename, 'w') as fo:
             # preparing data and writing header
             data_unpacked = []
-            for i, (key, (arg, int)) in enumerate(kwargs.items()):
+            for i, (key, arg) in enumerate(kwargs.items()):
                 if i == 0:
                     fo.write('interval\t' + key)
                 else:
                     fo.write('\t' + key)
                 tmp = []
-                if int == 1:
-                    [tmp.extend(a) for a in arg]
-                    data_unpacked.append(tmp[:])
-                else: # interval is 5
-                    [tmp.extend(a) for a in arg]
-                    tmp_ext = []
-                    [tmp_ext.extend([t, '-', '-', '-', '-']) for t in tmp]
-                    data_unpacked.append(tmp_ext[:])
+                [tmp.extend(a) for a in arg]
+                data_unpacked.append(tmp[:])
+                
             fo.write('\n')
             # writing table
             for i in range(len(data_unpacked[0])):
@@ -1042,80 +1164,23 @@ class TibannaResource(object):
                   }
                 }
                 /* Reading data and Plotting */
-                d3.tsv("metrics.tsv").then(function(data) {
-                    return data.map(function(d){
-                      if (Number.isNaN(parseFloat(d.max_mem_used_MB)) == false) {
-                        return parseFloat(d.max_mem_used_MB);
-                      }
-                    });
-                  }).then(function(d){
-                    line_plot(d, 'chart_max_mem', 'Memory used [Mb]');
-                });
-                d3.tsv("metrics.tsv").then(function(data) {
-                    return data.map(function(d){
-                      if (Number.isNaN(parseFloat(d.min_mem_available_MB)) == false) {
-                        return parseFloat(d.min_mem_available_MB);
-                      }
-                    });
-                  }).then(function(d){
-                    line_plot(d, 'chart_min_mem', 'Memory available [Mb]');
-                });
-                d3.tsv("metrics.tsv").then(function(data) {
-                    return data.map(function(d){
-                      if (Number.isNaN(parseFloat(d.max_disk_space_used_GB)) == false) {
-                        return parseFloat(d.max_disk_space_used_GB);
-                      }
-                    });
-                  }).then(function(d){
-                    line_plot(d, 'chart_disk', 'Disk space used [Gb]');
-                });
-                d3.tsv("metrics.tsv").then(function(data) {
-                    var data_array = [[], [], []]
-                    data.forEach(function(d) {
-                        if (Number.isNaN(parseFloat(d.max_mem_utilization_percent)) == false) {
-                          data_array[0].push(parseFloat(d.max_mem_utilization_percent));
-                        }
-                        if (Number.isNaN(parseFloat(d.max_disk_space_utilization_percent)) == false) {
-                          data_array[1].push(parseFloat(d.max_disk_space_utilization_percent));
-                        }
-                        if (Number.isNaN(parseFloat(d.max_cpu_utilization_percent)) == false) {
-                          data_array[2].push(parseFloat(d.max_cpu_utilization_percent));
-                        }
-                    });
-                    return data_array;
-                  }).then(function(d_a){
-                    percent_plot(d_a, 'chart_percent');
-                });
-                d3.tsv("top_cpu.tsv").then(function(data) {
-                    var data_array = [];
-                    var columns = data.columns
-                    columns.shift()
-                    for ( col=0; col<columns.length; col++){
-                        data_array[col] = []
-                        data.forEach(function(d) {
-                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
-                              data_array[col].push(parseFloat(d[columns[col]]));
-                            }
-                        });
-                    }
-                    bar_plot(data_array, 'bar_chart_cpu', 'Total CPU (%%) [100%% = 1 CPU]');
-                    bar_plot_legend(columns, 'bar_chart_cpu_legend');
-                });
-                d3.tsv("top_mem.tsv").then(function(data) {
-                    var data_array = [];
-                    var columns = data.columns
-                    columns.shift()
-                    for ( col=0; col<columns.length; col++){
-                        data_array[col] = []
-                        data.forEach(function(d) {
-                            if (Number.isNaN(parseFloat(d[columns[col]])) == false) {
-                              data_array[col].push(parseFloat(d[columns[col]]));
-                            }
-                        });
-                    }
-                    bar_plot(data_array, 'bar_chart_mem', 'Total Mem (%% total available memory)');
-                    bar_plot_legend(columns, 'bar_chart_mem_legend');
-                });
+                line_plot(%s, 'chart_max_mem', 'Memory used [Mb]');
+                line_plot(%s, 'chart_min_mem', 'Memory available [Mb]');
+                line_plot(%s, 'chart_disk', 'Disk space used [Gb]');
+
+                var resources_utilization = [%s, %s, %s];
+                percent_plot(resources_utilization, 'chart_percent');
+
+                var cpu_columns = %s;
+                var cpu_data = %s;
+                bar_plot(cpu_data, 'bar_chart_cpu', 'Total CPU (%%) [100%% = 1 CPU]');
+                bar_plot_legend(cpu_columns, 'bar_chart_cpu_legend');
+
+                var mem_columns = %s;
+                var mem_data = %s;
+                bar_plot(mem_data, 'bar_chart_mem', 'Total Mem (%% total available memory)');
+                bar_plot_legend(mem_columns, 'bar_chart_mem_legend');
+
                 </script>\
             """
         return(html)
