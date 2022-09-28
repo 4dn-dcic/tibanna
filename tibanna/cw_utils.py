@@ -130,7 +130,7 @@ class TibannaResource(object):
         self.list_files.append(self.write_tsv(directory, **input_dict))
         self.list_files.append(self.write_metrics(instance_type, directory))
         # writing html
-        self.list_files.append(self.write_html(instance_type, directory, input_dict))
+        self.list_files.append(self.write_html(instance_type, directory))
 
     def upload(self, bucket, prefix='', lock=True):
         logger.debug("list_files: " + str(self.list_files))
@@ -390,7 +390,7 @@ class TibannaResource(object):
         )
 
     # functions to create reports and html
-    def write_html(self, instance_type, directory, metrics):
+    def write_html(self, instance_type, directory):
         self.check_mkdir(directory)
         filename = directory + '/' + 'metrics.html'
         cost_estimate = '---' if self.cost_estimate == 0.0 else "{:.5f}".format(self.cost_estimate)
