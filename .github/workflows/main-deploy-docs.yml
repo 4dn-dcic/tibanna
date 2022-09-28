@@ -12,7 +12,7 @@ jobs:
   # This workflow contains a single job called "build"
   build:
     # The type of runner that the job will run on
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -21,5 +21,6 @@ jobs:
       - name: Docs
         env:
           DOCS_TOKEN: ${{ secrets.DOCS_TOKEN }}
+          TIBANNA_VERSION: 2.2.1
         run: curl -X POST -d "branches=master" -d "token=$DOCS_TOKEN" https://readthedocs.org/api/v2/webhook/tibanna/141616/ 
 
