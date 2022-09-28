@@ -1,4 +1,3 @@
-from re import M
 import boto3, os
 from . import create_logger
 from .utils import (
