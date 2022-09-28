@@ -327,29 +327,27 @@ class TibannaResource(object):
     
     @staticmethod
     def extract_metrics_data(file_contents):
-      # This function takes a file contents string and parses it column wise.
-      # It returns the header and the data in a way that can be injected into JS code
-      # `data` is a Python dict, that contains all that data for later processing
-      # outside of this function.
-      columns = []
-      columns_js = "[]"
-      data = {}
-      data_js = "[]"
+      """
+      This function takes a file contents string and parses it column wise.
+      It returns the header and the data in a way that can be injected into JS code
+      `data` is a Python dict, that contains all that data for later processing
+      outside of this function.
+      """
+      columns, data = [], {}
+      columns_js, data_js = "[]", "[]"
 
-      is_header_line = True
-      for line in file_contents.rstrip().split('\n'):
-          if is_header_line:
+      for idx, line in enumerate(file_contents.rstrip().split('\n')):
+          if idx == 0:
               for k,col in enumerate(line.split('\t')):
                   columns.append(col)
                   data[col] = []
-              is_header_line = False
-              continue
           else:
               for k, col in enumerate(line.split('\t')):
                   try:
                       float(col) # check if it's a number, still add it as string though
                       data[columns[k]].append(col)
-                  except:
+                  except ValueError:
+                      logger.info("Cannot convert %s to float in column %s" % (col, columns[k]))
                       continue
 
       columns.pop(0) # Remove the 'interval' column
