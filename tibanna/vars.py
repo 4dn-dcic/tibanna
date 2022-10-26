@@ -142,6 +142,7 @@ BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
 BASE_METRICS_URL = 'https://%s.s3.amazonaws.com/%s.metrics/metrics.html'
 
+
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):
     return BASE_ARN % ('stateMachine', sfn)
 

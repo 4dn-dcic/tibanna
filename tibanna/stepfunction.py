@@ -22,8 +22,8 @@ class StepFunctionUnicorn(object):
         },
         {
             "ErrorEquals": ["EC2InstanceLimitWaitException"],
-            "IntervalSeconds": 600,
-            "MaxAttempts": 1008,  # 1 wk
+            "IntervalSeconds": 300,  # dropped since we now parametrize on subnets, instance types
+            "MaxAttempts": 2016,  # still try for 1 week
             "BackoffRate": 1.0
         },
         lambda_error_retry_condition
