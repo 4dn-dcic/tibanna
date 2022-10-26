@@ -21,7 +21,7 @@ class Jobs(object):
     def status(job_ids=None, exec_arns=None):
         res = dict()
         statuses = dict()
-        if job_ids: 
+        if job_ids:
             for j in job_ids:
                 statuses.update({j: Job(job_id=j).check_status()})
         if exec_arns:
@@ -116,6 +116,7 @@ class Job(object):
                     # first try dynanmodb to get logbucket
                     self._log_bucket = self.get_log_bucket_from_job_id(self.job_id)
                 except Exception as e:
+                    logger.warning(f'Unable to retrieve metadata from dynamo: {str(e)}')
                     if self.sfn:
                         self._log_bucket = self.get_log_bucket_from_job_id_and_sfn_wo_dd(self.job_id, self.sfn)
             if not self._log_bucket:
@@ -130,6 +131,8 @@ class Job(object):
     def get_log_bucket_from_job_id_and_sfn_wo_dd(job_id, sfn):
         stateMachineArn = STEP_FUNCTION_ARN(sfn)
         sf = boto3.client('stepfunctions')
+        logbucket = None  # should be resolved below
+        logger.warning(f'Could not get job metadata from DynamoDB - falling back to sfn {stateMachineArn}')
         res = sf.list_executions(stateMachineArn=stateMachineArn)
         while True:
             if 'executions' not in res or not res['executions']:
@@ -189,7 +192,7 @@ class Job(object):
             raise Exception("Can't find exec_name from dynamoDB for job_id %s" % job_id)
         sfn = ddinfo.get('Step Function', '')
         if not cls.stepfunction_exists(sfn + "_costupdater"):
-            raise Exception("Costupdater step function does not exist." + 
+            raise Exception("Costupdater step function does not exist." +
                             "To use costupdater, upgrade your tibanna to >=1.1 and redeploy with -C option!")
         exec_arn = EXECUTION_ARN(exec_name, sfn + "_costupdater")
         return exec_arn
@@ -221,7 +224,6 @@ class Job(object):
             while True:
                 if 'executions' not in res or not res['executions']:
                     break
-                breakwhile = False
                 for exc in res['executions']:
                     desc = sf.describe_execution(executionArn=exc['executionArn'])
                     if job_id == str(json.loads(desc['input'])['jobid']):
@@ -249,16 +251,16 @@ class Job(object):
     @staticmethod
     def get_dd(job_id):
         '''return raw content from dynamodb for a given job id'''
-        ddres = dict()
-        try:
-            dd = boto3.client('dynamodb')
-            ddres = dd.query(TableName=DYNAMODB_TABLE,
-                             KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
-                                                       'ComparisonOperator': 'EQ'}})
-            return ddres
-        except Exception as e:
-            logger.warning("DynamoDB entry not found: %s" % e)
-            return None
+        for _ in range(3):  # retry this just in case
+            try:
+                dd = boto3.client('dynamodb')
+                ddres = dd.query(TableName=DYNAMODB_TABLE,
+                                 KeyConditions={'Job Id': {'AttributeValueList': [{'S': job_id}],
+                                                           'ComparisonOperator': 'EQ'}})
+                return ddres
+            except Exception as e:
+                logger.error("DynamoDB entry not found: %s" % e)
+        return None
 
     @staticmethod
     def get_info_from_dd(ddres):
@@ -282,34 +284,39 @@ class Job(object):
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists
-            res = dydb.describe_table(TableName=DYNAMODB_TABLE)
+            dydb.describe_table(TableName=DYNAMODB_TABLE)
         except Exception as e:
             if verbose:
-                logger.info("Not adding to dynamo table: %s" % e)
+                logger.error("Not adding to dynamo table: %s" % e)
             return
-        try:
-            response = dydb.put_item(
-                TableName=DYNAMODB_TABLE,
-                Item={
-                    'Job Id': {
-                        'S': job_id
-                    },
-                    'Execution Name': {
-                        'S': execution_name
-                    },
-                    'Step Function': {
-                        'S': sfn
-                    },
-                    'Log Bucket': {
-                        'S': logbucket
-                    },
-                    'Time Stamp': {
-                        'S': time_stamp
+        for _ in range(5):  # try to add to dynamo 5 times
+            try:
+                response = dydb.put_item(
+                    TableName=DYNAMODB_TABLE,
+                    Item={
+                        'Job Id': {
+                            'S': job_id
+                        },
+                        'Execution Name': {
+                            'S': execution_name
+                        },
+                        'Step Function': {
+                            'S': sfn
+                        },
+                        'Log Bucket': {
+                            'S': logbucket
+                        },
+                        'Time Stamp': {
+                            'S': time_stamp
+                        }
                     }
-                }
-            )
-            if verbose:
-                logger.info("Successfully put item to dynamoDB: " + str(response))
-        except Exception as e:
-            raise(e)
+                )
+                if 'CapacityUnits' in response['ConsumedCapacity']:
+                    if verbose:
+                        logger.warning("Successfully put item to dynamoDB: " + str(response))
+                    break
+                else:
+                    logger.error(f"Encountered an unknown error inserting into dynamo: {response}")
+            except Exception as e:
+                logger.error(f"Encountered exception inserting into dynamoDB: {e}")
 
