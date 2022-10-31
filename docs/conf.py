@@ -15,7 +15,6 @@
 
 # import sys
 # import os
-from tibanna._version import __version__ 
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -68,7 +67,16 @@ def _read(*parts, **kwargs):
     return text
 
 
-version = __version__
+def get_version():
+    specs = open("../pyproject.toml").readlines()
+    for spec in specs:
+        if "version =" in spec:
+            return spec.split("\"")[1]
+    return "0.0.0"
+
+
+version = get_version()
+
 # The full version, including alpha/beta/rc tags.
 release = version
 
