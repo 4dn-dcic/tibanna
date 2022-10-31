@@ -14,7 +14,7 @@
 # serve to show the default.
 
 # import sys
-import os
+# import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -67,10 +67,15 @@ def _read(*parts, **kwargs):
     return text
 
 
-version = os.environ.get('TIBANNA_VERSION', False)
+def get_version():
+    specs = open("../pyproject.toml").readlines()
+    for spec in specs:
+        if "version =" in spec:
+            return spec.split("\"")[1]
+    return "0.0.0"
 
-if not version:
-    raise Exception('Could not determine Tibanna version when building docs.')
+
+version = get_version()
 
 # The full version, including alpha/beta/rc tags.
 release = version
