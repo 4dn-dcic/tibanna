@@ -21,6 +21,6 @@ jobs:
       - name: Docs
         env:
           DOCS_TOKEN: ${{ secrets.DOCS_TOKEN }}
-          TIBANNA_VERSION: 2.2.3
+          TIBANNA_VERSION: 2.2.3b1
         run: curl -X POST -d "branches=build_docs_fix" -d "token=$DOCS_TOKEN" https://readthedocs.org/api/v2/webhook/tibanna/141616/ 
 
