@@ -71,7 +71,7 @@ class IAM(object):
     @property
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
-                'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
+                'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc', 'ec2_fleet',
                 'executions', 'pricing', 'vpc', 'kms']
 
     def policy_arn(self, policy_type):
@@ -94,6 +94,7 @@ class IAM(object):
                     'cw_dashboard': 'cw_dashboard',
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc',
+                    'ec2_fleet': 'ec2_fleet',
                     'pricing': 'pricing',
                     'executions': 'executions',
                     'vpc': 'vpc_access',
@@ -115,7 +116,8 @@ class IAM(object):
                        'cloudwatch_metric': self.policy_cloudwatch_metric,
                        'cw_dashboard': self.policy_cw_dashboard,
                        'dynamodb': self.policy_dynamodb,
-                       'ec2_desc': self.policy_ec2_desc_policy,
+                       'ec2_desc': self.policy_ec2_desc,
+                       'ec2_fleet': self.policy_ec2_fleet,
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
                        'vpc': self.policy_vpc_access,
@@ -156,7 +158,7 @@ class IAM(object):
         # returns a dictionary with role_type as keys
         # adding vpc access to only check_task since run_task has full ec2 access
         run_task_custom_policy_types = base + ['list', 'cloudwatch', 'passrole', 'dynamodb',
-                                               'executions', 'cw_dashboard']
+                                               'executions', 'cw_dashboard', 'ec2_fleet']
         check_task_custom_policy_types = base + ['cloudwatch_metric', 'cloudwatch', 'ec2_desc',
                                                  'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
@@ -392,6 +394,24 @@ class IAM(object):
         return policy
 
     @property
+    def policy_ec2_fleet(self):
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "iam:ListRoles",
+                        "iam:PassRole",
+                        "iam:ListInstanceProfiles"
+                    ],
+                    "Resource":"*"
+                }
+            ]
+        }
+        return policy
+
+    @property
     def policy_cw_dashboard(self):
         policy = {
             "Version": "2012-10-17",
@@ -427,7 +447,7 @@ class IAM(object):
         return policy
 
     @property
-    def policy_ec2_desc_policy(self):
+    def policy_ec2_desc(self):
         policy = {
             "Version": "2012-10-17",
             "Statement": [

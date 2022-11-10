@@ -38,30 +38,35 @@ if not AWS_REGION:
 # Tibanna AMI info
 # Override this mapping to use a custom AMI scheme
 AMI_PER_REGION = {
-    'us-east-1': 'ami-06e2266f85063aabc',  # latest as of Oct 25 2021
-    'us-east-2': 'ami-03a4e3e84b6a1813d',
-    'us-west-1': 'ami-0c5e8147be760a354',
-    'us-west-2': 'ami-068589fed9c8d5950',
-    'ap-south-1': 'ami-05ef59bc4f359c93b',
-    'ap-northeast-2': 'ami-0d8618a76aece8a8e',
-    'ap-southeast-1': 'ami-0c22dc3b05714bda1',
-    'ap-southeast-2': 'ami-03dc109bbf412aac5',
-    'ap-northeast-1': 'ami-0f4c520515c41ff46',
-    'ca-central-1': 'ami-01af127710fadfe74',
-    'eu-central-1': 'ami-0887bcb1c901c1769',
-    'eu-west-1': 'ami-08db59692e4371ea6',
-    'eu-west-2': 'ami-036d3ce7a21e07012',
-    'eu-west-3': 'ami-0cad0ec4160a6b940',
-    'eu-north-1': 'ami-00a6f0f9fee951aa0',
-    'sa-east-1': 'ami-0b2164f9680f97099',
-    'me-south-1': 'ami-03479b7a590f97945',
-    'af-south-1': 'ami-080baa4ec59c456aa',
-    'ap-east-1': 'ami-0a9056eb817bc3928',
-    'eu-south-1': 'ami-0a72279e56849415e'
+    'x86': {
+        'us-east-1': 'ami-06e2266f85063aabc',  # latest as of Oct 25 2021
+        'us-east-2': 'ami-03a4e3e84b6a1813d',
+        'us-west-1': 'ami-0c5e8147be760a354',
+        'us-west-2': 'ami-068589fed9c8d5950',
+        'ap-south-1': 'ami-05ef59bc4f359c93b',
+        'ap-northeast-2': 'ami-0d8618a76aece8a8e',
+        'ap-southeast-1': 'ami-0c22dc3b05714bda1',
+        'ap-southeast-2': 'ami-03dc109bbf412aac5',
+        'ap-northeast-1': 'ami-0f4c520515c41ff46',
+        'ca-central-1': 'ami-01af127710fadfe74',
+        'eu-central-1': 'ami-0887bcb1c901c1769',
+        'eu-west-1': 'ami-08db59692e4371ea6',
+        'eu-west-2': 'ami-036d3ce7a21e07012',
+        'eu-west-3': 'ami-0cad0ec4160a6b940',
+        'eu-north-1': 'ami-00a6f0f9fee951aa0',
+        'sa-east-1': 'ami-0b2164f9680f97099',
+        'me-south-1': 'ami-03479b7a590f97945',
+        'af-south-1': 'ami-080baa4ec59c456aa',
+        'ap-east-1': 'ami-0a9056eb817bc3928',
+        'eu-south-1': 'ami-0a72279e56849415e'
+    },
+    'Arm': {
+        'us-east-1': 'ami-0e12894d2dc91ab8c',
+    }
 }
-if AWS_REGION not in AMI_PER_REGION:
-    logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
-AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
+# if AWS_REGION not in AMI_PER_REGION:
+#     logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
+# AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 
 AWS_REGION_NAMES = {
     'us-east-1': 'US East (N. Virginia)',

@@ -2,6 +2,7 @@
 import json
 import time
 import os
+import base64
 import logging
 import boto3
 import botocore
@@ -19,7 +20,7 @@ from .vars import (
     S3_ACCESS_ARN,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
-    AMI_ID,
+    AMI_PER_REGION,
     DYNAMODB_TABLE,
     DEFAULT_ROOT_EBS_SIZE,
     TIBANNA_AWSF_DIR,
@@ -35,8 +36,7 @@ from .exceptions import (
     EC2InstanceLimitWaitException,
     DependencyStillRunningException,
     DependencyFailedException,
-    UnsupportedCWLVersionException,
-    PricingRetrievalException
+    UnsupportedCWLVersionException
 )
 from .base import SerializableObject
 from .nnested_array import flatten, run_on_nested_arrays1
@@ -325,7 +325,9 @@ class Config(SerializableObject):
         if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
             self.ebs_size_as_is = False
         if not hasattr(self, 'ami_id'):
-            self.ami_id = AMI_ID
+            #self.ami_id = self.get_default_amis(self.instance_type)
+            self.ami_id = ""
+            
         # special handling for subnet, SG if not set already pull from env
         # values from config take priority - omit them to get these values from lambda
         if not self.subnet and os.environ.get('SUBNETS', ''):
@@ -350,7 +352,36 @@ class Config(SerializableObject):
     def fill_other_fields(self, app_name=''):
         self.job_tag = app_name
 
+    # def get_default_amis(self, instance_types):
+    #     amis = []
+    #     instance_types_list = instance_types
+    #     if instance_types == '': # instance type not supplied in config
+    #         return ''
+    #     elif isinstance(instance_types, str):
+    #         instance_types_list = [instance_types]
 
+    #     ec2 = boto3.client('ec2')
+    #     results = ec2.describe_instance_types(
+    #          InstanceTypes=instance_types_list
+    #     )
+    #     instance_type_ami_mapping = {}
+    #     for result in results['InstanceTypes']:
+    #         arch = result['ProcessorInfo']['SupportedArchitectures'][0]
+    #         ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
+    #         if ami:
+    #             instance_type_ami_mapping[result['InstanceType']] = ami
+    #         else:
+    #             raise Exception(f"No AMI found for {result['InstanceType']} ({arch}) in {AWS_REGION}")
+
+    #     for instance_type in instance_types:
+    #         ami = instance_type_ami_mapping.get(instance_type, '')
+    #         if not ami: # This should not happen. The boto3 call would have already thrown an Exception.
+    #             raise Exception(f"Could not assign an AMI to instance {instance_type}")
+    #         amis.append(ami)
+
+    #     return amis
+
+    
 class Execution(object):
 
     def __init__(self, input_dict, dryrun=False):
@@ -359,11 +390,7 @@ class Execution(object):
         self.jobid = self.unicorn_input.jobid
         self.args = self.unicorn_input.args
         self.cfg = self.unicorn_input.cfg
-        # store user-specified values for instance type, EBS_optimized and ebs_size
-        # separately, since the values in cfg will change.
-        self.user_specified_instance_type = self.cfg.instance_type
-        self.user_specified_EBS_optimized = self.cfg.EBS_optimized
-        self.user_specified_ebs_size = self.cfg.ebs_size
+
         # get benchmark if available
         self.input_size_in_bytes = self.get_input_size_in_bytes()
         if self.cfg.use_benchmark:
@@ -372,8 +399,7 @@ class Execution(object):
         else:
             logger.debug('self.cfg.use_benchmark = ' + str(self.cfg.use_benchmark))
         logger.debug('self.cfg.as_dict() = ' + str(self.cfg.as_dict()))
-        self.init_instance_type_list()
-        self.update_config_instance_type()
+        self.create_instance_type_list()
         self.update_config_ebs_size()
 
     @property
@@ -395,26 +421,19 @@ class Execution(object):
         if self.cfg.cloudwatch_dashboard:
             self.create_cloudwatch_dashboard('awsem-' + self.jobid)
 
-    def init_instance_type_list(self):
-        instance_type = self.user_specified_instance_type
+    def create_instance_type_list(self):
+        instance_type = self.cfg.instance_type
         instance_type_dlist = []
         # user directly specified instance type
         if instance_type:
             if isinstance(instance_type, str):
-                if self.user_specified_EBS_optimized:
-                    instance_type_dlist.append({'instance_type': instance_type,
-                                                'EBS_optimized': self.user_specified_EBS_optimized})
-                else:
-                    instance_type_dlist.append({'instance_type': instance_type,
-                                                'EBS_optimized': False})
+                # Note that the EBS_optimized flag is set on the launch template level
+                instance_type_dlist.append({'instance_type': instance_type,
+                                            'EBS_optimized': self.cfg.EBS_optimized})
             elif isinstance(instance_type, list):
                 for potential_type in instance_type:
-                    if self.user_specified_EBS_optimized:
-                        instance_type_dlist.append({'instance_type': potential_type,
-                                                    'EBS_optimized': self.user_specified_EBS_optimized})
-                    else:
-                        instance_type_dlist.append({'instance_type': potential_type,
-                                                    'EBS_optimized': False})
+                    instance_type_dlist.append({'instance_type': potential_type,
+                                                'EBS_optimized': self.cfg.EBS_optimized})
 
         # user specified mem and cpu
         if self.cfg.mem and self.cfg.cpu:
@@ -426,40 +445,40 @@ class Execution(object):
             nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
             instance_type_dlist.extend(nonredundant_list)
         # user specifically wanted EBS_optimized instances
-        if self.user_specified_EBS_optimized:
+        if self.cfg.EBS_optimized:
             instance_type_dlist = [i for i in instance_type_dlist if i['EBS_optimized']]
         # add benchmark only if there is no user specification
         if len(instance_type_dlist) == 0 and self.benchmark['instance_type']:
             instance_type_dlist.append(self.benchmark)
         self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
-        self.instance_type_info = {i['instance_type']: i for i in instance_type_dlist}
-        self.choose_next_instance_type()  # randomly choose
+        # Add corresponding AMIs to each instance type so that they are available in self.instance_type_info
+        instance_type_ami_mapping = self.create_instance_type_ami_mapping(self.instance_type_list)
+        for instance in instance_type_dlist:
+            instance['ami_id'] = instance_type_ami_mapping[instance['instance_type']]
+        self.instance_type_infos = {i['instance_type']: i for i in instance_type_dlist}
 
-    @property
-    def current_instance_type(self):
-        if len(self.instance_type_list) > self.current_instance_type_index:
-            return self.instance_type_list[self.current_instance_type_index]
-        else:
-            return ''
+    def create_instance_type_ami_mapping(self, instance_types):
+        instance_type_ami_mapping = {}
+        if self.cfg.ami_id:
+            # if a user supplied an ami_id, it will be used for every instance. 
+            # Will be problematic if the instance list contains x86 and Arm instances
+            for instance_type in instance_types:
+                instance_type_ami_mapping[instance_type] = self.cfg.ami_id
+            return instance_type_ami_mapping
 
-    @property
-    def current_EBS_optimized(self):
-        if self.current_instance_type:
-            return self.instance_type_info[self.current_instance_type]['EBS_optimized']
-        else:
-            return ''
+        ec2 = boto3.client('ec2')
+        results = ec2.describe_instance_types(
+            InstanceTypes=instance_types
+        )
+        for result in results['InstanceTypes']:
+            arch = result['ProcessorInfo']['SupportedArchitectures'][0]
+            ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
+            if ami:
+                instance_type_ami_mapping[result['InstanceType']] = ami
+            else:
+                raise Exception(f"No AMI found for {result['InstanceType']} ({arch}) in {AWS_REGION}")
 
-    def choose_next_instance_type(self):
-        """ Previously we would start to launch jobs at index 0 and increment, but now we will randomly pick
-            from the list
-        """
-        self.current_instance_type_index = choice(range(0, len(self.instance_type_list)))
-
-    def update_config_instance_type(self):
-        # deal with missing fields
-        self.cfg.instance_type = self.current_instance_type
-        if not self.user_specified_EBS_optimized:
-            self.cfg.EBS_optimized = self.current_EBS_optimized
+        return instance_type_ami_mapping
 
     @property
     def total_input_size_in_gb(self):
@@ -486,7 +505,7 @@ class Execution(object):
                 self.cfg.ebs_size = round(self.cfg.ebs_size) + 1
             else:
                 self.cfg.ebs_size = round(self.cfg.ebs_size)
-        if not self.user_specified_ebs_size:  # use benchmark only if not set by user
+        if not self.cfg.ebs_size:  # use benchmark only if not set by user
             self.cfg.ebs_size = self.benchmark['ebs_size']
         if not self.cfg.ebs_size_as_is:
             self.cfg.ebs_size += 5  # account for docker image size
@@ -536,65 +555,43 @@ class Execution(object):
         return time.strftime("%Y%m%d-%H:%M:%S-%Z")
 
     def launch_and_get_instance_id(self):
-        try:  # capturing stdout from the launch command
-            os.environ['AWS_DEFAULT_REGION'] = AWS_REGION
-            ec2 = boto3.client('ec2')
-        except Exception as e:
-            raise Exception("Failed to create a client for EC2")
-        while(True):
-            res = self.ec2_exception_coordinator(self.run_instances)(ec2)
-            if res == 'continue':
-                continue
-            break
-        try:
-            instance_id = res['Instances'][0]['InstanceId']
-        except Exception as e:
-            raise Exception("failed to retrieve instance ID for job %s: %s" % (self.jobid, str(e)))
-        return instance_id
+        os.environ['AWS_DEFAULT_REGION'] = AWS_REGION 
 
-    def ec2_exception_coordinator(self, func):
-        def inner(*args, **kwargs):
-            try:
-                return func(*args, **kwargs)
-            except Exception as e:
-                error_response = str(e)
-                # No instance capacity, too many instances or incompatible subnet/instance configuration - try again
-                if ('InsufficientInstanceCapacity' in error_response or 'InstanceLimitExceeded' in error_response or
-                        'is not supported in your requested Availability Zone' in error_response):
+        while(True):
+            fleet_result = self.create_fleet()
+            if 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
+                error_code = fleet_result['Errors'][0]['ErrorCode']
+                error_msg = fleet_result['Errors'][0]['ErrorMessage']
+                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code or
+                        'is not supported in your requested Availability Zone' in error_msg):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
-                        errmsg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
-                                 "to change the behavior to wait_and_retry, other_instance_types," + \
-                                 "or retry_without_spot. %s" % error_response
-                        raise EC2InstanceLimitException(errmsg)
+                        msg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
+                              "to change the behavior to wait_and_retry, other_instance_types," + \
+                              "or retry_without_spot. %s" % error_msg
+                        raise EC2InstanceLimitException(msg)
                     elif behavior == 'wait_and_retry':
-                        errmsg = "Instance limit exception - wait and retry later: %s" % error_response
-                        raise EC2InstanceLimitWaitException(errmsg)
-                    elif behavior == 'other_instance_types':
-                        try:
-                            self.choose_next_instance_type()
-                        except Exception as e2:  # should never hit now as we will continue indefinitely
-                            raise EC2InstanceLimitException(str(e2))
-                        self.update_config_instance_type()
-                        return 'continue'
+                        msg = "Instance limit exception - wait and retry later: %s" % error_msg
+                        raise EC2InstanceLimitWaitException(msg)
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
-                            errmsg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
-                                     "'spot_instance' : true. %s" % error_response
-                            raise Exception(errmsg)
+                            msg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
+                                  "'spot_instance' : true. %s" % error_msg
+                            raise Exception(msg)
                         else:
                             self.cfg.spot_instance = False
                             # change behavior as well,
                             # to avoid 'retry_without_spot works only with spot' error in the next round
                             self.cfg.behavior_on_capacity_limit = 'fail'
                             logger.info("trying without spot...")
-                            return 'continue'
+                            continue
                 else:
-                    raise Exception("failed to launch instance for job %s: %s" % (self.jobid, str(e)))
-        return inner
-
-    def run_instances(self, ec2):
-        return ec2.run_instances(**self.launch_args)
+                    raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
+            elif 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
+                instance_id = fleet_result['Instances'][0]['InstanceIds'][0]
+                return instance_id
+            else:
+                raise Exception(f"Unexpected result from create_fleet command: {json.dumps(fleet_result)}")
 
     def create_run_json_dict(self):
         args = self.args
@@ -738,65 +735,161 @@ class Execution(object):
             str += " -g"
         str += "\n"
         logger.debug("userdata: \n" + str)
-        return(str)
 
-    @property
-    def launch_args(self):
-        # creating a launch command
-        largs = {'ImageId': self.cfg.ami_id,
-                 'InstanceType': self.cfg.instance_type,
-                 'IamInstanceProfile': {'Arn': S3_ACCESS_ARN},
-                 'UserData': self.userdata,
-                 'MaxCount': 1,
-                 'MinCount': 1,
-                 'InstanceInitiatedShutdownBehavior': 'terminate',
-                 'DisableApiTermination': False,
-                 'TagSpecifications': [{'ResourceType': 'instance',
-                                        "Tags": [{"Key": "Name", "Value": "awsem-" + self.jobid},
-                                                 {"Key": "Type", "Value": "awsem"}]}]
-                 }
+        # The launch template expects base64 encoded text
+        str_bytes = str.encode('ascii')
+        base64_bytes = base64.b64encode(str_bytes)
+        base64_message = base64_bytes.decode('ascii')
+        return base64_message
+
+    def create_launch_template(self):
+        """Create a launch template everytime we run a workflow. There is no other
+        way to specify the necessary EC2 configurations"""
+        ec2 = boto3.client('ec2')
+        try:
+            # Existing launch templates can't be overwritten. Therefore, delete
+            # exsting ones first
+            ec2.delete_launch_template(
+                LaunchTemplateName='TibannaLaunchTemplate',
+            )
+        except Exception as e:
+            logger.info("No existing launch template found.")
+
+        # ImageId, InstanceType and SubnetId will be set during the create-fleet operation
+        launch_template_data ={
+            'IamInstanceProfile': {'Arn': S3_ACCESS_ARN},
+            'UserData': self.userdata,
+            'InstanceInitiatedShutdownBehavior': 'terminate',
+            'DisableApiTermination': False,
+            'BlockDeviceMappings': [
+                {
+                    'DeviceName': '/dev/sdb',
+                    'Ebs': 
+                        {
+                            'DeleteOnTermination': True,
+                            'VolumeSize': self.cfg.ebs_size,
+                            'VolumeType': self.cfg.ebs_type
+                        }
+                },
+                {
+                    'DeviceName': '/dev/sda1',
+                    'Ebs': 
+                        {
+                            'DeleteOnTermination': True,
+                            'VolumeSize': self.cfg.root_ebs_size,
+                            'VolumeType': 'gp3'
+                        }
+                }
+            ],
+            'TagSpecifications': [
+                {
+                    'ResourceType': 'instance',
+                    'Tags': [
+                        {"Key": "Name", "Value": "awsem-" + self.jobid},
+                        {"Key": "Type", "Value": "awsem"}
+                    ]
+                }
+            ]
+        }
+
         if self.cfg.key_name:
-            largs.update({'KeyName': self.cfg.key_name})
-        # EBS options
+            launch_template_data.update({'KeyName': self.cfg.key_name})
         if self.cfg.EBS_optimized is True:
-            largs.update({"EbsOptimized": True})
-        largs.update({"BlockDeviceMappings": [{'DeviceName': '/dev/sdb',
-                                               'Ebs': {'DeleteOnTermination': True,
-                                                       'VolumeSize': self.cfg.ebs_size,
-                                                       'VolumeType': self.cfg.ebs_type}},
-                                              {'DeviceName': '/dev/sda1',
-                                               'Ebs': {'DeleteOnTermination': True,
-                                                       'VolumeSize': self.cfg.root_ebs_size,
-                                                       'VolumeType': 'gp3'}}]})
+            launch_template_data.update({"EbsOptimized": True})
         if self.cfg.ebs_iops:    # io1 type, specify iops
-            largs["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops
+            launch_template_data["BlockDeviceMappings"][0]["Ebs"]['Iops'] = self.cfg.ebs_iops
         if self.cfg.ebs_throughput and self.cfg.ebs_type == 'gp3':
             if self.cfg.ebs_throughput < 125 or self.cfg.ebs_throughput > 1000:
                 message = "Invalid EBS throughput. Specify a value between 125 and 1000."
                 raise EC2LaunchException(message)
-            largs["BlockDeviceMappings"][0]["Ebs"]['Throughput'] = self.cfg.ebs_throughput
+            launch_template_data["BlockDeviceMappings"][0]["Ebs"]['Throughput'] = self.cfg.ebs_throughput
         if self.cfg.ebs_size >= 16000:
             message = "EBS size limit (16TB) exceeded: (attempted size: %s)" % self.cfg.ebs_size
             raise EC2LaunchException(message)
+
+        
+        if self.cfg.availability_zone:
+            launch_template_data.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
+        if self.cfg.security_group:
+            launch_template_data.update({'SecurityGroupIds': [self.cfg.security_group]})
+
         if self.cfg.spot_instance:
             spot_options = {'SpotInstanceType': 'one-time',
                             'InstanceInterruptionBehavior': 'terminate'}
             if self.cfg.spot_duration:
                 spot_options['BlockDurationMinutes'] = self.cfg.spot_duration
-            largs.update({'InstanceMarketOptions': {'MarketType': 'spot',
-                                                    'SpotOptions': spot_options}})
-        if self.cfg.availability_zone:
-            largs.update({'Placement': {'AvailabilityZone': self.cfg.availability_zone}})
-        if self.cfg.security_group:
-            largs.update({'SecurityGroupIds': [self.cfg.security_group]})
+            launch_template_data.update(
+                {'InstanceMarketOptions': 
+                    {'MarketType': 'spot','SpotOptions': spot_options}
+                }
+            )
+
+        try:
+            ec2.create_launch_template(
+                DryRun=self.dryrun,
+                LaunchTemplateName='TibannaLaunchTemplate',
+                LaunchTemplateData=launch_template_data,
+            )
+        except Exception as e:
+            raise Exception(f"Could not create launch template: {str(e)}")
+
+
+    def create_fleet(self):
+        '''Create an 'instant' type fleet with 1 instance'''
+        self.create_launch_template()
+
+        potential_ec2s = [] # Used as overrides in the launch template
+
+        subnets = False
         if self.cfg.subnet:
             if isinstance(self.cfg.subnet, str):
-                largs.update({'SubnetId': self.cfg.subnet})
+                subnets = [self.cfg.subnet]
             elif isinstance(self.cfg.subnet, list):
-                largs.update({'SubnetId': choice(self.cfg.subnet)})  # if given multiple, pick one randomly
-        if self.dryrun:
-            largs.update({'DryRun': True})
-        return largs
+                subnets = self.cfg.subnet
+
+        for instance_type in self.instance_type_list:
+            instance_info = self.instance_type_infos[instance_type]
+            if subnets:
+                for subnet in subnets:
+                    potential_ec2s.append({
+                        "InstanceType": instance_type,
+                        "SubnetId": subnet,
+                        "ImageId": instance_info['ami_id']
+                    })
+            else:
+                potential_ec2s.append({
+                    "InstanceType": instance_type,
+                    "ImageId": instance_info['ami_id']
+                })
+
+        ec2 = boto3.client('ec2')
+        try:
+            fleet_result = ec2.create_fleet(
+                SpotOptions={
+                    'AllocationStrategy': 'capacity-optimized',
+                    'InstanceInterruptionBehavior': 'terminate' # hibernate is an option here
+                },
+                OnDemandOptions={
+                    'AllocationStrategy': 'lowest-price' # prioritized is the other option, but then we need to assign prioritoes in the launch template
+                },
+                LaunchTemplateConfigs=[{
+                    'LaunchTemplateSpecification': {
+                        'LaunchTemplateName': 'TibannaLaunchTemplate',
+                        "Version": "$Latest" # There is only one version
+                    },
+                    'Overrides': potential_ec2s,
+                    
+                }],
+                TargetCapacitySpecification={
+                    'TotalTargetCapacity': 1,
+                    'DefaultTargetCapacityType': 'spot' if self.cfg.spot_instance else 'on-demand',
+                },
+                Type='instant',
+            )
+            return fleet_result
+        except Exception as e:
+            raise Exception(f"Unable to create fleet: {str(e)}")
+
 
     def get_instance_info(self):
         # get public IP and availablity zone for the instance (This may not happen immediately)

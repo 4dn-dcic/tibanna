@@ -21,7 +21,6 @@ from .vars import (
     TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
     STEP_FUNCTION_ARN,
     EXECUTION_ARN,
-    AMI_ID,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
     TIBANNA_PROFILE_ACCESS_KEY,
@@ -112,8 +111,6 @@ class API(object):
     run_task_lambda = RUN_TASK_LAMBDA_NAME
     check_task_lambda = CHECK_TASK_LAMBDA_NAME
     update_cost_lambda = UPDATE_COST_LAMBDA_NAME
-
-    ami_id = AMI_ID
 
     @property
     def UNICORN_LAMBDAS(self):
@@ -631,8 +628,7 @@ class API(object):
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
         envlist = {
-            self.run_task_lambda: {'AMI_ID': self.ami_id,
-                                   'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
+            self.run_task_lambda: {'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
                                    'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
             self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
@@ -976,7 +972,7 @@ class API(object):
             else:
                 job_complete = False
             log_bucket = postrunjson.config.log_bucket
-            instance_type = postrunjson.config.instance_type or 'unknown'
+            instance_type = job.instance_type or 'unknown'
         else:
             runjsonstr = self.log(job_id=job_id, sfn=sfn, runjson=True, quiet=True)
             job_complete = False
@@ -985,6 +981,10 @@ class API(object):
                 job = runjson.Job
                 log_bucket = runjson.config.log_bucket
                 instance_type = runjson.config.instance_type or 'unknown'
+                # Multiple types were specified, but the run json does not know which one was actually picked
+                # In this case we just show all of them in the metrics report
+                if isinstance(instance_type, list):
+                    instance_type = ','.join(instance_type)
             else:
                 raise Exception("Neither postrun json nor run json can be retrieved." +
                                 "Check job_id or step function?")
@@ -1251,12 +1251,16 @@ class API(object):
             logger.info("Finished cleaning")
 
     def create_ami(self, build_from_scratch=True, source_image_to_copy_from=None, source_image_region=None,
-                   ubuntu_base_image=None, make_public=False, replicate=False):
+                   ubuntu_base_image=None, make_public=False, replicate=False, architecture='x86'):
         args = dict()
         if build_from_scratch:
             # build from ubuntu 20.04 image and user data
             if ubuntu_base_image:
                 args.update({'base_ami': ubuntu_base_image})
+            if architecture in ['x86','Arm']:
+                args.update({'architecture': architecture})
+            else:
+                raise Exception("Architecture must be 'x86' or 'Arm'.")
         else:
             # copy an existing image
             args.update({'userdata_file': ''})

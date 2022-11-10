@@ -87,10 +87,12 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
 
             if(not job.instance_availablity_zone):
                 raise PricingRetrievalException("Instance availability zone is not available. You might have to deploy a newer version of Tibanna.")
+            if(not job.instance_type):
+                raise PricingRetrievalException("Instance type is not available. You might have to deploy a newer version of Tibanna.")
 
             ec2_client=boto3.client('ec2',region_name=AWS_REGION)
             prices=ec2_client.describe_spot_price_history(
-                InstanceTypes=[cfg.instance_type],
+                InstanceTypes=[job.instance_type],
                 ProductDescriptions=['Linux/UNIX'],
                 AvailabilityZone=job.instance_availablity_zone,
                 MaxResults=1) # Most recent price is on top
@@ -111,7 +113,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                 {
                     'Type': 'TERM_MATCH',
                     'Field': 'instanceType',
-                    'Value': cfg.instance_type
+                    'Value': job.instance_type
                 },
                 {
                     'Type': 'TERM_MATCH',

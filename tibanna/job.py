@@ -309,7 +309,8 @@ class Job(object):
                         'Time Stamp': {
                             'S': time_stamp
                         }
-                    }
+                    },
+                    ReturnConsumedCapacity='TOTAL'
                 )
                 if 'CapacityUnits' in response['ConsumedCapacity']:
                     if verbose:

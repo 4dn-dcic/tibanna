@@ -588,9 +588,7 @@ The ``config`` field describes execution configuration.
     - available options :
 
       - ``fail`` (default)
-      - ``wait_and_retry`` (wait and retry with the same instance type again),
-      - ``other_instance_types`` top 10 cost-effective instance types will be tried in the order
-                                 (``mem`` and ``cpu`` must be set in order for this to work),
+      - ``wait_and_retry`` (wait and retry with the same instance type again.),
       - ``retry_without_spot`` (try with the same instance type but not a spot instance) : this option is applicable only when
         ``spot_instance`` is set to ```True``
 

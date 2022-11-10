@@ -348,6 +348,7 @@ def update_postrun_json_init(json_old, json_new):
     prj.Job.instance_id = os.getenv('INSTANCE_ID')
     prj.Job.filesystem = os.getenv('EBS_DEVICE')
     prj.Job.instance_availablity_zone = os.getenv('INSTANCE_AVAILABILITY_ZONE')
+    prj.Job.instance_type = os.getenv('INSTANCE_TYPE')
 
     # write to new json file
     write_postrun_json(json_new, prj)

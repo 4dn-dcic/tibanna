@@ -48,6 +48,7 @@ export TOPLATESTFILE=$LOCAL_OUTDIR/$JOBID.top_latest  # this one includes only t
 export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
 export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export INSTANCE_AVAILABILITY_ZONE=$(ec2metadata --availability-zone)
+export INSTANCE_TYPE=$(ec2metadata --instance-type)
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 export LOCAL_OUTDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_OUTDIR
