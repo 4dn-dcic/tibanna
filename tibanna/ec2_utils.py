@@ -325,8 +325,7 @@ class Config(SerializableObject):
         if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
             self.ebs_size_as_is = False
         if not hasattr(self, 'ami_id'):
-            #self.ami_id = self.get_default_amis(self.instance_type)
-            self.ami_id = ""
+            self.ami_id = "" # will be assigned instance architecture specific later
             
         # special handling for subnet, SG if not set already pull from env
         # values from config take priority - omit them to get these values from lambda
@@ -352,36 +351,7 @@ class Config(SerializableObject):
     def fill_other_fields(self, app_name=''):
         self.job_tag = app_name
 
-    # def get_default_amis(self, instance_types):
-    #     amis = []
-    #     instance_types_list = instance_types
-    #     if instance_types == '': # instance type not supplied in config
-    #         return ''
-    #     elif isinstance(instance_types, str):
-    #         instance_types_list = [instance_types]
 
-    #     ec2 = boto3.client('ec2')
-    #     results = ec2.describe_instance_types(
-    #          InstanceTypes=instance_types_list
-    #     )
-    #     instance_type_ami_mapping = {}
-    #     for result in results['InstanceTypes']:
-    #         arch = result['ProcessorInfo']['SupportedArchitectures'][0]
-    #         ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
-    #         if ami:
-    #             instance_type_ami_mapping[result['InstanceType']] = ami
-    #         else:
-    #             raise Exception(f"No AMI found for {result['InstanceType']} ({arch}) in {AWS_REGION}")
-
-    #     for instance_type in instance_types:
-    #         ami = instance_type_ami_mapping.get(instance_type, '')
-    #         if not ami: # This should not happen. The boto3 call would have already thrown an Exception.
-    #             raise Exception(f"Could not assign an AMI to instance {instance_type}")
-    #         amis.append(ami)
-
-    #     return amis
-
-    
 class Execution(object):
 
     def __init__(self, input_dict, dryrun=False):
@@ -567,10 +537,10 @@ class Execution(object):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         msg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
-                              "to change the behavior to wait_and_retry, other_instance_types," + \
+                              "to change the behavior to wait_and_retry," + \
                               "or retry_without_spot. %s" % error_msg
                         raise EC2InstanceLimitException(msg)
-                    elif behavior == 'wait_and_retry':
+                    elif behavior == 'wait_and_retry' or behavior == 'other_instance_types': # 'other_instance_types' is there for backwards compatibility
                         msg = "Instance limit exception - wait and retry later: %s" % error_msg
                         raise EC2InstanceLimitWaitException(msg)
                     elif behavior == 'retry_without_spot':
@@ -746,11 +716,13 @@ class Execution(object):
         """Create a launch template everytime we run a workflow. There is no other
         way to specify the necessary EC2 configurations"""
         ec2 = boto3.client('ec2')
+        launch_template_name = 'TibannaLaunchTemplate'
+
         try:
             # Existing launch templates can't be overwritten. Therefore, delete
             # exsting ones first
             ec2.delete_launch_template(
-                LaunchTemplateName='TibannaLaunchTemplate',
+                LaunchTemplateName=launch_template_name,
             )
         except Exception as e:
             logger.info("No existing launch template found.")
@@ -827,7 +799,7 @@ class Execution(object):
         try:
             ec2.create_launch_template(
                 DryRun=self.dryrun,
-                LaunchTemplateName='TibannaLaunchTemplate',
+                LaunchTemplateName=launch_template_name,
                 LaunchTemplateData=launch_template_data,
             )
         except Exception as e:
@@ -847,6 +819,7 @@ class Execution(object):
             elif isinstance(self.cfg.subnet, list):
                 subnets = self.cfg.subnet
 
+        # Create all possible combinations of instance type / subnet
         for instance_type in self.instance_type_list:
             instance_info = self.instance_type_infos[instance_type]
             if subnets:
