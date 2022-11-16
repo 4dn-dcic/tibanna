@@ -331,7 +331,7 @@ class Config(SerializableObject):
         # values from config take priority - omit them to get these values from lambda
         if not self.subnet and os.environ.get('SUBNETS', ''):
             possible_subnets = os.environ['SUBNETS'].split(',')
-            self.subnet = possible_subnets  # propagate all subnets here, pick one in launch_args
+            self.subnet = possible_subnets  # propagate all subnets here
         if not self.security_group and os.environ.get('SECURITY_GROUPS', ''):
             self.security_group = os.environ['SECURITY_GROUPS'].split(',')[0]
 
@@ -405,50 +405,55 @@ class Execution(object):
                     instance_type_dlist.append({'instance_type': potential_type,
                                                 'EBS_optimized': self.cfg.EBS_optimized})
 
-        # user specified mem and cpu
+        # user specified mem and cpu - use the benchmark package to retrieve instance types
         if self.cfg.mem and self.cfg.cpu:
-            if self.cfg.mem_as_is:
-                mem = self.cfg.mem
-            else:
-                mem = self.cfg.mem + 1
+            mem = self.cfg.mem if self.cfg.mem_as_is else self.cfg.mem + 1
             list0 = get_instance_types(self.cfg.cpu, mem, instance_list(exclude_t=False))
-            nonredundant_list = [i for i in list0 if i['instance_type'] != instance_type]
+            current_list = [i['instance_type'] for i in instance_type_dlist]
+            nonredundant_list = [i for i in list0 if i['instance_type'] not in current_list]
             instance_type_dlist.extend(nonredundant_list)
-        # user specifically wanted EBS_optimized instances
-        if self.cfg.EBS_optimized:
-            instance_type_dlist = [i for i in instance_type_dlist if i['EBS_optimized']]
+
         # add benchmark only if there is no user specification
         if len(instance_type_dlist) == 0 and self.benchmark['instance_type']:
             instance_type_dlist.append(self.benchmark)
-        self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
-        # Add corresponding AMIs to each instance type so that they are available in self.instance_type_info
-        instance_type_ami_mapping = self.create_instance_type_ami_mapping(self.instance_type_list)
-        for instance in instance_type_dlist:
-            instance['ami_id'] = instance_type_ami_mapping[instance['instance_type']]
-        self.instance_type_infos = {i['instance_type']: i for i in instance_type_dlist}
 
-    def create_instance_type_ami_mapping(self, instance_types):
-        instance_type_ami_mapping = {}
-        if self.cfg.ami_id:
-            # if a user supplied an ami_id, it will be used for every instance. 
-            # Will be problematic if the instance list contains x86 and Arm instances
-            for instance_type in instance_types:
-                instance_type_ami_mapping[instance_type] = self.cfg.ami_id
-            return instance_type_ami_mapping
-
+        # Augment the list with the corresponding AMI ID and EBS_optimized flag
         ec2 = boto3.client('ec2')
+        current_instance_types = [i['instance_type'] for i in instance_type_dlist]
+        ami_ebs_info = {}
         results = ec2.describe_instance_types(
-            InstanceTypes=instance_types
+            InstanceTypes=current_instance_types
         )
         for result in results['InstanceTypes']:
+            instance_type = result['InstanceType']
+            is_ebs_optimized = result['EbsInfo']['EbsOptimizedSupport'] != 'unsupported'
+            ami_ebs_info[instance_type] = {
+                'EBS_optimized': is_ebs_optimized
+            }
             arch = result['ProcessorInfo']['SupportedArchitectures'][0]
-            ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
-            if ami:
-                instance_type_ami_mapping[result['InstanceType']] = ami
+            default_ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
+            if self.cfg.ami_id:
+                # if a user supplied an ami_id, it will be used for every instance. 
+                # will be problematic if the instance list contains x86 and Arm instances
+                ami_ebs_info[instance_type]['ami_id'] = self.cfg.ami_id
+            elif default_ami:
+                ami_ebs_info[instance_type]['ami_id'] = default_ami
             else:
                 raise Exception(f"No AMI found for {result['InstanceType']} ({arch}) in {AWS_REGION}")
+        for instance in instance_type_dlist:
+            it = instance['instance_type']
+            instance['ami_id'] = ami_ebs_info[it]['ami_id']
+            instance['EBS_optimized'] = ami_ebs_info[it]['EBS_optimized']
 
-        return instance_type_ami_mapping
+        # Filtering: user specifically wanted EBS_optimized instances
+        if self.cfg.EBS_optimized:
+            instance_type_dlist = [i for i in instance_type_dlist if i['EBS_optimized']]
+
+        if len(instance_type_dlist) == 0:
+            raise Exception("There are no EC2 instances that match the provided configuration.")
+        
+        self.instance_type_list = [i['instance_type'] for i in instance_type_dlist]
+        self.instance_type_infos = {i['instance_type']: i for i in instance_type_dlist}
 
     @property
     def total_input_size_in_gb(self):
@@ -722,6 +727,7 @@ class Execution(object):
             # Existing launch templates can't be overwritten. Therefore, delete
             # exsting ones first
             ec2.delete_launch_template(
+                DryRun=self.dryrun,
                 LaunchTemplateName=launch_template_name,
             )
         except Exception as e:
@@ -810,6 +816,17 @@ class Execution(object):
         '''Create an 'instant' type fleet with 1 instance'''
         self.create_launch_template()
 
+        ec2 = boto3.client('ec2')
+        try:
+            fleet_spec = self.create_fleet_spec()
+            fleet_result = ec2.create_fleet(**fleet_spec)
+            return fleet_result
+        except Exception as e:
+            raise Exception(f"Unable to create fleet: {str(e)}")
+
+
+    def create_fleet_spec(self): # Factored out for easier testing
+
         potential_ec2s = [] # Used as overrides in the launch template
 
         subnets = False
@@ -834,34 +851,33 @@ class Execution(object):
                     "InstanceType": instance_type,
                     "ImageId": instance_info['ami_id']
                 })
+        
+        spec = {
+            "DryRun": self.dryrun,
+            "SpotOptions": {
+                'AllocationStrategy': 'capacity-optimized',
+                'InstanceInterruptionBehavior': 'terminate' # hibernate is an option here
+            },
+            "OnDemandOptions": {
+                'AllocationStrategy': 'lowest-price' # prioritized is the other option, but then we need to assign prioritoes in the launch template
+            },
+            "LaunchTemplateConfigs": [{
+                'LaunchTemplateSpecification': {
+                    'LaunchTemplateName': 'TibannaLaunchTemplate',
+                    "Version": "$Latest" # There is only one version
+                },
+                'Overrides': potential_ec2s,
+                
+            }],
+            "TargetCapacitySpecification": {
+                'TotalTargetCapacity': 1,
+                'DefaultTargetCapacityType': 'spot' if self.cfg.spot_instance else 'on-demand',
+            },
+            "Type": 'instant' 
+        }
 
-        ec2 = boto3.client('ec2')
-        try:
-            fleet_result = ec2.create_fleet(
-                SpotOptions={
-                    'AllocationStrategy': 'capacity-optimized',
-                    'InstanceInterruptionBehavior': 'terminate' # hibernate is an option here
-                },
-                OnDemandOptions={
-                    'AllocationStrategy': 'lowest-price' # prioritized is the other option, but then we need to assign prioritoes in the launch template
-                },
-                LaunchTemplateConfigs=[{
-                    'LaunchTemplateSpecification': {
-                        'LaunchTemplateName': 'TibannaLaunchTemplate',
-                        "Version": "$Latest" # There is only one version
-                    },
-                    'Overrides': potential_ec2s,
-                    
-                }],
-                TargetCapacitySpecification={
-                    'TotalTargetCapacity': 1,
-                    'DefaultTargetCapacityType': 'spot' if self.cfg.spot_instance else 'on-demand',
-                },
-                Type='instant',
-            )
-            return fleet_result
-        except Exception as e:
-            raise Exception(f"Unable to create fleet: {str(e)}")
+        return spec
+
 
 
     def get_instance_info(self):

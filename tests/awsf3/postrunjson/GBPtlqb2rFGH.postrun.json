@@ -112,6 +112,7 @@
         "filesystem": "",
         "instance_availablity_zone": "",
         "instance_id": "",
+        "instance_type": "",
         "start_time": "20210312-14:04:23-UTC"
     },
     "config": {
