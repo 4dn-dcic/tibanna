@@ -291,25 +291,30 @@ class Job(object):
             return
         for _ in range(5):  # try to add to dynamo 5 times
             try:
+                item ={
+                    'Job Id': {
+                        'S': job_id
+                    },
+                    'Execution Name': {
+                        'S': execution_name
+                    },
+                    'Step Function': {
+                        'S': sfn
+                    },
+                    'Log Bucket': {
+                        'S': logbucket
+                    },
+                    'Time Stamp': {
+                        'S': time_stamp
+                    }
+                }
+                if verbose:
+                    logger.info("Trying to add the following item to dynamoDB: " + str(item))
+
                 response = dydb.put_item(
                     TableName=DYNAMODB_TABLE,
-                    Item={
-                        'Job Id': {
-                            'S': job_id
-                        },
-                        'Execution Name': {
-                            'S': execution_name
-                        },
-                        'Step Function': {
-                            'S': sfn
-                        },
-                        'Log Bucket': {
-                            'S': logbucket
-                        },
-                        'Time Stamp': {
-                            'S': time_stamp
-                        }
-                    }
+                    Item=item,
+                    ReturnConsumedCapacity='TOTAL'
                 )
                 if 'CapacityUnits' in response['ConsumedCapacity']:
                     if verbose:
