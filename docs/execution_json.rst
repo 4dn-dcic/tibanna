@@ -469,7 +469,12 @@ The ``config`` field describes execution configuration.
 :instance_type:
     - <instance_type>
     - This or ``mem`` and ``cpu`` are required if Benchmark is not available for a given workflow.
-    - If both ``instance_type`` and ``mem`` & ``cpu`` are specified, then ``instance_type`` is the first choice.
+    - ``instance_type`` can be a string (e.g.,  ``t3.micro``) or a list (e.g., ``[t3.micro, t3.small]``). If ``spot_instance``
+      is enabled, Tibanna will run the workflow on the instance with the highest available capacity. If ``spot_instance``
+      is disabled, it will run the workflow on the cheapest instance in the list.
+    - If both ``instance_type`` and ``mem`` & ``cpu`` are specified, Tibanna internally creates a list of instances that
+      are directly specified in ``instance_type`` and instances that satisfy the ``mem`` & ``cpu`` requirement. One instance is chosen
+      according to the rules above to run the workflow.
 
 :mem:
     - <memory_in_gb>
