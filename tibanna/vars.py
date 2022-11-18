@@ -64,9 +64,6 @@ AMI_PER_REGION = {
         'us-east-1': 'ami-0e12894d2dc91ab8c',
     }
 }
-# if AWS_REGION not in AMI_PER_REGION:
-#     logger.warning("Public Tibanna AMI for region %s is not available." % AWS_REGION)
-# AMI_ID = AMI_PER_REGION.get(AWS_REGION, '')
 
 AWS_REGION_NAMES = {
     'us-east-1': 'US East (N. Virginia)',

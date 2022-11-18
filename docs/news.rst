@@ -19,8 +19,9 @@ Version updates
 
 .. _releases: https://github.com/4dn-dcic/tibanna/releases
 
-  **Nov 16, 2022** The latest version is now 2.2.3_.
+  **Nov 18, 2022** The latest version is now 2.3.0_.
     - Tibanna now supports AWS Graviton-based instances.
+    - The instance type configuration now allows single instances (e.g., ``t3.micro``) and lists (e.g., ``[t3.micro, t3.small]``). If ``spot_instance`` is enabled, Tibanna will run the workflow on the instance with the highest available capacity. If ``spot_instance`` is disabled, it will run the workflow on the cheapest instance in the list.
 
 
   **Mar 10, 2022** The latest version is now 2.0.0_.
