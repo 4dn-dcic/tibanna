@@ -61,7 +61,26 @@ AMI_PER_REGION = {
         'eu-south-1': 'ami-0a72279e56849415e'
     },
     'Arm': {
-        'us-east-1': 'ami-0e12894d2dc91ab8c',
+        'us-east-1': 'ami-0f3e90ad8e76c7a32', # latest as of Nov 23 2022
+        'us-east-2': 'ami-03359d89f311a015e', 
+        'us-west-1': 'ami-00ffd20b39dbfb6ea', 
+        'us-west-2': 'ami-08ab3015c1bc36d24', 
+        'ap-south-1': 'ami-01af9ec07fed38a38', 
+        'ap-northeast-2': 'ami-0ee2af459355dd917', 
+        'ap-southeast-1': 'ami-0d74dc5af4bf74ea8', 
+        'ap-southeast-2': 'ami-08ab7201c83209fe8', 
+        'ap-northeast-1': 'ami-07227003bfa0565e3', 
+        'ca-central-1': 'ami-0cbf87c80362a058e', 
+        'eu-central-1': 'ami-09cfa59f75e88ad54', 
+        'eu-west-1': 'ami-0804bdeafd8af01f8', 
+        'eu-west-2': 'ami-0db05a333dc02c1c8', 
+        'eu-west-3': 'ami-0ceab436f882fe36a', 
+        'eu-north-1': 'ami-04ba962c974ddd374', 
+        'sa-east-1': 'ami-0fc9a9dec0f3df318', 
+        'me-south-1': 'ami-0211bc858eb163594', 
+        'af-south-1': 'ami-0d6a4af087f83899d', 
+        'ap-east-1': 'ami-0d375f2ce688d16b9', 
+        'eu-south-1': 'ami-0b1db84f31597a70f'
     }
 }
 
