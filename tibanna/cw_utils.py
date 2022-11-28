@@ -263,7 +263,7 @@ class TibannaResource(object):
     def max_cpu_utilization_all_pts(self):
         res = self.client.get_metric_statistics(
             Namespace='CWAgent',
-            MetricName='cpu_usage_system',
+            MetricName='cpu_usage_active',
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],

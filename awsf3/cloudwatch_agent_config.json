@@ -19,7 +19,8 @@
 				"measurement": [
 					"usage_idle",
 					"usage_iowait",
-					"usage_system"
+					"usage_system",
+					"usage_active"
 				],
 				"metrics_collection_interval": 60,
 				"totalcpu": true
