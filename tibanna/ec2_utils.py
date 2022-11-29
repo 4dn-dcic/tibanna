@@ -532,7 +532,7 @@ class Execution(object):
     def launch_and_get_instance_id(self):
         os.environ['AWS_DEFAULT_REGION'] = AWS_REGION 
 
-        while(True):
+        while True:
             fleet_result = self.create_fleet()
             if 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
                 error_code = fleet_result['Errors'][0]['ErrorCode']
@@ -855,25 +855,25 @@ class Execution(object):
         spec = {
             "DryRun": self.dryrun,
             "SpotOptions": {
-                'AllocationStrategy': 'capacity-optimized',
-                'InstanceInterruptionBehavior': 'terminate' # hibernate is an option here
+                "AllocationStrategy": "capacity-optimized",
+                "InstanceInterruptionBehavior": "terminate" # hibernate is an option here
             },
             "OnDemandOptions": {
-                'AllocationStrategy': 'lowest-price' # prioritized is the other option, but then we need to assign prioritoes in the launch template
+                "AllocationStrategy": "lowest-price" # prioritized is the other option, but then we need to assign prioritoes in the launch template
             },
             "LaunchTemplateConfigs": [{
-                'LaunchTemplateSpecification': {
-                    'LaunchTemplateName': 'TibannaLaunchTemplate',
+                "LaunchTemplateSpecification": {
+                    "LaunchTemplateName": "TibannaLaunchTemplate",
                     "Version": "$Latest" # There is only one version
                 },
-                'Overrides': potential_ec2s,
+                "Overrides": potential_ec2s,
                 
             }],
             "TargetCapacitySpecification": {
-                'TotalTargetCapacity': 1,
-                'DefaultTargetCapacityType': 'spot' if self.cfg.spot_instance else 'on-demand',
+                "TotalTargetCapacity": 1,
+                "DefaultTargetCapacityType": "spot" if self.cfg.spot_instance else "on-demand",
             },
-            "Type": 'instant' 
+            "Type": "instant" 
         }
 
         return spec
@@ -886,7 +886,7 @@ class Execution(object):
             ec2 = boto3.client('ec2')
         except Exception as e:
             raise Exception("Can't create an ec2 client %s" % str(e))
-        while(True):  # keep trying until you get the result.
+        while True:  # keep trying until you get the result.
             time.sleep(1)  # wait for one second before trying again.
             try:
                 # sometimes you don't get a description immediately

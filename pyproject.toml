@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tibanna"
-version = "2.3.0"
+version = "3.0.0"
 description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
 authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
 license = "MIT"
@@ -43,7 +43,6 @@ flake8 = "^3.9.0"
 pytest = "^6.0"
 pytest-cov = "^3.0.0"
 pytest-parallel = "^0.1.1"
-mock = "4.0"
 pytest-mock = "3.7"
 
 coverage = {extras = ["toml"], version = "^6.3.2"}

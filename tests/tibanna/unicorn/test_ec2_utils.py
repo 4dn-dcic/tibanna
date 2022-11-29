@@ -3,7 +3,7 @@ import pytest
 import base64
 import os
 import json
-from mock import patch
+from unittest import mock
 from tibanna.job import Jobs
 from tibanna.ec2_utils import (
     UnicornInput,
@@ -625,7 +625,7 @@ def test_upload_run_json_encrypt_s3_upload():
 
 
 
-@patch.object(Execution, 'create_fleet')
+@mock.patch.object(Execution, 'create_fleet')
 def test_launch_and_get_instance_id(test_create_fleet):
     """test dryrun of ec2 launch"""
     jobid = create_jobid()
@@ -985,7 +985,7 @@ def test_check_dependency():
         'running_jobs': ['jid1', 'jid2'],
         'failed_jobs': []
     }
-    with patch('tibanna.job.Jobs.status', return_value=job_statuses):
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
         with pytest.raises(DependencyStillRunningException) as exec_info:
             Execution.check_dependency(job_id=['jid1', 'jid2'])
     assert 'still running' in str(exec_info.value)
@@ -998,7 +998,7 @@ def test_check_dependency_failed():
         'running_jobs': ['jid1'],
         'failed_jobs': ['jid2']
     }
-    with patch('tibanna.job.Jobs.status', return_value=job_statuses):
+    with mock.patch('tibanna.job.Jobs.status', return_value=job_statuses):
         with pytest.raises(DependencyFailedException) as exec_info:
             Execution.check_dependency(job_id=['jid1', 'jid2'])
     assert 'failed' in str(exec_info.value)
