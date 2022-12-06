@@ -42,7 +42,8 @@
 				"measurement": [
 					"io_time",
                     "read_bytes",
-                    "iops_in_progress"
+                    "iops_in_progress",
+					"read_time"
 				],
 				"metrics_collection_interval": 60,
 				"resources": [

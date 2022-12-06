@@ -538,11 +538,12 @@ class Execution(object):
                 error_code = fleet_result['Errors'][0]['ErrorCode']
                 error_msg = fleet_result['Errors'][0]['ErrorMessage']
                 if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code or
-                        'is not supported in your requested Availability Zone' in error_msg):
+                        'is not supported in your requested Availability Zone' in error_msg
+                        or 'UnfulfillableCapacity' in error_code):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
-                        msg = "Instance limit exception - use 'behavior_on_capacity_limit' option" + \
-                              "to change the behavior to wait_and_retry," + \
+                        msg = "Instance limit exception - use 'behavior_on_capacity_limit' option " + \
+                              "to change the behavior to wait_and_retry, " + \
                               "or retry_without_spot. %s" % error_msg
                         raise EC2InstanceLimitException(msg)
                     elif behavior == 'wait_and_retry' or behavior == 'other_instance_types': # 'other_instance_types' is there for backwards compatibility
