@@ -286,8 +286,7 @@ class Job(object):
             # first check the table exists
             dydb.describe_table(TableName=DYNAMODB_TABLE)
         except Exception as e:
-            if verbose:
-                logger.error("Not adding to dynamo table: %s" % e)
+            logger.error("Not adding to dynamo table: %s" % e)
             return
         for _ in range(5):  # try to add to dynamo 5 times
             try:

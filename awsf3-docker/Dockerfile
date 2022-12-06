@@ -35,25 +35,31 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     libseccomp-dev \
     pkg-config \
     openjdk-8-jre-headless \
-    nodejs
+    nodejs \
+    gnupg \
+    lsb-release
 
 RUN ln -s /usr/bin/python3.8 /usr/bin/python
 #RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR /usr/local/bin
 
-# docker inside docker
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-    && apt-key fingerprint 0EBFCD88 \
-    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-RUN apt-get update -y \
-    && apt-cache policy docker-ce \
-    && apt-get install -y docker-ce
+# install docker inside docker
+RUN mkdir -p /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+RUN apt-get update
+RUN apt-get --assume-yes install docker-ce
 
 # singularity
-RUN wget https://golang.org/dl/go1.16.6.linux-amd64.tar.gz && \
-    tar -xzf go1.16.6.linux-amd64.tar.gz && \
-    rm go1.16.6.linux-amd64.tar.gz
+RUN ARCH="$(dpkg --print-architecture)" && \
+    wget "https://golang.org/dl/go1.16.6.linux-${ARCH}.tar.gz" && \
+    tar -xzf "go1.16.6.linux-${ARCH}.tar.gz" && \
+    rm "go1.16.6.linux-${ARCH}.tar.gz"
 RUN export SINGULARITY_VERSION=3.8.1 && \
     export PATH=/usr/local/bin/go/bin/:$PATH && \
     wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz && \

@@ -115,7 +115,7 @@ class IAM(object):
                        'cloudwatch_metric': self.policy_cloudwatch_metric,
                        'cw_dashboard': self.policy_cw_dashboard,
                        'dynamodb': self.policy_dynamodb,
-                       'ec2_desc': self.policy_ec2_desc_policy,
+                       'ec2_desc': self.policy_ec2_desc,
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
                        'vpc': self.policy_vpc_access,
@@ -427,7 +427,7 @@ class IAM(object):
         return policy
 
     @property
-    def policy_ec2_desc_policy(self):
+    def policy_ec2_desc(self):
         policy = {
             "Version": "2012-10-17",
             "Statement": [

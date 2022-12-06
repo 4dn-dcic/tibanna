@@ -381,7 +381,11 @@ class Subcommands(object):
                   'help': "The ID of the Ubuntu 20.04 image to build from (e.g. 'ami-0885b1f6bd170450c' for us-east-1). " +
                           "To use this option, turn on the option -B."},
                  {'flag': ["-r", "--replicate"],
-                  'help': "Enable to replicate across all regions defined by AMI_PER_REGION"}
+                  'help': "Enable to replicate across all regions defined by AMI_PER_REGION"},
+                  {'flag': ["-a", "--architecture"],
+                  'help': "Architecture: x86 or Arm. Default: x86. " +
+                          "To use this option, turn on option -B. Ignored when option -U is used.",
+                  'default': "x86"}
                  ]
         }
 
@@ -525,10 +529,10 @@ def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=F
 
 
 def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
-               ubuntu_base_image=None, replicate=False):
+               ubuntu_base_image=None, replicate=False, architecture="x86"):
     print(API().create_ami(make_public=make_public, build_from_scratch=build_from_scratch,
                            source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
-                           ubuntu_base_image=ubuntu_base_image, replicate=replicate))
+                           ubuntu_base_image=ubuntu_base_image, replicate=replicate, architecture=architecture))
 
 
 def main(Subcommands=Subcommands):

@@ -182,8 +182,11 @@ exl echo "## Installing and activating Cloudwatch agent to collect metrics"
 cwd0=$(pwd)
 cd ~
 
+ARCHITECTURE="$(dpkg --print-architecture)"
+CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${ARCHITECTURE}/latest/amazon-cloudwatch-agent.deb"
 apt install -y wget
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+wget "${CW_AGENT_LINK}"
 sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
 # If we want to collect new metrics, the following file has to be modified
 exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"

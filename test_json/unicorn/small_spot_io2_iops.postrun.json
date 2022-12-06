@@ -53,6 +53,7 @@
         "status": "0",
         "filesystem": "/dev/nvme1n1",
         "instance_id": "i-01769a822e5dbb407",
+        "instance_type": "t3.small",
         "instance_availablity_zone": "us-east-1f",
         "total_input_size": "12K",
         "total_output_size": "36K",

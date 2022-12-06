@@ -11,15 +11,27 @@ logger = create_logger(__name__)
 
 class AMI(object):
 
-    BASE_AMI = 'ami-0885b1f6bd170450c'  # ubuntu 20.04 for us-east-1
+    BASE_AMI = None
+    BASE_AMI_X86 = 'ami-0885b1f6bd170450c'  # ubuntu 20.04 for us-east-1 (x86)
+    BASE_AMI_ARM = 'ami-00266f51b6b22db58'  # ubuntu 20.04 for us-east-1 (Arm)
     BASE_REGION = 'us-east-1'
     USERDATA_DIR = os.path.dirname(os.path.abspath(__file__))
     USERDATA_FILE = os.path.join(USERDATA_DIR, 'create_ami_userdata')
     AMI_NAME = 'tibanna-ami-' + datetime.strftime(datetime.today(), '%Y%m%d')  # e.g tibanna-ami-20201113
+    ARCHITECTURE = 'x86'
 
-    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None):
+    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None, architecture=None):
         if base_ami:
             self.BASE_AMI = base_ami
+        elif architecture == 'x86':
+            self.BASE_AMI = self.BASE_AMI_X86
+            self.AMI_NAME = 'tibanna-ami-x86-' + datetime.strftime(datetime.today(), '%Y%m%d')
+        elif architecture == 'Arm':
+            self.BASE_AMI = self.BASE_AMI_ARM
+            self.AMI_NAME = 'tibanna-ami-arm-' + datetime.strftime(datetime.today(), '%Y%m%d')
+            self.ARCHITECTURE = 'Arm'
+
+
         if base_region:
             self.BASE_REGION = base_region
         if userdata_file is not None:
@@ -28,10 +40,14 @@ class AMI(object):
             self.AMI_NAME = ami_name
 
     @staticmethod
-    def launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami):
+    def launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture):
+
+        instanceType = 't3.micro'
+        if architecture == 'Arm':
+            instanceType = 'a1.medium'
 
         launch_args = {'ImageId': base_ami,
-                       'InstanceType': 't3.micro',
+                       'InstanceType': instanceType,
                        'MaxCount': 1,
                        'MinCount': 1,
                        'TagSpecifications': [{'ResourceType': 'instance',
@@ -55,7 +71,8 @@ class AMI(object):
     def create_ami_for_tibanna(self, keyname=None, make_public=False, replicate=False):
         return self.create_ami(keyname=keyname, userdata_file=self.USERDATA_FILE,
                                base_ami=self.BASE_AMI, ami_name=self.AMI_NAME,
-                               make_public=make_public, base_region=self.BASE_REGION, replicate=replicate)
+                               make_public=make_public, base_region=self.BASE_REGION, 
+                               replicate=replicate, architecture=self.ARCHITECTURE)
 
     @staticmethod
     def replicate_ami(*, ami_name, ami_id, source_region='us-east-1',
@@ -75,7 +92,7 @@ class AMI(object):
             Returns an AMI_PER_REGION mapping
         """
         if not target_regions:
-            target_regions = [r for r in AMI_PER_REGION.keys() if r != source_region]
+            target_regions = [r for r in AMI_PER_REGION['x86'].keys() if r != source_region]
 
         # Create sessions in each target region and copy the AMI into it
         # If this AMI is to be publicly available, sleep for 5 mins to allow
@@ -113,6 +130,7 @@ class AMI(object):
                    ami_name=AMI_NAME,
                    make_public=False,
                    replicate=False,
+                   architecture='x86',
                    base_region='us-east-1'):
         """ Helper function that creates the Tibanna AMI from a base image. """
         if not userdata_file:
@@ -136,7 +154,7 @@ class AMI(object):
 
         # Launch an instance with base AMI
         try:
-            instance_id = AMI.launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami)
+            instance_id = AMI.launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture)
             logger.debug("instance_id=" + instance_id)
         except:
             raise Exception("Failed to launch an instance")

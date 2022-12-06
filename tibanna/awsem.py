@@ -291,7 +291,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
                  start_time=None, end_time=None, status=None, Log=None,
                  total_input_size=None, total_output_size=None, total_tmp_size=None,
                  # older postrunjsons don't have these fields
-                 filesystem='', instance_id='', instance_availablity_zone='',
+                 filesystem='', instance_id='', instance_availablity_zone='', instance_type='',
                  Metrics=None, strict=True):
         if strict:
             if App is None or Input is None or Output is None or not JOBID or start_time is None:
@@ -303,6 +303,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
         self.filesystem = filesystem
         self.instance_id = instance_id
         self.instance_availablity_zone = instance_availablity_zone
+        self.instance_type = instance_type
         self.total_input_size = total_input_size
         self.total_output_size = total_output_size
         self.total_tmp_size = total_tmp_size

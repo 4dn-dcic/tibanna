@@ -3,6 +3,15 @@
 Change Log
 ==========
 
+3.0.0
+=====
+
+* Added support for Graviton instances. 
+* Removed ``other_instance_types`` as option for ``behavior_on_capacity_limit``. It will fall back to ``wait_and_retry``.
+* Multiple instance types can be specified in the configuration. If ``spot_instance`` is enabled, Tibanna will run the workflow on the instance with the highest available capacity. If ``spot_instance`` is disabled, it will run the workflow on the cheapest instance in the list.
+* Instead of using the ``run_instance`` command we switch to EC2 fleets (in instant mode) to start up instances. 
+
+
 2.2.6
 =====
 

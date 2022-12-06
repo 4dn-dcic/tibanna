@@ -2,7 +2,7 @@ from tibanna.job import Job, Jobs
 from tibanna.utils import create_jobid
 from tibanna import dd_utils
 from tibanna.vars import DYNAMODB_TABLE, EXECUTION_ARN
-import mock
+from unittest import mock
 import boto3
 import pytest
 
