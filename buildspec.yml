@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - wget https://github.com/docker/buildx/releases/download/v0.9.1/buildx-v0.9.1.linux-amd64
+      - mkdir -p ~/.docker/cli-plugins
+      - mv buildx-v0.9.1.linux-amd64 ~/.docker/cli-plugins/docker-buildx
+      - chmod a+rx ~/.docker/cli-plugins/docker-buildx
+      - docker run --privileged --rm tonistiigi/binfmt --install arm64,amd64
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker buildx create --use
+      - docker buildx build --push --platform linux/amd64,linux/arm64 -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/tibanna-awsf:$IMAGE_TAG --build-arg version=$IMAGE_TAG awsf3-docker/
