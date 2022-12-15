@@ -15,4 +15,4 @@ phases:
       - echo Build started on `date`
       - echo Building the Docker image...
       - docker buildx create --use
-      - docker buildx build --push --platform linux/amd64,linux/arm64 -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/tibanna-awsf --build-arg version=$IMAGE_TAG awsf3-docker/
+      - docker buildx build --push --platform linux/amd64,linux/arm64 -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/tibanna-awsf:$IMAGE_TAG --build-arg version=$IMAGE_TAG awsf3-docker/
