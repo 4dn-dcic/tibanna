@@ -12,8 +12,6 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     cron \
     curl \
     fuse \
-    gcc \
-    g++ \
     git \
     less \
     locales \
@@ -25,7 +23,6 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     vim \
     wget \
     software-properties-common \
-    build-essential \
     libssl-dev \
     libwww-perl \
     libdatetime-perl \
@@ -55,33 +52,22 @@ RUN echo \
 RUN apt-get update
 RUN apt-get --assume-yes install docker-ce
 
-# singularity
+# Singularity
 RUN ARCH="$(dpkg --print-architecture)" && \
-    wget "https://golang.org/dl/go1.16.6.linux-${ARCH}.tar.gz" && \
-    tar -xzf "go1.16.6.linux-${ARCH}.tar.gz" && \
-    rm "go1.16.6.linux-${ARCH}.tar.gz"
-RUN export SINGULARITY_VERSION=3.8.1 && \
-    export PATH=/usr/local/bin/go/bin/:$PATH && \
-    wget https://github.com/sylabs/singularity/releases/download/v${SINGULARITY_VERSION}/singularity-ce-${SINGULARITY_VERSION}.tar.gz && \
-    tar -xzf singularity-ce-${SINGULARITY_VERSION}.tar.gz && \
-    rm singularity-ce-${SINGULARITY_VERSION}.tar.gz && \
-    cd singularity-ce-${SINGULARITY_VERSION} && \
-    ./mconfig && \
-    make -C ./builddir && \
-    make -C ./builddir install && \
-    cd .. && \
-    rm -rf go && \
-    rm -rf singularity-ce-${SINGULARITY_VERSION}
+    SINGULARITY_VERSION=3.10.4 && \
+    wget https://tibanna-dependencies.s3.amazonaws.com/singularity/singularity-ce_${SINGULARITY_VERSION}-focal_${ARCH}.deb && \
+    apt install -y ./singularity-ce_${SINGULARITY_VERSION}-focal_${ARCH}.deb && \
+    rm singularity-ce_${SINGULARITY_VERSION}-focal_${ARCH}.deb
 
 # goofys
-# RUN curl -O -L http://bit.ly/goofys-latest && chmod +x goofys-latest  # latest is not latest
-RUN wget https://github.com/kahing/goofys/releases/download/v0.24.0/goofys && chmod +x goofys
+# RUN wget https://github.com/kahing/goofys/releases/download/v0.24.0/goofys && chmod +x goofys
+RUN ARCH="$(dpkg --print-architecture)" && \
+    wget https://tibanna-dependencies.s3.amazonaws.com/goofys/v0.24.0/${ARCH}/goofys && chmod +x goofys
 
 # python packages
 RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11
 RUN pip install psutil==5.7.3
-#RUN pip install schema-salad==2.7.20180514132321 cwltool==1.0.20180525185854  # old set up, doesn't work for python3
-RUN pip install schema-salad==7.0.20200811075006 cwltool==3.0.20201017180608
+RUN pip install cwltool==3.1.20211103193132
 RUN pip install ec2metadata==2.0.1
 
 # cromwell for WDL 1.0

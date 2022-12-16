@@ -3,6 +3,22 @@
 Change Log
 ==========
 
+3.1.0
+=====
+
+* Add config option ``ami_per_region``.
+* Bump ``cwltool`` version to ``3.1.20211103193132``.
+* Singularity was not working. Also, bump Singularity version to ``3.10.4``.
+* Speed up Tibanna docker build.
+* Fix Goofys installation on ARM architecture.
+
+
+3.0.1
+=====
+
+* Add CodeBuild specification.
+
+
 3.0.0
 =====
 
