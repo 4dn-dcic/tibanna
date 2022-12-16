@@ -7,3 +7,8 @@ export AWSF_IMAGE=$(python -c 'from tibanna.vars import DEFAULT_AWSF_IMAGE; prin
 # Your local docker driver needs to support the multiple platforms feature
 docker buildx build --push --platform linux/amd64,linux/arm64 -t $AWSF_IMAGE --build-arg version=$VERSION awsf3-docker/ > $BUILD_LOG
 
+# To push to ECR use (after log in), run
+#export AWSF_IMAGE="xxx.dkr.ecr.us-east-1.amazonaws.com/tibanna-awsf:$VERSION"
+#echo $AWSF_IMAGE
+#docker buildx build --push --platform linux/amd64,linux/arm64 -t $AWSF_IMAGE --build-arg version=$VERSION awsf3-docker/ > $BUILD_LOG
+

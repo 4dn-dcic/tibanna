@@ -298,11 +298,20 @@ else
     exl echo "Error: CWL draft3 is no longer supported. Please switch to v1"
     handle_error 1
   fi
-  # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
-  # To prevent this, use the original directory name here.
-  exl echo "cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE"
+
   mkdir -p $LOCAL_WF_TMPDIR_CWL
-  exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  if [[ $SINGULARITY_OPTION == '--singularity' ]]
+  then
+    exl echo "Using Singularity"
+    # Singularity can't be run with --custom-net host
+    exl echo "cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE"
+    exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  else
+    # cwltool cannot recognize symlinks and end up copying output from tmp directory intead of moving.
+    # To prevent this, use the original directory name here.
+    exl echo "cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE"
+    exlj cwltool --enable-dev --non-strict --no-read-only --no-match-user $RUN_ARGS --custom-net host --outdir $LOCAL_OUTDIR_CWL --tmp-outdir-prefix $LOCAL_WF_TMPDIR_CWL --tmpdir-prefix $LOCAL_WF_TMPDIR_CWL $PRESERVED_ENV_OPTION $SINGULARITY_OPTION $MAIN_CWL $cwd0/$INPUT_YML_FILE
+  fi
   handle_error $?
 fi
 cd $cwd0

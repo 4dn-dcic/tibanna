@@ -326,6 +326,8 @@ class Config(SerializableObject):
             self.ebs_size_as_is = False
         if not hasattr(self, 'ami_id'):
             self.ami_id = "" # will be assigned instance architecture specific later
+        if not hasattr(self, 'ami_per_region'):
+            self.ami_per_region = AMI_PER_REGION
             
         # special handling for subnet, SG if not set already pull from env
         # values from config take priority - omit them to get these values from lambda
@@ -431,10 +433,11 @@ class Execution(object):
                 'EBS_optimized': is_ebs_optimized
             }
             arch = result['ProcessorInfo']['SupportedArchitectures'][0]
-            default_ami = AMI_PER_REGION['Arm'].get(AWS_REGION, '') if arch == 'arm64' else AMI_PER_REGION['x86'].get(AWS_REGION, '')
+            default_ami = self.cfg.ami_per_region['Arm'].get(AWS_REGION, '') if arch == 'arm64' else self.cfg.ami_per_region['x86'].get(AWS_REGION, '')
             if self.cfg.ami_id:
                 # if a user supplied an ami_id, it will be used for every instance. 
                 # will be problematic if the instance list contains x86 and Arm instances
+                # Instead, users should provide ami_per_region
                 ami_ebs_info[instance_type]['ami_id'] = self.cfg.ami_id
             elif default_ami:
                 ami_ebs_info[instance_type]['ami_id'] = default_ami
