@@ -8,7 +8,8 @@ import boto3
 import botocore
 import copy
 import re
-from random import choice
+import random
+import string
 from . import create_logger
 from datetime import datetime, timedelta
 from .utils import (
@@ -534,9 +535,13 @@ class Execution(object):
 
     def launch_and_get_instance_id(self):
         os.environ['AWS_DEFAULT_REGION'] = AWS_REGION 
+        invalid_launch_template_retries = 0
+
+        self.create_launch_template()
 
         while True:
             fleet_result = self.create_fleet()
+            
             if 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
                 error_code = fleet_result['Errors'][0]['ErrorCode']
                 error_msg = fleet_result['Errors'][0]['ErrorMessage']
@@ -545,15 +550,18 @@ class Execution(object):
                         or 'UnfulfillableCapacity' in error_code):
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
+                        self.delete_launch_template()
                         msg = "Instance limit exception - use 'behavior_on_capacity_limit' option " + \
                               "to change the behavior to wait_and_retry, " + \
                               "or retry_without_spot. %s" % error_msg
                         raise EC2InstanceLimitException(msg)
                     elif behavior == 'wait_and_retry' or behavior == 'other_instance_types': # 'other_instance_types' is there for backwards compatibility
+                        self.delete_launch_template()
                         msg = "Instance limit exception - wait and retry later: %s" % error_msg
                         raise EC2InstanceLimitWaitException(msg)
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
+                            self.delete_launch_template()
                             msg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
                                   "'spot_instance' : true. %s" % error_msg
                             raise Exception(msg)
@@ -564,12 +572,19 @@ class Execution(object):
                             self.cfg.behavior_on_capacity_limit = 'fail'
                             logger.info("trying without spot...")
                             continue
+                elif 'InvalidLaunchTemplateId' in error_code and invalid_launch_template_retries < 5:
+                    invalid_launch_template_retries += 1
+                    logger.info(f"LaunchTemplate not found. Retry #{invalid_launch_template_retries}")
+                    continue
                 else:
+                    self.delete_launch_template()
                     raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
             elif 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
+                self.delete_launch_template()
                 instance_id = fleet_result['Instances'][0]['InstanceIds'][0]
                 return instance_id
             else:
+                self.delete_launch_template()
                 raise Exception(f"Unexpected result from create_fleet command: {json.dumps(fleet_result)}")
 
     def create_run_json_dict(self):
@@ -721,21 +736,25 @@ class Execution(object):
         base64_message = base64_bytes.decode('ascii')
         return base64_message
 
+    def delete_launch_template(self):
+        try:
+            # Existing launch templates can't be overwritten. Therefore, delete
+            # exsting ones first
+            ec2 = boto3.client('ec2')
+            ec2.delete_launch_template(
+                DryRun=self.dryrun,
+                LaunchTemplateName=self.launch_template_name,
+            )
+        except Exception as e:
+            logger.info("No existing launch template found.")
+
+
     def create_launch_template(self):
         """Create a launch template everytime we run a workflow. There is no other
         way to specify the necessary EC2 configurations"""
         ec2 = boto3.client('ec2')
-        launch_template_name = 'TibannaLaunchTemplate'
-
-        try:
-            # Existing launch templates can't be overwritten. Therefore, delete
-            # exsting ones first
-            ec2.delete_launch_template(
-                DryRun=self.dryrun,
-                LaunchTemplateName=launch_template_name,
-            )
-        except Exception as e:
-            logger.info("No existing launch template found.")
+        lt_id = ''.join(random.choices(string.ascii_lowercase, k=8))
+        self.launch_template_name = f'TibannaLaunchTemplate_{lt_id}'
 
         # ImageId, InstanceType and SubnetId will be set during the create-fleet operation
         launch_template_data ={
@@ -809,7 +828,7 @@ class Execution(object):
         try:
             ec2.create_launch_template(
                 DryRun=self.dryrun,
-                LaunchTemplateName=launch_template_name,
+                LaunchTemplateName=self.launch_template_name,
                 LaunchTemplateData=launch_template_data,
             )
         except Exception as e:
@@ -818,8 +837,6 @@ class Execution(object):
 
     def create_fleet(self):
         '''Create an 'instant' type fleet with 1 instance'''
-        self.create_launch_template()
-
         ec2 = boto3.client('ec2')
         try:
             fleet_spec = self.create_fleet_spec()
@@ -867,7 +884,7 @@ class Execution(object):
             },
             "LaunchTemplateConfigs": [{
                 "LaunchTemplateSpecification": {
-                    "LaunchTemplateName": "TibannaLaunchTemplate",
+                    "LaunchTemplateName": self.launch_template_name,
                     "Version": "$Latest" # There is only one version
                 },
                 "Overrides": potential_ec2s,
