@@ -625,8 +625,11 @@ def test_upload_run_json_encrypt_s3_upload():
 
 
 
+
+@mock.patch.object(Execution, 'create_launch_template')
+@mock.patch.object(Execution, 'delete_launch_template')
 @mock.patch.object(Execution, 'create_fleet')
-def test_launch_and_get_instance_id(test_create_fleet):
+def test_launch_and_get_instance_id(test_create_fleet, test_create_launch_template, test_delete_launch_template):
     """test dryrun of ec2 launch"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -637,12 +640,15 @@ def test_launch_and_get_instance_id(test_create_fleet):
                              'spot_instance': True, 'behavior_on_capacity_limit': 'fail'},
                   'jobid': jobid}
 
+    test_create_launch_template.return_value = []
+    test_delete_launch_template.return_value = []
     test_create_fleet.return_value = {
         "Errors":[{
             "ErrorCode": "Unhandled_error",
             "ErrorMessage": "Unhandled_error"
         }]
     }
+    
     execution = Execution(input_dict, dryrun=True)
     with pytest.raises(Exception) as ex:
         execution.launch_and_get_instance_id()
@@ -693,6 +699,7 @@ def test_create_fleet_spec():
                              'behavior_on_capacity_limit': 'fail'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
+    execution.launch_template_name = "LT"
     fleet_spec = execution.create_fleet_spec()
     potential_ec2s = fleet_spec["LaunchTemplateConfigs"][0]["Overrides"]
     assert len(potential_ec2s) == 1
@@ -700,6 +707,7 @@ def test_create_fleet_spec():
 
     input_dict['config']['instance_type'] = ['t2.micro']
     execution = Execution(input_dict, dryrun=True)
+    execution.launch_template_name = "LT"
     fleet_spec = execution.create_fleet_spec()
     potential_ec2s = fleet_spec["LaunchTemplateConfigs"][0]["Overrides"]
     assert len(potential_ec2s) == 1
@@ -708,6 +716,7 @@ def test_create_fleet_spec():
     input_dict['config']['instance_type'] = ['t2.micro','a1.medium']
     input_dict['config']['subnet'] = ['subnet_1', 'subnet_2']
     execution = Execution(input_dict, dryrun=True)
+    execution.launch_template_name = "LT"
     fleet_spec = execution.create_fleet_spec()
     potential_ec2s = fleet_spec["LaunchTemplateConfigs"][0]["Overrides"]
     assert len(potential_ec2s) == 4
@@ -727,6 +736,7 @@ def test_create_fleet():
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
     execution.userdata = execution.create_userdata()
+    execution.launch_template_name = "MyLaunchTemplateName"
     with pytest.raises(Exception) as ex:
         execution.create_fleet()
     assert 'Request would have succeeded, but DryRun flag is set.' in str(ex.value)
@@ -751,6 +761,7 @@ def test_fleet_spec_subnet_env(subnets):
                              'behavior_on_capacity_limit': 'fail'},
                   'jobid': jobid}
     execution = Execution(input_dict, dryrun=True)
+    execution.launch_template_name = "LT"
     fleet_spec = execution.create_fleet_spec()
     potential_ec2s = fleet_spec["LaunchTemplateConfigs"][0]["Overrides"]
 
