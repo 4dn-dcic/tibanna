@@ -572,7 +572,7 @@ class Execution(object):
                             self.cfg.behavior_on_capacity_limit = 'fail'
                             logger.info("trying without spot...")
                             continue
-                elif 'InvalidLaunchTemplateId' in error_code and invalid_launch_template_retries < 5:
+                elif 'InvalidLaunchTemplate' in error_code and invalid_launch_template_retries < 5:
                     invalid_launch_template_retries += 1
                     logger.info(f"LaunchTemplate not found. Retry #{invalid_launch_template_retries}")
                     continue
