@@ -2,7 +2,7 @@ merge_and_cut
 -------------
 
 This pipeline is an example of a double-nested input file array (e.g. ``[[[f1, f2], [f3, f4]], [[f5, f6], [f7, f8]]]``).
-It consists of a subworkflow called ``merge`` (previous section) and an extra step called ``cut``. ``Merge`` consists of two steps, ``paste`` and ``cat``, the former pastes input files horrizontally and the latter concatenates input files vertically. ``Cut`` prints the first letter of every line from a list of files. Since we're using generic commands, we do not need to create a pipeline software component or a Docker image. We will use the existing ``ubuntu:16.04`` Docker image. So, we will just do the following three steps.
+It consists of a subworkflow called ``merge`` (previous section) and an extra step called ``cut``. ``Merge`` consists of two steps, ``paste`` and ``cat``, the former pastes input files horrizontally and the latter concatenates input files vertically. ``Cut`` prints the first letter of every line from a list of files. Since we're using generic commands, we do not need to create a pipeline software component or a Docker image. We will use the existing ``ubuntu:20.04`` Docker image. So, we will just do the following three steps.
 
 1. create the pipeline description using either *CWL* or *WDL*.
 2. prepare for a job definition that specifies pipeline, input files, parameters, resources, output target, etc.
@@ -134,7 +134,7 @@ WDL
                 File cut1 = "cut1"
             }
             runtime {
-                docker: "ubuntu:16.04"
+                docker: "ubuntu:20.04"
             }
         } 
 

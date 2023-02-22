@@ -4,7 +4,7 @@
             "App_name": "repliseq-parta", 
             "App_version": null, 
             "command": "touch tests/awsf/haha", 
-            "container_image": "ubuntu:16.04", 
+            "container_image": "ubuntu:20.04", 
             "language": "shell"
         }, 
         "Input": {

@@ -20,7 +20,7 @@ task paste {
         File pasted = "pasted"
     }
     runtime {
-        docker: "ubuntu:16.04"
+        docker: "ubuntu:20.04"
     }
 }
 
@@ -33,6 +33,6 @@ task cat {
         File concatenated = "concatenated"
     }
     runtime {
-        docker: "ubuntu:16.04"
+        docker: "ubuntu:20.04"
     }
 }

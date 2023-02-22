@@ -20,6 +20,6 @@ task cut {
         File cut1 = "cut1"
     }
     runtime {
-        docker: "ubuntu:16.04"
+        docker: "ubuntu:20.04"
     }
 }

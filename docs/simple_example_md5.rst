@@ -64,7 +64,7 @@ To create your own, first you need to install docker on your (local) machine.
 ::
 
     # start from ubuntu docker image
-    FROM ubuntu:16.04
+    FROM ubuntu:20.04
     
     # general updates & installing necessary Linux components
     RUN apt-get update -y && apt-get install -y unzip
