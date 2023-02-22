@@ -596,7 +596,7 @@ def test_upload_run_json():
     res = s3.get_object(Bucket=log_bucket, Key=jobid + '.run.json')
     assert res
     res = s3.head_object(Bucket=log_bucket, Key=jobid + '.run.json')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,
                       Delete={'Objects': [{'Key': jobid + '.run.json'}]})
@@ -862,9 +862,9 @@ def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):
     res1 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/main.cwl')
     res2 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child1.cwl')
     res3 = s3.head_object(Bucket=log_bucket, Key=jobid + '.workflow/child2.cwl')
-    assert 'ServerSideEncryption' not in res1
-    assert 'ServerSideEncryption' not in res2
-    assert 'ServerSideEncryption' not in res3
+    assert res1["ServerSideEncryption"] == 'AES256'
+    assert res2["ServerSideEncryption"] == 'AES256'
+    assert res3["ServerSideEncryption"] == 'AES256'
     assert unicorn_input.args.cwl_directory_url == 's3://tibanna-output/' + jobid + '.workflow/'
     # clean up afterwards
     s3.delete_objects(Bucket=log_bucket,

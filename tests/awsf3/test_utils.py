@@ -637,7 +637,7 @@ def test_upload_postrun_json():
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/bqLd8oa7Tdz1.postrun.json')
 
     # check the result
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
 
 
 def test_upload_postrun_json_encrypt_s3_upload():
@@ -677,15 +677,15 @@ def test_upload_output():
     # get the results to check
     s3 = boto3.client('s3')
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload2')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload3.abc')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
-    assert 'ServerSideEncryption' not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     
     # clean up
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload')
