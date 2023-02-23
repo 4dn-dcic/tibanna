@@ -9,7 +9,7 @@ Job description
 
 To run the pipeline on a specific input file using Tibanna, we need to create an *job description* file for each execution (or a dictionary object if you're using Tibanna as a python module).
 
-The job description for running shell commands requires ``command`` and ``container_image`` fields. The former is a list of commands and the latter is the Docker image name. Here, we use ``ubuntu:16.04`` image and use an ``echo`` command. Notice that double-quotes are escaped inside the command string. We're passing an environment variable ``$NAME`` through the field ``input_env``. Also notice that the environment variable's ``$`` sign is prefixed with an escaped backslash in the ``command`` string.
+The job description for running shell commands requires ``command`` and ``container_image`` fields. The former is a list of commands and the latter is the Docker image name. Here, we use ``ubuntu:20.04`` image and use an ``echo`` command. Notice that double-quotes are escaped inside the command string. We're passing an environment variable ``$NAME`` through the field ``input_env``. Also notice that the environment variable's ``$`` sign is prefixed with an escaped backslash in the ``command`` string.
 
 In the following example, the output file ``hello.txt`` in the same directory is copied to the output bucket ``my-tibanna-test-bucket`` as ``some_sub_dirname/my_first_hello.txt``.
 
@@ -20,7 +20,7 @@ This json can be found at https://github.com/4dn-dcic/tibanna/blob/master/exampl
     
         {       
           "args": {
-            "container_image": "ubuntu:16.04",
+            "container_image": "ubuntu:20.04",
             "command": ["echo \"Hello world, \\$NAME!\" > hello.txt"],
             "language": "shell",
             "input_files": {},

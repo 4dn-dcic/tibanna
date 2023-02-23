@@ -19,7 +19,7 @@ def test_upload():
     res = s3.get_object(Bucket='tibanna-output', Key='uploadtest/' + randomstr)
     assert res
     res = s3.head_object(Bucket='tibanna-output', Key='uploadtest/' + randomstr)
-    assert "ServerSideEncryption" not in res
+    assert res["ServerSideEncryption"] == 'AES256'
     # cleanup afterwards
     shutil.rmtree(randomstr)
     s3.delete_objects(Bucket='tibanna-output',

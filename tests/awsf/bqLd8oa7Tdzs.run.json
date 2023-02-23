@@ -5,7 +5,7 @@
             "App_version": null, 
             "language": "shell",
             "command": "touch tests/awsf/haha",
-            "container_image": "ubuntu:16.04"
+            "container_image": "ubuntu:20.04"
         }, 
         "Input": {
             "Input_files_data": {

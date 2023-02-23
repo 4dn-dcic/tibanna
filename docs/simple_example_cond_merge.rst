@@ -2,7 +2,7 @@ cond_merge
 -----
 
 This pipeline is an example of a conditional output.
-It chooses between two tasks, ``paste`` and ``cat``, depending on the length of the input array (i.e. the number of input files). The former pastes input files horrizontally and the latter concatenates input files vertically. Since we're using generic commands, we do not need to create a pipeline software component or a Docker image. We will use the existing ``ubuntu:16.04`` Docker image. So, we will just do the following three steps.
+It chooses between two tasks, ``paste`` and ``cat``, depending on the length of the input array (i.e. the number of input files). The former pastes input files horrizontally and the latter concatenates input files vertically. Since we're using generic commands, we do not need to create a pipeline software component or a Docker image. We will use the existing ``ubuntu:20.04`` Docker image. So, we will just do the following three steps.
 
 1. create the pipeline description using *WDL*. (*CWL* does not support conditional statements)
 2. prepare for a job definition that specifies pipeline, input files, parameters, resources, output target, etc.
@@ -75,7 +75,7 @@ WDL
                 File pasted = "pasted"
             }
             runtime {
-                docker: "ubuntu:16.04"
+                docker: "ubuntu:20.04"
             }
         }
         
@@ -88,7 +88,7 @@ WDL
                 File concatenated = "concatenated"
             }
             runtime {
-                docker: "ubuntu:16.04"
+                docker: "ubuntu:20.04"
             }
         } 
             

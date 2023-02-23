@@ -19,5 +19,5 @@ outputs:
       glob: "cut1"
 stdout: "cut1"
 hints:
-  - dockerPull: ubuntu:16.04
+  - dockerPull: ubuntu:20.04
     class: DockerRequirement
