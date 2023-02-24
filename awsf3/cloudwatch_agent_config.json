@@ -17,9 +17,6 @@
 		"metrics_collected": {
 			"cpu": {
 				"measurement": [
-					"usage_idle",
-					"usage_iowait",
-					"usage_system",
 					"usage_active"
 				],
 				"metrics_collection_interval": 60,
@@ -27,11 +24,8 @@
 			},
 			"disk": {
 				"measurement": [
-                    "free",
-                    "total",
                     "used",
-					"used_percent",
-					"inodes_free"
+					"used_percent"
 				],
 				"metrics_collection_interval": 60,
 				"resources": [
@@ -40,10 +34,7 @@
 			},
 			"diskio": {
 				"measurement": [
-					"io_time",
-                    "read_bytes",
-                    "iops_in_progress",
-					"read_time"
+                    "read_bytes"
 				],
 				"metrics_collection_interval": 60,
 				"resources": [
@@ -54,20 +45,9 @@
 				"measurement": [
 					"used_percent",
                     "used",
-                    "available_percent",
                     "available"
 				],
 				"metrics_collection_interval": 60
-			},
-            "net": {
-				"measurement": [
-					"bytes_sent",
-                    "bytes_recv"
-				],
-				"metrics_collection_interval": 60,
-				"resources": [
-					"*"
-				]
 			}
 		}
 	}
