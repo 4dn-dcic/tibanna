@@ -548,6 +548,10 @@ class Execution(object):
                 if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code or
                         'is not supported in your requested Availability Zone' in error_msg
                         or 'UnfulfillableCapacity' in error_code):
+                    
+                    if 'FleetId' in fleet_result:
+                        self.delete_fleet(fleet_result['FleetId'])
+
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         self.delete_launch_template()
@@ -585,6 +589,8 @@ class Execution(object):
                 return instance_id
             else:
                 self.delete_launch_template()
+                if 'FleetId' in fleet_result:
+                    self.delete_fleet(fleet_result['FleetId'])
                 raise Exception(f"Unexpected result from create_fleet command: {json.dumps(fleet_result)}")
 
     def create_run_json_dict(self):
@@ -834,6 +840,19 @@ class Execution(object):
         except Exception as e:
             raise Exception(f"Could not create launch template: {str(e)}")
 
+
+    def delete_fleet(self, fleet_id):
+        '''Delete an existing fleet'''
+        ec2 = boto3.client('ec2')
+        try:
+            return ec2.delete_fleets(
+                DryRun=self.dryrun,
+                FleetIds=[fleet_id],
+                TerminateInstances=True
+            )
+        except Exception as e:
+            raise Exception(f"Unable to delete fleet: {str(e)}")
+        
 
     def create_fleet(self):
         '''Create an 'instant' type fleet with 1 instance'''
