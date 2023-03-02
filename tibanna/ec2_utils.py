@@ -541,17 +541,23 @@ class Execution(object):
 
         while True:
             fleet_result = self.create_fleet()
+            logger.info(f"Result from create_fleet command: {json.dumps(fleet_result)}")
             
-            if 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
+            if 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
+                self.delete_launch_template()
+                instance_id = fleet_result['Instances'][0]['InstanceIds'][0]
+                return instance_id
+            
+            elif 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
                 error_code = fleet_result['Errors'][0]['ErrorCode']
                 error_msg = fleet_result['Errors'][0]['ErrorMessage']
-                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code or
-                        'is not supported in your requested Availability Zone' in error_msg
+
+                self.delete_fleet(fleet_result['FleetId'])
+
+                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code   
+                        or 'is not supported in your requested Availability Zone' in error_msg            
                         or 'UnfulfillableCapacity' in error_code):
                     
-                    if 'FleetId' in fleet_result:
-                        self.delete_fleet(fleet_result['FleetId'])
-
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         self.delete_launch_template()
@@ -583,14 +589,9 @@ class Execution(object):
                 else:
                     self.delete_launch_template()
                     raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
-            elif 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
-                self.delete_launch_template()
-                instance_id = fleet_result['Instances'][0]['InstanceIds'][0]
-                return instance_id
             else:
                 self.delete_launch_template()
-                if 'FleetId' in fleet_result:
-                    self.delete_fleet(fleet_result['FleetId'])
+                self.delete_fleet(fleet_result['FleetId'])
                 raise Exception(f"Unexpected result from create_fleet command: {json.dumps(fleet_result)}")
 
     def create_run_json_dict(self):

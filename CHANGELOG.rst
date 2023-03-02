@@ -3,7 +3,7 @@
 Change Log
 ==========
 
-3.2.0
+3.2.1
 =====
 
 * Fix issue where costs could be inflated when running spot
