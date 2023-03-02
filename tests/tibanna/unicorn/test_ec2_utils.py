@@ -629,7 +629,8 @@ def test_upload_run_json_encrypt_s3_upload():
 @mock.patch.object(Execution, 'create_launch_template')
 @mock.patch.object(Execution, 'delete_launch_template')
 @mock.patch.object(Execution, 'create_fleet')
-def test_launch_and_get_instance_id(test_create_fleet, test_create_launch_template, test_delete_launch_template):
+@mock.patch.object(Execution, 'delete_fleet')
+def test_launch_and_get_instance_id(test_delete_fleet, test_create_fleet, test_create_launch_template, test_delete_launch_template):
     """test dryrun of ec2 launch"""
     jobid = create_jobid()
     log_bucket = 'tibanna-output'
@@ -642,7 +643,10 @@ def test_launch_and_get_instance_id(test_create_fleet, test_create_launch_templa
 
     test_create_launch_template.return_value = []
     test_delete_launch_template.return_value = []
+    test_delete_fleet.return_value = []
     test_create_fleet.return_value = {
+        "FleetId": "fid",
+        "Instances": [],
         "Errors":[{
             "ErrorCode": "Unhandled_error",
             "ErrorMessage": "Unhandled_error"
@@ -655,6 +659,8 @@ def test_launch_and_get_instance_id(test_create_fleet, test_create_launch_templa
     assert 'Failed to launch instance for job' in str(ex.value)
 
     test_create_fleet.return_value = {
+        "FleetId": "fid",
+        "Instances": [],
         "Errors":[{
             "ErrorCode": "InsufficientInstanceCapacity",
             "ErrorMessage": "InsufficientInstanceCapacity"
