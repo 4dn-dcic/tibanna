@@ -545,8 +545,9 @@ class Execution(object):
             if 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
                 error_code = fleet_result['Errors'][0]['ErrorCode']
                 error_msg = fleet_result['Errors'][0]['ErrorMessage']
-                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code or
-                        'is not supported in your requested Availability Zone' in error_msg
+
+
+                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code                        
                         or 'UnfulfillableCapacity' in error_code):
                     
                     if 'FleetId' in fleet_result:
@@ -576,12 +577,25 @@ class Execution(object):
                             self.cfg.behavior_on_capacity_limit = 'fail'
                             logger.info("trying without spot...")
                             continue
+                elif 'is not supported in your requested Availability Zone' in error_msg:
+                    if 'FleetId' in fleet_result:
+                        self.delete_launch_template()
+                        instance_id = fleet_result['Instances'][0]['InstanceIds'][0]
+                        return instance_id
+                    else:
+                        self.delete_launch_template()
+                        raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
+
                 elif 'InvalidLaunchTemplate' in error_code and invalid_launch_template_retries < 5:
+                    if 'FleetId' in fleet_result:
+                        self.delete_fleet(fleet_result['FleetId'])
                     invalid_launch_template_retries += 1
                     logger.info(f"LaunchTemplate not found. Retry #{invalid_launch_template_retries}")
                     continue
                 else:
                     self.delete_launch_template()
+                    if 'FleetId' in fleet_result:
+                        self.delete_fleet(fleet_result['FleetId'])
                     raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
             elif 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
                 self.delete_launch_template()
