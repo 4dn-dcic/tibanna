@@ -3,7 +3,13 @@
 Change Log
 ==========
 
-3.1.0
+3.2.0
+=====
+
+* Fix issue where costs could be inflated when running spot
+
+
+3.1.0 - yanked (do not use)
 =====
 
 * Add config option ``ami_per_region``.
@@ -13,13 +19,13 @@ Change Log
 * Fix Goofys installation on ARM architecture.
 
 
-3.0.1
+3.0.1  - yanked (do not use)
 =====
 
 * Add CodeBuild specification.
 
 
-3.0.0
+3.0.0 - yanked (do not use)
 =====
 
 * Added support for Graviton instances. 
