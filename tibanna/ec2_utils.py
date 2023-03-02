@@ -541,6 +541,7 @@ class Execution(object):
 
         while True:
             fleet_result = self.create_fleet()
+            logger.info(f"Result from create_fleet command: {json.dumps(fleet_result)}")
             
             if 'Instances' in fleet_result and len(fleet_result['Instances']) > 0:
                 self.delete_launch_template()
