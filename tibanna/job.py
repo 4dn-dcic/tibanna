@@ -35,7 +35,7 @@ class Jobs(object):
 
 class Job(object):
 
-    def __init__(self, job_id=None, exec_arn=None, sfn=None):
+    def __init__(self, job_id=None, exec_arn=None, sfn=None, **kwargs):
         """A job can be identified with either a job_id or an exec_arn.
         For old tibanna versions (with no dynamoDB deployed),
         a job can be identified with a job_id and sfn.
