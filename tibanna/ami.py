@@ -20,7 +20,7 @@ class AMI(object):
     AMI_NAME = 'tibanna-ami-' + datetime.strftime(datetime.today(), '%Y%m%d')  # e.g tibanna-ami-20201113
     ARCHITECTURE = 'x86'
 
-    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None, architecture=None):
+    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None, architecture=None, **kwargs):
         if base_ami:
             self.BASE_AMI = base_ami
         elif architecture == 'x86':

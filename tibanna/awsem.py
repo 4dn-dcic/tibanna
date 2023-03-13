@@ -9,7 +9,7 @@ from .nnested_array import flatten
 
 
 class AwsemRunJson(SerializableObject):
-    def __init__(self, Job=None, config=None, strict=True):
+    def __init__(self, Job=None, config=None, strict=True, **kwargs):
         if strict:
             if not Job or not config:
                 raise MalFormattedPostRunJsonException("Job and config are required fields.")
@@ -24,7 +24,7 @@ class AwsemRunJson(SerializableObject):
 
 class AwsemRunJsonJob(SerializableObject):
     def __init__(self, App=None, Input=None, Output=None, JOBID='',
-                 start_time=None, Log=None, strict=True):
+                 start_time=None, Log=None, strict=True, **kwargs):
         if strict:
             if App is None or Input is None or Output is None or not JOBID:
                 raise MalFormattedRunJsonException
@@ -63,7 +63,7 @@ class AwsemRunJsonJob(SerializableObject):
 
 
 class AwsemRunJsonLog(SerializableObject):
-    def __init__(self, log_bucket_directory=None):
+    def __init__(self, log_bucket_directory=None, **kwargs):
         self.log_bucket_directory = log_bucket_directory
 
 
@@ -72,7 +72,8 @@ class AwsemRunJsonApp(SerializableObject):
                  cwl_url=None, main_cwl=None, other_cwl_files=None,
                  wdl_url=None, main_wdl=None, other_wdl_files=None, workflow_engine=None, run_args=None,
                  container_image=None, command=None,
-                 snakemake_url=None, main_snakemake=None, other_snakemake_files=None):
+                 snakemake_url=None, main_snakemake=None, other_snakemake_files=None,
+                 **kwargs):
         self.App_name = App_name
         self.App_version = App_version
         self.language = language
@@ -90,11 +91,12 @@ class AwsemRunJsonApp(SerializableObject):
         self.main_snakemake = main_snakemake
         self.other_snakemake_files = other_snakemake_files
 
+
 class AwsemRunJsonInput(SerializableObject):
     def __init__(self, Input_files_data=None, Input_parameters=None, Secondary_files_data=None,
                  # Input_files_reference is for older postrunjson
                  # Env is missing in older postrunjson
-                 Input_files_reference=None, Env=None):
+                 Input_files_reference=None, Env=None, **kwargs):
         if not Input_files_data:
             Input_files_data = {}
         if not Input_parameters:
@@ -223,7 +225,7 @@ class AwsemRunJsonInputFile(SerializableObject):
 
 class AwsemRunJsonOutput(SerializableObject):
     def __init__(self, output_bucket_directory=None, output_target=None,
-                 secondary_output_target=None, alt_cond_output_argnames=None):
+                 secondary_output_target=None, alt_cond_output_argnames=None, **kwargs):
         self.output_bucket_directory = output_bucket_directory or {}
         self.output_target = output_target or {}
         self.secondary_output_target = secondary_output_target or {}
@@ -269,7 +271,7 @@ class AwsemRunJsonOutput(SerializableObject):
 
 
 class AwsemPostRunJson(AwsemRunJson):
-    def __init__(self, Job=None, config=None, commands=None,log=None, strict=True):
+    def __init__(self, Job=None, config=None, commands=None, log=None, strict=True, **kwargs):
         if strict:
             if not Job or not config:
                 raise MalFormattedPostRunJsonException("Job and config are required fields.")
@@ -292,7 +294,7 @@ class AwsemPostRunJsonJob(AwsemRunJsonJob):
                  total_input_size=None, total_output_size=None, total_tmp_size=None,
                  # older postrunjsons don't have these fields
                  filesystem='', instance_id='', instance_availablity_zone='', instance_type='',
-                 Metrics=None, strict=True):
+                 Metrics=None, strict=True, **kwargs):
         if strict:
             if App is None or Input is None or Output is None or not JOBID or start_time is None:
                 errmsg = "App, Input, Output, JOBID and start_time are required fields"

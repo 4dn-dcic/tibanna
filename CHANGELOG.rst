@@ -3,6 +3,13 @@
 Change Log
 ==========
 
+3.2.2
+=====
+`PR 387: Add kwargs <https://github.com/4dn-dcic/tibanna/pull/387>`_
+
+* Add kwargs to various class' init methods
+
+
 3.2.1
 =====
 
