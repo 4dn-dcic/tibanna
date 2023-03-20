@@ -77,6 +77,8 @@ class CheckTask(object):
         if does_key_exist(bucket_name, job_aborted):
             try:
                 self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
+                # Instance should already be terminated here. Sending a second signal just in case
+                boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
             except Exception as e:
                 logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
             raise JobAbortedException("job aborted")
@@ -87,6 +89,10 @@ class CheckTask(object):
                 self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             except Exception as e:
                 logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
+            
+            # Instance should already be terminated here. Sending a second signal just in case
+            boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
+            
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
@@ -102,6 +108,8 @@ class CheckTask(object):
         if does_key_exist(bucket_name, job_success):
             self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             print("completed successfully")
+            # Instance should already be terminated here. Sending a second signal just in case
+            boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
             return self.input_json
 
         # checking if instance is terminated for no reason
@@ -144,9 +152,9 @@ class CheckTask(object):
         raise StillRunningException("job %s still running" % jobid)
 
     def terminate_idle_instance(self, jobid, instance_id, cpu, ebs_read):
-        if not cpu or cpu < 1.0:
+        if not cpu or cpu < 2.0:
             # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-            if not ebs_read or ebs_read < 1000:  # minimum 1kb
+            if not ebs_read or ebs_read < 5000:  # minimum 5kb
                 # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
                 try:
                     bucket_name = self.input_json['config']['log_bucket']

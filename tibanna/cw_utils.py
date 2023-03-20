@@ -8,7 +8,7 @@ from .utils import (
 from .top import Top
 from .vars import (
     AWS_REGION,
-    EBS_MOUNT_POINT,
+    METRICS_COLLECTION_INTERVAL,
     S3_ENCRYT_KEY_ID
 )
 from datetime import datetime
@@ -219,7 +219,7 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -235,7 +235,7 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -251,7 +251,7 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Minimum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -267,7 +267,7 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -283,7 +283,7 @@ class TibannaResource(object):
             Dimensions=[{
               'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -299,7 +299,7 @@ class TibannaResource(object):
             Dimensions=[{
               'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Maximum'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -315,7 +315,7 @@ class TibannaResource(object):
             Dimensions=[{
                 'Name': 'InstanceId', 'Value': self.instance_id
             }],
-            Period=60*5,
+            Period=METRICS_COLLECTION_INTERVAL,
             Statistics=['Average'],
             StartTime=self.starttime,
             EndTime=self.endtime,
@@ -429,6 +429,7 @@ class TibannaResource(object):
                              '---', # cost placeholder for now
                              cost_estimate, self.cost_estimate_type,
                              str(self.start), str(self.end), str(self.end - self.start),
+                             METRICS_COLLECTION_INTERVAL,
                              max_mem_used_MB_js, min_mem_available_MB_js, max_disk_space_used_GB_js,
                              max_mem_utilization_percent_js, max_disk_space_utilization_percent_js, max_cpu_utilization_percent_js,
                              cpu_columns_js, cpu_data_js,
@@ -490,6 +491,7 @@ class TibannaResource(object):
                              cost,
                              estimated_cost, cost_estimate_type,
                              str(starttime), str(endtime), str(endtime-starttime),
+                             METRICS_COLLECTION_INTERVAL,
                              max_mem_used_MB_js, min_mem_available_MB_js, max_disk_space_used_GB_js,
                              max_mem_utilization_percent_js, max_disk_space_utilization_percent_js, max_cpu_utilization_percent_js,
                              cpu_columns_js, cpu_data_js,
@@ -811,6 +813,9 @@ class TibannaResource(object):
                 //window.onload = function(){
                 //  window.addEventListener('resize', onResize);
                 //}
+
+                const TIME_SCALING_FACTOR=Math.round(%s/60);
+
                 /* Functions definition */
                 function make_x_gridlines(x, n) {
                   var n_l = 0
@@ -863,11 +868,11 @@ class TibannaResource(object):
                   var n_cpu = data_cpu.length;
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n]) // input
+                      .domain([0, TIME_SCALING_FACTOR * n]) // input
                       .range([0, width]); // output
                   // X scale for CPU utilization
                   var xScale_cpu = d3.scaleLinear()
-                      .domain([0, n_cpu]) // input
+                      .domain([0, TIME_SCALING_FACTOR * n_cpu]) // input
                       .range([0, width*(n_cpu)/(n)]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
@@ -875,12 +880,12 @@ class TibannaResource(object):
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i) + xScale(1); }) // set the x values for the line generator
+                      .x(function(d, i) { return TIME_SCALING_FACTOR * (xScale(i)+xScale(1)); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // d3's line generator for CPU utilization
                   var line_cpu = d3.line()
-                      .x(function(d, i) { return xScale_cpu(i) + xScale(1); }) // set the x values for the line generator
+                      .x(function(d, i) { return TIME_SCALING_FACTOR * (xScale_cpu(i)+xScale_cpu(1)); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
@@ -965,7 +970,7 @@ class TibannaResource(object):
                   }
                   // X scale will use the index of our data
                   var xScale = d3.scaleLinear()
-                      .domain([0, n]) // input
+                      .domain([0, TIME_SCALING_FACTOR * n]) // input
                       .range([0, width]); // output
                   // Y scale will use the randomly generate number
                   var yScale = d3.scaleLinear()
@@ -973,7 +978,7 @@ class TibannaResource(object):
                       .range([height, 0]); // output
                   // d3's line generator
                   var line = d3.line()
-                      .x(function(d, i) { return xScale(i) + xScale(1); }) // set the x values for the line generator
+                      .x(function(d, i) { return TIME_SCALING_FACTOR * (xScale(i)+xScale(1)); }) // set the x values for the line generator
                       .y(function(d) { return yScale(d.y); }) // set the y values for the line generator
                       //.curve(d3.curveMonotoneX) // apply smoothing to the line
                   // An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
