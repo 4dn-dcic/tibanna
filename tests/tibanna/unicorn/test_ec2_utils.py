@@ -656,7 +656,7 @@ def test_launch_and_get_instance_id(test_delete_fleet, test_create_fleet, test_c
     execution = Execution(input_dict, dryrun=True)
     with pytest.raises(Exception) as ex:
         execution.launch_and_get_instance_id()
-    assert 'Failed to launch instance for job' in str(ex.value)
+    assert 'Unexpected result from create_fleet command' in str(ex.value)
 
     test_create_fleet.return_value = {
         "FleetId": "fid",
@@ -692,6 +692,23 @@ def test_launch_and_get_instance_id(test_delete_fleet, test_create_fleet, test_c
     assert 'Instance limit exception' in str(ex.value)
     assert execution.cfg.behavior_on_capacity_limit == 'fail'
     assert execution.cfg.spot_instance == False
+
+    test_create_fleet.return_value = {
+        "FleetId": "fid",
+        "Instances": [],
+        "Errors":[{
+            "ErrorCode": "InvalidFleetConfiguration",
+            "ErrorMessage": "InvalidFleetConfiguration"
+        },
+        {
+            "ErrorCode": "InvalidFleetConfiguration",
+            "ErrorMessage": "InvalidFleetConfiguration"
+        }]
+    }
+    execution = Execution(input_dict, dryrun=True)
+    with pytest.raises(Exception) as ex:
+        execution.launch_and_get_instance_id()
+    assert 'Invalid fleet configuration' in str(ex.value)
 
 
 def test_create_fleet_spec():
@@ -820,15 +837,15 @@ def test_instance_types():
     input_dict['config']['cpu'] = 1
     input_dict['config']['mem_as_is'] = True
     execution = Execution(input_dict, dryrun=True)
-    possible_instance_types = ['t3.small', 't3.medium', 't3.large', 'c5.large', 'm5a.large']
-    assert len(execution.instance_type_list) == 5
+    possible_instance_types = ['t3.small', 't3.medium', 'c6a.large', 't3.large', 'c6i.large', 'c5.large', 'm5a.large', 'm6a.large']
+    assert len(execution.instance_type_list) == 8
     for instance in possible_instance_types:
         assert instance in execution.instance_type_list
 
     input_dict['config']['EBS_optimized'] = False
     execution = Execution(input_dict, dryrun=True)
-    possible_instance_types = ['t3.small', 't2.small', 't3.medium', 't2.medium', 'm3.medium', 't3.large', 'c5.large',
-                               'm5a.large', 'm1.medium', 't2.large']
+    possible_instance_types = ['t3.small', 't2.small', 't3.medium', 't2.medium', 'c6a.large', 't3.large', 'c6i.large', 'c5.large', 'm5a.large', 'm6a.large']
+
     for instance in possible_instance_types:
         assert instance in execution.instance_type_list
 
@@ -849,7 +866,7 @@ def test_instance_types():
         'mem': 2, 'cpu': 1
     }
     execution = Execution(input_dict, dryrun=True)
-    assert len(execution.instance_type_list) == 11
+    assert len(execution.instance_type_list) == 1 # instance_type has priority
 
 
 def test_upload_workflow_to_s3(run_task_awsem_event_cwl_upload):

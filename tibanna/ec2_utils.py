@@ -550,8 +550,8 @@ class Execution(object):
             
             elif 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
 
-                error_codes = map(lambda err: err['ErrorCode'], fleet_result['Errors'])
-                error_msgs = map(lambda err: err['ErrorMessage'], fleet_result['Errors'])
+                error_codes = list(map(lambda err: err['ErrorCode'], fleet_result['Errors']))
+                error_msgs = list(map(lambda err: err['ErrorMessage'], fleet_result['Errors']))
 
                 num_unique_errors = len(set(error_codes))
 
