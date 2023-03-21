@@ -152,9 +152,9 @@ class CheckTask(object):
         raise StillRunningException("job %s still running" % jobid)
 
     def terminate_idle_instance(self, jobid, instance_id, cpu, ebs_read):
-        if not cpu or cpu < 2.0:
+        if not cpu or cpu < 1.0:
             # the instance wasn't terminated - otherwise it would have been captured in the previous error.
-            if not ebs_read or ebs_read < 5000:  # minimum 5kb
+            if not ebs_read or ebs_read < 1000:  # minimum 1kb
                 # in case the instance is copying files using <1% cpu for more than 1hr, do not terminate it.
                 try:
                     bucket_name = self.input_json['config']['log_bucket']
