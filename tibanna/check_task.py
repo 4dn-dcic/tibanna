@@ -77,6 +77,8 @@ class CheckTask(object):
         if does_key_exist(bucket_name, job_aborted):
             try:
                 self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
+                # Instance should already be terminated here. Sending a second signal just in case
+                boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
             except Exception as e:
                 logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
             raise JobAbortedException("job aborted")
@@ -87,6 +89,10 @@ class CheckTask(object):
                 self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             except Exception as e:
                 logger.warning("error occurred while handling postrun json but continuing. %s" % str(e))
+            
+            # Instance should already be terminated here. Sending a second signal just in case
+            boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
+            
             eh = AWSEMErrorHandler()
             if 'custom_errors' in self.input_json['args']:
                 eh.add_custom_errors(self.input_json['args']['custom_errors'])
@@ -102,6 +108,8 @@ class CheckTask(object):
         if does_key_exist(bucket_name, job_success):
             self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json)
             print("completed successfully")
+            # Instance should already be terminated here. Sending a second signal just in case
+            boto3.client('ec2').terminate_instances(InstanceIds=[instance_id]) 
             return self.input_json
 
         # checking if instance is terminated for no reason

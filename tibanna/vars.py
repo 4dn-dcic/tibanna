@@ -144,7 +144,6 @@ def PARSE_AWSEM_TIME(t_str):
 # EBS mount path for cloudwatch metric collection
 EBS_MOUNT_POINT = '/mnt/data1'
 
-
 # Default root EBS size
 DEFAULT_ROOT_EBS_SIZE = 8
 
@@ -157,11 +156,12 @@ RUN_TASK_LAMBDA_NAME = 'run_task_awsem'
 CHECK_TASK_LAMBDA_NAME = 'check_task_awsem'
 UPDATE_COST_LAMBDA_NAME = 'update_cost_awsem'
 
-
 # step function and execution ARN generators
 BASE_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':%s:%s'
 BASE_EXEC_ARN = 'arn:aws:states:' + AWS_REGION + ':' + AWS_ACCOUNT_NUMBER + ':execution:%s:%s'
 BASE_METRICS_URL = 'https://%s.s3.amazonaws.com/%s.metrics/metrics.html'
+
+METRICS_COLLECTION_INTERVAL = 120 # in seconds, same value as in cloudwatch_agent_config.json
 
 
 def STEP_FUNCTION_ARN(sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME):

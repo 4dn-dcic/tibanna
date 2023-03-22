@@ -409,7 +409,7 @@ class Execution(object):
                                                 'EBS_optimized': self.cfg.EBS_optimized})
 
         # user specified mem and cpu - use the benchmark package to retrieve instance types
-        if self.cfg.mem and self.cfg.cpu:
+        elif self.cfg.mem and self.cfg.cpu:
             mem = self.cfg.mem if self.cfg.mem_as_is else self.cfg.mem + 1
             list0 = get_instance_types(self.cfg.cpu, mem, instance_list(exclude_t=False))
             current_list = [i['instance_type'] for i in instance_type_dlist]
@@ -549,31 +549,48 @@ class Execution(object):
                 return instance_id
             
             elif 'Errors' in fleet_result and len(fleet_result['Errors']) > 0:
-                error_code = fleet_result['Errors'][0]['ErrorCode']
-                error_msg = fleet_result['Errors'][0]['ErrorMessage']
+
+                error_codes = list(map(lambda err: err['ErrorCode'], fleet_result['Errors']))
+                error_msgs = list(map(lambda err: err['ErrorMessage'], fleet_result['Errors']))
+
+                num_unique_errors = len(set(error_codes))
 
                 self.delete_fleet(fleet_result['FleetId'])
 
-                if ('InsufficientInstanceCapacity' in error_code or 'InstanceLimitExceeded' in error_code   
-                        or 'is not supported in your requested Availability Zone' in error_msg            
-                        or 'UnfulfillableCapacity' in error_code):
-                    
+                if 'InvalidLaunchTemplate' in error_codes and invalid_launch_template_retries < 5:
+                    invalid_launch_template_retries += 1
+                    logger.info(f"LaunchTemplate not found. Retry #{invalid_launch_template_retries}")
+                    # continue without creating a new launch template
+                    continue
+
+                elif 'InvalidLaunchTemplate' in error_codes and invalid_launch_template_retries >= 5:
+                    self.delete_launch_template()
+                    raise Exception(f"InvalidLaunchTemplate. Result from create_fleet command: {json.dumps(fleet_result)}")
+
+                elif num_unique_errors == 1 and 'InvalidFleetConfiguration' in error_codes:
+                    # This error code includes the "Your requested instance type (xxx) is not supported in your requested Availability Zone (xxx)" error
+                    # In this case there must be an issue with the general setup, otherwise we would get additional error codes, e.g., InsufficientInstanceCapacity
+                    self.delete_launch_template()
+                    raise Exception(f"Invalid fleet configuration. Result from create_fleet command: {json.dumps(fleet_result)}")
+                
+                elif 'InsufficientInstanceCapacity' in error_codes or 'InstanceLimitExceeded' in error_codes or 'UnfulfillableCapacity' in error_codes:
+                    # We ignore the 'InvalidFleetConfiguration' error here
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
                         self.delete_launch_template()
-                        msg = "Instance limit exception - use 'behavior_on_capacity_limit' option " + \
-                              "to change the behavior to wait_and_retry, " + \
-                              "or retry_without_spot. %s" % error_msg
+                        msg = "Instance limit exception - use 'behavior_on_capacity_limit' option to change the behavior to wait_and_retry, or retry_without_spot. Errors: "
+                        msg += "; ".join(error_msgs)
                         raise EC2InstanceLimitException(msg)
                     elif behavior == 'wait_and_retry' or behavior == 'other_instance_types': # 'other_instance_types' is there for backwards compatibility
                         self.delete_launch_template()
-                        msg = "Instance limit exception - wait and retry later: %s" % error_msg
+                        msg = "Instance limit exception - wait and retry later. Errors: "
+                        msg += "; ".join(error_msgs)
                         raise EC2InstanceLimitWaitException(msg)
                     elif behavior == 'retry_without_spot':
                         if not self.cfg.spot_instance:
                             self.delete_launch_template()
-                            msg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with " + \
-                                  "'spot_instance' : true. %s" % error_msg
+                            msg = "'behavior_on_capacity_limit': 'retry_without_spot' works only with 'spot_instance' : true. Errors: "
+                            msg += "; ".join(error_msgs)
                             raise Exception(msg)
                         else:
                             self.cfg.spot_instance = False
@@ -582,13 +599,11 @@ class Execution(object):
                             self.cfg.behavior_on_capacity_limit = 'fail'
                             logger.info("trying without spot...")
                             continue
-                elif 'InvalidLaunchTemplate' in error_code and invalid_launch_template_retries < 5:
-                    invalid_launch_template_retries += 1
-                    logger.info(f"LaunchTemplate not found. Retry #{invalid_launch_template_retries}")
-                    continue
+
                 else:
                     self.delete_launch_template()
-                    raise Exception(f"Failed to launch instance for job {self.jobid}. {error_code}: {error_msg}")
+                    raise Exception(f"Unexpected result from create_fleet command: {json.dumps(fleet_result)}")
+
             else:
                 self.delete_launch_template()
                 self.delete_fleet(fleet_result['FleetId'])
