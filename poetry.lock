@@ -50,14 +50,14 @@ python-versions = ">=3.5,<4.0"
 
 [[package]]
 name = "boto3"
-version = "1.26.111"
+version = "1.26.113"
 description = "The AWS SDK for Python"
 category = "main"
 optional = false
 python-versions = ">= 3.7"
 
 [package.dependencies]
-botocore = ">=1.29.111,<1.30.0"
+botocore = ">=1.29.113,<1.30.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.6.0,<0.7.0"
 
@@ -66,7 +66,7 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.29.111"
+version = "1.29.113"
 description = "Low-level, data-driven core of boto 3."
 category = "main"
 optional = false
@@ -240,7 +240,7 @@ python-versions = "*"
 
 [[package]]
 name = "packaging"
-version = "23.0"
+version = "23.1"
 description = "Core utilities for Python packages"
 category = "dev"
 optional = false
@@ -673,12 +673,12 @@ benchmark-4dn = [
     {file = "benchmark_4dn-0.5.23-py3-none-any.whl", hash = "sha256:bd8aa8c252e868f1d7afa2c2003e1148f409e6dc825af5656f37cd5fec30e2c3"},
 ]
 boto3 = [
-    {file = "boto3-1.26.111-py3-none-any.whl", hash = "sha256:6cb601c4232537aca2dd216282ff4383a7277f6a150b2c8947eda0c3933d0223"},
-    {file = "boto3-1.26.111.tar.gz", hash = "sha256:db8733f0a723c4548b6565d8665b876e93f28837d8d6bae40cc03a6e597cd6a6"},
+    {file = "boto3-1.26.113-py3-none-any.whl", hash = "sha256:631db554cf9d98a2d29c0533a7020cf967b6800437be36e4335e654a480dfcdf"},
+    {file = "boto3-1.26.113.tar.gz", hash = "sha256:0de50b90e14e1dc3037d302f45edbf7b342ba2540f464e9ce60bad12651f02e1"},
 ]
 botocore = [
-    {file = "botocore-1.29.111-py3-none-any.whl", hash = "sha256:baa6442df9b539c5c4e622bd22b47bc3594a0428f280587a359a9298e73a6e48"},
-    {file = "botocore-1.29.111.tar.gz", hash = "sha256:c3a51d80ceac0945969f94894651c4728525c7cf2df7d7838063c3516f5ee9e3"},
+    {file = "botocore-1.29.113-py3-none-any.whl", hash = "sha256:d927c1fbf5f5caf7937b5f53eb158c708bcbe3b6aa6d46e1fbd353241f21b5b0"},
+    {file = "botocore-1.29.113.tar.gz", hash = "sha256:acfee1faaa3ef2a6931fe574c092f596afb48f3c49e054aec7cfa8494227c031"},
 ]
 certifi = [
     {file = "certifi-2022.12.7-py3-none-any.whl", hash = "sha256:4ad3232f5e926d6718ec31cfc1fcadfde020920e278684144551c91769c7bc18"},
@@ -842,8 +842,8 @@ mccabe = [
     {file = "mccabe-0.6.1.tar.gz", hash = "sha256:dd8d182285a0fe56bace7f45b5e7d1a6ebcbf524e8f3bd87eb0f125271b8831f"},
 ]
 packaging = [
-    {file = "packaging-23.0-py3-none-any.whl", hash = "sha256:714ac14496c3e68c99c29b00845f7a2b85f3bb6f1078fd9f72fd20f0570002b2"},
-    {file = "packaging-23.0.tar.gz", hash = "sha256:b6ad297f8907de0fa2fe1ccbd26fdaf387f5f47c7275fedf8cce89f99446cf97"},
+    {file = "packaging-23.1-py3-none-any.whl", hash = "sha256:994793af429502c4ea2ebf6bf664629d07c1a9fe974af92966e4b8d2df7edc61"},
+    {file = "packaging-23.1.tar.gz", hash = "sha256:a392980d2b6cffa644431898be54b0045151319d1e7ec34f0cfed48767dd334f"},
 ]
 pluggy = [
     {file = "pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
