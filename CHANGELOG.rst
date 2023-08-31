@@ -3,6 +3,10 @@
 Change Log
 ==========
 
+3.3.3
+=====
+
+* Remove unused `requests` dependency
 
 3.3.2
 =====
