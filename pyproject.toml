@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<3.9"
+python = ">=3.8,<3.11"
 python-lambda-4dn = "0.12.3"
 boto3 = "^1.9.0"
 botocore = "^1.12.1"
