@@ -3,6 +3,13 @@
 Change Log
 ==========
 
+4.0.0
+=====
+
+* Drop support for 3.7
+* Support 3.9, 3.10
+
+
 3.3.3
 =====
 
