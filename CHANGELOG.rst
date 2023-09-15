@@ -3,6 +3,38 @@
 Change Log
 ==========
 
+4.0.0
+=====
+
+* Drop support for 3.7
+* Support 3.9, 3.10
+
+
+3.3.3
+=====
+
+* Remove unused `requests` dependency
+
+3.3.2
+=====
+
+* Add ``instance_start_time`` to ``tibanna stat`` command
+
+
+3.3.1
+=====
+`PR 390: Bump Benchmark <https://github.com/4dn-dcic/tibanna/pull/390>`_
+
+* Bump Benchmark
+
+
+3.3.0
+=====
+`PR 388: Improved fleet error handling + smaller fixes <https://github.com/4dn-dcic/tibanna/pull/388>`_
+
+* Improved fleet error handling + smaller fixes
+
+
 3.2.2
 =====
 `PR 387: Add kwargs <https://github.com/4dn-dcic/tibanna/pull/387>`_

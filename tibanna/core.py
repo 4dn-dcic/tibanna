@@ -391,16 +391,16 @@ class API(object):
             raise Exception("Status filter cannot be specified when job_ids are specified.")
         if verbose:
             print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name',
-                                                                      'start_time', 'stop_time',
-                                                                      'instance_id', 'instance_type',
+                                                                      'execution_start_time', 'execution_stop_time',
+                                                                      'instance_id', 'instance_start_time', 'instance_type',
                                                                       'instance_status', 'ip', 'key',
                                                                       'password'))
         else:
-            print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'start_time', 'stop_time'))
+            print("{}\t{}\t{}\t{}\t{}".format('jobid', 'status', 'name', 'execution_start_time', 'execution_stop_time'))
         client = boto3.client('stepfunctions')
         ec2 = boto3.client('ec2')
 
-        def parse_exec_desc_and_ec2_desc(exec_arn, verbose):
+        def parse_exec_desc_and_ec2_desc(exec_arn, verbose, job_id=None):
             # collecting execution stats
             exec_desc = client.describe_execution(executionArn=exec_arn)
 
@@ -409,11 +409,13 @@ class API(object):
             job_id = json.loads(exec_desc['input']).get('jobid', 'no jobid')
             status = exec_desc['status']
             name = exec_desc['name']
-            start_time = exec_desc['startDate'].strftime("%Y-%m-%d %H:%M")
+            execution_start_time_ts = exec_desc['startDate'].timestamp()
+            execution_start_time = datetime.fromtimestamp(execution_start_time_ts).strftime("%Y-%m-%d %H:%M")
             if 'stopDate' in exec_desc:
-                stop_time = exec_desc['stopDate'].strftime("%Y-%m-%d %H:%M")
+                execution_stop_time_ts = exec_desc['stopDate'].timestamp()
+                execution_stop_time = datetime.fromtimestamp(execution_stop_time_ts).strftime("%Y-%m-%d %H:%M")
             else:
-                stop_time = ''
+                execution_stop_time = ''
 
             # collect instance stats
             ec2_desc = ec2.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': ['awsem-' + job_id]}])
@@ -440,8 +442,20 @@ class API(object):
                 keyname = '-'
                 password = '-'
 
-            parsed_stat = (job_id, status, name, start_time, stop_time,
-                           instance_id, instance_type, instance_status,
+            instance_start_time = '-'
+            if verbose and job_id:
+                try:
+                    job = Job(exec_arn=exec_arn, job_id=job_id, sfn=self.default_stepfunction_name)
+                    # We use the creation date of <job_id>.job_started as proxy for the EC2 creation date
+                    res_s3 = boto3.client('s3').get_object(Bucket=job.log_bucket, Key=job.job_id + ".job_started")
+                    instance_start_time_ts = res_s3['LastModified'].timestamp()
+                    instance_start_time = datetime.fromtimestamp(instance_start_time_ts).strftime("%Y-%m-%d %H:%M")
+                except Exception as e:
+                    instance_start_time = 'NA'
+
+
+            parsed_stat = (job_id, status, name, execution_start_time, execution_stop_time,
+                           instance_id, instance_start_time, instance_type, instance_status,
                            instance_ip, keyname, password)
             if verbose:
                 print("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(*parsed_stat))
@@ -456,7 +470,7 @@ class API(object):
                 if 'Step Function' not in dd_info:
                     raise Exception("Cannot find step function for job ID %s" % job_id)
                 exec_arn = EXECUTION_ARN(dd_info['Execution Name'], dd_info['Step Function'])
-                parse_exec_desc_and_ec2_desc(exec_arn, verbose)
+                parse_exec_desc_and_ec2_desc(exec_arn, verbose, job_id=job_id)
         else:
             if not sfn:
                 sfn = self.default_stepfunction_name
