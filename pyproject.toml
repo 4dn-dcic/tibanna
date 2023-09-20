@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tibanna"
-version = "4.0.0"
+version = "4.0.0.1b1"  # TODO: To become 5.0.0
 description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
 authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
 license = "MIT"
@@ -28,10 +28,10 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.12"
 python-lambda-4dn = "0.12.3"
-boto3 = "^1.9.0"
-botocore = "^1.12.1"
+boto3 = "^1.28.51"
+botocore = "^1.31.51"
 Benchmark-4dn = "^0.5.23"
 tomlkit = "^0.11.0"
 

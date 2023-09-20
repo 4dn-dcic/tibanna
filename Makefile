@@ -5,6 +5,9 @@ clean:
 lint:
 	flake8 tibanna
 
+build:
+	poetry install
+
 install:
 	poetry install
 
