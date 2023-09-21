@@ -24,6 +24,13 @@ publish:
 	# New Python based publish script (2023-09-20).
 	poetry run publish-to-pypi
 
+publish-for-ga:
+	# Need this poetry install first for some reason in GitHub Actions, otherwise getting this:
+	# Warning: 'publish-to-pypi' is an entry point defined in pyproject.toml, but it's not installed as a script. You may get improper `sys.argv[0]`.
+	# Only a warning, but then it does not find dcicutils for some reason.
+	poetry install
+	poetry run publish-to-pypi --noconfirm
+
 publish-pypi:
 	scripts/publish-pypi
 
