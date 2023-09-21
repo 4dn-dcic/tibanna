@@ -20,6 +20,10 @@ retest:  # runs only failed tests from the last test run.
 update:  # updates dependencies
 	poetry update
 
+publish:
+	# New Python based publish script (2023-09-20).
+	poetry run publish-to-pypi
+
 publish-pypi:
 	scripts/publish-pypi
 
