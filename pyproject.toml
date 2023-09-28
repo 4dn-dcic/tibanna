@@ -31,8 +31,8 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.8,<3.12"
 python-lambda-4dn = "0.12.3"
-boto3 = "^1.28.51"
-botocore = "^1.31.51"
+boto3 = "^1.28.56"
+botocore = "^1.31.56"
 Benchmark-4dn = "^0.5.23"
 tomlkit = "^0.11.0"
 
