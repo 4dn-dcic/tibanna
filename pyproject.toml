@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tibanna"
-version = "4.0.0.1b3"  # TODO: To become 5.0.0
+version = "4.0.0.1b4"  # TODO: To become 5.0.0
 description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
 authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
 license = "MIT"
