@@ -4,6 +4,11 @@ Change Log
 ==========
 
 
+5.0.1
+=====
+* Fixing publish in GA.
+
+
 5.0.0
 =====
 
