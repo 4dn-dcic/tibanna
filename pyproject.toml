@@ -37,6 +37,8 @@ Benchmark-4dn = "^0.5.23"
 tomlkit = "^0.11.0"
 
 [tool.poetry.dev-dependencies]
+boto3-stubs = "^1.28.56"
+botocore-stubs = "^1.31.56"
 invoke = "^2.2.0"
 flake8 = "^3.9.0"
 

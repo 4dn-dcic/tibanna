@@ -2,10 +2,14 @@ clean:
 	rm -rf *.egg-info
 	rm -rf .eggs
 
+configure:
+	pip install poetry==1.4.2
+
 lint:
 	flake8 tibanna
 
 build:
+	make configure
 	poetry install
 
 install:
