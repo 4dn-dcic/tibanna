@@ -48,6 +48,7 @@ jobs:
       - name: QA (unit)
         run: |
           poetry run invoke test --no-flake
+
 jobs:
   build_python3_8:
     needs: build
