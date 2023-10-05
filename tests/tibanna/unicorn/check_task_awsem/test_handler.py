@@ -14,6 +14,7 @@ import json
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from tibanna.vars import AWSEM_TIME_STAMP_FORMAT
+import uuid
 
 
 @pytest.fixture()
@@ -33,7 +34,7 @@ def s3(check_task_input):
 @pytest.mark.webtest
 def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
     # ensure there is no job started
-    jobid = 'notmyjobid'
+    jobid = 'notmyjobid' + str(uuid.uuid4())
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
     check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=4),
@@ -48,7 +49,7 @@ def test_check_task_awsem_fails_if_no_job_started(check_task_input, s3):
 @pytest.mark.webtest
 def test_check_task_awsem_fails_if_no_job_started_for_too_long(check_task_input, s3):
     # ensure there is no job started
-    jobid = 'notmyjobid'
+    jobid = 'notmyjobid' + str(uuid.uuid4())
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
     check_task_input_modified['config']['start_time'] = datetime.strftime(datetime.now(tzutc()) - timedelta(minutes=13),
@@ -61,7 +62,7 @@ def test_check_task_awsem_fails_if_no_job_started_for_too_long(check_task_input,
 
 
 def test_check_task_awsem_aborted(check_task_input, s3):
-    jobid = 'lalala'
+    jobid = 'lalala' + str(uuid.uuid4())
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
     job_started = "%s.job_started" % jobid
@@ -86,7 +87,7 @@ def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
 
 @pytest.mark.webtest
 def test_check_task_awsem(check_task_input, s3):
-    jobid = 'lalala'
+    jobid = 'lalala' + str(uuid.uuid4())
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
     job_started = "%s.job_started" % jobid
@@ -114,7 +115,7 @@ def test_check_task_awsem(check_task_input, s3):
 
 @pytest.mark.webtest
 def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
-    jobid = 'some_uniq_jobid'
+    jobid = 'some_uniq_jobid' + str(uuid.uuid4())
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
     job_started = "%s.job_started" % jobid
