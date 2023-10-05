@@ -3,6 +3,15 @@
 Change Log
 ==========
 
+
+5.0.0
+=====
+
+* Update to Python 3.11.
+* Note 3: As of Tibanna version 5.0.0, Python 3.7 (and lower) is no longer supported.
+  Please switch to Python 3.11!
+
+
 4.0.0
 =====
 

@@ -22,6 +22,7 @@ Version updates
   **Sep 15, 2023** The latest version is now 4.0.0_.
     - Support for Python 3.7 has been dropped
     - Added support for Python 3.9 and 3.10
+    - Added support for Python 3.11
 
   **Nov 18, 2022** The latest version is now 3.0.0_.
     - Tibanna now supports AWS Graviton-based instances.

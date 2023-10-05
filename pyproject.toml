@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tibanna"
-version = "4.0.0"
+version = "5.0.0"
 description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
 authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
 license = "MIT"
@@ -25,25 +25,30 @@ classifiers = [
   'Programming Language :: Python :: 3.8',
   'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
+python = ">=3.8,<3.12"
 python-lambda-4dn = "0.12.3"
-boto3 = "^1.9.0"
-botocore = "^1.12.1"
+boto3 = "^1.28.56"
+botocore = "^1.31.56"
 Benchmark-4dn = "^0.5.23"
 tomlkit = "^0.11.0"
 
 [tool.poetry.dev-dependencies]
-invoke = "0.18.1"
+boto3-stubs = "^1.28.56"
+botocore-stubs = "^1.31.56"
+invoke = "^2.2.0"
 flake8 = "^3.9.0"
 
 # PyTest and its auxiliary support files
-pytest = "^6.0"
-pytest-cov = "^3.0.0"
+# Need pytest-redis 3.0.2 or higher for pytest 7.4.2 (or higher).
+pytest = "^7.4.2"
+pytest-redis = "^3.0.2"
+pytest-cov = "^4.1.0"
 pytest-parallel = "^0.1.1"
-pytest-mock = "3.7"
+pytest-mock = "^3.11.1"
 
 coverage = {extras = ["toml"], version = "^6.3.2"}
 
@@ -55,6 +60,7 @@ sphinx-rtd-theme = "0.5.0"  # Do we have a good reason to pin this? -kmp 9-Nov-2
 [tool.poetry.scripts]
 tibanna = "tibanna.__main__:main"
 awsf3 = "awsf3.__main__:main"
+publish-to-pypi = "dcicutils.scripts.publish_to_pypi:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

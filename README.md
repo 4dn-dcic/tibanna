@@ -43,7 +43,7 @@ API().run_workflow(input_json='myrun.json')
 ---
 Note: Starting `0.8.2`, Tibanna supports local CWL/WDL files as well as shell commands and Snakemake workflows.
 
-Note 2: As of Tibanna version `2.0.0`, Python 3.6 is no longer supported. Please switch to Python 3.8! Python 3.7 is also supported as a fallback, but please prefer 3.8 if you can.
+Note 2: As of Tibanna version `2.0.0`, Python 3.7 (and lower) is no longer supported. Please switch to Python 3.11! Python 3.8 is also supported as a fallback, but please prefer 3.11 if you can.
 
 Note 3: Starting `0.8.0`, one no longer needs to `git clone` the Tibanna repo. 
 * Please switch from `invoke <command>` to `tibanna <command>`! 
