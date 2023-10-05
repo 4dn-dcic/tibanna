@@ -34,8 +34,6 @@ publish-for-ga:
 	# Only a warning, but then it does not find dcicutils for some reason.
 	poetry install
 	pip install dcicutils
-	echo "DEBUG: Running pip list ..."
-	pip list
 	poetry run publish-to-pypi --noconfirm
 
 publish-pypi:
