@@ -52,7 +52,7 @@ jobs:
           poetry run invoke test --no-flake
 
   build_3_9:
-    needs: build_3_8
+    # needs: build_3_8
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
@@ -83,7 +83,7 @@ jobs:
           poetry run invoke test --no-flake
 
   build_3_10:
-    needs: build_3_9
+    # needs: build_3_9
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
@@ -114,7 +114,7 @@ jobs:
           poetry run invoke test --no-flake
 
   build_3_11:
-    needs: build_3_10
+    # needs: build_3_10
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
