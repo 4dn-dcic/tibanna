@@ -14,6 +14,12 @@ on:
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# In this case, since this repo (tibanna) has tests which cannot reliablly run concurrently,
+# because (at least) they write/read to/from fixed locations in S3, we need to run the tests
+# for each of the Python versions serially; so the build_<version> sections below are just
+# clones of each other, with the proper version and "needs" clause on the previous build.
+# Using the strategy/matrix mechanism as is done in other repos causes the tests to run
+# concurrently. TODO: Find a way to do this without having to clone these sections.
 jobs:
   build_3_8:
     # The type of runner that the job will run on
