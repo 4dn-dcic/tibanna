@@ -4,7 +4,7 @@ Change Log
 ==========
 
 
-5.0.1
+5.1.0
 =====
 * Fixed GA publish which was not working because it could not find dcicutils because
   it is not a dependency in pyproject.toml; workaround is to call it manually via straight
