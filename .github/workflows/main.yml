@@ -55,7 +55,6 @@ jobs:
         run: |
           poetry run invoke test --no-flake
 
-jobs:
   build_3_11:
     needs: build
     runs-on: ubuntu-22.04
