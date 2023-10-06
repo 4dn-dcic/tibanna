@@ -29,11 +29,14 @@ publish:
 	poetry run publish-to-pypi
 
 publish-for-ga:
-	# Need this poetry install first for some reason in GitHub Actions, otherwise getting this:
-	# Warning: 'publish-to-pypi' is an entry point defined in pyproject.toml, but it's not installed as a script. You may get improper `sys.argv[0]`.
-	# Only a warning, but then it does not find dcicutils for some reason.
-	poetry install
-	poetry run publish-to-pypi --noconfirm
+	# Normally this is done like this:
+	# -> poetry run publish-to-pypi --noconfirm
+	# But this will not work in GA because this repo (tibanna) does not have dcicutils as a
+	# dependency in pyproject.toml and the publish-to-pypi is defined within pyproject.toml
+	# so it will not find dcicutils, even we install it explicitly here (or in the GA yml file),
+	# so we just call the script manually here, just like it is defined in pyproject.toml.
+	pip install dcicutils poetry
+	python -m dcicutils.scripts.publish_to_pypi --noconfirm
 
 publish-pypi:
 	scripts/publish-pypi

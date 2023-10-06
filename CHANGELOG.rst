@@ -4,6 +4,19 @@ Change Log
 ==========
 
 
+5.1.0
+=====
+* Fixed GA publish which was not working because it could not find dcicutils because
+  it is not a dependency in pyproject.toml; workaround is to call it manually via straight
+  python and not via pyproject.toml script. N.B. HOWEVER: It still does not work because
+  pypi project credentials are not yet defined for this repo.
+* Added Python 3.8, 3.9, 3.10, as well as 3.11 for GA CI build. This causes failures
+  because of the way the tests were written - writing/reading to/from fixed location in S3,
+  which means that concurrent runs do not reliably succeed, i.e. because they are stomping
+  on each other. Workaround was to define separate build steps (cloned for now) in main.yml
+  with appropriate "needs" clauses which forces them to execute serially.
+
+
 5.0.0
 =====
 
