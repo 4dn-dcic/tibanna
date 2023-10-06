@@ -27,13 +27,9 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.11
-      # Do not yet know why it is necessary to manually install dcicutils but it is.
-      - name: Install Python dependencies for publish
-        run: python -m pip install dcicutils
       - name: Publish
         env:
           PYPI_USER: ${{ secrets.PYPI_USER }}
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: | 
-          make configure
           make publish-for-ga
