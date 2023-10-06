@@ -35,7 +35,7 @@ publish-for-ga:
 	# dependency in pyproject.toml and the publish-to-pypi is defined within pyproject.toml
 	# so it will not find dcicutils, even we install it explicitly here (or in the GA yml file),
 	# so we just call the script manually here, just like it is defined in pyproject.toml.
-	pip install dcicutils
+	pip install dcicutils poetry
 	python -m dcicutils.scripts.publish_to_pypi --noconfirm
 
 publish-pypi:
