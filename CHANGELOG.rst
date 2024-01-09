@@ -3,6 +3,11 @@
 Change Log
 ==========
 
+5.2.0
+=====
+
+* Fix CLI for Python 3.11
+
 
 5.1.0
 =====
