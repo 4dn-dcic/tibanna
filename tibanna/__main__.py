@@ -575,7 +575,7 @@ def main(Subcommands=Subcommands):
     # get subcommand-specific args
     args = secondary_parser.parse_args(args=remaining, namespace=primary_namespace)
     subcommandf = eval(args.subcommand)
-    sc_args = [getattr(args, sc_arg) for sc_arg in inspect.getargspec(subcommandf).args]
+    sc_args = [getattr(args, sc_arg) for sc_arg in inspect.getfullargspec(subcommandf).args]
     # run subcommand
     subcommandf(*sc_args)
 
