@@ -325,6 +325,8 @@ class Config(SerializableObject):
             self.mem_as_is = False
         if not hasattr(self, 'ebs_size_as_is'):  # if false, add 5GB overhead
             self.ebs_size_as_is = False
+        if not hasattr(self, 'disable_metrics_collection'): 
+            self.disable_metrics_collection = False
         if not hasattr(self, 'ami_id'):
             self.ami_id = "" # will be assigned instance architecture specific later
         if not hasattr(self, 'ami_per_region'):
@@ -741,6 +743,8 @@ class Execution(object):
         str += " -l $LOGBUCKET"
         str += " -V {version}".format(version=__version__)
         str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
+        if cfg.disable_metrics_collection:
+            str += " -c"
         if cfg.kms_key_id:
             str += " -k %s" % cfg.kms_key_id
         if cfg.password:
