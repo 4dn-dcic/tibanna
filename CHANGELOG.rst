@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.2.1
+=====
+
+* Update dependencies
+
+
 5.2.0
 =====
 
