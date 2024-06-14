@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.2.2
+=====
+
+* Fix docker version in awsf3 Dockerfile
+
+
 5.2.1
 =====
 
