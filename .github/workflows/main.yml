@@ -26,7 +26,15 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python_version: [3.11]
+        python_version: [3.8, 3.11]
+        include:
+          - python-version: 3.8
+            job-name: job-3.8
+          - python-version: 3.11
+            job-name: job-3.11
+    # This makes the different Python versioned jobs run synchronously as
+    # there seems to be issues if run concurrently (to figure out another day).
+    needs: ${{ fromJson('["' + join('","', matrix.python-version | map('job-' + .)) + '"]')[index(matrix.python-version) - 1] }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
