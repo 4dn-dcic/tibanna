@@ -145,7 +145,7 @@ jobs:
           poetry run invoke test --no-flake
 
   build_3_12:
-    needs: build_3_10
+    needs: build_3_11
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
 
