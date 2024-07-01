@@ -7,6 +7,7 @@ Change Log
 =====
 
 * Support for Python 3.12.
+* Matrix-ized GitHub Action CI workflow (.github/workflows/main.yml).
 
 
 5.2.2
