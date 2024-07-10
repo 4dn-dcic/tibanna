@@ -1,6 +1,4 @@
 FROM ubuntu:20.04
-MAINTAINER Soo Lee (duplexa@gmail.com)
-
 
 # general updates & installing necessary Linux components
 ENV DEBIAN_FRONTEND=noninteractive
@@ -50,7 +48,7 @@ RUN echo \
   $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 RUN apt-get update
-RUN apt-get --assume-yes install docker-ce
+RUN apt-get --assume-yes install docker-ce=5:24.0.7-1~ubuntu.20.04~focal
 
 # Singularity
 RUN ARCH="$(dpkg --print-architecture)" && \
