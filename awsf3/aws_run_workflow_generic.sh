@@ -39,7 +39,7 @@ while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
-        c) export DISABLE_METRICS_COLLECTION=true;;  # use singularity
+        c) export DISABLE_METRICS_COLLECTION=true;;  # disable metrics collection
         k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
