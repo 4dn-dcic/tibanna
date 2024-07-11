@@ -8,10 +8,11 @@ export ACCESS_KEY=
 export SECRET_KEY=
 export REGION=
 export SINGULARITY_OPTION_TO_PASS=
+export DISABLE_METRICS_COLLECTION=false
 export S3_ENCRYPT_KEY_ID=
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-k S3_ENCRYPT_KEY_ID]"
+    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID]"
     echo "-i JOBID : awsem job id (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
@@ -22,10 +23,11 @@ printHelpAndExit() {
     echo "-s SECRET_KEY : secret key for certian s3 bucket access (if not set, use IAM permission only)"
     echo "-r REGION : region for the profile set for certain s3 bucket access (if not set, use IAM permission only)"
     echo "-g : use singularity"
+    echo "-c : Metrics collection is disabled if flag is set"
     echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
     exit "$1"
 }
-while getopts "i:m:l:p:a:s:r:gV:A:k:" opt; do
+while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
@@ -37,6 +39,7 @@ while getopts "i:m:l:p:a:s:r:gV:A:k:" opt; do
         s) export SECRET_KEY=$OPTARG;;  # secret key for certian s3 bucket access
         r) export REGION=$OPTARG;;  # region for the profile set for certian s3 bucket access
         g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
+        c) export DISABLE_METRICS_COLLECTION=true;;  # disable metrics collection
         k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
@@ -176,24 +179,29 @@ exl mkdir -p $LOCAL_OUTDIR
 mv $LOGFILE1 $LOGFILE2
 export LOGFILE=$LOGFILE2
 
-
 exl echo
-exl echo "## Installing and activating Cloudwatch agent to collect metrics"
 cwd0=$(pwd)
 cd ~
 
-ARCHITECTURE="$(dpkg --print-architecture)"
-CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${ARCHITECTURE}/latest/amazon-cloudwatch-agent.deb"
-apt install -y wget
-exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
-wget "${CW_AGENT_LINK}"
-sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
-# If we want to collect new metrics, the following file has to be modified
-exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-wget https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json
-mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
-# This starts the agent with the downloaded configuration file
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
+  exl echo "## Installing and activating Cloudwatch agent to collect metrics"
+  ARCHITECTURE="$(dpkg --print-architecture)"
+  CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${ARCHITECTURE}/latest/amazon-cloudwatch-agent.deb"
+  apt install -y wget
+  exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+  wget "${CW_AGENT_LINK}"
+  sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+  # If we want to collect new metrics, the following file has to be modified
+  exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
+  wget https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json
+  mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
+  # This starts the agent with the downloaded configuration file
+  sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+else
+  exl echo "## Metrics collection is disabled"
+fi
+
+
 
 # Set up cronjob to monitor AWS spot instance termination notice.
 # Works only in deployed Tibanna version >=1.6.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`

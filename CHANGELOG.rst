@@ -3,10 +3,16 @@
 Change Log
 ==========
 
-5.3.0
+5.4.0
 =====
 
 * Support for Python 3.12.
+
+
+5.3.0
+=====
+
+* Add config option `disable_metrics_collection`
 
 
 5.2.2
