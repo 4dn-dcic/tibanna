@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.4.0
+=====
+
+* Support for Python 3.12.
+
+
 5.3.0
 =====
 

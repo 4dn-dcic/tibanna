@@ -393,7 +393,7 @@ class AwsemPostRunJsonOutputFile(SerializableObject):
 
 def file2cwlfile(filename, dirname, unzip):
     if unzip:
-        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+        filename = re.match(r'(.+)\.{0}$'.format(unzip), filename).group(1)
     if dirname.endswith('/'):
         dirname = dirname.rstrip('/')
     return {"class": 'File', "path": dirname + '/' + filename}
@@ -401,7 +401,7 @@ def file2cwlfile(filename, dirname, unzip):
 
 def file2wdlfile(filename, dirname, unzip):
     if unzip:
-        filename = re.match('(.+)\.{0}$'.format(unzip), filename).group(1)
+        filename = re.match(r'(.+)\.{0}$'.format(unzip), filename).group(1)
     if dirname.endswith('/'):
         dirname = dirname.rstrip('/')
     return dirname + '/' + filename
