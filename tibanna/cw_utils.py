@@ -28,7 +28,7 @@ class TibannaResource(object):
 
     @classmethod
     def convert_timestamp_to_datetime(cls, timestamp):
-        return datetime.strptime(timestamp, cls.timestamp_format)
+        return datetime.strptime(timestamp, cls.timestamp_format).replace(tzinfo=timezone.utc)
 
     def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now(timezone.utc), cost_estimate = 0.0, cost_estimate_type = "NA"):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.

@@ -320,7 +320,7 @@ class Top(object):
 
     @classmethod
     def as_datetime(cls, timestamp):
-        return datetime.datetime.strptime(timestamp, cls.timestamp_format)
+        return datetime.datetime.strptime(timestamp, cls.timestamp_format).replace(tzinfo=datetime.timezone.utc)
 
     @staticmethod
     def wrap_in_double_quotes(string):

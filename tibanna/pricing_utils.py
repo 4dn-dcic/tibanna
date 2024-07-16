@@ -30,7 +30,7 @@ def get_cost(postrunjson, job_id):
     job = postrunjson.Job
 
     def reformat_time(t, delta):
-        d = datetime.strptime(t, '%Y%m%d-%H:%M:%S-UTC') + timedelta(days=delta)
+        d = datetime.strptime(t, '%Y%m%d-%H:%M:%S-UTC').replace(tzinfo=timezone.utc) + timedelta(days=delta)
         return d.strftime("%Y-%m-%d")
 
     start_time = reformat_time(job.start_time, -1)  # give more room
@@ -73,8 +73,8 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
         logger.warning("job.end_time not available. Cannot calculate estimated cost.")
         return 0.0, "NA"
 
-    job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC')
-    job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC')
+    job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC').replace(tzinfo=timezone.utc)
+    job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC').replace(tzinfo=timezone.utc)
     job_duration = (job_end - job_start).seconds / 3600.0 # in hours
 
     if(not job.instance_type):

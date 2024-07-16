@@ -624,7 +624,7 @@ class API(object):
             sfn = self.default_stepfunction_name
         stophour = stophour + offset
         stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
-        stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M')
+        stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M').replace(tzinfo=timezone.utc)
         client = boto3.client('stepfunctions')
         sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
         k = 0
