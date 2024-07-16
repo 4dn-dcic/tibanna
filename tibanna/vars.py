@@ -1,8 +1,7 @@
 import os
 import boto3
 import sys
-from datetime import datetime
-from dateutil.tz import tzutc
+from datetime import datetime, timezone
 from ._version import __version__
 from . import create_logger
 
@@ -137,8 +136,7 @@ AWSEM_TIME_STAMP_FORMAT = '%Y%m%d-%H:%M:%S-UTC'
 
 
 def PARSE_AWSEM_TIME(t_str):
-  t = datetime.strptime(t_str, AWSEM_TIME_STAMP_FORMAT)
-  return t.replace(tzinfo=tzutc())
+  return datetime.strptime(t_str, AWSEM_TIME_STAMP_FORMAT).replace(tzinfo=timezone.utc)
 
 
 # EBS mount path for cloudwatch metric collection

@@ -3,6 +3,14 @@
 Change Log
 ==========
 
+5.4.1
+=====
+
+* Disable idle instance check when `disable_metrics_collection` is active
+* Switch to timezone aware datetime object everywhere. In particular, replace deprecated `datetime.utcnow()` with `datetime.now(timezone.utc)`.
+* Update docs
+
+
 5.4.0
 =====
 

@@ -152,6 +152,11 @@ class CheckTask(object):
         raise StillRunningException("job %s still running" % jobid)
 
     def terminate_idle_instance(self, jobid, instance_id, cpu, ebs_read):
+        
+        # Don't check for idle instance if we don't collect any metrics
+        if self.input_json['config'].get('disable_metrics_collection'):
+            return
+
         if not cpu or cpu < 1.0:
             # the instance wasn't terminated - otherwise it would have been captured in the previous error.
             if not ebs_read or ebs_read < 1000:  # minimum 1kb
@@ -161,18 +166,15 @@ class CheckTask(object):
                     public_postrun_json = self.input_json['config'].get('public_postrun_json', False)
                     self.handle_postrun_json(bucket_name, jobid, self.input_json, public_read=public_postrun_json) # We need to record the end time
                     boto3.client('ec2').terminate_instances(InstanceIds=[instance_id])
-                    errmsg = (
-                        "Nothing has been running for the past hour for job %s,"
-                        "(CPU utilization %s and EBS read %s bytes)."
-                    ) %  (jobid, str(cpu), str(ebs_read))
-                    raise EC2IdleException(errmsg)
                 except Exception as e:
-                    errmsg = (
-                        "Nothing has been running for the past hour for job %s,"
-                        "but cannot terminate the instance - cpu utilization (%s) : %s"
-                    ) %  (jobid, str(cpu), str(e))
+                    errmsg = (f"Nothing has been running for the past hour for job {jobid}",
+                              f", but instance could not be terminated. Error: {str(e)}")
                     logger.error(errmsg)
                     raise EC2IdleException(errmsg)
+                
+                errmsg = (f"Nothing has been running for the past hour for job {jobid},",
+                        f"(CPU utilization {str(cpu)} and EBS read {str(ebs_read)} bytes).")
+                raise EC2IdleException(errmsg)
 
     def handle_postrun_json(self, bucket_name, jobid, input_json, public_read=False):
         postrunjson = "%s.postrun.json" % jobid
