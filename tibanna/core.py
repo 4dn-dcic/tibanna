@@ -9,7 +9,7 @@ import importlib
 import shutil
 import subprocess
 import webbrowser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dateutil.tz import tzutc
 from uuid import uuid4, UUID
 from types import ModuleType
@@ -1018,7 +1018,7 @@ class API(object):
             if hasattr(job, 'end_time_as_datetime') and job.end_time_as_datetime:
                 endtime = job.end_time_as_datetime
             else:
-                endtime = datetime.utcnow()
+                endtime = datetime.now(timezone.utc)
         if hasattr(job, 'filesystem') and job.filesystem:
             filesystem = job.filesystem
         else:
@@ -1049,7 +1049,7 @@ class API(object):
                             job_complete = False  # still running
                     else:
                         # waiting 10 min to be sure the istance is starting
-                        if (datetime.utcnow() - starttime) / timedelta(minutes=1) < 5:
+                        if (datetime.now(timezone.utc) - starttime) / timedelta(minutes=1) < 5:
                             raise Exception("the instance is still setting up. " +
                                             "Wait a few seconds/minutes and try again.")
                         else:

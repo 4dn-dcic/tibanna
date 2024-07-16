@@ -7,7 +7,7 @@ import boto3
 import botocore
 import re
 from . import create_logger
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from .utils import (
     does_key_exist,
     read_s3,
@@ -37,7 +37,7 @@ def get_cost(postrunjson, job_id):
     if(job.end_time != None):
         end_time = reformat_time(job.end_time, 1)
     else:
-        end_time = datetime.utcnow() + timedelta(days=1) # give more room
+        end_time = datetime.now(timezone.utc) + timedelta(days=1) # give more room
         end_time = end_time.strftime("%Y-%m-%d")
 
     billing_args = {'Filter': {'Tags': {'Key': 'Name', 'Values': ['awsem-' + job_id]}},
@@ -378,7 +378,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
                 ) * job_duration / (24.0*30.0)
             estimated_cost = estimated_cost + ebs_iops_cost
 
-        time_since_run = (datetime.utcnow() - job_end).total_seconds() / (3600 * 24) # days
+        time_since_run = (datetime.now(timezone.utc) - job_end).total_seconds() / (3600 * 24) # days
         estimation_type = "retrospective estimate" if time_since_run > 10 else "immediate estimate"
 
         return estimated_cost, estimation_type

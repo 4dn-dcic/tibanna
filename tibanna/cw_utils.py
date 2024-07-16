@@ -11,8 +11,7 @@ from .vars import (
     METRICS_COLLECTION_INTERVAL,
     S3_ENCRYT_KEY_ID
 )
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 import json, math
 
 
@@ -31,7 +30,7 @@ class TibannaResource(object):
     def convert_timestamp_to_datetime(cls, timestamp):
         return datetime.strptime(timestamp, cls.timestamp_format)
 
-    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.utcnow(), cost_estimate = 0.0, cost_estimate_type = "NA"):
+    def __init__(self, instance_id, filesystem, starttime, endtime=datetime.now(timezone.utc), cost_estimate = 0.0, cost_estimate_type = "NA"):
         """All the Cloudwatch metrics are retrieved and stored at the initialization.
         :param instance_id: e.g. 'i-0167a6c2d25ce5822'
         :param filesystem: e.g. "/dev/xvdb", "/dev/nvme1n1"

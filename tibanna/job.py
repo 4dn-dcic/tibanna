@@ -1,6 +1,6 @@
 import boto3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from . import create_logger
 from tibanna import dd_utils
 from .vars import (
@@ -280,7 +280,7 @@ class Job(object):
 
     @staticmethod
     def add_to_dd(job_id, execution_name, sfn, logbucket, verbose=True):
-        time_stamp = datetime.strftime(datetime.utcnow(), '%Y%m%d-%H:%M:%S-UTC')
+        time_stamp = datetime.strftime(datetime.now(timezone.utc), '%Y%m%d-%H:%M:%S-UTC')
         dydb = boto3.client('dynamodb', region_name=AWS_REGION)
         try:
             # first check the table exists

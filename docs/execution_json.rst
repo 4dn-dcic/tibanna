@@ -572,9 +572,10 @@ The ``config`` field describes execution configuration.
     - type of EBS (e.g. ``gp3``, ``gp2``, ``io1``, ``io2``)
     - optional (default: gp3 (version >= ``1.0.0``) or gp2 (version < ``1.0.0``))
 
-:disable_metrics_collection:
+:disable_metrics_collection (**Not recommended**):
     - <true|false>, default: false
     - If true, the cloudwatch agent is not installed on the EC2 and CPU/memory/storage won't be collected and send to AWS CloudWatch. Disabling metrics collection can reduce CloudWatch associated costs.
+    - If true, Tibanna's check for idle or stalled instances will be disabled. Please monitor your runs accordingly.
 
 :cloudwatch_dashboard:
     - **This option is now depricated.**
