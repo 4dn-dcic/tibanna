@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.4.2
+=====
+
+* Safeguard against unexpected output from top command
+
+
 5.4.1
 =====
 
