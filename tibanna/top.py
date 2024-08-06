@@ -93,7 +93,9 @@ class Top(object):
         is_in_table = False
         for line in contents.splitlines():
             if line.startswith('Timestamp:'):
-                timestamp = line.split()[1]
+                line_split = line.split()
+                if len(line_split) > 1:
+                    timestamp = line_split[1]
                 continue
             if line.lstrip().startswith('PID'):
                 is_in_table = True
