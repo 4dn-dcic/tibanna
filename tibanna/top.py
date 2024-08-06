@@ -1,4 +1,7 @@
 import datetime
+from . import create_logger
+
+logger = create_logger(__name__)
 
 
 class Top(object):
@@ -100,7 +103,11 @@ class Top(object):
             if is_in_table:
                 if timestamp not in self.processes:
                     self.processes[timestamp] = []
-                process = Process(line)
+                try:
+                    process = Process(line)
+                except:
+                    logger.info(f"Could not process line from top command: {line}")
+                    continue
                 if not self.should_skip_process(process):
                     self.processes[timestamp].append(Process(line))
 
