@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.4.3
+=====
+
+* Fix bug when parsing output from top command
+
+
 5.4.2
 =====
 
