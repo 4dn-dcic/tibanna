@@ -575,7 +575,7 @@ class Execution(object):
                     self.delete_launch_template()
                     raise Exception(f"Invalid fleet configuration. Result from create_fleet command: {json.dumps(fleet_result)}")
                 
-                elif 'InsufficientInstanceCapacity' in error_codes or 'InstanceLimitExceeded' in error_codes or 'UnfulfillableCapacity' in error_codes:
+                elif 'InsufficientInstanceCapacity' in error_codes or 'InstanceLimitExceeded' in error_codes or 'UnfulfillableCapacity' in error_codes or 'MaxSpotInstanceCountExceeded'in error_codes:
                     # We ignore the 'InvalidFleetConfiguration' error here
                     behavior = self.cfg.behavior_on_capacity_limit
                     if behavior == 'fail':
