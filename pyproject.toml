@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tibanna"
-version = "5.4.3"
+version = "5.5.0"
 description = "Tibanna runs portable pipelines (in CWL/WDL) on the AWS Cloud."
 authors = ["4DN-DCIC Team <support@4dnucleome.org>"]
 license = "MIT"
@@ -34,7 +34,7 @@ python = ">=3.8,<3.13"
 python-lambda-4dn = "0.12.3"
 boto3 = "^1.34.136"
 botocore = "^1.34.136"
-Benchmark-4dn = "^0.5.24"
+Benchmark-4dn = "^0.5.25"
 tomlkit = "^0.11.0"
 
 [tool.poetry.dev-dependencies]
