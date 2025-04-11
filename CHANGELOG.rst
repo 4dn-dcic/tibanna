@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+5.5.1
+=====
+
+* Update dependencies (especially Benchmark)
+
+
 5.5.0
 =====
 
