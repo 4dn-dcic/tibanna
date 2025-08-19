@@ -50,6 +50,11 @@ class AMI(object):
                        'InstanceType': instanceType,
                        'MaxCount': 1,
                        'MinCount': 1,
+                       'MetadataOptions': {
+                           'HttpTokens': 'required',
+                           'HttpEndpoint': 'enabled',
+                           'HttpPutResponseHopLimit': 2
+                       },
                        'TagSpecifications': [{'ResourceType': 'instance',
                                               'Tags': [{"Key": "Name", "Value": "tibanna_ami"}]}]}
         if userdata_file:

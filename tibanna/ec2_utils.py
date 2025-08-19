@@ -808,6 +808,11 @@ class Execution(object):
                         }
                 }
             ],
+            'MetadataOptions': {
+                'HttpTokens': 'required',
+                'HttpEndpoint': 'enabled',
+                'HttpPutResponseHopLimit': 2
+            },
             'TagSpecifications': [
                 {
                     'ResourceType': 'instance',

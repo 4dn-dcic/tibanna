@@ -66,7 +66,7 @@ RUN ARCH="$(dpkg --print-architecture)" && \
 RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11
 RUN pip install psutil==5.7.3
 RUN pip install cwltool==3.1.20211103193132
-RUN pip install ec2metadata==2.0.1
+RUN pip install ec2-metadata
 
 # cromwell for WDL 1.0
 RUN wget https://github.com/broadinstitute/cromwell/releases/download/53.1/cromwell-53.1.jar && \

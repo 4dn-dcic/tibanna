@@ -45,10 +45,15 @@ export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export TOPFILE=$LOCAL_OUTDIR/$JOBID.top  # now top command output goes to a separate file
 export TOPLATESTFILE=$LOCAL_OUTDIR/$JOBID.top_latest  # this one includes only the latest top command output
-export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
-export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
-export INSTANCE_AVAILABILITY_ZONE=$(ec2metadata --availability-zone)
-export INSTANCE_TYPE=$(ec2metadata --instance-type)
+# IMDSv2-safe metadata
+export INSTANCE_ID=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.instance_id)")
+export INSTANCE_AVAILABILITY_ZONE=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.availability_zone)")
+export INSTANCE_REGION=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.availability_zone[:-1])")
+export INSTANCE_TYPE=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.instance_type)")
+echo "INSTANCE_ID: $INSTANCE_ID"
+echo "AZ: $INSTANCE_AVAILABILITY_ZONE"
+echo "Region: $INSTANCE_REGION"
+echo "Instance Type: $INSTANCE_TYPE"
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 export AWS_REGION=$INSTANCE_REGION  # this is for importing awsf3 package which imports tibanna package
 export LOCAL_OUTDIR_CWL=$MOUNT_DIR_PREFIX$LOCAL_OUTDIR

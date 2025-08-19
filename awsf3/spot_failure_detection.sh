@@ -23,9 +23,15 @@ sleep $SLEEP
 
 ### Send spot_failure message to S3
 if [ ! -f $JOBID.spot_failure ]; then
-    # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
-    # We are using IMDSv1 for performance reasons and simplicity.
-    status_code=`curl -s -o /dev/null -I -w "%{http_code}" http://169.254.169.254/latest/meta-data/spot/instance-action`
+    # IMDSv2 token fetch
+    TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" \
+                  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600" \
+                  -s)
+
+    # Query instance-action endpoint using IMDSv2
+    status_code=$(curl -s -o /dev/null -w "%{http_code}" \
+                  -H "X-aws-ec2-metadata-token: $TOKEN" \
+                  http://169.254.169.254/latest/meta-data/spot/instance-action)
     # This spot/instance-action is present only if the Spot Instance has been marked for hibernate, stop, or terminate.
     # Therefore, it is sufficient to check if the request was successful.
     if [ "$status_code" = "200" ]; then
