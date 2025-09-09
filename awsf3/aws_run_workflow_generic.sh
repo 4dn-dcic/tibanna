@@ -153,7 +153,6 @@ SECURITY_GROUPS_RAW=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
   http://169.254.169.254/latest/meta-data/security-groups)
 SECURITY_GROUPS=$(echo "$SECURITY_GROUPS_RAW" | paste -sd "," -)
 
-exl echo "## Using IMDSv2" # Temporary log to confirm the correct script with IMDSv2 is being used
 exl echo "## Tibanna version: $TIBANNA_VERSION"
 exl echo "## job id: $JOBID"
 exl echo "## instance type: $INSTANCE_TYPE"

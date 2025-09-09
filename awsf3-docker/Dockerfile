@@ -78,6 +78,9 @@ RUN wget https://github.com/broadinstitute/cromwell/blob/develop/LICENSE.txt  # 
 # Caper - uses cromwell 59 under the hood
 RUN pip install caper==1.6.3
 
+# Dependency of cwltool that requires a specific version of ruamel.yaml
+RUN pip install ruamel.yaml==0.17.16
+
 # awsf scripts
 COPY run.sh .
 COPY cron.sh .
