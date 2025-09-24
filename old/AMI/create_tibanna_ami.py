@@ -15,6 +15,11 @@ def launch_instance_for_tibanna_ami(keyname, userdata_file='AMI/tibanna_ami.sh')
                    'UserData': userdata_str,
                    'MaxCount': 1,
                    'MinCount': 1,
+                   'MetadataOptions': {
+                       'HttpTokens': 'required',
+                       'HttpEndpoint': 'enabled',
+                       'HttpPutResponseHopLimit': 2
+                    },
                    'TagSpecifications': [{'ResourceType': 'instance',
                                           'Tags': [{"Key": "Name", "Value": "tibanna_ami"}]}]}
     if keyname:

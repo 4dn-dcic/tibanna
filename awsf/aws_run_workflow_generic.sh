@@ -65,9 +65,10 @@ export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export LOGJSONFILE=$LOCAL_OUTDIR/$JOBID.log.json
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_ID=$(ec2metadata --instance-id|cut -d' ' -f2)
-export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
+# IMDSv2-safe instance metadata using Python
+export INSTANCE_ID=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.instance_id)")
+export INSTANCE_REGION=$(python3 -c "from ec2_metadata import ec2_metadata; print(ec2_metadata.availability_zone[:-1])")
 
 if [[ $LANGUAGE == 'wdl' ]]
 then

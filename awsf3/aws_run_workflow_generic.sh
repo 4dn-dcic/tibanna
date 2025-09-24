@@ -52,7 +52,12 @@ export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
 export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
-export INSTANCE_REGION=$(ec2metadata --availability-zone | sed 's/[a-z]$//')
+#IMDSv2 Addition
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+export INSTANCE_REGION=${AZ::-1}
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity| grep Account | sed 's/[^0-9]//g')
 
 
@@ -129,16 +134,35 @@ send_job_started;
 
 ### start logging
 ### env
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+
+INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/instance-type)
+
+AMI_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/ami-id)
+
+AVAILABILITY_ZONE=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+
+# For security groups, this returns a newline-separated list
+SECURITY_GROUPS_RAW=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/security-groups)
+SECURITY_GROUPS=$(echo "$SECURITY_GROUPS_RAW" | paste -sd "," -)
+
 exl echo "## Tibanna version: $TIBANNA_VERSION"
 exl echo "## job id: $JOBID"
-exl echo "## instance type: $(ec2metadata --instance-type)"
-exl echo "## instance id: $(ec2metadata --instance-id)"
+exl echo "## instance type: $INSTANCE_TYPE"
+exl echo "## instance id: $INSTANCE_ID"
 exl echo "## instance region: $INSTANCE_REGION"
 exl echo "## tibanna lambda version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
-exl echo "## ami id: $(ec2metadata --ami-id)"
-exl echo "## availability zone: $(ec2metadata --availability-zone)"
-exl echo "## security groups: $(ec2metadata --security-groups)"
+exl echo "## ami id: $AMI_ID"
+exl echo "## availability zone: $AVAILABILITY_ZONE"
+exl echo "## security groups: $SECURITY_GROUPS"
 exl echo "## log bucket: $LOGBUCKET"
 exl echo "## shutdown min: $SHUTDOWN_MIN"
 exl echo "## kms_key_id: $S3_ENCRYPT_KEY_ID"
@@ -207,7 +231,15 @@ fi
 # Works only in deployed Tibanna version >=1.6.0 since the ec2 needed more permissions to call `aws ec2 describe-spot-instance-requests`
 # Since cron only has a resolution of 1 min, we set up 2 jobs and let one sleep for 30s, to get a resolution of 30s.
 if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
-  is_spot_instance=`aws ec2 describe-spot-instance-requests --filters Name=instance-id,Values="$(ec2metadata --instance-id)" --region "$INSTANCE_REGION" | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))"`
+  # Get IMDSv2 token and instance ID
+  TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+    -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+  INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" \
+    http://169.254.169.254/latest/meta-data/instance-id)
+  is_spot_instance=$(aws ec2 describe-spot-instance-requests \
+    --filters Name=instance-id,Values="$INSTANCE_ID" \
+    --region "$INSTANCE_REGION" \
+    | python3 -c "import sys, json; print(len(json.load(sys.stdin)['SpotInstanceRequests']))")
   if [ "$is_spot_instance" = "1" ]; then
     exl echo
     exl echo "## Turning on Spot instance failure detection"
