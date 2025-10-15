@@ -3,6 +3,17 @@
 Change Log
 ==========
 
+5.5.3
+=====
+
+* Increase timeout limit for lambda functions
+
+
+5.5.2
+=====
+* Security - refactor Tibanna to use IMDSv2
+
+
 5.5.1
 =====
 

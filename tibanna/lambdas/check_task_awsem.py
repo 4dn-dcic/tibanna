@@ -10,7 +10,7 @@ config = {
     'runtime': 'python3.11',
     'role': 'tibanna_lambda_init_role',
     'description': 'check status of AWSEM run by interegating appropriate files on S3 ',
-    'timeout': 300,
+    'timeout': 800,
     'memory_size': 256
 }
 
