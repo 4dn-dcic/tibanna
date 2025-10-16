@@ -66,8 +66,8 @@ class Top(object):
     # These commands are excluded when parsing the top output
     # Currently only 1-, 2- or 3-word prefixes work.
     exclude_list = ['top', 'docker', 'dockerd', '/usr/bin/dockerd', 'cron',
-                    'docker-untar', 'containerd', 'goofys-latest', 'cwltool',
-                    '/usr/bin/containerd-shim-runc-v2', 'goofys', 'nodejs --eval',
+                    'docker-untar', 'containerd', 'mount-s3', 'cwltool',
+                    '/usr/bin/containerd-shim-runc-v2', 'nodejs --eval',
                     '/usr/bin/python3 /usr/local/bin/cwltool', 'containerd-shim',
                     '/usr/bin/python3 /bin/unattended-upgrade',
                     '/usr/bin/python3 /usr/local/bin/awsf3',
