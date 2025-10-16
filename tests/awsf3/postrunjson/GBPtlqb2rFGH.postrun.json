@@ -169,6 +169,7 @@
         "behavior_on_capacity_limit": "wait_and_retry",
         "cloudwatch_dashboard": false,
         "cpu": "",
+        "disable_metrics_collection": false,
         "ebs_iops": "",
         "ebs_size": 45,
         "ebs_size_as_is": false,

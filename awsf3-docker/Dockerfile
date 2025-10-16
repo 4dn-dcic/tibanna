@@ -57,10 +57,22 @@ RUN ARCH="$(dpkg --print-architecture)" && \
     apt install -y ./singularity-ce_${SINGULARITY_VERSION}-focal_${ARCH}.deb && \
     rm singularity-ce_${SINGULARITY_VERSION}-focal_${ARCH}.deb
 
-# goofys
-# RUN wget https://github.com/kahing/goofys/releases/download/v0.24.0/goofys && chmod +x goofys
-RUN ARCH="$(dpkg --print-architecture)" && \
-    wget https://tibanna-dependencies.s3.amazonaws.com/goofys/v0.24.0/${ARCH}/goofys && chmod +x goofys
+# mountpoint-s3
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    if [ "$ARCH" = "amd64" ]; then \
+        DEB_URL="https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb"; \
+    elif [ "$ARCH" = "arm64" ]; then \
+        DEB_URL="https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.deb"; \
+    else \
+        echo "Unsupported architecture: $ARCH" >&2; \
+        exit 1; \
+    fi; \
+    wget "$DEB_URL"; \
+    apt-get update; \
+    apt-get install -y ./mount-s3.deb; \
+    rm -f ./mount-s3.deb
+
 
 # python packages
 RUN pip install boto3==1.15 awscli==1.18.152 botocore==1.18.11

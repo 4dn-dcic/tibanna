@@ -33,7 +33,8 @@ class Subcommands(object):
         return {
             'decode_run_json':
                 [{'flag': ["-i", "--input-run-json"], 'help': "input run json file"},
-                 {'flag': ["-k", "--kms-key-id"], 'help': "kms-key-id to use for encrypting s3 files"}],
+                 {'flag': ["-k", "--kms-key-id"], 'help': "kms-key-id to use for encrypting s3 files"},
+                 {'flag': ["-r", "--region"], 'help': "AWS region"}],
             'download_workflow':
                 [],
             'update_postrun_json_init':
@@ -56,8 +57,8 @@ class Subcommands(object):
         }
 
 
-def decode_run_json(input_run_json, kms_key_id=None):
-    utils.decode_run_json(input_run_json, kms_key_id=kms_key_id)
+def decode_run_json(input_run_json, kms_key_id=None, region=None):
+    utils.decode_run_json(input_run_json, kms_key_id=kms_key_id, region=region)
 
 
 def download_workflow():

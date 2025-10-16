@@ -297,9 +297,9 @@ def test_create_mount_command_list():
         mcfile_content = f.read()
 
     right_content = ('mkdir -p /data1/input-mounted-somebucket\n'
-                     'goofys -f somebucket /data1/input-mounted-somebucket &\n'
+                     'mount-s3 somebucket /data1/input-mounted-somebucket &\n'
                      'mkdir -p /data1/input-mounted-somebucket2\n'
-                     'goofys -f somebucket2 /data1/input-mounted-somebucket2 &\n')
+                     'mount-s3 somebucket2 /data1/input-mounted-somebucket2 &\n')
 
     assert mcfile_content == right_content
     os.remove(mountcommand_filename)
