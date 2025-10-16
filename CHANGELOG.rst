@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+6.0.0
+=====
+
+* Replace Goofys with mountpoint-s3 (https://github.com/awslabs/mountpoint-s3)
+
+
 5.5.3
 =====
 

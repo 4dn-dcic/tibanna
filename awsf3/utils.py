@@ -26,7 +26,7 @@ INPUT_DIR = "/data1/input"  # data are downloaded to this directory
 INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
 
 
-def decode_run_json(input_json_file, kms_key_id=None):
+def decode_run_json(input_json_file, kms_key_id=None, region=None):
     """reads a run json file and creates three text files:
     download command list file (commands to download input files from s3)
     input yml file (for cwl/wdl/snakemake run)
@@ -42,7 +42,7 @@ def decode_run_json(input_json_file, kms_key_id=None):
     create_download_command_list(downloadlist_filename, runjson_input)
 
     # create a bucket-mounting command list file
-    create_mount_command_list(mountlist_filename, runjson_input, kms_key_id=kms_key_id)
+    create_mount_command_list(mountlist_filename, runjson_input, kms_key_id=kms_key_id, region=region)
 
     # create an input yml file to be used on awsem
     if language in ['wdl', 'wdl_v1', 'wdl_draft2']:  # wdl
@@ -57,24 +57,31 @@ def decode_run_json(input_json_file, kms_key_id=None):
 
 
 def create_mount_command_list(mountlist_filename, runjson_input,
-                              kms_key_id=None):
-    """ This function creates a mount point directory and starts goofys
+                              kms_key_id=None, region=None):
+    """ This function creates a mount point directory and starts mountpoint-s3
         with some default arguments.
         Note that KMS key arguments are needed for the mount if encryption
         is enabled.
     """
+    key_arn = None
+    if kms_key_id and region:
+        kms = boto3.client("kms", region_name=region)
+        response = kms.describe_key(KeyId=kms_key_id)
+        key_arn = response["KeyMetadata"]["Arn"]
+        
     buckets_to_be_mounted = set()
     for category in ["Input_files_data", "Secondary_files_data"]:
         for inkey, v in getattr(runjson_input, category).items():
             if v.mount:
                 buckets_to_be_mounted.add(v.dir_)
     with open(mountlist_filename, 'w') as f:
-        for b in sorted(buckets_to_be_mounted):
-            f.write("mkdir -p %s\n" % (INPUT_MOUNT_DIR_PREFIX + b))
-            if kms_key_id:
-                f.write("goofys --sse-kms %s -f %s %s &\n" % (kms_key_id, b, INPUT_MOUNT_DIR_PREFIX + b))
+        for bucket in sorted(buckets_to_be_mounted):
+            path_to_mount = INPUT_MOUNT_DIR_PREFIX + bucket
+            f.write(f"mkdir -p {path_to_mount}\n")
+            if key_arn:
+                f.write(f"mount-s3 {bucket} {path_to_mount} --sse aws:kms --sse-kms-key-id {key_arn} &\n")
             else:
-                f.write("goofys -f %s %s &\n" % (b, INPUT_MOUNT_DIR_PREFIX + b))
+                f.write(f"mount-s3 {bucket} {path_to_mount} &\n")
 
 
 def create_download_command_list(downloadlist_filename, runjson_input):

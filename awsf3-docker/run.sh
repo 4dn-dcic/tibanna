@@ -150,7 +150,7 @@ exl echo "## cwltool version $(cwltool --version | cut -f2 -d' ')"
 exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell-35.jar --version | cut -f2 -d ' ') for WDL draft2"
 exl echo "## cromwell version $(java -jar /usr/local/bin/cromwell.jar --version | cut -f2 -d ' ') for WDL v1.0"
 exl echo "## $(singularity --version)"
-exl echo "## $(goofys --version 2>&1)"
+exl echo "## $(mount-s3 --version)"
 
 
 # getting run.json file
@@ -163,7 +163,7 @@ if [ -z "$S3_ENCRYPT_KEY_ID" ];
 then
   exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME
 else
-  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME -k $S3_ENCRYPT_KEY_ID
+  exl awsf3 decode_run_json -i $RUN_JSON_FILE_NAME -k $S3_ENCRYPT_KEY_ID -r $INSTANCE_REGION
 fi
 
 
