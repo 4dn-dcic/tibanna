@@ -47,6 +47,14 @@ while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
 done
 
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
+
+# Detect container runtime (docker preferred, fallback to podman)
+CONTAINER_CMD=$(command -v docker 2>/dev/null || command -v podman 2>/dev/null)
+# Detect instance user and home directory (ubuntu on Debian/Ubuntu, ec2-user on RHEL)
+INSTANCE_USER=$(getent passwd ubuntu 2>/dev/null | cut -d: -f1)
+[ -z "$INSTANCE_USER" ] && INSTANCE_USER=$(getent passwd ec2-user 2>/dev/null | cut -d: -f1)
+[ -z "$INSTANCE_USER" ] && INSTANCE_USER="ubuntu"
+INSTANCE_HOME="/home/$INSTANCE_USER"
 export LOCAL_OUTDIR=$EBS_DIR/out
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
@@ -107,9 +115,9 @@ handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then s
 # used to compare Tibanna version strings
 version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
 
-### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
+### start with a log under the home directory for the instance user. Later this will be moved to the output directory, once the ebs is mounted.
 export LOGFILE=$LOGFILE1
-cd /home/ubuntu/
+cd $INSTANCE_HOME/
 touch $LOGFILE
 
 
@@ -175,10 +183,16 @@ exl date
 exl echo
 exl echo "## Configuring and starting ssh"
 if [ ! -z $PASSWORD ]; then
-  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
+  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd $INSTANCE_USER
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
   mv tmpp /etc/ssh/sshd_config
-  exl service ssh restart
+  # SSH service unit differs by distro: "ssh" on Debian/Ubuntu, "sshd" on RHEL
+  if systemctl list-unit-files 2>/dev/null | grep -q '^ssh\.service'; then
+    SSH_SERVICE=ssh
+  else
+    SSH_SERVICE=sshd
+  fi
+  exl service $SSH_SERVICE restart
 fi
 
 
@@ -192,7 +206,7 @@ exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir /mnt/$EBS_DIR
 exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
 exl ln -s /mnt/$EBS_DIR $EBS_DIR
-exl chown -R ubuntu $EBS_DIR
+exl chown -R $INSTANCE_USER $EBS_DIR
 exl chmod -R +x $EBS_DIR
 exl echo "Mounting finished."
 exl echo "Data EBS file system: $EBS_DEVICE"
@@ -209,16 +223,28 @@ cd ~
 
 if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
   exl echo "## Installing and activating Cloudwatch agent to collect metrics"
-  ARCHITECTURE="$(dpkg --print-architecture)"
-  CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${ARCHITECTURE}/latest/amazon-cloudwatch-agent.deb"
-  apt install -y wget
-  exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
-  wget "${CW_AGENT_LINK}"
-  sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+  # Normalize architecture string used in CW agent download URLs (amd64 / arm64)
+  _RAW_ARCH="$(uname -m)"
+  case "$_RAW_ARCH" in
+    x86_64)  CW_ARCH="amd64" ;;
+    aarch64) CW_ARCH="arm64" ;;
+    *)       CW_ARCH="$_RAW_ARCH" ;;
+  esac
+  if command -v dpkg &>/dev/null; then
+    CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${CW_ARCH}/latest/amazon-cloudwatch-agent.deb"
+    exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+    curl -fsSL "${CW_AGENT_LINK}" -o amazon-cloudwatch-agent.deb
+    dpkg -i -E ./amazon-cloudwatch-agent.deb
+  else
+    CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/${CW_ARCH}/latest/amazon-cloudwatch-agent.rpm"
+    exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+    curl -fsSL "${CW_AGENT_LINK}" -o amazon-cloudwatch-agent.rpm
+    rpm -U ./amazon-cloudwatch-agent.rpm
+  fi
   # If we want to collect new metrics, the following file has to be modified
   exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-  wget https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json
-  mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
+  curl -fsSL https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json \
+    -o /opt/aws/amazon-cloudwatch-agent/bin/config.json
   # This starts the agent with the downloaded configuration file
   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 else
@@ -274,7 +300,7 @@ fi
 exl echo
 exl echo "## Logging into ECR"
 exl echo "Logging into ECR $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com..."
-exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
+exlo $CONTAINER_CMD login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 send_log
 
 # send log before starting docker
@@ -288,7 +314,7 @@ send_log
 exl echo "## Pulling Docker image"
 tries=0
 until [ $tries -ge 3 ]; do
-  if exl_no_error docker pull $AWSF_IMAGE; then
+  if exl_no_error $CONTAINER_CMD pull $AWSF_IMAGE; then
     exl echo "## Pull successfull on try $tries"
     break
   else
@@ -301,9 +327,9 @@ send_log
 # pass S3_ENCRYPT_KEY_ID if desired
 if [ -z "$S3_ENCRYPT_KEY_ID" ];
 then
-  docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
+  $CONTAINER_CMD run --privileged --net host -e HOST_HOME=$INSTANCE_HOME -v $INSTANCE_HOME/:$INSTANCE_HOME/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
 else
-  docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS -k $S3_ENCRYPT_KEY_ID
+  $CONTAINER_CMD run --privileged --net host -e HOST_HOME=$INSTANCE_HOME -v $INSTANCE_HOME/:$INSTANCE_HOME/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS -k $S3_ENCRYPT_KEY_ID
 fi
 
 handle_error $?

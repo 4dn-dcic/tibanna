@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# basic updates and installation (RHEL/dnf-based)
+dnf update -y
+dnf install -y curl unzip
+
+# install AWS CLI v2
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip /tmp/awscliv2.zip -d /tmp/
+/tmp/aws/install
+rm -rf /tmp/aws /tmp/awscliv2.zip
+
+# Podman is pre-installed by the base image — no Docker installation needed.
+# Allow the default instance user to run podman without sudo (update if the
+# IT base image uses a user other than ec2-user).
+usermod -aG podman ec2-user || true
+
+reboot
