@@ -124,6 +124,13 @@ TIBANNA_DEFAULT_STEP_FUNCTION_NAME = os.environ.get('TIBANNA_DEFAULT_STEP_FUNCTI
 # S3_ENCRYPT_KEY_ID for Tibanna output buckets
 S3_ENCRYT_KEY_ID = os.environ.get('S3_ENCRYPT_KEY_ID', None)
 
+# AMI_KMS_KEY_ID for launching EC2 from a KMS-encrypted AMI (e.g. a custom/cross-account
+# encrypted base AMI). When set, the run_task_awsem Lambda role is granted the KMS
+# permissions (including kms:CreateGrant) needed to decrypt the AMI's EBS snapshot at
+# launch. May be a bare key id (assumed to live in this account/region) or a full key ARN
+# (use the full ARN when the key lives in another account, e.g. one owned by IT).
+AMI_KMS_KEY_ID = os.environ.get('AMI_KMS_KEY_ID', None)
+
 # dynamo table (optional) for fast searching
 DYNAMODB_TABLE = 'tibanna-master'
 DYNAMODB_KEYNAME = 'Job Id'

@@ -200,8 +200,8 @@ fi
 exl echo
 exl echo "## Mounting EBS"
 exl lsblk $TMPLOGFILE
-exl export ROOT_EBS=$(lsblk -o PKNAME | tail +2 | awk '$1!=""')
-exl export EBS_DEVICE=/dev/$(lsblk -o TYPE,KNAME | tail +2 | grep disk | grep -v $ROOT_EBS | cut -f2 -d' ')
+exl export ROOT_EBS=$(lsblk -o PKNAME | tail -n +2 | awk '$1!=""' | sort -u)
+exl export EBS_DEVICE=/dev/$(lsblk -o TYPE,KNAME | tail -n +2 | grep disk | grep -v "$ROOT_EBS" | cut -f2 -d' ')
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir /mnt/$EBS_DIR
 exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
