@@ -313,6 +313,20 @@ until $CONTAINER_CMD info >/dev/null 2>&1; do
 done
 exl echo "## Container engine ready after $container_tries attempt(s)"
 
+### Load the host kernel modules the nested (in-container) dockerd needs.
+### The AWSF container starts its own dockerd to run the workflow's tool images.
+### That dockerd uses iptables-legacy and overlayfs and shares the host kernel,
+### but RHEL 9 doesn't load the legacy netfilter modules by default (it uses
+### nftables) and 'modprobe' isn't available inside the container -- so without
+### this the nested dockerd dies with "can't initialize iptables table 'nat'".
+### Each module is loaded independently so one failure can't block the rest.
+### Harmless on the Ubuntu AMI, where these are typically already loaded.
+exl echo
+exl echo "## Loading kernel modules for nested docker"
+for _mod in overlay br_netfilter ip_tables iptable_nat iptable_filter iptable_mangle; do
+  modprobe "$_mod" 2>/dev/null || exl echo "## note: could not load kernel module $_mod (may be built-in or unavailable)"
+done
+
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
