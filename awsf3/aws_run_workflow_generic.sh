@@ -136,6 +136,22 @@ if [ -z "$AWSF_IMAGE" ]; then
     handle_error;
 fi
 
+### Normalize AWSF_IMAGE to a fully-qualified name.
+### This is needed for compatibility with Podman. Docker
+### instead defaults unqualified names to docker.io. Prepending docker.io/ when
+### no registry host is present makes both engines behave identically (Docker
+### accepts the docker.io/ prefix too, so Ubuntu/Docker AMIs are unaffected).
+### A leading segment containing '.' or ':', or equal to 'localhost', is treated
+### as a registry host (e.g. an ECR image) and left untouched.
+AWSF_IMAGE_REGISTRY=${AWSF_IMAGE%%/*}
+if [ "$AWSF_IMAGE_REGISTRY" = "$AWSF_IMAGE" ]; then
+    # no '/' at all -> official Docker Hub image (e.g. "ubuntu:20.04")
+    AWSF_IMAGE=docker.io/library/$AWSF_IMAGE
+elif ! echo "$AWSF_IMAGE_REGISTRY" | grep -q '[.:]' && [ "$AWSF_IMAGE_REGISTRY" != "localhost" ]; then
+    # first segment is not a registry host -> Docker Hub user image (e.g. "4dn-dcic/tibanna-awsf3:1.0.0")
+    AWSF_IMAGE=docker.io/$AWSF_IMAGE
+fi
+
 
 ### send job start message to S3
 send_job_started;
