@@ -1266,7 +1266,7 @@ class API(object):
 
     def create_ami(self, build_from_scratch=True, source_image_to_copy_from=None, source_image_region=None,
                    ubuntu_base_image=None, make_public=False, replicate=False, architecture='x86',
-                   userdata_file=None):
+                   userdata_file=None, subnet=None, security_group=None):
         args = dict()
         if build_from_scratch:
             # build from base image and user data
@@ -1278,6 +1278,12 @@ class API(object):
                 raise Exception("Architecture must be 'x86' or 'Arm'.")
             if userdata_file:
                 args.update({'userdata_file': userdata_file})
+            # Required when the account has no default VPC (otherwise run_instances
+            # fails with VPCIdNotSpecified).
+            if subnet:
+                args.update({'subnet': subnet})
+            if security_group:
+                args.update({'security_group': security_group})
         else:
             # copy an existing image
             args.update({'userdata_file': ''})

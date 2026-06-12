@@ -159,7 +159,7 @@ exl echo "## $(mount-s3 --version)"
 # getting run.json file
 exl echo
 exl echo "## Downloading and parsing run.json file"
-exl cd /home/ubuntu/
+exl cd "${_INSTANCE_HOME}/"
 exl aws s3 cp s3://$LOGBUCKET/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 if [ -z "$S3_ENCRYPT_KEY_ID" ];

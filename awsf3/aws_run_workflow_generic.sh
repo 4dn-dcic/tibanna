@@ -312,6 +312,25 @@ if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 fi
 
+### Wait for the container engine to be ready before using it.
+### On the RHEL AMI, Docker is started at boot by systemd and this userdata can
+### race ahead of dockerd; "docker info" only succeeds once the daemon is up,
+### otherwise the ECR login below fails with "Cannot connect to the Docker daemon".
+### For podman there is no daemon, so "podman info" returns immediately; on the
+### Ubuntu AMI Docker is already up, so this loop passes on the first try.
+exl echo
+exl echo "## Waiting for container engine ($CONTAINER_CMD) to be ready"
+container_tries=0
+until $CONTAINER_CMD info >/dev/null 2>&1; do
+  container_tries=$((container_tries+1))
+  if [ $container_tries -ge 30 ]; then
+    exl echo "Error: container engine ($CONTAINER_CMD) did not become ready after $container_tries attempts"
+    handle_error 1
+  fi
+  sleep 2
+done
+exl echo "## Container engine ready after $container_tries attempt(s)"
+
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"

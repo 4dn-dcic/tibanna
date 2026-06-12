@@ -1,18 +1,51 @@
 #!/bin/bash
+set -euxo pipefail
 
-# basic updates and installation (RHEL/dnf-based)
-dnf update -y
-dnf install -y curl unzip
+# Install Docker CE on the IT-provided RHEL base image.
+#
+# NOTE: this image's dnf is configured to use an internal-only mirror
+# (yumrepos.hms-srce.org) for the RHEL appstream/baseos repos, and the instance
+# is not registered with a subscription server. That mirror is not reachable
+# from a general AWS subnet, so any dnf transaction that needs those repos fails
+# (this previously caused the Docker install to fail silently and produce a
+# Docker-less AMI). To avoid them, we install Docker *only* from Docker's own
+# repo (--disablerepo='*' --enablerepo='docker-ce-stable'). This works because
+# Docker's main RHEL dependency, container-selinux, is already installed (Podman
+# requires it). 'dnf update -y' is intentionally omitted for the same reason.
+#
+# If the install below fails to resolve a dependency, it means a required package
+# is missing from the image and only available on the internal mirror -- in that
+# case build this AMI from a subnet that can reach yumrepos.hms-srce.org instead.
 
-# install AWS CLI v2
-curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
-unzip /tmp/awscliv2.zip -d /tmp/
-/tmp/aws/install
-rm -rf /tmp/aws /tmp/awscliv2.zip
+# Remove podman-docker if present: it ships a /usr/bin/docker shim pointing at
+# podman that would otherwise shadow the real Docker CLI. (|| true: it may not be
+# installed, and 'dnf remove' must not abort the script.)
+dnf remove -y podman-docker || true
 
-# Podman is pre-installed by the base image — no Docker installation needed.
-# Allow the default instance user to run podman without sudo (update if the
-# IT base image uses a user other than ec2-user).
-usermod -aG podman ec2-user || true
+# Add Docker's official repo (the CentOS repo works on RHEL). Guarded with
+# '|| true' because dnf may exit non-zero while trying to refresh the unreachable
+# internal repos; what matters is that the docker-ce.repo file gets written. If
+# it wasn't, the scoped install below fails loudly.
+dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo || true
+
+# Install Docker using ONLY the Docker repo, ignoring the unreachable internal
+# repos. 'set -e' makes the build fail here -- rather than silently producing a
+# Docker-less AMI -- if any dependency cannot be satisfied.
+dnf install -y --disablerepo='*' --enablerepo='docker-ce-stable' \
+  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Start Docker now and on every boot so it is available when the workflow's
+# userdata (aws_run_workflow_generic.sh) runs its first docker command.
+systemctl enable --now docker
+
+# Allow the default instance user to use docker.
+# (Update the user if the IT base image uses something other than ec2-user.)
+usermod -aG docker ec2-user || true
+
+# Verify before snapshotting: with 'set -e', a missing docker binary aborts the
+# build here and leaves the failure in /var/log/cloud-init-output.log instead of
+# producing a broken AMI.
+docker --version
+systemctl is-active --quiet docker && echo "## Docker daemon is active" || echo "## WARNING: docker daemon not active"
 
 reboot
