@@ -48,8 +48,8 @@ done
 
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
 
-# Detect container runtime (docker preferred, fallback to podman)
-CONTAINER_CMD=$(command -v docker 2>/dev/null || command -v podman 2>/dev/null)
+# Locate the docker binary (docker is installed on both the Ubuntu and RHEL AMIs)
+CONTAINER_CMD=$(command -v docker 2>/dev/null)
 # Detect instance user and home directory (ubuntu on Debian/Ubuntu, ec2-user on RHEL)
 INSTANCE_USER=$(getent passwd ubuntu 2>/dev/null | cut -d: -f1)
 [ -z "$INSTANCE_USER" ] && INSTANCE_USER=$(getent passwd ec2-user 2>/dev/null | cut -d: -f1)
@@ -135,23 +135,6 @@ if [ -z "$AWSF_IMAGE" ]; then
     exl echo "Error: awsf docker image is not defined";
     handle_error;
 fi
-
-### Normalize AWSF_IMAGE to a fully-qualified name.
-### This is needed for compatibility with Podman. Docker
-### instead defaults unqualified names to docker.io. Prepending docker.io/ when
-### no registry host is present makes both engines behave identically (Docker
-### accepts the docker.io/ prefix too, so Ubuntu/Docker AMIs are unaffected).
-### A leading segment containing '.' or ':', or equal to 'localhost', is treated
-### as a registry host (e.g. an ECR image) and left untouched.
-AWSF_IMAGE_REGISTRY=${AWSF_IMAGE%%/*}
-if [ "$AWSF_IMAGE_REGISTRY" = "$AWSF_IMAGE" ]; then
-    # no '/' at all -> official Docker Hub image (e.g. "ubuntu:20.04")
-    AWSF_IMAGE=docker.io/library/$AWSF_IMAGE
-elif ! echo "$AWSF_IMAGE_REGISTRY" | grep -q '[.:]' && [ "$AWSF_IMAGE_REGISTRY" != "localhost" ]; then
-    # first segment is not a registry host -> Docker Hub user image (e.g. "4dn-dcic/tibanna-awsf3:1.0.0")
-    AWSF_IMAGE=docker.io/$AWSF_IMAGE
-fi
-
 
 ### send job start message to S3
 send_job_started;
@@ -312,12 +295,11 @@ if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 fi
 
-### Wait for the container engine to be ready before using it.
+### Wait for the docker daemon to be ready before using it.
 ### On the RHEL AMI, Docker is started at boot by systemd and this userdata can
 ### race ahead of dockerd; "docker info" only succeeds once the daemon is up,
 ### otherwise the ECR login below fails with "Cannot connect to the Docker daemon".
-### For podman there is no daemon, so "podman info" returns immediately; on the
-### Ubuntu AMI Docker is already up, so this loop passes on the first try.
+### On the Ubuntu AMI Docker is already up, so this loop passes on the first try.
 exl echo
 exl echo "## Waiting for container engine ($CONTAINER_CMD) to be ready"
 container_tries=0

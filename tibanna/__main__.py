@@ -388,7 +388,7 @@ class Subcommands(object):
                   'default': "x86"},
                  {'flag': ["-F", "--userdata-file"],
                   'help': "Path to a custom userdata script for AMI bootstrapping. " +
-                          "Use this to supply an OS-specific script (e.g. for RHEL/Podman). " +
+                          "Use this to supply an OS-specific script (e.g. for RHEL). " +
                           "Only used with option -B. Defaults to the built-in Ubuntu/Docker script."},
                  {'flag': ["-s", "--subnet"],
                   'help': "Subnet ID (e.g. 'subnet-0123...') to launch the build instance in. " +
