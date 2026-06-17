@@ -10,6 +10,7 @@ RUN apt update -y && apt upgrade -y &&  apt install -y \
     cron \
     curl \
     fuse \
+    fuse-overlayfs \
     git \
     less \
     locales \
