@@ -300,6 +300,10 @@ fi
 ### race ahead of dockerd; "docker info" only succeeds once the daemon is up,
 ### otherwise the ECR login below fails with "Cannot connect to the Docker daemon".
 ### On the Ubuntu AMI Docker is already up, so this loop passes on the first try.
+if [ -z "$CONTAINER_CMD" ]; then
+  exl echo "Error: docker not found on this instance"
+  handle_error 1
+fi
 exl echo
 exl echo "## Waiting for container engine ($CONTAINER_CMD) to be ready"
 container_tries=0
@@ -308,6 +312,7 @@ until $CONTAINER_CMD info >/dev/null 2>&1; do
   if [ $container_tries -ge 30 ]; then
     exl echo "Error: container engine ($CONTAINER_CMD) did not become ready after $container_tries attempts"
     handle_error 1
+    break
   fi
   sleep 2
 done
