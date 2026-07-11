@@ -239,10 +239,10 @@ class CheckTask(object):
                                              prj.Job.end_time_as_datetime)
             prj.Job.update(Metrics=resources.as_dict())
             self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
-                               force_upload=True, open_browser=False,
-                               endtime=prj.Job.end_time_as_datetime,
-                               filesystem=prj.Job.filesystem,
-                               instance_id=prj.Job.instance_id)
+                                    force_upload=True, open_browser=False,
+                                    endtime=prj.Job.end_time_as_datetime,
+                                    filesystem=prj.Job.filesystem,
+                                    instance_id=prj.Job.instance_id)
             prj.Job.update(Metrics_status='ok')
         except Exception as e:
             logger.warning("metrics/plot generation failed for job %s but the job result stands: %s" %

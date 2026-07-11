@@ -75,7 +75,7 @@ def get_cost_estimate(postrunjson, ebs_root_type = "gp3", aws_price_overwrite = 
 
     job_start = datetime.strptime(job.start_time, '%Y%m%d-%H:%M:%S-UTC').replace(tzinfo=timezone.utc)
     job_end = datetime.strptime(job.end_time, '%Y%m%d-%H:%M:%S-UTC').replace(tzinfo=timezone.utc)
-    job_duration = (job_end - job_start).total_seconds() / 3600.0 # in hours
+    job_duration = (job_end - job_start).total_seconds() / 3600.0  # in hours
 
     if(not job.instance_type):
         logger.warning("Instance type is not available for cost estimation. Please try to deploy the latest version of Tibanna.")
