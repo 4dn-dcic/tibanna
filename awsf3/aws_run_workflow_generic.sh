@@ -142,7 +142,7 @@ handle_error() {
   if [ "$ERRCODE" -ne 0 ]; then
     send_error
     send_log
-    shutdown -h $SHUTDOWN_MIN
+    shutdown -h "$SHUTDOWN_MIN"
     exit "$ERRCODE"
   fi
 }

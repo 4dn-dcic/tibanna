@@ -28,7 +28,7 @@ def test_rerun_many_paginates_beyond_first_page(mocker):
     mocker.patch('tibanna.core.time.sleep')
 
     reran = api.rerun_many(sfn='tibanna_unicorn_test', stopdate='01Jan2019', stophour=0, stopminute=0,
-                            sleeptime=0)
+                           sleeptime=0)
 
     assert reran == 2
     assert mock_rerun.call_count == 2

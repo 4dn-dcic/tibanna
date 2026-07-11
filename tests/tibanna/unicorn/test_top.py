@@ -203,4 +203,3 @@ def test_convert_command_to_collapsed_command_all_commands_sentinel():
     collapsed_commands = ['all_commands']
     assert top.Top.convert_command_to_collapsed_command('bwa mem', collapsed_commands) == 'all_commands'
     assert top.Top.convert_command_to_collapsed_command('java -jar x.jar', collapsed_commands) == 'all_commands'
-
