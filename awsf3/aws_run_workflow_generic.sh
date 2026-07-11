@@ -51,7 +51,12 @@ export LOCAL_OUTDIR=$EBS_DIR/out
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
-export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
+# ERRFILE1 lives under the home directory, which exists from boot, so a
+# pre-mount failure can still persist a durable error marker. ERRFILE2 (under
+# the data EBS) is switched to once that volume is mounted, mirroring LOGFILE.
+export ERRFILE1=/home/ubuntu/$JOBID.error
+export ERRFILE2=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
+export ERRFILE=$ERRFILE1
 #IMDSv2 Addition
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
   -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -101,8 +106,22 @@ send_job_started() {
   fi
 }
 
-# function that handles errors - this function calls send_error and send_log
-handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; shutdown -h $SHUTDOWN_MIN; fi; }  ## usage: handle_error <error_code>
+# function that handles errors - this function calls send_error and send_log,
+# then fails closed: it exits immediately so a fatal error never falls through
+# into mounting/formatting disks, pulling/running Docker, or running the
+# workload. Best-effort logging failures (send_error/send_log/shutdown) do not
+# mask the original error code, since exit is always the last statement.
+## usage: handle_error <error_code>  (a missing/empty code is treated as an error, not silently skipped)
+handle_error() {
+  ERRCODE=${1:-1}
+  STATUS+=,$ERRCODE
+  if [ "$ERRCODE" -ne 0 ]; then
+    send_error
+    send_log
+    shutdown -h $SHUTDOWN_MIN
+    exit "$ERRCODE"
+  fi
+}
 
 # used to compare Tibanna version strings
 version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
@@ -116,16 +135,19 @@ touch $LOGFILE
 # make sure log bucket is defined
 if [ -z "$LOGBUCKET" ]; then
     exl echo "Error: log bucket not defined";  # just add this message to the log file, which may help debugging by ssh
+    # LOGBUCKET is unset, so send_error/send_log cannot upload anywhere; still
+    # fail closed instead of continuing into mount/Docker/workload setup.
     shutdown -h $SHUTDOWN_MIN;
+    exit 1
 fi
 # tibanna version and awsf image should also be defined
 if [ -z "$TIBANNA_VERSION" ]; then
     exl echo "Error: tibanna lambda version is not defined";
-    handle_error;
+    handle_error 1;
 fi
 if [ -z "$AWSF_IMAGE" ]; then
     exl echo "Error: awsf docker image is not defined";
-    handle_error;
+    handle_error 1;
 fi
 
 
@@ -202,6 +224,7 @@ exl echo "Data EBS file system: $EBS_DEVICE"
 exl mkdir -p $LOCAL_OUTDIR
 mv $LOGFILE1 $LOGFILE2
 export LOGFILE=$LOGFILE2
+export ERRFILE=$ERRFILE2
 
 exl echo
 cwd0=$(pwd)
@@ -287,9 +310,11 @@ send_log
 # network failures (seen frequently) - Will Sept 22 2021
 exl echo "## Pulling Docker image"
 tries=0
+pull_success=false
 until [ $tries -ge 3 ]; do
   if exl_no_error docker pull $AWSF_IMAGE; then
     exl echo "## Pull successfull on try $tries"
+    pull_success=true
     break
   else
     ((tries++))
@@ -297,7 +322,12 @@ until [ $tries -ge 3 ]; do
   fi
 done
 send_log
-# will fail here now if docker pull is not successful after multiple attempts
+# fail closed here if docker pull did not succeed after multiple attempts,
+# instead of silently falling through into `docker run` with a missing image
+if [ "$pull_success" != true ]; then
+  exl echo "Error: failed to pull docker image $AWSF_IMAGE after $tries tries"
+  handle_error 1
+fi
 # pass S3_ENCRYPT_KEY_ID if desired
 if [ -z "$S3_ENCRYPT_KEY_ID" ];
 then
