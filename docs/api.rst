@@ -61,10 +61,12 @@ To create an instance of tibanna unicorn (step function + lambdas)
   usergroup                           Tibanna usergroup to share the permission to access
                                       buckets and run jobs
 
-  do_not_delete_public_access_block   If set True, Tibanna does not delete public
-                                      access block from the specified buckets
-                                      (this way postrunjson and metrics reports will
-                                      not be public). Default False.
+  do_not_delete_public_access_block   If set True (the default), Tibanna does not delete
+                                      public access block from the specified buckets.
+                                      Set False only for an approved public-output
+                                      deployment - postrunjson and metrics reports
+                                      remain private regardless unless public output is
+                                      separately requested per job. Default True.
 
 
 Note: starting ``0.9.0``, users do not need to export ``AWS_ACCOUNT_NUMBER`` and ``TIBANNA_AWS_REGION`` any more.
@@ -182,10 +184,12 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
                                       buckets to which Tibanna needs access to
                                       through IAM role (input, output, log).
 
-  do_not_delete_public_access_block   If set True, Tibanna does not delete public
-                                      access block from the specified buckets
-                                      (this way postrunjson and metrics reports will
-                                      not be public). Default False.
+  do_not_delete_public_access_block   If set True (the default), Tibanna does not delete
+                                      public access block from the specified buckets.
+                                      Set False only for an approved public-output
+                                      deployment - postrunjson and metrics reports
+                                      remain private regardless unless public output is
+                                      separately requested per job. Default True.
 
 
 

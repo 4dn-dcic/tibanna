@@ -109,7 +109,7 @@ def does_key_exist(bucket, object_name, quiet=False):
     return file_metadata
 
 
-def upload(filepath, bucket, prefix='', public=True, encrypt_s3_upload=False, kms_key_id=None):
+def upload(filepath, bucket, prefix='', public=False, encrypt_s3_upload=False, kms_key_id=None):
     """ Uploads a file to S3 under a prefix.
         The original directory structure is removed
         and only the filename is preserved.
@@ -117,6 +117,8 @@ def upload(filepath, bucket, prefix='', public=True, encrypt_s3_upload=False, km
         itself as key
         If encrypt_s3_upload is True, default Server-Side encryption is enabled
         If kms_key_id is True as well, Server-Side encryption with the given key_id is enabled
+        Objects are private by default; pass public=True only for an explicit,
+        approved public-output use case (see K1/R8 in the security audit).
     """
     if public:
         acl = 'public-read'
@@ -150,7 +152,7 @@ def upload(filepath, bucket, prefix='', public=True, encrypt_s3_upload=False, km
             s3.put_object(Body=b'', Bucket=bucket, Key=prefix, ACL='private', **upload_extra_args)
 
 
-def put_object_s3(content, key, bucket, public=True, encrypt_s3_upload=False, kms_key_id=None):
+def put_object_s3(content, key, bucket, public=False, encrypt_s3_upload=False, kms_key_id=None):
     if public:
         acl = 'public-read'
     else:

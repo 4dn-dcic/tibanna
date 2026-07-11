@@ -7,6 +7,20 @@ Change Log
 =====
 
 * Replace Goofys with mountpoint-s3 (https://github.com/awslabs/mountpoint-s3)
+* Security - S3 objects (metrics, cost, marker, run and postrun files) uploaded by
+  Tibanna are now private by default; public output requires an explicit per-call
+  opt-in. ``deploy_unicorn``/``setup_tibanna_env`` now retain S3 Block Public Access
+  on the given buckets by default; pass the new ``-Q/--enable-public-access-block-deletion``
+  flag (``do_not_delete_public_access_block=False`` in the API) to restore the old
+  behavior for an approved public-output deployment. This code change does not
+  revoke ACLs already applied to existing objects/buckets - operators who deployed
+  a prior Tibanna version with the old defaults should audit and, if needed,
+  explicitly remediate any previously-public buckets/objects.
+* Fix workflow finalization being coupled to optional metrics/plotting/cost-estimate
+  generation: a completed job with a valid ``.success`` marker and postrun data now
+  always finalizes and terminates its instance, even if CloudWatch/plotting/cost
+  estimation fails; the failure is recorded as a structured ``Metrics_status``/
+  ``Metrics_error`` on the postrun job instead of failing the whole execution.
 
 
 5.5.3

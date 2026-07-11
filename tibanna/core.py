@@ -798,10 +798,17 @@ class API(object):
                                quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
-                          do_not_delete_public_access_block=False, verbose=False):
+                          do_not_delete_public_access_block=True, verbose=False):
         """set up usergroup environment on AWS
         This function is called automatically by deploy_tibanna or deploy_unicorn
-        Use it only when the IAM permissions need to be reset"""
+        Use it only when the IAM permissions need to be reset
+
+        S3 Block Public Access is retained on the given buckets by default
+        (do_not_delete_public_access_block=True). Pass False only for an
+        explicit, approved public-output deployment (K1/R8) - this does not
+        change the ACL of objects already written to those buckets; existing
+        public objects/buckets require a separate, explicit remediation step.
+        """
         logger.info("setting up tibanna usergroup environment on AWS...")
         if not AWS_ACCOUNT_NUMBER or not AWS_REGION:
             logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
@@ -831,7 +838,7 @@ class API(object):
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
                        default_usergroup_tag='default',
-                       buckets='', setenv=False, do_not_delete_public_access_block=False,
+                       buckets='', setenv=False, do_not_delete_public_access_block=True,
                        deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
@@ -883,7 +890,7 @@ class API(object):
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=True,
                        deploy_costupdater=False, subnets=None, security_groups=None,
                        quiet=False):
         """deploy tibanna unicorn to AWS cloud"""

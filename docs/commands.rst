@@ -66,9 +66,17 @@ To create an instance of tibanna unicorn (step function + lambdas)
   -g|--usergroup=<usergroup>               Tibanna usergroup to share the permission to access
                                            buckets and run jobs
 
-  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
-                                           (this way postrunjson and metrics reports will
-                                           not be public)
+  -P|--do-not-delete-public-access-block   Deprecated, now the default: S3 Block Public
+                                           Access is retained on the given buckets unless
+                                           -Q/--enable-public-access-block-deletion is also
+                                           given. Kept only so existing scripts do not break.
+
+  -Q|--enable-public-access-block-deletion Explicitly opt in to deleting S3 Block Public
+                                           Access from the given buckets. Only use this for
+                                           an approved public-output deployment - postrunjson
+                                           and metrics reports remain private regardless
+                                           unless public output is separately requested per
+                                           job.
 
 -C|--deploy-costupdater                    Deploys an additional step function that will periodically 
                                            check, if the cost for a workflow run can be retrieved from AWS.
@@ -193,9 +201,17 @@ To set up environment on AWS without deploying tibanna, use `tibanna setup_tiban
                                            buckets to which Tibanna needs access to
                                            through IAM role (input, output, log).
 
-  -P|--do-not-delete-public-access-block   Do not delete public access block from buckets
-                                           (this way postrunjson and metrics reports will
-                                           not be public)
+  -P|--do-not-delete-public-access-block   Deprecated, now the default: S3 Block Public
+                                           Access is retained on the given buckets unless
+                                           -Q/--enable-public-access-block-deletion is also
+                                           given. Kept only so existing scripts do not break.
+
+  -Q|--enable-public-access-block-deletion Explicitly opt in to deleting S3 Block Public
+                                           Access from the given buckets. Only use this for
+                                           an approved public-output deployment - postrunjson
+                                           and metrics reports remain private regardless
+                                           unless public output is separately requested per
+                                           job.
 
 
 
