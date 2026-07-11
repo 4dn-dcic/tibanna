@@ -205,6 +205,7 @@ class Subcommands(object):
                   'default': 0,
                   'help': "stop (end) minute of the executions (e.g. 55)"},
                  {'flag': ["-o", "--offset"],
+                  'type': int,
                   'default': 0,
                   'help': "offset for time zone between local computer and AWS step function"},
                  {'flag': ["-r", "--sleeptime"],
@@ -437,9 +438,9 @@ def users():
     API().users()
 
 
-def list_sfns(numbers=False):
+def list_sfns(numbers=False, sfn_type=None):
     """list all step functions, optionally with a summary (-n)"""
-    API().list_sfns(numbers=numbers)
+    API().list_sfns(numbers=numbers, sfn_type=sfn_type)
 
 
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,

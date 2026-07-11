@@ -498,8 +498,10 @@ class API(object):
                 else:
                     break
 
-    def list_sfns(self, numbers=False):
+    def list_sfns(self, numbers=False, sfn_type=None):
         """list all step functions, optionally with a summary (-n)"""
+        if not sfn_type:
+            sfn_type = self.sfn_type
         st = boto3.client('stepfunctions')
         res = st.list_state_machines(
             maxResults=1000
@@ -509,7 +511,7 @@ class API(object):
             header = header + "\trunning\tsucceeded\tfailed\taborted\ttimed_out"
         print(header)
         for s in res['stateMachines']:
-            if not s['name'].startswith('tibanna_' + self.sfn_type):
+            if not s['name'].startswith('tibanna_' + sfn_type):
                 continue
             line = "%s\t%s" % (s['name'], str(s['creationDate']))
             if numbers:
@@ -626,18 +628,21 @@ class API(object):
         stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
         stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M').replace(tzinfo=timezone.utc)
         client = boto3.client('stepfunctions')
-        sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
+        paginator = client.get_paginator('list_executions')
         k = 0
-        for exc in sflist['executions']:
-            if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
-                k = k + 1
-                self.rerun(exc['executionArn'], sfn=sfn,
-                           override_config=override_config, app_name_filter=app_name_filter,
-                           instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
-                           ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
-                           overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
-                           use_spot=use_spot, do_not_use_spot=do_not_use_spot)
-                time.sleep(sleeptime)
+        for page in paginator.paginate(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status):
+            for exc in page['executions']:
+                if exc['stopDate'] > stoptime_in_datetime:
+                    k = k + 1
+                    self.rerun(exc['executionArn'], sfn=sfn,
+                               override_config=override_config, app_name_filter=app_name_filter,
+                               instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
+                               ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
+                               overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
+                               use_spot=use_spot, do_not_use_spot=do_not_use_spot)
+                    time.sleep(sleeptime)
+        logger.info("rerun_many reran %d execution(s)" % k)
+        return k
 
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
