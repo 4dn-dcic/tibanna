@@ -21,6 +21,18 @@ Change Log
   always finalizes and terminates its instance, even if CloudWatch/plotting/cost
   estimation fails; the failure is recorded as a structured ``Metrics_status``/
   ``Metrics_error`` on the postrun job instead of failing the whole execution.
+* Security - reduce IAM blast radius: the run_task Lambda role no longer carries
+  the AWS-managed ``AmazonEC2FullAccess`` policy; it now gets a scoped custom
+  policy covering only the EC2 actions Tibanna actually calls (RunInstances,
+  CreateFleet, CreateLaunchTemplate, DeleteLaunchTemplate, DeleteFleets,
+  CreateTags, DescribeInstances, DescribeInstanceTypes). ``ec2:TerminateInstances``
+  is now conditioned on the ``Type=awsem`` tag Tibanna applies to instances it
+  launches. The step-function role uses the scoped ``lambdainvoke`` policy
+  (restricted to the three tibanna lambdas) instead of the managed
+  ``AWSLambdaRole`` policy, which granted ``lambda:InvokeFunction`` on
+  ``Resource: "*"``. Existing deployments must redeploy
+  (``tibanna deploy_unicorn``/``setup_tibanna_env``) to pick up the new,
+  narrower policies.
 
 
 5.5.3
