@@ -19,6 +19,7 @@ from awsf3.utils import (
     upload_to_output_target,
     upload_output
 )
+from unittest.mock import MagicMock
 from awsf3.log import (
     parse_commands,
     read_logfile_by_line
@@ -716,7 +717,7 @@ def test_upload_output_encrypt_s3_upload():
     assert res['ServerSideEncryption'] == 'aws:kms'
     res = s3.head_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
     assert res['ServerSideEncryption'] == 'aws:kms'
-    
+
     # clean up
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload')
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_test_file_to_upload2')
@@ -724,3 +725,21 @@ def test_upload_output_encrypt_s3_upload():
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/dir1/file1')
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/file1')
     s3.delete_object(Bucket="tibanna-test-bucket", Key='tibanna-test/some_zip_file_to_upload/file2')
+
+
+def test_determine_key_type_with_profile_uses_boto3_session(mocker):
+    """C17 regression: boto3.session (the module) is not callable - a run.json
+    input with a non-empty profile must use boto3.Session (the class) to build
+    a profile-scoped client, or profile-based downloads crash with a TypeError.
+    """
+    mock_client = MagicMock()
+    mock_client.list_objects_v2.return_value = {'KeyCount': 1}
+    mock_session_instance = MagicMock()
+    mock_session_instance.client.return_value = mock_client
+    mock_session_cls = mocker.patch('awsf3.utils.boto3.Session', return_value=mock_session_instance)
+
+    key_type = determine_key_type('somebucket', 'somefolder', 'someprofile')
+
+    mock_session_cls.assert_called_once_with(profile_name='someprofile')
+    mock_session_instance.client.assert_called_once_with('s3')
+    assert key_type == 'Folder'
