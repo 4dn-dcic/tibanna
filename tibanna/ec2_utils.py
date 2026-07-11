@@ -27,6 +27,12 @@ from .vars import (
     TIBANNA_AWSF_DIR,
     DEFAULT_AWSF_IMAGE,
     S3_ENCRYT_KEY_ID,
+    TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED,
+)
+from .awsf3_checksums import (
+    AWS_RUN_WORKFLOW_GENERIC_SHA256,
+    CLOUDWATCH_AGENT_CONFIG_SHA256,
+    SPOT_FAILURE_DETECTION_SHA256,
 )
 from .job import Jobs
 from .exceptions import (
@@ -737,12 +743,29 @@ class Execution(object):
         str += "SHUTDOWN_MIN={}\n".format(cfg.shutdown_min)
         str += "LOGBUCKET={}\n".format(cfg.log_bucket)
         str += "SCRIPT_URL={}\n".format(cfg.script_url)
+        # D1: the bootstrap script is verified against a pinned sha256 before
+        # it is made executable/sourced, so it fails closed (before mounting
+        # disks or running Docker/workload code) on a hash mismatch or an
+        # unavailable/tampered download, instead of blindly executing
+        # whatever bytes came back from SCRIPT_URL.
+        str += "RUN_SCRIPT_SHA256={}\n".format(AWS_RUN_WORKFLOW_GENERIC_SHA256)
+        str += "CW_CONFIG_SHA256={}\n".format(CLOUDWATCH_AGENT_CONFIG_SHA256)
+        str += "SPOT_SCRIPT_SHA256={}\n".format(SPOT_FAILURE_DETECTION_SHA256)
         str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+        if TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED:
+            str += "echo 'WARNING: bootstrap script sha256 verification disabled (development override)'\n"
+        else:
+            str += "echo \"$RUN_SCRIPT_SHA256  $RUN_SCRIPT\" | sha256sum -c - || " \
+                   "{ echo 'Error: bootstrap script sha256 mismatch, refusing to execute'; " \
+                   "shutdown -h $SHUTDOWN_MIN; exit 1; }\n"
         str += "chmod +x $RUN_SCRIPT\n"
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
         str += " -l $LOGBUCKET"
         str += " -V {version}".format(version=__version__)
         str += " -A {awsf_image}".format(awsf_image=cfg.awsf_image)
+        str += " -u $SCRIPT_URL -w $CW_CONFIG_SHA256 -z $SPOT_SCRIPT_SHA256"
+        if TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED:
+            str += " -x"
         if cfg.disable_metrics_collection:
             str += " -c"
         if cfg.kms_key_id:

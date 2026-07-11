@@ -10,9 +10,13 @@ export REGION=
 export SINGULARITY_OPTION_TO_PASS=
 export DISABLE_METRICS_COLLECTION=false
 export S3_ENCRYPT_KEY_ID=
+export SCRIPT_URL=
+export CW_CONFIG_SHA256=
+export SPOT_SCRIPT_SHA256=
+export DISABLE_SCRIPT_VERIFICATION=false
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID]"
+    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID] [-u SCRIPT_URL] [-w CW_CONFIG_SHA256] [-z SPOT_SCRIPT_SHA256] [-x]"
     echo "-i JOBID : awsem job id (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
@@ -25,9 +29,13 @@ printHelpAndExit() {
     echo "-g : use singularity"
     echo "-c : Metrics collection is disabled if flag is set"
     echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
+    echo "-u SCRIPT_URL : base URL this script was fetched from, reused to fetch the cloudwatch agent config and spot failure detection script from the same pinned location"
+    echo "-w CW_CONFIG_SHA256 : expected sha256 of cloudwatch_agent_config.json; the download is rejected on mismatch"
+    echo "-z SPOT_SCRIPT_SHA256 : expected sha256 of spot_failure_detection.sh; the download is rejected on mismatch"
+    echo "-x : (development only) disable sha256 verification of downloaded monitoring assets"
     exit "$1"
 }
-while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
+while getopts "i:m:l:p:a:s:r:gcV:A:k:u:w:z:x" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
@@ -41,6 +49,10 @@ while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
         g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
         c) export DISABLE_METRICS_COLLECTION=true;;  # disable metrics collection
         k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
+        u) export SCRIPT_URL=$OPTARG;;  # base URL to fetch pinned monitoring assets from
+        w) export CW_CONFIG_SHA256=$OPTARG;;  # expected sha256 of cloudwatch_agent_config.json
+        z) export SPOT_SCRIPT_SHA256=$OPTARG;;  # expected sha256 of spot_failure_detection.sh
+        x) export DISABLE_SCRIPT_VERIFICATION=true;;  # development-only override, see printHelpAndExit
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -121,6 +133,34 @@ handle_error() {
     shutdown -h $SHUTDOWN_MIN
     exit "$ERRCODE"
   fi
+}
+
+# function that verifies a downloaded file's sha256 against an expected value
+# and fails closed (via handle_error) on mismatch or a missing expected value.
+# DISABLE_SCRIPT_VERIFICATION is a development-only escape hatch (e.g. for a
+# custom TIBANNA_REPO_BRANCH fork where the expected hash is not known ahead
+# of time) and must never be the default in a real deployment.
+## usage: verify_sha256 <file> <expected_sha256>
+verify_sha256() {
+  local file="$1"
+  local expected="$2"
+  if [ "$DISABLE_SCRIPT_VERIFICATION" = true ]; then
+    exl echo "## WARNING: sha256 verification disabled (development override) for $file"
+    return 0
+  fi
+  if [ -z "$expected" ]; then
+    exl echo "Error: no expected sha256 provided for $file - refusing to use it"
+    handle_error 1
+    return 1
+  fi
+  local actual
+  actual=$(sha256sum "$file" | awk '{print $1}')
+  if [ "$actual" != "$expected" ]; then
+    exl echo "Error: sha256 mismatch for $file (expected $expected, got $actual)"
+    handle_error 1
+    return 1
+  fi
+  return 0
 }
 
 # used to compare Tibanna version strings
@@ -238,9 +278,13 @@ if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
   exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
   wget "${CW_AGENT_LINK}"
   sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
-  # If we want to collect new metrics, the following file has to be modified
-  exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-  wget https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json
+  # If we want to collect new metrics, the following file has to be modified.
+  # Fetched from the same pinned SCRIPT_URL this script itself was fetched
+  # from (not a hardcoded /master/ URL) and verified against CW_CONFIG_SHA256
+  # before use (D1) - fails closed on mismatch/unavailability.
+  exl echo "## Using CW Agent config: ${SCRIPT_URL}cloudwatch_agent_config.json"
+  wget "${SCRIPT_URL}cloudwatch_agent_config.json"
+  verify_sha256 ./cloudwatch_agent_config.json "$CW_CONFIG_SHA256"
   mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
   # This starts the agent with the downloaded configuration file
   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
@@ -267,7 +311,10 @@ if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
     exl echo
     exl echo "## Turning on Spot instance failure detection"
     cd ~
-    curl https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/spot_failure_detection.sh -O
+    # Fetched from the same pinned SCRIPT_URL and verified against
+    # SPOT_SCRIPT_SHA256 before being made executable (D1).
+    curl "${SCRIPT_URL}spot_failure_detection.sh" -O
+    verify_sha256 ./spot_failure_detection.sh "$SPOT_SCRIPT_SHA256"
     chmod +x spot_failure_detection.sh
     if [ -z "$S3_ENCRYPT_KEY_ID" ];
     then

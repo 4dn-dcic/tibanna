@@ -33,6 +33,23 @@ Change Log
   ``Resource: "*"``. Existing deployments must redeploy
   (``tibanna deploy_unicorn``/``setup_tibanna_env``) to pick up the new,
   narrower policies.
+* Security - worker instances no longer fetch their bootstrap/monitoring scripts
+  from the mutable ``master`` branch by default: ``TIBANNA_REPO_BRANCH`` now
+  defaults to the tagged release matching this package's version (e.g.
+  ``v6.0.0``), and the downloaded ``aws_run_workflow_generic.sh``,
+  ``cloudwatch_agent_config.json`` and ``spot_failure_detection.sh`` are each
+  verified against a pinned sha256 (``tibanna/awsf3_checksums.py``) before
+  being executed/used - a mismatch or unavailable download fails closed
+  (stops before mounting disks or running Docker/workload code) rather than
+  running unverified code. A development-only override,
+  ``TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED=true``, is available for a
+  custom ``TIBANNA_REPO_BRANCH`` fork whose scripts are not tracked in
+  ``awsf3_checksums.py`` - never set this in a real deployment. Also fixes:
+  a fatal host-bootstrap error (missing log bucket/version/image, EBS
+  mount/format failure, Docker pull exhaustion, Docker run failure) now
+  fails closed (exits immediately after reporting the error) instead of
+  merely scheduling a delayed shutdown and continuing into subsequent setup
+  and workload execution.
 
 
 5.5.3

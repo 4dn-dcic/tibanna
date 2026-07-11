@@ -23,6 +23,7 @@ from .vars import (
     EXECUTION_ARN,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
+    TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED,
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
@@ -648,7 +649,9 @@ class API(object):
         # don't set this as a global, since not all tasks require it
         envlist = {
             self.run_task_lambda: {'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
-                                   'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
+                                   'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
+                                   'TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED':
+                                       str(TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED)},
             self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
