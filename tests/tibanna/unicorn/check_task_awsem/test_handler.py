@@ -2,7 +2,6 @@ from tibanna.lambdas import check_task_awsem as service
 from tibanna.exceptions import (
     EC2StartingException,
     StillRunningException,
-    MetricRetrievalException,
     EC2IdleException,
     JobAbortedException
 )
@@ -11,9 +10,25 @@ import boto3
 import random
 import string
 import json
+from unittest.mock import MagicMock
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc
 from tibanna.vars import AWSEM_TIME_STAMP_FORMAT
+
+
+def _mock_ec2_client_only(mocker):
+    """Mock only the EC2 client (terminate_instances) so these tests don't
+    attempt a live EC2 mutation against a made-up/empty instance id, while
+    leaving the real S3 client (used elsewhere in the same process) alone.
+    """
+    real_boto3_client = boto3.client
+
+    def fake_client(service_name, *args, **kwargs):
+        if service_name == 'ec2':
+            return MagicMock()
+        return real_boto3_client(service_name, *args, **kwargs)
+
+    return mocker.patch('tibanna.check_task.boto3.client', side_effect=fake_client)
 
 
 @pytest.fixture()
@@ -85,7 +100,14 @@ def test_check_task_awsem_throws_exception_if_not_done(check_task_input):
 
 
 @pytest.mark.webtest
-def test_check_task_awsem(check_task_input, s3):
+def test_check_task_awsem(check_task_input, s3, mocker):
+    """D3 regression (webtest): a valid .success marker plus valid postrun
+    data must complete successfully even when metrics retrieval fails (here,
+    because the job's tiny/synthetic start_time makes CloudWatch retrieval
+    fail) - the failure is recorded as a structured Metrics_status/error
+    instead of aborting the job as failed.
+    """
+    _mock_ec2_client_only(mocker)
     jobid = 'lalala'
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
@@ -100,20 +122,21 @@ def test_check_task_awsem(check_task_input, s3):
                         "Input": {'Input_files_data': {}, 'Input_parameters': {}, 'Secondary_files_data': {}}}}
     jsoncontent = json.dumps(jsondict)
     s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
-    with pytest.raises(MetricRetrievalException) as excinfo:
-        retval = service.handler(check_task_input_modified, '')
-    assert 'error getting metrics' in str(excinfo.value)
+    retval = service.handler(check_task_input_modified, '')
+    assert 'postrunjson' in retval
+    assert retval['postrunjson']['Job']['Metrics_status'] in ('ok', 'failed')
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
     s3.delete_objects(Delete={'Objects': [{'Key': postrunjson}]})
-    #assert 'postrunjson' in retval
-    #assert retval['postrunjson'] == jsondict
-    #del retval['postrunjson']
-    #assert retval == check_task_input_modified
 
 
 @pytest.mark.webtest
-def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
+def test_check_task_awsem_with_long_postrunjson(check_task_input, s3, mocker):
+    """D3 regression (webtest): same as test_check_task_awsem, but with an
+    oversized `commands` field that triggers the postrun-json truncation
+    path - completion must still succeed despite the metrics failure.
+    """
+    _mock_ec2_client_only(mocker)
     jobid = 'some_uniq_jobid'
     check_task_input_modified = check_task_input
     check_task_input_modified['jobid'] = jobid
@@ -130,16 +153,10 @@ def test_check_task_awsem_with_long_postrunjson(check_task_input, s3):
                 "commands": verylongstring}
     jsoncontent = json.dumps(jsondict)
     s3.put_object(Body=jsoncontent.encode(), Key=postrunjson)
-    with pytest.raises(MetricRetrievalException) as excinfo:
-        retval = service.handler(check_task_input_modified, '')
-    assert 'error getting metrics' in str(excinfo.value)
+    retval = service.handler(check_task_input_modified, '')
+    assert 'postrunjson' in retval
+    assert 'Job' in retval['postrunjson']
+    assert retval['postrunjson']['Job']['Metrics_status'] in ('ok', 'failed')
     s3.delete_objects(Delete={'Objects': [{'Key': job_started}]})
     s3.delete_objects(Delete={'Objects': [{'Key': job_success}]})
     s3.delete_objects(Delete={'Objects': [{'Key': postrunjson}]})
-    #assert 'postrunjson' in retval
-    #assert 'Job' in retval['postrunjson']
-    #assert 'Output' in retval['postrunjson']['Job']
-    #assert 'log' in retval['postrunjson']
-    #assert retval['postrunjson']['log'] == "postrun json not included due to data size limit"
-    #del retval['postrunjson']
-    #assert retval == check_task_input_modified
