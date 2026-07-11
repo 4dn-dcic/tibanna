@@ -13,6 +13,6 @@ checked-out awsf3/ files and fails if they drift, so a source change to any
 of these three files always requires a matching update here.
 """
 
-AWS_RUN_WORKFLOW_GENERIC_SHA256 = '739db3476107e9f77edbf751bcc4fd5afd2fcdc3bbb85a719b2edaa88b692aa5'
+AWS_RUN_WORKFLOW_GENERIC_SHA256 = 'bb610a5a8d8315b57cf09520f834f047680e9d322299f1ef25c2fa67e5d29ebe'
 CLOUDWATCH_AGENT_CONFIG_SHA256 = '4c67d8d9da35a98663c6451894d391aa115ace9b85d44674779b1613f0602e14'
 SPOT_FAILURE_DETECTION_SHA256 = '6808d9b0320c9da6aefcc0dd5010210da9cc5d447e7d7b2caf9125d13760a883'
