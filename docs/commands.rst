@@ -521,14 +521,15 @@ To list all step functions
 
 ::
 
-    tibanna list_sfns [-n]
+    tibanna list_sfns [-n] [-s sfn_type]
 
 **Options**
 
 ::
 
-    -n      show stats of the number of jobs for per status (using this option could slow down the
-            process)
+    -n                    show stats of the number of jobs for per status (using this option could slow down the
+                          process)
+    -s|--sfn-type=<type>  tibanna step function type ('unicorn' vs 'pony'), default 'unicorn'
 
 plot_metrics
 ------------

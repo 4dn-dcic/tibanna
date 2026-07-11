@@ -8,9 +8,10 @@ passed as `package_objects` to aws_lambda.deploy_function and copytree'd
 verbatim). The Lambda therefore cannot read awsf3/*.sh from its own local
 filesystem to compute a hash at userdata-generation time.
 
-tests/tibanna/unicorn/test_awsf3_checksums.py recomputes these from the
-checked-out awsf3/ files and fails if they drift, so a source change to any
-of these three files always requires a matching update here.
+tests/tibanna/unicorn/test_ec2_utils_bootstrap_verification.py::test_pinned_checksums_match_the_actual_awsf3_files
+recomputes these from the checked-out awsf3/ files and fails if they drift,
+so a source change to any of these three files always requires a matching
+update here.
 """
 
 AWS_RUN_WORKFLOW_GENERIC_SHA256 = 'bb610a5a8d8315b57cf09520f834f047680e9d322299f1ef25c2fa67e5d29ebe'

@@ -504,8 +504,11 @@ To list all step functions
 
 ::
 
-    n      show stats of the number of jobs for per status (using this option could slow down the
-           process)
+    numbers      show stats of the number of jobs for per status (using this option could slow down the
+                 process)
+
+    sfn_type     tibanna step function type ('unicorn' vs 'pony'), default is the API instance's
+                 own sfn_type (e.g. 'unicorn')
 
 
 plot_metrics
