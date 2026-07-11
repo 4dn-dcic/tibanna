@@ -144,13 +144,13 @@ Deploying Tibanna Unicorn to AWS
 
 *Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
 
-If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf3` directory of the right tibanna repo/branch. By default (i.e. without setting these variables), Tibanna fetches from the tagged release matching the installed package version (e.g. ``v6.0.0``), not the mutable ``master`` branch, and verifies the downloaded bootstrap/monitoring scripts against a pinned sha256 checksum before running them.
+If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf3` directory of the right tibanna repo/branch. By default (i.e. without setting these variables), Tibanna fetches from the immutable source commit containing the pinned assets, not the mutable ``master`` branch or a release tag that may not exist yet, and verifies the downloaded bootstrap/monitoring scripts against a pinned sha256 checksum before running them.
 
 ::
 
     # only if you're using a forked repo or a non-default branch
     export TIBANNA_REPO_NAME=<git_hub_repo_name>  # (default: 4dn-dcic/tibanna)
-    export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: v<tibanna version>, e.g. v6.0.0)
+    export TIBANNA_REPO_BRANCH=<git_hub_branch_or_commit>  # default: pinned source commit
 
 If you point ``TIBANNA_REPO_BRANCH`` at a fork/branch whose ``awsf3`` scripts differ from the ones this Tibanna version ships (and their pinned sha256 in ``tibanna/awsf3_checksums.py``), the worker will fail closed (refuse to run the mismatched script) unless you also set, for that development deployment only::
 
@@ -389,5 +389,4 @@ Check users again.
     monty	lalala
 
 Now ``monty`` can use ``tibanna_unicorn_lalala`` and access buckets ``montys-data-bucket`` and ``montys-tibanna-log-bucket``
-
 

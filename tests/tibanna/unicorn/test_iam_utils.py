@@ -66,8 +66,10 @@ def test_lambdainvoke_policy_scoped_to_tibanna_lambdas_only():
     assert statement['Action'] == ['lambda:InvokeFunction']
     resources = statement['Resource']
     assert resources != '*'
-    assert all(iam.tibanna_policy_prefix in r for r in resources)
-    assert len(resources) == len(iam.lambda_names)
+    expected_prefix = 'arn:aws:lambda:%s:%s:function:' % (iam.region, iam.account_id)
+    assert resources == [expected_prefix + name + '_' + iam.tibanna_policy_prefix
+                         for name in iam.lambda_names]
+    assert all(':function/' not in resource for resource in resources)
 
 
 def test_ec2_launch_policy_type_is_created_and_cleaned_up():
