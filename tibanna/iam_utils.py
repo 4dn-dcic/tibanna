@@ -362,7 +362,10 @@ class IAM(object):
 
     @property
     def policy_lambdainvoke(self):
-        function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function/'
+        # Lambda function ARNs use a colon after ``function``. A slash creates
+        # a syntactically different resource ARN that never matches the
+        # functions invoked by Step Functions.
+        function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function:'
         resource = [function_arn_prefix + ln + '_' + self.tibanna_policy_prefix for ln in self.lambda_names]
         policy = {
             "Version": "2012-10-17",

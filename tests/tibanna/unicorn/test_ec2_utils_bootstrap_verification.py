@@ -3,8 +3,7 @@ import hashlib
 import os
 from unittest.mock import MagicMock
 from tibanna.ec2_utils import Execution
-from tibanna.vars import TIBANNA_REPO_BRANCH
-from tibanna._version import __version__
+from tibanna.vars import TIBANNA_AWSF_ASSET_COMMIT, TIBANNA_REPO_BRANCH
 from tibanna.awsf3_checksums import (
     AWS_RUN_WORKFLOW_GENERIC_SHA256,
     CLOUDWATCH_AGENT_CONFIG_SHA256,
@@ -42,13 +41,14 @@ def test_verification_disabled_flag_is_propagated_to_run_task_lambda_env():
     assert 'TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED' in env
 
 
-def test_default_repo_branch_is_not_mutable_master():
+def test_default_repo_ref_is_reachable_immutable_asset_commit():
     """D1 regression: the default fetch location must not be a floating
-    branch - it should be pinned to the tagged release matching this
-    package's own version, mirroring how DEFAULT_AWSF_IMAGE already pins the
-    Docker image tag to __version__.
+    branch or a prospective tag that may not exist when source deployments
+    run. It is pinned to the commit containing the checksummed assets.
     """
-    assert TIBANNA_REPO_BRANCH == 'v' + __version__
+    assert TIBANNA_REPO_BRANCH == TIBANNA_AWSF_ASSET_COMMIT
+    assert len(TIBANNA_AWSF_ASSET_COMMIT) == 40
+    assert all(c in '0123456789abcdef' for c in TIBANNA_AWSF_ASSET_COMMIT)
     assert TIBANNA_REPO_BRANCH != 'master'
 
 

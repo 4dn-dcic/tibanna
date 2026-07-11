@@ -35,8 +35,8 @@ Change Log
   narrower policies.
 * Security - worker instances no longer fetch their bootstrap/monitoring scripts
   from the mutable ``master`` branch by default: ``TIBANNA_REPO_BRANCH`` now
-  defaults to the tagged release matching this package's version (e.g.
-  ``v6.0.0``), and the downloaded ``aws_run_workflow_generic.sh``,
+  defaults to the reachable source commit containing the pinned assets, and
+  the downloaded ``aws_run_workflow_generic.sh``,
   ``cloudwatch_agent_config.json`` and ``spot_failure_detection.sh`` are each
   verified against a pinned sha256 (``tibanna/awsf3_checksums.py``) before
   being executed/used - a mismatch or unavailable download fails closed
