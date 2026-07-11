@@ -51,6 +51,14 @@ Change Log
   fails closed (exits immediately after reporting the error) instead of
   merely scheduling a delayed shutdown and continuing into subsequent setup
   and workload execution.
+* Fix several low-risk correctness defects: ``rerun_many`` now paginates
+  ``list_executions`` instead of silently processing only the first page, and
+  no longer raises a ``TypeError`` from comparing a naive/aware datetime in its
+  ``stopDate`` filter; ``list_sfns``' ``-s/--sfn-type`` flag is now actually
+  passed through instead of being ignored; ``rerun_many``'s ``-o/--offset``
+  is now parsed as an int so it no longer crashes when added to ``stophour``;
+  cost estimates and ``top`` metric timelines now use ``timedelta.total_seconds()``
+  instead of ``.seconds`` so they are correct for jobs spanning more than a day.
 
 
 5.5.3
