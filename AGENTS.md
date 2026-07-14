@@ -46,7 +46,7 @@ Authoritative overviews are [README.md](README.md), [docs/how_it_works.rst](docs
 
 ### IAM scope
 
-Policy construction lives in `tibanna/iam_utils.py`. The run-task Lambda uses the custom EC2 launch allowlist, not `AmazonEC2FullAccess`; the Step Functions role invokes only Tibanna Lambda ARNs. Termination is conditioned on `ec2:ResourceTag/Type=awsem`, so `ec2_utils.create_launch_template()` must retain the `Type=awsem` instance tag. Lambda ARNs use `:function:` (not `:function/`). When adding an AWS API call, update and test the owning role's policy rather than broadening unrelated roles.
+Policy construction lives in `tibanna/iam_utils.py`. The run-task Lambda uses the custom EC2 launch allowlist, not `AmazonEC2FullAccess`; the Step Functions role invokes only Tibanna Lambda ARNs. Termination is conditioned on `ec2:ResourceTag/Type=awsem`, so `ec2_utils.create_launch_template()` must retain the `Type=awsem` instance tag. Lambda ARNs use `:function:` (not `:function/`), and deployed function names are `<lambda_name>` + `utils.create_tibanna_suffix(dev_suffix, usergroup)` (no `tibanna_` prefix) — any policy that names Lambda functions must match that convention and is cross-checked against the state-machine definition in `tests/tibanna/unicorn/test_iam_utils.py`. When adding an AWS API call, update and test the owning role's policy rather than broadening unrelated roles.
 
 ### Bootstrap trust boundary
 
