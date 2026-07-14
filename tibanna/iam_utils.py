@@ -2,6 +2,7 @@ import boto3
 import json
 import random
 from . import create_logger
+from .utils import create_tibanna_suffix
 from .vars import (
     DYNAMODB_TABLE,
     AWS_ACCOUNT_NUMBER,
@@ -71,7 +72,7 @@ class IAM(object):
     @property
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
-                'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
+                'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc', 'ec2_launch',
                 'executions', 'pricing', 'vpc', 'kms']
 
     def policy_arn(self, policy_type):
@@ -94,6 +95,7 @@ class IAM(object):
                     'cw_dashboard': 'cw_dashboard',
                     'dynamodb': 'dynamodb',
                     'ec2_desc': 'ec2_desc',
+                    'ec2_launch': 'ec2_launch',
                     'pricing': 'pricing',
                     'executions': 'executions',
                     'vpc': 'vpc_access',
@@ -116,6 +118,7 @@ class IAM(object):
                        'cw_dashboard': self.policy_cw_dashboard,
                        'dynamodb': self.policy_dynamodb,
                        'ec2_desc': self.policy_ec2_desc,
+                       'ec2_launch': self.policy_ec2_launch,
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
                        'vpc': self.policy_vpc_access,
@@ -154,19 +157,22 @@ class IAM(object):
         if S3_ENCRYT_KEY_ID:  # if we have a value, this key is valid and we must add perms
             base.append('kms')
         # returns a dictionary with role_type as keys
-        # adding vpc access to only check_task since run_task has full ec2 access
+        # run_task gets a scoped ec2_launch policy (RunInstances/CreateFleet/
+        # CreateLaunchTemplate/DeleteLaunchTemplate/DeleteFleets/Describe*)
+        # instead of AmazonEC2FullAccess (C1); vpc access is only needed by
+        # check_task.
         run_task_custom_policy_types = base + ['list', 'cloudwatch', 'passrole', 'dynamodb',
-                                               'executions', 'cw_dashboard']
+                                               'executions', 'cw_dashboard', 'ec2_launch']
         check_task_custom_policy_types = base + ['cloudwatch_metric', 'cloudwatch', 'ec2_desc',
                                                  'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
         arnlist = {'ec2': [self.policy_arn(_) for _ in base + ['cloudwatch_metric', 'ec2_desc']] +
                           ['arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly'] +
                           ['arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy'],
-                   # 'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
-                   'stepfunction': ['arn:aws:iam::aws:policy/service-role/AWSLambdaRole'],
-                   self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types] +
-                                              ['arn:aws:iam::aws:policy/AmazonEC2FullAccess'],
+                   # scoped to the three tibanna lambdas (C10) instead of the
+                   # AWSLambdaRole managed policy, which grants lambda:InvokeFunction on *
+                   'stepfunction': [self.policy_arn(_) for _ in ['lambdainvoke']],
+                   self.run_task_lambda_name: [self.policy_arn(_) for _ in run_task_custom_policy_types],
                    self.check_task_lambda_name: [self.policy_arn(_) for _ in check_task_custom_policy_types],
                    self.update_cost_lambda_name: [self.policy_arn(_) for _ in update_cost_custom_policy_types]}
 
@@ -213,12 +219,45 @@ class IAM(object):
 
     @property
     def policy_terminate_instances(self):
+        # Scoped to instances Tibanna itself launches (tagged Type=awsem at
+        # launch time in ec2_utils.py) so this role/user cannot terminate
+        # arbitrary EC2 instances in the account (C1).
         policy = {
             "Version": "2012-10-17",
             "Statement": [
                 {
                     "Effect": "Allow",
                     "Action": "ec2:TerminateInstances",
+                    "Resource": "*",
+                    "Condition": {
+                        "StringEquals": {"ec2:ResourceTag/Type": "awsem"}
+                    }
+                }
+            ]
+        }
+        return policy
+
+    @property
+    def policy_ec2_launch(self):
+        # Least-privilege replacement for AmazonEC2FullAccess on run_task (C1).
+        # RunInstances/CreateFleet/CreateLaunchTemplate/CreateTags cannot be
+        # scoped by resource since the instance doesn't exist yet at call
+        # time; Describe* calls are inherently read-only and account-wide.
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "ec2:RunInstances",
+                        "ec2:CreateFleet",
+                        "ec2:CreateLaunchTemplate",
+                        "ec2:DeleteLaunchTemplate",
+                        "ec2:DeleteFleets",
+                        "ec2:CreateTags",
+                        "ec2:DescribeInstances",
+                        "ec2:DescribeInstanceTypes"
+                    ],
                     "Resource": "*"
                 }
             ]
@@ -324,8 +363,20 @@ class IAM(object):
 
     @property
     def policy_lambdainvoke(self):
-        function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function/'
-        resource = [function_arn_prefix + ln + '_' + self.tibanna_policy_prefix for ln in self.lambda_names]
+        # Lambda function ARNs use a colon after ``function``. A slash creates
+        # a syntactically different resource ARN that never matches the
+        # functions invoked by Step Functions.
+        # Deployed function names are '<lambda_name>' plus
+        # create_tibanna_suffix(dev_suffix, usergroup) (core.py deploy_lambda,
+        # stepfunction.py) - e.g. 'run_task_awsem_<usergroup>' - not the
+        # 'tibanna_'-prefixed policy prefix. Grant the exact per-usergroup
+        # names plus a '_*' variant so dev-suffix deployments of the same
+        # usergroup ('run_task_awsem_<usergroup>_<dev_suffix>') keep working.
+        function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function:'
+        resource = []
+        for ln in self.lambda_names:
+            base = function_arn_prefix + ln + create_tibanna_suffix(None, self.user_group_name)
+            resource.extend([base, base + '_*'])
         policy = {
             "Version": "2012-10-17",
             "Statement": [

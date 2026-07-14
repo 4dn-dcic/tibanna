@@ -105,10 +105,29 @@ AWS_REGION_NAMES = {
     'us-gov-east-1': 'AWS GovCloud (US-East)'
 }
 
-# Tibanna repo from which awsf scripts are pulled
+# Tibanna repo from which awsf scripts are pulled. Defaults to the tagged
+# release matching this package's own version (immutable once published, and
+# never deleted the way a feature/working branch is) - not the mutable
+# `master` branch (D1), matching the existing convention of DEFAULT_AWSF_IMAGE
+# below, which already pins the awsf3 Docker image to __version__. The
+# release tag is only pushed once this version is published to PyPI (see
+# .github/workflows/main-publish.yml), so a source/pre-release deployment run
+# before that tag exists must set TIBANNA_REPO_BRANCH explicitly (e.g. to a
+# specific commit) - this is a documented dev-only override, not the default.
+# sha256 verification (ec2_utils.py/aws_run_workflow_generic.sh) is a second,
+# independent layer of defense that applies regardless of which branch/fork/
+# commit is configured here.
 TIBANNA_REPO_NAME = os.environ.get('TIBANNA_REPO_NAME', '4dn-dcic/tibanna')
-TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'master')
+TIBANNA_REPO_BRANCH = os.environ.get('TIBANNA_REPO_BRANCH', 'v' + __version__)
 TIBANNA_AWSF_DIR = 'awsf3'
+
+# Development-only escape hatch to skip sha256 verification of the awsf3
+# bootstrap/monitoring assets downloaded onto worker instances (D1). Must be
+# explicitly set - never the default - and is intended only for an isolated
+# development deployment (e.g. one pointed at a custom TIBANNA_REPO_BRANCH
+# fork whose pinned hashes are not tracked in awsf3_checksums.py).
+TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED = \
+    os.environ.get('TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED', 'false').lower() == 'true'
 
 # Tibanna roles
 AWS_S3_ROLE_NAME = os.environ.get('AWS_S3_ROLE_NAME', 'S3_access')

@@ -7,6 +7,58 @@ Change Log
 =====
 
 * Replace Goofys with mountpoint-s3 (https://github.com/awslabs/mountpoint-s3)
+* Security - S3 objects (metrics, cost, marker, run and postrun files) uploaded by
+  Tibanna are now private by default; public output requires an explicit per-call
+  opt-in. ``deploy_unicorn``/``setup_tibanna_env`` now retain S3 Block Public Access
+  on the given buckets by default; pass the new ``-Q/--enable-public-access-block-deletion``
+  flag (``do_not_delete_public_access_block=False`` in the API) to restore the old
+  behavior for an approved public-output deployment. This code change does not
+  revoke ACLs already applied to existing objects/buckets - operators who deployed
+  a prior Tibanna version with the old defaults should audit and, if needed,
+  explicitly remediate any previously-public buckets/objects.
+* Fix workflow finalization being coupled to optional metrics/plotting/cost-estimate
+  generation: a completed job with a valid ``.success`` marker and postrun data now
+  always finalizes and terminates its instance, even if CloudWatch/plotting/cost
+  estimation fails; the failure is recorded as a structured ``Metrics_status``/
+  ``Metrics_error`` on the postrun job instead of failing the whole execution.
+* Security - reduce IAM blast radius: the run_task Lambda role no longer carries
+  the AWS-managed ``AmazonEC2FullAccess`` policy; it now gets a scoped custom
+  policy covering only the EC2 actions Tibanna actually calls (RunInstances,
+  CreateFleet, CreateLaunchTemplate, DeleteLaunchTemplate, DeleteFleets,
+  CreateTags, DescribeInstances, DescribeInstanceTypes). ``ec2:TerminateInstances``
+  is now conditioned on the ``Type=awsem`` tag Tibanna applies to instances it
+  launches. The step-function role uses the scoped ``lambdainvoke`` policy
+  (restricted to the three tibanna lambdas) instead of the managed
+  ``AWSLambdaRole`` policy, which granted ``lambda:InvokeFunction`` on
+  ``Resource: "*"``. Existing deployments must redeploy
+  (``tibanna deploy_unicorn``/``setup_tibanna_env``) to pick up the new,
+  narrower policies.
+* Security - worker instances no longer fetch their bootstrap/monitoring scripts
+  from the mutable ``master`` branch by default: ``TIBANNA_REPO_BRANCH`` now
+  defaults to this package's own immutable release tag (``v`` + version,
+  matching the existing ``DEFAULT_AWSF_IMAGE`` convention), and the downloaded
+  ``aws_run_workflow_generic.sh``,
+  ``cloudwatch_agent_config.json`` and ``spot_failure_detection.sh`` are each
+  verified against a pinned sha256 (``tibanna/awsf3_checksums.py``) before
+  being executed/used - a mismatch or unavailable download fails closed
+  (stops before mounting disks or running Docker/workload code) rather than
+  running unverified code. A development-only override,
+  ``TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED=true``, is available for a
+  custom ``TIBANNA_REPO_BRANCH`` fork whose scripts are not tracked in
+  ``awsf3_checksums.py`` - never set this in a real deployment. Also fixes:
+  a fatal host-bootstrap error (missing log bucket/version/image, EBS
+  mount/format failure, Docker pull exhaustion, Docker run failure) now
+  fails closed (exits immediately after reporting the error) instead of
+  merely scheduling a delayed shutdown and continuing into subsequent setup
+  and workload execution.
+* Fix several low-risk correctness defects: ``rerun_many`` now paginates
+  ``list_executions`` instead of silently processing only the first page, and
+  no longer raises a ``TypeError`` from comparing a naive/aware datetime in its
+  ``stopDate`` filter; ``list_sfns``' ``-s/--sfn-type`` flag is now actually
+  passed through instead of being ignored; ``rerun_many``'s ``-o/--offset``
+  is now parsed as an int so it no longer crashes when added to ``stophour``;
+  cost estimates and ``top`` metric timelines now use ``timedelta.total_seconds()``
+  instead of ``.seconds`` so they are correct for jobs spanning more than a day.
 
 
 5.5.3

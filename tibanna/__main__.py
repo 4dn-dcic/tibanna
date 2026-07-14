@@ -205,6 +205,7 @@ class Subcommands(object):
                   'default': 0,
                   'help': "stop (end) minute of the executions (e.g. 55)"},
                  {'flag': ["-o", "--offset"],
+                  'type': int,
                   'default': 0,
                   'help': "offset for time zone between local computer and AWS step function"},
                  {'flag': ["-r", "--sleeptime"],
@@ -252,8 +253,15 @@ class Subcommands(object):
                   'action': "store_true"},
                  {'flag': ["-P", "--do-not-delete-public-access-block"],
                   'action': "store_true",
-                  'help': "Do not delete public access block from buckets" +
-                          "(this way postrunjson and metrics reports will not be public)"}],
+                  'help': "Deprecated, now the default: S3 Block Public Access is retained " +
+                          "on the given buckets unless -Q/--enable-public-access-block-deletion " +
+                          "is also given. This flag is kept only so existing scripts do not break."},
+                 {'flag': ["-Q", "--enable-public-access-block-deletion"],
+                  'action': "store_true",
+                  'help': "Explicitly opt in to deleting S3 Block Public Access from the given " +
+                          "buckets. Only use this for an approved public-output deployment - " +
+                          "postrunjson and metrics reports remain private regardless unless " +
+                          "public output is separately requested per job."}],
             'deploy_unicorn':
                 [{'flag': ["-s", "--suffix"],
                   'help': "suffix (e.g. 'dev') to add to the end of the name of" +
@@ -275,8 +283,15 @@ class Subcommands(object):
                   'help': "Tibanna usergroup to share the permission to access buckets and run jobs"},
                  {'flag': ["-P", "--do-not-delete-public-access-block"],
                   'action': "store_true",
-                  'help': "Do not delete public access block from buckets" +
-                          "(this way postrunjson and metrics reports will not be public)"},
+                  'help': "Deprecated, now the default: S3 Block Public Access is retained " +
+                          "on the given buckets unless -Q/--enable-public-access-block-deletion " +
+                          "is also given. This flag is kept only so existing scripts do not break."},
+                 {'flag': ["-Q", "--enable-public-access-block-deletion"],
+                  'action': "store_true",
+                  'help': "Explicitly opt in to deleting S3 Block Public Access from the given " +
+                          "buckets. Only use this for an approved public-output deployment - " +
+                          "postrunjson and metrics reports remain private regardless unless " +
+                          "public output is separately requested per job."},
                  {'flag': ["-t", "--subnets"],
                   'nargs': '+',
                   'help': "subnet IDs"},
@@ -409,22 +424,27 @@ def run_batch_workflows(input_json_list, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,
 
 
 def setup_tibanna_env(buckets='', usergroup_tag='default', no_randomize=False,
-                      do_not_delete_public_access_block=False):
+                      enable_public_access_block_deletion=False):
     """set up usergroup environment on AWS
     This function is called automatically by deploy_tibanna or deploy_unicorn
     Use it only when the IAM permissions need to be reset"""
-    API().setup_tibanna_env(buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize,
-                            do_not_delete_public_access_block=do_not_delete_public_access_block, verbose=False)
+    API().setup_tibanna_env(
+        buckets=buckets, usergroup_tag=usergroup_tag, no_randomize=no_randomize,
+        do_not_delete_public_access_block=not enable_public_access_block_deletion,
+        verbose=False)
 
 
 def deploy_unicorn(suffix=None, no_setup=False, buckets='',
-                   no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                   no_setenv=False, usergroup='',
+                   enable_public_access_block_deletion=False,
                    deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
     """deploy tibanna unicorn to AWS cloud"""
-    API().deploy_unicorn(suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
-                         usergroup=usergroup, do_not_delete_public_access_block=do_not_delete_public_access_block,
-                         deploy_costupdater=deploy_costupdater, subnets=subnets, security_groups=security_groups,
-                         quiet=quiet)
+    API().deploy_unicorn(
+        suffix=suffix, no_setup=no_setup, buckets=buckets, no_setenv=no_setenv,
+        usergroup=usergroup,
+        do_not_delete_public_access_block=not enable_public_access_block_deletion,
+        deploy_costupdater=deploy_costupdater, subnets=subnets, security_groups=security_groups,
+        quiet=quiet)
 
 
 def add_user(user, usergroup):
@@ -437,9 +457,9 @@ def users():
     API().users()
 
 
-def list_sfns(numbers=False):
+def list_sfns(numbers=False, sfn_type=None):
     """list all step functions, optionally with a summary (-n)"""
-    API().list_sfns(numbers=numbers)
+    API().list_sfns(numbers=numbers, sfn_type=sfn_type)
 
 
 def log(exec_arn=None, job_id=None, exec_name=None, sfn=TIBANNA_DEFAULT_STEP_FUNCTION_NAME,

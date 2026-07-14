@@ -118,7 +118,7 @@ def add_download_cmd(data_file, rename, data_bucket, profile, f, unzip, target_t
 def determine_key_type(bucket, key, profile):
     """Return values : 'File', 'Folder' or 'Does not exist'"""
     if profile:
-        s3 = boto3.session(profile_name=profile).client('s3')
+        s3 = boto3.Session(profile_name=profile).client('s3')
     else:
         s3 = boto3.client('s3')
     if not key:

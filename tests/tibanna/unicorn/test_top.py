@@ -183,3 +183,23 @@ def test_get_collapsed_commands():
     collapsed_commands = top1.get_collapsed_commands(max_n_commands=2)
     assert set(collapsed_commands) == set(['java -jar', 'bwa mem'])
 
+
+def test_as_minutes_multi_day():
+    # C22 regression: .total_seconds() must be used so timestamps more than
+    # 24h after start don't collapse back into the first day.
+    start = '2020-12-18-18:55:37'
+    one_day_later = '2020-12-19-18:55:37'
+    assert top.Top.as_minutes(one_day_later, start) == 24 * 60
+    over_a_day_later = '2020-12-19-19:20:37'  # 24h, 25min after start
+    assert top.Top.as_minutes(over_a_day_later, start) == 24 * 60 + 25
+    before_start = '2020-12-18-18:50:37'
+    assert top.Top.as_minutes(before_start, start) == -5
+
+
+def test_convert_command_to_collapsed_command_all_commands_sentinel():
+    # C23 regression: get_collapsed_commands returns the *list* ['all_commands']
+    # (not the string 'all_commands') when there are too many unique commands to
+    # collapse to prefixes; the guard must recognize that list form.
+    collapsed_commands = ['all_commands']
+    assert top.Top.convert_command_to_collapsed_command('bwa mem', collapsed_commands) == 'all_commands'
+    assert top.Top.convert_command_to_collapsed_command('java -jar x.jar', collapsed_commands) == 'all_commands'

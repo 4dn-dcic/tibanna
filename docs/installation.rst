@@ -144,13 +144,18 @@ Deploying Tibanna Unicorn to AWS
 
 *Note: You have to have admin permission to deploy unicorn to AWS and add user to a tibanna permission group*
 
-If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf` directory of the right tibanna repo/branch. If you're using default (``4dn-dcic/tibanna``, ``master``), no need to set these variables.
+If you're using a forked Tibanna repo or want to use a specific branch, set the following variables as well before deployment. They will be used by the EC2 (VM) instances to grab the right scripts from the `awsf3` directory of the right tibanna repo/branch. By default (i.e. without setting these variables), Tibanna fetches from its own immutable release tag (matching this package's version), not the mutable ``master`` branch, and verifies the downloaded bootstrap/monitoring scripts against a pinned sha256 checksum before running them. If you're running from source before that release tag has been published (e.g. a development checkout of an unreleased version), set ``TIBANNA_REPO_BRANCH`` explicitly to a reachable branch or commit for that deployment.
 
 ::
 
-    # only if you're using a forked repo
+    # only if you're using a forked repo, a non-default branch, or an unreleased source checkout
     export TIBANNA_REPO_NAME=<git_hub_repo_name>  # (default: 4dn-dcic/tibanna)
-    export TIBANNA_REPO_BRANCH=<git_hub_branch_name>  # (default: master)
+    export TIBANNA_REPO_BRANCH=<git_hub_branch_or_commit>  # default: this version's release tag
+
+If you point ``TIBANNA_REPO_BRANCH`` at a fork/branch/commit whose ``awsf3`` scripts differ from the ones this Tibanna version ships (and their pinned sha256 in ``tibanna/awsf3_checksums.py``), the worker will fail closed (refuse to run the mismatched script) unless you also set, for that development deployment only::
+
+    # development only - do not use in a real deployment
+    export TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED=true
 
 
 If you're using an external bucket with a separate credential, you can give the permission to this bucket to tibanna unicorn during deployment by setting the following additional environment variables before deploying. This credential will be added as profile ``user1`` on the EC2 instances to run. This profile name can be added to input file specifications for the files that require this external credential. For most cases, this part can be ignored.
@@ -384,5 +389,4 @@ Check users again.
     monty	lalala
 
 Now ``monty`` can use ``tibanna_unicorn_lalala`` and access buckets ``montys-data-bucket`` and ``montys-tibanna-log-bucket``
-
 

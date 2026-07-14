@@ -23,6 +23,7 @@ from .vars import (
     EXECUTION_ARN,
     TIBANNA_REPO_NAME,
     TIBANNA_REPO_BRANCH,
+    TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED,
     TIBANNA_PROFILE_ACCESS_KEY,
     TIBANNA_PROFILE_SECRET_KEY,
     METRICS_URL,
@@ -498,8 +499,10 @@ class API(object):
                 else:
                     break
 
-    def list_sfns(self, numbers=False):
+    def list_sfns(self, numbers=False, sfn_type=None):
         """list all step functions, optionally with a summary (-n)"""
+        if not sfn_type:
+            sfn_type = self.sfn_type
         st = boto3.client('stepfunctions')
         res = st.list_state_machines(
             maxResults=1000
@@ -509,7 +512,7 @@ class API(object):
             header = header + "\trunning\tsucceeded\tfailed\taborted\ttimed_out"
         print(header)
         for s in res['stateMachines']:
-            if not s['name'].startswith('tibanna_' + self.sfn_type):
+            if not s['name'].startswith('tibanna_' + sfn_type):
                 continue
             line = "%s\t%s" % (s['name'], str(s['creationDate']))
             if numbers:
@@ -626,24 +629,29 @@ class API(object):
         stoptime = stopdate + ' ' + str(stophour) + ':' + str(stopminute)
         stoptime_in_datetime = datetime.strptime(stoptime, '%d%b%Y %H:%M').replace(tzinfo=timezone.utc)
         client = boto3.client('stepfunctions')
-        sflist = client.list_executions(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status)
+        paginator = client.get_paginator('list_executions')
         k = 0
-        for exc in sflist['executions']:
-            if exc['stopDate'].replace(tzinfo=None) > stoptime_in_datetime:
-                k = k + 1
-                self.rerun(exc['executionArn'], sfn=sfn,
-                           override_config=override_config, app_name_filter=app_name_filter,
-                           instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
-                           ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
-                           overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
-                           use_spot=use_spot, do_not_use_spot=do_not_use_spot)
-                time.sleep(sleeptime)
+        for page in paginator.paginate(stateMachineArn=STEP_FUNCTION_ARN(sfn), statusFilter=status):
+            for exc in page['executions']:
+                if exc['stopDate'] > stoptime_in_datetime:
+                    k = k + 1
+                    self.rerun(exc['executionArn'], sfn=sfn,
+                               override_config=override_config, app_name_filter=app_name_filter,
+                               instance_type=instance_type, shutdown_min=shutdown_min, ebs_size=ebs_size,
+                               ebs_type=ebs_type, ebs_iops=ebs_iops, ebs_throughput=ebs_throughput,
+                               overwrite_input_extra=overwrite_input_extra, key_name=key_name, name=name,
+                               use_spot=use_spot, do_not_use_spot=do_not_use_spot)
+                    time.sleep(sleeptime)
+        logger.info("rerun_many reran %d execution(s)" % k)
+        return k
 
     def env_list(self, name):
         # don't set this as a global, since not all tasks require it
         envlist = {
             self.run_task_lambda: {'TIBANNA_REPO_NAME': TIBANNA_REPO_NAME,
-                                   'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH},
+                                   'TIBANNA_REPO_BRANCH': TIBANNA_REPO_BRANCH,
+                                   'TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED':
+                                       str(TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED)},
             self.check_task_lambda: {'TIBANNA_DEFAULT_STEP_FUNCTION_NAME': self.default_stepfunction_name}
         }
         if TIBANNA_PROFILE_ACCESS_KEY and TIBANNA_PROFILE_SECRET_KEY:
@@ -793,10 +801,17 @@ class API(object):
                                quiet=quiet)
 
     def setup_tibanna_env(self, buckets='', usergroup_tag='default', no_randomize=False,
-                          do_not_delete_public_access_block=False, verbose=False):
+                          do_not_delete_public_access_block=True, verbose=False):
         """set up usergroup environment on AWS
         This function is called automatically by deploy_tibanna or deploy_unicorn
-        Use it only when the IAM permissions need to be reset"""
+        Use it only when the IAM permissions need to be reset
+
+        S3 Block Public Access is retained on the given buckets by default
+        (do_not_delete_public_access_block=True). Pass False only for an
+        explicit, approved public-output deployment (K1/R8) - this does not
+        change the ACL of objects already written to those buckets; existing
+        public objects/buckets require a separate, explicit remediation step.
+        """
         logger.info("setting up tibanna usergroup environment on AWS...")
         if not AWS_ACCOUNT_NUMBER or not AWS_REGION:
             logger.info("Please set and export environment variable AWS_ACCOUNT_NUMBER and AWS_REGION!")
@@ -826,7 +841,7 @@ class API(object):
 
     def deploy_tibanna(self, suffix=None, usergroup='', setup=False, no_randomize=False,
                        default_usergroup_tag='default',
-                       buckets='', setenv=False, do_not_delete_public_access_block=False,
+                       buckets='', setenv=False, do_not_delete_public_access_block=True,
                        deploy_costupdater=False, subnets=None, security_groups=None, quiet=False):
         """deploy tibanna unicorn or pony to AWS cloud (pony is for 4DN-DCIC only)"""
         if setup:
@@ -878,7 +893,7 @@ class API(object):
         return step_function_name
 
     def deploy_unicorn(self, suffix=None, no_setup=False, buckets='',
-                       no_setenv=False, usergroup='', do_not_delete_public_access_block=False,
+                       no_setenv=False, usergroup='', do_not_delete_public_access_block=True,
                        deploy_costupdater=False, subnets=None, security_groups=None,
                        quiet=False):
         """deploy tibanna unicorn to AWS cloud"""
