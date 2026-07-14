@@ -8,6 +8,7 @@ from awsf3.utils import (
     create_env_def_file,
     decode_workflow_files,
     download_workflow,
+    encode_workflow_files,
     create_mount_command_list,
     create_download_command_list,
     create_download_cmd,
@@ -344,10 +345,17 @@ def test_download_workflow_with_spaces(tmp_path, mocker, monkeypatch):
 
 def test_decode_workflow_files_legacy_format():
     """Workers can still read environment files created before this fix."""
-    assert decode_workflow_files('rules/base.smk config/defaults.yml') == [
+    assert decode_workflow_files('  rules/base.smk   config/defaults.yml  ') == [
         'rules/base.smk',
         'config/defaults.yml'
     ]
+
+
+def test_encode_workflow_files_ignores_separator_whitespace():
+    """Whitespace around comma separators does not become part of a filename."""
+    assert encode_workflow_files(' rules/base.smk, ,config/defaults.yml,') == (
+        'json:["rules/base.smk", "config/defaults.yml"]'
+    )
 
 
 def test_create_mount_command_list():

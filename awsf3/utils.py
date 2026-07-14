@@ -30,7 +30,11 @@ WORKFLOW_FILES_JSON_PREFIX = 'json:'
 
 def encode_workflow_files(workflow_files):
     """Serialize comma-separated workflow filenames for an environment variable."""
-    workflow_files = workflow_files.split(',') if workflow_files else []
+    workflow_files = [
+        filename.strip()
+        for filename in workflow_files.split(',')
+        if filename.strip()
+    ] if workflow_files else []
     return WORKFLOW_FILES_JSON_PREFIX + json.dumps(workflow_files)
 
 
@@ -43,7 +47,7 @@ def decode_workflow_files(workflow_files):
         if not isinstance(workflow_files, list) or not all(isinstance(filename, str) for filename in workflow_files):
             raise ValueError("Workflow files must be a list of filenames")
         return workflow_files
-    return workflow_files.split(' ') if ' ' in workflow_files else [workflow_files]
+    return workflow_files.split()
 
 
 def decode_run_json(input_json_file, kms_key_id=None, region=None):
