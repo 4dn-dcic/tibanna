@@ -1,4 +1,7 @@
+from fnmatch import fnmatchcase
+
 from tibanna.iam_utils import IAM
+from tibanna.stepfunction import StepFunctionUnicorn
 
 
 def _iam():
@@ -60,6 +63,12 @@ def test_stepfunction_role_uses_scoped_lambdainvoke_not_wildcard():
 
 
 def test_lambdainvoke_policy_scoped_to_tibanna_lambdas_only():
+    """Deployed lambdas are named '<lambda_name>_<usergroup>[_<dev_suffix>]'
+    (core.py deploy_lambda / utils.create_tibanna_suffix), NOT
+    '<lambda_name>_<tibanna_policy_prefix>'. The policy must grant exactly
+    those names (plus the dev-suffix wildcard), or Step Functions gets
+    AccessDenied on every invocation once AWSLambdaRole is gone.
+    """
     iam = _iam()
     policy = iam.policy_lambdainvoke
     statement = policy['Statement'][0]
@@ -67,9 +76,32 @@ def test_lambdainvoke_policy_scoped_to_tibanna_lambdas_only():
     resources = statement['Resource']
     assert resources != '*'
     expected_prefix = 'arn:aws:lambda:%s:%s:function:' % (iam.region, iam.account_id)
-    assert resources == [expected_prefix + name + '_' + iam.tibanna_policy_prefix
-                         for name in iam.lambda_names]
+    expected = []
+    for name in iam.lambda_names:
+        expected.extend([expected_prefix + name + '_' + iam.user_group_name,
+                         expected_prefix + name + '_' + iam.user_group_name + '_*'])
+    assert resources == expected
     assert all(':function/' not in resource for resource in resources)
+    # the misnamed 'tibanna_'-prefixed variant must not come back
+    assert all('_' + iam.tibanna_policy_prefix not in resource for resource in resources)
+
+
+def test_lambdainvoke_policy_covers_stepfunction_invoked_arns():
+    """Cross-check the policy against the actual state-machine definition:
+    every lambda ARN StepFunctionUnicorn invokes (with and without a dev
+    suffix) must be covered by the lambdainvoke policy resources.
+    """
+    iam = _iam()
+    resources = iam.policy_lambdainvoke['Statement'][0]['Resource']
+
+    def covered(arn):
+        return any(fnmatchcase(arn, pattern) for pattern in resources)
+
+    for dev_suffix in (None, 'dev'):
+        sfn = StepFunctionUnicorn(dev_suffix=dev_suffix, usergroup=iam.user_group_name)
+        for state in ('RunTaskAwsem', 'CheckTaskAwsem'):
+            invoked_arn = sfn.sfn_state_defs[state]['Resource']
+            assert covered(invoked_arn), invoked_arn
 
 
 def test_ec2_launch_policy_type_is_created_and_cleaned_up():

@@ -2,6 +2,7 @@ import boto3
 import json
 import random
 from . import create_logger
+from .utils import create_tibanna_suffix
 from .vars import (
     DYNAMODB_TABLE,
     AWS_ACCOUNT_NUMBER,
@@ -365,8 +366,17 @@ class IAM(object):
         # Lambda function ARNs use a colon after ``function``. A slash creates
         # a syntactically different resource ARN that never matches the
         # functions invoked by Step Functions.
+        # Deployed function names are '<lambda_name>' plus
+        # create_tibanna_suffix(dev_suffix, usergroup) (core.py deploy_lambda,
+        # stepfunction.py) - e.g. 'run_task_awsem_<usergroup>' - not the
+        # 'tibanna_'-prefixed policy prefix. Grant the exact per-usergroup
+        # names plus a '_*' variant so dev-suffix deployments of the same
+        # usergroup ('run_task_awsem_<usergroup>_<dev_suffix>') keep working.
         function_arn_prefix = 'arn:aws:lambda:' + self.region + ':' + self.account_id + ':function:'
-        resource = [function_arn_prefix + ln + '_' + self.tibanna_policy_prefix for ln in self.lambda_names]
+        resource = []
+        for ln in self.lambda_names:
+            base = function_arn_prefix + ln + create_tibanna_suffix(None, self.user_group_name)
+            resource.extend([base, base + '_*'])
         policy = {
             "Version": "2012-10-17",
             "Statement": [
