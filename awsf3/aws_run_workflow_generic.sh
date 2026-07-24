@@ -53,7 +53,11 @@ CONTAINER_CMD=$(command -v docker 2>/dev/null)
 # Detect instance user and home directory (ubuntu on Debian/Ubuntu, ec2-user on RHEL)
 INSTANCE_USER=$(getent passwd ubuntu 2>/dev/null | cut -d: -f1)
 [ -z "$INSTANCE_USER" ] && INSTANCE_USER=$(getent passwd ec2-user 2>/dev/null | cut -d: -f1)
-[ -z "$INSTANCE_USER" ] && INSTANCE_USER="ubuntu"
+# Fall back to "ubuntu" if neither known user exists. Record the fallback so we can
+# warn once logging is up: on such an image /home/ubuntu likely does not exist and
+# later steps (e.g. chown of $EBS_DIR) will fail with a non-obvious cause.
+INSTANCE_USER_FALLBACK=false
+[ -z "$INSTANCE_USER" ] && { INSTANCE_USER="ubuntu"; INSTANCE_USER_FALLBACK=true; }
 INSTANCE_HOME="/home/$INSTANCE_USER"
 export LOCAL_OUTDIR=$EBS_DIR/out
 export LOGFILE1=templog___  # log before mounting ebs
@@ -165,6 +169,10 @@ exl echo "## job id: $JOBID"
 exl echo "## instance type: $INSTANCE_TYPE"
 exl echo "## instance id: $INSTANCE_ID"
 exl echo "## instance region: $INSTANCE_REGION"
+exl echo "## instance user: $INSTANCE_USER"
+if [ "$INSTANCE_USER_FALLBACK" = true ]; then
+  exl echo "## WARNING: could not detect a known instance user (neither 'ubuntu' nor 'ec2-user' exists); defaulting to 'ubuntu'. $INSTANCE_HOME may not exist and subsequent steps (e.g. chown of $EBS_DIR) may fail."
+fi
 exl echo "## tibanna lambda version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
 exl echo "## ami id: $AMI_ID"
@@ -200,7 +208,24 @@ exl echo
 exl echo "## Mounting EBS"
 exl lsblk $TMPLOGFILE
 exl export ROOT_EBS=$(lsblk -o PKNAME | tail -n +2 | awk '$1!=""' | sort -u)
-exl export EBS_DEVICE=/dev/$(lsblk -o TYPE,KNAME | tail -n +2 | grep disk | grep -v "$ROOT_EBS" | cut -f2 -d' ')
+# Select the data EBS to format/mount. Tibanna attaches a single blank data EBS, but
+# some instance types also expose instance-store (ephemeral) NVMe disks, so more than
+# one non-root disk can be present. Pick exactly one device (a multi-line EBS_DEVICE
+# would break mkfs): prefer a disk with no filesystem and no mountpoint (the freshly
+# attached, unformatted data EBS), falling back to the first candidate.
+CANDIDATE_DISKS=$(lsblk -o TYPE,KNAME | tail -n +2 | grep disk | grep -v "$ROOT_EBS" | awk '{print $2}')
+exl echo "## Data EBS candidate disks: $(echo $CANDIDATE_DISKS | tr '\n' ' ')"
+EBS_DEVICE=
+for _disk in $CANDIDATE_DISKS; do
+  _fstype=$(lsblk -no FSTYPE "/dev/$_disk" | grep -v '^$' | head -n 1)
+  _mnt=$(lsblk -no MOUNTPOINT "/dev/$_disk" | grep -v '^$' | head -n 1)
+  if [ -z "$_fstype" ] && [ -z "$_mnt" ]; then
+    EBS_DEVICE=/dev/$_disk
+    break
+  fi
+done
+[ -z "$EBS_DEVICE" ] && EBS_DEVICE=/dev/$(echo "$CANDIDATE_DISKS" | head -n 1)
+export EBS_DEVICE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir /mnt/$EBS_DIR
 exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount

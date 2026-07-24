@@ -181,7 +181,7 @@ def test_config2():
     assert 'shutdown_min' in cfg_dict
     assert 'root_ebs_size' in cfg_dict
     assert cfg_dict['shutdown_min'] == 'now'
-    assert cfg_dict['root_ebs_size'] == 8
+    assert cfg_dict['root_ebs_size'] == 10
 
 
 def test_config_root_ebs_size():
