@@ -47,6 +47,18 @@ while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
 done
 
 export EBS_DIR=/data1  ## WARNING: also hardcoded in aws_decode_run_json.py
+
+# Locate the docker binary (docker is installed on both the Ubuntu and RHEL AMIs)
+CONTAINER_CMD=$(command -v docker 2>/dev/null)
+# Detect instance user and home directory (ubuntu on Debian/Ubuntu, ec2-user on RHEL)
+INSTANCE_USER=$(getent passwd ubuntu 2>/dev/null | cut -d: -f1)
+[ -z "$INSTANCE_USER" ] && INSTANCE_USER=$(getent passwd ec2-user 2>/dev/null | cut -d: -f1)
+# Fall back to "ubuntu" if neither known user exists. Record the fallback so we can
+# warn once logging is up: on such an image /home/ubuntu likely does not exist and
+# later steps (e.g. chown of $EBS_DIR) will fail with a non-obvious cause.
+INSTANCE_USER_FALLBACK=false
+[ -z "$INSTANCE_USER" ] && { INSTANCE_USER="ubuntu"; INSTANCE_USER_FALLBACK=true; }
+INSTANCE_HOME="/home/$INSTANCE_USER"
 export LOCAL_OUTDIR=$EBS_DIR/out
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
@@ -107,9 +119,9 @@ handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then s
 # used to compare Tibanna version strings
 version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
 
-### start with a log under the home directory for ubuntu. Later this will be moved to the output directory, once the ebs is mounted.
+### start with a log under the home directory for the instance user. Later this will be moved to the output directory, once the ebs is mounted.
 export LOGFILE=$LOGFILE1
-cd /home/ubuntu/
+cd $INSTANCE_HOME/
 touch $LOGFILE
 
 
@@ -127,7 +139,6 @@ if [ -z "$AWSF_IMAGE" ]; then
     exl echo "Error: awsf docker image is not defined";
     handle_error;
 fi
-
 
 ### send job start message to S3
 send_job_started;
@@ -158,6 +169,10 @@ exl echo "## job id: $JOBID"
 exl echo "## instance type: $INSTANCE_TYPE"
 exl echo "## instance id: $INSTANCE_ID"
 exl echo "## instance region: $INSTANCE_REGION"
+exl echo "## instance user: $INSTANCE_USER"
+if [ "$INSTANCE_USER_FALLBACK" = true ]; then
+  exl echo "## WARNING: could not detect a known instance user (neither 'ubuntu' nor 'ec2-user' exists); defaulting to 'ubuntu'. $INSTANCE_HOME may not exist and subsequent steps (e.g. chown of $EBS_DIR) may fail."
+fi
 exl echo "## tibanna lambda version: $TIBANNA_VERSION"
 exl echo "## awsf image: $AWSF_IMAGE"
 exl echo "## ami id: $AMI_ID"
@@ -175,10 +190,16 @@ exl date
 exl echo
 exl echo "## Configuring and starting ssh"
 if [ ! -z $PASSWORD ]; then
-  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd ubuntu
+  echo -ne "$PASSWORD\n$PASSWORD\n" | sudo passwd $INSTANCE_USER
   sed 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config | sed 's/#PasswordAuthentication no/PasswordAuthentication yes/g' > tmpp
   mv tmpp /etc/ssh/sshd_config
-  exl service ssh restart
+  # SSH service unit differs by distro: "ssh" on Debian/Ubuntu, "sshd" on RHEL
+  if systemctl list-unit-files 2>/dev/null | grep -q '^ssh\.service'; then
+    SSH_SERVICE=ssh
+  else
+    SSH_SERVICE=sshd
+  fi
+  exl service $SSH_SERVICE restart
 fi
 
 
@@ -186,13 +207,30 @@ fi
 exl echo
 exl echo "## Mounting EBS"
 exl lsblk $TMPLOGFILE
-exl export ROOT_EBS=$(lsblk -o PKNAME | tail +2 | awk '$1!=""')
-exl export EBS_DEVICE=/dev/$(lsblk -o TYPE,KNAME | tail +2 | grep disk | grep -v $ROOT_EBS | cut -f2 -d' ')
+exl export ROOT_EBS=$(lsblk -o PKNAME | tail -n +2 | awk '$1!=""' | sort -u)
+# Select the data EBS to format/mount. Tibanna attaches a single blank data EBS, but
+# some instance types also expose instance-store (ephemeral) NVMe disks, so more than
+# one non-root disk can be present. Pick exactly one device (a multi-line EBS_DEVICE
+# would break mkfs): prefer a disk with no filesystem and no mountpoint (the freshly
+# attached, unformatted data EBS), falling back to the first candidate.
+CANDIDATE_DISKS=$(lsblk -o TYPE,KNAME | tail -n +2 | grep disk | grep -v "$ROOT_EBS" | awk '{print $2}')
+exl echo "## Data EBS candidate disks: $(echo $CANDIDATE_DISKS | tr '\n' ' ')"
+EBS_DEVICE=
+for _disk in $CANDIDATE_DISKS; do
+  _fstype=$(lsblk -no FSTYPE "/dev/$_disk" | grep -v '^$' | head -n 1)
+  _mnt=$(lsblk -no MOUNTPOINT "/dev/$_disk" | grep -v '^$' | head -n 1)
+  if [ -z "$_fstype" ] && [ -z "$_mnt" ]; then
+    EBS_DEVICE=/dev/$_disk
+    break
+  fi
+done
+[ -z "$EBS_DEVICE" ] && EBS_DEVICE=/dev/$(echo "$CANDIDATE_DISKS" | head -n 1)
+export EBS_DEVICE
 exl mkfs -t ext4 $EBS_DEVICE # creating a file system
 exl mkdir /mnt/$EBS_DIR
 exl mount $EBS_DEVICE /mnt/$EBS_DIR  # mount
 exl ln -s /mnt/$EBS_DIR $EBS_DIR
-exl chown -R ubuntu $EBS_DIR
+exl chown -R $INSTANCE_USER $EBS_DIR
 exl chmod -R +x $EBS_DIR
 exl echo "Mounting finished."
 exl echo "Data EBS file system: $EBS_DEVICE"
@@ -209,16 +247,28 @@ cd ~
 
 if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
   exl echo "## Installing and activating Cloudwatch agent to collect metrics"
-  ARCHITECTURE="$(dpkg --print-architecture)"
-  CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${ARCHITECTURE}/latest/amazon-cloudwatch-agent.deb"
-  apt install -y wget
-  exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
-  wget "${CW_AGENT_LINK}"
-  sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+  # Normalize architecture string used in CW agent download URLs (amd64 / arm64)
+  _RAW_ARCH="$(uname -m)"
+  case "$_RAW_ARCH" in
+    x86_64)  CW_ARCH="amd64" ;;
+    aarch64) CW_ARCH="arm64" ;;
+    *)       CW_ARCH="$_RAW_ARCH" ;;
+  esac
+  if command -v dpkg &>/dev/null; then
+    CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/ubuntu/${CW_ARCH}/latest/amazon-cloudwatch-agent.deb"
+    exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+    curl -fsSL "${CW_AGENT_LINK}" -o amazon-cloudwatch-agent.deb
+    dpkg -i -E ./amazon-cloudwatch-agent.deb
+  else
+    CW_AGENT_LINK="https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/${CW_ARCH}/latest/amazon-cloudwatch-agent.rpm"
+    exl echo "Loading Cloudwatch Agent from ${CW_AGENT_LINK}"
+    curl -fsSL "${CW_AGENT_LINK}" -o amazon-cloudwatch-agent.rpm
+    rpm -U ./amazon-cloudwatch-agent.rpm
+  fi
   # If we want to collect new metrics, the following file has to be modified
   exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-  wget https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json
-  mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
+  curl -fsSL https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json \
+    -o /opt/aws/amazon-cloudwatch-agent/bin/config.json
   # This starts the agent with the downloaded configuration file
   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 else
@@ -270,11 +320,48 @@ if [ ! -z $ACCESS_KEY -a ! -z $SECRET_KEY -a ! -z $REGION ]; then
   echo -ne "$ACCESS_KEY\n$SECRET_KEY\n$REGION\njson" | aws configure --profile user1
 fi
 
+### Wait for the docker daemon to be ready before using it.
+### On the RHEL AMI, Docker is started at boot by systemd and this userdata can
+### race ahead of dockerd; "docker info" only succeeds once the daemon is up,
+### otherwise the ECR login below fails with "Cannot connect to the Docker daemon".
+### On the Ubuntu AMI Docker is already up, so this loop passes on the first try.
+if [ -z "$CONTAINER_CMD" ]; then
+  exl echo "Error: docker not found on this instance"
+  handle_error 1
+fi
+exl echo
+exl echo "## Waiting for container engine ($CONTAINER_CMD) to be ready"
+container_tries=0
+until $CONTAINER_CMD info >/dev/null 2>&1; do
+  container_tries=$((container_tries+1))
+  if [ $container_tries -ge 30 ]; then
+    exl echo "Error: container engine ($CONTAINER_CMD) did not become ready after $container_tries attempts"
+    handle_error 1
+    break
+  fi
+  sleep 2
+done
+exl echo "## Container engine ready after $container_tries attempt(s)"
+
+### Load the host kernel modules the nested (in-container) dockerd needs.
+### The AWSF container starts its own dockerd to run the workflow's tool images.
+### That dockerd uses iptables-legacy and overlayfs and shares the host kernel,
+### but RHEL 9 doesn't load the legacy netfilter modules by default (it uses
+### nftables) and 'modprobe' isn't available inside the container -- so without
+### this the nested dockerd dies with "can't initialize iptables table 'nat'".
+### Each module is loaded independently so one failure can't block the rest.
+### Harmless on the Ubuntu AMI, where these are typically already loaded.
+exl echo
+exl echo "## Loading kernel modules for nested docker"
+for _mod in overlay br_netfilter ip_tables iptable_nat iptable_filter iptable_mangle; do
+  modprobe "$_mod" 2>/dev/null || exl echo "## note: could not load kernel module $_mod (may be built-in or unavailable)"
+done
+
 ### log into ECR if necessary
 exl echo
 exl echo "## Logging into ECR"
 exl echo "Logging into ECR $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com..."
-exlo docker login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
+exlo $CONTAINER_CMD login --username AWS --password $(aws ecr get-login-password --region $INSTANCE_REGION) $AWS_ACCOUNT_ID.dkr.ecr.$INSTANCE_REGION.amazonaws.com;
 send_log
 
 # send log before starting docker
@@ -288,7 +375,7 @@ send_log
 exl echo "## Pulling Docker image"
 tries=0
 until [ $tries -ge 3 ]; do
-  if exl_no_error docker pull $AWSF_IMAGE; then
+  if exl_no_error $CONTAINER_CMD pull $AWSF_IMAGE; then
     exl echo "## Pull successfull on try $tries"
     break
   else
@@ -301,9 +388,9 @@ send_log
 # pass S3_ENCRYPT_KEY_ID if desired
 if [ -z "$S3_ENCRYPT_KEY_ID" ];
 then
-  docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
+  $CONTAINER_CMD run --privileged --net host -e HOST_HOME=$INSTANCE_HOME -v $INSTANCE_HOME/:$INSTANCE_HOME/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS
 else
-  docker run --privileged --net host -v /home/ubuntu/:/home/ubuntu/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS -k $S3_ENCRYPT_KEY_ID
+  $CONTAINER_CMD run --privileged --net host -e HOST_HOME=$INSTANCE_HOME -v $INSTANCE_HOME/:$INSTANCE_HOME/:rw -v /mnt/:/mnt/:rw $AWSF_IMAGE run.sh -i $JOBID -l $LOGBUCKET -f $EBS_DEVICE -S $STATUS $SINGULARITY_OPTION_TO_PASS -k $S3_ENCRYPT_KEY_ID
 fi
 
 handle_error $?

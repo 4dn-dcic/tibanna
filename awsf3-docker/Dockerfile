@@ -50,6 +50,24 @@ RUN echo \
 RUN apt-get update
 RUN apt-get --assume-yes install docker-ce=5:24.0.7-1~ubuntu.20.04~focal
 
+# fuse-overlayfs storage driver for the nested (in-container) docker. Installed
+# as the upstream *static* binary rather than the 'fuse-overlayfs' apt package:
+# on Ubuntu 20.04 that package pulls 'fuse3', which "Breaks: fuse" (fuse2),
+# and fuse2 is required by singularity-ce and mountpoint-s3. The static binary
+# links libfuse3 statically (no fuse3 package needed) and, in the privileged
+# DinD container, mounts directly as root. Docker auto-selects it over vfs when
+# native overlay2 is unavailable (as in the nested context on the RHEL host).
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    if [ "$ARCH" = "amd64" ]; then FOA_ARCH=x86_64; \
+    elif [ "$ARCH" = "arm64" ]; then FOA_ARCH=aarch64; \
+    else echo "Unsupported architecture: $ARCH" >&2; exit 1; fi; \
+    FOA_VERSION=v1.13; \
+    curl -fsSL -o /usr/bin/fuse-overlayfs \
+        "https://github.com/containers/fuse-overlayfs/releases/download/${FOA_VERSION}/fuse-overlayfs-${FOA_ARCH}"; \
+    chmod +x /usr/bin/fuse-overlayfs; \
+    fuse-overlayfs --version
+
 # Singularity
 RUN ARCH="$(dpkg --print-architecture)" && \
     SINGULARITY_VERSION=3.10.4 && \

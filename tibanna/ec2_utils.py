@@ -737,7 +737,7 @@ class Execution(object):
         str += "SHUTDOWN_MIN={}\n".format(cfg.shutdown_min)
         str += "LOGBUCKET={}\n".format(cfg.log_bucket)
         str += "SCRIPT_URL={}\n".format(cfg.script_url)
-        str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+        str += "curl -fsSL $SCRIPT_URL/$RUN_SCRIPT -o $RUN_SCRIPT\n"
         str += "chmod +x $RUN_SCRIPT\n"
         str += "source $RUN_SCRIPT -i $JOBID -m $SHUTDOWN_MIN"
         str += " -l $LOGBUCKET"

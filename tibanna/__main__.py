@@ -385,7 +385,17 @@ class Subcommands(object):
                   {'flag': ["-a", "--architecture"],
                   'help': "Architecture: x86 or Arm. Default: x86. " +
                           "To use this option, turn on option -B. Ignored when option -U is used.",
-                  'default': "x86"}
+                  'default': "x86"},
+                 {'flag': ["-F", "--userdata-file"],
+                  'help': "Path to a custom userdata script for AMI bootstrapping. " +
+                          "Use this to supply an OS-specific script (e.g. for RHEL). " +
+                          "Only used with option -B. Defaults to the built-in Ubuntu/Docker script."},
+                 {'flag': ["-s", "--subnet"],
+                  'help': "Subnet ID (e.g. 'subnet-0123...') to launch the build instance in. " +
+                          "Required when the account has no default VPC. Only used with option -B."},
+                 {'flag': ["-G", "--security-group"],
+                  'help': "Security group ID (e.g. 'sg-0123...') for the build instance. " +
+                          "Optional; only used with option -B."}
                  ]
         }
 
@@ -529,10 +539,12 @@ def cleanup(usergroup, suffix='', purge_history=False, do_not_remove_iam_group=F
 
 
 def create_ami(make_public=False, build_from_scratch=False, source_image_to_copy_from=None, source_image_region=None,
-               ubuntu_base_image=None, replicate=False, architecture="x86"):
+               ubuntu_base_image=None, replicate=False, architecture="x86", userdata_file=None,
+               subnet=None, security_group=None):
     print(API().create_ami(make_public=make_public, build_from_scratch=build_from_scratch,
                            source_image_to_copy_from=source_image_to_copy_from, source_image_region=source_image_region,
-                           ubuntu_base_image=ubuntu_base_image, replicate=replicate, architecture=architecture))
+                           ubuntu_base_image=ubuntu_base_image, replicate=replicate, architecture=architecture,
+                           userdata_file=userdata_file, subnet=subnet, security_group=security_group))
 
 
 def main(Subcommands=Subcommands):

@@ -3,6 +3,12 @@
 Change Log
 ==========
 
+6.1.0
+=====
+
+* Add RHEL support and fixes for newer kernels (also unblocks newer Ubuntu AMIs)
+
+
 6.0.0
 =====
 

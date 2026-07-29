@@ -12,6 +12,7 @@ from .vars import (
     CHECK_TASK_LAMBDA_NAME,
     UPDATE_COST_LAMBDA_NAME,
     S3_ENCRYT_KEY_ID,
+    AMI_KMS_KEY_ID,
 )
 
 
@@ -72,7 +73,7 @@ class IAM(object):
     def policy_types(self):
         return ['bucket', 'termination', 'list', 'cloudwatch', 'passrole', 'lambdainvoke',
                 'cloudwatch_metric', 'cw_dashboard', 'dynamodb', 'ec2_desc',
-                'executions', 'pricing', 'vpc', 'kms']
+                'executions', 'pricing', 'vpc', 'kms', 'kms_ami']
 
     def policy_arn(self, policy_type):
         return 'arn:aws:iam::' + self.account_id + ':policy/' + self.policy_name(policy_type)
@@ -81,6 +82,17 @@ class IAM(object):
         _id = S3_ENCRYT_KEY_ID
         if not _id:
             _id = 'invalid'  # build a dummy arn in the case that we are not using KMS
+        return 'arn:aws:kms:' + self.region + ':' + self.account_id + ':key/' + _id
+
+    def ami_kms_key_arn(self):
+        """ARN of the KMS key that encrypts the EC2 AMI. Accepts either a bare key id
+            (assumed to live in this account/region) or a full key ARN (used when the
+            key is owned by another account, e.g. an IT-managed encrypted base AMI)."""
+        _id = AMI_KMS_KEY_ID
+        if not _id:
+            _id = 'invalid'  # build a dummy arn in the case that we are not using an encrypted AMI
+        if _id.startswith('arn:'):
+            return _id
         return 'arn:aws:kms:' + self.region + ':' + self.account_id + ':key/' + _id
 
     def policy_suffix(self, policy_type):
@@ -97,7 +109,8 @@ class IAM(object):
                     'pricing': 'pricing',
                     'executions': 'executions',
                     'vpc': 'vpc_access',
-                    'kms': 'kms_key_for_s3'}
+                    'kms': 'kms_key_for_s3',
+                    'kms_ami': 'kms_key_for_ami'}
         if policy_type not in suffices:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return suffices[policy_type]
@@ -119,7 +132,8 @@ class IAM(object):
                        'pricing': self.policy_pricing,
                        'executions': self.policy_executions,
                        'vpc': self.policy_vpc_access,
-                       'kms': self.policy_kms_access}
+                       'kms': self.policy_kms_access,
+                       'kms_ami': self.policy_kms_ami_access}
         if policy_type not in definitions:
             raise Exception("policy %s must be one of %s." % (policy_type, str(self.policy_types)))
         return definitions[policy_type]
@@ -157,6 +171,8 @@ class IAM(object):
         # adding vpc access to only check_task since run_task has full ec2 access
         run_task_custom_policy_types = base + ['list', 'cloudwatch', 'passrole', 'dynamodb',
                                                'executions', 'cw_dashboard']
+        if AMI_KMS_KEY_ID:  # AMI is KMS-encrypted; run_task launches the fleet so it needs key access
+            run_task_custom_policy_types.append('kms_ami')
         check_task_custom_policy_types = base + ['cloudwatch_metric', 'cloudwatch', 'ec2_desc',
                                                  'termination', 'dynamodb', 'pricing', 'vpc']
         update_cost_custom_policy_types = base + ['executions', 'dynamodb', 'pricing', 'vpc']
@@ -265,6 +281,47 @@ class IAM(object):
                     self.kms_key_arn()
                 ]
             }
+        }
+
+    @property
+    def policy_kms_ami_access(self):
+        """ Returns a policy granting the permissions needed to launch an EC2 instance
+            from a KMS-encrypted AMI. The principal launching the instance (the
+            run_task_awsem Lambda role, which calls CreateFleet) must be able to decrypt
+            the AMI's EBS snapshot and create a grant so EC2 can use the key. This is
+            required for both same-account and cross-account (e.g. IT-managed) encrypted
+            AMIs. kms:CreateGrant is the permission most commonly missing; without it the
+            launch fails with 'Client.InvalidKMSKey.InvalidState'.
+        """
+        return {
+            'Version': '2012-10-17',
+            'Statement': [
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        'kms:Decrypt',
+                        'kms:DescribeKey',
+                        'kms:GenerateDataKeyWithoutPlaintext',
+                        'kms:ReEncryptFrom',
+                        'kms:ReEncryptTo'
+                    ],
+                    'Resource': [
+                        self.ami_kms_key_arn()
+                    ]
+                },
+                {
+                    'Effect': 'Allow',
+                    'Action': [
+                        'kms:CreateGrant'
+                    ],
+                    'Resource': [
+                        self.ami_kms_key_arn()
+                    ],
+                    'Condition': {
+                        'Bool': {'kms:GrantIsForAWSResource': 'true'}
+                    }
+                }
+            ]
         }
 
     @property

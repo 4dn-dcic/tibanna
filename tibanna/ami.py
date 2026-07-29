@@ -20,7 +20,8 @@ class AMI(object):
     AMI_NAME = 'tibanna-ami-' + datetime.strftime(datetime.today(), '%Y%m%d')  # e.g tibanna-ami-20201113
     ARCHITECTURE = 'x86'
 
-    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None, architecture=None, **kwargs):
+    def __init__(self, base_ami=None, base_region=None, userdata_file=None, ami_name=None, architecture=None,
+                 subnet=None, security_group=None, **kwargs):
         if base_ami:
             self.BASE_AMI = base_ami
         elif architecture == 'x86':
@@ -38,11 +39,14 @@ class AMI(object):
             self.USERDATA_FILE = userdata_file
         if ami_name:
             self.AMI_NAME = ami_name
+        self.subnet = subnet
+        self.security_group = security_group
 
     @staticmethod
-    def launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture):
+    def launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture,
+                                        subnet=None, security_group=None):
 
-        instanceType = 't3.micro'
+        instanceType = 'c5a.large'
         if architecture == 'Arm':
             instanceType = 'a1.medium'
 
@@ -65,6 +69,14 @@ class AMI(object):
         if keyname:
             launch_args.update({'KeyName': keyname})
 
+        # Accounts without a default VPC must specify a subnet (and, in a non-default
+        # VPC, security groups by ID rather than name) or run_instances fails with
+        # "VPCIdNotSpecified: No default VPC for this user".
+        if subnet:
+            launch_args.update({'SubnetId': subnet})
+        if security_group:
+            launch_args.update({'SecurityGroupIds': [security_group]})
+
         logger.debug("launch_args=" + str(launch_args))
         ec2 = boto3.client('ec2')
         res = ec2.run_instances(**launch_args)
@@ -76,8 +88,9 @@ class AMI(object):
     def create_ami_for_tibanna(self, keyname=None, make_public=False, replicate=False):
         return self.create_ami(keyname=keyname, userdata_file=self.USERDATA_FILE,
                                base_ami=self.BASE_AMI, ami_name=self.AMI_NAME,
-                               make_public=make_public, base_region=self.BASE_REGION, 
-                               replicate=replicate, architecture=self.ARCHITECTURE)
+                               make_public=make_public, base_region=self.BASE_REGION,
+                               replicate=replicate, architecture=self.ARCHITECTURE,
+                               subnet=self.subnet, security_group=self.security_group)
 
     @staticmethod
     def replicate_ami(*, ami_name, ami_id, source_region='us-east-1',
@@ -136,7 +149,9 @@ class AMI(object):
                    make_public=False,
                    replicate=False,
                    architecture='x86',
-                   base_region='us-east-1'):
+                   base_region='us-east-1',
+                   subnet=None,
+                   security_group=None):
         """ Helper function that creates the Tibanna AMI from a base image. """
         if not userdata_file:
             logger.info("no userdata.. no need to launch an instance.. just copying image")
@@ -159,7 +174,8 @@ class AMI(object):
 
         # Launch an instance with base AMI
         try:
-            instance_id = AMI.launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture)
+            instance_id = AMI.launch_instance_for_tibanna_ami(keyname, userdata_file, base_ami, architecture,
+                                                              subnet=subnet, security_group=security_group)
             logger.debug("instance_id=" + instance_id)
         except:
             raise Exception("Failed to launch an instance")

@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euxo pipefail
+
+# HMS-SRCE-SPECIFIC: builds a Docker-enabled AMI from HMS IT-provided RHEL base
+# image. This is NOT a general-purpose RHEL AMI builder -- it works around quirks
+# of that specific base image (RHEL repos served only from an internal mirror, no
+# subscription, podman + container-selinux preinstalled). On other RHEL images,
+# adapt the repo handling, instance user, and dependencies accordingly.
+#
+# Docker is installed ONLY from Docker's own repo because the base image's other
+# repos point at an internal mirror unreachable from a general AWS subnet, so any
+# dnf transaction touching them fails. This relies on container-selinux (docker's
+# main dependency) already being present via podman. 'dnf update -y' is omitted
+# for the same reason. If the install can't resolve a dependency, it's missing
+# from the image and only on the internal mirror -- build from a subnet with
+# access to that mirror instead.
+
+# Drop the podman-docker shim so it can't shadow the real Docker CLI.
+dnf remove -y podman-docker || true
+
+# Add Docker's repo (the CentOS repo works on RHEL). '|| true': dnf may exit
+# non-zero refreshing the unreachable internal repos; only the repo file matters.
+dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo || true
+
+# Install from the Docker repo only. 'set -e' fails the build loudly here if a
+# dependency can't be satisfied, instead of producing a Docker-less AMI.
+dnf install -y --disablerepo='*' --enablerepo='docker-ce-stable' \
+  docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Enable Docker at boot so it's up when the workflow userdata runs.
+systemctl enable --now docker
+
+# Allow the default instance user (ec2-user on this base image) to use docker.
+usermod -aG docker ec2-user || true
+
+# Verify before snapshotting; 'set -e' aborts (leaving the error in
+# /var/log/cloud-init-output.log) rather than snapshotting a broken AMI.
+docker --version
+systemctl is-active --quiet docker && echo "## Docker daemon is active" || echo "## WARNING: docker daemon not active"
+
+reboot

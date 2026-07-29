@@ -125,8 +125,11 @@ fi
 # so mount /mnt/data1/ instead and create a symlink.
 ln -s $MOUNT_DIR_PREFIX/$EBS_DIR $EBS_DIR
 
-# Transferring profile info
-ln -s /home/ubuntu/.aws /root/.aws
+# Transferring profile info. This container is always Ubuntu, so it cannot infer
+# the host instance user's home from its own passwd database. The host passes its
+# home directory (where the AWS profile and mounted volume live) via HOST_HOME.
+_INSTANCE_HOME="${HOST_HOME:-/home/ubuntu}"
+ln -sf "${_INSTANCE_HOME}/.aws" /root/.aws
 
 # log the first message from the container
 exl echo
@@ -156,7 +159,7 @@ exl echo "## $(mount-s3 --version)"
 # getting run.json file
 exl echo
 exl echo "## Downloading and parsing run.json file"
-exl cd /home/ubuntu/
+exl cd "${_INSTANCE_HOME}/"
 exl aws s3 cp s3://$LOGBUCKET/$RUN_JSON_FILE_NAME .
 exl chmod -R +x .
 if [ -z "$S3_ENCRYPT_KEY_ID" ];
