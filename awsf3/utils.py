@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import boto3
 import re
@@ -24,6 +25,29 @@ input_yml_filename = "inputs.yml"
 env_filename = "env_command_list.txt"
 INPUT_DIR = "/data1/input"  # data are downloaded to this directory
 INPUT_MOUNT_DIR_PREFIX = "/data1/input-mounted-"  # data are mounted to this directory + bucket name
+WORKFLOW_FILES_JSON_PREFIX = 'json:'
+
+
+def encode_workflow_files(workflow_files):
+    """Serialize comma-separated workflow filenames for an environment variable."""
+    workflow_files = [
+        filename.strip()
+        for filename in workflow_files.split(',')
+        if filename.strip()
+    ] if workflow_files else []
+    return WORKFLOW_FILES_JSON_PREFIX + json.dumps(workflow_files)
+
+
+def decode_workflow_files(workflow_files):
+    """Deserialize workflow filenames, retaining support for the legacy format."""
+    if not workflow_files:
+        return []
+    if workflow_files.startswith(WORKFLOW_FILES_JSON_PREFIX):
+        workflow_files = json.loads(workflow_files[len(WORKFLOW_FILES_JSON_PREFIX):])
+        if not isinstance(workflow_files, list) or not all(isinstance(filename, str) for filename in workflow_files):
+            raise ValueError("Workflow files must be a list of filenames")
+        return workflow_files
+    return workflow_files.split()
 
 
 def decode_run_json(input_json_file, kms_key_id=None, region=None):
@@ -200,14 +224,15 @@ def create_env_def_file(env_filename, runjson, language):
         f_env.write("export LANGUAGE={}\n".format(app.language))
         if language in ['wdl', 'wdl_v1', 'wdl_draft2']:
             f_env.write("export WDL_URL={}\n".format(app.wdl_url))
-            f_env.write("export MAIN_WDL={}\n".format(app.main_wdl))
+            f_env.write("export MAIN_WDL={}\n".format(shlex.quote(app.main_wdl)))
             f_env.write("export WORKFLOW_ENGINE={}\n".format(app.workflow_engine))
             f_env.write("export RUN_ARGS={}\n".format(app.run_args))
-            f_env.write("export WDL_FILES=\"{}\"\n".format(' '.join(app.other_wdl_files.split(','))))
+            f_env.write("export WDL_FILES={}\n".format(shlex.quote(encode_workflow_files(app.other_wdl_files))))
         elif language == 'snakemake':
             f_env.write("export SNAKEMAKE_URL={}\n".format(app.snakemake_url))
-            f_env.write("export MAIN_SNAKEMAKE={}\n".format(app.main_snakemake))
-            f_env.write("export SNAKEMAKE_FILES=\"{}\"\n".format(' '.join(app.other_snakemake_files.split(','))))
+            f_env.write("export MAIN_SNAKEMAKE={}\n".format(shlex.quote(app.main_snakemake)))
+            f_env.write("export SNAKEMAKE_FILES={}\n".format(
+                shlex.quote(encode_workflow_files(app.other_snakemake_files))))
             f_env.write("export COMMAND=\"{}\"\n".format(app.command.replace("\"", "\\\"")))
             f_env.write("export CONTAINER_IMAGE={}\n".format(app.container_image))
         elif language == 'shell':
@@ -215,8 +240,8 @@ def create_env_def_file(env_filename, runjson, language):
             f_env.write("export CONTAINER_IMAGE={}\n".format(app.container_image))
         else:  # cwl
             f_env.write("export CWL_URL={}\n".format(app.cwl_url))
-            f_env.write("export MAIN_CWL={}\n".format(app.main_cwl))
-            f_env.write("export CWL_FILES=\"{}\"\n".format(' '.join(app.other_cwl_files.split(','))))
+            f_env.write("export MAIN_CWL={}\n".format(shlex.quote(app.main_cwl)))
+            f_env.write("export CWL_FILES={}\n".format(shlex.quote(encode_workflow_files(app.other_cwl_files))))
             f_env.write("export RUN_ARGS={}\n".format(app.run_args))
         # other env variables
         env_preserv_str = ''
@@ -249,13 +274,7 @@ def download_workflow():
         main_wf = os.environ.get('MAIN_CWL', '')
         wf_files = os.environ.get('CWL_FILES', '')
         wf_url = os.environ.get('CWL_URL')
-    # turn into a list
-    if not wf_files:
-        wf_files = []
-    elif ' ' in wf_files:
-        wf_files = wf_files.split(' ')
-    else:
-        wf_files = [wf_files]
+    wf_files = decode_workflow_files(wf_files)
     wf_files.append(main_wf)
     wf_url = wf_url.rstrip('/')
 

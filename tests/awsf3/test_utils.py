@@ -2,9 +2,13 @@ import os
 import pytest
 import json
 import boto3
+import subprocess
 from datetime import datetime
 from awsf3.utils import (
     create_env_def_file,
+    decode_workflow_files,
+    download_workflow,
+    encode_workflow_files,
     create_mount_command_list,
     create_download_command_list,
     create_download_cmd,
@@ -54,7 +58,7 @@ def test_create_env_def_file_cwl():
     right_content = ('export LANGUAGE=cwl_v1\n'
                      'export CWL_URL=someurl\n'
                      'export MAIN_CWL=somecwl\n'
-                     'export CWL_FILES="othercwl1 othercwl2"\n'
+                     'export CWL_FILES=\'json:["othercwl1", "othercwl2"]\'\n'
                      'export RUN_ARGS=\n'
                      'export SOME_ENV=1234\n'
                      'export PRESERVED_ENV_OPTION="--preserve-environment SOME_ENV "\n'
@@ -89,7 +93,7 @@ def test_create_env_def_file_wdl_v1():
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
                      'export RUN_ARGS=\n'
-                     'export WDL_FILES="otherwdl1 otherwdl2"\n'
+                     'export WDL_FILES=\'json:["otherwdl1", "otherwdl2"]\'\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
@@ -122,7 +126,7 @@ def test_create_env_def_file_wdl_draft2():
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
                      'export RUN_ARGS=\n'
-                     'export WDL_FILES="otherwdl1 otherwdl2"\n'
+                     'export WDL_FILES=\'json:["otherwdl1", "otherwdl2"]\'\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
@@ -155,7 +159,7 @@ def test_create_env_def_file_wdl():
                      'export MAIN_WDL=somewdl\n'
                      'export WORKFLOW_ENGINE=cromwell\n'
                      'export RUN_ARGS=\n'
-                     'export WDL_FILES="otherwdl1 otherwdl2"\n'
+                     'export WDL_FILES=\'json:["otherwdl1", "otherwdl2"]\'\n'
                      'export PRESERVED_ENV_OPTION=""\n'
                      'export DOCKER_ENV_OPTION=""\n')
 
@@ -274,7 +278,7 @@ def test_create_env_def_file_snakemake():
     right_content = ('export LANGUAGE=snakemake\n'
                      'export SNAKEMAKE_URL=someurl\n'
                      'export MAIN_SNAKEMAKE=somesnakemake\n'
-                     'export SNAKEMAKE_FILES="othersnakemake1 othersnakemake2"\n'
+                     'export SNAKEMAKE_FILES=\'json:["othersnakemake1", "othersnakemake2"]\'\n'
                      'export COMMAND="com1;com2"\n'
                      'export CONTAINER_IMAGE=someimage\n'
                      'export PRESERVED_ENV_OPTION=""\n'
@@ -282,6 +286,76 @@ def test_create_env_def_file_snakemake():
 
     assert envfile_content == right_content
     os.remove(envfilename)
+
+
+def test_create_env_def_file_snakemake_with_spaces(tmp_path):
+    """Workflow filenames containing spaces survive shell evaluation."""
+    envfilename = tmp_path / 'env'
+    runjson_dict = {'Job': {'App': {'language': 'snakemake',
+                                    'command': 'snakemake',
+                                    'container_image': 'someimage',
+                                    'snakemake_url': 's3://somebucket/workflow',
+                                    'main_snakemake': 'Snake File',
+                                    'other_snakemake_files':
+                                        'rules/base.smk,jnotebooks/Read Lengths-Copy2.ipynb'},
+                            'Input': {},
+                            'Output': {'output_bucket_directory': 'somebucket'},
+                            'JOBID': 'somejobid'},
+                    'config': {'log_bucket': 'somebucket'}}
+    runjson = AwsemRunJson(**runjson_dict)
+
+    create_env_def_file(envfilename, runjson, 'snakemake')
+
+    result = subprocess.run(
+        ['sh', '-c', '. "$1"; printf "%s\n%s" "$MAIN_SNAKEMAKE" "$SNAKEMAKE_FILES"',
+         'sh', str(envfilename)],
+        check=True,
+        capture_output=True,
+        text=True
+    )
+    assert result.stdout.splitlines() == [
+        'Snake File',
+        'json:["rules/base.smk", "jnotebooks/Read Lengths-Copy2.ipynb"]'
+    ]
+
+
+def test_download_workflow_with_spaces(tmp_path, mocker, monkeypatch):
+    """Workflow filenames containing spaces are passed to S3 intact."""
+    monkeypatch.setenv('LANGUAGE', 'snakemake')
+    monkeypatch.setenv('LOCAL_WFDIR', str(tmp_path))
+    monkeypatch.setenv('MAIN_SNAKEMAKE', 'Snake File')
+    monkeypatch.setenv(
+        'SNAKEMAKE_FILES',
+        'json:["rules/base.smk", "jnotebooks/Read Lengths-Copy2.ipynb"]'
+    )
+    monkeypatch.setenv('SNAKEMAKE_URL', 's3://somebucket/workflow')
+    s3 = mocker.patch('awsf3.utils.boto3.client').return_value
+
+    download_workflow()
+
+    assert s3.download_file.call_args_list == [
+        mocker.call(Bucket='somebucket', Key='workflow/rules/base.smk',
+                    Filename=str(tmp_path / 'rules/base.smk')),
+        mocker.call(Bucket='somebucket', Key='workflow/jnotebooks/Read Lengths-Copy2.ipynb',
+                    Filename=str(tmp_path / 'jnotebooks/Read Lengths-Copy2.ipynb')),
+        mocker.call(Bucket='somebucket', Key='workflow/Snake File',
+                    Filename=str(tmp_path / 'Snake File'))
+    ]
+
+
+def test_decode_workflow_files_legacy_format():
+    """Workers can still read environment files created before this fix."""
+    assert decode_workflow_files('  rules/base.smk   config/defaults.yml  ') == [
+        'rules/base.smk',
+        'config/defaults.yml'
+    ]
+
+
+def test_encode_workflow_files_ignores_separator_whitespace():
+    """Whitespace around comma separators does not become part of a filename."""
+    assert encode_workflow_files(' rules/base.smk, ,config/defaults.yml,') == (
+        'json:["rules/base.smk", "config/defaults.yml"]'
+    )
 
 
 def test_create_mount_command_list():
