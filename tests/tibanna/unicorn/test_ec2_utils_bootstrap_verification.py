@@ -51,6 +51,8 @@ def test_default_repo_ref_is_the_immutable_release_tag():
     """
     assert TIBANNA_REPO_BRANCH == 'v' + __version__
     assert TIBANNA_REPO_BRANCH != 'master'
+    assert not all(c in '0123456789abcdef' for c in TIBANNA_REPO_BRANCH.lower())
+    assert len(TIBANNA_REPO_BRANCH) != 40
 
 
 def _build_execution(mocker):

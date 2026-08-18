@@ -51,8 +51,12 @@ Change Log
   running unverified code. A development-only override,
   ``TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED=true``, is available for a
   custom ``TIBANNA_REPO_BRANCH`` fork whose scripts are not tracked in
-  ``awsf3_checksums.py`` - never set this in a real deployment. Also fixes:
-  a fatal host-bootstrap error (missing log bucket/version/image, EBS
+  ``awsf3_checksums.py`` - never set this in a real deployment. Generated
+  user-data uses this verified release-tag path as the primary
+  bootstrap path while older user-data and direct callers retain the original
+  master-path asset downloads as a compatibility fallback; a requested
+  primary path still fails closed on checksum errors. Also fixes a fatal
+  host-bootstrap error (missing log bucket/version/image, EBS
   mount/format failure, Docker pull exhaustion, Docker run failure) now
   fails closed (exits immediately after reporting the error) instead of
   merely scheduling a delayed shutdown and continuing into subsequent setup

@@ -25,6 +25,26 @@ def _extract_function(name):
     return match.group(0)
 
 
+def _run_asset_source_selection(script_url='', cw_hash='', spot_hash='', disable_verification=False):
+    asset_source_src = _extract_function('asset_source_is_verified')
+    select_source_src = _extract_function('select_asset_source')
+    script = """
+set -u
+SCRIPT_URL="{script_url}"
+CW_CONFIG_SHA256="{cw_hash}"
+SPOT_SCRIPT_SHA256="{spot_hash}"
+DISABLE_SCRIPT_VERIFICATION={disable_verification}
+LEGACY_SCRIPT_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/
+{asset_source_src}
+{select_source_src}
+select_asset_source
+printf '%s|%s\\n' "$ASSET_SCRIPT_URL" "$USE_VERIFIED_SCRIPT_ASSETS"
+""".format(asset_source_src=asset_source_src, select_source_src=select_source_src,
+           script_url=script_url, cw_hash=cw_hash, spot_hash=spot_hash,
+           disable_verification=str(disable_verification).lower())
+    return subprocess.check_output(['bash', '-c', script], text=True).strip()
+
+
 def _run_verify(expected, disable_verification=False, tamper=False):
     handle_error_src = _extract_function('handle_error')
     verify_src = _extract_function('verify_sha256')
@@ -96,3 +116,32 @@ def test_verify_sha256_dev_override_skips_verification():
     assert exit_code == 0
     assert 'reached_after_verify' in markers
     assert 'shutdown_called' not in markers
+
+
+def test_new_release_asset_path_is_primary_when_complete():
+    """Generated userdata supplies the release URL and both hashes, so the
+    verified asset path must win over the compatibility path."""
+    selected_url, verified = _run_asset_source_selection(
+        script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/v6.0.0/awsf3/',
+        cw_hash='cw-hash', spot_hash='spot-hash').split('|')
+    assert selected_url.endswith('/v6.0.0/awsf3/')
+    assert verified == 'true'
+
+
+def test_legacy_callers_use_original_asset_path_without_new_arguments():
+    """Existing userdata/direct callers omit the new flags; they must retain
+    the original master-path asset downloads instead of failing because the
+    new hashes are absent."""
+    selected_url, verified = _run_asset_source_selection().split('|')
+    assert selected_url == 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/'
+    assert verified == 'false'
+
+
+def test_incomplete_new_asset_context_uses_legacy_compatibility_path():
+    """A partially upgraded caller must not enter verification with missing
+    hashes; it falls back to the established asset path."""
+    selected_url, verified = _run_asset_source_selection(
+        script_url='https://raw.githubusercontent.com/4dn-dcic/tibanna/v6.0.0/awsf3/',
+        cw_hash='cw-hash').split('|')
+    assert selected_url == 'https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/'
+    assert verified == 'false'

@@ -14,6 +14,9 @@ export SCRIPT_URL=
 export CW_CONFIG_SHA256=
 export SPOT_SCRIPT_SHA256=
 export DISABLE_SCRIPT_VERIFICATION=false
+export LEGACY_SCRIPT_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/
+export ASSET_SCRIPT_URL=
+export USE_VERIFIED_SCRIPT_ASSETS=false
 
 printHelpAndExit() {
     echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID] [-u SCRIPT_URL] [-w CW_CONFIG_SHA256] [-z SPOT_SCRIPT_SHA256] [-x]"
@@ -33,6 +36,7 @@ printHelpAndExit() {
     echo "-w CW_CONFIG_SHA256 : expected sha256 of cloudwatch_agent_config.json; the download is rejected on mismatch"
     echo "-z SPOT_SCRIPT_SHA256 : expected sha256 of spot_failure_detection.sh; the download is rejected on mismatch"
     echo "-x : (development only) disable sha256 verification of downloaded monitoring assets"
+    echo "If the new asset URL/checksums are omitted, use the original master-path downloads for compatibility with existing callers."
     exit "$1"
 }
 while getopts "i:m:l:p:a:s:r:gcV:A:k:u:w:z:x" opt; do
@@ -175,6 +179,27 @@ verify_sha256() {
   return 0
 }
 
+# The generated userdata always supplies a durable release URL and all asset
+# hashes, which is the primary path. Older userdata and direct callers only
+# supply the original options; keep their established master-path behavior as
+# a compatibility fallback. An integrity failure on the primary path still
+# fails closed - it must not silently downgrade a caller that requested the
+# verified path.
+asset_source_is_verified() {
+  [ -n "$SCRIPT_URL" ] || return 1
+  [ "$DISABLE_SCRIPT_VERIFICATION" = true ] && return 0
+  [ -n "$CW_CONFIG_SHA256" ] || return 1
+  [ -n "$SPOT_SCRIPT_SHA256" ] || return 1
+}
+
+select_asset_source() {
+  ASSET_SCRIPT_URL="$LEGACY_SCRIPT_URL"
+  USE_VERIFIED_SCRIPT_ASSETS=false
+  asset_source_is_verified || return 0
+  ASSET_SCRIPT_URL="$SCRIPT_URL"
+  USE_VERIFIED_SCRIPT_ASSETS=true
+}
+
 # used to compare Tibanna version strings
 version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
 
@@ -182,6 +207,13 @@ version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; 
 export LOGFILE=$LOGFILE1
 cd $INSTANCE_HOME/
 touch $LOGFILE
+
+select_asset_source
+if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
+  exl echo "## Using verified bootstrap assets from $ASSET_SCRIPT_URL"
+else
+  exl echo "## Using legacy bootstrap asset path from $ASSET_SCRIPT_URL for caller compatibility"
+fi
 
 
 # make sure log bucket is defined
@@ -329,22 +361,15 @@ if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
     rpm -U ./amazon-cloudwatch-agent.rpm
   fi
   # If we want to collect new metrics, the following file has to be modified.
-  # Primary path (D1): fetch the config from the same pinned SCRIPT_URL this
-  # script was fetched from (not a hardcoded /master/ URL) and verify it against
-  # CW_CONFIG_SHA256 before use - fails closed on mismatch/unavailability.
-  # Legacy fallback: when SCRIPT_URL is not supplied (older user-data or
-  # established callers that predate the pinned -u/-w arguments), fetch the
-  # config from the master URL as before so existing deployments keep working.
-  if [ -n "$SCRIPT_URL" ]; then
-    exl echo "## Using CW Agent config: ${SCRIPT_URL}cloudwatch_agent_config.json"
-    curl -fsSL "${SCRIPT_URL}cloudwatch_agent_config.json" -o ./cloudwatch_agent_config.json
+  # The generated userdata supplies a durable release URL, which is the
+  # primary path. Older userdata/callers omit the new arguments and use the
+  # original master URL without verification for compatibility.
+  exl echo "## Using CW Agent config: ${ASSET_SCRIPT_URL}cloudwatch_agent_config.json"
+  curl -fsSL "${ASSET_SCRIPT_URL}cloudwatch_agent_config.json" -o ./cloudwatch_agent_config.json
+  if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
     verify_sha256 ./cloudwatch_agent_config.json "$CW_CONFIG_SHA256"
-    mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
-  else
-    exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-    curl -fsSL https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json \
-      -o /opt/aws/amazon-cloudwatch-agent/bin/config.json
   fi
+  mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
   # This starts the agent with the downloaded configuration file
   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 else
@@ -370,16 +395,11 @@ if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
     exl echo
     exl echo "## Turning on Spot instance failure detection"
     cd ~
-    # Primary path (D1): fetch from the same pinned SCRIPT_URL and verify against
-    # SPOT_SCRIPT_SHA256 before being made executable - fails closed on mismatch.
-    # Legacy fallback: when SCRIPT_URL is not supplied (older user-data or
-    # established callers that predate the pinned arguments), fetch from the
-    # master URL as before so existing deployments keep working.
-    if [ -n "$SCRIPT_URL" ]; then
-      curl "${SCRIPT_URL}spot_failure_detection.sh" -O
+    # The generated userdata supplies a durable release URL and checksum,
+    # while older callers retain the original master-path download.
+    curl "${ASSET_SCRIPT_URL}spot_failure_detection.sh" -O
+    if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
       verify_sha256 ./spot_failure_detection.sh "$SPOT_SCRIPT_SHA256"
-    else
-      curl https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/spot_failure_detection.sh -O
     fi
     chmod +x spot_failure_detection.sh
     if [ -z "$S3_ENCRYPT_KEY_ID" ];
