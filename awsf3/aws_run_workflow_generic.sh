@@ -82,7 +82,7 @@ export STATUS=0
 # ERRFILE1 lives under the home directory, which exists from boot, so a
 # pre-mount failure can still persist a durable error marker. ERRFILE2 (under
 # the data EBS) is switched to once that volume is mounted, mirroring LOGFILE.
-export ERRFILE1=/home/ubuntu/$JOBID.error
+export ERRFILE1=$INSTANCE_HOME/$JOBID.error
 export ERRFILE2=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
 export ERRFILE=$ERRFILE1
 #IMDSv2 Addition

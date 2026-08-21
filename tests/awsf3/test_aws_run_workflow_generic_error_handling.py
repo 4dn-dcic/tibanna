@@ -155,7 +155,7 @@ def test_errfile_has_pre_mount_and_post_mount_paths():
     boot), and switch to the EBS-backed path only after the mount succeeds -
     otherwise a pre-mount failure can't persist a durable error marker."""
     content = _read_script()
-    assert re.search(r'export ERRFILE1=/home/ubuntu/\$JOBID\.error', content)
+    assert re.search(r'export ERRFILE1=\$INSTANCE_HOME/\$JOBID\.error', content)
     assert re.search(r'export ERRFILE2=\$LOCAL_OUTDIR/\$JOBID\.error', content)
     assert 'export ERRFILE=$ERRFILE1' in content
     # the switch to ERRFILE2 must happen at/after local outdir creation, not before

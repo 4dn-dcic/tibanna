@@ -102,12 +102,12 @@ def test_userdata_verifies_bootstrap_script_before_sourcing(mocker):
     assert 'CW_CONFIG_SHA256={}'.format(CLOUDWATCH_AGENT_CONFIG_SHA256) in userdata_str
     assert 'SPOT_SCRIPT_SHA256={}'.format(SPOT_FAILURE_DETECTION_SHA256) in userdata_str
 
-    wget_idx = userdata_str.index('wget $SCRIPT_URL/$RUN_SCRIPT')
+    download_idx = userdata_str.index('curl -fsSL $SCRIPT_URL/$RUN_SCRIPT -o $RUN_SCRIPT')
     verify_idx = userdata_str.index('sha256sum -c -')
     chmod_idx = userdata_str.index('chmod +x $RUN_SCRIPT')
     source_idx = userdata_str.index('source $RUN_SCRIPT')
     # verification must happen strictly between the download and execution
-    assert wget_idx < verify_idx < chmod_idx < source_idx
+    assert download_idx < verify_idx < chmod_idx < source_idx
     # a mismatch must fail closed: shut down and exit, not just log a warning
     verify_line = userdata_str[verify_idx:userdata_str.index('\n', verify_idx)]
     assert 'shutdown' in verify_line

@@ -751,7 +751,7 @@ class Execution(object):
         str += "RUN_SCRIPT_SHA256={}\n".format(AWS_RUN_WORKFLOW_GENERIC_SHA256)
         str += "CW_CONFIG_SHA256={}\n".format(CLOUDWATCH_AGENT_CONFIG_SHA256)
         str += "SPOT_SCRIPT_SHA256={}\n".format(SPOT_FAILURE_DETECTION_SHA256)
-        str += "wget $SCRIPT_URL/$RUN_SCRIPT\n"
+        str += "curl -fsSL $SCRIPT_URL/$RUN_SCRIPT -o $RUN_SCRIPT\n"
         if TIBANNA_AWSF_SCRIPT_VERIFICATION_DISABLED:
             str += "echo 'WARNING: bootstrap script sha256 verification disabled (development override)'\n"
         else:
