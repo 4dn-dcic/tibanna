@@ -145,7 +145,9 @@ def test_docker_run_failure_routes_through_handle_error():
     """Docker-run regression: the result of `docker run` (the workload
     execution) must be checked and routed through handle_error."""
     content = _read_script()
-    docker_run_section = content[content.index('docker run --privileged'):]
+    # the workload is launched via `$CONTAINER_CMD run --privileged` (docker or
+    # a compatible runtime resolved at boot), not a literal `docker` command
+    docker_run_section = content[content.index('$CONTAINER_CMD run --privileged'):]
     assert re.search(r'^handle_error \$\?', docker_run_section, re.MULTILINE)
 
 
