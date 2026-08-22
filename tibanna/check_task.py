@@ -185,7 +185,8 @@ class CheckTask(object):
         prj = AwsemPostRunJson(**postrunjsoncontent)
         prj.Job.update(instance_id=input_json['config'].get('instance_id', ''))
         prj.Job.update(end_time=datetime.now(tzutc()).strftime(AWSEM_TIME_STAMP_FORMAT))
-        self.handle_metrics(prj)
+        disable_metrics_collection = input_json['config'].get('disable_metrics_collection', False)
+        self.handle_metrics(prj, disable_metrics_collection=disable_metrics_collection)
         logger.debug("inside funtion handle_postrun_json")
         logger.debug("content=\n" + json.dumps(prj.as_dict(), indent=4))
         # upload postrun json file back to s3
@@ -218,18 +219,32 @@ class CheckTask(object):
             else:
                 input_json['postrunjson'] = {'log': 'postrun json not included due to data size limit'}
 
-    def handle_metrics(self, prj):
+    def handle_metrics(self, prj, disable_metrics_collection=False):
+        """Best-effort metrics/plot/cost-estimate generation for a finished job.
+
+        A valid `.success` marker plus valid postrun data must result in a
+        successful workflow regardless of whether ancillary CloudWatch
+        retrieval, plotting, cost estimation, or metrics S3 upload succeeds
+        (D3). Failures here are therefore never raised - they are recorded as
+        a structured warning on the postrun Job so operators can see them,
+        and finalization/termination proceeds unaffected.
+        """
+        if disable_metrics_collection:
+            prj.Job.update(Metrics_status='disabled')
+            return
         try:
             resources = self.TibannaResource(prj.Job.instance_id,
                                              prj.Job.filesystem,
                                              prj.Job.start_time_as_datetime,
                                              prj.Job.end_time_as_datetime)
-
+            prj.Job.update(Metrics=resources.as_dict())
+            self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
+                                    force_upload=True, open_browser=False,
+                                    endtime=prj.Job.end_time_as_datetime,
+                                    filesystem=prj.Job.filesystem,
+                                    instance_id=prj.Job.instance_id)
+            prj.Job.update(Metrics_status='ok')
         except Exception as e:
-            raise MetricRetrievalException("error getting metrics: %s" % str(e))
-        prj.Job.update(Metrics=resources.as_dict())
-        self.API().plot_metrics(prj.Job.JOBID, directory='/tmp/tibanna_metrics/',
-                           force_upload=True, open_browser=False,
-                           endtime=prj.Job.end_time_as_datetime,
-                           filesystem=prj.Job.filesystem,
-                           instance_id=prj.Job.instance_id)
+            logger.warning("metrics/plot generation failed for job %s but the job result stands: %s" %
+                           (prj.Job.JOBID, str(e)))
+            prj.Job.update(Metrics_status='failed', Metrics_error=str(e))

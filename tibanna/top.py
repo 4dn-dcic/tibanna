@@ -281,7 +281,7 @@ class Top(object):
 
     @staticmethod
     def convert_command_to_collapsed_command(cmd, collapsed_commands):
-        if collapsed_commands == 'all_commands':  # collapsed to one command
+        if collapsed_commands == ['all_commands']:  # collapsed to one command
             return 'all_commands'
         elif cmd in collapsed_commands:  # not collapsed
             return cmd
@@ -317,9 +317,9 @@ class Top(object):
         dt_start = cls.as_datetime(timestamp_start)
         # negative numbers are not supported by timedelta, so do each case separately
         if dt > dt_start:
-            return round((dt - dt_start).seconds / 60)
+            return round((dt - dt_start).total_seconds() / 60)
         else:
-            return -round((dt_start - dt).seconds / 60)
+            return -round((dt_start - dt).total_seconds() / 60)
 
     def timestamps_as_minutes(self, timestamp_start):
         """convert self.timestamps to a list of minutes since timestamp_start

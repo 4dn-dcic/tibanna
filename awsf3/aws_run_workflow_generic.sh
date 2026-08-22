@@ -10,9 +10,16 @@ export REGION=
 export SINGULARITY_OPTION_TO_PASS=
 export DISABLE_METRICS_COLLECTION=false
 export S3_ENCRYPT_KEY_ID=
+export SCRIPT_URL=
+export CW_CONFIG_SHA256=
+export SPOT_SCRIPT_SHA256=
+export DISABLE_SCRIPT_VERIFICATION=false
+export LEGACY_SCRIPT_URL=https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/
+export ASSET_SCRIPT_URL=
+export USE_VERIFIED_SCRIPT_ASSETS=false
 
 printHelpAndExit() {
-    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID]"
+    echo "Usage: ${0##*/} -i JOBID -l LOGBUCKET -V VERSION -A AWSF_IMAGE [-m SHUTDOWN_MIN] [-p PASSWORD] [-a ACCESS_KEY] [-s SECRET_KEY] [-r REGION] [-g] [-c] [-k S3_ENCRYPT_KEY_ID] [-u SCRIPT_URL] [-w CW_CONFIG_SHA256] [-z SPOT_SCRIPT_SHA256] [-x]"
     echo "-i JOBID : awsem job id (required)"
     echo "-l LOGBUCKET : bucket for sending log file (required)"
     echo "-V TIBANNA_VERSION : tibanna version (used in the run_task lambda that launched this instance)"
@@ -25,9 +32,14 @@ printHelpAndExit() {
     echo "-g : use singularity"
     echo "-c : Metrics collection is disabled if flag is set"
     echo "-k S3_ENCRYPT_KEY_ID : KMS key to encrypt s3 files with"
+    echo "-u SCRIPT_URL : base URL this script was fetched from, reused to fetch the cloudwatch agent config and spot failure detection script from the same pinned location"
+    echo "-w CW_CONFIG_SHA256 : expected sha256 of cloudwatch_agent_config.json; the download is rejected on mismatch"
+    echo "-z SPOT_SCRIPT_SHA256 : expected sha256 of spot_failure_detection.sh; the download is rejected on mismatch"
+    echo "-x : (development only) disable sha256 verification of downloaded monitoring assets"
+    echo "If the new asset URL/checksums are omitted, use the original master-path downloads for compatibility with existing callers."
     exit "$1"
 }
-while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
+while getopts "i:m:l:p:a:s:r:gcV:A:k:u:w:z:x" opt; do
     case $opt in
         i) export JOBID=$OPTARG;;
         l) export LOGBUCKET=$OPTARG;;  # bucket for sending log file
@@ -41,6 +53,10 @@ while getopts "i:m:l:p:a:s:r:gcV:A:k:" opt; do
         g) export SINGULARITY_OPTION_TO_PASS=-g;;  # use singularity
         c) export DISABLE_METRICS_COLLECTION=true;;  # disable metrics collection
         k) export S3_ENCRYPT_KEY_ID=$OPTARG;;  # KMS key ID to encrypt s3 files with
+        u) export SCRIPT_URL=$OPTARG;;  # base URL to fetch pinned monitoring assets from
+        w) export CW_CONFIG_SHA256=$OPTARG;;  # expected sha256 of cloudwatch_agent_config.json
+        z) export SPOT_SCRIPT_SHA256=$OPTARG;;  # expected sha256 of spot_failure_detection.sh
+        x) export DISABLE_SCRIPT_VERIFICATION=true;;  # development-only override, see printHelpAndExit
         h) printHelpAndExit 0;;
         [?]) printHelpAndExit 1;;
         esac
@@ -63,7 +79,12 @@ export LOCAL_OUTDIR=$EBS_DIR/out
 export LOGFILE1=templog___  # log before mounting ebs
 export LOGFILE2=$LOCAL_OUTDIR/$JOBID.log
 export STATUS=0
-export ERRFILE=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
+# ERRFILE1 lives under the home directory, which exists from boot, so a
+# pre-mount failure can still persist a durable error marker. ERRFILE2 (under
+# the data EBS) is switched to once that volume is mounted, mirroring LOGFILE.
+export ERRFILE1=$INSTANCE_HOME/$JOBID.error
+export ERRFILE2=$LOCAL_OUTDIR/$JOBID.error  # if this is found on s3, that means something went wrong.
+export ERRFILE=$ERRFILE1
 #IMDSv2 Addition
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
   -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -113,8 +134,71 @@ send_job_started() {
   fi
 }
 
-# function that handles errors - this function calls send_error and send_log
-handle_error() {  ERRCODE=$1; STATUS+=,$ERRCODE; if [ "$ERRCODE" -ne 0 ]; then send_error; send_log; shutdown -h $SHUTDOWN_MIN; fi; }  ## usage: handle_error <error_code>
+# function that handles errors - this function calls send_error and send_log,
+# then fails closed: it exits immediately so a fatal error never falls through
+# into mounting/formatting disks, pulling/running Docker, or running the
+# workload. Best-effort logging failures (send_error/send_log/shutdown) do not
+# mask the original error code, since exit is always the last statement.
+## usage: handle_error <error_code>  (a missing/empty code is treated as an error, not silently skipped)
+handle_error() {
+  ERRCODE=${1:-1}
+  STATUS+=,$ERRCODE
+  if [ "$ERRCODE" -ne 0 ]; then
+    send_error
+    send_log
+    shutdown -h "$SHUTDOWN_MIN"
+    exit "$ERRCODE"
+  fi
+}
+
+# function that verifies a downloaded file's sha256 against an expected value
+# and fails closed (via handle_error) on mismatch or a missing expected value.
+# DISABLE_SCRIPT_VERIFICATION is a development-only escape hatch (e.g. for a
+# custom TIBANNA_REPO_BRANCH fork where the expected hash is not known ahead
+# of time) and must never be the default in a real deployment.
+## usage: verify_sha256 <file> <expected_sha256>
+verify_sha256() {
+  local file="$1"
+  local expected="$2"
+  if [ "$DISABLE_SCRIPT_VERIFICATION" = true ]; then
+    exl echo "## WARNING: sha256 verification disabled (development override) for $file"
+    return 0
+  fi
+  if [ -z "$expected" ]; then
+    exl echo "Error: no expected sha256 provided for $file - refusing to use it"
+    handle_error 1
+    return 1
+  fi
+  local actual
+  actual=$(sha256sum "$file" | awk '{print $1}')
+  if [ "$actual" != "$expected" ]; then
+    exl echo "Error: sha256 mismatch for $file (expected $expected, got $actual)"
+    handle_error 1
+    return 1
+  fi
+  return 0
+}
+
+# The generated userdata always supplies a durable release URL and all asset
+# hashes, which is the primary path. Older userdata and direct callers only
+# supply the original options; keep their established master-path behavior as
+# a compatibility fallback. An integrity failure on the primary path still
+# fails closed - it must not silently downgrade a caller that requested the
+# verified path.
+asset_source_is_verified() {
+  [ -n "$SCRIPT_URL" ] || return 1
+  [ "$DISABLE_SCRIPT_VERIFICATION" = true ] && return 0
+  [ -n "$CW_CONFIG_SHA256" ] || return 1
+  [ -n "$SPOT_SCRIPT_SHA256" ] || return 1
+}
+
+select_asset_source() {
+  ASSET_SCRIPT_URL="$LEGACY_SCRIPT_URL"
+  USE_VERIFIED_SCRIPT_ASSETS=false
+  asset_source_is_verified || return 0
+  ASSET_SCRIPT_URL="$SCRIPT_URL"
+  USE_VERIFIED_SCRIPT_ASSETS=true
+}
 
 # used to compare Tibanna version strings
 version() { echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'; }
@@ -124,20 +208,30 @@ export LOGFILE=$LOGFILE1
 cd $INSTANCE_HOME/
 touch $LOGFILE
 
+select_asset_source
+if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
+  exl echo "## Using verified bootstrap assets from $ASSET_SCRIPT_URL"
+else
+  exl echo "## Using legacy bootstrap asset path from $ASSET_SCRIPT_URL for caller compatibility"
+fi
+
 
 # make sure log bucket is defined
 if [ -z "$LOGBUCKET" ]; then
     exl echo "Error: log bucket not defined";  # just add this message to the log file, which may help debugging by ssh
+    # LOGBUCKET is unset, so send_error/send_log cannot upload anywhere; still
+    # fail closed instead of continuing into mount/Docker/workload setup.
     shutdown -h $SHUTDOWN_MIN;
+    exit 1
 fi
 # tibanna version and awsf image should also be defined
 if [ -z "$TIBANNA_VERSION" ]; then
     exl echo "Error: tibanna lambda version is not defined";
-    handle_error;
+    handle_error 1;
 fi
 if [ -z "$AWSF_IMAGE" ]; then
     exl echo "Error: awsf docker image is not defined";
-    handle_error;
+    handle_error 1;
 fi
 
 ### send job start message to S3
@@ -240,6 +334,7 @@ exl echo "Data EBS file system: $EBS_DEVICE"
 exl mkdir -p $LOCAL_OUTDIR
 mv $LOGFILE1 $LOGFILE2
 export LOGFILE=$LOGFILE2
+export ERRFILE=$ERRFILE2
 
 exl echo
 cwd0=$(pwd)
@@ -265,10 +360,16 @@ if [ "$DISABLE_METRICS_COLLECTION" = false ] ; then
     curl -fsSL "${CW_AGENT_LINK}" -o amazon-cloudwatch-agent.rpm
     rpm -U ./amazon-cloudwatch-agent.rpm
   fi
-  # If we want to collect new metrics, the following file has to be modified
-  exl echo "## Using CW Agent config: https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json"
-  curl -fsSL https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/cloudwatch_agent_config.json \
-    -o /opt/aws/amazon-cloudwatch-agent/bin/config.json
+  # If we want to collect new metrics, the following file has to be modified.
+  # The generated userdata supplies a durable release URL, which is the
+  # primary path. Older userdata/callers omit the new arguments and use the
+  # original master URL without verification for compatibility.
+  exl echo "## Using CW Agent config: ${ASSET_SCRIPT_URL}cloudwatch_agent_config.json"
+  curl -fsSL "${ASSET_SCRIPT_URL}cloudwatch_agent_config.json" -o ./cloudwatch_agent_config.json
+  if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
+    verify_sha256 ./cloudwatch_agent_config.json "$CW_CONFIG_SHA256"
+  fi
+  mv ./cloudwatch_agent_config.json /opt/aws/amazon-cloudwatch-agent/bin/config.json
   # This starts the agent with the downloaded configuration file
   sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
 else
@@ -294,7 +395,12 @@ if [ $(version $TIBANNA_VERSION) -ge $(version "1.6.0") ]; then
     exl echo
     exl echo "## Turning on Spot instance failure detection"
     cd ~
-    curl https://raw.githubusercontent.com/4dn-dcic/tibanna/master/awsf3/spot_failure_detection.sh -O
+    # The generated userdata supplies a durable release URL and checksum,
+    # while older callers retain the original master-path download.
+    curl "${ASSET_SCRIPT_URL}spot_failure_detection.sh" -O
+    if [ "$USE_VERIFIED_SCRIPT_ASSETS" = true ]; then
+      verify_sha256 ./spot_failure_detection.sh "$SPOT_SCRIPT_SHA256"
+    fi
     chmod +x spot_failure_detection.sh
     if [ -z "$S3_ENCRYPT_KEY_ID" ];
     then
@@ -374,9 +480,11 @@ send_log
 # network failures (seen frequently) - Will Sept 22 2021
 exl echo "## Pulling Docker image"
 tries=0
+pull_success=false
 until [ $tries -ge 3 ]; do
   if exl_no_error $CONTAINER_CMD pull $AWSF_IMAGE; then
     exl echo "## Pull successfull on try $tries"
+    pull_success=true
     break
   else
     ((tries++))
@@ -384,7 +492,12 @@ until [ $tries -ge 3 ]; do
   fi
 done
 send_log
-# will fail here now if docker pull is not successful after multiple attempts
+# fail closed here if docker pull did not succeed after multiple attempts,
+# instead of silently falling through into `docker run` with a missing image
+if [ "$pull_success" != true ]; then
+  exl echo "Error: failed to pull docker image $AWSF_IMAGE after $tries tries"
+  handle_error 1
+fi
 # pass S3_ENCRYPT_KEY_ID if desired
 if [ -z "$S3_ENCRYPT_KEY_ID" ];
 then
