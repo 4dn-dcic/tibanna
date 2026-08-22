@@ -7,12 +7,6 @@ Change Log
 =====
 
 * Add RHEL support and fixes for newer kernels (also unblocks newer Ubuntu AMIs)
-
-
-6.0.0
-=====
-
-* Replace Goofys with mountpoint-s3 (https://github.com/awslabs/mountpoint-s3)
 * Security - S3 objects (metrics, cost, marker, run and postrun files) uploaded by
   Tibanna are now private by default; public output requires an explicit per-call
   opt-in. ``deploy_unicorn``/``setup_tibanna_env`` now retain S3 Block Public Access
@@ -69,6 +63,12 @@ Change Log
   is now parsed as an int so it no longer crashes when added to ``stophour``;
   cost estimates and ``top`` metric timelines now use ``timedelta.total_seconds()``
   instead of ``.seconds`` so they are correct for jobs spanning more than a day.
+
+
+6.0.0
+=====
+
+* Replace Goofys with mountpoint-s3 (https://github.com/awslabs/mountpoint-s3)
 
 
 5.5.3
